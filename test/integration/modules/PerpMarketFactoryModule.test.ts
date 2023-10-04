@@ -55,6 +55,29 @@ describe('PerpMarketFactoryModule', () => {
     });
   });
 
+  describe('setSpotMarket', () => {
+    it('should set successfully', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      const address = genAddress();
+      await PerpMarketProxy.connect(from).setSpotMarket(address);
+      const config = await PerpMarketProxy.getMarketConfiguration();
+
+      assert(config.spotMarket, address);
+    });
+
+    it('should revert when not owner', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = traders()[0].signer;
+      const address = genAddress();
+      await assertRevert(
+        PerpMarketProxy.connect(from).setSpotMarket(address),
+        `Unauthorized("${await from.getAddress()}")`
+      );
+    });
+  });
+
   describe('setPyth', () => {
     it('should set successfully', async () => {
       const { PerpMarketProxy } = systems();

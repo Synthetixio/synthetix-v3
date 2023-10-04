@@ -1,6 +1,6 @@
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import type { BootstrapArgs } from '../bootstrap';
+import type { GeneratedBootstrap } from '../bootstrap';
 
 export const bn = (n: number) => wei(n).toBN();
 
@@ -11,7 +11,7 @@ export const bn = (n: number) => wei(n).toBN();
 // markets shuffle between the 5 below here (see `genBootstrap()`).
 //
 // If you're looking for a completely random market, see `genMarket()`.
-export const MARKETS: BootstrapArgs['markets'] = [
+export const MARKETS: GeneratedBootstrap['markets'] = [
   {
     name: ethers.utils.formatBytes32String('BTCPERP'),
     initialPrice: bn(30_000),
@@ -30,7 +30,7 @@ export const MARKETS: BootstrapArgs['markets'] = [
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
-      liquidationWindowDuration: bn(30),
+      liquidationWindowDuration: 30,
       liquidationMaxPd: bn(0.0016),
     },
   },
@@ -52,7 +52,7 @@ export const MARKETS: BootstrapArgs['markets'] = [
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
-      liquidationWindowDuration: bn(30),
+      liquidationWindowDuration: 30,
       liquidationMaxPd: bn(0.0016),
     },
   },
@@ -74,7 +74,7 @@ export const MARKETS: BootstrapArgs['markets'] = [
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
-      liquidationWindowDuration: bn(30),
+      liquidationWindowDuration: 30,
       liquidationMaxPd: bn(0.002),
     },
   },
@@ -96,7 +96,7 @@ export const MARKETS: BootstrapArgs['markets'] = [
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
-      liquidationWindowDuration: bn(30),
+      liquidationWindowDuration: 30,
       liquidationMaxPd: bn(0.0024),
     },
   },
@@ -118,7 +118,7 @@ export const MARKETS: BootstrapArgs['markets'] = [
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
-      liquidationWindowDuration: bn(30),
+      liquidationWindowDuration: 30,
       liquidationMaxPd: bn(0.0024),
     },
   },

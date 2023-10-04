@@ -24,20 +24,25 @@ contract PerpAccountModule is IPerpAccountModule {
     ) external view returns (IPerpAccountModule.AccountDigest memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        uint256 length = globalMarginConfig.supportedAddresses.length;
-        IPerpAccountModule.DepositedCollateral[] memory collateral = new DepositedCollateral[](length);
-        address collateralType;
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        IPerpAccountModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
+        uint128 synthMarketId;
+        uint256 collateralAvailable;
 
         for (uint256 i = 0; i < length; ) {
-            collateralType = globalMarginConfig.supportedAddresses[i];
-            collateral[i] = IPerpAccountModule.DepositedCollateral(
-                collateralType,
-                accountMargin.collaterals[collateralType],
-                Margin.getOraclePrice(collateralType)
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            collateralAvailable = accountMargin.collaterals[synthMarketId];
+            depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
+                synthMarketId,
+                collateralAvailable,
+                Margin.getCollateralPrice(synthMarketId, collateralAvailable, globalConfig)
             );
+
             unchecked {
                 ++i;
             }
@@ -45,7 +50,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         return
             IPerpAccountModule.AccountDigest(
-                collateral,
+                depositedCollaterals,
                 Margin.getCollateralUsd(accountId, marketId),
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)
@@ -66,8 +71,12 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd) = position
-            .getHealthData(market, Margin.getMarginUsd(accountId, market, oraclePrice), oraclePrice, marketConfig);
+        (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position.getHealthData(
+            market,
+            Margin.getMarginUsd(accountId, market, oraclePrice),
+            oraclePrice,
+            marketConfig
+        );
         uint256 notionalValueUsd = MathUtil.abs(position.size).mulDecimal(oraclePrice);
         (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
 
@@ -78,7 +87,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 remainingMarginUsd,
                 healthFactor,
                 notionalValueUsd,
-                unrealizedPnl,
+                pnl,
                 accruedFunding,
                 position.entryPrice,
                 oraclePrice,

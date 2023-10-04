@@ -27,7 +27,23 @@ contract OrderModule is IOrderModule {
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
 
-    /** @dev Same implementation as `MarginModule.validateOrderAvailability`. */
+    // --- Runtime structs --- //
+
+    struct Runtime_settleOrder {
+        uint256 pythPrice;
+        uint256 publishTime;
+        int256 accruedFunding;
+        int256 pnl;
+        uint256 fillPrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams params;
+    }
+
+    // --- Helpers --- //
+
+    /**
+     * @dev Same implementation as `MarginModule.validateOrderAvailability`.
+     */
     function validateOrderAvailability(
         uint128 accountId,
         uint128 marketId,
@@ -49,62 +65,10 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @inheritdoc IOrderModule
-     */
-    function commitOrder(
-        uint128 accountId,
-        uint128 marketId,
-        int128 sizeDelta,
-        uint256 limitPrice,
-        uint256 keeperFeeBufferUsd
-    ) external {
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
-
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        validateOrderAvailability(accountId, marketId, market, globalConfig);
-        uint256 oraclePrice = market.getOraclePrice();
-
-        // TODO: Consider removing and only recomputing funding at the settlement.
-        recomputeFunding(market, oraclePrice);
-
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-
-        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        //
-        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
-        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
-        // order will reach liquidation or insufficient margin for the desired leverage.
-        Position.ValidatedTrade memory trade = Position.validateTrade(
-            accountId,
-            market,
-            Position.TradeParams(
-                sizeDelta,
-                oraclePrice,
-                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
-                marketConfig.makerFee,
-                marketConfig.takerFee,
-                limitPrice,
-                keeperFeeBufferUsd
-            )
-        );
-
-        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
-        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
-    }
-
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
-    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
-    }
-
-    /**
      * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
+        PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
         uint256 publishTime,
@@ -135,6 +99,13 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.InvalidPrice();
         }
 
+        uint256 onchainPrice = market.getOraclePrice();
+
+        // Do not accept zero prices.
+        if (onchainPrice == 0 || params.oraclePrice == 0) {
+            revert ErrorUtil.InvalidPrice();
+        }
+
         // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
         //
         // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
@@ -144,12 +115,35 @@ contract OrderModule is IOrderModule {
         ) {
             revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
         }
+
+        // Ensure Pyth price does not diverge too far from on-chain price from CL.
+        //
+        // e.g. A maximum of 3% price divergence with the following prices:
+        //
+        // (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
+        // (1800, 1750) ~ 2.857143% divergence => Ok
+        // (1854, 1800) ~ 3%        divergence => Ok
+        // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
+        uint256 priceDelta = onchainPrice > params.oraclePrice
+            ? onchainPrice.divDecimal(params.oraclePrice) - DecimalMath.UNIT
+            : params.oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
+        if (priceDelta > globalConfig.priceDivergencePercent) {
+            revert ErrorUtil.PriceDivergenceExceeded(params.oraclePrice, onchainPrice);
+        }
     }
 
     /**
-     * @dev Upon successful settlement, update `market` for `accountId` with `newPosition` details.
+     * @dev Generic helper for funding recomputation during order management.
      */
-    function updateMarketPostSettlement(
+    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
+        (int256 fundingRate, ) = market.recomputeFunding(price);
+        emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
+    }
+
+    /**
+     * @dev Upon successful settlement, update `market` and account margin with `newPosition` details.
+     */
+    function stateUpdatePostSettlement(
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
@@ -178,14 +172,48 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
-    struct Runtime_settleOrder {
-        uint256 pythPrice;
-        uint256 publishTime;
-        int256 accruedFunding;
-        int256 pnl;
-        uint256 fillPrice;
-        Position.ValidatedTrade trade;
-        Position.TradeParams params;
+    // --- Mutative --- //
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function commitOrder(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 limitPrice,
+        uint256 keeperFeeBufferUsd
+    ) external {
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
+        uint256 oraclePrice = market.getOraclePrice();
+
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
+        //
+        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
+        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
+        // order will reach liquidation or insufficient margin for the desired leverage.
+        Position.ValidatedTrade memory trade = Position.validateTrade(
+            accountId,
+            market,
+            Position.TradeParams(
+                sizeDelta,
+                oraclePrice,
+                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+                marketConfig.makerFee,
+                marketConfig.takerFee,
+                limitPrice,
+                keeperFeeBufferUsd
+            )
+        );
+
+        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
+        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**
@@ -193,6 +221,7 @@ contract OrderModule is IOrderModule {
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
         Order.Data storage order = market.orders[accountId];
         Runtime_settleOrder memory runtime;
 
@@ -209,6 +238,7 @@ contract OrderModule is IOrderModule {
         // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
         // such that keepers can conditionally update prices only if necessary.
         PerpMarket.updatePythPrice(priceUpdateData);
+
         (runtime.pythPrice, runtime.publishTime) = market.getPythPrice(order.commitmentTime);
         runtime.fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, runtime.pythPrice);
         runtime.params = Position.TradeParams(
@@ -221,7 +251,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
+        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
 
         recomputeFunding(market, runtime.pythPrice);
 
@@ -233,7 +263,7 @@ contract OrderModule is IOrderModule {
             runtime.pythPrice,
             marketConfig
         );
-        updateMarketPostSettlement(
+        stateUpdatePostSettlement(
             accountId,
             market,
             runtime.trade.newPosition,
@@ -266,19 +296,7 @@ contract OrderModule is IOrderModule {
         return market.orders[accountId];
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
-    function simulateOrder(
-        uint128 accountId,
-        uint128 marketId,
-        int128 sizeDelta,
-        uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
-        uint256 oraclePrice
-    ) external view {
-        // TODO: Implement me
-    }
+    // --- Views --- //
 
     /**
      * @inheritdoc IOrderModule

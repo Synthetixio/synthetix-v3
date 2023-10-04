@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 
@@ -10,50 +11,74 @@ interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
+        // Name of the market to be created e.g, swstETHsUSDPERP.
         bytes32 name;
     }
 
+    struct DepositedCollateral {
+        // Id of the spot synth market collateral.
+        uint128 synthMarketId;
+        // Amount of available collateral deposited (unrelated to position).
+        uint256 available;
+    }
+
     struct MarketDigest {
+        // Array of supported collaterals and amounts.
+        IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
+        // Name of the market e.g, swstETHsUSDPERP.
         bytes32 name;
+        // Skew in native units on market (long - shorts).
         int128 skew;
+        // Market OI in native units.
         uint128 size;
+        // Current oracle price (not accounting for pd adjustments).
         uint256 oraclePrice;
+        // Current rate of funding velocity.
         int256 fundingVelocity;
+        // Current funding rate as a function of funding velocity.
         int256 fundingRate;
-        uint256 lastLiquidationTime;
+        // Amount of size remaining last recorded in current window.
         uint256 remainingLiquidatableSizeCapacity;
+        // block.timestamp of when the last liqudation had occurred.
+        uint128 lastLiquidationTime;
     }
 
     // --- Events --- //
 
+    // @notice Emitted when a market is created.
     event MarketCreated(uint128 id, bytes32 name);
 
     // --- Mutative --- //
 
     /**
-     * @dev Stores a reference to the Synthetix core system.
+     * @notice Stores a reference to the Synthetix core system.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
 
     /**
-     * @dev Stores a reference to the Pyth EVM contract.
+     * @notice Stores a reference to the Synthetix spot market system.
+     */
+    function setSpotMarket(ISpotMarketSystem spotMarket) external;
+
+    /**
+     * @notice Stores a reference to the Pyth EVM contract.
      */
     function setPyth(IPyth pyth) external;
 
     /**
-     * @dev Stores a reference to the ETH/USD oracle node.
+     * @notice Stores a reference to the ETH/USD oracle node.
      */
     function setEthOracleNodeId(bytes32 nodeId) external;
 
     /**
-     * @dev Registers a new PerpMarket with Synthetix and initializes storage.
+     * @notice Registers a new PerpMarket with Synthetix and initializes storage.
      */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
 
     // --- Views --- //
 
     /**
-     * @dev Returns a digest of a market given the `marketId`.
+     * @notice Returns a digest of an existing market given the `marketId`.
      */
     function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
 }

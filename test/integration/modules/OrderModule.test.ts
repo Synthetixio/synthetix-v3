@@ -7,9 +7,11 @@ import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
+import { bn, genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
 import {
+  SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
+  commitOrder,
   depositMargin,
   findEventSafe,
   getFastForwardTimestamp,
@@ -20,6 +22,7 @@ import {
 } from '../../helpers';
 import { BigNumber } from 'ethers';
 import { calcOrderFees, calcFillPrice } from '../../calculations';
+import { PerpMarketProxy } from '../../generated/typechain';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -97,20 +100,21 @@ describe('OrderModule', () => {
       await fastForwardTo(commitmentTime + maxOrderAge.toNumber() + 1, provider());
 
       // Committed, not settled, fastforward by maxAge, commit again, old order should be canceled.
-      const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd
+          ),
+        provider()
       );
-
-      await assertEvent(tx, `OrderCanceled`, PerpMarketProxy);
+      await assertEvent(receipt, `OrderCanceled`, PerpMarketProxy);
     });
 
     it('should emit all events in correct order');
-
-    it('should recompute funding');
 
     it('should revert insufficient margin when margin is less than initial margin', async () => {
       const { PerpMarketProxy } = systems();
@@ -379,7 +383,36 @@ describe('OrderModule', () => {
       assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
     });
 
-    it('should settle an order that partially closes existing');
+    it('should settle an order that partially closes existing', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+
+      // Open new position.
+      const orderSide = genSide();
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      assertBn.equal((await PerpMarketProxy.getMarketDigest(marketId)).size, order.sizeDelta.abs());
+
+      // Partially close position (halving the collateral USD value)
+      const partialCloseOrder = await genOrder(bs, market, collateral, collateralDepositAmount.div(2), {
+        desiredSide: orderSide === 1 ? -1 : 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, partialCloseOrder);
+
+      const expectedRemainingSize = order.sizeDelta.add(partialCloseOrder.sizeDelta);
+      assertBn.equal((await PerpMarketProxy.getMarketDigest(marketId)).size, expectedRemainingSize.abs());
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
+      assertBn.equal((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size, expectedRemainingSize);
+    });
 
     it('should settle an order that adds to an existing order', async () => {
       const { PerpMarketProxy } = systems();
@@ -465,17 +498,178 @@ describe('OrderModule', () => {
       assertBn.equal(marketDigest.skew, order.sizeDelta);
     });
 
-    it('should commit order when price moves but new position still safe');
+    it('should settle order when market price moves between commit/settle but next position still safe', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const orderSide = genSide();
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+
+      await commitOrder(bs, marketId, trader, order);
+
+      // Move price by just 1% (but still within realm of safety).
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.99 : 1.01)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      assertBn.equal((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta, order.sizeDelta);
+
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      await fastForwardTo(settlementTime, provider());
+
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+            value: updateFee,
+          }),
+        provider()
+      );
+
+      // Order should successfully settle despite the unfavourable price move.
+      await assertEvent(receipt, 'OrderSettled', PerpMarketProxy);
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
+    });
 
     it('should allow position reduction even if insufficient unless in liquidation');
 
     it('should emit all events in correct order');
 
-    it('should recompute funding');
+    it('should recompute funding', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should pay sUSD to trader when closing a profitable trade');
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
-    it('should pay a non-zero settlement fee to keeper');
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+
+      assertEvent(receipt, 'FundingRecomputed', PerpMarketProxy);
+    });
+
+    it('should realize non-zero sUSD to trader when closing a profitable trade', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Any collateral except sUSD can be used, we want to make sure a non-zero.
+      const collateral = genOneOf(
+        collaterals().filter(({ synthMarket }) => !synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID))
+      );
+      const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral })
+      );
+
+      // No prior orders or deposits. Must be zero.
+      const d0 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.isZero(
+        d0.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available
+      );
+
+      // Open then close order after making a profit.
+      const orderSide = genSide();
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Profit with 20% (large enough to cover any fees).
+      const newMarketOraclePrice = wei(openOrder.oraclePrice)
+        .mul(orderSide === 1 ? 1.2 : 0.8)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide === 1 ? -1 : 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      // sUSD must be gt 0.
+      assertBn.gt(
+        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available,
+        BigNumber.from(0)
+      );
+
+      // Value of original collateral should also stay the same.
+      assertBn.equal(
+        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId()))[0]
+          .available,
+        collateralDepositAmount
+      );
+    });
+
+    it('should pay a non-zero settlement fee to keeper', async () => {
+      const { PerpMarketProxy, USD } = systems();
+
+      // Any collateral except sUSD can be used, we want to make sure a non-zero.
+      const collateral = genOneOf(
+        collaterals().filter(({ synthMarket }) => !synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID))
+      );
+      const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral })
+      );
+
+      // No prior orders or deposits. Must be zero.
+      const d0 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.isZero(
+        d0.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available
+      );
+
+      // Open then close order after making a profit.
+      const orderSide = genSide();
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+      const { receipt } = await commitAndSettle(bs, marketId, trader, openOrder, {
+        desiredKeeper: keeper(),
+      });
+
+      const keeperFee = findEventSafe({
+        receipt,
+        eventName: 'OrderSettled',
+        contract: PerpMarketProxy,
+      })?.args.keeperFee;
+
+      assertBn.gt(keeperFee, BigNumber.from(0));
+      assertBn.equal(await USD.balanceOf(await keeper().getAddress()), keeperFee);
+    });
+
+    describe('SpotMarket.sellExactIn', () => {
+      describe('open', () => {
+        it('should not sell any margin when opening a new position');
+      });
+
+      describe('modify', () => {
+        it('should sell some non-sUSD synths to pay fees on when no sUSD margin');
+
+        it('should realize sUSD profit when modifying a profitable position');
+
+        it('should sell margin when modifying a neg pnl position (when no sUSD)');
+
+        it('should not sell margin when enough sUSD margin covers neg pnl');
+
+        it('should not sell margin on a profitable position even if fees > pnl');
+      });
+
+      describe('close', () => {
+        it('should not sell margin when closing a profitable position');
+
+        it('should sell margin when closing a neg pnl position');
+      });
+    });
 
     it('should revert when this order exceeds maxMarketSize (oi)');
 
@@ -627,10 +821,109 @@ describe('OrderModule', () => {
 
     it('should revert if collateral price slips into maxMarketSize between commit and settle');
 
-    // NOTE: This may not be necessary.
-    it('should revert when price deviations exceed threshold');
+    it('should revert when price divergence exceed threshold', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when price is zero (i.e. invalid)');
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+      // Retrieve on-chain configuration to generate a Pyth price that's above the divergence.
+      const priceDivergencePercent = wei(
+        (await PerpMarketProxy.getMarketConfiguration()).priceDivergencePercent
+      ).toNumber();
+      const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
+
+      // Create a Pyth price that is > the oraclePrice +/- 0.001%. Randomly below or above the oracle price.
+      //
+      // We `parseFloat(xxx.toFixed(3))` to avoid really ugly numbers like 1864.7999999999997 during testing.
+      const pythPrice = parseFloat(
+        genOneOf([
+          oraclePrice * (1.001 + priceDivergencePercent),
+          oraclePrice * (0.999 - priceDivergencePercent),
+        ]).toFixed(3)
+      );
+
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, pythPrice);
+
+      await fastForwardTo(settlementTime, provider());
+
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `PriceDivergenceExceeded("${bn(pythPrice)}", "${bn(oraclePrice)}")`,
+        PerpMarketProxy
+      );
+    });
+
+    enum ZeroPriceVariant {
+      PYTH = 'PYTH',
+      CL = 'CL',
+      BOTH = 'PYTH_AND_CL',
+    }
+
+    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it(
+      'should revert when pricees are zero and hence invalid (variant: %s)',
+      async (variant: ZeroPriceVariant) => {
+        const { PerpMarketProxy } = systems();
+
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+        await PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        );
+        const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+        assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+
+        const updatePriceReflectVariant = async () => {
+          switch (variant) {
+            case ZeroPriceVariant.PYTH:
+              return getPythPriceData(bs, marketId, publishTime, 0);
+            case ZeroPriceVariant.CL: {
+              const oraclePrice = wei(order.oraclePrice).toNumber();
+              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              return getPythPriceData(bs, marketId, publishTime, oraclePrice);
+            }
+            case ZeroPriceVariant.BOTH: {
+              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              return getPythPriceData(bs, marketId, publishTime, 0);
+            }
+          }
+        };
+        const { updateData, updateFee } = await updatePriceReflectVariant();
+
+        await fastForwardTo(settlementTime, provider());
+
+        await assertRevert(
+          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+            value: updateFee,
+          }),
+          'InvalidPrice()',
+          PerpMarketProxy
+        );
+      }
+    );
 
     it('should revert when pyth price is stale');
 
@@ -639,6 +932,10 @@ describe('OrderModule', () => {
     it('should revert if pyth vaa merkle/blob is invalid');
 
     it('should revert when not enough wei is available to pay pyth fee');
+
+    it('should revert when placing an existing position into instant liquidation');
+
+    it('should revert when placing a new positin into instant liquidation');
   });
 
   describe('getOrderFees', () => {
@@ -810,6 +1107,13 @@ describe('OrderModule', () => {
     //
     // @see: https://github.com/NomicFoundation/hardhat/issues/3028
     describe.skip('keeperFee', () => {
+      const getKeeperFee = (PerpMarketProxy: PerpMarketProxy, receipt: ethers.ContractReceipt): BigNumber =>
+        findEventSafe({
+          receipt,
+          eventName: 'OrderSettled',
+          contract: PerpMarketProxy,
+        })?.args.keeperFee;
+
       it('should calculate keeper fees proportional to block.baseFee and profit margin', async () => {
         const { PerpMarketProxy } = systems();
 
@@ -818,25 +1122,19 @@ describe('OrderModule', () => {
           genTrader(bs)
         );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-        const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(
-          marketId,
-          order.sizeDelta,
-          order.keeperFeeBufferUsd
-        );
+        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFeeBufferUsd);
         const { calcKeeperOrderSettlementFee } = await calcOrderFees(
           bs,
           marketId,
           order.sizeDelta,
           order.keeperFeeBufferUsd
         );
-        const { tx, settlementTime } = await commitAndSettle(bs, marketId, trader, order);
+        const { tx, receipt, settlementTime, lastBaseFeePerGas } = await commitAndSettle(bs, marketId, trader, order);
 
-        // block.basefee on the block which settled the commitment.
-        const { lastBaseFeePerGas } = await provider().getFeeData();
-
-        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
-
+        const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
+        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
         assertBn.equal(expectedKeeperFee, keeperFee);
+
         assertEvent(
           tx,
           `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, ${settlementTime})`,
@@ -847,8 +1145,6 @@ describe('OrderModule', () => {
       it('should cap the keeperFee by its max usd when exceeds ceiling', async () => {
         const { PerpMarketProxy } = systems();
 
-        const BLOCK_BASE_FEE_PER_GAS = 10;
-
         // Set a really high ETH price of 4.9k USD (Dec 21' ATH).
         await ethOracleNode().agg.mockSetCurrentPrice(wei(4900).toBN());
 
@@ -856,17 +1152,11 @@ describe('OrderModule', () => {
         const maxKeeperFeeUsd = wei(50).toBN();
         await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: wei(10).toBN() });
 
-        // Explicitly set the block.basefee here (and set again before commit etc.)
-        //
-        // This block.basefee _may_ move but _should_ be close enough.
-        await provider().send('hardhat_setNextBlockBaseFeePerGas', [BLOCK_BASE_FEE_PER_GAS]);
-
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,
           genTrader(bs)
         );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredKeeperFeeBufferUsd: 0 });
-        const { keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFeeBufferUsd);
         const { calcKeeperOrderSettlementFee } = await calcOrderFees(
           bs,
           marketId,
@@ -874,10 +1164,10 @@ describe('OrderModule', () => {
           order.keeperFeeBufferUsd
         );
 
-        await commitAndSettle(bs, marketId, trader, order, BLOCK_BASE_FEE_PER_GAS);
+        const { receipt, lastBaseFeePerGas } = await commitAndSettle(bs, marketId, trader, order);
 
-        const { lastBaseFeePerGas } = await provider().getFeeData();
-        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
+        const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
+        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
 
         assertBn.equal(keeperFee, expectedKeeperFee);
         assertBn.equal(expectedKeeperFee, maxKeeperFeeUsd);
@@ -886,33 +1176,32 @@ describe('OrderModule', () => {
       it('should cap the keeperFee by its min usd when below floor', async () => {
         const { PerpMarketProxy } = systems();
 
-        // Set a low ETH price of $800 USD.
-        await ethOracleNode().agg.mockSetCurrentPrice(wei(800).toBN());
-
-        // Set a reasonably high minKeeperFee to payout $30. More importantly, don't give an additional buffer as profit either.
-        const minKeeperFeeUsd = wei(30).toBN();
+        // Lower the min requirements to reduce fees fairly significantly.
+        const minKeeperFeeUsd = wei(60).toBN();
         await setMarketConfiguration(bs, {
-          maxKeeperFeeUsd: wei(50).toBN(),
+          keeperSettlementGasUnits: 100_000,
+          maxKeeperFeeUsd: wei(100).toBN(),
           minKeeperFeeUsd,
           keeperProfitMarginPercent: wei(0).toBN(),
         });
+        await ethOracleNode().agg.mockSetCurrentPrice(wei(100).toBN()); // $100 ETH
 
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,
           genTrader(bs)
         );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredKeeperFeeBufferUsd: 0 });
-        const { keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFeeBufferUsd);
         const { calcKeeperOrderSettlementFee } = await calcOrderFees(
           bs,
           marketId,
           order.sizeDelta,
           order.keeperFeeBufferUsd
         );
-        await commitAndSettle(bs, marketId, trader, order);
 
-        const { lastBaseFeePerGas } = await provider().getFeeData();
-        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
+        const { receipt, lastBaseFeePerGas } = await commitAndSettle(bs, marketId, trader, order);
+
+        const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
+        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
 
         assertBn.equal(keeperFee, expectedKeeperFee);
         assertBn.equal(keeperFee, minKeeperFeeUsd);
@@ -961,24 +1250,24 @@ describe('OrderModule', () => {
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
       // Creating a long skew for the market.
+      const orderSide = genSide();
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: 1,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Collect some data.
+      // Invert the size 1:1 and bring it back to neutral.
+      const fillPrice = await PerpMarketProxy.getFillPrice(marketId, order.sizeDelta.mul(-1));
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
-      const prevPositionSizeNeg = wei(order.sizeDelta).mul(-1).toNumber();
-
-      // Using size to simulate short which will reduce the skew. The smallest negative size is the size of the current skew
-      const size = wei(genNumber(prevPositionSizeNeg, -1)).toBN();
-
-      const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
-
-      // To get a "discount" to our short we expect the price to have a premium
-      assertBn.gt(actualFillPrice, oraclePrice);
+      // To get a discount, we expect longs (invert short) to receive a lower price and shorts
+      // (invert long) to receive a higher price.
+      if (orderSide === 1) {
+        assertBn.gt(fillPrice, oraclePrice);
+      } else {
+        assertBn.lt(fillPrice, oraclePrice);
+      }
     });
 
     it('should return mark price as fillPrice when size is 0', async () => {

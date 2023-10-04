@@ -15,7 +15,9 @@ const formatDecodedArg = (value: LogDescription['args'][number]): string => {
 
   return value.toString();
 };
+
 const formatDecodedArgs = (values: LogDescription['args']) => values.map((x) => formatDecodedArg(x)).join(', ');
+
 export const assertEvents = async (
   tx: ContractTransaction | ContractReceipt,
   expected: (string | RegExp)[],

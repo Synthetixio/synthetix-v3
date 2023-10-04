@@ -5,7 +5,11 @@ import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
+
+// @dev A static uint128 of the sUSD marketId.
+uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
 
 /**
  * @dev Market specific and shared configuration.
@@ -25,6 +29,8 @@ library PerpMarketConfiguration {
     struct GlobalData {
         // A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
+        // A reference to the core Synthetix v3 spot market system.
+        ISpotMarketSystem spotMarket;
         // A reference to the Synthetix USD stablecoin.
         ITokenModule usdToken;
         // A reference to the Synthetix oracle manager (used to fetch market prices).
@@ -89,7 +95,7 @@ library PerpMarketConfiguration {
         uint256 liquidationRewardPercent;
         // An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
         uint128 liquidationLimitScalar;
-        // Liquidation window duration in seconds.
+        // Liquidation window duration in seconds (e.g. 30s -> 30, <>30e18)
         uint128 liquidationWindowDuration;
         // If below, allows further liquidations of pd is below this maximum and caps are reached.
         uint128 liquidationMaxPd;

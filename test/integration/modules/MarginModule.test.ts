@@ -1,4 +1,4 @@
-import { BigNumber, Contract, ethers, utils } from 'ethers';
+import { BigNumber, ethers, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -8,9 +8,7 @@ import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
 import {
   bn,
-  genAddress,
   genBootstrap,
-  genBytes32,
   genNumber,
   genListOf,
   genOneOf,
@@ -19,18 +17,18 @@ import {
   toRoundRobinGenerators,
 } from '../../generators';
 import {
-  ZERO_ADDRESS,
-  approveAndMintMargin,
+  mintAndApproveWithTrader,
   commitAndSettle,
   commitOrder,
   depositMargin,
   extendContractAbi,
   fastForwardBySec,
   findEventSafe,
+  mintAndApprove,
+  BURN_ADDRESS,
   withExplicitEvmMine,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
-import { CollateralMock } from '../../../typechain-types';
 import { assertEvents } from '../../assert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
@@ -67,17 +65,19 @@ describe('MarginModule', async () => {
       const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         marketId,
-        collateral.contract.address,
+        collateral.synthMarket.marketId(),
         collateralDepositAmount.mul(-1)
       );
 
-      const traderAddress = await trader.signer.getAddress();
+      const marginWithdrawEventProperties = [
+        `"${PerpMarketProxy.address}"`,
+        `"${await trader.signer.getAddress()}"`,
+        collateralDepositAmount,
+        collateral.synthMarket.marketId(),
+      ].join(', ');
+
       await assertEvent(tx, `OrderCanceled()`, PerpMarketProxy);
-      await assertEvent(
-        tx,
-        `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
-        PerpMarketProxy
-      );
+      await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
     });
 
     it('should revert when a transfer amount of 0', async () => {
@@ -85,14 +85,14 @@ describe('MarginModule', async () => {
 
       const trader = genOneOf(traders());
       const market = genOneOf(markets());
-      const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
+      const collateral = genOneOf(collaterals());
       const amountDelta = bn(0);
 
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           market.marketId(),
-          collateral.address,
+          collateral.synthMarket.marketId(),
           amountDelta
         ),
         `ZeroAmount()`
@@ -107,19 +107,23 @@ describe('MarginModule', async () => {
       await commitAndSettle(bs, marketId, trader, genOrder(bs, market, collateral, collateralDepositAmount));
 
       // Provision collateral and approve for access.
-      const { collateralDepositAmount: collateralDepositAmount2 } = await approveAndMintMargin(
+      const { collateralDepositAmount: collateralDepositAmount2 } = await mintAndApproveWithTrader(
         bs,
         genTrader(bs, { desiredMarket: market, desiredTrader: trader, desiredCollateral: collateral })
       );
 
       // Perform the deposit.
-      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-        trader.accountId,
-        market.marketId(),
-        collateral.contract.address,
-        collateralDepositAmount2
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            market.marketId(),
+            collateral.synthMarket.marketId(),
+            collateralDepositAmount2
+          ),
+        provider()
       );
-      await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
+      await assertEvent(receipt, `FundingRecomputed`, PerpMarketProxy);
     });
 
     it('should revert on modify when an order is pending', async () => {
@@ -145,14 +149,14 @@ describe('MarginModule', async () => {
       const gTrader2 = await genTrader(bs, { desiredTrader: trader, desiredMarket: market });
 
       // (deposit) Mint and give access.
-      await approveAndMintMargin(bs, gTrader2);
+      await mintAndApproveWithTrader(bs, gTrader2);
 
       // (deposit) Perform deposit but expect failure.
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          gTrader2.collateral.contract.address,
+          gTrader2.collateral.synthMarket.marketId(),
           gTrader2.collateralDepositAmount
         ),
         `OrderFound()`
@@ -163,7 +167,7 @@ describe('MarginModule', async () => {
         PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateral.contract.address,
+          collateral.synthMarket.marketId(),
           collateralDepositAmount.mul(-1)
         ),
         `OrderFound()`
@@ -179,7 +183,7 @@ describe('MarginModule', async () => {
         collateral,
         collateralDepositAmount,
         trader: trader1,
-      } = await approveAndMintMargin(bs, genTrader(bs, { desiredTrader: tradersGenerator.next().value }));
+      } = await mintAndApproveWithTrader(bs, genTrader(bs, { desiredTrader: tradersGenerator.next().value }));
 
       const permission = ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL');
       const trader2 = tradersGenerator.next().value;
@@ -189,7 +193,7 @@ describe('MarginModule', async () => {
         PerpMarketProxy.connect(trader2.signer).modifyCollateral(
           trader1.accountId,
           market.marketId(),
-          collateral.contract.address,
+          collateral.synthMarket.marketId(),
           collateralDepositAmount
         ),
         `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
@@ -204,46 +208,55 @@ describe('MarginModule', async () => {
         const traderAddress = await trader.signer.getAddress();
 
         const market = genOneOf(markets());
-        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
-
+        const collateral = genOneOf(collaterals());
         const amountDelta = bn(genNumber(50, 100_000));
-        await collateral.mint(trader.signer.getAddress(), amountDelta);
-        await collateral.approve(PerpMarketProxy.address, amountDelta);
 
-        const balanceBefore = await collateral.balanceOf(traderAddress);
+        await mintAndApprove(bs, collateral, amountDelta, trader.signer);
 
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          market.marketId(),
-          collateral.address,
-          amountDelta
+        const balanceBefore = await collateral.contract.balanceOf(traderAddress);
+
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              market.marketId(),
+              collateral.synthMarket.marketId(),
+              amountDelta
+            ),
+          provider()
         );
-        await assertEvent(
-          tx,
-          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, "${collateral.address}")`,
-          PerpMarketProxy
-        );
+
+        const marginDepositEventProperties = [
+          `"${traderAddress}"`,
+          `"${PerpMarketProxy.address}"`,
+          amountDelta,
+          collateral.synthMarket.marketId(),
+        ].join(', ');
+        await assertEvent(receipt, `MarginDeposit(${marginDepositEventProperties})`, PerpMarketProxy);
 
         const expectedBalanceAfter = balanceBefore.sub(amountDelta);
-        assertBn.equal(await collateral.balanceOf(traderAddress), expectedBalanceAfter);
+        assertBn.equal(await collateral.contract.balanceOf(traderAddress), expectedBalanceAfter);
       });
 
       it('should emit depositMarketUsd when using sUSD as collateral'); // To write this test we need to configure `globalConfig.usdToken` as collateral in bootstrap.
 
       it('should emit all events in correct order', async () => {
         const { PerpMarketProxy, Core } = systems();
-        const traderObj = await genTrader(bs);
-        await approveAndMintMargin(bs, traderObj);
-        const { collateral, trader, traderAddress, collateralDepositAmount, marketId } = traderObj;
+
+        const gTrader = await genTrader(bs);
+        await mintAndApproveWithTrader(bs, gTrader);
+        const { collateral, trader, traderAddress, collateralDepositAmount, marketId } = gTrader;
         const { accountId, signer } = trader;
+
         // Perform the deposit.
         const tx = await PerpMarketProxy.connect(signer).modifyCollateral(
           accountId,
           marketId,
-          collateral.contract.address,
+          collateral.synthMarket.marketId(),
           collateralDepositAmount
         );
-        // Create a contract that can parse all events emitted
+
+        // Create a contract that can parse all events emitted.
         const contractsWithAllEvents = extendContractAbi(
           PerpMarketProxy,
           Core.interface
@@ -251,14 +264,26 @@ describe('MarginModule', async () => {
             .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
         );
 
+        const marketCollateralDepositedEventProperties = [
+          marketId,
+          `"${collateral.synthMarket.synthAddress()}"`,
+          collateralDepositAmount,
+          `"${PerpMarketProxy.address}"`,
+        ].join(', ');
+        const marginDepositEventProperties = [
+          `"${traderAddress}"`,
+          `"${PerpMarketProxy.address}"`,
+          collateralDepositAmount,
+          collateral.synthMarket.marketId(),
+        ].join(', ');
         await assertEvents(
           tx,
           [
             /FundingRecomputed/,
-            `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`, // from collateral ERC20 contract
-            `Transfer("${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount})`, // from collateral ERC20 contract
-            `MarketCollateralDeposited(${marketId}, "${collateral.contract.address}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`, // from core
-            `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+            `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`, // From collateral ERC20 contract
+            `Transfer("${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount})`, // From collateral ERC20 contract
+            `MarketCollateralDeposited(${marketCollateralDepositedEventProperties})`, // From core.
+            `MarginDeposit(${marginDepositEventProperties})`,
           ],
           contractsWithAllEvents
         );
@@ -299,17 +324,16 @@ describe('MarginModule', async () => {
         const invalidAccountId = genNumber(42069, 50000);
 
         const market = genOneOf(markets());
-        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
-
+        const collateral = genOneOf(collaterals());
         const amountDelta = bn(genNumber(50, 100_000));
-        await collateral.mint(trader.signer.getAddress(), amountDelta);
-        await collateral.approve(PerpMarketProxy.address, amountDelta);
+
+        await mintAndApprove(bs, collateral, amountDelta, trader.signer);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             invalidAccountId,
             market.marketId(),
-            collateral.address,
+            collateral.synthMarket.marketId(),
             amountDelta
           ),
           `PermissionDenied("${invalidAccountId}"`
@@ -320,7 +344,7 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy } = systems();
 
         const gTrader = genTrader(bs);
-        const { trader, collateral, collateralDepositAmount } = await approveAndMintMargin(bs, gTrader);
+        const { trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, gTrader);
         const invalidMarketId = bn(genNumber(42069, 50_000));
 
         // Perform deposit with invalid market id.
@@ -328,7 +352,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             invalidMarketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             collateralDepositAmount
           ),
           `MarketNotFound("${invalidMarketId}")`,
@@ -341,42 +365,17 @@ describe('MarginModule', async () => {
 
         const trader = genOneOf(traders());
         const market = genOneOf(markets());
-        const invalidCollateralAddress = genAddress();
+        const invalidSynthMarketId = genNumber(69, 420);
         const amountDelta = bn(genNumber(10, 100));
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            invalidCollateralAddress,
+            invalidSynthMarketId,
             amountDelta
           ),
-          `UnsupportedCollateral("${invalidCollateralAddress}")`
-        );
-      });
-
-      it('should revert when depositing an address(0) collateral', async () => {
-        const { PerpMarketProxy } = systems();
-
-        const trader = genOneOf(traders());
-        const market = genOneOf(markets());
-        const marketId = market.marketId();
-        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
-
-        const depositAmountDelta = bn(genNumber(500, 1000));
-        await collateral.mint(trader.signer.getAddress(), depositAmountDelta);
-        await collateral.approve(PerpMarketProxy.address, depositAmountDelta);
-
-        // Perform withdraw with zero address.
-        await assertRevert(
-          PerpMarketProxy.connect(trader.signer).modifyCollateral(
-            trader.accountId,
-            marketId,
-            ZERO_ADDRESS,
-            depositAmountDelta
-          ),
-          'ZeroAddress()',
-          PerpMarketProxy
+          `UnsupportedCollateral("${invalidSynthMarketId}")`
         );
       });
 
@@ -386,22 +385,54 @@ describe('MarginModule', async () => {
         const trader = genOneOf(traders());
         const market = genOneOf(markets());
 
-        const { contract, max: maxAllowable } = genOneOf(collaterals());
-        const collateral = contract.connect(trader.signer);
+        const collateral = genOneOf(collaterals());
+        const depositAmountDelta = collateral.max.add(bn(1)); // +1 to maxAllowable to exceeded cap.
 
-        // Add one extra to max allowable to exceed max cap.
-        const depositAmountDelta = maxAllowable.add(bn(1));
-        await collateral.mint(trader.signer.getAddress(), depositAmountDelta);
-        await collateral.approve(PerpMarketProxy.address, depositAmountDelta);
+        await mintAndApprove(bs, collateral, depositAmountDelta, trader.signer);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            collateral.address,
+            collateral.synthMarket.marketId(),
             depositAmountDelta
           ),
-          `MaxCollateralExceeded("${depositAmountDelta}", "${maxAllowable}")`
+          `MaxCollateralExceeded("${depositAmountDelta}", "${collateral.max}")`
+        );
+      });
+
+      it('should revert deposit that exceeds market-wide max cap', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
+
+        const market = genOneOf(markets());
+
+        const collateral = genOneOf(collaterals());
+        const depositAmountDelta1 = collateral.max; // Exactly at cap.
+        const depositAmountDelta2 = bn(genNumber(1, 10)); // A few units above cap.
+
+        await mintAndApprove(bs, collateral, depositAmountDelta1, trader1.signer);
+        await mintAndApprove(bs, collateral, depositAmountDelta2, trader2.signer);
+
+        await PerpMarketProxy.connect(trader1.signer).modifyCollateral(
+          trader1.accountId,
+          market.marketId(),
+          collateral.synthMarket.marketId(),
+          depositAmountDelta1
+        );
+
+        // Exceeded cap (across two accounts and hence market wide).
+        await assertRevert(
+          PerpMarketProxy.connect(trader2.signer).modifyCollateral(
+            trader2.accountId,
+            market.marketId(),
+            collateral.synthMarket.marketId(),
+            depositAmountDelta2
+          ),
+          `MaxCollateralExceeded("${depositAmountDelta2}", "${collateral.max}")`
         );
       });
 
@@ -410,20 +441,19 @@ describe('MarginModule', async () => {
 
         const trader = genOneOf(traders());
         const market = genOneOf(markets());
-        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
+        const collateral = genOneOf(collaterals());
 
         // Ensure the amount available is lower than amount to deposit (i.e. depositing more than available).
         const amountToDeposit = bn(genNumber(100, 1000));
         const amountAvailable = amountToDeposit.sub(bn(genNumber(50, 99)));
 
-        await collateral.mint(trader.signer.getAddress(), amountAvailable);
-        await collateral.approve(PerpMarketProxy.address, amountAvailable);
+        await mintAndApprove(bs, collateral, amountAvailable, trader.signer);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            collateral.address,
+            collateral.synthMarket.marketId(),
             amountToDeposit
           ),
           `InsufficientAllowance("${amountToDeposit}", "${amountAvailable}")`
@@ -440,21 +470,24 @@ describe('MarginModule', async () => {
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+
+        // Open leveraged position.
         await commitAndSettle(bs, marketId, trader, order);
-        // updating price, causing position to be liquidatable
+
+        // Updating price, causing position to be liquidatable.
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
-        // flag position
+
+        // Flag position.
         await PerpMarketProxy.flagPosition(trader.accountId, marketId);
-        // Mint some more collateral
-        await collateral.contract.connect(trader.signer).mint(trader.signer.getAddress(), collateralDepositAmount);
-        await collateral.contract.connect(trader.signer).approve(PerpMarketProxy.address, collateralDepositAmount);
+
+        // Mint some more collateral.
+        await mintAndApprove(bs, collateral, collateralDepositAmount, trader.signer);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             collateralDepositAmount
           ),
           `PositionFlagged()`,
@@ -472,18 +505,25 @@ describe('MarginModule', async () => {
         );
 
         // Perform the withdraw (full amount).
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.contract.address,
-          collateralDepositAmount.mul(-1)
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarket.marketId(),
+              collateralDepositAmount.mul(-1)
+            ),
+          provider()
         );
 
-        await assertEvent(
-          tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
-          PerpMarketProxy
-        );
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          collateralDepositAmount,
+          collateral.synthMarket.marketId(),
+        ].join(', ');
+
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
       });
 
       it('should emit withdrawMarketUsd when using sUSD as collateral'); // To write this test we need to configure `globalConfig.usdToken` as collateral in bootstrap.
@@ -495,13 +535,15 @@ describe('MarginModule', async () => {
           genTrader(bs, { desiredCollateral: bs.collaterals()[0] })
         );
         const withdrawAmount = wei(collateralDepositAmount).mul(0.5).toBN();
+
         // Perform the deposit.
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateral.contract.address,
+          collateral.synthMarket.marketId(),
           withdrawAmount.mul(-1)
         );
+
         // Create a contract that can parse all events emitted
         const contractsWithAllEvents = extendContractAbi(
           PerpMarketProxy,
@@ -509,14 +551,22 @@ describe('MarginModule', async () => {
             .format(utils.FormatTypes.full)
             .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
         );
+
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          withdrawAmount,
+          collateral.synthMarket.marketId(),
+        ].join(', ');
+
         await assertEvents(
           tx,
           [
             /FundingRecomputed/,
-            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount})`, // from collateral ERC20 contract
-            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}")`, // from core
-            `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount})`, // from collateral ERC20 contract
-            `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount}, "${collateral.contract.address}")`,
+            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount})`, // From collateral ERC20 contract
+            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}")`, // From core
+            `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount})`, // From collateral ERC20 contract
+            `MarginWithdraw(${marginWithdrawEventProperties})`,
           ],
           contractsWithAllEvents
         );
@@ -528,33 +578,32 @@ describe('MarginModule', async () => {
           bs,
           genTrader(bs)
         );
-        const collateralAddress = collateral.contract.address;
 
         // Perform the withdraw (partial amount).
         const withdrawAmount = collateralDepositAmount.div(2).mul(-1);
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateralAddress,
+          collateral.synthMarket.marketId(),
           withdrawAmount
         );
 
-        // Convert withdrawAmount back to positive because Transfer takes in abs(amount).
-        const withdrawAmountAbs = withdrawAmount.abs();
-        await assertEvent(
-          tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmountAbs}, "${collateralAddress}")`,
-          PerpMarketProxy
-        );
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          withdrawAmount.abs(), // Convert to positive because `Transfer` takes in abs(amount).
+          collateral.synthMarket.marketId(),
+        ].join(', ');
+
+        await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
       });
 
       it('should allow partial withdraw when initial margin req are still met', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount, collateralPrice, traderAddress } =
           await depositMargin(bs, genTrader(bs));
-        const collateralAddress = collateral.contract.address;
 
-        // open leveraged position
+        // Open leveraged position.
         await commitAndSettle(
           bs,
           marketId,
@@ -566,47 +615,35 @@ describe('MarginModule', async () => {
         );
 
         const { im, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-        // Figure out max withdraw
+
+        // Figure out max withdraw.
         const maxWithdrawUsd = wei(remainingMarginUsd).sub(im);
         const maxWithdraw = maxWithdrawUsd.div(collateralPrice);
-        // Withdraw 90% of max withdraw
+
+        // Withdraw 90% of max withdraw.
         const withdrawAmount = maxWithdraw.mul(0.9);
-        // Store balance to compare later
+
+        // Store balance to compare later.
         const balanceBefore = await collateral.contract.balanceOf(traderAddress);
 
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateral.contract.address,
+          collateral.synthMarket.marketId(),
           withdrawAmount.mul(-1).toBN()
         );
-        await assertEvent(
-          tx,
-          `MarginWithdraw("${
-            PerpMarketProxy.address
-          }", "${traderAddress}", ${withdrawAmount.toBN()}, "${collateralAddress}")`,
-          PerpMarketProxy
-        );
+
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          withdrawAmount.toBN(),
+          collateral.synthMarket.marketId(),
+        ].join(', ');
+        await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+
         const expectedBalanceAfter = wei(balanceBefore).add(withdrawAmount).toBN();
         const balanceAfter = await collateral.contract.balanceOf(traderAddress);
         assertBn.equal(expectedBalanceAfter, balanceAfter);
-      });
-
-      it('should revert withdraw on address(0) collateral', async () => {
-        const { PerpMarketProxy } = systems();
-        const { trader, marketId, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-
-        // Perform withdraw with zero address.
-        await assertRevert(
-          PerpMarketProxy.connect(trader.signer).modifyCollateral(
-            trader.accountId,
-            marketId,
-            ZERO_ADDRESS,
-            collateralDepositAmount.mul(-1)
-          ),
-          'ZeroAddress()',
-          PerpMarketProxy
-        );
       });
 
       it('should revert withdraw to an account that does not exist', async () => {
@@ -619,7 +656,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             invalidAccountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             collateralDepositAmount.mul(-1)
           ),
           `PermissionDenied("${invalidAccountId}"`,
@@ -627,7 +664,7 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw to a market that does not exist', async () => {
+      it('should revert withdraw from market that does not exist', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
         const invalidMarketId = bn(genNumber(42069, 50_000));
@@ -637,7 +674,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             invalidMarketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             collateralDepositAmount.mul(-1)
           ),
           `MarketNotFound("${invalidMarketId}")`,
@@ -648,17 +685,17 @@ describe('MarginModule', async () => {
       it('should revert withdraw of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-        const invalidCollateralAddress = genAddress();
+        const invalidSynthMarketId = genNumber(69, 420);
 
-        // Perform withdraw with zero address.
+        // Perform withdraw with invalid synth market id.
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            invalidCollateralAddress,
+            invalidSynthMarketId,
             collateralDepositAmount.mul(-1)
           ),
-          `UnsupportedCollateral("${invalidCollateralAddress}")`,
+          `UnsupportedCollateral("${invalidSynthMarketId}")`,
           PerpMarketProxy
         );
       });
@@ -670,16 +707,20 @@ describe('MarginModule', async () => {
         // Perform the withdraw with a little more than what was deposited.
         const withdrawAmount = collateralDepositAmount.add(bn(1)).mul(-1);
 
+        const insufficientCollateralEventProperties = [
+          `"${collateral.synthMarket.marketId()}"`,
+          `"${collateralDepositAmount}"`,
+          `"${withdrawAmount.mul(-1)}"`,
+        ].join(', ');
+
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             withdrawAmount
           ),
-          `InsufficientCollateral("${collateral.contract.address}", "${collateralDepositAmount}", "${withdrawAmount.mul(
-            -1
-          )}")`,
+          `InsufficientCollateral(${insufficientCollateralEventProperties})`,
           PerpMarketProxy
         );
       });
@@ -694,27 +735,28 @@ describe('MarginModule', async () => {
           desiredSide: -1,
           desiredLeverage: 5,
         });
-        // open leveraged position
+
+        // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
 
         const { im, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
         const maxWithdrawUsd = wei(remainingMarginUsd).sub(im);
 
-        // Try withdrawing $1 more than max withdraw
+        // Try withdrawing $1 more than max withdraw in native units.
         const amountToWithdrawUsd = maxWithdrawUsd.add(1);
-        // Convert to native units
         const amountToWithdraw = amountToWithdrawUsd.div(collateralPrice);
-        /**
-         *      Error: Transaction was expected to revert with "InsufficientMargin()", but reverted with "CanLiquidatePosition()"
-Error: transaction reverted in contract MarginModule: CanLiquidatePosition()
 
-Need to make sure we are not liquidatable
+        /**
+         * Error: Transaction was expected to revert with "InsufficientMargin()", but reverted with "CanLiquidatePosition()"
+         * Error: transaction reverted in contract MarginModule: CanLiquidatePosition()
+         *
+         * Need to make sure we are not liquidatable
          */
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             amountToWithdraw.mul(-1).toBN()
           ),
           `InsufficientMargin()`,
@@ -732,14 +774,15 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+
+        // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             collateralDepositAmount.mul(-1)
           ),
           `CanLiquidatePosition()`,
@@ -757,16 +800,18 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+
+        // Open leveraged position.
         await commitAndSettle(bs, marketId, trader, order);
-        // Change market price to make position liquidatable
+
+        // Change market price to make position liquidatable.
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             wei(-0.01).toBN()
           ),
           `CanLiquidatePosition()`,
@@ -784,18 +829,20 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+        // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
-        // updating price, causing position to be liquidatable
+
+        // Updating price, causing position to be liquidatable
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
-        // flag position
+
+        // Flag position
         await PerpMarketProxy.flagPosition(trader.accountId, marketId);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.contract.address,
+            collateral.synthMarket.marketId(),
             collateralDepositAmount.mul(-1)
           ),
           `PositionFlagged()`,
@@ -815,6 +862,7 @@ Need to make sure we are not liquidatable
           bs,
           genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
         );
+
         // Deposit margin with collateral 2
         const { collateralDepositAmount: collateralDepositAmount2, collateral: collateral2 } = await depositMargin(
           bs,
@@ -825,46 +873,59 @@ Need to make sure we are not liquidatable
           })
         );
 
-        // Assert deposit went thorough and  we have two different types of collateral
+        // Assert deposit went thorough and we have two different types of collateral.
         const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
         const { available: collateralBalance = bn(0) } =
-          accountDigest.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+          accountDigest.depositedCollaterals.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral.synthMarket.marketId())
+          ) || {};
         const { available: collateral2Balance = bn(0) } =
-          accountDigest.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+          accountDigest.depositedCollaterals.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral2.synthMarket.marketId())
+          ) || {};
 
         assertBn.equal(collateralBalance, collateralDepositAmount);
         assertBn.equal(collateral2Balance, collateralDepositAmount2);
 
-        // Store balances before withdrawal
+        // Store balances before withdrawal.
         const collateralWalletBalanceBeforeWithdrawal = await collateral.contract.balanceOf(traderAddress);
         const collateralWalletBalanceBeforeWithdrawal2 = await collateral2.contract.balanceOf(traderAddress);
 
-        // Perform the withdrawAllCollateral
+        // Perform the `withdrawAllCollateral`.
         const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
 
-        // Assert that events are triggered
+        // Assert that events are triggered.
         await assertEvent(
           tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+          `MarginWithdraw("${
+            PerpMarketProxy.address
+          }", "${traderAddress}", ${collateralDepositAmount}, ${collateral.synthMarket.marketId()})`,
           PerpMarketProxy
         );
         await assertEvent(
           tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount2}, "${collateral2.contract.address}")`,
+          `MarginWithdraw("${
+            PerpMarketProxy.address
+          }", "${traderAddress}", ${collateralDepositAmount2}, ${collateral2.synthMarket.marketId()})`,
           PerpMarketProxy
         );
 
         // Assert that no collateral is left the market
         const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
         const { available: collateralBalanceAfter = bn(0) } =
-          accountDigestAfter.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+          accountDigestAfter.depositedCollaterals.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral.synthMarket.marketId())
+          ) || {};
         const { available: collateral2BalanceAfter = bn(0) } =
-          accountDigestAfter.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+          accountDigestAfter.depositedCollaterals.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral2.synthMarket.marketId())
+          ) || {};
 
-        assertBn.equal(collateralBalanceAfter, bn(0));
-        assertBn.equal(collateral2BalanceAfter, bn(0));
+        assertBn.isZero(collateralBalanceAfter);
+        assertBn.isZero(collateral2BalanceAfter);
 
-        // Assert that we have the collateral back in the trader's wallet
+        // Assert that we have the collateral back in the trader's wallet.
         assertBn.equal(
           await collateral.contract.balanceOf(traderAddress),
           collateralDepositAmount.add(collateralWalletBalanceBeforeWithdrawal)
@@ -882,11 +943,11 @@ Need to make sure we are not liquidatable
         const { trader, market } = await depositMargin(bs, genTrader(bs));
 
         // Perform the deposit.
-        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
-          trader.accountId,
-          market.marketId()
+        const { receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, market.marketId()),
+          provider()
         );
-        await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
+        await assertEvent(receipt, `FundingRecomputed()`, PerpMarketProxy);
       });
 
       it('should withdraw with fees and funding removed when no price changes', async () => {
@@ -939,6 +1000,8 @@ Need to make sure we are not liquidatable
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
+        assertBn.lt(expectedChange.toBN(), wei(0).toBN());
+
         assertBn.equal(actualBalance, startingCollateralBalance.add(expectedChange).toBN());
       });
 
@@ -965,7 +1028,7 @@ Need to make sure we are not liquidatable
         const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
         const isLong = openOrder.sizeDelta.gt(0);
 
-        // Increase or Decrease price 20%
+        // Increase or decrease price 20%
         const newPrice = wei(openOrder.oraclePrice).mul(isLong ? 1.2 : 0.8);
         await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
 
@@ -1042,7 +1105,8 @@ Need to make sure we are not liquidatable
       });
 
       it('should withdraw correct amount after losing position', async () => {
-        const { PerpMarketProxy } = systems();
+        const { PerpMarketProxy, SpotMarket, Core } = systems();
+
         const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
         // Deposit margin with collateral 1.
@@ -1104,18 +1168,16 @@ Need to make sure we are not liquidatable
 
         // Price change causing 50% loss.
         await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(0.5).toBN());
-        // Change collateral price 10% win
+
+        // Change collateral price 10% win.
         const newCollateralPrice = wei(collateralPrice).mul(1.1);
-        await collateral.aggregator().mockSetCurrentPrice(newCollateralPrice.toBN());
+        await collateral.updatePrice(newCollateralPrice.toBN());
 
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
-
+        // Close the order with a loss
         const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
-
-        // Do the withdraw.
-        await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
 
         // Collect some data for calculation.
         const { args: closeEventArgs } =
@@ -1124,18 +1186,80 @@ Need to make sure we are not liquidatable
             contract: PerpMarketProxy,
             eventName: 'OrderSettled',
           }) || {};
+        const { args: marketUsdDepositedArgs } =
+          findEventSafe({
+            receipt: closeReceipt,
+            contract: Core,
+            eventName: 'MarketUsdDeposited',
+          }) || {};
 
+        // Calculate things for assertions
         const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
         const openOrderFees = wei(openOrder.orderFee).add(openEventArgs?.keeperFee);
         const closeOrderFees = wei(closeOrder.orderFee).add(closeEventArgs?.keeperFee);
+        const collateralMarketId = collateral.synthMarket.marketId();
+        const [keeperAddress, blockTimestamp] = await Promise.all([
+          bs.keeper().getAddress(),
+          provider()
+            .getBlock(closeReceipt.blockHash)
+            .then(({ timestamp }) => timestamp),
+        ]);
 
         // Calculate diff amount.
         const usdDiffAmount = wei(pnl).sub(openOrderFees).sub(closeOrderFees).add(closeEventArgs?.accruedFunding);
         const collateralDiffAmount = usdDiffAmount.div(newCollateralPrice);
 
+        /**
+         * Assert close position call. We want to make sure we've interacted with v3 Core correctly
+         */
+
+        // usdDiffAmount will have some rounding errors, make sure our calculated value it's "near" marketUsdDepositedArgs?.amount,
+        // and then use marketUsdDepositedArgs?.amount when matching events
+        assertBn.near(marketUsdDepositedArgs?.amount, usdDiffAmount.abs().toBN(), wei('0.000001').toBN());
+
+        const dollarAmount = marketUsdDepositedArgs?.amount;
+        const amount = wei(marketUsdDepositedArgs?.amount).div(newCollateralPrice).toBN();
+
+        // Assert events from all contracts, to make sure CORE's market manager is paid correctly
+        await assertEvents(
+          closeReceipt,
+          [
+            /PriceFeedUpdate/, // Pyth events
+            /BatchPriceFeedUpdate/, // Pyth events
+            /FundingRecomputed/, // funding recomputed, don't care about the exact values here
+            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${amount})`,
+            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${amount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
+            `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${amount})`, // withdraw collateral, to sell to pay back losing pos in sUSD
+            `Transfer("${BURN_ADDRESS}", "${PerpMarketProxy.address}", ${dollarAmount})`, // emitted from selling synths
+            `MarketUsdWithdrawn(${collateralMarketId}, "${PerpMarketProxy.address}", ${dollarAmount}, "${SpotMarket.address}")`, // emitted from selling synthe
+            `SynthSold(${collateralMarketId}, ${dollarAmount}, [0, 0, 0, 0], 0, "${BURN_ADDRESS}", ${newCollateralPrice.toBN()})`, // Sell collateral to sUSD to pay back losing pos
+            `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${dollarAmount})`, // part of depositing sUSD to market manager
+            `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${dollarAmount}, "${PerpMarketProxy.address}")`, // deposit sUSD into market manager, this will let LPs of this market profit
+            `Transfer("${BURN_ADDRESS}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
+            `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}")`, // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited
+            `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
+          ],
+          // PerpsMarket abi gets events from Core, SpotMarket, Pyth and ERC20 added
+          extendContractAbi(
+            PerpMarketProxy,
+            Core.interface
+              .format(utils.FormatTypes.full)
+              .concat(SpotMarket.interface.format(utils.FormatTypes.full))
+              .concat([
+                'event Transfer(address indexed from, address indexed to, uint256 value)', //ERC20
+                'event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf)', // Pyth
+                'event BatchPriceFeedUpdate(uint16 chainId, uint64 sequenceNumber)', // Pyth
+              ])
+          )
+        );
+
+        // Actually do the withdraw.
+        await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
         const expectedCollateralBalanceAfterTrade = wei(startingCollateralBalance).add(collateralDiffAmount).toBN();
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
-
+        // We expect to be losing
+        assertBn.lt(collateralDiffAmount.toBN(), 0);
         // Assert that the balance is correct.
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
       });
@@ -1245,11 +1369,14 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+
+        // Open leveraged position.
         await commitAndSettle(bs, marketId, trader, order);
-        // updating price, causing position to be liquidatable
+
+        // Updating price, causing position to be liquidatable.
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
-        // flag position
+
+        // Flag position.
         await PerpMarketProxy.flagPosition(trader.accountId, marketId);
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
@@ -1262,65 +1389,112 @@ Need to make sure we are not liquidatable
 
   describe('setCollateralConfiguration', () => {
     it('should revert when array has mismatched length', async () => {
-      const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
+      const { PerpMarketProxy } = systems();
       const from = owner();
 
-      // `maxAllowables` to have _at least_ 6 elements to ensure there's _always_ a mismatch.
-      const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
-      const oracleNodeIds = genListOf(genNumber(1, 5), () => genBytes32());
-      const maxAllowables = genListOf(genNumber(6, 10), () => bn(genNumber(10_000, 100_000)));
+      const synthMarketIds = [collaterals()[0].synthMarket.marketId(), collaterals()[1].synthMarket.marketId()];
+      const maxAllowables = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables),
+        PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables),
         `ArrayLengthMismatch()`
       );
     });
 
-    it('should configure many collaterals, also tests getConfiguredCollaterals', async () => {
-      const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
+    it('should configure and return many collaterals configured', async () => {
+      const { PerpMarketProxy } = systems();
       const from = owner();
 
-      // Unfortunately `collateralTypes` must be a real ERC20 contract otherwise this will fail due to the `.approve`.
-      const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
-      const n = collateralTypes.length;
-      const oracleNodeIds = genListOf(n, () => genBytes32());
-      const maxAllowables = genListOf(n, () => bn(genNumber(10_000, 100_000)));
+      const newCollaterals = shuffle(collaterals());
+      const newSynthMarketIds = newCollaterals.map(({ synthMarket }) => synthMarket.marketId());
+      const newMaxAllowables = genListOf(newCollaterals.length, () => bn(genNumber(10_000, 100_000)));
 
-      const tx = await PerpMarketProxy.connect(from).setCollateralConfiguration(
-        collateralTypes,
-        oracleNodeIds,
-        maxAllowables
-      );
-      const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      const tx = await PerpMarketProxy.connect(from).setCollateralConfiguration(newSynthMarketIds, newMaxAllowables);
+      const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
-      assert.equal(collaterals.length, n);
+      assert.equal(configuredCollaterals.length, newCollaterals.length);
 
-      for (const [i, collateral] of Object.entries(collaterals)) {
-        const index = parseInt(i);
-        const { maxAllowable, collateralType, oracleNodeId } = collateral;
-        const collateralContract = new Contract(
-          collateralType,
-          ['function allowance(address, address) view returns (uint256)'],
-          bs.provider()
-        ) as CollateralMock;
-        const perpsAllowance = await collateralContract.allowance(PerpMarketProxy.address, PerpMarketProxy.address);
-        const coreAllowance = await collateralContract.allowance(PerpMarketProxy.address, bs.systems().Core.address);
+      for (const [_i, configuredCollateral] of Object.entries(configuredCollaterals)) {
+        const idx = parseInt(_i);
+        const synth = newCollaterals[idx].synthMarket.synth();
 
-        assertBn.equal(ethers.constants.MaxUint256, perpsAllowance);
+        const perpAllowance = await synth.allowance(PerpMarketProxy.address, PerpMarketProxy.address);
+        const coreAllowance = await synth.allowance(PerpMarketProxy.address, bs.systems().Core.address);
+
+        assertBn.equal(ethers.constants.MaxUint256, perpAllowance);
         assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
-        assertBn.equal(maxAllowable, maxAllowables[index]);
-        assert.equal(collateralType, collateralTypes[index]);
-        assert.equal(oracleNodeId, oracleNodeIds[index]);
+        assertBn.equal(configuredCollateral.maxAllowable, newMaxAllowables[idx]);
       }
 
-      await assertEvent(tx, `CollateralConfigured("${await from.getAddress()}", ${n})`, PerpMarketProxy);
+      await assertEvent(
+        tx,
+        `CollateralConfigured("${await from.getAddress()}", ${newCollaterals.length})`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should remove an unsupported collateral when set with new collaterals', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      // Set a known set of supported collaterals.
+      const supportedCollaterals = collaterals();
+      const synthMarketIds1 = [
+        supportedCollaterals[0].synthMarket.marketId(),
+        supportedCollaterals[1].synthMarket.marketId(),
+      ];
+      const maxAllowables1 = [BigNumber.from(1), BigNumber.from(1)];
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds1, maxAllowables1);
+
+      // Reconfigure the collaterals, removing one of them.
+      const synthMarketIds2 = [
+        supportedCollaterals[0].synthMarket.marketId(),
+        // supportedCollaterals[1].synthMarket.marketId(), (removed!)
+      ];
+      const maxAllowables2 = [BigNumber.from(1)];
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds2, maxAllowables2);
+
+      const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      assert.equal(configuredCollaterals.length, 1);
+      assert.equal(
+        configuredCollaterals.filter((c) => c.synthMarketId.eq(supportedCollaterals[1].synthMarket.marketId())).length,
+        0
+      );
+    });
+
+    it('should allow zero maxAllowables to temporarily disable deposits', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      // Set zero allowable deposits.
+      const supportedCollaterals = collaterals();
+      const synthMarketIds = [
+        supportedCollaterals[0].synthMarket.marketId(),
+        supportedCollaterals[1].synthMarket.marketId(),
+      ];
+      const maxAllowables = [BigNumber.from(0), BigNumber.from(0)];
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables);
+
+      // Depositing should cause a failure.
+      const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, genTrader(bs));
+
+      // Perform the deposit (maxAllowable = 0 and unsupported are indistinguishable without more information).
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          market.marketId(),
+          collateral.synthMarket.marketId(),
+          collateralDepositAmount
+        ),
+        `UnsupportedCollateral("${collateral.synthMarket.marketId()}")`
+      );
     });
 
     it('should reset existing collaterals when new config is empty', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration([], [], []);
+      await PerpMarketProxy.connect(from).setCollateralConfiguration([], []);
       const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
       assert.equal(collaterals.length, 0);
@@ -1329,27 +1503,28 @@ Need to make sure we are not liquidatable
     it('should revert when non-owners configuring collateral', async () => {
       const { PerpMarketProxy } = systems();
       const from = await traders()[0].signer.getAddress();
-      await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([], [], []),
-        `Unauthorized("${from}")`
-      );
+      await assertRevert(PerpMarketProxy.connect(from).setCollateralConfiguration([], []), `Unauthorized("${from}")`);
     });
 
     it('should revert when max allowable is negative', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([genAddress()], [genBytes32()], [bn(-1)]),
+        PerpMarketProxy.connect(from).setCollateralConfiguration([bn(genNumber())], [bn(-1)]),
         'Error: value out-of-bounds'
       );
     });
 
-    it('should revert when type is address(0)', async () => {
+    it('should revert when an invalid synthMarketId is supplied as collateral', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
+
+      const synthMarketIds = [BigNumber.from(696969)];
+      const maxAllowables = [BigNumber.from(1)];
+
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([ZERO_ADDRESS], [genBytes32()], [bn(genNumber())]),
-        'ZeroAddress()'
+        PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables),
+        `transaction reverted in contract unknown: 0x`
       );
     });
 
@@ -1365,21 +1540,23 @@ Need to make sure we are not liquidatable
     });
 
     it('should return usd amount after price of collateral changes', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice } = await depositMargin(
-        bs,
-        genTrader(bs)
-      );
+      const { PerpMarketProxy, SpotMarket } = systems();
+      const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice, collateralDepositAmount } =
+        await depositMargin(bs, genTrader(bs));
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
 
-      // Change price
+      // Change price.
       await collateral.aggregator().mockSetCurrentPrice(wei(2).mul(collateralPrice).toBN());
+      const actual = await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId);
 
-      assertBn.near(
-        await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId),
-        wei(marginUsdDepositAmount).mul(2).toBN()
+      // Fetch the price of the synth, this is our expected collateral value.
+      const { returnAmount: expected } = await SpotMarket.quoteSellExactIn(
+        collateral.synthMarket.marketId(),
+        collateralDepositAmount
       );
+
+      assertBn.equal(actual, expected);
     });
 
     it('should return zero when collateral has not been deposited', async () => {
@@ -1427,7 +1604,7 @@ Need to make sure we are not liquidatable
     it('should return zero marginUsd when no collateral has been deposited', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId } = await genTrader(bs);
-      assertBn.equal(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId), bn(0));
+      assertBn.isZero(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId));
     });
 
     it('should return marginUsd + pnl of position', async () => {
@@ -1485,16 +1662,19 @@ Need to make sure we are not liquidatable
       await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-
       assertBn.gt(marginUsdBeforePriceChange, 0);
+
       // Price double, causing our short to be underwater
       const newPrice = wei(order.oraclePrice).mul(2).toBN();
+
       // Update price
       await market.aggregator().mockSetCurrentPrice(newPrice);
+
       // Load margin again
       const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
       // Assert marginUSD is 0 since price change made the position underwater
-      assertBn.equal(marginUsdAfterPriceChange, bn(0));
+      assertBn.isZero(marginUsdAfterPriceChange);
     });
 
     it('should not consider a position in a different market for the same account', async () => {

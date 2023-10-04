@@ -7,8 +7,10 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -33,6 +35,16 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
         globalConfig.usdToken = ITokenModule(usdTokenAddress);
         globalConfig.oracleManager = synthetix.getOracleManager();
+    }
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
+    function setSpotMarket(ISpotMarketSystem spotMarket) external {
+        OwnableStorage.onlyOwner();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        globalConfig.spotMarket = spotMarket;
     }
 
     /**
@@ -117,19 +129,39 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (, uint128 remainingCapacity) = market.getRemainingLiquidatableSizeCapacity(marketConfig);
+        (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market.getRemainingLiquidatableSizeCapacity(
+            marketConfig
+        );
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        IPerpMarketFactoryModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
+        uint128 synthMarketId;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            depositedCollaterals[i] = IPerpMarketFactoryModule.DepositedCollateral(
+                synthMarketId,
+                market.depositedCollateral[synthMarketId]
+            );
+
+            unchecked {
+                ++i;
+            }
+        }
 
         return
             IPerpMarketFactoryModule.MarketDigest(
+                depositedCollaterals,
                 market.name,
                 market.skew,
                 market.size,
                 market.getOraclePrice(),
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
-                market.lastLiquidationTime,
-                remainingCapacity
+                remainingCapacity,
+                lastLiquidationTime
             );
     }
 }

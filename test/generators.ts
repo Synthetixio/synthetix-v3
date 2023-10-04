@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
 import { shuffle, isNil, random } from 'lodash';
-import Wei, { wei } from '@synthetixio/wei';
+import { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
 import { Bs, Market, Trader, Collateral } from './typed';
+import { SYNTHETIX_USD_MARKET_ID } from './helpers';
 
 // --- Utils --- //
 
@@ -64,7 +65,7 @@ export const genBootstrap = () => ({
     stakedAmount: bn(500_000),
   },
   global: {
-    priceDivergencePercent: wei(genNumber(0.1, 0.3)).toBN(),
+    priceDivergencePercent: bn(genOneOf([0.01, 0.02, 0.03, 0.035, 0.04, 0.045, 0.05])),
     pythPublishTimeMin: 8,
     pythPublishTimeMax: 12,
     minOrderAge: 12,
@@ -77,11 +78,13 @@ export const genBootstrap = () => ({
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Dummy address to be replaced later.
   },
-  markets: shuffle(MARKETS),
+  markets: MARKETS,
 });
 
 /**
  * Generates a market with possibly unrealistic parms. Use `genOneOf(MARKETS)` for realistic values.
+ *
+ * NOTE: BE WARNED! THIS FUNCTION CAN RESULT IN UNEXPECTED BEHAVIOUR IN DOWNSTREAM TESTS.
  */
 export const genMarket = () => ({
   name: ethers.utils.formatBytes32String(genMarketName()),
@@ -101,7 +104,7 @@ export const genMarket = () => ({
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
     liquidationRewardPercent: bn(genNumber(0.005, 0.0075)),
     liquidationLimitScalar: bn(genNumber(0.9, 1.2)),
-    liquidationWindowDuration: bn(genOneOf([36, 48, 60])),
+    liquidationWindowDuration: genOneOf([36, 48, 60]), // In seconds
     liquidationMaxPd: bn(genNumber(0.0001, 0.001)),
   },
 });
@@ -161,6 +164,11 @@ export const genTrader = async (
   };
 };
 
+/** Generate a non-USD collatearl */
+export const genNonUsdCollateral = ({ collaterals }: Bs) =>
+  genOneOf(collaterals().filter((x) => !x.synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID)));
+
+/** Generates a side randomly, 1 for long, -1 for short. */
 export const genSide = (): 1 | -1 => genOneOf([1, -1]);
 
 /** Generates a valid order to settle on a specific market for a specific collateral type/amount. */

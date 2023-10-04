@@ -44,13 +44,14 @@ library Position {
         uint256 newMarginUsd;
     }
 
-    // --- Runtime structs --- //
+    // --- Runtime Structs --- //
 
     struct Runtime_validateLiquidation {
         address flagger;
-        uint128 oldPositionSize;
+        uint128 oldPositionSizeAbs;
         uint128 maxLiquidatableCapacity;
         uint128 remainingCapacity;
+        uint128 lastLiquidationTime;
     }
 
     // --- Storage --- //
@@ -247,17 +248,17 @@ library Position {
 
         // Precautionary to ensure we're liquidating an open position.
         oldPosition = market.positions[accountId];
-        runtime.oldPositionSize = MathUtil.abs(oldPosition.size).to128();
-        if (runtime.oldPositionSize == 0) {
+        runtime.oldPositionSizeAbs = MathUtil.abs(oldPosition.size).to128();
+        if (runtime.oldPositionSizeAbs == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
         // Fetch the available capacity then alter iff zero AND the caller is a whitelisted endorsed liquidation keeper.
-        (runtime.maxLiquidatableCapacity, runtime.remainingCapacity) = market.getRemainingLiquidatableSizeCapacity(
-            marketConfig
-        );
+        (runtime.maxLiquidatableCapacity, runtime.remainingCapacity, runtime.lastLiquidationTime) = market
+            .getRemainingLiquidatableSizeCapacity(marketConfig);
+
         if (msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0) {
-            runtime.remainingCapacity = runtime.oldPositionSize;
+            runtime.remainingCapacity = runtime.oldPositionSizeAbs;
         }
 
         // At max capacity for current liquidation window.
@@ -271,13 +272,13 @@ library Position {
             //  3. The current market premium/discount does not exceed a configurable maxPd.
             //  4. The current position size as skew does not exceed a configurable maxPd.
             if (
-                market.lastLiquidationTime != block.timestamp &&
+                runtime.lastLiquidationTime != block.timestamp &&
                 MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd &&
-                runtime.oldPositionSize.divDecimal(skewScale) < liquidationMaxPd
+                runtime.oldPositionSizeAbs.divDecimal(skewScale) < liquidationMaxPd
             ) {
-                runtime.remainingCapacity = runtime.oldPositionSize > runtime.maxLiquidatableCapacity
+                runtime.remainingCapacity = runtime.oldPositionSizeAbs > runtime.maxLiquidatableCapacity
                     ? runtime.maxLiquidatableCapacity
-                    : runtime.oldPositionSize;
+                    : runtime.oldPositionSizeAbs;
             } else {
                 // No liquidation for you.
                 revert ErrorUtil.LiquidationZeroCapacity();
@@ -404,6 +405,9 @@ library Position {
             getHealthData(market, self.size, self.entryPrice, self.entryFundingAccrued, marginUsd, price, marketConfig);
     }
 
+    /**
+     * @dev Returns the health factor associated with this position.
+     */
     function getHealthFactor(
         Position.Data storage self,
         PerpMarket.Data storage market,

@@ -1,20 +1,40 @@
+import assert from 'assert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
+import { BigNumber, Signer, ethers } from 'ethers';
+import { shuffle, times } from 'lodash';
+import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genNonUsdCollateral,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genOrderFromSizeDelta,
+  genSide,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import {
   depositMargin,
   commitAndSettle,
   commitOrder,
   setMarketConfigurationById,
   getBlockTimestamp,
+  withExplicitEvmMine,
+  findEventSafe,
+  SYNTHETIX_USD_MARKET_ID,
+  fastForwardBySec,
 } from '../../helpers';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { Trader } from '../../typed';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, keeper, systems, provider, restore } = bs;
+  const { markets, collaterals, traders, keeper, keeper2, keeper3, endorsedKeeper, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -70,7 +90,7 @@ describe('LiquidationModule', () => {
       await commitOrder(bs, marketId, trader, order2);
       const commitmentTime = await getBlockTimestamp(provider());
 
-      // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
+      // Price moves 10% and results in a healthFactor of < 1.
       const newMarketOraclePrice = wei(order2.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
@@ -85,6 +105,61 @@ describe('LiquidationModule', () => {
       );
       await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
     });
+
+    it('should sell all available synth collateral for sUSD when flagging', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const collateral = genNonUsdCollateral(bs);
+      const orderSide = genSide();
+      const marginUsd = genOneOf([1000, 5000]);
+
+      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: marginUsd })
+      );
+
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Verify no USD but _some_ non-USD collateral was used as margin.
+      const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const collateralBalanceBefore = d1.depositedCollaterals
+        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
+        .map((c) => c.available)[0];
+      const usdBalanceBefore = d1.depositedCollaterals
+        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
+        .map((c) => c.available)[0];
+
+      assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
+      assertBn.isZero(usdBalanceBefore);
+
+      // Price moves 10% and results in a healthFactor of < 1.
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Flag for liqudation, triggering the sale of collateral for sUSD.
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      // Assert the collateral has been sold and all that's left is sUSD (minus fees).
+      const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      const collateralBalanceAfter = d2.depositedCollaterals
+        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
+        .map((c) => c.available)[0];
+      const usdBalanceAfter = d2.depositedCollaterals
+        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
+        .map((c) => c.available)[0];
+
+      assertBn.isZero(collateralBalanceAfter);
+      assertBn.near(usdBalanceAfter, marginUsdDepositAmount); // .near to account for spot-market skewFee.
+    });
+
+    it('should not sell any synth collateral when all collateral is already sUSD');
 
     it('should emit all events in correct order');
 
@@ -177,56 +252,90 @@ describe('LiquidationModule', () => {
   });
 
   describe('liquidatePosition', () => {
-    it('should fully liquidate a flagged position', async () => {
+    const commtAndSettleLiquidatedPosition = async (desiredKeeper: ethers.Signer) => {
       const { PerpMarketProxy } = systems();
 
-      // Commit, settle, place position into liquidation, flag for liquidation.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, we set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       // Set a large enough liqCap to ensure a full liquidation.
-      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: wei(100).toBN() });
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
 
-      await market.aggregator().mockSetCurrentPrice(
-        wei(order.oraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
-          .toBN()
-      );
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await PerpMarketProxy.connect(desiredKeeper).flagPosition(trader.accountId, marketId);
 
       // Attempt the liquidate. This should complete successfully.
-      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
-      const keeperAddress = await keeper().getAddress();
-
-      // TODO: Missing the last two values (liqReward and keeperFee).
-      await assertEvent(
-        tx,
-        `PositionLiquidated(${trader.accountId}, ${marketId}, 0, "${keeperAddress}", "${keeperAddress}"`,
-        PerpMarketProxy
+      const { tx, receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(desiredKeeper).liquidatePosition(trader.accountId, marketId),
+        provider()
       );
+
+      return { tx, receipt, trader, marketId, newMarketOraclePrice };
+    };
+
+    it('should fully liquidate a flagged position', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const desiredKeeper = keeper();
+      const keeperAddress = await desiredKeeper.getAddress();
+
+      const { tx, receipt, trader, marketId, newMarketOraclePrice } = await commtAndSettleLiquidatedPosition(
+        desiredKeeper
+      );
+
+      const positionLiquidatedEvent = findEventSafe({
+        receipt,
+        eventName: 'PositionLiquidated',
+        contract: PerpMarketProxy,
+      });
+      const positionLiquidatedEventProperties = [
+        trader.accountId,
+        marketId,
+        0, // sizeRemaining (expected full liquidation).
+        `"${keeperAddress}"`, // keeper
+        `"${keeperAddress}"`, // flagger
+        positionLiquidatedEvent?.args.liqReward,
+        positionLiquidatedEvent?.args.keeperFee,
+        newMarketOraclePrice,
+      ].join(', ');
+
+      await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
     });
 
     it('should liquidate a flagged position even if health > 1', async () => {
       const { PerpMarketProxy } = systems();
 
-      // Commit, settle, place position into liquidation, flag for liquidation.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       const marketOraclePrice = order.oraclePrice;
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -240,32 +349,49 @@ describe('LiquidationModule', () => {
       assertBn.gt(hf2, wei(1).toBN());
 
       // Attempt the liquidate. This should complete successfully.
-      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+      const { tx, receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
       const keeperAddress = await keeper().getAddress();
 
-      // TODO: Missing the last two values (liqReward and keeperFee).
-      await assertEvent(
-        tx,
-        `PositionLiquidated(${trader.accountId}, ${marketId}, 0, "${keeperAddress}", "${keeperAddress}"`,
-        PerpMarketProxy
-      );
+      const positionLiquidatedEvent = findEventSafe({
+        receipt,
+        eventName: 'PositionLiquidated',
+        contract: PerpMarketProxy,
+      });
+      const positionLiquidatedEventProperties = [
+        trader.accountId,
+        marketId,
+        0, // sizeRemaining (expected full liquidation).
+        `"${keeperAddress}"`, // keeper
+        `"${keeperAddress}"`, // flagger
+        positionLiquidatedEvent?.args.liqReward,
+        positionLiquidatedEvent?.args.keeperFee,
+        marketOraclePrice,
+      ].join(', ');
+
+      await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
     });
 
     it('should update market size and skew upon full liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
       // Commit, settle, place position into liquidation, flag for liquidation.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
+      // Set a large enough cap to ensure we always get full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
@@ -287,17 +413,17 @@ describe('LiquidationModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Commit, settle, place position into liquidation, flag for liquidation.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
@@ -313,22 +439,207 @@ describe('LiquidationModule', () => {
       assertBn.lt(d2.remainingLiquidatableSizeCapacity, d1.remainingLiquidatableSizeCapacity);
     });
 
-    it('should send liqReward to flagger and keeperFee to liquidator');
+    it('should send liqReward to flagger and keeperFee to liquidator', async () => {
+      const { PerpMarketProxy, USD } = systems();
 
-    it('should send send both fees to flagger if same keeper', async () => {});
+      const settlementKeeper = keeper();
+      const flaggerKeeper = keeper2();
+      const liquidatorKeeper = keeper3();
+
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order, { desiredKeeper: settlementKeeper });
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+
+      // Attempt the liquidate. This should complete successfully.
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(liquidatorKeeper).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const positionLiquidatedEvent = findEventSafe({
+        receipt,
+        eventName: 'PositionLiquidated',
+        contract: PerpMarketProxy,
+      });
+      const liqReward = positionLiquidatedEvent?.args.liqReward as BigNumber;
+      const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
+
+      assertBn.equal(await USD.balanceOf(await flaggerKeeper.getAddress()), liqReward);
+      assertBn.equal(await USD.balanceOf(await liquidatorKeeper.getAddress()), keeperFee);
+    });
+
+    it('should send send both fees to flagger if same keeper', async () => {
+      const { PerpMarketProxy, USD } = systems();
+
+      const settlementKeeper = keeper();
+      const flaggerKeeper = keeper2();
+
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order, { desiredKeeper: settlementKeeper });
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+
+      // Attempt the liquidate. This should complete successfully.
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(flaggerKeeper).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const positionLiquidatedEvent = findEventSafe({
+        receipt,
+        eventName: 'PositionLiquidated',
+        contract: PerpMarketProxy,
+      });
+      const liqReward = positionLiquidatedEvent?.args.liqReward as BigNumber;
+      const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
+      const expectedKeeperUsdBalance = liqReward.add(keeperFee);
+
+      assertBn.equal(await USD.balanceOf(await flaggerKeeper.getAddress()), expectedKeeperUsdBalance);
+    });
+
+    it('should not send endorsed keeper any liquidation rewards when flagger', async () => {
+      const { PerpMarketProxy, USD } = systems();
+
+      const settlementKeeper = keeper();
+      const flaggerKeeper = endorsedKeeper();
+      const liquidatorKeeper = keeper2();
+
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order, { desiredKeeper: settlementKeeper });
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+
+      // Attempt the liquidate. This should complete successfully.
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(liquidatorKeeper).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const positionLiquidatedEvent = findEventSafe({
+        receipt,
+        eventName: 'PositionLiquidated',
+        contract: PerpMarketProxy,
+      });
+      const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
+
+      // Expect the flagger to receive _nothing_ and liquidator to receive just the keeperFee.
+      assertBn.isZero(await USD.balanceOf(await flaggerKeeper.getAddress()));
+      assertBn.equal(await USD.balanceOf(await liquidatorKeeper.getAddress()), keeperFee);
+    });
+
+    it('should not send endorsed keeper liqReward when they are both flagger and liquidator', async () => {
+      const { PerpMarketProxy, USD } = systems();
+
+      const settlementKeeper = keeper();
+      const flaggerKeeper = endorsedKeeper();
+
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order, { desiredKeeper: settlementKeeper });
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+
+      // Attempt the liquidate. This should complete successfully.
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(flaggerKeeper).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const positionLiquidatedEvent = findEventSafe({
+        receipt,
+        eventName: 'PositionLiquidated',
+        contract: PerpMarketProxy,
+      });
+      const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
+
+      // Only receive keeperFee, no liqReward should be sent.
+      assertBn.equal(await USD.balanceOf(await flaggerKeeper.getAddress()), keeperFee);
+    });
 
     it('should remove flagger on full liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
       // Commit, settle, place position into liquidation, flag for liquidation, liquidate.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const trader = genOneOf(traders());
       const market = genOneOf(markets());
       const marketId = market.marketId();
       const collateral = genOneOf(collaterals());
 
       // Set a large enough liqCap to ensure a full liquidation.
-      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: wei(100).toBN() });
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
 
       const gTrader1 = await depositMargin(
         bs,
@@ -336,14 +647,14 @@ describe('LiquidationModule', () => {
       );
       const order1 = await genOrder(bs, market, collateral, gTrader1.collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order1);
 
       const { answer: marketOraclePrice1 } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice1)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
@@ -355,14 +666,14 @@ describe('LiquidationModule', () => {
       );
       const order2 = await genOrder(bs, market, collateral, gTrader2.collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order2);
 
       const { answer: marketOraclePrice2 } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice2)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -377,25 +688,30 @@ describe('LiquidationModule', () => {
     it('should remove all position collateral from market on liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
-      // Commit, settle, place position into liquidation, flag for liquidation.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      // Commit, settle, place position into liquidation, flag for liquidation. For the purposes
+      // of this test, ensure we can liquidate the entire position in one call (hence the smaller
+      // marginUsd deposit amounts).
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       const d1 = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
 
-      await market.aggregator().mockSetCurrentPrice(
-        wei(order.oraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
-          .toBN()
-      );
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
       await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+
       const d2 = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       const { collateralUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
@@ -404,16 +720,37 @@ describe('LiquidationModule', () => {
       assertBn.isZero(collateralUsd);
     });
 
+    it('should remove all market deposited collateral after full liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { marketId } = await commtAndSettleLiquidatedPosition(keeper());
+
+      // Expecting ZERO collateral deposited into the market.
+      const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+      d1.depositedCollaterals.map((c) => assertBn.isZero(c.available));
+    });
+
+    it('shuold remove all account margin collateral after full liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, marketId } = await commtAndSettleLiquidatedPosition(keeper());
+
+      // Expecting ZERO collateral left associated with the account.
+      const d = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.isZero(d.collateralUsd);
+      d.depositedCollaterals.forEach((c) => assertBn.isZero(c.available));
+    });
+
     it('should emit all events in correct order');
 
     it('should recompute funding', async () => {
       const { PerpMarketProxy } = systems();
 
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
 
       await commitAndSettle(bs, marketId, trader, order);
@@ -423,30 +760,34 @@ describe('LiquidationModule', () => {
       // Whether it goes up or down depends on the side of the order.
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
-      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
-      await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+      await assertEvent(receipt, `FundingRecomputed`, PerpMarketProxy);
     });
 
     it('should revert when position is not flagged', async () => {
       const { PerpMarketProxy } = systems();
 
       // Commit, settle, place position into liquidation.
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -494,22 +835,549 @@ describe('LiquidationModule', () => {
       );
     });
 
-    describe('liquidationCapacity', () => {
-      it('should partially liquidate if position hits liq window cap');
+    describe('getRemainingLiquidatableSizeCapacity', () => {
+      const calcMaxLiquidatableCapacity = (
+        makerFee: BigNumber,
+        takerFee: BigNumber,
+        skewScale: BigNumber,
+        liquidationLimitScalar: BigNumber
+      ) => wei(makerFee.add(takerFee)).mul(skewScale).mul(liquidationLimitScalar).toBN();
 
-      it('should allow an endorsed keeper to fully liquidate a position even if above caps');
+      describe('maxLiquidatableCapacity', () => {
+        it('should be calculated relative to makerFee/takerFee and skewScale', async () => {
+          const { PerpMarketProxy } = systems();
+          const market = genOneOf(markets());
+          const marketId = market.marketId();
 
-      it('should allow liquidations even if exceed caps if pd is below maxPd');
+          const liquidationLimitScalar = bn(1);
+          const makerFee = bn(0.0001);
+          const takerFee = bn(0.0001);
+          const skewScale = bn(1_000_000);
 
-      it('should partial liquidation even if pd is < maxPd and we reach cap');
+          await setMarketConfigurationById(bs, marketId, {
+            liquidationLimitScalar,
+            makerFee,
+            takerFee,
+            skewScale,
+          });
 
-      it('should track and include endorsed keeper activity (cap + time)');
+          const { maxLiquidatableCapacity } = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+          const expectedMaxLiquidatableCapacity = calcMaxLiquidatableCapacity(
+            makerFee,
+            takerFee,
+            skewScale,
+            liquidationLimitScalar
+          );
+          assertBn.equal(maxLiquidatableCapacity, expectedMaxLiquidatableCapacity);
+        });
 
-      it('should not send endorsed keeper any fees');
+        /* Randomly test 10 scalars between 0 and 1 (inclusive, always include boundaries). */
+        forEach([0, ...times(8).map(() => genNumber(0.1, 0.9)), 1]).it(
+          `should scale with liquidationLimitScalar of '%0.5f'`,
+          async (scalar: number) => {
+            const { PerpMarketProxy } = systems();
+            const market = genOneOf(markets());
+            const marketId = market.marketId();
 
-      it('should not remove flagger on partial liquidation');
+            const makerFee = bn(genNumber(0.0001, 0.0005));
+            const takerFee = bn(genNumber(0.0006, 0.001));
+            const skewScale = bn(1_000_000);
 
-      it('should revert when liq cap has been met and not endorsed');
+            const liquidationLimitScalar = bn(scalar);
+            await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar, makerFee, takerFee, skewScale });
+
+            const { maxLiquidatableCapacity } = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+            const expectedMaxLiquidatableCapacity = calcMaxLiquidatableCapacity(
+              makerFee,
+              takerFee,
+              skewScale,
+              liquidationLimitScalar
+            );
+            assertBn.equal(maxLiquidatableCapacity, expectedMaxLiquidatableCapacity);
+          }
+        );
+      });
+
+      describe('remainingCapacity', () => {
+        it('should be updated to reflect a recent liquidation');
+
+        it('should be zero when cap has been met and an endorsed liquidator pushes past cap for window');
+      });
+    });
+
+    describe('{partialLiqudation,liqCaps}', () => {
+      const configurePartiallyLiquidatedPosition = async (
+        desiredFlagger?: Signer,
+        desiredLiquidator?: Signer,
+        desiredTrader?: Trader,
+        desiredMarginUsdDepositAmount: number = 50_000
+      ) => {
+        const { PerpMarketProxy } = systems();
+
+        const flaggerKeeper = desiredFlagger ?? keeper();
+        const liquidationKeeper = desiredLiquidator ?? keeper();
+
+        const flaggerKeeperAddr = await flaggerKeeper.getAddress();
+        const liquidationKeeperAddr = await liquidationKeeper.getAddress();
+
+        // Be quite explicit with what market and market params we are using to ensure a partial liquidation.
+        const market = markets()[0];
+        await market.aggregator().mockSetCurrentPrice(wei(25_000).toBN());
+        const orderSide = genSide();
+
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredTrader, desiredMarket: market, desiredMarginUsdDepositAmount })
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: 10,
+          desiredSide: orderSide,
+        });
+
+        await commitAndSettle(bs, marketId, trader, order);
+
+        // Reconfigure market to lower the remainingCapacity such that it's < collateralDepositAmount but > 0.
+        //
+        // This effectively gives us a liquidation max cap at 1.
+        await setMarketConfigurationById(bs, marketId, {
+          liquidationLimitScalar: bn(0.01),
+          makerFee: bn(0.0001),
+          takerFee: bn(0.0001),
+          skewScale: bn(500_000),
+        });
+
+        const capBefore = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.gt(capBefore.remainingCapacity, 0);
+        assertBn.lt(capBefore.remainingCapacity, collateralDepositAmount);
+
+        // Price moves 10% and results in a healthFactor of < 1.
+        const newMarketOraclePrice = wei(order.oraclePrice)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .toBN();
+        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+
+        // Attempt the liquidate. This should complete successfully.
+        const { tx, receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(liquidationKeeper).liquidatePosition(trader.accountId, marketId),
+          provider()
+        );
+
+        const positionLiquidatedEvent = findEventSafe({
+          receipt,
+          eventName: 'PositionLiquidated',
+          contract: PerpMarketProxy,
+        });
+
+        const remainingSize = order.sizeDelta.abs().sub(capBefore.remainingCapacity).mul(orderSide);
+        const positionLiquidatedEventProperties = [
+          trader.accountId,
+          marketId,
+          remainingSize,
+          `"${flaggerKeeperAddr}"`,
+          `"${liquidationKeeperAddr}"`,
+          positionLiquidatedEvent?.args.liqReward,
+          positionLiquidatedEvent?.args.keeperFee,
+          newMarketOraclePrice,
+        ].join(', ');
+        await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
+
+        const capAfter = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(capAfter.remainingCapacity);
+
+        return {
+          tx,
+          receipt,
+          marketId,
+          market,
+          order,
+          orderSide,
+          liquidatedSize: capBefore.remainingCapacity,
+          remainingSize,
+          trader,
+          flaggerKeeper,
+          liquidationKeeper,
+        };
+      };
+
+      it('should partially liquidate and exhaust cap if position hits liq window cap', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { marketId } = await configurePartiallyLiquidatedPosition();
+        const cap = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+
+        assertBn.isZero(cap.remainingCapacity);
+      });
+
+      it('should partially update market skew/size when partially liquidated', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { remainingSize, marketId } = await configurePartiallyLiquidatedPosition();
+        const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+
+        assertBn.equal(d1.size, remainingSize.abs());
+        assertBn.equal(d1.skew, remainingSize);
+      });
+
+      it('should allow an endorsed keeper to fully liquidate a position even if above caps', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { trader, remainingSize, marketId } = await configurePartiallyLiquidatedPosition();
+
+        // Should be fullt exhausted.
+        const cap1 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap1.remainingCapacity);
+
+        // Endorsed liqudaitor to liquidate remaining capacity.
+        const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        assertBn.equal(d1.position.size, remainingSize);
+
+        await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(endorsedKeeper()).liquidatePosition(trader.accountId, marketId),
+          provider()
+        );
+
+        const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        assertBn.isZero(d2.position.size);
+
+        const cap2 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap2.remainingCapacity);
+      });
+
+      it('should allow further liquidations even if exceed caps when pd is below maxPd', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
+        const desiredMarginUsdDepositAmount = 50_000;
+
+        const desiredKeeper = keeper();
+        const desiredKeeperAddress = await desiredKeeper.getAddress();
+        const {
+          liquidatedSize,
+          marketId,
+          market,
+          order: order1,
+          orderSide: orderSide1,
+        } = await configurePartiallyLiquidatedPosition(
+          desiredKeeper,
+          desiredKeeper,
+          trader1,
+          desiredMarginUsdDepositAmount
+        );
+
+        // Partially liquidated position.
+        const cap = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap.remainingCapacity);
+
+        // Open another position with the same to balance skew.
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: trader2,
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount,
+          })
+        );
+
+        // Inverted side to neutralize skew.
+        const desiredOrderSize = liquidatedSize.mul(orderSide1 === 1 ? -1 : 1);
+        const order = await genOrderFromSizeDelta(bs, market, desiredOrderSize);
+        await commitAndSettle(bs, marketId, trader2, order);
+
+        // Liquidate remaining size.
+        const { tx, receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader1.accountId, marketId),
+          provider()
+        );
+
+        const positionLiquidatedEvent = findEventSafe({
+          receipt,
+          eventName: 'PositionLiquidated',
+          contract: PerpMarketProxy,
+        });
+
+        // Partial liquidation (again) - not high enough cap to fully liquidate but did bypass liquidations.
+        //
+        // NOTE: We .mul(2) here because the position has been partially liquidated _twice_.
+        const expectedRemainingSize = order1.sizeDelta.abs().sub(liquidatedSize.mul(2)).mul(orderSide1);
+        const positionLiquidatedEventProperties = [
+          trader1.accountId,
+          marketId,
+          expectedRemainingSize, // Remaining size to liquidate (none = dead).
+          `"${desiredKeeperAddress}"`,
+          `"${desiredKeeperAddress}"`,
+          positionLiquidatedEvent?.args.liqReward,
+          positionLiquidatedEvent?.args.keeperFee,
+          order.oraclePrice,
+        ].join(', ');
+
+        await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
+      });
+
+      it('should reset caps after window timeframe has elapsed', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { marketId } = await configurePartiallyLiquidatedPosition();
+
+        // NOTE: We make an assumption about the configured liquidationWindowDuration.
+        //
+        // We know that this value is defined as 30s. If this changes then this test will most likely
+        // break and this comment will be served as a notice.
+        const { liquidationWindowDuration } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+
+        // Caps before moving time forward.
+        const cap1 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap1.remainingCapacity);
+
+        await fastForwardBySec(provider(), 15); // Half way into cap.
+
+        const cap2 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap2.remainingCapacity);
+
+        await fastForwardBySec(provider(), 14); // One second before end of cap.
+
+        const cap3 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap3.remainingCapacity);
+
+        await fastForwardBySec(provider(), 1); // Exact 30s.
+
+        const cap4 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.equal(cap4.remainingCapacity, cap4.maxLiquidatableCapacity);
+
+        await fastForwardBySec(provider(), 5); // 5s into new window.
+
+        const cap5 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.equal(cap5.remainingCapacity, cap5.maxLiquidatableCapacity);
+
+        await fastForwardBySec(provider(), liquidationWindowDuration.toNumber()); // > window over.
+
+        const cap6 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.equal(cap6.remainingCapacity, cap6.maxLiquidatableCapacity);
+      });
+
+      it('should use up cap (partial) before exceeding if pd < maxPd');
+
+      it('should track and include endorsed keeper activity (cap + time) on liquidations');
+
+      it('should not remove flagger on partial liquidation', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { trader, marketId } = await configurePartiallyLiquidatedPosition();
+
+        // Partially liquidated and should still remain flagged. A re-flat should not be allowed.
+        await assertRevert(
+          PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+          `PositionFlagged()`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should accumulate liq utilisation without exceeding cap', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const flaggerKeeper = keeper();
+        const liquidationKeeper = keeper2();
+
+        // Ensure we use the same side and market for all traders.
+        const orderSide = genSide();
+        const market = genOneOf(markets());
+        const marketId = market.marketId();
+
+        // Set a fairly large liquidation limit scalar to prevent partial liquidations. Also give a large enough
+        // window to ensure liquidations all occur within one window.
+        await setMarketConfigurationById(bs, marketId, {
+          liquidationLimitScalar: bn(10),
+          liquidationWindowDuration: 60,
+        });
+
+        const orders: Awaited<ReturnType<typeof genOrder>>[] = [];
+
+        // For every available trader, open a position (all on the same side) and liquidate everything. The
+        // sum of all sizeDelta should be the utilisation and remaining should be max - utlisation.
+        for (const trader of traders()) {
+          const marginUsdDepositAmount = genOneOf([5000, 10_000, 15_000]);
+          const collateral = genOneOf(collaterals());
+
+          const { collateralDepositAmount: collateralDepositAmount1 } = await depositMargin(
+            bs,
+            genTrader(bs, {
+              desiredTrader: trader,
+              desiredCollateral: collateral,
+              desiredMarket: market,
+              desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+            })
+          );
+          const order = await genOrder(bs, market, collateral, collateralDepositAmount1, {
+            desiredLeverage: 10,
+            desiredSide: orderSide,
+          });
+          await commitAndSettle(bs, marketId, trader, order);
+
+          orders.push(order);
+        }
+
+        const sizeToLiquidate = orders.reduce((acc, order) => {
+          return acc.add(order.sizeDelta.abs());
+        }, BigNumber.from(0));
+
+        // Verify that liquidating both will not incur any caps.
+        const capBefore = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.gt(capBefore.remainingCapacity, sizeToLiquidate);
+
+        // Place both traders into liquidation.
+        const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+        const newMarketOraclePrice = wei(oraclePrice)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .toBN();
+        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        // Flag and liquidate it all.
+        for (const trader of traders()) {
+          await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+          await PerpMarketProxy.connect(liquidationKeeper).liquidatePosition(trader.accountId, marketId);
+        }
+
+        // Ensure both liquidations occurred on the same block.
+        assertBn.isZero((await PerpMarketProxy.getMarketDigest(marketId)).size);
+
+        // Ensure both were fully liquidated.
+        const capAfter = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+
+        // Ensure caps have not changed between liquidations.
+        assertBn.equal(capBefore.maxLiquidatableCapacity, capAfter.maxLiquidatableCapacity);
+        assertBn.equal(capAfter.remainingCapacity, capAfter.maxLiquidatableCapacity.sub(sizeToLiquidate));
+
+        // Verify internal accounting tracks correct liquidation time and amount.
+        const { remainingLiquidatableSizeCapacity } = await PerpMarketProxy.getMarketDigest(marketId);
+        assertBn.equal(capAfter.maxLiquidatableCapacity.sub(remainingLiquidatableSizeCapacity), sizeToLiquidate);
+      });
+
+      it('should accumulate an into existing liquidation chunk if two tx in the same block', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const flaggerKeeper = keeper();
+        const liquidationKeeper = keeper2();
+
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
+
+        const orderSide = genSide();
+        const marginUsdDepositAmount = 15_000;
+        const collateral = collaterals()[0];
+        const market = markets()[0];
+        const marketId = market.marketId();
+
+        // Set a fairly large liquidation limit scalar to prevent partial liquidations.
+        await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(10) });
+
+        // Trader 1.
+        const { collateralDepositAmount: collateralDepositAmount1 } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: trader1,
+            desiredCollateral: collateral,
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+          })
+        );
+        const order1 = await genOrder(bs, market, collateral, collateralDepositAmount1, {
+          desiredLeverage: 10,
+          desiredSide: orderSide,
+        });
+        await commitAndSettle(bs, marketId, trader1, order1);
+
+        // Trader 2.
+        const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: trader2,
+            desiredCollateral: collateral,
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+          })
+        );
+        const order2 = await genOrder(bs, market, collateral, collateralDepositAmount2, {
+          desiredLeverage: 10,
+          desiredSide: orderSide,
+        });
+        await commitAndSettle(bs, marketId, trader2, order2);
+
+        const sizeToLiquidate = order1.sizeDelta.abs().add(order2.sizeDelta.abs());
+
+        // Verify that liquidating both will not incur any caps.
+        const capBefore = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.gt(capBefore.remainingCapacity, sizeToLiquidate);
+
+        // Place both traders into liquidation.
+        const oraclePrice = order1.oraclePrice;
+        const newMarketOraclePrice = wei(oraclePrice)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .toBN();
+        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        // Flag both users for liquidation.
+        await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader1.accountId, marketId);
+        await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader2.accountId, marketId);
+
+        // Attempt to liquidate both in a single block.
+        await provider().send('evm_setAutomine', [false]);
+
+        const tx1 = await PerpMarketProxy.connect(liquidationKeeper).liquidatePosition(trader1.accountId, marketId);
+        const tx2 = await PerpMarketProxy.connect(liquidationKeeper).liquidatePosition(trader2.accountId, marketId);
+
+        await provider().send('evm_setAutomine', [true]);
+
+        const receipt1 = await tx1.wait();
+        const receipt2 = await tx2.wait();
+
+        // Ensure both liquidations occurred on the same block.
+        assert.equal(receipt1.blockNumber, receipt2.blockNumber);
+        assert.equal(tx1.timestamp, tx2.timestamp);
+        assertBn.isZero((await PerpMarketProxy.getMarketDigest(marketId)).size);
+
+        // Ensure both were fully liquidated.
+        const capAfter = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+
+        // Ensure caps have not changed between liquidations.
+        assertBn.equal(capBefore.maxLiquidatableCapacity, capAfter.maxLiquidatableCapacity);
+        assertBn.equal(capAfter.remainingCapacity, capAfter.maxLiquidatableCapacity.sub(sizeToLiquidate));
+
+        // Verify internal accounting tracks correct liquidation time and amount.
+        const block = await provider().getBlock(receipt1.blockNumber);
+        const { lastLiquidationTime, remainingLiquidatableSizeCapacity } = await PerpMarketProxy.getMarketDigest(
+          marketId
+        );
+        assertBn.equal(lastLiquidationTime, block.timestamp);
+        assertBn.equal(capAfter.maxLiquidatableCapacity.sub(remainingLiquidatableSizeCapacity), sizeToLiquidate);
+      });
+
+      it('should revert when liq cap has been met and not endorsed', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const desiredKeeper = keeper(); // NOT endorsed.
+        const { trader, marketId } = await configurePartiallyLiquidatedPosition(desiredKeeper, desiredKeeper);
+
+        // Confirm we have exhausted caps.
+        const { remainingCapacity } = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(remainingCapacity);
+
+        // Do not allow bypass unless market is _perfectly_ balanced. Adding this here to prevent maxPd bypass.
+        await setMarketConfigurationById(bs, marketId, { liquidationMaxPd: bn(0) });
+
+        // Attempt to liquidate again.
+        await assertRevert(
+          PerpMarketProxy.connect(desiredKeeper).liquidatePosition(trader.accountId, marketId),
+          `LiquidationZeroCapacity()`,
+          PerpMarketProxy
+        );
+      });
+
+      // TODO: A concrete test with many whales all trading but one has over extended, partially liqudated.
+      it('should revert when liq cap has been met and not endorsed (concrete)');
 
       it('should revert when pd is below maxPd but liquidation happens in the same block');
     });

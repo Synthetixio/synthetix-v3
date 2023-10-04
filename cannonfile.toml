@@ -7,8 +7,14 @@ description = "bfp market for Synthetix v3"
 description = "bfp market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.synthetixPreset]
+defaultValue = "main"
+
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
+
+[setting.spotMarketPackage]
+defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
 
 # What is salt?
 #
@@ -21,6 +27,10 @@ defaultValue = "bfp"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
+
+[import.spotMarket]
+source = "<%= settings.spotMarketPackage %>"
 
 # --- Market Contracts --- #
 
@@ -80,8 +90,7 @@ contracts = [
   "PerpAccountModule",
   "MarginModule",
   "OrderModule",
-  "LiquidationModule",
-
+  "LiquidationModule"
 ]
 depends = [
   "import.synthetix",
@@ -137,15 +146,10 @@ artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "1"
 
-[contract.SynthetixUsdXCollateralMock]
+[contract.SynthetixCollateral2Mock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "2"
-
-[contract.WrappedStakedEthCollateralMock]
-artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
-args = []
-salt = "3"
 
 [invoke.initialize_snxCollateral]
 target = ["SnxV3CollateralMock"]
@@ -153,17 +157,11 @@ func = "initialize"
 args = ["SNX V3","SNXV3","18"]
 depends = ["contract.SnxV3CollateralMock"]
 
-[invoke.initialize_usdXCollateral]
-target = ["SynthetixUsdXCollateralMock"]
+[invoke.initialize_xxxCollateral]
+target = ["SynthetixCollateral2Mock"]
 func = "initialize"
-args = ["Synthetix Stablecoin","USD","18"]
-depends = ["contract.SynthetixUsdXCollateralMock"]
-
-[invoke.initialize_wstETHCollateral]
-target = ["WrappedStakedEthCollateralMock"]
-func = "initialize"
-args = ["Wrapped Lido Staked ETH","wstETH","18"]
-depends = ["contract.WrappedStakedEthCollateralMock"]
+args = ["XXX X","XXX","18"]
+depends = ["contract.SynthetixCollateral2Mock"]
 
 [contract.PythMock]
 artifact = "contracts/mocks/PythMock.sol:PythMock"
@@ -184,6 +182,15 @@ args = [
 ]
 depends = ["invoke.upgradeProxy"]
 
+[invoke.setSpotMarket]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSpotMarket"
+args = [
+  "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
+]
+depends = ["invoke.upgradeProxy", "import.spotMarket"]
+
 [invoke.setPyth]
 target = ["PerpMarketProxy"]
 fromCall.func = "owner"
@@ -191,10 +198,7 @@ func = "setPyth"
 args = [
   "<%= contracts.PythMock.address %>",
 ]
-depends = [
-  "invoke.upgradeProxy",
-  "contract.PythMock"
-]
+depends = ["invoke.upgradeProxy", "contract.PythMock"]
 
 # --- Feature Flags --- #
 

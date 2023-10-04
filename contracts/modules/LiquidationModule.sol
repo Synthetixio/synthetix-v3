@@ -8,7 +8,7 @@ import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
@@ -17,6 +17,51 @@ contract LiquidationModule is ILiquidationModule {
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+
+    // --- Helpers --- //
+
+    /**
+     * @dev Before liquidation (not flag) to perform pre-steps and validation.
+     */
+    function updateMarketPreLiquidation(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        uint256 oraclePrice,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    )
+        private
+        returns (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint256 liqReward,
+            uint256 keeperFee
+        )
+    {
+        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+
+        uint128 liqSize;
+        (oldPosition, newPosition, liqSize, liqReward, keeperFee) = Position.validateLiquidation(
+            accountId,
+            market,
+            PerpMarketConfiguration.load(marketId),
+            globalConfig,
+            oraclePrice
+        );
+
+        // Track the liqSize that is about to be liquidated.
+        market.updateAccumulatedLiquidation(liqSize);
+
+        // Update market to reflect state of liquidated position.
+        market.skew = market.skew - oldPosition.size + newPosition.size;
+        market.size -= liqSize;
+
+        // Update market debt relative to the liqReward and keeperFee incurred.
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
+        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
+        market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+    }
 
     // --- Mutative --- //
 
@@ -59,48 +104,13 @@ contract LiquidationModule is ILiquidationModule {
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, oraclePrice);
-    }
 
-    /**
-     * @dev Before liquidation (not flag) peform validation and market updates.
-     */
-    function updateMarketPreLiquidation(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market,
-        uint256 oraclePrice,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    )
-        private
-        returns (
-            Position.Data storage oldPosition,
-            Position.Data memory newPosition,
-            uint256 liqReward,
-            uint256 keeperFee
-        )
-    {
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
-
-        uint128 liqSize;
-        (oldPosition, newPosition, liqSize, liqReward, keeperFee) = Position.validateLiquidation(
-            accountId,
-            market,
-            PerpMarketConfiguration.load(marketId),
-            globalConfig,
-            oraclePrice
-        );
-
-        // Update market to reflect a successful full or partial liquidation.
-        market.lastLiquidationTime = block.timestamp;
-        market.lastLiquidationUtilization += liqSize;
-        market.skew -= oldPosition.size;
-        market.size -= MathUtil.abs(oldPosition.size).to128();
-
-        // Update market debt relative to the liqReward and keeperFee incurred.
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
-        market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+        // Sell any non sUSD collateral for sUSD post flag. Non sUSD margin value is already discounted in the quote
+        // price on the synth by spot market. This simply realizes that discount.
+        //
+        // We sell the synth collateral here to ensure there's enough sUSD at this point in time to pay down any debt
+        // incurred on this position and to also credit LPs with sUSD.
+        Margin.sellAllSynthCollateralForUsd(accountId, marketId, market);
     }
 
     /**
@@ -118,6 +128,7 @@ contract LiquidationModule is ILiquidationModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
         (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
@@ -132,16 +143,34 @@ contract LiquidationModule is ILiquidationModule {
         if (newPosition.size == 0) {
             delete market.positions[accountId];
             delete market.flaggedLiquidations[accountId];
-            Margin.clearAccountCollateral(accountId, marketId);
+
+            // Zero out all sUSD that was collected after selling synth based collateral during the flag.
+            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
         } else {
             market.positions[accountId].update(newPosition);
         }
 
-        if (flagger == msg.sender) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
-        } else {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);
+        // `flagPosition` has already (1) withdrew collateral (2) spot sold (3) deposited as usd.
+        //
+        // By the time the liquidation occurs (partial or otherwise), we're essentially withdrawing a portion
+        // of that deposited usd margin to pay keepers/liquidator.
+        //
+        // Additionally,
+        // - If flagger is the same as the liquidator, they receive both keeper/liqReward
+        // - If flagger/liquidator are different, distribute fees separately
+        //
+        // NOTE: The endorsed liquidator receives _zero_ liquidation rewards (but does receive a keeperFee for upkeep).
+        if (flagger == globalConfig.keeperLiquidationEndorsed) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+        } else {
+            if (msg.sender == flagger) {
+                globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee + liqReward);
+            } else {
+                globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);
+                globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+            }
         }
 
         emit PositionLiquidated(
@@ -179,7 +208,11 @@ contract LiquidationModule is ILiquidationModule {
      */
     function getRemainingLiquidatableSizeCapacity(
         uint128 marketId
-    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
+    )
+        external
+        view
+        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTimestamp)
+    {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }
