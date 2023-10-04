@@ -6,6 +6,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
@@ -81,6 +82,20 @@ contract UtilsModule is IUtilsModule {
             cc.ccipChainIdToSelector[supportedNetworks[i]] = ccipSelectors[i];
             cc.ccipSelectorToChainId[ccipSelectors[i]] = supportedNetworks[i];
         }
+    }
+
+    /**
+     * @inheritdoc IUtilsModule
+     */
+    function isTrustedForwarder(address forwarder) external pure returns (bool) {
+        return ERC2771Context.isTrustedForwarder(forwarder);
+    }
+
+    /**
+     * @inheritdoc IUtilsModule
+     */
+    function getTrustedForwarder() external pure returns (address) {
+        return ERC2771Context.trustedForwarder();
     }
 
     /**

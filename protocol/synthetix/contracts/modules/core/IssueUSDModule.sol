@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
@@ -113,7 +114,7 @@ contract IssueUSDModule is IIssueUSDModule {
             emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
 
-        emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
+        emit UsdMinted(accountId, poolId, collateralType, amount, ERC2771Context._msgSender());
     }
 
     /**
@@ -172,6 +173,6 @@ contract IssueUSDModule is IIssueUSDModule {
         // Increase the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
 
-        emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
+        emit UsdBurned(accountId, poolId, collateralType, amount, ERC2771Context._msgSender());
     }
 }

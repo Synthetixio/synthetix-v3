@@ -21,10 +21,10 @@ contract ERC20Mock is ERC20 {
     }
 
     function mint(uint256 amount) external {
-        _mint(msg.sender, amount);
+        _mint(ERC2771Context._msgSender(), amount);
     }
 
     function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
+        _burn(ERC2771Context._msgSender(), amount);
     }
 }

@@ -3,7 +3,11 @@ import { Market, MarketUpdated } from './generated/schema';
 
 export function handleMarketUpdated(event: MarketUpdatedEvent): void {
   const id = event.params.marketId.toString();
-  const market = new Market(id);
+  const market = Market.load(id);
+
+  if (!market) {
+    return;
+  }
 
   market.price = event.params.price;
   market.skew = event.params.skew;

@@ -40,9 +40,10 @@ dataSources:
           handler: handleMarketPriceDataUpdated
         - event: FundingParametersSet(indexed uint128,uint256,uint256)
           handler: handleFundingParametersSet
-        - event: LiquidationParametersSet(indexed
-            uint128,uint256,uint256,uint256,uint256,uint256)
+        - event: LiquidationParametersSet(indexed uint128,uint256,uint256,uint256,uint256,uint256)
           handler: handleLiquidationParametersSet
+        - event: MaxLiquidationParametersSet(indexed uint128,uint256,uint256,uint256,address)
+          handler: handleMaxLiquidationParametersSet
         - event: LockedOiRatioSet(indexed uint128,uint256)
           handler: handleLockedOiRatioSet
         - event: OrderFeesSet(indexed uint128,uint256,uint256)
@@ -68,6 +69,7 @@ dataSources:
           handler: handlePositionLiquidated
         - event: AccountLiquidated(indexed uint128,uint256,bool)
           handler: handleAccountLiquidated
-        - event: CollateralModified(indexed uint128,indexed uint128,int256,indexed
+        - event:
+            CollateralModified(indexed uint128,indexed uint128,int256,indexed
             address)
           handler: handleCollateralModified

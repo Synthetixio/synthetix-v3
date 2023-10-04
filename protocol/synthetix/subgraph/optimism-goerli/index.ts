@@ -22,6 +22,7 @@ export * from '../mainnet/handlePoolOwnershipAccepted';
 export * from '../mainnet/handleRewardsClaimed';
 export * from '../mainnet/handleRewardsDistributed';
 export * from '../mainnet/handleRewardsDistributorRegistered';
+export * from '../mainnet/handleRewardsDistributorRemoved';
 export * from '../mainnet/handleUSDBurned';
 export * from '../mainnet/handleUSDMinted';
 export * from '../mainnet/handleVaultLiquidation';

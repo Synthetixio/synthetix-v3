@@ -1,8 +1,9 @@
-import { assert } from 'matchstick-as';
+import { log, assert } from 'matchstick-as';
 import { getISOWeekNumber } from '../mainnet';
 
 export default function test(): void {
   const date = Date.parse('2022-01-01T00:00:00.000Z');
+
   // @ts-ignore
   const weekNumber = getISOWeekNumber(date.getTime());
   assert.stringEquals(weekNumber.toString(), '0');

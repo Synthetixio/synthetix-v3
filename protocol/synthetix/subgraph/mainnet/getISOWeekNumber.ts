@@ -2,9 +2,11 @@
 
 // exported for test
 export function getISOWeekNumber(timestamp: i64): i64 {
-  const dateOfTimeStamp = new Date(<i64>timestamp).toISOString().slice(0, 4);
+  const date = new Date(timestamp);
+  const fullYear = date.getUTCFullYear();
+
   // Calculate the timestamp for the first day of the year
-  const firstDayDate = Date.parse(dateOfTimeStamp + '-01-01T00:00:00.000Z');
+  const firstDayDate = new Date(Date.UTC(fullYear, 0, 1, 0, 0, 0, 0));
 
   const firstDayTimestamp = firstDayDate.getTime() as f64;
   // Calculate the day of the week for the first day of the year (0 = Sunday, 6 = Saturday)

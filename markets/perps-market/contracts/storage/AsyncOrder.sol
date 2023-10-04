@@ -78,7 +78,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
      */
-    error InsufficientMargin(int availableMargin, uint minMargin);
+    error InsufficientMargin(int256 availableMargin, uint256 minMargin);
 
     struct Data {
         /**
@@ -145,9 +145,10 @@ library AsyncOrder {
             revert OrderNotValid();
         }
 
-        strategy = PerpsMarketConfiguration.load(order.request.marketId).settlementStrategies[
+        strategy = PerpsMarketConfiguration.loadValidSettlementStrategy(
+            order.request.marketId,
             order.request.settlementStrategyId
-        ];
+        );
         checkWithinSettlementWindow(order, strategy);
     }
 
@@ -207,14 +208,14 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint settlementExpiration = self.settlementTime +
+        uint256 settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < self.settlementTime) {
             revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
         }
 
-        if (expired(self, settlementStrategy)) {
+        if (block.timestamp > settlementExpiration) {
             revert SettlementWindowExpired(
                 block.timestamp,
                 self.settlementTime,
@@ -230,7 +231,7 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view returns (bool) {
-        uint settlementExpiration = self.settlementTime +
+        uint256 settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
         return block.timestamp > settlementExpiration;
     }
@@ -242,18 +243,18 @@ library AsyncOrder {
         int128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
-        uint fillPrice;
-        uint orderFees;
-        uint availableMargin;
-        uint currentLiquidationMargin;
-        uint accumulatedLiquidationRewards;
-        uint currentLiquidationReward;
+        uint256 fillPrice;
+        uint256 orderFees;
+        uint256 availableMargin;
+        uint256 currentLiquidationMargin;
+        uint256 accumulatedLiquidationRewards;
+        uint256 currentLiquidationReward;
         int128 newPositionSize;
-        uint newNotionalValue;
+        uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint requiredMaintenanceMargin;
-        uint initialRequiredMargin;
-        uint totalRequiredMargin;
+        uint256 requiredMaintenanceMargin;
+        uint256 initialRequiredMargin;
+        uint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
     }
@@ -273,7 +274,7 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal returns (Position.Data memory, uint, uint, Position.Data storage oldPosition) {
+    ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
         runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
@@ -334,15 +335,15 @@ library AsyncOrder {
         }
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
             marketConfig.maxMarketSize,
             oldPosition.size,
-            runtime.sizeDelta
+            runtime.newPositionSize
         );
 
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
         runtime.totalRequiredMargin =
             getRequiredMarginWithNewPosition(
                 marketConfig,
@@ -376,7 +377,7 @@ library AsyncOrder {
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
-    ) internal view returns (uint) {
+    ) internal view returns (uint256) {
         int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
@@ -386,7 +387,7 @@ library AsyncOrder {
             // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
 
-            uint staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
+            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
             return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
@@ -404,11 +405,11 @@ library AsyncOrder {
         //
         // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
 
-        uint makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
+        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.makerFee
         );
 
-        uint takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.takerFee
         );
 
@@ -423,7 +424,7 @@ library AsyncOrder {
         uint256 skewScale,
         int128 size,
         uint256 price
-    ) internal pure returns (uint) {
+    ) internal pure returns (uint256) {
         // How is the p/d-adjusted price calculated using an example:
         //
         // price      = $1200 USD (oracle)
@@ -477,25 +478,25 @@ library AsyncOrder {
         int128 oldPositionSize,
         int128 newPositionSize,
         uint256 fillPrice,
-        uint currentTotalMaintenanceMargin,
-        uint currentTotalLiquidationRewards
-    ) internal view returns (uint) {
+        uint256 currentTotalMaintenanceMargin,
+        uint256 currentTotalLiquidationRewards
+    ) internal view returns (uint256) {
         // get initial margin requirement for the new position
-        (, , uint newRequiredMargin, , uint newLiquidationReward) = marketConfig
+        (, , uint256 newRequiredMargin, , uint256 newLiquidationReward) = marketConfig
             .calculateRequiredMargins(newPositionSize, fillPrice);
 
         // get maintenance margin of old position
-        (, , , uint256 oldRequiredMargin, uint oldLiquidationReward) = marketConfig
+        (, , , uint256 oldRequiredMargin, uint256 oldLiquidationReward) = marketConfig
             .calculateRequiredMargins(oldPositionSize, PerpsPrice.getCurrentPrice(marketId));
 
         // remove the maintenance margin and add the initial margin requirement
         // this gets us our total required margin for new position
-        uint requiredMarginForNewPosition = currentTotalMaintenanceMargin +
+        uint256 requiredMarginForNewPosition = currentTotalMaintenanceMargin +
             newRequiredMargin -
             oldRequiredMargin;
 
         // do same thing for liquidation rewards and compute against global configured min/max liq reward
-        uint requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
+        uint256 requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
             .load()
             .liquidationReward(
                 currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward

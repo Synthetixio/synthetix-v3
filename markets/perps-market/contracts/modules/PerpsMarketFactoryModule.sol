@@ -2,7 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -41,29 +40,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function setSynthetix(ISynthetixSystem synthetix) external override {
-        OwnableStorage.onlyOwner();
-        PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
-
-        store.synthetix = synthetix;
-        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
-        store.usdToken = ITokenModule(usdTokenAddress);
-        store.oracle = synthetix.getOracleManager();
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function setSpotMarket(ISpotMarketSystem spotMarket) external override {
-        OwnableStorage.onlyOwner();
-
-        PerpsMarketFactory.load().spotMarket = spotMarket;
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function initializeFactory() external override returns (uint128) {
+    function initializeFactory(
+        ISynthetixSystem synthetix,
+        ISpotMarketSystem spotMarket,
+        string memory marketName
+    ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
         OwnableStorage.onlyOwner();
 
@@ -71,8 +52,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            perpsMarketId = factory.synthetix.registerMarket(address(this));
-            factory.perpsMarketId = perpsMarketId;
+            perpsMarketId = factory.initialize(synthetix, spotMarket, marketName);
         } else {
             perpsMarketId = factory.perpsMarketId;
         }
@@ -80,6 +60,14 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         emit FactoryInitialized(perpsMarketId);
 
         return perpsMarketId;
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketFactoryModule
+     */
+    function setPerpsMarketName(string memory marketName) external override {
+        OwnableStorage.onlyOwner();
+        PerpsMarketFactory.load().name = marketName;
     }
 
     /**
@@ -110,9 +98,13 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     // solc-ignore-next-line func-mutability
     function name(uint128 perpsMarketId) external view override returns (string memory) {
-        // todo: set name on initialize?
-        perpsMarketId; // silence unused variable warning
-        return "Perps Market";
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        if (factory.perpsMarketId == perpsMarketId) {
+            return string.concat(factory.name, " Perps Market");
+        }
+
+        return "";
     }
 
     /**

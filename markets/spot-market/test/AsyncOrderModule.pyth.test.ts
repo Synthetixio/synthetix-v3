@@ -40,7 +40,6 @@ describe('AsyncOrderModule pyth', () => {
       feedId: ethers.utils.formatBytes32String('ETH/USD'),
       url: 'https://fakeapi.pyth.network/',
       settlementReward: bn(5),
-      priceDeviationTolerance: bn(0.2),
       disabled: false,
       minimumUsdExchangeAmount: bn(0.000001),
       maxRoundingLoss: bn(0.000001),
@@ -121,13 +120,6 @@ describe('AsyncOrderModule pyth', () => {
 
   // after off chain look up
   describe('settle pyth order', () => {
-    it('reverts due to high price deviation', async () => {
-      await assertRevert(
-        systems().SpotMarket.connect(keeper).settlePythOrder(pythCallData, extraData),
-        'PriceDeviationToleranceExceeded'
-      );
-    });
-
     describe('change mock pyth price', () => {
       let settleTxn: ethers.providers.TransactionResponse;
       before('set mock pyth price', async () => {
@@ -169,7 +161,6 @@ describe('AsyncOrderModule pyth', () => {
         feedId: ethers.utils.formatBytes32String('ETH/USD'),
         url: 'https://fakeapi.pyth.network/',
         settlementReward: 0,
-        priceDeviationTolerance: bn(0.2),
         disabled: false,
         minimumUsdExchangeAmount: bn(0.000001),
         maxRoundingLoss: bn(0.000001),

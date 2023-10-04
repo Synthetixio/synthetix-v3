@@ -7,6 +7,7 @@ export * from './handleLockedOiRatioSet';
 export * from './handleMarketCreated';
 export * from './handleMarketPriceDataUpdated';
 export * from './handleMarketUpdated';
+export * from './handleMaxLiquidationParametersSet';
 export * from './handleOrderCommitted';
 export * from './handleOrderFeesSet';
 export * from './handleOrderSettled';

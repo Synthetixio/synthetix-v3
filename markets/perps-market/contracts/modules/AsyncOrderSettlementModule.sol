@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -68,9 +69,12 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = result;
 
+        IPythVerifier verifier = IPythVerifier(settlementStrategy.priceVerificationContract);
+        uint256 msgValue = verifier.getUpdateFee(1);
+
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msg.value}(
+        ).parsePriceFeedUpdates{value: msgValue}(
             updateData,
             priceIds,
             order.settlementTime.to64(),
@@ -79,11 +83,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
-
-        settlementStrategy.checkPriceDeviation(
-            offchainPrice,
-            PerpsPrice.getCurrentPrice(order.request.marketId)
-        );
 
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
@@ -177,7 +176,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.withdrawMarketUsd(msg.sender, runtime.settlementReward);
+            factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
         (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
@@ -205,7 +204,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.feeCollectorFees,
             runtime.settlementReward,
             asyncOrder.request.trackingCode,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
