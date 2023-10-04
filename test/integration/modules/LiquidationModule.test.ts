@@ -720,7 +720,15 @@ describe('LiquidationModule', () => {
       assertBn.isZero(collateralUsd);
     });
 
-    it('should remove all market deposited collateral after full liquidation', async () => {});
+    it('should remove all market deposited collateral after full liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { marketId } = await commtAndSettleLiquidatedPosition(keeper());
+
+      // Expecting ZERO collateral deposited into the market.
+      const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+      d1.collateral.map((c) => assertBn.isZero(c.available));
+    });
 
     it('shuold remove all account margin collateral after full liquidation', async () => {
       const { PerpMarketProxy } = systems();

@@ -173,34 +173,6 @@ library Margin {
     }
 
     /**
-     * @dev Zeros out the deposited collateral for `accountId` in `marketId`. This is used in scenarios
-     * where we can confidently remove the collateral credited to `accountId` e.g. at the end of a liquidation
-     * event.
-     */
-    function clearAccountCollateral(uint128 accountId, uint128 marketId) internal {
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 synthMarketId;
-        uint256 available;
-
-        for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = accountMargin.collaterals[synthMarketId];
-
-            // Avoid changing the value to zero if already zero.
-            if (available > 0) {
-                accountMargin.collaterals[synthMarketId] = 0;
-            }
-
-            unchecked {
-                i++;
-            }
-        }
-    }
-
-    /**
      * @dev Sell all deposited synth collateral for sUSD.
      */
     function sellAllSynthCollateralForUsd(

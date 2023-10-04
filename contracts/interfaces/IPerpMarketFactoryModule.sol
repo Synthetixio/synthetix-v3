@@ -15,7 +15,16 @@ interface IPerpMarketFactoryModule is IMarket {
         bytes32 name;
     }
 
+    struct DepositedCollateral {
+        // Id of the spot synth market collateral.
+        uint128 synthMarketId;
+        // Amount of available collateral deposited (unrelated to position).
+        uint256 available;
+    }
+
     struct MarketDigest {
+        // Array of supported collaterals and amounts.
+        IPerpMarketFactoryModule.DepositedCollateral[] collateral;
         // Name of the market e.g, swstETHsUSDPERP.
         bytes32 name;
         // Skew in native units on market (long - shorts).

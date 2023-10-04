@@ -10,6 +10,7 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -128,13 +129,31 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market.getRemainingLiquidatableSizeCapacity(
             marketConfig
         );
 
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        IPerpMarketFactoryModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
+        uint128 synthMarketId;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            depositedCollaterals[i] = IPerpMarketFactoryModule.DepositedCollateral(
+                synthMarketId,
+                market.depositedCollateral[synthMarketId]
+            );
+
+            unchecked {
+                ++i;
+            }
+        }
+
         return
             IPerpMarketFactoryModule.MarketDigest(
+                depositedCollaterals,
                 market.name,
                 market.skew,
                 market.size,

@@ -8,7 +8,7 @@ import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
@@ -143,7 +143,11 @@ contract LiquidationModule is ILiquidationModule {
         if (newPosition.size == 0) {
             delete market.positions[accountId];
             delete market.flaggedLiquidations[accountId];
-            Margin.clearAccountCollateral(accountId, marketId);
+
+            // Zero out all sUSD that was collected after selling synth based collateral during the flag.
+            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
         } else {
             market.positions[accountId].update(newPosition);
         }
