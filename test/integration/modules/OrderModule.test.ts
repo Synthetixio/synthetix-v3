@@ -891,24 +891,22 @@ describe('OrderModule', () => {
 
         const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
-        let updateData: string;
-        let updateFee: ethers.BigNumber;
-        switch (variant) {
-          case ZeroPriceVariant.PYTH: {
-            ({ updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, 0));
-            break;
+        const updatePriceReflectVariant = async () => {
+          switch (variant) {
+            case ZeroPriceVariant.PYTH:
+              return getPythPriceData(bs, marketId, publishTime, 0);
+            case ZeroPriceVariant.CL: {
+              const oraclePrice = wei(order.oraclePrice).toNumber();
+              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              return getPythPriceData(bs, marketId, publishTime, oraclePrice);
+            }
+            case ZeroPriceVariant.BOTH: {
+              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              return getPythPriceData(bs, marketId, publishTime, 0);
+            }
           }
-          case ZeroPriceVariant.CL: {
-            const oraclePrice = wei(order.oraclePrice).toNumber();
-            await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
-            ({ updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, oraclePrice));
-            break;
-          }
-          case ZeroPriceVariant.BOTH: {
-            await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
-            ({ updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, 0));
-          }
-        }
+        };
+        const { updateData, updateFee } = await updatePriceReflectVariant();
 
         await fastForwardTo(settlementTime, provider());
 
