@@ -258,18 +258,20 @@ contract MarginModule is IMarginModule {
             uint128 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             delete globalMarginConfig.supported[synthMarketId];
 
-            // Revoke access after wiping collateral from supported market collateral.
             ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
                 ? ITokenModule(globalMarketConfig.usdToken)
                 : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
-            uint256 synthetixAllowance = synth.allowance(msg.sender, address(globalMarketConfig.synthetix));
-            synth.decreaseAllowance(address(globalMarketConfig.synthetix), synthetixAllowance);
 
-            uint256 spotMarketAllowance = synth.allowance(msg.sender, address(globalMarketConfig.spotMarket));
-            synth.decreaseAllowance(address(globalMarketConfig.spotMarket), spotMarketAllowance);
-
-            uint256 thisContractAllowance = synth.allowance(msg.sender, address(this));
-            synth.decreaseAllowance(address(this), thisContractAllowance);
+            // Revoke access after wiping collateral from supported market collateral.
+            synth.decreaseAllowance(
+                address(globalMarketConfig.synthetix),
+                synth.allowance(msg.sender, address(globalMarketConfig.synthetix))
+            );
+            synth.decreaseAllowance(
+                address(globalMarketConfig.spotMarket),
+                synth.allowance(msg.sender, address(globalMarketConfig.spotMarket))
+            );
+            synth.decreaseAllowance(address(this), synth.allowance(msg.sender, address(this)));
 
             unchecked {
                 ++i;

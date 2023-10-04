@@ -1417,7 +1417,62 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should reset maxAllowable of when supported collateral is removed');
+    it('should remove an unsupported collateral when set with new collaterals', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      // Set a known set of supported collaterals.
+      const supportedCollaterals = collaterals();
+      const synthMarketIds1 = [
+        supportedCollaterals[0].synthMarket.marketId(),
+        supportedCollaterals[1].synthMarket.marketId(),
+      ];
+      const maxAllowables1 = [BigNumber.from(1), BigNumber.from(1)];
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds1, maxAllowables1);
+
+      // Reconfigure the collaterals, removing one of them.
+      const synthMarketIds2 = [
+        supportedCollaterals[0].synthMarket.marketId(),
+        // supportedCollaterals[1].synthMarket.marketId(), (removed!)
+      ];
+      const maxAllowables2 = [BigNumber.from(1)];
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds2, maxAllowables2);
+
+      const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      assert.equal(configuredCollaterals.length, 1);
+      assert.equal(
+        configuredCollaterals.filter((c) => c.synthMarketId.eq(supportedCollaterals[1].synthMarket.marketId())).length,
+        0
+      );
+    });
+
+    it('should allow zero maxAllowables to temporarily disable deposits', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      // Set zero allowable deposits.
+      const supportedCollaterals = collaterals();
+      const synthMarketIds = [
+        supportedCollaterals[0].synthMarket.marketId(),
+        supportedCollaterals[1].synthMarket.marketId(),
+      ];
+      const maxAllowables = [BigNumber.from(0), BigNumber.from(0)];
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables);
+
+      // Depositing should cause a failure.
+      const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, genTrader(bs));
+
+      // Perform the deposit (maxAllowable = 0 and unsupported are indistinguishable without more information).
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          market.marketId(),
+          collateral.synthMarket.marketId(),
+          collateralDepositAmount
+        ),
+        `UnsupportedCollateral("${collateral.synthMarket.marketId()}")`
+      );
+    });
 
     it('should reset existing collaterals when new config is empty', async () => {
       const { PerpMarketProxy } = systems();
@@ -1441,6 +1496,19 @@ describe('MarginModule', async () => {
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration([bn(genNumber())], [bn(-1)]),
         'Error: value out-of-bounds'
+      );
+    });
+
+    it('should revert when an invalid synthMarketId is supplied as collateral', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      const synthMarketIds = [BigNumber.from(696969)];
+      const maxAllowables = [BigNumber.from(1)];
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables),
+        `transaction reverted in contract unknown: 0x`
       );
     });
 
