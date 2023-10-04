@@ -33,7 +33,7 @@ contract OrderModule is IOrderModule {
         uint256 pythPrice;
         uint256 publishTime;
         int256 accruedFunding;
-        int256 unrealizedPnl;
+        int256 pnl;
         uint256 fillPrice;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
@@ -257,7 +257,7 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        (, runtime.accruedFunding, runtime.unrealizedPnl, ) = market.positions[accountId].getHealthData(
+        (, runtime.accruedFunding, runtime.pnl, ) = market.positions[accountId].getHealthData(
             market,
             runtime.trade.newMarginUsd,
             runtime.pythPrice,
@@ -282,7 +282,7 @@ contract OrderModule is IOrderModule {
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
             runtime.accruedFunding,
-            runtime.unrealizedPnl,
+            runtime.pnl,
             runtime.fillPrice
         );
     }

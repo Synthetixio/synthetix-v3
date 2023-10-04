@@ -27,7 +27,7 @@ interface IOrderModule is IBasePerpMarket {
         uint256 orderFee,
         uint256 keeperFee,
         int256 accruedFunding,
-        int256 unrealizedPnl,
+        int256 pnl,
         uint256 fillPrice
     );
 

@@ -371,16 +371,12 @@ library Position {
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    )
-        internal
-        view
-        returns (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd)
-    {
+    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
         int256 netFundingPerUnit = market.getNextFundingAccrued(price) - positionEntryFundingAccrued;
         accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
 
         // Calculate this position's PnL
-        unrealizedPnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+        pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
 
         // Ensure we also deduct the realized losses in fees to open trade.
         //
@@ -404,11 +400,7 @@ library Position {
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    )
-        internal
-        view
-        returns (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd)
-    {
+    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
         return
             getHealthData(market, self.size, self.entryPrice, self.entryFundingAccrued, marginUsd, price, marketConfig);
     }
