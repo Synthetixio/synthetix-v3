@@ -99,6 +99,13 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.InvalidPrice();
         }
 
+        uint256 onchainPrice = market.getOraclePrice();
+
+        // Do not accept zero prices.
+        if (onchainPrice == 0 || params.oraclePrice == 0) {
+            revert ErrorUtil.InvalidPrice();
+        }
+
         // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
         //
         // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
@@ -117,7 +124,6 @@ contract OrderModule is IOrderModule {
         // (1800, 1750) ~ 2.857143% divergence => Ok
         // (1854, 1800) ~ 3%        divergence => Ok
         // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
-        uint256 onchainPrice = market.getOraclePrice();
         uint256 priceDelta = onchainPrice > params.oraclePrice
             ? onchainPrice.divDecimal(params.oraclePrice) - DecimalMath.UNIT
             : params.oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
@@ -184,9 +190,6 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         validateOrderAvailability(accountId, marketId, market, globalConfig);
         uint256 oraclePrice = market.getOraclePrice();
-
-        // TODO: Consider removing and only recomputing funding at the settlement.
-        recomputeFunding(market, oraclePrice);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 

@@ -116,8 +116,6 @@ describe('OrderModule', () => {
 
     it('should emit all events in correct order');
 
-    it('should recompute funding');
-
     it('should revert insufficient margin when margin is less than initial margin', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -864,7 +862,65 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when price is zero (i.e. invalid)');
+    enum ZeroPriceVariant {
+      PYTH = 'PYTH',
+      CL = 'CL',
+      BOTH = 'PYTH_AND_CL',
+    }
+
+    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it(
+      'should revert when pricees are zero and hence invalid (variant: %s)',
+      async (variant: ZeroPriceVariant) => {
+        const { PerpMarketProxy } = systems();
+
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+        await PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        );
+        const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+        assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+
+        let updateData: string;
+        let updateFee: ethers.BigNumber;
+        switch (variant) {
+          case ZeroPriceVariant.PYTH: {
+            ({ updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, 0));
+            break;
+          }
+          case ZeroPriceVariant.CL: {
+            const oraclePrice = wei(order.oraclePrice).toNumber();
+            await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+            ({ updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, oraclePrice));
+            break;
+          }
+          case ZeroPriceVariant.BOTH: {
+            await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+            ({ updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, 0));
+          }
+        }
+
+        await fastForwardTo(settlementTime, provider());
+
+        await assertRevert(
+          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+            value: updateFee,
+          }),
+          'InvalidPrice()',
+          PerpMarketProxy
+        );
+      }
+    );
 
     it('should revert when pyth price is stale');
 
