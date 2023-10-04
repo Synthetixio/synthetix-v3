@@ -1,9 +1,16 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bn, bootstrapMarkets } from '../bootstrap';
-import { calculateFillPrice, openPosition, requiredMargins } from '../helpers';
+import {
+  calculateFillPrice,
+  openPosition,
+  requiredMargins,
+  getRequiredLiquidationRewardMargin,
+} from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
+
+const MIN_LIQUIDATION_REWARD = wei(100);
 
 describe('Orders - margin validation', () => {
   const liqParams = {
@@ -24,7 +31,7 @@ describe('Orders - margin validation', () => {
   const { systems, provider, trader1, perpsMarkets, keeper } = bootstrapMarkets({
     synthMarkets: [],
     liquidationGuards: {
-      minLiquidationReward: bn(100),
+      minLiquidationReward: MIN_LIQUIDATION_REWARD.toBN(),
       maxLiquidationReward: bn(500),
     },
     perpsMarkets: [
@@ -93,7 +100,9 @@ describe('Orders - margin validation', () => {
         wei(10_000)
       );
 
-      const totalRequiredMargin = initialMargin.add(liquidationMargin).add(orderFees);
+      const totalRequiredMargin = initialMargin
+        .add(getRequiredLiquidationRewardMargin(liquidationMargin, MIN_LIQUIDATION_REWARD))
+        .add(orderFees);
 
       assertBn.equal(
         await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3)),
@@ -178,7 +187,10 @@ describe('Orders - margin validation', () => {
         wei(1000)
       );
 
-      const liqReward = ethLiqMargin.add(btcLiqMargin);
+      const liqReward = getRequiredLiquidationRewardMargin(
+        ethLiqMargin.add(btcLiqMargin),
+        MIN_LIQUIDATION_REWARD
+      );
 
       const totalRequiredMargin = ethMaintMargin
         .add(btcInitialMargin)
@@ -267,7 +279,10 @@ describe('Orders - margin validation', () => {
         wei(1000)
       );
 
-      const liqReward = ethLiqMargin.add(btcLiqMargin);
+      const liqReward = getRequiredLiquidationRewardMargin(
+        ethLiqMargin.add(btcLiqMargin),
+        MIN_LIQUIDATION_REWARD
+      );
 
       const totalRequiredMargin = ethMaintMargin
         .add(btcInitialMargin)

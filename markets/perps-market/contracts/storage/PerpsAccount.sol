@@ -131,8 +131,7 @@ library PerpsAccount {
             accumulatedLiquidationRewards,
             liquidationReward
         ) = getAccountRequiredMargins(self);
-        isEligible =
-            (requiredMaintenanceMargin + accumulatedLiquidationRewards).toInt() > availableMargin;
+        isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
 
     function flagForLiquidation(Data storage self) internal {
@@ -310,9 +309,9 @@ library PerpsAccount {
         }
 
         // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
-        uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration.load().liquidationReward(
-            accumulatedLiquidationRewards
-        );
+        uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration
+            .load()
+            .minimumLiquidationReward(accumulatedLiquidationRewards);
 
         return (
             initialMargin,

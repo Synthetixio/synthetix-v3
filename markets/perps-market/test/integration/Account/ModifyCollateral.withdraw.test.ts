@@ -343,11 +343,17 @@ describe('ModifyCollateral Withdraw', () => {
       });
       it('reverts when withdrawing more than "collateral available for withdraw"', async () => {
         // Note that more low level tests related to specific maintenance margins are done in the liquidation tests
+        const liquidationRewards = wei(2)
+          .mul(wei(30_000))
+          .mul(wei(0.05))
+          .add(wei(20).mul(wei(2_000).mul(wei(0.05))));
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader1())
             .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
-          `InsufficientCollateralAvailableForWithdraw("${bn(14000)}", "${bn(18000)}")`
+          `InsufficientCollateralAvailableForWithdraw("${bn(14000).sub(
+            liquidationRewards.toBN()
+          )}", "${bn(18000)}")`
         );
       });
 

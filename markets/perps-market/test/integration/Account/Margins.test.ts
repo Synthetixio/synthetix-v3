@@ -160,14 +160,14 @@ describe('Account margins test', () => {
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin, liquidationRewards] =
+      const [initialMargin, maintenanceMargin, , maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(
-        initialMargin.sub(liquidationRewards),
+        initialMargin.sub(maxLiquidationReward),
         btcInitialMargin.add(ethInitialMargin).add(minimumPositionMargin).toBN()
       );
       assertBn.equal(
-        maintenanceMargin.sub(liquidationRewards),
+        maintenanceMargin.sub(maxLiquidationReward),
         btcMaintenanceMargin.add(ethMaintenanceMargin).add(minimumPositionMargin).toBN()
       );
     });

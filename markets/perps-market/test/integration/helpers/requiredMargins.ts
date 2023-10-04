@@ -22,3 +22,7 @@ export const requiredMargins = (config: Config, size: Wei, price: Wei, skewScale
     liquidationMargin: notional.mul(config.liquidationRewardRatio),
   };
 };
+
+export const getRequiredLiquidationRewardMargin = (reward: Wei, min: Wei) => {
+  return Wei.max(reward, min);
+};
