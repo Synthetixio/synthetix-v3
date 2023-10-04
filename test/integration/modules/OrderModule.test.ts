@@ -524,12 +524,16 @@ describe('OrderModule', () => {
 
       await fastForwardTo(settlementTime, provider());
 
-      const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
-        value: updateFee,
-      });
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+            value: updateFee,
+          }),
+        provider()
+      );
 
       // Order should successfully settle despite the unfavourable price move.
-      await assertEvent(tx, 'OrderSettled', PerpMarketProxy);
+      await assertEvent(receipt, 'OrderSettled', PerpMarketProxy);
       assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
     });
 

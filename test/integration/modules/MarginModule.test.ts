@@ -214,11 +214,16 @@ describe('MarginModule', async () => {
         await mintAndApprove(bs, collateral, amountDelta, trader.signer);
 
         const balanceBefore = await collateral.contract.balanceOf(traderAddress);
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          market.marketId(),
-          collateral.synthMarket.marketId(),
-          amountDelta
+
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              market.marketId(),
+              collateral.synthMarket.marketId(),
+              amountDelta
+            ),
+          provider()
         );
 
         const marginDepositEventProperties = [
@@ -227,7 +232,7 @@ describe('MarginModule', async () => {
           amountDelta,
           collateral.synthMarket.marketId(),
         ].join(', ');
-        await assertEvent(tx, `MarginDeposit(${marginDepositEventProperties})`, PerpMarketProxy);
+        await assertEvent(receipt, `MarginDeposit(${marginDepositEventProperties})`, PerpMarketProxy);
 
         const expectedBalanceAfter = balanceBefore.sub(amountDelta);
         assertBn.equal(await collateral.contract.balanceOf(traderAddress), expectedBalanceAfter);
@@ -500,11 +505,15 @@ describe('MarginModule', async () => {
         );
 
         // Perform the withdraw (full amount).
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.synthMarket.marketId(),
-          collateralDepositAmount.mul(-1)
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarket.marketId(),
+              collateralDepositAmount.mul(-1)
+            ),
+          provider()
         );
 
         const marginWithdrawEventProperties = [
@@ -514,7 +523,7 @@ describe('MarginModule', async () => {
           collateral.synthMarket.marketId(),
         ].join(', ');
 
-        await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
       });
 
       it('should emit withdrawMarketUsd when using sUSD as collateral'); // To write this test we need to configure `globalConfig.usdToken` as collateral in bootstrap.
