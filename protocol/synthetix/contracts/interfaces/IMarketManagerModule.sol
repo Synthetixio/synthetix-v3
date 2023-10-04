@@ -36,9 +36,10 @@ interface IMarketManagerModule {
      * @param target The address of the account that provided the snxUSD in the deposit.
      * @param amount The amount of snxUSD deposited in the system, denominated with 18 decimals of precision.
      * @param market The address of the external market that is depositing.
-     * @param creditCapacity Updated credit capacity of the market after depositing
-     * @param netIssuance Updated net issuance
-     * @param reportedDebt Updated reported debt of the market after depositing
+     * @param creditCapacity Updated credit capacity of the market after depositing.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
+     * @param reportedDebt Updated reported debt of the market after depositing.
      */
     event MarketUsdDeposited(
         uint128 indexed marketId,
@@ -47,6 +48,7 @@ interface IMarketManagerModule {
         address indexed market,
         int128 creditCapacity,
         int128 netIssuance,
+        uint256 depositedCollateralValue,
         uint256 reportedDebt
     );
 
@@ -56,9 +58,10 @@ interface IMarketManagerModule {
      * @param target The address of the account that received the snxUSD in the withdrawal.
      * @param amount The amount of snxUSD withdrawn from the system, denominated with 18 decimals of precision.
      * @param market The address of the external market that is withdrawing.
-     * @param creditCapacity Updated credit capacity of the market after withdrawing
-     * @param netIssuance Updated net issuance
-     * @param reportedDebt Updated reported debt of the market after withdrawal
+     * @param creditCapacity Updated credit capacity of the market after withdrawing.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
+     * @param reportedDebt Updated reported debt of the market after withdrawal.
      */
     event MarketUsdWithdrawn(
         uint128 indexed marketId,
@@ -67,6 +70,7 @@ interface IMarketManagerModule {
         address indexed market,
         int128 creditCapacity,
         int128 netIssuance,
+        uint256 depositedCollateralValue,
         uint256 reportedDebt
     );
 

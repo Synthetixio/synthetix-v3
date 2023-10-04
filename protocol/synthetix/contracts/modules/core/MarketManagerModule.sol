@@ -237,6 +237,7 @@ contract MarketManagerModule is IMarketManagerModule {
             ERC2771Context._msgSender(),
             market.creditCapacityD18,
             market.netIssuanceD18,
+            market.getDepositedCollateralValue(),
             market.getReportedDebt()
         );
     }
@@ -285,6 +286,7 @@ contract MarketManagerModule is IMarketManagerModule {
             ERC2771Context._msgSender(),
             marketData.creditCapacityD18,
             marketData.netIssuanceD18,
+            marketData.getDepositedCollateralValue(),
             marketData.getReportedDebt()
         );
     }

@@ -29,13 +29,19 @@ interface IMarketCollateralModule {
      * @param collateralType The address of the collateral that was directly deposited in the market.
      * @param tokenAmount The amount of tokens that were deposited, denominated in the token's native decimal representation.
      * @param sender The address that triggered the deposit.
-     * @param reportedDebt Updated reported debt of the market after depositing
+     * @param creditCapacity Updated credit capacity of the market after depositing collateral.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
+     * @param reportedDebt Updated reported debt of the market after depositing collateral.
      */
     event MarketCollateralDeposited(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 tokenAmount,
         address indexed sender,
+        int128 creditCapacity,
+        int128 netIssuance,
+        uint256 depositedCollateralValue,
         uint256 reportedDebt
     );
 
@@ -45,13 +51,19 @@ interface IMarketCollateralModule {
      * @param collateralType The address of the collateral that was withdrawn from the market.
      * @param tokenAmount The amount of tokens that were withdrawn, denominated in the token's native decimal representation.
      * @param sender The address that triggered the withdrawal.
-     * @param reportedDebt Updated reported debt of the market after withdrawing.
+     * @param creditCapacity Updated credit capacity of the market after withdrawing.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
+     * @param reportedDebt Updated reported debt of the market after withdrawing collateral.
      */
     event MarketCollateralWithdrawn(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 tokenAmount,
         address indexed sender,
+        int128 creditCapacity,
+        int128 netIssuance,
+        uint256 depositedCollateralValue,
         uint256 reportedDebt
     );
 
