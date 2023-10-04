@@ -343,6 +343,8 @@ describe('ModifyCollateral Withdraw', () => {
       });
       it('reverts when withdrawing more than "collateral available for withdraw"', async () => {
         // Note that more low level tests related to specific maintenance margins are done in the liquidation tests
+
+        // calculate liquidation rewards based on price, sizes and liquidation reward ratio
         const liquidationRewards = wei(2)
           .mul(wei(30_000))
           .mul(wei(0.05))
