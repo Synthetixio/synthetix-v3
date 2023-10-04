@@ -6,7 +6,7 @@ interface IElectionModuleSatellite {
     event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
 
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
-    function cast(address[] calldata candidates, uint256[] calldata amounts) external;
+    function cast(address[] calldata candidates, uint256[] calldata amounts) external payable;
 
     /// @dev Burn the council tokens from the given members; receiving end of CCIP members dismissal
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;

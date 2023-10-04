@@ -38,7 +38,7 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
     function cast(
         address[] calldata candidates,
         uint256[] calldata amounts
-    ) public virtual override {
+    ) public payable override {
         CrossChain.Data storage cc = CrossChain.load();
 
         cc.transmit(
