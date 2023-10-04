@@ -57,18 +57,6 @@ interface IOrderModule is IBasePerpMarket {
     function getOrderDigest(uint128 accountId, uint128 marketId) external view returns (Order.Data memory);
 
     /**
-     * @notice Given details about a trader, simulate a what would happen if the order were to be committed.
-     */
-    function simulateOrder(
-        uint128 accountId,
-        uint128 marketId,
-        int128 sizeDelta,
-        uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
-        uint256 oraclePrice
-    ) external view;
-
-    /**
      * @notice Returns fees charged to open/close an order (along with a dynamic keeper fee).
      *
      * This incorporates the scenario where a if a trade flips the skew, the proportion that reduces the skew
