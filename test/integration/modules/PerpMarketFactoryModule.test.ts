@@ -403,4 +403,34 @@ describe('PerpMarketFactoryModule', () => {
       );
     });
   });
+
+  describe('reportedDebt', () => {
+    it('should have a debt of zero when first initialized');
+
+    it('should expect sum of remaining margin to eq market debt');
+
+    it('should expect sum of remaining margin to eq debt after a long period of trading');
+
+    it('should expect debt to be calculated correctly (concrete)');
+
+    it('should incur debt when a profitable position exits and withdraws all');
+
+    it('should incur debt when trader is paid funding to hold position');
+
+    it('should incur credit when trader pays funding to hold position');
+
+    it('should reflect debt/credit in real time while position is still open');
+
+    it('should generate credit when a neg pnl position exists and withdraws all');
+
+    it('should generate credit when an underwater position is liquidated');
+
+    it('should generate credit when price does not move and only fees and paid in/out');
+
+    it('should not consider deposited margin as debt');
+
+    it('should incur no debt in a delta neutral market with high when price volatility');
+
+    it('should incur small debt proportional to skew with high price volatility');
+  });
 });
