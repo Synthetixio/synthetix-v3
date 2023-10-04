@@ -858,6 +858,12 @@ describe('LiquidationModule', () => {
           }
         );
       });
+
+      describe('remainingCapacity', () => {
+        it('should be updated to reflect a recent liquidation');
+
+        it('should be zero when cap has been met and an endorsed liquidator pushes past cap for window');
+      });
     });
 
     describe('{partialLiqudation,liqCaps}', () => {

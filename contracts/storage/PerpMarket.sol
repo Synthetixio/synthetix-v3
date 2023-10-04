@@ -93,6 +93,9 @@ library PerpMarket {
         PerpMarket.Data storage market = load(id);
         market.id = id;
         market.name = name;
+
+        // @dev Init the pastLiquidations with an empty liquidation chunk for easier remainingCapacity check.
+        market.pastLiquidations.push([0, 0]);
     }
 
     /**
@@ -147,22 +150,17 @@ library PerpMarket {
      * @dev Updates the `pastLiquidations` array by either appending a new timestamp or
      */
     function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
-        uint64 currentTime = block.timestamp.to64();
+        uint128 currentTime = block.timestamp.to128();
         uint256 length = self.pastLiquidations.length;
 
-        // No prior liquidations, push new liquidation chunk.
-        if (length == 0) {
-            self.pastLiquidations.push([currentTime, uint128(liqSize)]);
+        // Most recent liquidation is the same timestamp (multi liquidation tx in same block), accumulate.
+        uint128[2] storage pastLiquidation = self.pastLiquidations[length - 1];
+        if (pastLiquidation[0] == block.timestamp) {
+            // Add the liqSize to the same chunk.
+            self.pastLiquidations[length - 1][1] += liqSize;
         } else {
-            // Most recent liquidation is the same timestamp (multi liquidation tx in same block), accumulate.
-            uint128[2] storage pastLiquidation = self.pastLiquidations[length - 1];
-            if (pastLiquidation[0] == block.timestamp) {
-                // Add the liqSize to the same chunk.
-                self.pastLiquidations[length - 1][1] += liqSize;
-            } else {
-                // A new timestamp (block) to be chunked.
-                self.pastLiquidations.push([currentTime, liqSize]);
-            }
+            // A new timestamp (block) to be chunked.
+            self.pastLiquidations.push([currentTime, liqSize]);
         }
     }
 
@@ -336,18 +334,13 @@ library PerpMarket {
         //                 = 72 - 48
         //                 = 24
         //
-        // capacity = [(12, 6), (24, 10), (36, 25), (60, 100)]
-        //          = [(36, 25), (60, 100)]
-        //          = sum([25, 100])
-        //          = 125
-
-        uint256 length = self.pastLiquidations.length;
-        if (length == 0) {
-            return (maxLiquidatableCapacity, maxLiquidatableCapacity, 0);
-        }
+        // remCapacity = [(12, 6), (24, 10), (36, 25), (60, 100)]
+        //             = [(36, 25), (60, 100)]
+        //             = sum([25, 100])
+        //             = 125
 
         // Start from the end of the array and go backwards until we've hit timestamp > windowStartTimestamp.
-        uint256 idx = length - 1;
+        uint256 idx = self.pastLiquidations.length - 1;
 
         // There has been at least one liquidation.
         lastLiquidationTime = self.pastLiquidations[idx][0];
@@ -356,8 +349,9 @@ library PerpMarket {
         uint256 capacityUtilized;
 
         // Infer the _rolling_ window start time by reading the current block.timestamp.
-        uint64 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to64();
+        uint128 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to128();
 
+        // Starting from the end until we reach the beginning or until block.timestamp is no longer within window.
         while (self.pastLiquidations[idx][0] > windowStartTime) {
             capacityUtilized += self.pastLiquidations[idx][1];
 
@@ -370,6 +364,8 @@ library PerpMarket {
             }
         }
 
+        // Ensure remainingCapacity can never be negative during times where cap was exceeded due to maxPd bypass or
+        // endorsed keeper bypass.
         remainingCapacity = MathUtil
             .max((maxLiquidatableCapacity.toInt() - capacityUtilized.toInt()), 0)
             .toUint()
