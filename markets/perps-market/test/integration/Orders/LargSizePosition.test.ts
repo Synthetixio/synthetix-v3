@@ -6,7 +6,7 @@ import { wei } from '@synthetixio/wei';
 
 const PRICE = bn(0.00000001);
 const NOTIONAL = bn(10_000_000); // sizeDelta = 1_000_000_000_000_000 (1e15)
-describe('Large Size Position', async () => {
+describe('Large Size Position', () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -70,7 +70,7 @@ describe('Large Size Position', async () => {
     assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), NOTIONAL);
   });
 
-  describe('can liquidate the position', async () => {
+  describe('can liquidate the position', () => {
     before('lower price to liquidation', async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(PRICE.div(100));
     });
