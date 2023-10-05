@@ -45,7 +45,7 @@ describe('Market - size test', () => {
   // starting skew = 20 from above order
   // below test:
   // [newOrderSize, expectedSize, expectedSkew]
-  [
+  for (const [newOrderSize, expectedSize, expectedSkew] of [
     [bn(20), bn(40), bn(40)],
     [bn(-40), bn(40), bn(0)],
     [bn(-25), bn(65), bn(-25)],
@@ -55,7 +55,7 @@ describe('Market - size test', () => {
     [bn(180), bn(92), bn(92)],
     [bn(-15), bn(77), bn(77)],
     [bn(-19), bn(58), bn(58)],
-  ].forEach(([newOrderSize, expectedSize, expectedSkew]) => {
+  ]) {
     describe('skew and size test', () => {
       before('open position', async () => {
         await openPosition({
@@ -77,7 +77,7 @@ describe('Market - size test', () => {
         assertBn.equal(market.skew, expectedSkew);
       });
     });
-  });
+  }
 
   describe('max market value', () => {
     describe('success', () => {
