@@ -205,6 +205,7 @@ library Position {
         //
         // This is important as it helps avoid instant liquidation on successful settlement.
         uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
+
         if (!positionDecreasing && newMarginUsd < imnp) {
             revert ErrorUtil.InsufficientMargin();
         }

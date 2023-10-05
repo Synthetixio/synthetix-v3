@@ -58,9 +58,7 @@ contract LiquidationModule is ILiquidationModule {
         market.size -= liqSize;
 
         // Update market debt relative to the liqReward and keeperFee incurred.
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
-        market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+        market.updateDebtCorrection(market.positions[accountId], newPosition);
     }
 
     // --- Mutative --- //

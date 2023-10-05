@@ -60,13 +60,17 @@ describe('MarginModule', async () => {
 
       // Fastforward to expire the pending order.
       const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
-      fastForwardBySec(provider(), maxOrderAge.toNumber() + 1);
+      await fastForwardBySec(provider(), maxOrderAge.toNumber() + 1);
 
-      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-        trader.accountId,
-        marketId,
-        collateral.synthMarket.marketId(),
-        collateralDepositAmount.mul(-1)
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            marketId,
+            collateral.synthMarket.marketId(),
+            collateralDepositAmount.mul(-1)
+          ),
+        provider()
       );
 
       const marginWithdrawEventProperties = [
@@ -76,8 +80,8 @@ describe('MarginModule', async () => {
         collateral.synthMarket.marketId(),
       ].join(', ');
 
-      await assertEvent(tx, `OrderCanceled()`, PerpMarketProxy);
-      await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      await assertEvent(receipt, `OrderCanceled()`, PerpMarketProxy);
+      await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
     });
 
     it('should revert when a transfer amount of 0', async () => {
@@ -893,18 +897,21 @@ describe('MarginModule', async () => {
         const collateralWalletBalanceBeforeWithdrawal2 = await collateral2.contract.balanceOf(traderAddress);
 
         // Perform the `withdrawAllCollateral`.
-        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+        const { receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          provider()
+        );
 
         // Assert that events are triggered.
         await assertEvent(
-          tx,
+          receipt,
           `MarginWithdraw("${
             PerpMarketProxy.address
           }", "${traderAddress}", ${collateralDepositAmount}, ${collateral.synthMarket.marketId()})`,
           PerpMarketProxy
         );
         await assertEvent(
-          tx,
+          receipt,
           `MarginWithdraw("${
             PerpMarketProxy.address
           }", "${traderAddress}", ${collateralDepositAmount2}, ${collateral2.synthMarket.marketId()})`,
@@ -1057,41 +1064,6 @@ describe('MarginModule', async () => {
         const fees = orderFees.add(keeperFees);
         const expectedProfit = wei(pnl).sub(fees).add(closeOrderEvent?.args.accruedFunding);
 
-        /**
-         * So why cant we just withdraw our profit, why do we need a deposit from another trader?
-         *
-         * In V3, the smart contract will revert if:
-         *
-         * `marketData.creditCapacityD18 + (depositedCollateralValue - our withdrawalAmount) < 0`
-         *
-         * We started with a `creditCapacityD18` of 0, since we don't have any pools delegating to us.
-         *
-         * Keeper Fees:
-         * When we paid out the keeper fees, we borrowed sUSD, which increased the market debt.
-         * This debt is represented by a negative `creditCapacityD18`.
-         *
-         * Expected profit:
-         * After our withdrawal the `depositedCollateralValue` in v3 will be 0. So we need another
-         * trader to deposit collateral matching the profit. As well as the keeper fees.
-         *
-         * The traders profit would have the keeper fees deducted already, so the LPs (or the market)
-         * really did loose keeper fees + profit.
-         *
-         * The other way of working around this and probably a more real life scenario, would be having
-         * LPs delegating to us giving us more creditCapacityD18 to start of with.
-         */
-        await depositMargin(
-          bs,
-          genTrader(bs, {
-            desiredMarket: market, // Use same market
-            desiredTrader: tradersGenerator.next().value, // Use another trader
-            desiredMarginUsdDepositAmount: keeperFees
-              .add(expectedProfit)
-              .add(1 /* Rounding error protection */)
-              .toNumber(),
-          })
-        );
-
         // Perform the withdrawal.
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
 
@@ -1102,6 +1074,9 @@ describe('MarginModule', async () => {
         const actualUsdBalance = await USD.balanceOf(traderAddress);
         // Our pnl, minus fees, funding should be equal to our sUSD balance.
         assertBn.equal(actualUsdBalance, expectedProfit.toBN());
+
+        // Everything has been withdrawn. There should be no reportedDebt for this market.
+        assertBn.isZero(await PerpMarketProxy.reportedDebt(marketId));
       });
 
       it('should withdraw correct amount after losing position', async () => {
@@ -1262,6 +1237,8 @@ describe('MarginModule', async () => {
         assertBn.lt(collateralDiffAmount.toBN(), 0);
         // Assert that the balance is correct.
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
+        // Everything has been withdrawn. There should be no reportedDebt for this market.
+        assertBn.isZero(await PerpMarketProxy.reportedDebt(marketId));
       });
 
       it('should revert with InsufficientMarketCollateralWithdrawable from synthetix.MarketCollateralModule');
