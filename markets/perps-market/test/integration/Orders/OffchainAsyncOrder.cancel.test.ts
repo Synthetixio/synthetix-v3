@@ -9,6 +9,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 describe('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -380,6 +381,14 @@ describe('Cancel Offchain Async Order test', () => {
         describe('cancel pyth order', () => {
           let pythPriceData: string;
           let settleTx: ethers.ContractTransaction;
+          let accountBalanceBefore: ethers.BigNumber;
+          let keeperBalanceBefore: ethers.BigNumber;
+          const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+
+          before('collect initial balances', async () => {
+            accountBalanceBefore = await systems().PerpsMarket.getAvailableMargin(2);
+            keeperBalanceBefore = await systems().USD.balanceOf(await keeper().getAddress());
+          });
 
           before('prepare data', async () => {
             // Get the latest price
@@ -406,7 +415,6 @@ describe('Cancel Offchain Async Order test', () => {
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1051)).toBN();
             const sizeDelta = bn(1);
             const desiredPrice = bn(1050);
-            const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
             const trackingCode = `"${ethers.constants.HashZero}"`;
             const msgSender = `"${await keeper().getAddress()}"`;
             const params = [
@@ -424,6 +432,13 @@ describe('Cancel Offchain Async Order test', () => {
               `OrderCancelled(${params.join(', ')})`,
               systems().PerpsMarket
             );
+          });
+
+          it('updates balances accordingly', async () => {
+            const accountBalanceAfter = await systems().PerpsMarket.getAvailableMargin(2);
+            const keeperBalanceAfter = await systems().USD.balanceOf(await keeper().getAddress());
+            assertBn.equal(keeperBalanceAfter, keeperBalanceBefore.add(settlementReward));
+            assertBn.equal(accountBalanceAfter, accountBalanceBefore.sub(settlementReward));
           });
         });
       });
