@@ -6,7 +6,7 @@ import { templates } from '@synthetixio/docgen';
 const config = {
   ...commonConfig,
   solidity: {
-    version: '0.8.17',
+    version: '0.8.21',
     settings: {
       optimizer: {
         enabled: true,

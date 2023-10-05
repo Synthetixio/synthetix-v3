@@ -6,7 +6,7 @@ Hardhat Plugin to validate storage usage on a set of solidity contracts. The int
 
 ### Mutable State Variables
 
-It makes sure that your contracts are not using [state variables](https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html) to avoid any storage collisions between different contracts executed behind the same Proxy.
+It makes sure that your contracts are not using [state variables](https://docs.soliditylang.org/en/v0.8.21/internals/layout_in_storage.html) to avoid any storage collisions between different contracts executed behind the same Proxy.
 
 To avoid this error it is recommended to use [Storage Namespaces](../router/README.md#storage-namespaces).
 

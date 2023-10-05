@@ -5,7 +5,7 @@ import { templates } from '@synthetixio/docgen';
 
 const config = {
   ...commonConfig,
-  solidity: '0.8.17',
+  solidity: '0.8.21',
   allowUnlimitedContractSize: true,
   docgen: {
     exclude: [
