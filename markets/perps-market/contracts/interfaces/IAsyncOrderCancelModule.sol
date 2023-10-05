@@ -37,19 +37,11 @@ interface IAsyncOrderCancelModule {
     struct CancelOrderRuntime {
         uint128 marketId;
         uint128 accountId;
-        int128 newPositionSize;
         int128 sizeDelta;
-        int256 pnl;
-        int256 accruedFunding;
         uint256 settlementReward;
         uint256 fillPrice;
-        uint256 totalFees;
-        uint256 referralFees;
-        uint256 feeCollectorFees;
         uint256 acceptablePrice;
         int currentAvailableMargin;
-        Position.Data newPosition;
-        MarketUpdate.Data updateData;
     }
 
     /**

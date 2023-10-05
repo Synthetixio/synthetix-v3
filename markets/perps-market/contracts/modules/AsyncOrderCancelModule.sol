@@ -112,7 +112,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
 
-        // Validate Request
+        // Validate Order still exists and is valid
         if (runtime.sizeDelta == 0) {
             revert AsyncOrder.ZeroSizeOrder();
         }
@@ -122,12 +122,12 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
         bool isEligible;
         (isEligible, runtime.currentAvailableMargin, , , , ) = account.isEligibleForLiquidation();
 
+        // Check order is not elegible for liqudiation
         if (isEligible) {
             revert PerpsAccount.AccountLiquidatable(runtime.accountId);
         }
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
-        perpsMarketData.recomputeFunding(price);
 
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             runtime.marketId
@@ -140,7 +140,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
             price
         );
 
-        // check if price exceeded acceptable price
+        // check if fill price exceeded acceptable price
         if (!asyncOrder.acceptablePriceExceeded(runtime.fillPrice)) {
             revert PriceNotExceeded(runtime.fillPrice, runtime.acceptablePrice);
         }
