@@ -11,6 +11,7 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
@@ -38,12 +39,12 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
-    int256 public constant PRECISION = 18;
+    int256 private constant PRECISION = 18;
 
     /**
      * @inheritdoc IAsyncOrderCancelModule
      */
-    function cancel(uint128 accountId) external view {
+    function cancelOrder(uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
@@ -101,39 +102,64 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
-        uint128 accountId = asyncOrder.request.accountId;
-        uint256 settlementReward = settlementStrategy.settlementReward;
-        bool isEligible;
-        int256 currentAvailableMargin;
+        CancelOrderRuntime memory runtime;
+        runtime.marketId = asyncOrder.request.marketId;
+        runtime.accountId = asyncOrder.request.accountId;
+        runtime.acceptablePrice = asyncOrder.request.acceptablePrice;
+        runtime.settlementReward = settlementStrategy.settlementReward;
+        runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         // check if account is flagged
-        GlobalPerpsMarket.load().checkLiquidation(accountId);
+        GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+
+        // Validate Request
+        if (runtime.sizeDelta == 0) {
+            revert AsyncOrder.ZeroSizeOrder();
+        }
+
+        PerpsAccount.Data storage account = PerpsAccount.load(runtime.accountId);
+
+        bool isEligible;
+        (isEligible, runtime.currentAvailableMargin, , , , ) = account.isEligibleForLiquidation();
+
+        if (isEligible) {
+            revert PerpsAccount.AccountLiquidatable(runtime.accountId);
+        }
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
+        perpsMarketData.recomputeFunding(price);
+
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            runtime.marketId
+        );
+
+        runtime.fillPrice = AsyncOrder.calculateFillPrice(
+            perpsMarketData.skew,
+            marketConfig.skewScale,
+            runtime.sizeDelta,
+            price
+        );
 
         // check if price exceeded acceptable price
-        if (!asyncOrder.acceptablePriceExceeded(price)) {
-            revert PriceNotExceeded(asyncOrder.request.acceptablePrice, price);
+        if (!asyncOrder.acceptablePriceExceeded(runtime.fillPrice)) {
+            revert PriceNotExceeded(runtime.fillPrice, runtime.acceptablePrice);
         }
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
-
-        // check if account is eligible for liquidation
-        (isEligible, currentAvailableMargin, , , , ) = perpsAccount.isEligibleForLiquidation();
-
-        if (isEligible) {
-            revert PerpsAccount.AccountLiquidatable(accountId);
-        }
 
         // check if there's enough margin to pay keeper
-        if (currentAvailableMargin < settlementReward.toInt()) {
-            revert AsyncOrder.InsufficientMargin(currentAvailableMargin, settlementReward);
+        if (runtime.currentAvailableMargin < runtime.settlementReward.toInt()) {
+            revert AsyncOrder.InsufficientMargin(
+                runtime.currentAvailableMargin,
+                runtime.settlementReward
+            );
         }
 
-        if (settlementReward > 0) {
+        if (runtime.settlementReward > 0) {
             // deduct keeper reward
-            perpsAccount.deductFromAccount(settlementReward);
+            account.deductFromAccount(runtime.settlementReward);
             // pay keeper
-            factory.withdrawMarketUsd(ERC2771Context._msgSender(), settlementReward);
+            factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
         // trader can now commit a new order
@@ -141,12 +167,12 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
 
         // emit event
         emit OrderCancelled(
-            asyncOrder.request.marketId,
-            accountId,
-            asyncOrder.request.acceptablePrice,
-            price,
-            asyncOrder.request.sizeDelta,
-            settlementReward,
+            runtime.marketId,
+            runtime.accountId,
+            runtime.acceptablePrice,
+            runtime.fillPrice,
+            runtime.sizeDelta,
+            runtime.settlementReward,
             asyncOrder.request.trackingCode,
             ERC2771Context._msgSender()
         );

@@ -9,7 +9,7 @@ interface IAsyncOrderCancelModule {
     /**
      * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
      */
-    error PriceNotExceeded(uint256 acceptablePrice, uint256 currentPrice);
+    error PriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
 
     /**
      * @notice Gets fired when an order is cancelled.
@@ -33,11 +33,30 @@ interface IAsyncOrderCancelModule {
         address settler
     );
 
+    // only used due to stack too deep during settlement
+    struct CancelOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 newPositionSize;
+        int128 sizeDelta;
+        int256 pnl;
+        int256 accruedFunding;
+        uint256 settlementReward;
+        uint256 fillPrice;
+        uint256 totalFees;
+        uint256 referralFees;
+        uint256 feeCollectorFees;
+        uint256 acceptablePrice;
+        int currentAvailableMargin;
+        Position.Data newPosition;
+        MarketUpdate.Data updateData;
+    }
+
     /**
      * @notice Cancels an offchain order when price exceeds the acceptable price in the settlement window. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
      * @param accountId Id of the account used for the trade.
      */
-    function cancel(uint128 accountId) external view;
+    function cancelOrder(uint128 accountId) external view;
 
     /**
      * @notice Cancels an offchain order when price exceeds the acceptable price in the settlement window using the offchain retrieved data from pyth.

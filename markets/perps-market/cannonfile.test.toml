@@ -31,6 +31,9 @@ artifact = "AsyncOrderModule"
 [contract.AsyncOrderSettlementModule]
 artifact = "AsyncOrderSettlementModule"
 
+[contract.AsyncOrderCancelModule]
+artifact = "AsyncOrderCancelModule"
+
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
@@ -70,6 +73,7 @@ contracts = [
     "PerpsMarketModule",
     "AsyncOrderModule",
     "AsyncOrderSettlementModule",
+    "AsyncOrderCancelModule",
     "FeatureFlagModule",
     "LiquidationModule",
     "MarketConfigurationModule",
