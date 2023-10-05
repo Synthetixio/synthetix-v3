@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
-import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
+import {IAsyncOrderCancelModule} from "../interfaces/IAsyncOrderCancelModule.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
@@ -19,10 +19,10 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
 /**
- * @title Module for settling async orders.
- * @dev See IAsyncOrderSettlementModule.
+ * @title Module for cancelling async orders.
+ * @dev See IAsyncOrderCancelModule.
  */
-contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
+contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
@@ -41,35 +41,35 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
     int256 public constant PRECISION = 18;
 
     /**
-     * @inheritdoc IAsyncOrderSettlementModule
+     * @inheritdoc IAsyncOrderCancelModule
      */
-    function settle(uint128 accountId) external view {
+    function cancel(uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
         ) = AsyncOrder.loadValid(accountId);
 
-        _settleOffchain(order, settlementStrategy);
+        _cancelOffchain(order, settlementStrategy);
     }
 
     /**
-     * @inheritdoc IAsyncOrderSettlementModule
+     * @inheritdoc IAsyncOrderCancelModule
      */
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
+    function cancelPythOrder(bytes calldata result, bytes calldata extraData) external payable {
         (
             uint256 offchainPrice,
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
         ) = _parsePythPrice(result, extraData);
 
-        _settleOrder(offchainPrice, order, settlementStrategy);
+        _cancelOrder(offchainPrice, order, settlementStrategy);
     }
 
     /**
-     * @dev used for settleing offchain orders. This will revert with OffchainLookup.
+     * @dev used for canceling offchain orders. This will revert with OffchainLookup.
      */
-    function _settleOffchain(
+    function _cancelOffchain(
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private view returns (uint, int256, uint256) {
@@ -78,7 +78,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         bytes4 selector;
         if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
-            selector = AsyncOrderSettlementModule.settlePythOrder.selector;
+            selector = AsyncOrderCancelModule.cancelPythOrder.selector;
         } else {
             revert SettlementStrategyNotFound(settlementStrategy.strategyType);
         }
@@ -94,94 +94,59 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
     }
 
     /**
-     * @dev used for settleing an order.
+     * @dev used for canceling an order.
      */
-    function _settleOrder(
+    function _cancelOrder(
         uint256 price,
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
-        SettleOrderRuntime memory runtime;
-        runtime.accountId = asyncOrder.request.accountId;
-        runtime.marketId = asyncOrder.request.marketId;
+        uint128 accountId = asyncOrder.request.accountId;
+        uint256 settlementReward = settlementStrategy.settlementReward;
+        bool isEligible;
+        int256 currentAvailableMargin;
+
         // check if account is flagged
-        GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+        GlobalPerpsMarket.load().checkLiquidation(accountId);
 
-        Position.Data storage oldPosition;
-        (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
-            .validateRequest(settlementStrategy, price);
-
-        runtime.amountToDeduct += runtime.totalFees;
-
-        runtime.newPositionSize = runtime.newPosition.size;
-        runtime.sizeDelta = asyncOrder.request.sizeDelta;
+        // check if price exceeded acceptable price
+        if (!asyncOrder.acceptablePriceExceeded(price)) {
+            revert PriceNotExceeded(asyncOrder.request.acceptablePrice, price);
+        }
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
+        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
 
-        // use fill price to calculate realized pnl
-        (runtime.pnl, , , runtime.accruedFunding, ) = oldPosition.getPnl(runtime.fillPrice);
-        runtime.pnlUint = MathUtil.abs(runtime.pnl);
+        // check if account is eligible for liquidation
+        (isEligible, currentAvailableMargin, , , , ) = perpsAccount.isEligibleForLiquidation();
 
-        if (runtime.pnl > 0) {
-            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
-        } else if (runtime.pnl < 0) {
-            runtime.amountToDeduct += runtime.pnlUint;
+        if (isEligible) {
+            revert PerpsAccount.AccountLiquidatable(accountId);
         }
 
-        // after pnl is realized, update position
-        runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
-            runtime.accountId,
-            runtime.newPosition
-        );
-        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
-
-        emit MarketUpdated(
-            runtime.updateData.marketId,
-            price,
-            runtime.updateData.skew,
-            runtime.updateData.size,
-            runtime.sizeDelta,
-            runtime.updateData.currentFundingRate,
-            runtime.updateData.currentFundingVelocity
-        );
-
-        // since margin is deposited, as long as the owed collateral is deducted
-        // fees are realized by the stakers
-        if (runtime.amountToDeduct > 0) {
-            perpsAccount.deductFromAccount(runtime.amountToDeduct);
+        // check if there's enough margin to pay keeper
+        if (currentAvailableMargin < settlementReward.toInt()) {
+            revert AsyncOrder.InsufficientMargin(currentAvailableMargin, settlementReward);
         }
-        runtime.settlementReward = settlementStrategy.settlementReward;
 
-        if (runtime.settlementReward > 0) {
+        if (settlementReward > 0) {
+            // deduct keeper reward
+            perpsAccount.deductFromAccount(settlementReward);
             // pay keeper
-            factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
+            factory.withdrawMarketUsd(ERC2771Context._msgSender(), settlementReward);
         }
-
-        (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
-            .load()
-            .collectFees(
-                runtime.totalFees - runtime.settlementReward, // totalFees includes settlement reward so we remove it
-                asyncOrder.request.referrer,
-                factory
-            );
 
         // trader can now commit a new order
         asyncOrder.reset();
 
         // emit event
-        emit OrderSettled(
-            runtime.marketId,
-            runtime.accountId,
-            runtime.fillPrice,
-            runtime.pnl,
-            runtime.accruedFunding,
-            runtime.sizeDelta,
-            runtime.newPositionSize,
-            runtime.totalFees,
-            runtime.referralFees,
-            runtime.feeCollectorFees,
-            runtime.settlementReward,
+        emit OrderCancelled(
+            asyncOrder.request.marketId,
+            accountId,
+            asyncOrder.request.acceptablePrice,
+            price,
+            asyncOrder.request.sizeDelta,
+            settlementReward,
             asyncOrder.request.trackingCode,
             ERC2771Context._msgSender()
         );
