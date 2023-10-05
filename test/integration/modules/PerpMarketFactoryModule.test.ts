@@ -4,13 +4,16 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
+import { BigNumber } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import {
+  bn,
   genAddress,
   genBootstrap,
   genBytes32,
   genNumber,
   genOneOf,
+  genOrder,
   genOrderFromSizeDelta,
   genTrader,
 } from '../../generators';
@@ -22,7 +25,6 @@ import {
   fastForwardBySec,
   setMarketConfigurationById,
 } from '../../helpers';
-import { BigNumber } from 'ethers';
 import { Collateral, Market, Trader } from '../../typed';
 import { isSameSide } from '../../calculations';
 
@@ -405,9 +407,65 @@ describe('PerpMarketFactoryModule', () => {
   });
 
   describe('reportedDebt', () => {
-    it('should have a debt of zero when first initialized');
+    const getTotalPositionPnl = async (traders: Trader[], marketId: BigNumber) => {
+      const { PerpMarketProxy } = systems();
+      const positions = await Promise.all(traders.map((t) => PerpMarketProxy.getPositionDigest(t.accountId, marketId)));
+      return positions.reduce((acc, p) => acc.add(p.pnl).sub(p.accruedFeesUsd), BigNumber.from(0));
+    };
 
-    it('should expect sum of remaining margin to eq market debt');
+    it('should have a debt of zero when first initialized', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const market = genOneOf(markets());
+      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+
+      assertBn.isZero(reportedDebt);
+    });
+
+    it('should report usd value of margin as report when depositing into system', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { market, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+
+      assertBn.near(reportedDebt, marginUsdDepositAmount, bn(0.00001));
+    });
+
+    it('should expect sum of pnl to eq market debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const collateral = collaterals()[0];
+      const { trader, marketId, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: 10_000 })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+      });
+
+      const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+      const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
+        await getTotalPositionPnl([trader], marketId)
+      );
+      const reportedDebt1 = await PerpMarketProxy.reportedDebt(market.marketId());
+      assertBn.equal(reportedDebt1, expectedReportedDebtAfterOpen);
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const d2 = await PerpMarketProxy.getMarketDigest(marketId);
+      const expectedReportedDebtAfterClose = d2.totalCollateralValueUsd.add(
+        await getTotalPositionPnl([trader], marketId)
+      );
+      const reportedDebt2 = await PerpMarketProxy.reportedDebt(market.marketId());
+      assertBn.near(reportedDebt2, expectedReportedDebtAfterClose, bn(0.000001));
+    });
+
+    it('should expect sum of remaining margin to eq market debt (multiple markets)');
 
     it('should expect sum of remaining margin to eq debt after a long period of trading');
 

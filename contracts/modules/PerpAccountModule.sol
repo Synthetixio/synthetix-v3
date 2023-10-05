@@ -88,6 +88,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 healthFactor,
                 notionalValueUsd,
                 pnl,
+                position.accruedFeesUsd,
                 accruedFunding,
                 position.entryPrice,
                 oraclePrice,

@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
@@ -122,28 +122,21 @@ library PerpMarket {
     }
 
     /**
-     * @dev Updates the debt given an `oldPosition` and `newPosition`.
+     * @dev Updates the debt correction given an `oldPosition` and `newPosition`.
      */
     function updateDebtCorrection(
         PerpMarket.Data storage self,
         Position.Data storage oldPosition,
-        Position.Data memory newPosition,
-        uint256 collateralUsd,
-        uint256 newMarginUsd
+        Position.Data memory newPosition
     ) internal {
-        int256 oldCorrection = getPositionDebtCorrection(
-            collateralUsd,
-            oldPosition.size,
-            oldPosition.entryPrice,
-            oldPosition.entryFundingAccrued
-        );
-        int256 newCorrection = getPositionDebtCorrection(
-            newMarginUsd,
-            newPosition.size,
-            newPosition.entryPrice,
-            newPosition.entryFundingAccrued
-        );
-        self.debtCorrection = (self.debtCorrection + newCorrection - oldCorrection).to128();
+        int256 sizeDelta = newPosition.size - oldPosition.size;
+        int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
+        int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
+        int256 totalPositionPnl = oldPosition.getPnl(newPosition.entryPrice) +
+            oldPosition.getAccruedFunding(self, newPosition.entryPrice) +
+            newPosition.accruedFeesUsd.toInt();
+
+        self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
 
     /**
@@ -370,5 +363,37 @@ library PerpMarket {
             .max((maxLiquidatableCapacity.toInt() - capacityUtilized.toInt()), 0)
             .toUint()
             .to128();
+    }
+
+    /**
+     * @dev Returns the total USD value of all collaterals if we were to spot sell everything.
+     */
+    function getTotalCollateralValueUsd(PerpMarket.Data storage self) internal view returns (uint256) {
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 totalValueUsd;
+        uint256 available;
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        for (uint256 i = 0; i < length; ++i) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = self.depositedCollateral[synthMarketId];
+
+            if (available == 0) {
+                continue;
+            }
+
+            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+                totalValueUsd += self.depositedCollateral[synthMarketId];
+            } else {
+                (uint256 amountUsd, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
+                totalValueUsd += amountUsd;
+            }
+        }
+
+        return totalValueUsd;
     }
 }

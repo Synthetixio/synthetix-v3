@@ -41,6 +41,10 @@ interface IPerpMarketFactoryModule is IMarket {
         uint256 remainingLiquidatableSizeCapacity;
         // block.timestamp of when the last liqudation had occurred.
         uint128 lastLiquidationTime;
+        // Total value in USD of all market depositedCollateral if sold on spot.
+        uint256 totalCollateralValueUsd;
+        // Most recently calculated debt entry for reportedDebt calc.
+        int128 debtCorrection;
     }
 
     // --- Events --- //

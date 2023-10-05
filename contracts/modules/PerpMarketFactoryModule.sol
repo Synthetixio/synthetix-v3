@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
@@ -20,6 +20,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for uint128;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
 
     // --- Mutative --- //
@@ -94,12 +95,18 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
+
         if (market.skew == 0 && market.debtCorrection == 0) {
-            return 0;
+            return totalCollateralValueUsd;
         }
+
         uint256 oraclePrice = market.getOraclePrice();
         int256 priceWithFunding = int(oraclePrice) + market.getNextFundingAccrued(oraclePrice);
-        int256 totalDebt = market.skew.mulDecimal(priceWithFunding) + market.debtCorrection;
+        int256 totalDebt = totalCollateralValueUsd.toInt() +
+            market.skew.mulDecimal(priceWithFunding) -
+            market.debtCorrection;
+
         return MathUtil.max(totalDebt, 0).toUint();
     }
 
@@ -161,7 +168,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
                 remainingCapacity,
-                lastLiquidationTime
+                lastLiquidationTime,
+                market.getTotalCollateralValueUsd(),
+                market.debtCorrection
             );
     }
 }

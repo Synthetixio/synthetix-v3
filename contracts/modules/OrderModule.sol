@@ -155,7 +155,7 @@ contract OrderModule is IOrderModule {
         market.skew = market.skew + newPosition.size - oldPosition.size;
         market.size = (market.size.to256() + MathUtil.abs(newPosition.size) - MathUtil.abs(oldPosition.size)).to128();
 
-        market.updateDebtCorrection(oldPosition, newPosition, collateralUsd, newMarginUsd);
+        market.updateDebtCorrection(oldPosition, newPosition);
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
