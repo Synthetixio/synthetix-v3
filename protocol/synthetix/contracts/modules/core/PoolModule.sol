@@ -260,6 +260,17 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
+    function getPoolCollateralConfiguration(
+        uint128 poolId,
+        address collateralType
+    ) external view returns (PoolCollateralConfiguration.Data memory config) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        return Pool.loadExisting(poolId).collateralConfigurations[collateralType];
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
     function getPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral
