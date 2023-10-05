@@ -485,8 +485,6 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should generate credit when price does not move and only fees and paid in/out');
 
-    it('should not consider deposited margin as debt');
-
     it('should incur no debt in a delta neutral market with high when price volatility');
 
     it('should incur small debt proportional to skew with high price volatility');
