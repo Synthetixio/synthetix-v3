@@ -4,4 +4,4 @@ Synthetix contracts have been audited by Iosiro, OpenZeppelin, and Macro. Please
 
 ## Reporting a Vulnerability
 
-We offer a bug bounty program through [Immunefy](https://immunefi.com/bounty/synthetix/). Please do not report vulnerabilities through any other channels, as we only accept security disclosures through Immunefy.
+We offer a bug bounty program through [Immunefi](https://immunefi.com/bounty/synthetix/). Please do not report vulnerabilities through any other channels, as we only accept security disclosures through Immunefy.
