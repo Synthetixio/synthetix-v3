@@ -171,7 +171,7 @@ library RewardDistribution {
                     self.duration.toInt();
             }
 
-            console.log("CALCULATING VALUE PER SHARE", curUpdateDistributedD18, lastUpdateDistributedD18);
+            console.log("CALCULATING VALUE PER SHARE", uint256(curUpdateDistributedD18), uint256(lastUpdateDistributedD18));
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
             valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18)
