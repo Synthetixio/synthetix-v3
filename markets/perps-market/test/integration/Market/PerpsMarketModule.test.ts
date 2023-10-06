@@ -57,6 +57,19 @@ describe('PerpsMarketModule', () => {
     });
   });
 
+  describe('get market data', () => {
+    it('should return all independent values successfully', async () => {
+      const skew = await systems().PerpsMarket.skew(marketId);
+      const size = await systems().PerpsMarket.size(marketId);
+      const currentFundingRate = await systems().PerpsMarket.currentFundingRate(marketId);
+      const currentFundingVelocity = await systems().PerpsMarket.currentFundingVelocity(marketId);
+      assertBn.equal(skew, bn(0));
+      assertBn.equal(size, bn(0));
+      assertBn.equal(currentFundingRate, bn(0));
+      assertBn.equal(currentFundingVelocity, bn(0));
+    });
+  });
+
   describe('fillPrice', () => {
     let commonOpenPositionProps: Pick<
       OpenPositionData,
