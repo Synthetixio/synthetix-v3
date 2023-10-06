@@ -10,6 +10,8 @@ import "../interfaces/external/IRewardDistributor.sol";
 import "./Distribution.sol";
 import "./RewardDistributionClaimStatus.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Used by vaults to track rewards for its participants. There will be one of these for each pool, collateral type, and distributor combination.
  */
@@ -126,6 +128,8 @@ library RewardDistribution {
             return 0;
         }
 
+        console.log("ENTER UPDATE ENTRY", totalSharesAmountD18);
+
         uint256 curTime = block.timestamp;
 
         int256 valuePerShareChangeD18 = 0;
@@ -144,6 +148,7 @@ library RewardDistribution {
             );
             // Else, if the last update was before the end of the duration.
         } else if (self.lastUpdate < self.start + self.duration) {
+            console.log("LAST UPDATE VALUE", self.lastUpdate);
             // Determine how much was previously distributed.
             // If the last update is zero, then nothing was distributed,
             // otherwise the amount is proportional to the time elapsed since the start.
@@ -152,10 +157,13 @@ library RewardDistribution {
                 : (self.scheduledValueD18 * (self.lastUpdate - self.start).toInt()) /
                     self.duration.toInt();
 
+            console.log("THE START TIME", self.start);
+
             // If the current time is beyond the duration, then consider all scheduled value to be distributed.
             // Else, the amount distributed is proportional to the elapsed time.
             int256 curUpdateDistributedD18 = self.scheduledValueD18;
             if (curTime < self.start + self.duration) {
+                console.log("INCOMPLETE REWARD DISTRIBUTION STILL IN PROGRESS", curTime, self.duration);
                 // Note: Not using an intermediate time ratio variable
                 // in the following calculation to maintain precision.
                 curUpdateDistributedD18 =
@@ -163,12 +171,16 @@ library RewardDistribution {
                     self.duration.toInt();
             }
 
+            console.log("CALCULATING VALUE PER SHARE", curUpdateDistributedD18, lastUpdateDistributedD18);
+
             // The final value per share change is the difference between what is to be distributed and what was distributed.
             valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18)
                 .divDecimal(totalSharesAmountD18.toInt());
         }
 
         self.lastUpdate = curTime.to32();
+
+        console.log("EXIT UPDATE ENTRY", totalSharesAmountD18, uint(valuePerShareChangeD18));
 
         return valuePerShareChangeD18;
     }

@@ -7,6 +7,8 @@ import "./RewardDistribution.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
  *
@@ -170,9 +172,13 @@ library Vault {
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 
+        console.log("PRE UPDATE PENDING SEND", uint(dist.rewardPerShareD18), uint(dist.claimStatus[accountId].lastRewardPerShareD18));
+
         dist.claimStatus[accountId].pendingSendD18 += actorSharesD18
             .mulDecimal(dist.rewardPerShareD18 - dist.claimStatus[accountId].lastRewardPerShareD18)
             .to128();
+        
+        console.log("POST UPDATE PENDING SEND", dist.claimStatus[accountId].pendingSendD18);
 
         dist.claimStatus[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
