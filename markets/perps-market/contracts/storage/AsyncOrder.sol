@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
@@ -20,15 +20,12 @@ library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint256;
-    using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using SafeCastI128 for int128;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
-    using Position for Position.Data;
 
     /**
      * @notice Thrown when settlement window is not open yet.
@@ -63,6 +60,11 @@ library AsyncOrder {
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
     error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
+
+    /**
+     * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
+     */
+    error AcceptablePriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
@@ -364,6 +366,70 @@ library AsyncOrder {
             size: runtime.newPositionSize
         });
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
+    }
+
+    /**
+     * @notice Checks if the order request can be cancelled.
+     * @dev it calculates fill price the order
+     * @dev and with that data it checks that:
+     * @dev - the account is eligible for liquidation
+     * @dev - the fill price is outside the acceptable price range
+     * @dev - the account has enough margin to cover for the fees
+     * @dev - the account has enough margin to not be liquidable
+     * @dev if the order can be cancelled, it returns (account, fillPrice)
+     */
+    function validateCancellation(
+        Data storage order,
+        SettlementStrategy.Data storage strategy,
+        uint256 orderPrice
+    ) internal view returns (PerpsAccount.Data storage account, uint256 fillPrice) {
+        SimulateDataRuntime memory runtime;
+        runtime.sizeDelta = order.request.sizeDelta;
+        runtime.accountId = order.request.accountId;
+        runtime.marketId = order.request.marketId;
+
+        // Validate Order still exists and is valid
+        if (runtime.sizeDelta == 0) {
+            revert AsyncOrder.ZeroSizeOrder();
+        }
+
+        account = PerpsAccount.load(runtime.accountId);
+
+        bool isEligible;
+        // Get current available margin and check if the account is elegible for liquidation
+        (isEligible, runtime.currentAvailableMargin, , , , ) = account.isEligibleForLiquidation();
+
+        if (isEligible) {
+            revert PerpsAccount.AccountLiquidatable(runtime.accountId);
+        }
+
+        // check if there's enough margin to pay keeper
+        if (runtime.currentAvailableMargin < strategy.settlementReward.toInt()) {
+            revert AsyncOrder.InsufficientMargin(
+                runtime.currentAvailableMargin,
+                strategy.settlementReward
+            );
+        }
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
+
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            runtime.marketId
+        );
+
+        runtime.fillPrice = AsyncOrder.calculateFillPrice(
+            perpsMarketData.skew,
+            marketConfig.skewScale,
+            runtime.sizeDelta,
+            orderPrice
+        );
+
+        // check if fill price exceeded acceptable price
+        if (!acceptablePriceExceeded(order, runtime.fillPrice)) {
+            revert AcceptablePriceNotExceeded(runtime.fillPrice, order.request.acceptablePrice);
+        }
+
+        return (account, runtime.fillPrice);
     }
 
     /**

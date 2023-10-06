@@ -16,6 +16,7 @@ library OffchainUtil {
 
     /**
      * @dev parses the result from the offchain lookup data and returns the offchain price plus order and settlementStrategy.
+     * @notice parsePriceFeedUpdates will revert if the price timestamp is outside the acceptable window.
      */
     function parsePythPrice(
         bytes calldata result,

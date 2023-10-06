@@ -7,11 +7,6 @@ import {MarketUpdate} from "../storage/MarketUpdate.sol";
 
 interface IAsyncOrderCancelModule {
     /**
-     * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
-     */
-    error PriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
-
-    /**
      * @notice Gets fired when an order is cancelled.
      * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
@@ -41,7 +36,6 @@ interface IAsyncOrderCancelModule {
         uint256 settlementReward;
         uint256 fillPrice;
         uint256 acceptablePrice;
-        int currentAvailableMargin;
     }
 
     /**
