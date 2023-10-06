@@ -165,13 +165,13 @@ contract NodeModule is INodeModule {
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
             return
                 ReducerNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
             return
                 ExternalNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
                     nodeDefinition.parameters,
                     runtimeKeys,
                     runtimeValues
@@ -187,14 +187,16 @@ contract NodeModule is INodeModule {
         ) {
             return
                 PriceDeviationCircuitBreakerNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
             return
                 StalenessCircuitBreakerNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
-                    nodeDefinition.parameters
+                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
+                    nodeDefinition.parameters,
+                    runtimeKeys,
+                    runtimeValues
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CONSTANT) {
             return ConstantNode.process(nodeDefinition.parameters);
@@ -214,7 +216,7 @@ contract NodeModule is INodeModule {
             nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER
         ) {
             //check if parents are processable
-            _processParentNodeOutputs(nodeDefinition);
+            _processParentNodeOutputs(nodeDefinition, new bytes32[](0), new bytes32[](0));
         }
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
@@ -243,11 +245,17 @@ contract NodeModule is INodeModule {
      * @dev helper function that calls process on parent nodes.
      */
     function _processParentNodeOutputs(
-        NodeDefinition.Data memory nodeDefinition
+        NodeDefinition.Data memory nodeDefinition,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
     ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
         parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            parentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            parentNodeOutputs[i] = this.processWithRuntime(
+                nodeDefinition.parents[i],
+                runtimeKeys,
+                runtimeValues
+            );
         }
     }
 }
