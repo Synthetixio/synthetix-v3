@@ -96,12 +96,11 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
 
-        PerpsAccount.Data storage account;
-        (account, runtime.fillPrice) = asyncOrder.validateCancellation(settlementStrategy, price);
+        runtime.fillPrice = asyncOrder.validateCancellation(settlementStrategy, price);
 
         if (runtime.settlementReward > 0) {
             // deduct keeper reward
-            account.deductFromAccount(runtime.settlementReward);
+            PerpsAccount.load(runtime.accountId).deductFromAccount(runtime.settlementReward);
             // pay keeper
             PerpsMarketFactory.load().withdrawMarketUsd(
                 ERC2771Context._msgSender(),

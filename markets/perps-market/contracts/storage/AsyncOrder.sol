@@ -370,20 +370,18 @@ library AsyncOrder {
 
     /**
      * @notice Checks if the order request can be cancelled.
+     * @notice This function doesn't check for liquidation or available margin since the fees to be paid are small and we did that check at commitment less than the settlement window time.
      * @dev it calculates fill price the order
      * @dev and with that data it checks that:
      * @dev - settlement window is open
-     * @dev - the account is eligible for liquidation
      * @dev - the fill price is outside the acceptable price range
-     * @dev - the account has enough margin to cover for the fees
-     * @dev - the account has enough margin to not be liquidable
-     * @dev if the order can be cancelled, it returns (account, fillPrice)
+     * @dev if the order can be cancelled, it returns the fillPrice
      */
     function validateCancellation(
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal view returns (PerpsAccount.Data storage account, uint256 fillPrice) {
+    ) internal view returns (uint256 fillPrice) {
         SimulateDataRuntime memory runtime;
         runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
@@ -395,24 +393,6 @@ library AsyncOrder {
         }
 
         checkWithinSettlementWindow(order, strategy);
-
-        account = PerpsAccount.load(runtime.accountId);
-
-        bool isEligible;
-        // Get current available margin and check if the account is elegible for liquidation
-        (isEligible, runtime.currentAvailableMargin, , , , ) = account.isEligibleForLiquidation();
-
-        if (isEligible) {
-            revert PerpsAccount.AccountLiquidatable(runtime.accountId);
-        }
-
-        // check if there's enough margin to pay keeper
-        if (runtime.currentAvailableMargin < strategy.settlementReward.toInt()) {
-            revert AsyncOrder.InsufficientMargin(
-                runtime.currentAvailableMargin,
-                strategy.settlementReward
-            );
-        }
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
 
@@ -432,7 +412,7 @@ library AsyncOrder {
             revert AcceptablePriceNotExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
-        return (account, runtime.fillPrice);
+        return runtime.fillPrice;
     }
 
     /**
