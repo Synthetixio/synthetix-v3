@@ -372,6 +372,7 @@ library AsyncOrder {
      * @notice Checks if the order request can be cancelled.
      * @dev it calculates fill price the order
      * @dev and with that data it checks that:
+     * @dev - settlement window is open
      * @dev - the account is eligible for liquidation
      * @dev - the fill price is outside the acceptable price range
      * @dev - the account has enough margin to cover for the fees
@@ -392,6 +393,8 @@ library AsyncOrder {
         if (runtime.sizeDelta == 0) {
             revert AsyncOrder.ZeroSizeOrder();
         }
+
+        checkWithinSettlementWindow(order, strategy);
 
         account = PerpsAccount.load(runtime.accountId);
 
