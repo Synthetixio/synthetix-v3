@@ -19,6 +19,8 @@ struct NodeOutput {
 }
 ```
 
+For special cases, you can also call `function processWithRuntime(bytes32 nodeId, bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues)` to pass in an array of runtime keys and values. For example, the _Staleness Circuit Breaker Node_ will respect runtime value that corresponds to `stalenessTolerance` if present in the runtime rather than the staleness tolerance it was initialized with. Runtime data can also be leveraged by external nodes.
+
 ## Node Types
 
 There are currently seven types of nodes.
@@ -92,7 +94,7 @@ The Staleness Circuit Breaker Node passes through the value of the first parent 
 
 - `nodeType` Value: 7
 - Parameters:
-  - `uint256 stalenessTolerance` - The number of seconds in the past that determines whether the first parent's data is considered stale. If it's stale, the node will provide the fallback parents node's data or revert.
+  - `uint256 stalenessTolerance` - The number of seconds in the past that determines whether the first parent's data is considered stale. If it's stale, the node will provide the fallback parents node's data or revert. This value will be overriden if a value for `stalenessTolerance` is present in the runtime.
 - Expected Parents: 1-2
 
 ### Constant Node
@@ -106,12 +108,14 @@ The Constant Node returns a value for its price, set on registrations. It return
 
 ### External Node
 
-The External Node allows a custom node to be defined in an smart contract at a specified address. This contract must conform to the [`IExternalNode` interface](./contracts/interfaces/external/IExternalNode.sol).
+The External Node allows a custom node to be defined in an smart contract at a specified address. This contract must conform to the [`IExternalNode` interface](./contracts/interfaces/external/IExternalNode.sol). Note that additional data can be appended to the parameters (following `nodeAddress`) and leveraged by an external node implementation.
 
 - `nodeType` Value: 2
 - Parameters:
   - `address nodeAddress` - The address of the external node contract.
 - Expected Parents: N/A (_Determined by the custom node implementation._)
+
+Find some [external node implementations here](https://github.com/synthetixio/external-nodes).
 
 ## Development
 
