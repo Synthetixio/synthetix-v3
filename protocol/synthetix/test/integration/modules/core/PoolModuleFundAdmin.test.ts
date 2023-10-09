@@ -46,7 +46,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 
@@ -696,7 +696,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 
@@ -730,7 +730,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 

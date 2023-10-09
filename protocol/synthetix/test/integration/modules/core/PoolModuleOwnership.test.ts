@@ -31,7 +31,7 @@ describe('PoolModule Create / Ownership', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 
@@ -60,7 +60,7 @@ describe('PoolModule Create / Ownership', function () {
           .Core.connect(owner)
           .addToFeatureFlagAllowlist(
             ethers.utils.formatBytes32String('createPool'),
-            user2.getAddress()
+            await user2.getAddress()
           );
       });
 
