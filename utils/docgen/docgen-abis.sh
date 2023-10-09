@@ -58,8 +58,6 @@ echo "" >> $OUT
 node ./abis.js 84531 competition
 echo "## Competition on Base Goerli" >> $OUT
 echo "" >> $OUT
-cat ./base-goerli-competition.md >> $OUT
-echo "" >> $OUT
 cat ./docs/84531-competition.md >> $OUT
 echo "" >> $OUT
 
