@@ -63,6 +63,16 @@ interface IAsyncOrderSettlementModule {
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
 
     /**
+     * @notice gets thrown when the parsed price from pyth is outside the settlement window.
+     * @dev this should never be thrown as publish time was already verified by Pyth, but fail safe.
+     */
+    error PythPriceOutsideSettlementWindow(
+        uint256 publishTime,
+        uint256 windowStart,
+        uint256 windowSize
+    );
+
+    /**
      * @notice Settle already created async order via this function
      * @dev if the strategy is onchain, the settlement is done similar to an atomic buy except with settlement time
      * @dev if the strategy is offchain, this function will revert with OffchainLookup error and the client should perform offchain lookup and call the callback specified see: EIP-3668

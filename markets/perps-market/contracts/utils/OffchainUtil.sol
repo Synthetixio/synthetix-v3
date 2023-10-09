@@ -12,6 +12,16 @@ library OffchainUtil {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
+    /**
+     * @notice gets thrown when the parsed price from pyth is outside the settlement window.
+     * @dev this should never be thrown as publish time was already verified by Pyth, but fail safe.
+     */
+    error PythPriceOutsideSettlementWindow(
+        uint256 publishTime,
+        uint256 windowStart,
+        uint256 windowSize
+    );
+
     int256 private constant PRECISION = 18;
 
     /**
@@ -51,6 +61,20 @@ library OffchainUtil {
         );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
+
+        // Double check publishTime is valid
+        if (
+            pythData.price.publishTime < asyncOrder.settlementTime ||
+            pythData.price.publishTime >
+            asyncOrder.settlementTime + settlementStrategy.priceWindowDuration
+        ) {
+            revert PythPriceOutsideSettlementWindow(
+                pythData.price.publishTime,
+                asyncOrder.settlementTime,
+                settlementStrategy.priceWindowDuration
+            );
+        }
+
         offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
     }
 

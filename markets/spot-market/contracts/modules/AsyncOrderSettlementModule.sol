@@ -97,6 +97,19 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint256 offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
 
+        // Double check publishTime is valid
+        if (
+            pythData.price.publishTime < asyncOrderClaim.settlementTime ||
+            pythData.price.publishTime >
+            asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration
+        ) {
+            revert PythPriceOutsideSettlementWindow(
+                pythData.price.publishTime,
+                asyncOrderClaim.settlementTime,
+                settlementStrategy.settlementWindowDuration
+            );
+        }
+
         return
             _settleOrder(
                 marketId,
