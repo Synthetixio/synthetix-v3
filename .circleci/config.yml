@@ -163,7 +163,8 @@ commands:
             git config --global user.email engineering@snxdao.io
             git config --global user.name synthetix-team
 
-            git commit -am "<< parameters.commit_message >>"
+            git add .
+            git commit -m "<< parameters.commit_message >>"
             git push --set-upstream --force origin "<< parameters.branch_head >>"
 
             curl -s -H "Authorization: token $GITHUB_TOKEN" \
