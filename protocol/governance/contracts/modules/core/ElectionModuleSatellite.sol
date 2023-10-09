@@ -8,11 +8,13 @@ import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
 import {CouncilMembers} from "../../storage/CouncilMembers.sol";
+import {ElectionCrossChainSettings} from "../../storage/ElectionCrossChainSettings.sol";
 
 contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
     using SetUtil for SetUtil.AddressSet;
     using CrossChain for CrossChain.Data;
     using CouncilMembers for CouncilMembers.Data;
+    using ElectionCrossChainSettings for ElectionCrossChainSettings.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
@@ -33,6 +35,17 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         if (store.councilMembers.length() > 0) return;
 
         _addCouncilMembers(initialCouncil, initialEpochIndex);
+    }
+
+    function setMotherchainElectionModule(address electionModule) external {
+        OwnableStorage.onlyOwner();
+        ElectionCrossChainSettings.Data storage store = ElectionCrossChainSettings.load();
+        store.setMotherchainElectionModule(electionModule);
+    }
+
+    function getMotherchainElectionModule() external view returns (address) {
+        ElectionCrossChainSettings.Data storage store = ElectionCrossChainSettings.load();
+        return store.getMotherchainElectionModule();
     }
 
     function cast(

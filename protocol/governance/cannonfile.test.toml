@@ -1,4 +1,5 @@
-version = "<%= package.version %>-testable"
+name = "synthetix-governance"
+version = "<%= package.version %>-mock"
 include = ["cannonfile.toml"]
 
 [contract.SnapshotRecordMock]

@@ -109,13 +109,14 @@ library CrossChain {
 
     function transmit(
         Data storage self,
+        address target,
         uint64 chainId,
         bytes memory data,
         uint256 gasLimit
     ) internal returns (uint256 gasTokenUsed) {
         uint64[] memory chains = new uint64[](1);
         chains[0] = chainId;
-        return broadcast(self, chains, data, gasLimit);
+        return broadcast(self, target, chains, data, gasLimit);
     }
 
     /**
@@ -123,6 +124,7 @@ library CrossChain {
      */
     function broadcast(
         Data storage self,
+        address target,
         uint64[] memory chains,
         bytes memory data,
         uint256 gasLimit
@@ -130,7 +132,7 @@ library CrossChain {
         ICcipRouterClient router = self.ccipRouter;
 
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+            abi.encode(address(target == address(0) ? address(this) : target)), // abi.encode(receiver address) for dest EVM chains
             data, // Data payload
             new CcipClient.EVMTokenAmount[](0), // Token transfers
             address(0), // Address of feeToken. address(0) means you will send msg.value.
