@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
@@ -20,15 +20,12 @@ library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint256;
-    using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using SafeCastI128 for int128;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
-    using Position for Position.Data;
 
     /**
      * @notice Thrown when settlement window is not open yet.
@@ -63,6 +60,11 @@ library AsyncOrder {
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
     error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
+
+    /**
+     * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
+     */
+    error AcceptablePriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
@@ -314,10 +316,7 @@ library AsyncOrder {
             orderPrice
         );
 
-        if (
-            (runtime.sizeDelta > 0 && runtime.fillPrice > order.request.acceptablePrice) ||
-            (runtime.sizeDelta < 0 && runtime.fillPrice < order.request.acceptablePrice)
-        ) {
+        if (acceptablePriceExceeded(order, runtime.fillPrice)) {
             revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
@@ -367,6 +366,49 @@ library AsyncOrder {
             size: runtime.newPositionSize
         });
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
+    }
+
+    /**
+     * @notice Checks if the order request can be cancelled.
+     * @notice This function doesn't check for liquidation or available margin since the fees to be paid are small and we did that check at commitment less than the settlement window time.
+     * @notice it won't check if the order exists since it was already checked when loading the order (loadValid)
+     * @dev it calculates fill price the order
+     * @dev and with that data it checks that:
+     * @dev - settlement window is open
+     * @dev - the fill price is outside the acceptable price range
+     * @dev if the order can be cancelled, it returns the fillPrice
+     */
+    function validateCancellation(
+        Data storage order,
+        SettlementStrategy.Data storage strategy,
+        uint256 orderPrice
+    ) internal view returns (uint256 fillPrice) {
+        SimulateDataRuntime memory runtime;
+        runtime.sizeDelta = order.request.sizeDelta;
+        runtime.accountId = order.request.accountId;
+        runtime.marketId = order.request.marketId;
+
+        checkWithinSettlementWindow(order, strategy);
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
+
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            runtime.marketId
+        );
+
+        runtime.fillPrice = AsyncOrder.calculateFillPrice(
+            perpsMarketData.skew,
+            marketConfig.skewScale,
+            runtime.sizeDelta,
+            orderPrice
+        );
+
+        // check if fill price exceeded acceptable price
+        if (!acceptablePriceExceeded(order, runtime.fillPrice)) {
+            revert AcceptablePriceNotExceeded(runtime.fillPrice, order.request.acceptablePrice);
+        }
+
+        return runtime.fillPrice;
     }
 
     /**
@@ -504,5 +546,17 @@ library AsyncOrder {
 
         // this is the required margin for the new position (minus any order fees)
         return requiredMarginForNewPosition + requiredLiquidationRewardMargin;
+    }
+
+    /**
+     * @notice Checks if the fill price exceeds the acceptable price set at submission.
+     */
+    function acceptablePriceExceeded(
+        Data storage order,
+        uint256 fillPrice
+    ) internal view returns (bool exceeded) {
+        return
+            (order.request.sizeDelta > 0 && fillPrice > order.request.acceptablePrice) ||
+            (order.request.sizeDelta < 0 && fillPrice < order.request.acceptablePrice);
     }
 }
