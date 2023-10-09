@@ -13,32 +13,55 @@ touch $OUT
 
 cat "./addresses-+-abis.md" > $OUT
 
-generate () {
-  _chainId=$1
-  echo ""
-  echo "-----------------------------"
-  echo "Generating ABIs for $_chainId"
-  echo "-----------------------------"
-  echo "> cannon inspect synthetix-omnibus:latest --chain-id $_chainId --json > ./deployments/$_chainId.json"
-  mkdir -p ./deployments
-  yarn cannon inspect synthetix-omnibus:latest --chain-id $_chainId --json > ./deployments/$_chainId.json
-  node ./abis.js $_chainId ./deployments/$_chainId.json
-  cat ./docs/$_chainId.md >> $OUT
-  echo "" >> $OUT
-  echo "-----------------------------"
-  echo "OK Generating ABIs for $_chainId"
-  echo "-----------------------------"
-  echo ""
-  echo ""
-}
+node ./abis.js 1 main
+echo "## Mainnet" >> $OUT
+echo "" >> $OUT
+cat ./docs/1-main.md >> $OUT
+echo "" >> $OUT
 
-generate 1
-generate 5
-generate 11155111
-generate 10
-generate 420
-generate 80001
-generate 84531
+node ./abis.js 5 main
+echo "## Goerli" >> $OUT
+echo "" >> $OUT
+cat ./docs/5-main.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 11155111 main
+echo "## Sepolia" >> $OUT
+echo "" >> $OUT
+cat ./docs/11155111-main.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 10 main
+echo "## Optimism" >> $OUT
+echo "" >> $OUT
+cat ./docs/10-main.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 420 main
+echo "## Optimistic Goerli" >> $OUT
+echo "" >> $OUT
+cat ./docs/420-main.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 80001 main
+echo "## Polygon Mumbai" >> $OUT
+echo "" >> $OUT
+cat ./docs/80001-main.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 84531 main
+echo "## Base Goerli" >> $OUT
+echo "" >> $OUT
+cat ./docs/84531-main.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 84531 competition
+echo "## Competition on Base Goerli" >> $OUT
+echo "" >> $OUT
+cat ./base-goerli-competition.md >> $OUT
+echo "" >> $OUT
+cat ./docs/84531-competition.md >> $OUT
+echo "" >> $OUT
 
 cp -r ./abis $ROOT/docs/abis
 
