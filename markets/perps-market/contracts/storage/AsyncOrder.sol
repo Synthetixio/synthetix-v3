@@ -537,10 +537,10 @@ library AsyncOrder {
             newRequiredMargin -
             oldRequiredMargin;
 
-        // do same thing for liquidation rewards and compute against global configured min/max liq reward
+        // do same thing for liquidation rewards and account for minimum liquidation margin
         uint256 requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
             .load()
-            .liquidationReward(
+            .minimumLiquidationReward(
                 currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward
             );
 
