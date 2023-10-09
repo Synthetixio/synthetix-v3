@@ -371,6 +371,7 @@ library AsyncOrder {
     /**
      * @notice Checks if the order request can be cancelled.
      * @notice This function doesn't check for liquidation or available margin since the fees to be paid are small and we did that check at commitment less than the settlement window time.
+     * @notice it won't check if the order exists since it was already checked when loading the order (loadValid)
      * @dev it calculates fill price the order
      * @dev and with that data it checks that:
      * @dev - settlement window is open
@@ -386,11 +387,6 @@ library AsyncOrder {
         runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
         runtime.marketId = order.request.marketId;
-
-        // Validate Order still exists and is valid
-        if (runtime.sizeDelta == 0) {
-            revert AsyncOrder.ZeroSizeOrder();
-        }
 
         checkWithinSettlementWindow(order, strategy);
 
