@@ -131,9 +131,7 @@ describe('ModifyCollateral Deposit', () => {
     });
 
     it('returns the correct list of active collaterals', async () => {
-      const activeCollaterals = await systems().PerpsMarket.getAccountActiveCollaterals(
-        accountIds[0]
-      );
+      const activeCollaterals = await systems().PerpsMarket.getAccounthCollateralIds(accountIds[0]);
 
       deepEqual([synthBTCMarketId], activeCollaterals);
     });
@@ -145,9 +143,7 @@ describe('ModifyCollateral Deposit', () => {
     });
 
     it('returns the correct list of active collaterals', async () => {
-      const activeCollaterals = await systems().PerpsMarket.getAccountActiveCollaterals(
-        accountIds[0]
-      );
+      const activeCollaterals = await systems().PerpsMarket.getAccounthCollateralIds(accountIds[0]);
 
       deepEqual([synthBTCMarketId, synthETHMarketId], activeCollaterals);
     });

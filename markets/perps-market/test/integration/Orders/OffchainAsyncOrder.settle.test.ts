@@ -666,7 +666,7 @@ describe('Settle Offchain Async Order test', () => {
         });
 
         it('check account open position market ids', async () => {
-          const positions = await systems().PerpsMarket.getOpenPositionMarketIds(2);
+          const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
           deepEqual(positions, [ethMarketId]);
         });
       });
