@@ -113,6 +113,63 @@ library RewardDistribution {
     }
 
     /**
+     * @dev Gets the total shares of a reward distribution entry.
+     */
+    function getEntry(
+        Data storage self,
+        uint256 totalSharesAmountD18
+    ) internal view returns (int256) {
+        // No balance if a pool is empty or if it has no rewards
+        if (self.scheduledValueD18 == 0 || totalSharesAmountD18 == 0) {
+            return 0;
+        }
+
+        uint256 curTime = block.timestamp;
+
+        int256 valuePerShareChangeD18 = 0;
+
+        // No balance if current time is before start time
+        if (curTime < self.start) {
+            return 0;
+        }
+
+        // If the entry's duration is zero and the its last update is zero,
+        // consider the entry to be an instant distribution.
+        if (self.duration == 0 && self.lastUpdate < self.start) {
+            // Simply update the value per share to the total value divided by the total shares.
+            valuePerShareChangeD18 = self.scheduledValueD18.to256().divDecimal(
+                totalSharesAmountD18.toInt()
+            );
+            // Else, if the last update was before the end of the duration.
+        } else if (self.lastUpdate < self.start + self.duration) {
+            // Determine how much was previously distributed.
+            // If the last update is zero, then nothing was distributed,
+            // otherwise the amount is proportional to the time elapsed since the start.
+            int256 lastUpdateDistributedD18 = self.lastUpdate < self.start
+                ? SafeCastI128.zero()
+                : (self.scheduledValueD18 * (self.lastUpdate - self.start).toInt()) /
+                    self.duration.toInt();
+
+            // If the current time is beyond the duration, then consider all scheduled value to be distributed.
+            // Else, the amount distributed is proportional to the elapsed time.
+            int256 curUpdateDistributedD18 = self.scheduledValueD18;
+            if (curTime < self.start + self.duration) {
+                // Note: Not using an intermediate time ratio variable
+                // in the following calculation to maintain precision.
+                curUpdateDistributedD18 =
+                    (curUpdateDistributedD18 * (curTime - self.start).toInt()) /
+                    self.duration.toInt();
+            }
+
+            // The final value per share change is the difference between what is to be distributed and what was distributed.
+            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18)
+                .divDecimal(totalSharesAmountD18.toInt());
+        }
+
+        return valuePerShareChangeD18;
+    }
+
+    /**
      * @dev Updates the total shares of a reward distribution entry, and releases its unlocked value into its value per share, depending on the time elapsed since the start of the distribution's entry.
      *
      * Note: call every time before `totalShares` changes.

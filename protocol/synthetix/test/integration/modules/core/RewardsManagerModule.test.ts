@@ -159,13 +159,15 @@ describe('RewardsManagerModule', function () {
           });
 
           it('is distributed', async () => {
-            const [rewards] = await systems().Core.callStatic.updateRewards(
+            const availableRewards = await systems().Core.getAvailableRewards(
+              accountId,
               poolId,
               collateralAddress(),
-              accountId
+              RewardDistributor.address
             );
-            // should have received all 3 past rewards
-            assertBn.equal(rewards[0], rewardAmount.mul(3));
+
+            // 3 distributions should be available
+            assertBn.equal(availableRewards, rewardAmount.mul(3));
           });
         });
 
@@ -203,14 +205,17 @@ describe('RewardsManagerModule', function () {
           });
 
           it('is not distributed future yet', async () => {
-            const [rewards] = await systems().Core.callStatic.updateRewards(
-              poolId,
-              collateralAddress(),
-              accountId
-            );
+            const rewardsAvailable = await systems()
+              .Core.connect(user1)
+              .getAvailableRewards(
+                accountId,
+                poolId,
+                collateralAddress(),
+                RewardDistributor.address
+              );
 
-            // only one reward should have been distributed
-            assertBn.equal(rewards[0], rewardAmount);
+            // only one reward should have been distributed and be available
+            assertBn.equal(rewardsAvailable, rewardAmount);
           });
 
           it('has no rate', async () => {
@@ -230,12 +235,18 @@ describe('RewardsManagerModule', function () {
 
             it('is distributed', async () => {
               // should have received 2 distributions
-              const [rewards] = await systems().Core.callStatic.updateRewards(
-                poolId,
-                collateralAddress(),
-                accountId
-              );
-              assertBn.equal(rewards[0], rewardAmount.mul(2));
+              await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+
+              const rewardsAvailable = await systems()
+                .Core.connect(user1)
+                .getAvailableRewards(
+                  accountId,
+                  poolId,
+                  collateralAddress(),
+                  RewardDistributor.address
+                );
+
+              assertBn.equal(rewardsAvailable, rewardAmount.mul(2));
             });
 
             it('has no rate', async () => {
@@ -282,13 +293,16 @@ describe('RewardsManagerModule', function () {
           });
 
           it('is fully distributed', async () => {
-            const [rewards] = await systems().Core.callStatic.updateRewards(
-              poolId,
-              collateralAddress(),
-              accountId
-            );
-            // should have received all 3 past rewards
-            assertBn.equal(rewards[0], rewardAmount.mul(2));
+            const availableRewards = await systems()
+              .Core.connect(user1)
+              .getAvailableRewards(
+                accountId,
+                poolId,
+                collateralAddress(),
+                RewardDistributor.address
+              );
+            // All 3 past rewards should be available to claim
+            assertBn.equal(availableRewards, rewardAmount.mul(2));
           });
         });
 
@@ -330,13 +344,17 @@ describe('RewardsManagerModule', function () {
           });
 
           it('does not distribute future', async () => {
-            const [rewards] = await systems().Core.callStatic.updateRewards(
-              poolId,
-              collateralAddress(),
-              accountId
-            );
+            const availableRewards = await systems()
+              .Core.connect(user1)
+              .getAvailableRewards(
+                accountId,
+                poolId,
+                collateralAddress(),
+                RewardDistributor.address
+              );
+
             // should have received only the one past reward
-            assertBn.equal(rewards[0], rewardAmount);
+            assertBn.equal(availableRewards, rewardAmount);
           });
 
           describe('after time passes', () => {
@@ -345,13 +363,17 @@ describe('RewardsManagerModule', function () {
             });
 
             it('is fully distributed', async () => {
-              const [rewards] = await systems().Core.callStatic.updateRewards(
-                poolId,
-                collateralAddress(),
-                accountId
-              );
+              const availableRewards = await systems()
+                .Core.connect(user1)
+                .getAvailableRewards(
+                  accountId,
+                  poolId,
+                  collateralAddress(),
+                  RewardDistributor.address
+                );
+
               // should have received 2 of 3 past rewards
-              assertBn.equal(rewards[0], rewardAmount.mul(2));
+              assertBn.equal(availableRewards, rewardAmount.mul(2));
             });
           });
         });
@@ -381,14 +403,18 @@ describe('RewardsManagerModule', function () {
           });
 
           it('distributes portion of rewards immediately', async () => {
-            const [rewards] = await systems().Core.callStatic.updateRewards(
-              poolId,
-              collateralAddress(),
-              accountId
-            );
+            const availableRewards = await systems()
+              .Core.connect(user1)
+              .getAvailableRewards(
+                accountId,
+                poolId,
+                collateralAddress(),
+                RewardDistributor.address
+              );
+
             // should have received only the one past reward
             // 51 because block advances by exactly 1 second due to mine
-            assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(51).div(100)));
+            assertBn.equal(availableRewards, rewardAmount.add(rewardAmount.mul(51).div(100)));
           });
 
           describe('after time passes', () => {
@@ -397,13 +423,17 @@ describe('RewardsManagerModule', function () {
             });
 
             it('distributes more portion of rewards', async () => {
-              const [rewards] = await systems().Core.callStatic.updateRewards(
-                poolId,
-                collateralAddress(),
-                accountId
-              );
+              const availableRewards = await systems()
+                .Core.connect(user1)
+                .getAvailableRewards(
+                  accountId,
+                  poolId,
+                  collateralAddress(),
+                  RewardDistributor.address
+                );
+
               // should have received only the one past reward + 1 second for simulate
-              assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(75).div(100)));
+              assertBn.equal(availableRewards, rewardAmount.add(rewardAmount.mul(75).div(100)));
             });
 
             describe('new distribution', () => {
@@ -420,14 +450,18 @@ describe('RewardsManagerModule', function () {
               });
 
               it('distributes portion of rewards immediately', async () => {
-                const [rewards] = await systems().Core.callStatic.updateRewards(
-                  poolId,
-                  collateralAddress(),
-                  accountId
-                );
+                const availableRewards = await systems()
+                  .Core.connect(user1)
+                  .getAvailableRewards(
+                    accountId,
+                    poolId,
+                    collateralAddress(),
+                    RewardDistributor.address
+                  );
+
                 // should have received only the one past reward
                 assertBn.equal(
-                  rewards[0],
+                  availableRewards,
                   rewardAmount
                     .add(rewardAmount.mul(76).div(100))
                     .add(rewardAmount.mul(1000).mul(111).div(200))
@@ -440,16 +474,19 @@ describe('RewardsManagerModule', function () {
                 });
 
                 it('distributes more portion of rewards', async () => {
-                  const [rewards] = await systems().Core.callStatic.updateRewards(
-                    poolId,
-                    collateralAddress(),
-                    accountId
-                  );
+                  const availableRewards = await systems()
+                    .Core.connect(user1)
+                    .getAvailableRewards(
+                      accountId,
+                      poolId,
+                      collateralAddress(),
+                      RewardDistributor.address
+                    );
                   // should have received only the one past reward
                   // +1 because block being mined by earlier txn
                   // +1 because the simulation adds an additional second
                   assertBn.equal(
-                    rewards[0],
+                    availableRewards,
                     rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100))
                   );
                 });
@@ -540,18 +577,20 @@ describe('RewardsManagerModule', function () {
       });
 
       it('returns no rewards remaining', async () => {
-        const [rewards] = await systems().Core.callStatic.updateRewards(
-          poolId,
-          collateralAddress(),
-          accountId
-        );
-        // should have received only the one past reward
-        // +1 because block being mined by earlier txn
-        // +1 because the simulation adds an additional second
-        assertBn.equal(rewards[0], 0);
+        await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+
+        const availableRewards = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
+        assertBn.equal(availableRewards, 0);
       });
 
       it('doesnt get any rewards on subsequent claim', async () => {
+        const availableRewards = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
         await assertRevert(
           systems()
             .Core.connect(user1)
@@ -561,6 +600,7 @@ describe('RewardsManagerModule', function () {
         );
 
         assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+        assertBn.equal(availableRewards, 0);
       });
 
       describe('second payout', async () => {
@@ -588,15 +628,13 @@ describe('RewardsManagerModule', function () {
         });
 
         it('returns no rewards remaining', async () => {
-          const [rewards] = await systems().Core.callStatic.updateRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
-          // should have received only the one past reward
-          // +1 because block being mined by earlier txn
-          // +1 because the simulation adds an additional second
-          assertBn.equal(rewards[0], 0);
+          await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+
+          const rewardAmount = await systems()
+            .Core.connect(user1)
+            .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
+          assertBn.equal(rewardAmount, 0);
         });
 
         it('does not get any rewards on subsequent claim', async () => {
@@ -675,6 +713,10 @@ describe('RewardsManagerModule', function () {
       it('can still claim accumulated rewards', async () => {
         const beforeBalance = await Collateral.balanceOf(await user1.getAddress());
 
+        const rewardAmount = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
         await systems()
           .Core.connect(user1)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
@@ -682,6 +724,18 @@ describe('RewardsManagerModule', function () {
         // make sure some rewards were actually distributed from the over time distribution
         const afterBalance = await Collateral.balanceOf(await user1.getAddress());
         assertBn.gt(afterBalance, beforeBalance);
+
+        // Make sure the original getAvailableRewards balance is the same as the transferred amount
+        assertBn.equal(rewardAmount, afterBalance);
+
+        await systems().Core.updateRewards(poolId, collateralAddress(), accountId);
+
+        const afterRewardAmount = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
+        // Ensure that the available rewards are now 0
+        assertBn.equal(afterRewardAmount, 0);
 
         await fastForward(1000, provider());
 
