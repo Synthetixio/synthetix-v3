@@ -18,4 +18,3 @@ args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
-depends = ["contract.InitialModuleBundle"]

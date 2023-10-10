@@ -29,12 +29,6 @@ contracts = [
     "ElectionModuleSatellite",
     "InitialModuleBundle",
 ]
-depends = [
-    "contract.AssociatedSystemsModule",
-    "contract.CrossChainModule",
-    "contract.ElectionModuleSatellite",
-    "contract.InitialModuleBundle",
-]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
@@ -44,7 +38,6 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-depends = ["contract.InitialProxy", "router.CoreRouter"]
 
 [invoke.init_election_module_satellite]
 target = ["CoreProxy"]
@@ -54,4 +47,3 @@ args = [
     ["<%= settings.initial_council_member %>"],
     "<%= settings.initial_epoch_index %>",
 ]
-depends = ["invoke.upgrade_core_proxy"]

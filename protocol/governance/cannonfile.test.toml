@@ -33,14 +33,6 @@ contracts = [
     "TestableElectionSettingsStorage",
     "TestableElectionStorage",
 ]
-depends = [
-    "router.CoreRouter",
-    "contract.TestableCouncilStorage",
-    "contract.TestableBallotStorage",
-    "contract.TestableSnapshotVotePowerStorage",
-    "contract.TestableElectionSettingsStorage",
-    "contract.TestableElectionStorage",
-]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
@@ -50,4 +42,3 @@ args = ["<%= contracts.TestRouter.address %>"]
 factory.CoreProxy.abiOf = ["TestRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-depends = ["contract.InitialProxy", "router.TestRouter"]

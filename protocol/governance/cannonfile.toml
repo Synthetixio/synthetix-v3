@@ -46,14 +46,6 @@ contracts = [
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
 ]
-depends = [
-    "contract.AssociatedSystemsModule",
-    "contract.CrossChainModule",
-    "contract.ElectionInspectorModule",
-    "contract.ElectionModule",
-    "contract.SnapshotVotePowerModule",
-    "contract.InitialModuleBundle",
-]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
@@ -63,7 +55,6 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-depends = ["contract.InitialProxy", "router.CoreRouter"]
 
 [invoke.init_election_module]
 target = ["CoreProxy"]
@@ -77,4 +68,3 @@ args = [
     "<%= settings.voting_period_duration %>",
 ]
 from = "<%= settings.owner %>"
-depends = ["invoke.upgrade_core_proxy"]

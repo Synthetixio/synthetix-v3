@@ -12,7 +12,6 @@ artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenMod
 
 [router.CouncilTokenRouter]
 contracts = ["CouncilTokenModule", "InitialModuleBundle"]
-depends = ["contract.CouncilTokenModule", "contract.InitialModuleBundle"]
 
 [invoke.init_council_token]
 target = ["CoreProxy"]
@@ -28,4 +27,3 @@ args = [
 factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
 factory.CouncilToken.event = "AssociatedSystemSet"
 factory.CouncilToken.arg = 2
-depends = ["invoke.upgrade_core_proxy", "router.CouncilTokenRouter"]
