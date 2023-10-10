@@ -178,6 +178,24 @@ contract PerpsAccountModule is IPerpsAccountModule {
         return PerpsAccount.load(accountId).collateralAmounts[synthMarketId];
     }
 
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getAccountActiveCollaterals(
+        uint128 accountId
+    ) external view override returns (uint256[] memory) {
+        return PerpsAccount.load(accountId).activeCollateralTypes.values();
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getOpenPositionMarketIds(
+        uint128 accountId
+    ) external view override returns (uint256[] memory) {
+        return PerpsAccount.load(accountId).openPositionMarketIds.values();
+    }
+
     function _depositMargin(
         PerpsMarketFactory.Data storage perpsMarketFactory,
         uint128 perpsMarketId,
