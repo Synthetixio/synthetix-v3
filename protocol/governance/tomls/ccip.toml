@@ -1,0 +1,23 @@
+# (required) CCIP Router address (should be one of https://docs.chain.link/ccip/supported-networks/)
+[setting.ccip_router]
+
+[invoke.set_supported_cross_chain_networks]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setSupportedCrossChainNetworks"
+args = [
+    ["11155111", "420", "421613", "80001", "84531"],
+    [
+        "16015286601757825753",
+        "2664363617261496610",
+        "6101244977088475029",
+        "12532609583862916517",
+        "5790810961207155433"
+    ]
+]
+
+[invoke.configure_chainlink_cross_chain]
+target = ["CoreProxy"]
+func = "configureChainlinkCrossChain"
+from = "<%= settings.owner %>"
+args = ["<%= settings.ccip_router %>"]

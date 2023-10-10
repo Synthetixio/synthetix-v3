@@ -35,13 +35,18 @@ contract CrossChainModule is ICrossChainModule {
     /**
      * @inheritdoc ICrossChainModule
      */
-    function setSupportedCrossChainNetworks(
+    function setSupportedCrossChainNetworksWithTargets(
         uint64[] memory supportedNetworks,
+        address[] memory supportedNetworkTargets,
         uint64[] memory ccipSelectors
     ) external returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
         uint64 myChainId = block.chainid.to64();
+
+        if (supportedNetworkTargets.length != supportedNetworks.length) {
+            revert ParameterError.InvalidParameter("supportedNetworkTargets", "must match length");
+        }
 
         if (ccipSelectors.length != supportedNetworks.length) {
             revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
@@ -49,18 +54,34 @@ contract CrossChainModule is ICrossChainModule {
 
         CrossChain.Data storage cc = CrossChain.load();
         for (uint i = 0; i < supportedNetworks.length; i++) {
-            if (supportedNetworks[i] == myChainId) continue;
-            if (
-                supportedNetworks[i] != myChainId &&
-                !cc.supportedNetworks.contains(supportedNetworks[i])
-            ) {
+            uint64 chainId = supportedNetworks[i];
+
+            if (chainId == myChainId) continue;
+
+            if (!cc.supportedNetworks.contains(chainId)) {
                 numRegistered++;
-                cc.supportedNetworks.add(supportedNetworks[i]);
-                emit NewSupportedCrossChainNetwork(supportedNetworks[i]);
+                cc.supportedNetworks.add(chainId);
+                emit NewSupportedCrossChainNetwork(chainId);
             }
 
-            cc.ccipChainIdToSelector[supportedNetworks[i]] = ccipSelectors[i];
-            cc.ccipSelectorToChainId[ccipSelectors[i]] = supportedNetworks[i];
+            cc.ccipChainIdToSelector[chainId] = ccipSelectors[i];
+            cc.ccipSelectorToChainId[ccipSelectors[i]] = chainId;
+            cc.supportedNetworkTargets[chainId] = supportedNetworkTargets[i];
         }
+    }
+
+    /**
+     * @inheritdoc ICrossChainModule
+     */
+    function setSupportedCrossChainNetworks(
+        uint64[] memory supportedNetworks,
+        uint64[] memory ccipSelectors
+    ) external returns (uint256 numRegistered) {
+        return
+            this.setSupportedCrossChainNetworksWithTargets(
+                supportedNetworks,
+                new address[](supportedNetworks.length),
+                ccipSelectors
+            );
     }
 }

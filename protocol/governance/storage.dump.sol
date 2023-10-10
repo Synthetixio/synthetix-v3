@@ -113,6 +113,7 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
+        mapping(uint64 => address) supportedNetworkTargets;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -241,6 +242,19 @@ library Election {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", epochIndex));
         assembly {
             election.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/ElectionCrossChainSettings.sol:ElectionCrossChainSettings
+library ElectionCrossChainSettings {
+    struct Data {
+        address motherchainElectionModule;
+    }
+    function load() internal pure returns (Data storage settings) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionCrossChainSettings"));
+        assembly {
+            settings.slot := s
         }
     }
 }
