@@ -21,7 +21,7 @@ interface ICollateralConfigurationModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the system.
+     * - `ERC2771Context._msgSender()` must be the owner of the system.
      *
      * Emits a {CollateralConfigured} event.
      *

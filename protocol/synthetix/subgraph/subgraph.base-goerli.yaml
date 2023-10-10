@@ -7,8 +7,8 @@ dataSources:
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0xa53346A1684DAB73EFfd048fA40Fb1fA9327fDe9"
-      startBlock: 9243584
+      address: "0x76490713314fCEC173f44e99346F54c6e92a8E42"
+      startBlock: 3109083
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

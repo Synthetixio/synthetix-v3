@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
@@ -16,6 +17,20 @@ import "../../storage/Config.sol";
  */
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
+
+    /**
+     * @inheritdoc IUtilsModule
+     */
+    function isTrustedForwarder(address forwarder) external pure returns (bool) {
+        return ERC2771Context.isTrustedForwarder(forwarder);
+    }
+
+    /**
+     * @inheritdoc IUtilsModule
+     */
+    function getTrustedForwarder() external pure returns (address) {
+        return ERC2771Context.trustedForwarder();
+    }
 
     /**
      * @inheritdoc IUtilsModule

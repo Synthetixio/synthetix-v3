@@ -98,45 +98,6 @@ contracts = [
     "TestableVaultEpochStorage",
     "TestableVaultStorage",
 ]
-depends = [
-    "contract.InitialModuleBundle",
-    "contract.FeatureFlagModule",
-    "contract.AccountModule",
-    "contract.AssociateDebtModule",
-    "contract.AssociatedSystemsModule",
-    "contract.CcipReceiverModule",
-    "contract.CollateralModule",
-    "contract.CollateralConfigurationModule",
-    "contract.CrossChainModule",
-    "contract.CrossChainUSDModule",
-    "contract.IssueUSDModule",
-    "contract.LiquidationModule",
-    "contract.MarketCollateralModule",
-    "contract.MarketManagerModule",
-    "contract.MulticallModule",
-    "contract.PoolConfigurationModule",
-    "contract.PoolModule",
-    "contract.RewardsManagerModule",
-    "contract.UtilsModule",
-    "contract.VaultModule",
-    "contract.TestableAccountStorage",
-    "contract.TestableAccountRBACStorage",
-    "contract.TestableCollateralStorage",
-    "contract.TestableCollateralConfigurationStorage",
-    "contract.TestableCollateralLockStorage",
-    "contract.TestableDistributionStorage",
-    "contract.TestableDistributionActorStorage",
-    "contract.TestableMarketStorage",
-    "contract.TestableMarketConfigurationStorage",
-    "contract.TestableMarketPoolInfoStorage",
-    "contract.TestablePoolStorage",
-    "contract.TestableSystemPoolConfigurationStorage",
-    "contract.TestableRewardDistributionStorage",
-    "contract.TestableRewardDistributionClaimStatusStorage",
-    "contract.TestableScalableMappingStorage",
-    "contract.TestableVaultEpochStorage",
-    "contract.TestableVaultStorage",
-]
 
 # Post stuff
 [contract.CollateralMock]
@@ -150,7 +111,6 @@ salt = "2"
 target = ["CollateralMock"]
 func = "initialize"
 args = ["SampleToken", "TKN", "18"]
-depends = ["contract.CollateralMock"]
 
 [invoke.enableAllFeatures]
 target = ["CoreProxy"]
@@ -163,4 +123,3 @@ args = [
         "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
     ]
 ]
-depends = ["invoke.upgrade_core_proxy"]

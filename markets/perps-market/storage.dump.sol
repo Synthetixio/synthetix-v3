@@ -43,6 +43,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
     uint private constant _ROOT_INDEX = 1;
@@ -671,8 +676,7 @@ library PerpsMarketFactory {
         address synthetix;
         address spotMarket;
         uint128 perpsMarketId;
-        address owner;
-        address nominatedOwner;
+        string name;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
@@ -719,7 +723,6 @@ library SettlementStrategy {
         bytes32 feedId;
         string url;
         uint256 settlementReward;
-        uint256 priceDeviationTolerance;
         bool disabled;
     }
 }

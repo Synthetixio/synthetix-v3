@@ -28,7 +28,6 @@ describe('MarketConfiguration', async () => {
       feedId: utils.formatBytes32String('feedId'),
       url: 'url',
       settlementReward: 100,
-      priceDeviationTolerance: 200,
       disabled: true,
     },
 
@@ -78,8 +77,6 @@ describe('MarketConfiguration', async () => {
         fixture.settlementStrategy.url.toString() +
         '", ' +
         fixture.settlementStrategy.settlementReward.toString() +
-        ', ' +
-        fixture.settlementStrategy.priceDeviationTolerance.toString() +
         ', ' +
         fixture.settlementStrategy.disabled.toString() +
         '], 0)',
@@ -189,6 +186,9 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+
+    const lockedOiRatio = await systems().PerpsMarket.getLockedOiRatio(marketId);
+    assertBn.equal(lockedOiRatio, fixture.lockedOiPercentRatioD18);
   });
 
   it('should revert transaction when not market owner sets parameters', async () => {
@@ -267,10 +267,6 @@ describe('MarketConfiguration', async () => {
       settlementStrategy.settlementReward,
       fixture.settlementStrategy.settlementReward
     );
-    assertBn.equal(
-      settlementStrategy.priceDeviationTolerance,
-      fixture.settlementStrategy.priceDeviationTolerance
-    );
     assert.equal(settlementStrategy.disabled, !fixture.settlementStrategy.disabled);
     assert.equal(settlementStrategy.url, fixture.settlementStrategy.url);
     assert.equal(settlementStrategy.feedId, fixture.settlementStrategy.feedId);
@@ -320,5 +316,37 @@ describe('MarketConfiguration', async () => {
       fixture.maxLiquidationLimitAccumulationMultiplier
     );
     assertBn.equal(maxSecondsInLiquidationWindow, fixture.maxSecondsInLiquidationWindow);
+  });
+
+  it('if settlement strategy settlement delay is set to zero, defaults to 1', async () => {
+    const settlementStrategy = {
+      ...fixture.settlementStrategy,
+      settlementDelay: 0,
+    };
+    await systems()
+      .PerpsMarket.connect(owner())
+      .addSettlementStrategy(marketId, settlementStrategy),
+      'SettlementStrategyAdded(' +
+        marketId.toString() +
+        ', [' +
+        settlementStrategy.strategyType.toString() +
+        ', ' +
+        settlementStrategy.settlementDelay.toString() +
+        ', ' +
+        bn(1).toString() +
+        ', ' +
+        settlementStrategy.priceWindowDuration.toString() +
+        ', "' +
+        settlementStrategy.priceVerificationContract.toString() +
+        '", "' +
+        settlementStrategy.feedId.toString() +
+        '", "' +
+        settlementStrategy.url.toString() +
+        '", ' +
+        settlementStrategy.settlementReward.toString() +
+        ', ' +
+        settlementStrategy.disabled.toString() +
+        '], 0)',
+      systems().PerpsMarket;
   });
 });

@@ -99,6 +99,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
     uint private constant _ROOT_INDEX = 1;
@@ -352,8 +357,8 @@ contract MarketManagerModule {
 contract MulticallModule {
     bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
     bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS = "_allowlistedMulticallTargets";
-    bytes32 internal constant ALLOWED = bytes32(uint256(1));
-    bytes32 internal constant DISALLOWED = bytes32(uint256(0));
+    bytes32 private constant ALLOWED = bytes32(uint256(1));
+    bytes32 private constant DISALLOWED = bytes32(uint256(0));
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule

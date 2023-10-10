@@ -14,7 +14,6 @@ const settlementStrategyWithNoMin = {
   feedId: Ethers.constants.HashZero,
   url: '',
   settlementReward: 0,
-  priceDeviationTolerance: bn(0.01),
   minimumUsdExchangeAmount: 0,
   maxRoundingLoss: bn(0.000001),
   disabled: false,

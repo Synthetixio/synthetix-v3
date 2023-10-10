@@ -34,7 +34,6 @@ artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.initialOwner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
-depends = ["contract.CoreModule"]
 
 [router.Router]
 contracts = [
@@ -43,13 +42,6 @@ contracts = [
     "SettingsModule",
     "SomeModule",
     "AnotherModule",
-]
-depends = [
-    "contract.CoreModule",
-    "contract.InitializableModule",
-    "contract.SettingsModule",
-    "contract.SomeModule",
-    "contract.AnotherModule"
 ]
 
 [invoke.upgrade_proxy]
@@ -60,4 +52,3 @@ args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["contract.InitialProxy", "router.Router"]

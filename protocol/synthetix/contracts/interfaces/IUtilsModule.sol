@@ -40,4 +40,17 @@ interface IUtilsModule is IERC165 {
      * @return v the value set on the specified k
      */
     function getConfigAddress(bytes32 k) external view returns (address v);
+
+    /**
+     * @notice Checks if the address is the trusted forwarder
+     * @param forwarder The address to check
+     * @return Whether the address is the trusted forwarder
+     */
+    function isTrustedForwarder(address forwarder) external pure returns (bool);
+
+    /**
+     * @notice Provides the address of the trusted forwarder
+     * @return Address of the trusted forwarder
+     */
+    function getTrustedForwarder() external pure returns (address);
 }
