@@ -39,7 +39,7 @@ contract CrossChainModule is ICrossChainModule {
         uint64[] memory supportedNetworks,
         address[] memory supportedNetworkTargets,
         uint64[] memory ccipSelectors
-    ) external returns (uint256 numRegistered) {
+    ) public returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
         uint64 myChainId = block.chainid.to64();
@@ -76,9 +76,9 @@ contract CrossChainModule is ICrossChainModule {
     function setSupportedCrossChainNetworks(
         uint64[] memory supportedNetworks,
         uint64[] memory ccipSelectors
-    ) external returns (uint256 numRegistered) {
+    ) public returns (uint256 numRegistered) {
         return
-            this.setSupportedCrossChainNetworksWithTargets(
+            setSupportedCrossChainNetworksWithTargets(
                 supportedNetworks,
                 new address[](supportedNetworks.length),
                 ccipSelectors

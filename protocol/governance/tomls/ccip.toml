@@ -1,9 +1,10 @@
 # (required) CCIP Router address (should be one of https://docs.chain.link/ccip/supported-networks/)
 [setting.ccip_router]
+defaultValue = "0xE561d5E02207fb5eB32cca20a699E0d8919a1476"
 
 [invoke.set_supported_cross_chain_networks]
 target = ["CoreProxy"]
-fromCall.func = "owner"
+from = "<%= settings.owner %>"
 func = "setSupportedCrossChainNetworks"
 args = [
     ["11155111", "420", "421613", "80001", "84531"],
