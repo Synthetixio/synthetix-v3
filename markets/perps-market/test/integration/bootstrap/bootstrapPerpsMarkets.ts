@@ -98,111 +98,109 @@ export const bootstrapPerpsMarkets = (
     ]);
   });
 
-  const perpsMarkets: PerpsMarkets = data.map(
-    ({
-      requestedMarketId: marketId,
-      name,
-      token,
-      price,
-      orderFees,
-      fundingParams,
-      liquidationParams,
-      maxMarketValue,
-      lockedOiRatioD18,
-      settlementStrategy,
-    }) => {
-      let oracleNodeId: string, aggregator: AggregatorV3Mock;
-      before('create perps price nodes', async () => {
-        console.log('creating perps price node');
-        const results = await createOracleNode(r.owner(), price, contracts.OracleManager);
-        oracleNodeId = results.oracleNodeId;
-        aggregator = results.aggregator;
-        console.log('creating perps price node - done');
-      });
+  const perpsMarkets: PerpsMarkets = [];
 
-      before(`create perps market ${name}`, async () => {
-        await contracts.PerpsMarket.createMarket(marketId, name, token);
-        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
-      });
+  for (const {
+    requestedMarketId: marketId,
+    name,
+    token,
+    price,
+    orderFees,
+    fundingParams,
+    liquidationParams,
+    maxMarketValue,
+    lockedOiRatioD18,
+    settlementStrategy,
+  } of data) {
+    let oracleNodeId: string, aggregator: AggregatorV3Mock;
+    before('create perps price nodes', async () => {
+      console.log('creating perps price node');
+      const results = await createOracleNode(r.owner(), price, contracts.OracleManager);
+      oracleNodeId = results.oracleNodeId;
+      aggregator = results.aggregator;
+      console.log('creating perps price node - done');
+    });
 
-      before('set funding parameters', async () => {
-        await contracts.PerpsMarket.connect(r.owner()).setFundingParameters(
+    before(`create perps market ${name}`, async () => {
+      await contracts.PerpsMarket.createMarket(marketId, name, token);
+      await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
+    });
+
+    before('set funding parameters', async () => {
+      await contracts.PerpsMarket.connect(r.owner()).setFundingParameters(
+        marketId,
+        fundingParams ? fundingParams.skewScale : bn(1_000_000),
+        fundingParams ? fundingParams.maxFundingVelocity : 0
+      );
+    });
+
+    before('set max market value', async () => {
+      await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
+        marketId,
+        maxMarketValue ? maxMarketValue : bn(10_000_000)
+      );
+    });
+
+    if (orderFees) {
+      before('set fees', async () => {
+        await contracts.PerpsMarket.connect(r.owner()).setOrderFees(
           marketId,
-          fundingParams ? fundingParams.skewScale : bn(1_000_000),
-          fundingParams ? fundingParams.maxFundingVelocity : 0
+          orderFees.makerFee,
+          orderFees.takerFee
         );
       });
-
-      before('set max market value', async () => {
-        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
-          marketId,
-          maxMarketValue ? maxMarketValue : bn(10_000_000)
-        );
-      });
-
-      if (orderFees) {
-        before('set fees', async () => {
-          await contracts.PerpsMarket.connect(r.owner()).setOrderFees(
-            marketId,
-            orderFees.makerFee,
-            orderFees.takerFee
-          );
-        });
-      }
-
-      if (liquidationParams) {
-        before('set liquidation parameters', async () => {
-          await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
-            marketId,
-            liquidationParams.initialMarginFraction,
-            liquidationParams.minimumInitialMarginRatio,
-            liquidationParams.maintenanceMarginScalar,
-            liquidationParams.liquidationRewardRatio,
-            liquidationParams.minimumPositionMargin
-          );
-
-          await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
-            marketId,
-            liquidationParams.maxLiquidationLimitAccumulationMultiplier,
-            liquidationParams.maxSecondsInLiquidationWindow,
-            liquidationParams.maxLiquidationPd ?? 0,
-            liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
-          );
-        });
-      }
-
-      if (lockedOiRatioD18) {
-        before('set locked oi percent', async () => {
-          await contracts.PerpsMarket.connect(r.owner()).setLockedOiRatio(
-            marketId,
-            lockedOiRatioD18
-          );
-        });
-      }
-
-      let strategyId: ethers.BigNumber;
-      // create default settlement strategy
-      before('create default settlement strategy', async () => {
-        const strategy = {
-          ...DEFAULT_SETTLEMENT_STRATEGY,
-          ...(settlementStrategy ?? {}),
-          priceVerificationContract: contracts.MockPyth.address,
-        };
-        // first call is static to get strategyId
-        strategyId = await contracts.PerpsMarket.connect(
-          r.owner()
-        ).callStatic.addSettlementStrategy(marketId, strategy);
-
-        await contracts.PerpsMarket.connect(r.owner()).addSettlementStrategy(marketId, strategy);
-      });
-
-      return {
-        marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
-        aggregator: () => aggregator,
-        strategyId: () => strategyId,
-      };
     }
-  );
+
+    if (liquidationParams) {
+      before('set liquidation parameters', async () => {
+        await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
+          marketId,
+          liquidationParams.initialMarginFraction,
+          liquidationParams.minimumInitialMarginRatio,
+          liquidationParams.maintenanceMarginScalar,
+          liquidationParams.liquidationRewardRatio,
+          liquidationParams.minimumPositionMargin
+        );
+
+        await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
+          marketId,
+          liquidationParams.maxLiquidationLimitAccumulationMultiplier,
+          liquidationParams.maxSecondsInLiquidationWindow,
+          liquidationParams.maxLiquidationPd ?? 0,
+          liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
+        );
+      });
+    }
+
+    if (lockedOiRatioD18) {
+      before('set locked oi percent', async () => {
+        await contracts.PerpsMarket.connect(r.owner()).setLockedOiRatio(marketId, lockedOiRatioD18);
+      });
+    }
+
+    let strategyId: ethers.BigNumber;
+    // create default settlement strategy
+    before('create default settlement strategy', async () => {
+      const strategy = {
+        ...DEFAULT_SETTLEMENT_STRATEGY,
+        ...(settlementStrategy ?? {}),
+        priceVerificationContract: contracts.MockPyth.address,
+      };
+      // first call is static to get strategyId
+      strategyId = await contracts.PerpsMarket.connect(r.owner()).callStatic.addSettlementStrategy(
+        marketId,
+        strategy
+      );
+
+      await contracts.PerpsMarket.connect(r.owner()).addSettlementStrategy(marketId, strategy);
+    });
+
+    perpsMarkets.push({
+      marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
+      aggregator: () => aggregator,
+      strategyId: () => strategyId,
+    });
+  }
 
   const restore = snapshotCheckpoint(r.provider);
 
