@@ -17,18 +17,15 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
-    function initCouncilMembers(
-        address[] memory initialCouncil,
-        uint256 initialEpochIndex
-    ) external {
+    /**
+     * @dev When using ElectionModuleSatellite on the mothership, make sure to override
+     * this method to be not callable, and add your custom initialization logic.
+     */
+    function initElectionModule(
+        uint256 initialEpochIndex,
+        address[] memory initialCouncil
+    ) external virtual {
         OwnableStorage.onlyOwner();
-        _initCouncilMembers(initialCouncil, initialEpochIndex);
-    }
-
-    function _initCouncilMembers(
-        address[] memory initialCouncil,
-        uint256 initialEpochIndex
-    ) internal {
         CouncilMembers.Data storage store = CouncilMembers.load();
 
         if (store.councilMembers.length() > 0) return;

@@ -251,19 +251,6 @@ library Election {
     }
 }
 
-// @custom:artifact contracts/storage/ElectionCrossChainSettings.sol:ElectionCrossChainSettings
-library ElectionCrossChainSettings {
-    struct Data {
-        address motherchainElectionModule;
-    }
-    function load() internal pure returns (Data storage settings) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionCrossChainSettings"));
-        assembly {
-            settings.slot := s
-        }
-    }
-}
-
 // @custom:artifact contracts/storage/ElectionSettings.sol:ElectionSettings
 library ElectionSettings {
     uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1;

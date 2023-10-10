@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -32,6 +33,12 @@ contract ElectionModule is
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
+
+    /**
+     * @dev Do nothing when calling ElectionModuleSatellite initializer, this logic
+     * is being handled by initOrUpdateElectionSettings()
+     */
+    function initElectionModule(uint256, address[] memory) external pure override {}
 
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
@@ -222,22 +229,22 @@ contract ElectionModule is
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        if (nominees.contains(msg.sender)) revert AlreadyNominated();
+        if (nominees.contains(ERC2771Context._msgSender())) revert AlreadyNominated();
 
-        nominees.add(msg.sender);
+        nominees.add(ERC2771Context._msgSender());
 
-        emit CandidateNominated(msg.sender, Council.load().currentElectionId);
+        emit CandidateNominated(ERC2771Context._msgSender(), Council.load().currentElectionId);
     }
 
     function withdrawNomination() external override {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
-        if (!nominees.contains(msg.sender)) revert NotNominated();
+        if (!nominees.contains(ERC2771Context._msgSender())) revert NotNominated();
 
-        nominees.remove(msg.sender);
+        nominees.remove(ERC2771Context._msgSender());
 
-        emit NominationWithdrawn(msg.sender, Council.load().currentElectionId);
+        emit NominationWithdrawn(ERC2771Context._msgSender(), Council.load().currentElectionId);
     }
 
     function _recvCast(
@@ -261,7 +268,7 @@ contract ElectionModule is
 
         Ballot.Data storage ballot = Ballot.load(
             Council.load().currentElectionId,
-            msg.sender,
+            ERC2771Context._msgSender(),
             block.chainid
         );
 
