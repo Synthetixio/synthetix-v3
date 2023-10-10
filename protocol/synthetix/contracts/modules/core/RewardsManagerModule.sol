@@ -153,6 +153,29 @@ contract RewardsManagerModule is IRewardsManagerModule {
     /**
      * @inheritdoc IRewardsManagerModule
      */
+    function getAvailableRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external view returns (uint256) {
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
+
+        if (address(vault.rewards[rewardId].distributor) != distributor) {
+            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
+        }
+
+        RewardDistribution.Data storage distributionData = vault.rewards[rewardId];
+
+        uint256 rewardAmount = distributionData.claimStatus[accountId].pendingSendD18;
+
+        return rewardAmount;
+    }
+
+    /**
+     * @inheritdoc IRewardsManagerModule
+     */
     function claimRewards(
         uint128 accountId,
         uint128 poolId,
