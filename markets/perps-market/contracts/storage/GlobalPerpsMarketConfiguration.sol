@@ -79,6 +79,17 @@ library GlobalPerpsMarketConfiguration {
             );
     }
 
+    /**
+     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against only min
+     * @notice this is used when calculating the required margin for an account as there's no upper cap since the total liquidation rewards are dependent on available amount in liquidation window
+     */
+    function minimumLiquidationReward(
+        Data storage self,
+        uint256 totalLiquidationRewards
+    ) internal view returns (uint256) {
+        return MathUtil.max(self.minLiquidationRewardUsd, totalLiquidationRewards);
+    }
+
     function updateSynthDeductionPriority(
         Data storage self,
         uint128[] memory newSynthDeductionPriority
