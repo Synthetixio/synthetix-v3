@@ -136,7 +136,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint128 accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
 
-        uint accumulatedLiquidationRewards;
+        uint totalLiquidationRewards;
 
         for (uint i = 0; i < openPositionMarketIds.length; i++) {
             uint128 positionMarketId = openPositionMarketIds[i].to128();
@@ -175,11 +175,11 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 ERC2771Context._msgSender() !=
                 PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator
             ) {
-                accumulatedLiquidationRewards += liquidationReward;
+                totalLiquidationRewards += liquidationReward;
             }
         }
 
-        keeperLiquidationReward = _processLiquidationRewards(accumulatedLiquidationRewards);
+        keeperLiquidationReward = _processLiquidationRewards(totalLiquidationRewards);
 
         bool accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
         if (accountFullyLiquidated) {
