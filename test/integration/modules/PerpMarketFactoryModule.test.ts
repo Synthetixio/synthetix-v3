@@ -15,6 +15,7 @@ import {
   genOneOf,
   genOrder,
   genOrderFromSizeDelta,
+  genSide,
   genTrader,
 } from '../../generators';
 import {
@@ -444,6 +445,7 @@ describe('PerpMarketFactoryModule', () => {
         desiredSide: 1,
         desiredLeverage: 1,
       });
+      await commitAndSettle(bs, marketId, trader, openOrder);
 
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
       const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
@@ -465,13 +467,53 @@ describe('PerpMarketFactoryModule', () => {
       assertBn.near(reportedDebt2, expectedReportedDebtAfterClose, bn(0.000001));
     });
 
-    it('should expect sum of remaining margin to eq market debt (multiple markets)');
+    it('should expect sum of remaining all pnl to eq market debt (multiple markets)', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should expect sum of remaining margin to eq debt after a long period of trading');
+      const reportedDebts: BigNumber[] = [];
+      let accumulatedReportedDebt = BigNumber.from(0);
+      for (const market of markets()) {
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: 10_000 })
+        );
+
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: 1,
+          desiredLeverage: 1,
+        });
+        await commitAndSettle(bs, marketId, trader, openOrder);
+
+        const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+        const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
+          await getTotalPositionPnl([trader], marketId)
+        );
+        const reportedDebt1 = await PerpMarketProxy.reportedDebt(market.marketId());
+        assertBn.equal(reportedDebt1, expectedReportedDebtAfterOpen);
+
+        const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+        });
+        await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        const d2 = await PerpMarketProxy.getMarketDigest(marketId);
+        const expectedReportedDebtAfterClose = d2.totalCollateralValueUsd.add(
+          await getTotalPositionPnl([trader], marketId)
+        );
+        const reportedDebt2 = await PerpMarketProxy.reportedDebt(market.marketId());
+        assertBn.near(reportedDebt2, expectedReportedDebtAfterClose, bn(0.000001));
+
+        reportedDebts.push(reportedDebt2);
+        accumulatedReportedDebt = accumulatedReportedDebt.add(reportedDebt2);
+      }
+
+      // Markets are isolated so debt is not shared between them.
+      reportedDebts.forEach((debt) => assertBn.gt(accumulatedReportedDebt, debt));
+    });
+
+    it('should expect sum of remaining all pnl to eq debt after a long period of trading');
 
     it('should expect debt to be calculated correctly (concrete)');
-
-    it('should incur debt when a profitable position exits and withdraws all');
 
     it('should incur debt when trader is paid funding to hold position');
 
