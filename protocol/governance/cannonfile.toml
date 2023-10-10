@@ -3,16 +3,6 @@ description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
-[setting.salt]
-defaultValue = "governance"
-
-# Deployment Owner, defaults to first hardhat account
-[setting.owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.initial_council_member]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
 [setting.minimum_active_members]
 defaultValue = "1"
 
