@@ -4,17 +4,16 @@ pragma solidity ^0.8.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
 import {CouncilMembers} from "../../storage/CouncilMembers.sol";
-import {ElectionCrossChainSettings} from "../../storage/ElectionCrossChainSettings.sol";
 
 contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
     using SetUtil for SetUtil.AddressSet;
     using CrossChain for CrossChain.Data;
     using CouncilMembers for CouncilMembers.Data;
-    using ElectionCrossChainSettings for ElectionCrossChainSettings.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
@@ -37,17 +36,6 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         _addCouncilMembers(initialCouncil, initialEpochIndex);
     }
 
-    function setMotherchainElectionModule(address electionModule) external {
-        OwnableStorage.onlyOwner();
-        ElectionCrossChainSettings.Data storage store = ElectionCrossChainSettings.load();
-        store.setMotherchainElectionModule(electionModule);
-    }
-
-    function getMotherchainElectionModule() external view returns (address) {
-        ElectionCrossChainSettings.Data storage store = ElectionCrossChainSettings.load();
-        return store.getMotherchainElectionModule();
-    }
-
     function cast(
         address[] calldata candidates,
         uint256[] calldata amounts
@@ -58,7 +46,7 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
             cc.getChainIdAt(0),
             abi.encodeWithSelector(
                 IElectionModule._recvCast.selector,
-                msg.sender,
+                ERC2771Context._msgSender(),
                 block.chainid,
                 candidates,
                 amounts

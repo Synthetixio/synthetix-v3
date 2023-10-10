@@ -39,7 +39,7 @@ factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
 
-[invoke.init_election_module_satellite]
+[invoke.init_election_module]
 target = ["CoreProxy"]
 func = "initCouncilMembers"
 from = "<%= settings.owner %>"
