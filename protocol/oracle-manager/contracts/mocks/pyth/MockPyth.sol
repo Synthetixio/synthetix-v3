@@ -11,6 +11,7 @@ contract MockPyth is AbstractPyth {
 
     uint internal singleUpdateFeeInWei;
     uint internal validTimePeriod;
+    bool public skipPublishTimeCheck;
 
     constructor(uint _validTimePeriod, uint _singleUpdateFeeInWei) {
         singleUpdateFeeInWei = _singleUpdateFeeInWei;
@@ -98,7 +99,10 @@ contract MockPyth is AbstractPyth {
 
                 if (feeds[i].id == priceIds[i]) {
                     uint publishTime = feeds[i].price.publishTime;
-                    if (minPublishTime <= publishTime && publishTime <= maxPublishTime) {
+                    if (
+                        skipPublishTimeCheck ||
+                        (minPublishTime <= publishTime && publishTime <= maxPublishTime)
+                    ) {
                         break;
                     } else {
                         feeds[i].id = 0;
@@ -108,6 +112,10 @@ contract MockPyth is AbstractPyth {
 
             if (feeds[i].id != priceIds[i]) revert PythErrors.PriceFeedNotFoundWithinRange();
         }
+    }
+
+    function setSkipPublishTimeCheck(bool _skipPublishTimeCheck) external {
+        skipPublishTimeCheck = _skipPublishTimeCheck;
     }
 
     function createPriceFeedUpdateData(
