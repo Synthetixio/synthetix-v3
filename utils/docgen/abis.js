@@ -2,17 +2,18 @@
 
 const fs = require('fs/promises');
 const prettier = require('prettier');
+const { OnChainRegistry, IPFSLoader } = require('@usecannon/builder');
 
-const [chainIdString, deploymentsFile] = process.argv.slice(2);
-if (!chainIdString || !deploymentsFile) {
-  console.log('Usage: node ./abis.js <CHAIN_ID> <DEPLOYMENTS_JSON>');
-  console.log('  example: node ./abis.js 1 ./deployments/1.json');
+const DEFAULT_REGISTRY_ADDRESS = '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba';
+
+const [chainIdString, preset] = process.argv.slice(2);
+if (!chainIdString || !preset) {
+  console.log('Usage: node ./abis.js <CHAIN_ID> <PRESET>');
+  console.log('  example: node ./abis.js 1 main');
   process.exit(1);
 }
 const chainId = parseInt(chainIdString, 10);
-const deployments = require(deploymentsFile);
-
-//const CHAIN_IDS = [1, 5, 10, 420, 80001, 84531, 11155111];
+// const deployments = require(deploymentsFile);
 
 function etherscanLink(chain, address) {
   switch (chain) {
@@ -33,99 +34,100 @@ function etherscanLink(chain, address) {
   }
 }
 
-function chainName(chain) {
-  switch (chain) {
-    case 1:
-      return 'Mainnet';
-    case 5:
-      return 'Goerli';
-    case 11155111:
-      return 'Sepolia';
-    case 10:
-      return 'Optimism';
-    case 420:
-      return 'Optimistic Goerli';
-    case 80001:
-      return 'Polygon Mumbai';
-    case 84531:
-      return 'Base Goerli';
-  }
+const prettierOptions = {
+  printWidth: 100,
+  semi: true,
+  singleQuote: true,
+  bracketSpacing: true,
+  trailingComma: 'es5',
+};
+
+async function prettyJson(obj) {
+  return await prettier.format(JSON.stringify(obj, null, 2), {
+    parser: 'json',
+    ...prettierOptions,
+  });
+}
+
+async function prettyMd(md) {
+  return await prettier.format(md, { parser: 'markdown', ...prettierOptions });
 }
 
 async function run() {
+  await fs.mkdir(`${__dirname}/deployments`, { recursive: true });
   await fs.mkdir(`${__dirname}/abis`, { recursive: true });
   await fs.mkdir(`${__dirname}/docs`, { recursive: true });
 
-  const prettierOptions = JSON.parse(await fs.readFile(`${__dirname}/../../.prettierrc`, 'utf8'));
-  const prettyJson = async (obj) =>
-    await prettier.format(JSON.stringify(obj, null, 2), { parser: 'json', ...prettierOptions });
+  const registry = new OnChainRegistry({
+    signerOrProvider: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+    address: DEFAULT_REGISTRY_ADDRESS,
+  });
+  const loader = new IPFSLoader('https://ipfs.synthetix.io');
 
-  await fs.writeFile(`./docs/${chainId}.md`, `## ${chainName(chainId)}\n\n`, 'utf8');
-  await fs.appendFile(`./docs/${chainId}.md`, `Chain ID: ${chainId}\n\n`, 'utf8');
-  await fs.appendFile(`./docs/${chainId}.md`, '| System | Address | ABI |\n', 'utf8');
-  await fs.appendFile(`./docs/${chainId}.md`, '| --- | --- | --- |\n', 'utf8');
+  const ipfs = await registry.getUrl(`synthetix-omnibus:latest`, `${chainId}-${preset}`);
+  const deployments = await loader.read(ipfs);
+  await fs.writeFile(
+    `./deployments/${chainId}-${preset}.json`,
+    JSON.stringify(deployments, null, 2)
+  );
+
+  const out = [];
+
+  out.push(`Chain ID: ${chainId}`);
+  out.push('');
+
+  out.push('| System | Address | ABI |');
+  out.push('| --- | --- | --- |');
   const system = deployments?.state?.['provision.system']?.artifacts?.imports?.system;
   if (system) {
-    console.log(`Writing ${chainId}-SynthetixCore.json`);
+    console.log(`Writing ${chainId}-${preset}-SynthetixCore.json`);
     await fs.writeFile(
-      `./abis/${chainId}-SynthetixCore.json`,
-      await prettyJson(system.contracts.CoreProxy),
-      'utf8'
+      `./abis/${chainId}-${preset}-SynthetixCore.json`,
+      await prettyJson(system.contracts.CoreProxy)
     );
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
+    out.push(
       `| Synthetix Core | [${system.contracts.CoreProxy.address}](${etherscanLink(
         chainId,
         system.contracts.CoreProxy.address
-      )}) | [View/Download](./abis/${chainId}-SynthetixCore.json) |\n`,
-      'utf8'
+      )}) | [View/Download](./abis/${chainId}-${preset}-SynthetixCore.json) |`
     );
 
-    console.log(`Writing ${chainId}-snxAccountNFT.json`);
+    console.log(`Writing ${chainId}-${preset}-snxAccountNFT.json`);
     await fs.writeFile(
-      `./abis/${chainId}-snxAccountNFT.json`,
-      await prettyJson(system.contracts.AccountProxy),
-      'utf8'
+      `./abis/${chainId}-${preset}-snxAccountNFT.json`,
+      await prettyJson(system.contracts.AccountProxy)
     );
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
+    out.push(
       `| snxAccount NFT | [${system.contracts.AccountProxy.address}](${etherscanLink(
         chainId,
         system.contracts.AccountProxy.address
-      )}) | [View/Download](./abis/${chainId}-snxAccountNFT.json) |\n`,
-      'utf8'
+      )}) | [View/Download](./abis/${chainId}-${preset}-snxAccountNFT.json) |`
     );
 
-    console.log(`Writing ${chainId}-snxUSDToken.json`);
+    console.log(`Writing ${chainId}-${preset}-snxUSDToken.json`);
     await fs.writeFile(
-      `./abis/${chainId}-snxUSDToken.json`,
-      await prettyJson(system.contracts.USDProxy),
-      'utf8'
+      `./abis/${chainId}-${preset}-snxUSDToken.json`,
+      await prettyJson(system.contracts.USDProxy)
     );
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
+    out.push(
       `| snxUSD Token | [${system.contracts.USDProxy.address}](${etherscanLink(
         chainId,
         system.contracts.USDProxy.address
-      )}) | [View/Download](./abis/${chainId}-snxUSDToken.json) |\n`,
-      'utf8'
+      )}) | [View/Download](./abis/${chainId}-${preset}-snxUSDToken.json) |`
     );
 
     const { oracle_manager: oracleManager } = system.imports;
     if (oracleManager) {
-      console.log(`Writing ${chainId}-OracleManager.json`);
+      console.log(`Writing ${chainId}-${preset}-OracleManager.json`);
       await fs.writeFile(
-        `./abis/${chainId}-OracleManager.json`,
-        await prettyJson(oracleManager.contracts.Proxy),
-        'utf8'
+        `./abis/${chainId}-${preset}-OracleManager.json`,
+        await prettyJson(oracleManager.contracts.Proxy)
       );
-      await fs.appendFile(
-        `./docs/${chainId}.md`,
+      out.push(
         `| Oracle Manager | [${oracleManager.contracts.Proxy.address}](${etherscanLink(
           chainId,
           oracleManager.contracts.Proxy.address
-        )}) | [View/Download](./abis/${chainId}-OracleManager.json) |\n`,
-        'utf8'
+        )}) | [View/Download](./abis/${chainId}-${preset}-OracleManager.json) |`
       );
     }
   }
@@ -133,74 +135,80 @@ async function run() {
   const spotFactory =
     deployments?.state?.['provision.spotFactory']?.artifacts?.imports?.spotFactory;
   if (spotFactory) {
-    console.log(`Writing ${chainId}-SpotMarket.json`);
+    console.log(`Writing ${chainId}-${preset}-SpotMarket.json`);
     await fs.writeFile(
-      `./abis/${chainId}-SpotMarket.json`,
-      await prettyJson(spotFactory.contracts.SpotMarketProxy),
-      'utf8'
+      `./abis/${chainId}-${preset}-SpotMarket.json`,
+      await prettyJson(spotFactory.contracts.SpotMarketProxy)
     );
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
+    out.push(
       `| Spot Market | [${spotFactory.contracts.SpotMarketProxy.address}](${etherscanLink(
         chainId,
         spotFactory.contracts.SpotMarketProxy.address
-      )}) | [View/Download](./abis/${chainId}-SpotMarket.json) |\n`,
-      'utf8'
+      )}) | [View/Download](./abis/${chainId}-${preset}-SpotMarket.json) |`
     );
   }
 
   const perpsFactory =
     deployments?.state?.['provision.perpsFactory']?.artifacts?.imports?.perpsFactory;
   if (perpsFactory) {
-    console.log(`Writing ${chainId}-PerpsMarket.json`);
+    console.log(`Writing ${chainId}-${preset}-PerpsMarket.json`);
     await fs.writeFile(
-      `./abis/${chainId}-PerpsMarket.json`,
-      await prettyJson(perpsFactory.contracts.PerpsMarketProxy),
-      'utf8'
+      `./abis/${chainId}-${preset}-PerpsMarket.json`,
+      await prettyJson(perpsFactory.contracts.PerpsMarketProxy)
     );
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
+    out.push(
       `| Perps Market | [${perpsFactory.contracts.PerpsMarketProxy.address}](${etherscanLink(
         chainId,
         perpsFactory.contracts.PerpsMarketProxy.address
-      )}) | [View/Download](./abis/${chainId}-PerpsMarket.json) |\n`,
-      'utf8'
+      )}) | [View/Download](./abis/${chainId}-${preset}-PerpsMarket.json) |`
     );
 
-    console.log(`Writing ${chainId}-PerpsAccountNFT.json`);
+    console.log(`Writing ${chainId}-${preset}-PerpsAccountNFT.json`);
+    const PerpsAccountNFT =
+      perpsFactory.contracts.PerpsAccountProxy ?? perpsFactory.contracts.AccountProxy;
+
     await fs.writeFile(
-      `./abis/${chainId}-PerpsAccountNFT.json`,
-      await prettyJson(perpsFactory.contracts.AccountProxy),
-      'utf8'
+      `./abis/${chainId}-${preset}-PerpsAccountNFT.json`,
+      await prettyJson(PerpsAccountNFT)
     );
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
-      `| Perps Market Account NFT | [${
-        perpsFactory.contracts.AccountProxy.address
-      }](${etherscanLink(
+    out.push(
+      `| Perps Market Account NFT | [${PerpsAccountNFT.address}](${etherscanLink(
         chainId,
-        perpsFactory.contracts.AccountProxy.address
-      )}) | [View/Download](./abis/${chainId}-PerpsAccountNFT.json) |\n`,
-      'utf8'
+        PerpsAccountNFT.address
+      )}) | [View/Download](./abis/${chainId}-${preset}-PerpsAccountNFT.json) |`
     );
   }
 
-  console.log(`Writing ${chainId}.md`);
-  // SNX token
+  // Fake SNX token
+  const configureFakeSnxCollateral =
+    deployments?.state?.['invoke.configureFakeSnxCollateral']?.artifacts?.txns
+      ?.configureFakeSnxCollateral;
+  const [fakeSnxCollateralConfiguredEvent] =
+    configureFakeSnxCollateral?.events?.CollateralConfigured ?? [];
+  const [fakeSnxAddress] = fakeSnxCollateralConfiguredEvent?.args ?? [];
+  if (fakeSnxAddress) {
+    out.push(
+      `| Fake SNX Token | [${fakeSnxAddress}](${etherscanLink(
+        chainId,
+        fakeSnxAddress
+      )}) | _ERC-20 compliant_ |`
+    );
+  }
+
+  // Real SNX token
   const configureSnxCollateral =
     deployments?.state?.['invoke.configureSnxCollateral']?.artifacts?.txns?.configureSnxCollateral;
   const [snxCollateralConfiguredEvent] = configureSnxCollateral?.events?.CollateralConfigured ?? [];
   const [snxAddress] = snxCollateralConfiguredEvent?.args ?? [];
   if (snxAddress) {
-    await fs.appendFile(
-      `./docs/${chainId}.md`,
-      `| SNX Token | [${snxAddress}](${etherscanLink(
-        chainId,
-        snxAddress
-      )}) | _ERC-20 compliant_ |\n`,
-      'utf8'
+    out.push(
+      `| SNX Token | [${snxAddress}](${etherscanLink(chainId, snxAddress)}) | _ERC-20 compliant_ |`
     );
   }
+
+  console.log(`Writing ${chainId}-${preset}.md`);
+  //  await fs.writeFile(`./docs/${chainId}-${preset}.md`, out.join('\n'), );
+  await fs.writeFile(`./docs/${chainId}-${preset}.md`, await prettyMd(out.join('\n')));
 }
 
 run();
