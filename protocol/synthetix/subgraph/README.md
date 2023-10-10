@@ -17,7 +17,7 @@ abis:
 yarn deployments
 
 # 2. generate the networks.json file
-yarn codegen
+yarn subgraphgen
 ```
 
 ## Testing the subgraph

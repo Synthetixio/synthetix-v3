@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Position} from "./Position.sol";
@@ -23,11 +24,15 @@ library PerpsMarket {
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
+    /**
+     * @notice Thrown when attempting to create a market that already exists or invalid id was passed in
+     */
     error InvalidMarket(uint128 marketId);
 
+    /**
+     * @notice Thrown when attempting to load a market without a configured price feed
+     */
     error PriceFeedNotSet(uint128 marketId);
-
-    error MarketAlreadyExists(uint128 marketId);
 
     struct Data {
         string name;
@@ -105,7 +110,7 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         // if endorsedLiquidator is configured and is the sender, allow full liquidation
-        if (msg.sender == marketConfig.endorsedLiquidator) {
+        if (ERC2771Context._msgSender() == marketConfig.endorsedLiquidator) {
             _updateLiquidationData(self, requestedLiquidationAmount);
             return requestedLiquidationAmount;
         }

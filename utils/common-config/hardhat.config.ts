@@ -101,6 +101,9 @@ const config = {
   cannon: {
     publicSourceCode: true,
   },
+  typechain: {
+    target: 'ethers-v5',
+  },
 };
 
 export default config;

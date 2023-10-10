@@ -11,7 +11,7 @@ describe('Create Market test', () => {
     token = 'snxETH',
     price = bn(1000);
 
-  const { systems, signers, owner, restore, trader1 } = bootstrapMarkets({
+  const { systems, signers, owner, restore, trader1, superMarketId } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [], // don't create a market in bootstrap
     traderAccountIds: [2, 3],
@@ -47,6 +47,13 @@ describe('Create Market test', () => {
         assert.equal(metadata.name, name);
         assert.equal(metadata.symbol, token);
       });
+
+      it('reverts attempting to create the same market again', async () => {
+        await assertRevert(
+          systems().PerpsMarket.createMarket(marketId, name, token),
+          `InvalidMarket("${marketId.toString()}")`
+        );
+      });
     });
 
     describe('after market is created', () => {
@@ -59,6 +66,36 @@ describe('Create Market test', () => {
           tx,
           `MaxMarketSizeSet(${marketId}, ${bn(99999999).toString()})`,
           systems().PerpsMarket
+        );
+      });
+    });
+  });
+
+  describe('market initialization with invalid parameters', async () => {
+    before(restore);
+    const marketId = BigNumber.from(25);
+
+    before('create perps market', async () => {
+      await systems().PerpsMarket.connect(owner()).createMarket(marketId, name, token);
+    });
+
+    describe('attempt to add a settlement strategy with 0 secs window duration', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(owner())
+            .addSettlementStrategy(marketId, {
+              strategyType: 0,
+              settlementDelay: 5,
+              settlementWindowDuration: 0,
+              priceWindowDuration: 120,
+              priceVerificationContract: ethers.constants.AddressZero,
+              feedId: ethers.constants.HashZero,
+              url: '',
+              disabled: false,
+              settlementReward: bn(5),
+            }),
+          'InvalidSettlementWindowDuration("0")'
         );
       });
     });
@@ -129,7 +166,6 @@ describe('Create Market test', () => {
             url: '',
             disabled: false,
             settlementReward: bn(5),
-            priceDeviationTolerance: bn(0.01),
           });
       });
 
@@ -227,28 +263,23 @@ describe('Create Market test', () => {
     before(restore);
 
     describe('attempt to do it with non-owner', () => {
-      it('reverts setting synthetix', async () => {
+      it('reverts setting market name', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(randomAccount).setSynthetix(ethers.constants.AddressZero),
-          'Unauthorized'
-        );
-      });
-
-      it('reverts setting spot market', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(randomAccount).setSpotMarket(ethers.constants.AddressZero),
+          systems().PerpsMarket.connect(randomAccount).setPerpsMarketName('NewSuperMarket'),
           'Unauthorized'
         );
       });
     });
 
     describe('from owner', () => {
-      it('can set synthetix', async () => {
-        await systems().PerpsMarket.connect(owner()).setSynthetix(systems().Core.address);
+      before('set a new market name', async () => {
+        await systems().PerpsMarket.connect(owner()).setPerpsMarketName('NewSuperMarket');
       });
-
-      it('can set spot market', async () => {
-        await systems().PerpsMarket.connect(owner()).setSpotMarket(systems().SpotMarket.address);
+      it('market name was updated', async () => {
+        assert.equal(
+          await systems().PerpsMarket.name(superMarketId()),
+          'NewSuperMarket Perps Market'
+        );
       });
     });
   });

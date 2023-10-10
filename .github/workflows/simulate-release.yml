@@ -54,7 +54,7 @@ jobs:
             cannonPackage: "synthetix-spot-market"
             impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
             proxy: "InitialProxy"
-            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+            chains: "optimistic-mainnet optimistic-goerli"
 
           #          - workspace: "@synthetixio/perps-market"
           #            cannonPackage: "synthetix-perps-market"

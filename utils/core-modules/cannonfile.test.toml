@@ -55,63 +55,47 @@ artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreRouter.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreRouter"]
 salt = "<%= settings.salt %>"
-depends = ["router.CoreRouter"]
 
 # Core Router
 [router.CoreRouter]
 contracts = ["CoreModule"]
-depends = ["contract.CoreModule"]
 
 # AssociatedSystemsModule Router
 [router.AssociatedSystemsModuleRouter]
 contracts = ["CoreModule", "AssociatedSystemsModule"]
-depends = ["contract.CoreModule", "contract.AssociatedSystemsModule"]
 
 # TokenModule Router
 [router.TokenModuleRouter]
 contracts = ["CoreModule", "TokenModule"]
-depends = ["contract.CoreModule", "contract.TokenModule"]
 
 [router.TokenModuleRouter2]
 contracts = ["CoreModule", "TokenModule"]
 salt = "second"
-depends = ["contract.CoreModule", "contract.TokenModule"]
 
 [router.TokenModuleRouter3]
 contracts = ["CoreModule", "TokenModule"]
 salt = "third"
-depends = ["contract.CoreModule", "contract.TokenModule"]
 
 # DecayTokenModule Router
 [router.DecayTokenModuleRouter]
 contracts = ["CoreModule", "DecayTokenModule"]
-depends = ["contract.CoreModule", "contract.DecayTokenModule"]
 
 # Sample Router
 [router.SampleRouter]
 contracts = ["CoreModule", "SampleOwnedModule"]
-depends = ["contract.CoreModule", "contract.SampleOwnedModule"]
 
 # NftModule Router ( we need multiple for tests)
 [router.NftModuleRouter]
 contracts = ["CoreModule", "NftModule"]
-depends = ["contract.CoreModule", "contract.NftModule"]
 
 [router.NftModuleRouter2]
 contracts = ["CoreModule", "NftModule"]
 salt = "second"
-depends = ["contract.CoreModule", "contract.NftModule"]
 
 [router.NftModuleRouter3]
 contracts = ["CoreModule", "NftModule"]
 salt = "third"
-depends = ["contract.CoreModule", "contract.NftModule"]
 
 # FeatureFlagModule Router
 [router.FeatureFlagModuleRouter]
 contracts = ["CoreModule", "FeatureFlagModule", "SampleFeatureFlagModule"]
-depends = [
-    "contract.CoreModule",
-    "contract.FeatureFlagModule",
-    "contract.SampleFeatureFlagModule"
-]

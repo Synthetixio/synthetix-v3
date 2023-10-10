@@ -47,4 +47,17 @@ interface IUtilsModule is IERC165 {
      * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
      */
     function configureUsdTokenChainlink(address ccipRouter, address ccipTokenPool) external;
+
+    /**
+     * @notice Checks if the address is the trusted forwarder
+     * @param forwarder The address to check
+     * @return Whether the address is the trusted forwarder
+     */
+    function isTrustedForwarder(address forwarder) external pure returns (bool);
+
+    /**
+     * @notice Provides the address of the trusted forwarder
+     * @return Address of the trusted forwarder
+     */
+    function getTrustedForwarder() external pure returns (address);
 }

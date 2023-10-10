@@ -17,7 +17,6 @@ const pythSettlementStrategy = {
   feedId,
   url: 'https://xc-testnet.pyth.network/api/get_vaa_ccip?data={data}',
   settlementReward: bn(5),
-  priceDeviationTolerance: bn(1000),
   disabled: false,
   minimumUsdExchangeAmount: bn(0.000001),
   maxRoundingLoss: bn(0.000001),

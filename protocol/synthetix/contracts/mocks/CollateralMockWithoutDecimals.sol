@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+
 contract CollateralMockWithoutDecimals {
     bytes32 private constant _SLOT_ERC20_STORAGE =
         keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
@@ -33,7 +35,7 @@ contract CollateralMockWithoutDecimals {
     }
 
     function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
+        _burn(ERC2771Context._msgSender(), amount);
     }
 
     function mint(address recipient, uint256 amount) external {
@@ -67,26 +69,26 @@ contract CollateralMockWithoutDecimals {
     }
 
     function approve(address spender, uint256 amount) public returns (bool) {
-        _approve(msg.sender, spender, amount);
+        _approve(ERC2771Context._msgSender(), spender, amount);
         return true;
     }
 
     function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
-        uint256 currentAllowance = load().allowance[msg.sender][spender];
-        _approve(msg.sender, spender, currentAllowance + addedValue);
+        uint256 currentAllowance = load().allowance[ERC2771Context._msgSender()][spender];
+        _approve(ERC2771Context._msgSender(), spender, currentAllowance + addedValue);
 
         return true;
     }
 
     function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
-        uint256 currentAllowance = load().allowance[msg.sender][spender];
-        _approve(msg.sender, spender, currentAllowance - subtractedValue);
+        uint256 currentAllowance = load().allowance[ERC2771Context._msgSender()][spender];
+        _approve(ERC2771Context._msgSender(), spender, currentAllowance - subtractedValue);
 
         return true;
     }
 
     function transfer(address to, uint256 amount) public returns (bool) {
-        _transfer(msg.sender, to, amount);
+        _transfer(ERC2771Context._msgSender(), to, amount);
 
         return true;
     }
@@ -98,13 +100,13 @@ contract CollateralMockWithoutDecimals {
     function _transferFrom(address from, address to, uint256 amount) internal returns (bool) {
         Data storage store = load();
 
-        uint256 currentAllowance = store.allowance[from][msg.sender];
+        uint256 currentAllowance = store.allowance[from][ERC2771Context._msgSender()];
         if (currentAllowance < amount) {
             revert InsufficientAllowance(amount, currentAllowance);
         }
 
         unchecked {
-            store.allowance[from][msg.sender] -= amount;
+            store.allowance[from][ERC2771Context._msgSender()] -= amount;
         }
 
         _transfer(from, to, amount);

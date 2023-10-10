@@ -13,10 +13,7 @@
   "command": {
     "version": {
       "allowBranch": [
-        "main",
-        "lerna",
-        "teleporters",
-        "feature/3.3.4"
+        "main"
       ]
     }
   }
