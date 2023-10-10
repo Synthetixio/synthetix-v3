@@ -3,9 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: "16.20.1"
-    # TODO: update to Node 18 when we get fresh hardhat
-    # default: "18.17.1"
+    default: "18.18.0"
 
 commands:
   yarn-install:
