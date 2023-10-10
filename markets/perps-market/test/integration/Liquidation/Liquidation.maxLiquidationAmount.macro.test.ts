@@ -23,7 +23,7 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
           minimumInitialMarginRatio: bn(0),
           maintenanceMarginScalar: bn(0.66),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
-          liquidationRewardRatio: bn(0.05),
+          liquidationRewardRatio: bn(0.01),
           // time window 30 seconds
           maxSecondsInLiquidationWindow: ethers.BigNumber.from(30),
           minimumPositionMargin: bn(0),
@@ -43,7 +43,7 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
 
   before('add collateral to margin', async () => {
     await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(900));
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(3400));
+    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(3500));
   });
 
   before('open position', async () => {

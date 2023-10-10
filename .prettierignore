@@ -24,3 +24,7 @@ lerna.json
 **/cache/
 **/docs/
 **/tests/.latest.json
+
+utils/docgen/deployments/
+utils/docgen/abis/
+utils/docgen/docs/

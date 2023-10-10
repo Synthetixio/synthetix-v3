@@ -1,26 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
-import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 
 interface IAsyncOrderSettlementModule {
-    /**
-     * @notice Gets thrown when settle order is called with invalid settlement strategy.
-     */
-    error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
-    /**
-     * @notice Gets thrown when settle order is called as a signal to the client to perform offchain lookup.
-     */
-    error OffchainLookup(
-        address sender,
-        string[] urls,
-        bytes callData,
-        bytes4 callbackFunction,
-        bytes extraData
-    );
-
     /**
      * @notice Gets fired when a new order is settled.
      * @param marketId Id of the market used for the trade.

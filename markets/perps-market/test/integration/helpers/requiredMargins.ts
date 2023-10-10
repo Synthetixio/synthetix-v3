@@ -23,6 +23,6 @@ export const requiredMargins = (config: Config, size: Wei, price: Wei, skewScale
   };
 };
 
-export const getMaxLiquidationReward = (reward: Wei, min: Wei, max: Wei) => {
-  return Wei.min(Wei.max(reward, min), max);
+export const getRequiredLiquidationRewardMargin = (reward: Wei, min: Wei) => {
+  return Wei.max(reward, min);
 };
