@@ -668,13 +668,13 @@ workflows:
           name: "test-spot-market"
           requires: [build-testable]
           workspace: "@synthetixio/spot-market"
-          parallelism: 1
+          parallelism: 2
 
       - test-contracts:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 5
+          parallelism: 7
 
       #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"
