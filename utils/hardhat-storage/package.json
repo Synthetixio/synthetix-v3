@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "3.3.4",
+  "version": "3.3.3-dev.9b6781de",
   "publishConfig": {
     "access": "public"
   },
@@ -31,7 +31,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/core-utils": "3.3.3-dev.9b6781de",
     "mustache": "^4.2.0",
     "solidity-ast": "^0.4.52"
   },
@@ -43,5 +43,5 @@
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "9b6781de293b7939f72f5d1f3607f5da12ab7fa4"
 }

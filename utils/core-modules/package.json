@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "3.3.4",
+  "version": "3.3.3-dev.9b6781de",
   "publishConfig": {
     "access": "public"
   },
@@ -21,11 +21,11 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/common-config": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-utils": "3.3.3-dev.9b6781de",
     "@synthetixio/router": "^3.3.0",
     "ethers": "^5.7.2",
     "hardhat": "^2.17.4"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "9b6781de293b7939f72f5d1f3607f5da12ab7fa4"
 }

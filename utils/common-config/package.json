@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/common-config",
-  "version": "3.3.4",
+  "version": "3.3.3-dev.9b6781de",
   "publishConfig": {
     "access": "public"
   },
@@ -12,7 +12,7 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
-    "@synthetixio/hardhat-storage": "workspace:*",
+    "@synthetixio/hardhat-storage": "3.3.3-dev.9b6781de",
     "@typechain/ethers-v5": "^11.1.1",
     "@typechain/hardhat": "^9.0.0",
     "dotenv": "^16.3.1",
@@ -24,7 +24,7 @@
     "solidity-coverage": "^0.8.5",
     "typechain": "^8.3.1"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec",
+  "gitHead": "9b6781de293b7939f72f5d1f3607f5da12ab7fa4",
   "depcheck": {
     "ignoreMatches": [
       "@typechain/ethers-v5"

@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.3.4",
+  "version": "3.3.3-dev.9b6781de",
   "description": "Perps Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -23,15 +23,15 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-contracts": "workspace:*",
-    "@synthetixio/core-modules": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/main": "workspace:*",
-    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/common-config": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-contracts": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-modules": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-utils": "3.3.3-dev.9b6781de",
+    "@synthetixio/docgen": "1.0.0",
+    "@synthetixio/main": "3.3.3-dev.9b6781de",
+    "@synthetixio/oracle-manager": "3.3.3-dev.9b6781de",
     "@synthetixio/router": "^3.3.0",
-    "@synthetixio/spot-market": "workspace:*",
+    "@synthetixio/spot-market": "3.3.3-dev.9b6781de",
     "@synthetixio/wei": "^2.74.4",
     "@usecannon/cli": "2.8.1",
     "ethers": "^5.7.2",
@@ -40,5 +40,5 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "9b6781de293b7939f72f5d1f3607f5da12ab7fa4"
 }

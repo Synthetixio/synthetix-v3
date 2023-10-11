@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.3.4",
+  "version": "3.3.3-dev.9b6781de",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -24,12 +24,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-contracts": "workspace:*",
-    "@synthetixio/core-modules": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/common-config": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-contracts": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-modules": "3.3.3-dev.9b6781de",
+    "@synthetixio/core-utils": "3.3.3-dev.9b6781de",
+    "@synthetixio/docgen": "1.0.0",
+    "@synthetixio/oracle-manager": "3.3.3-dev.9b6781de",
     "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
@@ -38,5 +38,5 @@
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.1"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "9b6781de293b7939f72f5d1f3607f5da12ab7fa4"
 }
