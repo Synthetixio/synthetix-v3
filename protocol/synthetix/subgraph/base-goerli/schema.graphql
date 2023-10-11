@@ -164,6 +164,8 @@ type RewardsDistributor @entity {
   updated_at_block: BigInt!
   pool: Pool!
   isActive: Boolean!
+  rewards_distributions: [RewardsDistribution!]!
+    @derivedFrom(field: "distributor")
 }
 
 type RewardsDistribution @entity {

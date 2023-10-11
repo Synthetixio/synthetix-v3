@@ -1788,6 +1788,14 @@ export class RewardsDistributor extends Entity {
   set isActive(value: boolean) {
     this.set('isActive', Value.fromBoolean(value));
   }
+
+  get rewards_distributions(): RewardsDistributionLoader {
+    return new RewardsDistributionLoader(
+      'RewardsDistributor',
+      this.get('id')!.toString(),
+      'rewards_distributions'
+    );
+  }
 }
 
 export class RewardsDistribution extends Entity {
@@ -2689,5 +2697,23 @@ export class MarketSnapshotByWeekLoader extends Entity {
   load(): MarketSnapshotByWeek[] {
     let value = store.loadRelated(this._entity, this._id, this._field);
     return changetype<MarketSnapshotByWeek[]>(value);
+  }
+}
+
+export class RewardsDistributionLoader extends Entity {
+  _entity: string;
+  _field: string;
+  _id: string;
+
+  constructor(entity: string, id: string, field: string) {
+    super();
+    this._entity = entity;
+    this._id = id;
+    this._field = field;
+  }
+
+  load(): RewardsDistribution[] {
+    let value = store.loadRelated(this._entity, this._id, this._field);
+    return changetype<RewardsDistribution[]>(value);
   }
 }
