@@ -113,11 +113,9 @@ export const bootstrapPerpsMarkets = (
     }) => {
       let oracleNodeId: string, aggregator: AggregatorV3Mock;
       before('create perps price nodes', async () => {
-        console.log('creating perps price node');
         const results = await createOracleNode(r.owner(), price, contracts.OracleManager);
         oracleNodeId = results.oracleNodeId;
         aggregator = results.aggregator;
-        console.log('creating perps price node - done');
       });
 
       before(`create perps market ${name}`, async () => {
