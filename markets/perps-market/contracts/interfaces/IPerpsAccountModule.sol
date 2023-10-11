@@ -44,7 +44,7 @@ interface IPerpsAccountModule {
     ) external view returns (uint256);
 
     /**
-     * @notice Gets the account's active synth ids
+     * @notice Gets the account's collaterals ids
      * @param accountId Id of the account.
      */
     function getAccounthCollateralIds(uint128 accountId) external view returns (uint256[] memory);
