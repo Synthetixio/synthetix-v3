@@ -997,6 +997,39 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@foundry-rs/easy-foundryup@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "@foundry-rs/easy-foundryup@npm:0.1.3"
+  dependencies:
+    command-exists: ^1.2.9
+    ts-interface-checker: ^0.1.9
+  checksum: 479af448f079f588dda2a693ef70cebeacd98ccd53b6bf2636eb6eb4dd5cdbdc70ee09ac48c76bf58846bc0c07692931765c9fbd6974e20c91b70e25467de0cb
+  languageName: node
+  linkType: hard
+
+"@foundry-rs/hardhat-anvil@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "@foundry-rs/hardhat-anvil@npm:0.1.7"
+  dependencies:
+    "@foundry-rs/easy-foundryup": ^0.1.3
+    "@nomiclabs/hardhat-ethers": ^2.0.0
+    "@nomiclabs/hardhat-waffle": ^2.0.0
+    "@types/sinon-chai": ^3.2.3
+    "@types/web3": 1.0.19
+    chalk: ^2.4.2
+    debug: ^4.1.1
+    ethers: ^5.0.0
+    fs-extra: ^7.0.1
+    ts-interface-checker: ^0.1.9
+  peerDependencies:
+    "@nomiclabs/hardhat-ethers": ^2.0.0
+    ethereum-waffle: ^3.2.0
+    ethers: ^5.0.0
+    hardhat: ^2.0.0
+  checksum: 9d40c6f69bb0105de53b32bfe035dbe0e723b3591499117f20710303623a38ab55d4687ff88869bca62a5b93f994e5a3aadd6b610731eef4fe8fd5d84c973bcd
+  languageName: node
+  linkType: hard
+
 "@graphprotocol/graph-cli@npm:^0.58.0":
   version: 0.58.0
   resolution: "@graphprotocol/graph-cli@npm:0.58.0"
@@ -1974,7 +2007,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nomiclabs/hardhat-ethers@npm:^2.2.3":
+"@nomiclabs/hardhat-ethers@npm:^2.0.0, @nomiclabs/hardhat-ethers@npm:^2.2.3":
   version: 2.2.3
   resolution: "@nomiclabs/hardhat-ethers@npm:2.2.3"
   peerDependencies:
@@ -2001,6 +2034,19 @@ __metadata:
   peerDependencies:
     hardhat: ^2.0.4
   checksum: 32d74e567e78a940a79cbe49c5dee0eb5cda0a4c0c34a9badfaf13d45e6054d9e717c28b8d2b0b20f29721a484af15a52d391fb60768222c4b13de92ef0f72b3
+  languageName: node
+  linkType: hard
+
+"@nomiclabs/hardhat-waffle@npm:^2.0.0":
+  version: 2.0.6
+  resolution: "@nomiclabs/hardhat-waffle@npm:2.0.6"
+  peerDependencies:
+    "@nomiclabs/hardhat-ethers": ^2.0.0
+    "@types/sinon-chai": ^3.2.3
+    ethereum-waffle: "*"
+    ethers: ^5.0.0
+    hardhat: ^2.0.0
+  checksum: e43592b135739c7f077a9d0a38a479a5512000e58f91d684e6a0d4f0894f8f826821d0b637e2cd7b646669ba12300fcb5e180bcc2473f5cc67d55f44ab809770
   languageName: node
   linkType: hard
 
@@ -2801,10 +2847,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-modules@workspace:utils/core-modules"
   dependencies:
+    "@foundry-rs/easy-foundryup": ^0.1.3
+    "@foundry-rs/hardhat-anvil": ^0.1.7
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/router": ^3.3.0
+    "@types/debug": ^4.1.9
     ethers: ^5.7.2
+    get-port: ^7.0.0
     hardhat: ^2.17.4
   languageName: unknown
   linkType: soft
@@ -3235,6 +3285,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bn.js@npm:*":
+  version: 5.1.2
+  resolution: "@types/bn.js@npm:5.1.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: 8d9fdb43836646c2ecd445041de03e057f9b459885be57faee64104160487a63730b9f371e8ad7d33f360b3cc6dc0e323543962fc5fa296b92b322b946732be0
+  languageName: node
+  linkType: hard
+
 "@types/bn.js@npm:^4.11.3":
   version: 4.11.6
   resolution: "@types/bn.js@npm:4.11.6"
@@ -3250,6 +3309,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: e50ed2dd3abe997e047caf90e0352c71e54fc388679735217978b4ceb7e336e51477791b715f49fd77195ac26dd296c7bad08a3be9750e235f9b2e1edb1b51c2
+  languageName: node
+  linkType: hard
+
+"@types/chai@npm:*":
+  version: 4.3.7
+  resolution: "@types/chai@npm:4.3.7"
+  checksum: 51dfd9322444a8ac42785e8aec2e541babc32774098d2be480ceb19fabfc19c44a0ff4b37c4f509badf3931ae4e250728c6e0ec2def2f07496fe8e72c4d83404
   languageName: node
   linkType: hard
 
@@ -3277,6 +3343,15 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: fe81351470f2d3165e8b12ce33542eef89ea893e36dd62e8f7d72566dfb7e448376ae962f9f3ea888547ce8b55a40020ca0e01d637fab5d99567673084542641
+  languageName: node
+  linkType: hard
+
+"@types/debug@npm:^4.1.9":
+  version: 4.1.9
+  resolution: "@types/debug@npm:4.1.9"
+  dependencies:
+    "@types/ms": "*"
+  checksum: e88ee8b19d106f33eb0d3bc58bacff9702e98d821fd1ebd1de8942e6b97419e19a1ccf39370f1764a1dc66f79fd4619f3412e1be6eeb9f0b76412f5ffe4ead93
   languageName: node
   linkType: hard
 
@@ -3410,6 +3485,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/ms@npm:*":
+  version: 0.7.32
+  resolution: "@types/ms@npm:0.7.32"
+  checksum: 610744605c5924aa2657c8a62d307052af4f0e38e2aa015f154ef03391fabb4fd903f9c9baacb41f6e5798b8697e898463c351e5faf638738603ed29137b5254
+  languageName: node
+  linkType: hard
+
 "@types/mustache@npm:^4.2.3":
   version: 4.2.3
   resolution: "@types/mustache@npm:4.2.3"
@@ -3535,10 +3617,53 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/sinon-chai@npm:^3.2.3":
+  version: 3.2.10
+  resolution: "@types/sinon-chai@npm:3.2.10"
+  dependencies:
+    "@types/chai": "*"
+    "@types/sinon": "*"
+  checksum: 72e1f4e4622fba57d59f482ce421a7493e26baeea7bdc57a13e4ec93af62122188f9ea14c7b16e33d0e5a198c7d5df4651401c763071f114aebdc1893e03179e
+  languageName: node
+  linkType: hard
+
+"@types/sinon@npm:*":
+  version: 10.0.19
+  resolution: "@types/sinon@npm:10.0.19"
+  dependencies:
+    "@types/sinonjs__fake-timers": "*"
+  checksum: 79cab4cfc618a37a11e519795a297aa641b30eb05e2d2c7a9b03f40845b54ef631af80bddbef3e57dcd4be6c67bd78dce5210ea9860617d870f1d365c78468b6
+  languageName: node
+  linkType: hard
+
+"@types/sinonjs__fake-timers@npm:*":
+  version: 8.1.3
+  resolution: "@types/sinonjs__fake-timers@npm:8.1.3"
+  checksum: d4bac3c1b8d544ac7a57edac3fbf402b055d6401b2f8504fc83908aa40682c71c8ba260c52db29c7a6e72932751c653a0f5185bdb18530534ac50c86425b5cb8
+  languageName: node
+  linkType: hard
+
 "@types/stack-utils@npm:^2.0.0":
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
   checksum: 205fdbe3326b7046d7eaf5e494d8084f2659086a266f3f9cf00bccc549c8e36e407f88168ad4383c8b07099957ad669f75f2532ed4bc70be2b037330f7bae019
+  languageName: node
+  linkType: hard
+
+"@types/underscore@npm:*":
+  version: 1.11.11
+  resolution: "@types/underscore@npm:1.11.11"
+  checksum: 56fbd04305d0982178f32fd4adcfcf6012f75005a3cf2e33eca7f0bf99dadc31c6c8c4884cb0d3896af16c4e06ccf02810305e970899d4766ec2760b19f61511
+  languageName: node
+  linkType: hard
+
+"@types/web3@npm:1.0.19":
+  version: 1.0.19
+  resolution: "@types/web3@npm:1.0.19"
+  dependencies:
+    "@types/bn.js": "*"
+    "@types/underscore": "*"
+  checksum: 25a78e80052cca8abe5edf15c0ae92854d00d1bec15283486a2535ab673345b0be090e39cc9a86822be17ddd812fa76cbfd869be21bb944d2faaf2922e2a836a
   languageName: node
   linkType: hard
 
@@ -5619,7 +5744,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"command-exists@npm:^1.2.8":
+"command-exists@npm:^1.2.8, command-exists@npm:^1.2.9":
   version: 1.2.9
   resolution: "command-exists@npm:1.2.9"
   checksum: 729ae3d88a2058c93c58840f30341b7f82688a573019535d198b57a4d8cb0135ced0ad7f52b591e5b28a90feb2c675080ce916e56254a0f7c15cb2395277cac3
@@ -7138,7 +7263,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^5.7.1, ethers@npm:^5.7.2":
+"ethers@npm:^5.0.0, ethers@npm:^5.7.1, ethers@npm:^5.7.2":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -8003,6 +8128,13 @@ __metadata:
   version: 3.2.0
   resolution: "get-port@npm:3.2.0"
   checksum: 31f530326569683ac4b7452eb7573c40e9dbe52aec14d80745c35475261e6389160da153d5b8ae911150b4ce99003472b30c69ba5be0cedeaa7865b95542d168
+  languageName: node
+  linkType: hard
+
+"get-port@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "get-port@npm:7.0.0"
+  checksum: e9087f62d086bbb70f20c0a208e7cac552679c1426e29e0607eb1b8907a5cc4509337d5971b7f635385cd2a773a14cd21b7d9c3254a2eb5ebeaf5f8fde19fb07
   languageName: node
   linkType: hard
 
@@ -15587,6 +15719,13 @@ __metadata:
   peerDependencies:
     typescript: ">=3.7.0"
   checksum: 74d75868acf7f8b95e447d8b3b7442ca21738c6894e576df9917a352423fde5eb43c5651da5f78997da6061458160ae1f6b279150b42f47ccc58b73e55acaa2f
+  languageName: node
+  linkType: hard
+
+"ts-interface-checker@npm:^0.1.9":
+  version: 0.1.13
+  resolution: "ts-interface-checker@npm:0.1.13"
+  checksum: 20c29189c2dd6067a8775e07823ddf8d59a33e2ffc47a1bd59a5cb28bb0121a2969a816d5e77eda2ed85b18171aa5d1c4005a6b88ae8499ec7cc49f78571cb5e
   languageName: node
   linkType: hard
 
