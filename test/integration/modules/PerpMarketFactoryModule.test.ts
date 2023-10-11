@@ -515,6 +515,50 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should expect debt to be calculated correctly (concrete)');
 
+    it('should incur debt when a profitable position exits and withdraws all', async () => {
+      const { PerpMarketProxy, Core } = systems();
+
+      const orderSide = genSide();
+      const marginUsdDepositAmount = 10_000;
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: marginUsdDepositAmount })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredLeverage: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // 10% Profit meaning there _must_ be some debt incurred after everything is withdrawn.
+      const newMarketOraclePrice = wei(openOrder.oraclePrice)
+        .mul(orderSide === 1 ? 1.1 : 0.9)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Close out the position with profit.
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      // Verify there is no position.
+      assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
+
+      // Withdraw all collateral out of perp market.
+      await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
+      // Note reportedDebt is ZERO however total market debt is gt 0.
+      const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+      assertBn.isZero(reportedDebt);
+
+      // Market reportable debt includes issued sUSD paid out to the trader.
+      const totalMarketDebt = await Core.getMarketTotalDebt(marketId);
+      assertBn.gt(totalMarketDebt, 0);
+      assertBn.lt(totalMarketDebt, bn(marginUsdDepositAmount));
+    });
+
     it('should incur debt when trader is paid funding to hold position');
 
     it('should incur credit when trader pays funding to hold position');
