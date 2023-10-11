@@ -27,19 +27,19 @@ export function bootstrapTraders(data: Data) {
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
-        trader1.getAddress()
+        await trader1.getAddress()
       );
     await systems()
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
-        trader2.getAddress()
+        await trader2.getAddress()
       );
     await systems()
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
-        trader3.getAddress()
+        await trader3.getAddress()
       );
   });
 
