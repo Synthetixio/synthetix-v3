@@ -57,7 +57,7 @@ export const createStakedPool = (
       .createPool(poolId, await r.owner().getAddress());
   });
 
-  before('stake', async function () {
+  before('stake', async () => {
     const [, staker] = r.signers();
     await stake(
       { Core: r.systems().Core, CollateralMock: r.systems().CollateralMock },
