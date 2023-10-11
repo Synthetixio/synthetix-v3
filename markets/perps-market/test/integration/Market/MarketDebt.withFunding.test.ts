@@ -55,15 +55,15 @@ describe('Market Debt - with funding', () => {
   });
 
   before('add collateral to margin', async () => {
-    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(10_000));
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(12_000));
+    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(12_000));
     await systems().PerpsMarket.connect(trader3()).modifyCollateral(4, 0, bn(100_000));
   });
 
   describe('with no positions', () => {
     it('should report total collateral value as debt', async () => {
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.equal(debt, bn(120_000));
+      assertBn.equal(debt, bn(124_000));
     });
   });
 
