@@ -204,10 +204,15 @@ library RewardDistribution {
             // Determine how much was previously distributed.
             // If the last update is zero, then nothing was distributed,
             // otherwise the amount is proportional to the time elapsed since the start.
-            int256 lastUpdateDistributedD18 = self.lastUpdate < self.start
-                ? SafeCastI128.zero()
-                : (self.scheduledValueD18 * (self.lastUpdate - self.start).toInt()) /
+            int256 lastUpdateDistributedD18 = 0;
+
+            if (self.lastUpdate >= self.start) {
+                // solhint-disable numcast/safe-cast
+                lastUpdateDistributedD18 =
+                    (int256(self.scheduledValueD18) * (self.lastUpdate - self.start).toInt()) /
                     self.duration.toInt();
+                // solhint-enable numcast/safe-cast
+            }
 
             // If the current time is beyond the duration, then consider all scheduled value to be distributed.
             // Else, the amount distributed is proportional to the elapsed time.
