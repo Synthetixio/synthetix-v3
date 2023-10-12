@@ -630,20 +630,23 @@ describe('MarginModule', async () => {
         // Store balance to compare later.
         const balanceBefore = await collateral.contract.balanceOf(traderAddress);
 
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.synthMarket.marketId(),
-          withdrawAmount.mul(-1).toBN()
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarket.marketId(),
+              withdrawAmount.mul(-1).toBN()
+            ),
+          provider()
         );
-
         const marginWithdrawEventProperties = [
           `"${PerpMarketProxy.address}"`,
           `"${traderAddress}"`,
           withdrawAmount.toBN(),
           collateral.synthMarket.marketId(),
         ].join(', ');
-        await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
 
         const expectedBalanceAfter = wei(balanceBefore).add(withdrawAmount).toBN();
         const balanceAfter = await collateral.contract.balanceOf(traderAddress);
