@@ -1,6 +1,6 @@
 # (required) CCIP Router address (should be one of https://docs.chain.link/ccip/supported-networks/)
 [setting.ccip_router]
-defaultValue = "0xE561d5E02207fb5eB32cca20a699E0d8919a1476"
+defaultValue = "0x261c05167db67B2b619f9d312e0753f3721ad6E8"
 
 [invoke.set_supported_cross_chain_networks]
 target = ["CoreProxy"]

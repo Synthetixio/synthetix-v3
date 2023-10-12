@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils - Logic for satellite chains"
-version = "<%= package.version %>"
+version = "<%= package.version %>-sat"
 include = [
     "./tomls/proxy-base.toml",
     "./tomls/council-token.toml",
@@ -44,6 +44,6 @@ target = ["CoreProxy"]
 func = "initElectionModule"
 from = "<%= settings.owner %>"
 args = [
-    ["<%= settings.initial_council_member %>"],
     "<%= settings.initial_epoch_index %>",
+    ["<%= settings.initial_council_member %>"],
 ]

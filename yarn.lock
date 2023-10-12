@@ -2853,9 +2853,11 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/router": ^3.3.0
     "@types/debug": ^4.1.9
+    debug: ^4.3.4
     ethers: ^5.7.2
     get-port: ^7.0.0
     hardhat: ^2.17.4
+    p-event: ^6.0.0
   languageName: unknown
   linkType: soft
 
@@ -2944,6 +2946,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/router": ^3.3.0
+    "@usecannon/cli": 2.8.1
     hardhat: ^2.17.4
     solidity-docgen: ^0.6.0-beta.36
   languageName: unknown
@@ -12751,6 +12754,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-event@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "p-event@npm:6.0.0"
+  dependencies:
+    p-timeout: ^6.1.2
+  checksum: def3e49cd896fbf51264524959adf3f4542402541fda9c9681702308683df23bf0e75f7512db9509eeafe0bfef5d13b4eea0b6e13c6437766470caef01548654
+  languageName: node
+  linkType: hard
+
 "p-fifo@npm:^1.0.0":
   version: 1.0.0
   resolution: "p-fifo@npm:1.0.0"
@@ -12877,6 +12889,13 @@ __metadata:
   version: 5.1.0
   resolution: "p-timeout@npm:5.1.0"
   checksum: f5cd4e17301ff1ff1d8dbf2817df0ad88c6bba99349fc24d8d181827176ad4f8aca649190b8a5b1a428dfd6ddc091af4606835d3e0cb0656e04045da5c9e270c
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "p-timeout@npm:6.1.2"
+  checksum: 887b805eb72c217dbc3c55a60a7f3b89a46cab14f04af62224f253ec84716cbd0880758be13b35444a4fa12d64d37d4c8a300f0b12a57c004d289f0a574cfe91
   languageName: node
   linkType: hard
 

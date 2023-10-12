@@ -1,5 +1,4 @@
 import { AnvilServer } from '@foundry-rs/hardhat-anvil/dist/src/anvil-server';
-import { ethers } from 'ethers';
 
 interface Options {
   port?: number;
@@ -14,8 +13,7 @@ export async function launchAnvil(options: Options = {}) {
 
   const { port } = options;
   const server = await AnvilServer.launch({ launch: true, ...options }, false);
+  const rpcUrl = `http://127.0.0.1:${port}/`;
 
-  const provider = new ethers.providers.JsonRpcProvider(`http://127.0.0.1:${port}/`);
-
-  return { server, port, provider };
+  return { server, port, rpcUrl };
 }
