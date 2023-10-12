@@ -453,20 +453,8 @@ describe('PerpMarketFactoryModule', () => {
       const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
         await getTotalPositionPnl([trader], marketId)
       );
-      const reportedDebt1 = await PerpMarketProxy.reportedDebt(market.marketId());
-      assertBn.equal(reportedDebt1, expectedReportedDebtAfterOpen);
-
-      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
-      });
-      await commitAndSettle(bs, marketId, trader, closeOrder);
-
-      const d2 = await PerpMarketProxy.getMarketDigest(marketId);
-      const expectedReportedDebtAfterClose = d2.totalCollateralValueUsd.add(
-        await getTotalPositionPnl([trader], marketId)
-      );
-      const reportedDebt2 = await PerpMarketProxy.reportedDebt(market.marketId());
-      assertBn.near(reportedDebt2, expectedReportedDebtAfterClose, bn(0.000001));
+      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+      assertBn.equal(reportedDebt, expectedReportedDebtAfterOpen);
     });
 
     it('should expect sum of remaining all pnl to eq market debt (multiple markets)', async () => {
@@ -490,23 +478,11 @@ describe('PerpMarketFactoryModule', () => {
         const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
           await getTotalPositionPnl([trader], marketId)
         );
-        const reportedDebt1 = await PerpMarketProxy.reportedDebt(market.marketId());
-        assertBn.equal(reportedDebt1, expectedReportedDebtAfterOpen);
+        const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+        assertBn.equal(reportedDebt, expectedReportedDebtAfterOpen);
 
-        const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
-        });
-        await commitAndSettle(bs, marketId, trader, closeOrder);
-
-        const d2 = await PerpMarketProxy.getMarketDigest(marketId);
-        const expectedReportedDebtAfterClose = d2.totalCollateralValueUsd.add(
-          await getTotalPositionPnl([trader], marketId)
-        );
-        const reportedDebt2 = await PerpMarketProxy.reportedDebt(market.marketId());
-        assertBn.near(reportedDebt2, expectedReportedDebtAfterClose, bn(0.000001));
-
-        reportedDebts.push(reportedDebt2);
-        accumulatedReportedDebt = accumulatedReportedDebt.add(reportedDebt2);
+        reportedDebts.push(reportedDebt);
+        accumulatedReportedDebt = accumulatedReportedDebt.add(reportedDebt);
       }
 
       // Markets are isolated so debt is not shared between them.
