@@ -628,8 +628,6 @@ describe('RewardsManagerModule', function () {
         });
 
         it('returns no rewards remaining', async () => {
-          await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
-
           const rewardAmount = await systems()
             .Core.connect(user1)
             .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);

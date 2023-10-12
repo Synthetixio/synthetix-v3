@@ -166,11 +166,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
-        uint256 rewardAmount = 0;
-
-        rewardAmount += vault.getReward(accountId, rewardId);
-
-        return rewardAmount;
+        return vault.getReward(accountId, rewardId);
     }
 
     /**
