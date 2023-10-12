@@ -1,11 +1,7 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils - Logic for satellite chains"
 version = "<%= package.version %>-sat"
-include = [
-    "./tomls/proxy-base.toml",
-    "./tomls/council-token.toml",
-    "./tomls/ccip.toml",
-]
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
 [setting.initial_epoch_index]
 defaultValue = "0"

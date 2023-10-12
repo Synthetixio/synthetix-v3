@@ -18,18 +18,19 @@ export function integrationBootstrap() {
   before(`setup chains`, async function () {
     this.timeout(90000);
 
+    /// @dev: show logs with DEBUG=synthetix:core-modules:spawn
     const res = await Promise.all([
-      _spinCannonfile({
+      _spinNetwork({
         networkName: 'sepolia',
-        cannonfile: 'cannonfile.toml',
+        cannonfile: 'cannonfile.test.toml',
       }),
-      _spinCannonfile({
+      _spinNetwork({
         networkName: 'optimistic-goerli',
-        cannonfile: 'cannonfile.satellite.toml',
+        cannonfile: 'cannonfile.satellite.test.toml',
       }),
-      _spinCannonfile({
+      _spinNetwork({
         networkName: 'avalanche-fuji',
-        cannonfile: 'cannonfile.satellite.toml',
+        cannonfile: 'cannonfile.satellite.test.toml',
       }),
     ]);
 
@@ -39,7 +40,7 @@ export function integrationBootstrap() {
   return { chains };
 }
 
-async function _spinCannonfile({
+async function _spinNetwork({
   networkName,
   cannonfile,
 }: {
@@ -56,13 +57,17 @@ async function _spinCannonfile({
     throw new Error(`Invalid chainId on network ${networkName}`);
   }
 
+  console.log(`  Building: ${cannonfile} - Network: ${networkName}`);
+
   const { packageRef } = await cannonBuild({
     cannonfile,
     networkName,
     chainId,
     impersonate: ownerAddress,
-    wipe: false,
+    wipe: true,
   });
+
+  console.log(`  Running: ${packageRef} - Network: ${networkName}`);
 
   const { provider } = await cannonRun({
     networkName,

@@ -1,11 +1,7 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
-include = [
-    "./tomls/proxy-base.toml",
-    "./tomls/council-token.toml",
-    "./tomls/ccip.toml",
-]
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
 [setting.minimum_active_members]
 defaultValue = "1"

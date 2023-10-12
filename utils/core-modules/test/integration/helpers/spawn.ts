@@ -15,7 +15,13 @@ export async function spawn(cmd: string, args: string[] = [], opts: Options = {}
     env: { ...process.env, ...(opts.env || {}) },
   };
 
-  log(`Running: ${cmd} ${args.join(' ')}`);
+  const envs = opts.env
+    ? Object.entries(opts.env)
+        .map((e) => e.join('='))
+        .join(' ') + ' '
+    : '';
+
+  console.log(`  Spawn: ${envs}${cmd} ${args.join(' ')}`);
 
   const child = nodeSpawn(cmd, args, spawnOptions);
 

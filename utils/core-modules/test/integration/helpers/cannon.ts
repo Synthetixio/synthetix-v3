@@ -63,6 +63,10 @@ export async function cannonBuild(options: BuildOptions) {
     },
   });
 
+  if (!packageRef) {
+    throw new Error(`Could not build ${options.cannonfile} with --network ${options.networkName}`);
+  }
+
   node.server.kill();
 
   return { options, packageRef };
