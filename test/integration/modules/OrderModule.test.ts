@@ -208,9 +208,79 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when an existing position can be liquidated');
+    it('should revert when an existing position can be liquidated', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when an existing position is flagged for liquidation');
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Position is underwater but not flagged for liquidation.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order1.sizeDelta.mul(-1),
+      });
+      return assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd
+        ),
+        'CanLiquidatePosition()',
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when an existing position is flagged for liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      // Attempt to commit again. Expect a revert as the position has already flagged.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order1.sizeDelta.mul(-1),
+      });
+      return assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd
+        ),
+        'PositionFlagged()',
+        PerpMarketProxy
+      );
+    });
 
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
