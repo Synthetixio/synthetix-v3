@@ -164,13 +164,11 @@ library Vault {
             revert RewardDistributorNotFound();
         }
 
-        uint256 currentPending = dist.claimStatus[accountId].pendingSendD18;
         uint256 currentRewardPerShare = dist.rewardPerShareD18;
 
         currentRewardPerShare += dist.getEntry(totalSharesD18).toUint().to128();
 
-        currentPending +=
-            currentPending +
+        uint256 currentPending = dist.claimStatus[accountId].pendingSendD18 +
             actorSharesD18.mulDecimal(
                 currentRewardPerShare - dist.claimStatus[accountId].lastRewardPerShareD18
             );
