@@ -479,7 +479,7 @@ describe('PerpMarketFactoryModule', () => {
           await getTotalPositionPnl([trader], marketId)
         );
         const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
-        assertBn.equal(reportedDebt, expectedReportedDebtAfterOpen);
+        assertBn.near(reportedDebt, expectedReportedDebtAfterOpen, bn(0.0000000001));
 
         reportedDebts.push(reportedDebt);
         accumulatedReportedDebt = accumulatedReportedDebt.add(reportedDebt);

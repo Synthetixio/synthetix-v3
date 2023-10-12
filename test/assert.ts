@@ -2,6 +2,8 @@ import { Contract, ContractReceipt, ContractTransaction } from 'ethers';
 import assert from 'assert';
 import { LogDescription } from 'ethers/lib/utils';
 
+// --- Helpers --- //
+
 const formatDecodedArg = (value: LogDescription['args'][number]): string => {
   // print nested values as [value1, value2, ...]
   if (Array.isArray(value)) {
@@ -15,15 +17,18 @@ const formatDecodedArg = (value: LogDescription['args'][number]): string => {
 
   return value.toString();
 };
-
 const formatDecodedArgs = (values: LogDescription['args']) => values.map((x) => formatDecodedArg(x)).join(', ');
 
+// --- Public --- //
+
+/** Similar to `/assertions/assert-event`, this asserts event in `expected` exist in `receipt.wait()` in a specific order. */
 export const assertEvents = async (
-  tx: ContractTransaction | ContractReceipt,
+  txOrReceipt: ContractTransaction | ContractReceipt,
   expected: (string | RegExp)[],
   contract: Contract
 ) => {
-  const receipt = 'wait' in tx ? await tx.wait() : tx;
+  // TODO: Consider wrapping this in autoMine: false; .wait(); mine(); autoMine: true.
+  const receipt = 'wait' in txOrReceipt ? await txOrReceipt.wait() : txOrReceipt;
   const spaces = ' '.repeat(6); // to align with assert output
 
   const { logs } = receipt;

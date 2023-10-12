@@ -1236,10 +1236,13 @@ describe('MarginModule', async () => {
 
         const expectedCollateralBalanceAfterTrade = wei(startingCollateralBalance).add(collateralDiffAmount).toBN();
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
-        // We expect to be losing
+
+        // We expect to be losing.
         assertBn.lt(collateralDiffAmount.toBN(), 0);
+
         // Assert that the balance is correct.
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
+
         // Everything has been withdrawn. There should be no reportedDebt for this market.
         assertBn.isZero(await PerpMarketProxy.reportedDebt(marketId));
       });
@@ -1318,8 +1321,9 @@ describe('MarginModule', async () => {
       it('should revert when withdrawing all collateral of another account', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader1 = traders()[0];
-        const trader2 = traders()[1];
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
         const market = markets()[0];
 
         // Deposit many types of collateral for trader1.
