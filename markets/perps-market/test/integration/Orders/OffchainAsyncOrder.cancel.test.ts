@@ -435,7 +435,7 @@ describe('Cancel Offchain Async Order test', () => {
           });
 
           it('emits collateral deducted events', async () => {
-            let pendingSettelentRewards = settlementReward;
+            let pendingSettlementRewards = settlementReward;
             const accountId = 2;
 
             for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
@@ -443,13 +443,13 @@ describe('Cancel Offchain Async Order test', () => {
               const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
               let deductedCollateralAmount: ethers.BigNumber = bn(0);
               if (synthMarket == 0) {
-                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingSettelentRewards)
+                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingSettlementRewards)
                   ? collateral.snxUSDAmount()
-                  : pendingSettelentRewards;
+                  : pendingSettlementRewards;
               } else {
-                deductedCollateralAmount = pendingSettelentRewards.div(10_000);
+                deductedCollateralAmount = pendingSettlementRewards.div(10_000);
               }
-              pendingSettelentRewards = pendingSettelentRewards.sub(deductedCollateralAmount);
+              pendingSettlementRewards = pendingSettlementRewards.sub(deductedCollateralAmount);
 
               await assertEvent(
                 settleTx,
