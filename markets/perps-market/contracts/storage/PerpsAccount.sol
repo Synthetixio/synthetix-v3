@@ -373,14 +373,14 @@ library PerpsAccount {
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
+                    deductedAmount[i] = leftoverAmount;
                     updateCollateralAmount(self, synthMarketId, -(leftoverAmount.toInt()));
                     leftoverAmount = 0;
-                    deductedAmount[i] = leftoverAmount;
                     break;
                 } else {
+                    deductedAmount[i] = availableAmount;
                     updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= availableAmount;
-                    deductedAmount[i] = availableAmount;
                 }
             } else {
                 (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
