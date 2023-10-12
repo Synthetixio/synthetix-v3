@@ -1874,6 +1874,25 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     return new SpotMarketProxy('SpotMarketProxy', address);
   }
 
+  multicall(data: Array<Bytes>): Array<Bytes> {
+    let result = super.call('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+
+    return result[0].toBytesArray();
+  }
+
+  try_multicall(data: Array<Bytes>): ethereum.CallResult<Array<Bytes>> {
+    let result = super.tryCall('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytesArray());
+  }
+
   getImplementation(): Address {
     let result = super.call('getImplementation', 'getImplementation():(address)', []);
 
