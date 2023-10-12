@@ -30,6 +30,7 @@
     "@synthetixio/router": "^3.3.0",
     "@usecannon/cli": "2.8.1",
     "hardhat": "^2.17.4",
-    "solidity-docgen": "^0.6.0-beta.36"
+    "solidity-docgen": "^0.6.0-beta.36",
+    "typechain": "8.3.1"
   }
 }

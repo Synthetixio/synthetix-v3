@@ -1,6 +1,12 @@
-import { cannonBuild, cannonRun } from '@synthetixio/core-modules/test/integration/helpers/cannon';
+import path from 'node:path';
+import {
+  cannonBuild,
+  cannonInspect,
+  cannonRun,
+} from '@synthetixio/core-modules/test/integration/helpers/cannon';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { glob, runTypeChain } from 'typechain';
 
 type TestChain = 'sepolia' | 'optimistic-goerli' | 'avalanche-fuji';
 
@@ -18,19 +24,29 @@ export function integrationBootstrap() {
   before(`setup chains`, async function () {
     this.timeout(90000);
 
-    /// @dev: show logs with DEBUG=synthetix:core-modules:spawn
+    const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
+    const typechainFolder = path.resolve(generatedPath, 'typechain');
+    const writeDeployments = path.resolve(generatedPath, 'deployments');
+
+    /// @dev: show build logs with DEBUG=synthetix:core-modules:spawn
     const res = await Promise.all([
       _spinNetwork({
         networkName: 'sepolia',
         cannonfile: 'cannonfile.test.toml',
+        typechainFolder,
+        writeDeployments,
       }),
       _spinNetwork({
         networkName: 'optimistic-goerli',
         cannonfile: 'cannonfile.satellite.test.toml',
+        typechainFolder,
+        writeDeployments,
       }),
       _spinNetwork({
         networkName: 'avalanche-fuji',
         cannonfile: 'cannonfile.satellite.test.toml',
+        typechainFolder,
+        writeDeployments,
       }),
     ]);
 
@@ -43,9 +59,13 @@ export function integrationBootstrap() {
 async function _spinNetwork({
   networkName,
   cannonfile,
+  writeDeployments,
+  typechainFolder,
 }: {
   networkName: TestChain;
   cannonfile: string;
+  writeDeployments: string;
+  typechainFolder: string;
 }) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
@@ -56,6 +76,9 @@ async function _spinNetwork({
   if (typeof chainId !== 'number') {
     throw new Error(`Invalid chainId on network ${networkName}`);
   }
+
+  writeDeployments = path.join(writeDeployments, networkName);
+  typechainFolder = path.join(typechainFolder, networkName);
 
   console.log(`  Building: ${cannonfile} - Network: ${networkName}`);
 
@@ -72,6 +95,22 @@ async function _spinNetwork({
   const { provider } = await cannonRun({
     networkName,
     packageRef,
+  });
+
+  await cannonInspect({
+    networkName,
+    packageRef,
+    writeDeployments,
+  });
+
+  const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
+
+  await runTypeChain({
+    cwd: hre.config.paths.root,
+    filesToProcess: allFiles,
+    allFiles,
+    target: 'ethers-v5',
+    outDir: typechainFolder,
   });
 
   return { networkName, chainId, provider };

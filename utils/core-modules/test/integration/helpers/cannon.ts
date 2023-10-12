@@ -22,6 +22,12 @@ interface RunOptions {
   impersonate?: string;
 }
 
+interface InspectOptions {
+  packageRef: string;
+  networkName: string;
+  writeDeployments: string;
+}
+
 const defaultEnv = {
   CANNON_REGISTRY_PRIORITY: 'local',
 };
@@ -110,4 +116,23 @@ export async function cannonRun(options: RunOptions) {
   }
 
   return { child, options, provider };
+}
+
+export async function cannonInspect(options: InspectOptions) {
+  const args = [
+    'hardhat',
+    '--network',
+    options.networkName,
+    'cannon:inspect',
+    options.packageRef,
+    '--write-deployments',
+    options.writeDeployments,
+  ];
+
+  await spawn('yarn', args, {
+    env: { ...defaultEnv },
+    waitForText: (data) => {
+      return data.includes('has been deployed to a local node running');
+    },
+  });
 }
