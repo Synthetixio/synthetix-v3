@@ -15,7 +15,7 @@
     "deploy:optimism-mainnet": "graph deploy snx-v3/optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --product hosted-service",
     "deploy:optimism-goerli": "graph deploy snx-v3/optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --product hosted-service",
     "satsuma:base-goerli": "graph deploy synthetix-base-goerli subgraph.base-goerli.yaml --output-dir ./build/base-goerli --version-label v2 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
-    "satsuma:base-goerli-competition": "graph deploy synthetix-base-testnet subgraph.base-goerli-competition.yaml --output-dir ./build/base-goerli-competition --version-label v2 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
+    "satsuma:base-goerli-competition": "graph deploy synthetix-base-testnet subgraph.base-goerli-competition.yaml --output-dir ./build/base-goerli-competition --version-label v3 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
     "coverage": "yarn deployments:optimism-goerli && yarn codegen:optimism-goerli && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
