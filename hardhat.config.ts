@@ -2,6 +2,8 @@ import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
 import 'hardhat-contract-sizer';
 import 'hardhat-cannon';
+import 'hardhat-gas-reporter';
+import 'solidity-coverage';
 
 const config = {
   defaultNetwork: 'cannon',
@@ -33,6 +35,9 @@ const config = {
   },
   mocha: {
     timeout: 10 * 1000, // 10s
+  },
+  gasReporter: {
+    enabled: !!process.env.REPORT_GAS,
   },
 };
 
