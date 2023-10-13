@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
+import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
 library OffchainUtil {
     using DecimalMath for int64;
@@ -41,6 +42,10 @@ library OffchainUtil {
     {
         uint128 accountId = abi.decode(extraData, (uint128));
         (asyncOrder, settlementStrategy) = AsyncOrder.loadValid(accountId);
+
+        if (settlementStrategy.strategyType != SettlementStrategy.Type.PYTH) {
+            revert IMarketEvents.SettlementStrategyNotFound(settlementStrategy.strategyType);
+        }
 
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
