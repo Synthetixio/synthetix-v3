@@ -3,12 +3,6 @@ import '@nomiclabs/hardhat-ethers';
 import 'hardhat-contract-sizer';
 import 'hardhat-cannon';
 
-// Router generation cannon plugin.
-import { registerAction } from '@usecannon/builder';
-import pluginRouter from 'cannon-plugin-router';
-
-registerAction(pluginRouter);
-
 const config = {
   defaultNetwork: 'cannon',
   solidity: {
