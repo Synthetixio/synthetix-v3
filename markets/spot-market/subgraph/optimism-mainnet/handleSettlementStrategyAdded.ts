@@ -8,6 +8,8 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
   strategy.marketId = event.params.synthMarketId;
   strategy.settlementStrategyId = event.params.strategyId;
 
+  strategy.disabled = false; // TODO: this value MUST be present, but impossible to get from the event data. tis is a WRONG made up value
+
   // TODO: this info should be part of the event, same as for perps market
   // strategy.strategyType = strategyInfo.strategyType;
   // strategy.settlementDelay = strategyInfo.settlementDelay;
