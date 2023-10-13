@@ -65,11 +65,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         } else {
             uint256 amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            account.validateWithdrawableAmount(
-                synthMarketId,
-                amountAbs,
-                perpsMarketFactory.spotMarket
-            );
+            account.validateWithdrawableAmount(synthMarketId, amountAbs, perpsMarketFactory);
             _withdrawMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountAbs);
         }
 
@@ -83,7 +79,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
      * @inheritdoc IPerpsAccountModule
      */
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
-        return PerpsAccount.load(accountId).getTotalCollateralValue();
+        return PerpsAccount.load(accountId).getTotalCollateralValue(false);
     }
 
     /**
@@ -105,7 +101,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         Position.Data storage position = perpsMarket.positions[accountId];
 
         (, totalPnl, , accruedFunding, , ) = position.getPositionData(
-            PerpsPrice.getCurrentPrice(marketId)
+            PerpsPrice.getCurrentPrice(marketId, false)
         );
         return (totalPnl, accruedFunding, position.size);
     }
@@ -116,7 +112,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function getAvailableMargin(
         uint128 accountId
     ) external view override returns (int256 availableMargin) {
-        availableMargin = PerpsAccount.load(accountId).getAvailableMargin();
+        availableMargin = PerpsAccount.load(accountId).getAvailableMargin(false);
     }
 
     /**
@@ -126,9 +122,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin();
+        int256 availableMargin = account.getAvailableMargin(false);
         (uint256 initialRequiredMargin, , , uint256 liquidationReward) = account
-            .getAccountRequiredMargins();
+            .getAccountRequiredMargins(false);
 
         uint256 requiredMargin = initialRequiredMargin + liquidationReward;
 
@@ -161,7 +157,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
             requiredMaintenanceMargin,
             totalAccumulatedLiquidationRewards,
             maxLiquidationReward
-        ) = account.getAccountRequiredMargins();
+        ) = account.getAccountRequiredMargins(false);
 
         // Include liquidation rewards to required initial margin and required maintenance margin
         requiredInitialMargin += maxLiquidationReward;

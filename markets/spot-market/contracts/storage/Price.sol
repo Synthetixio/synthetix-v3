@@ -42,24 +42,31 @@ library Price {
     function getCurrentPriceData(
         uint128 marketId,
         Transaction.Type transactionType
-    ) internal view returns (NodeOutput.Data memory price) {
-        Data storage self = load(marketId);
-        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        if (Transaction.isBuy(transactionType)) {
-            price = INodeModule(factory.oracle).process(self.buyFeedId);
-        } else {
-            price = INodeModule(factory.oracle).process(self.sellFeedId);
-        }
-    }
+    ) internal view returns (NodeOutput.Data memory price) {}
 
     /**
      * @dev Same as getCurrentPriceData but returns only the price.
      */
     function getCurrentPrice(
         uint128 marketId,
-        Transaction.Type transactionType
+        Transaction.Type transactionType,
+        uint256 priceStalenessTolerance
     ) internal view returns (uint256 price) {
-        return getCurrentPriceData(marketId, transactionType).price.toUint();
+        Data storage self = load(marketId);
+        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
+        bytes32 feedId = Transaction.isBuy(transactionType) ? self.buyFeedId : self.sellFeedId;
+
+        bytes32[] memory runtimeKeys = new bytes32[](1);
+        bytes32[] memory runtimeValues = new bytes32[](1);
+        runtimeKeys[0] = bytes32("stalenessTolerance");
+        runtimeValues[0] = bytes32(priceStalenessTolerance);
+        NodeOutput.Data memory output = INodeModule(factory.oracle).processWithRuntime(
+            feedId,
+            runtimeKeys,
+            runtimeValues
+        );
+
+        return output.price.toUint();
     }
 
     /**

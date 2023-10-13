@@ -145,14 +145,15 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteBuyExactIn(
         uint128 marketId,
-        uint256 usdAmount
+        uint256 usdAmount,
+        uint256 priceStalenessTolerance
     ) public view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().validateMarket(marketId);
 
         (synthAmount, fees, ) = MarketConfiguration.quoteBuyExactIn(
             marketId,
             usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY, priceStalenessTolerance),
             ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );

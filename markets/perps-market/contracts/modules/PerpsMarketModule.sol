@@ -64,7 +64,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
      * @inheritdoc IPerpsMarketModule
      */
     function indexPrice(uint128 marketId) external view override returns (uint) {
-        return PerpsPrice.getCurrentPrice(marketId);
+        return PerpsPrice.getCurrentPrice(marketId, false);
     }
 
     /**
