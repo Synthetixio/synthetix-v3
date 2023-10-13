@@ -86,4 +86,47 @@ library PerpsMarketFactory {
     function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
         self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
     }
+
+    /**
+     * @notice This function returns the value of an amount of synth.
+     * @dev    Use the same oracle node that is configured on the core system for the synth
+     * @dev    Use the configured staleness tolerance if strict
+     */
+    function getSynthValue(
+        uint128 synthMarketId,
+        uint256 synthAmount,
+        bool useStrictStalenessTolerance
+    ) internal {
+        uint runtimeArgCount = useStrictStalenessTolerance ? 2 : 1;
+        bytes32[] memory runtimeKeys = new bytes32[](runtimeArgCount);
+        bytes32[] memory runtimeValues = new bytes32[](runtimeArgCount);
+
+        if (useStrictStalenessTolerance) {
+            uint stalenessTolerance = GlobalPerpsMarketConfiguration
+                .load()
+                .collateralStalenessTolerance(synthMarketId);
+
+            runtimeKeys[0] = bytes32("amount");
+            runtimeValues[0] = bytes32(synthAmount);
+            runtimeKeys[1] = bytes32("stalenessTolerance");
+            runtimeValues[1] = bytes32(stalenessTolerance);
+        } else {
+            runtimeKeys[0] = bytes32("amount");
+            runtimeValues[0] = bytes32(synthAmount);
+        }
+
+        bytes32 synthNodeId = getSynthOracle(synthMarketId);
+        NodeOutput.Data memory output = INodeModule(synthNodeId).processWithRuntime(
+            synthNodeId,
+            runtimeKeys,
+            runtimeValues
+        );
+
+        return output.price.toUint();
+    }
+
+    function getSynthOracle(Data storage self, uint128 synthMarketId) internal returns (bytes32) {
+        address synthToken = self.spotMarket.getSynth(synthMarketId);
+        return self.synthetix.getCollateralConfiguration(synthToken).oracleNodeId;
+    }
 }

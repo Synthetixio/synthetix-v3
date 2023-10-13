@@ -56,6 +56,11 @@ library GlobalPerpsMarketConfiguration {
          * @notice If set to a larger number (larger than number of collaterals enabled) it means is unlimited.
          */
         uint128 maxCollateralsPerAccount;
+        /**
+         * @dev each collateral used has a strict staleness tolerance that is used when dealing with liquidations since we want the most recent price.
+         * @dev this mapping has the configured tolerance for each collateral.
+         */
+        mapping(uint128 => uint) collateralStalenessTolerances;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -63,6 +68,13 @@ library GlobalPerpsMarketConfiguration {
         assembly {
             globalMarketConfig.slot := s
         }
+    }
+
+    function collateralStalenessTolerance(
+        Data storage self,
+        uint128 synthMarketId
+    ) internal returns (uint256) {
+        return self.collateralStalenessTolerances[synthMarketId];
     }
 
     /**

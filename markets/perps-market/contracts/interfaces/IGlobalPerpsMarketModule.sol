@@ -8,9 +8,14 @@ interface IGlobalPerpsMarketModule {
     /**
      * @notice Gets fired when max collateral amount for synth for all the markets is set by owner.
      * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount max amount that was set for the synth
+     * @param maxCollateralAmount max amount that was set for the synth
+     * @param strictStalenessTolerance collateral strict staleness tolerance
      */
-    event MaxCollateralAmountSet(uint128 indexed synthMarketId, uint256 collateralAmount);
+    event CollateralConfigurationSet(
+        uint128 indexed synthMarketId,
+        uint256 collateralAmount,
+        uint256 strictStalenessTolerance
+    );
 
     /**
      * @notice Gets fired when the synth deduction priority is updated by owner.
@@ -61,16 +66,24 @@ interface IGlobalPerpsMarketModule {
     /**
      * @notice Sets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount Max collateral amount to set for the synth market id.
+     * @param maxCollateralAmount Max collateral amount to set for the synth market id.
+     * @param strictStalenessTolerance  collateral staleness tolerance during liquidation
      */
-    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
+    function setCollateralConfiguration(
+        uint128 synthMarketId,
+        uint maxCollateralAmount,
+        uint strictStalenessTolerance
+    ) external;
 
     /**
      * @notice Gets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @return maxCollateralAmount max collateral amount of the specified synth market id
+     * @return strictStalenessTolerance configured strict staleness tolerance for collateral
      */
-    function getMaxCollateralAmount(uint128 synthMarketId) external view returns (uint);
+    function getCollateralConfiguration(
+        uint128 synthMarketId
+    ) external view returns (uint256 maxCollateralAmount, uint256 strictStalenessTolerance);
 
     /**
      * @notice Sets the synth deduction priority ordered list.

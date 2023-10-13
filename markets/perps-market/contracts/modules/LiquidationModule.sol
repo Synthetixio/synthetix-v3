@@ -41,7 +41,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , , , , ) = account.isEligibleForLiquidation();
+            (bool isEligible, , , , , ) = account.isEligibleForLiquidation(true);
 
             if (isEligible) {
                 account.flagForLiquidation();
@@ -107,7 +107,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @inheritdoc ILiquidationModule
      */
     function canLiquidate(uint128 accountId) external view override returns (bool isEligible) {
-        (isEligible, , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
+        (isEligible, , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation(false);
     }
 
     /**
@@ -140,7 +140,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         for (uint i = 0; i < openPositionMarketIds.length; i++) {
             uint128 positionMarketId = openPositionMarketIds[i].to128();
-            uint256 price = PerpsPrice.getCurrentPrice(positionMarketId);
+            uint256 price = PerpsPrice.getCurrentPrice(positionMarketId, true);
 
             (
                 uint256 amountLiquidated,

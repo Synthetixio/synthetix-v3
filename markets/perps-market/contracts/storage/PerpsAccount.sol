@@ -4,7 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -108,7 +107,8 @@ library PerpsAccount {
     }
 
     function isEligibleForLiquidation(
-        Data storage self
+        Data storage self,
+        bool useStrictStalenessTolerance
     )
         internal
         view
@@ -121,7 +121,7 @@ library PerpsAccount {
             uint256 liquidationReward
         )
     {
-        availableMargin = getAvailableMargin(self);
+        availableMargin = getAvailableMargin(self, useStrictStalenessTolerance);
         if (self.openPositionMarketIds.length() == 0) {
             return (false, availableMargin, 0, 0, 0, 0);
         }
@@ -130,7 +130,7 @@ library PerpsAccount {
             requiredMaintenanceMargin,
             accumulatedLiquidationRewards,
             liquidationReward
-        ) = getAccountRequiredMargins(self);
+        ) = getAccountRequiredMargins(self, useStrictStalenessTolerance);
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
 
@@ -176,12 +176,13 @@ library PerpsAccount {
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
      * @dev    It also checks the synth collateral for this account is enough to cover the withdrawal amount.
+     * @dev    All price checks are not checking strict staleness tolerance.
      */
     function validateWithdrawableAmount(
         Data storage self,
         uint128 synthMarketId,
         uint256 amountToWithdraw,
-        ISpotMarketSystem spotMarket
+        PerpsMarketFactory.Data storage factory
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
         uint collateralAmount = self.collateralAmounts[synthMarketId];
         if (collateralAmount < amountToWithdraw) {
@@ -195,7 +196,7 @@ library PerpsAccount {
             ,
             ,
             uint256 liquidationReward
-        ) = isEligibleForLiquidation(self);
+        ) = isEligibleForLiquidation(self, false);
 
         if (isEligible) {
             revert AccountLiquidatable(self.id);
@@ -209,7 +210,7 @@ library PerpsAccount {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
         } else {
-            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(synthMarketId, amountToWithdraw);
+            (amountToWithdrawUsd, ) = factory.getSynthValue(synthMarketId, amountToWithdraw, false);
         }
 
         if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
@@ -220,9 +221,12 @@ library PerpsAccount {
         }
     }
 
-    function getTotalCollateralValue(Data storage self) internal view returns (uint) {
+    function getTotalCollateralValue(
+        Data storage self,
+        bool useStrictStalenessTolerance
+    ) internal view returns (uint) {
         uint totalCollateralValue;
-        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             uint amount = self.collateralAmounts[synthMarketId];
@@ -231,25 +235,38 @@ library PerpsAccount {
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
-                (amountToAdd, ) = spotMarket.quoteSellExactIn(synthMarketId, amount);
+                (amountToAdd, ) = factory.getSynthValue(
+                    synthMarketId,
+                    amount,
+                    useStrictStalenessTolerance
+                );
             }
             totalCollateralValue += amountToAdd;
         }
         return totalCollateralValue;
     }
 
-    function getAccountPnl(Data storage self) internal view returns (int totalPnl) {
+    function getAccountPnl(
+        Data storage self,
+        bool useStrictStalenessTolerance
+    ) internal view returns (int totalPnl) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (int pnl, , , , ) = position.getPnl(PerpsPrice.getCurrentPrice(marketId));
+            (int pnl, , , , ) = position.getPnl(
+                PerpsPrice.getCurrentPrice(marketId, useStrictStalenessTolerance)
+            );
             totalPnl += pnl;
         }
     }
 
-    function getAvailableMargin(Data storage self) internal view returns (int256) {
-        int256 totalCollateralValue = getTotalCollateralValue(self).toInt();
-        int256 accountPnl = getAccountPnl(self);
+    function getAvailableMargin(
+        Data storage self,
+        bool useStrictStalenessTolerance
+    ) internal view returns (int256) {
+        int256 totalCollateralValue = getTotalCollateralValue(self, useStrictStalenessTolerance)
+            .toInt();
+        int256 accountPnl = getAccountPnl(self, useStrictStalenessTolerance);
 
         return totalCollateralValue + accountPnl;
     }
@@ -262,7 +279,7 @@ library PerpsAccount {
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (uint openInterest, , , , , ) = position.getPositionData(
-                PerpsPrice.getCurrentPrice(marketId)
+                PerpsPrice.getCurrentPrice(marketId, false)
             );
             totalAccountOpenInterest += openInterest;
         }
@@ -274,7 +291,8 @@ library PerpsAccount {
      * @dev The maintenance margin is used to determine when to liquidate a position
      */
     function getAccountRequiredMargins(
-        Data storage self
+        Data storage self,
+        bool useStrictStalenessTolerance
     )
         internal
         view
@@ -300,7 +318,7 @@ library PerpsAccount {
                 uint256 liquidationMargin
             ) = marketConfig.calculateRequiredMargins(
                     position.size,
-                    PerpsPrice.getCurrentPrice(marketId)
+                    PerpsPrice.getCurrentPrice(marketId, useStrictStalenessTolerance)
                 );
 
             accumulatedLiquidationRewards += liquidationMargin;
