@@ -2,12 +2,8 @@ import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
 import 'hardhat-contract-sizer';
 import 'hardhat-cannon';
-
-// Router generation cannon plugin.
-import { registerAction } from '@usecannon/builder';
-import pluginRouter from 'cannon-plugin-router';
-
-registerAction(pluginRouter);
+import 'hardhat-gas-reporter';
+import 'solidity-coverage';
 
 const config = {
   defaultNetwork: 'cannon',
@@ -39,6 +35,9 @@ const config = {
   },
   mocha: {
     timeout: 10 * 1000, // 10s
+  },
+  gasReporter: {
+    enabled: !!process.env.REPORT_GAS,
   },
 };
 
