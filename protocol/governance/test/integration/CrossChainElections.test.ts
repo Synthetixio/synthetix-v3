@@ -1,10 +1,40 @@
+import { ethers } from 'ethers';
 import { integrationBootstrap } from './bootstrap';
 
 describe('cross chain election testing', function () {
   const { chains } = integrationBootstrap();
 
+  async function _fixtureSignerOnChains() {
+    const { address } = ethers.Wallet.createRandom();
+    const signers = await Promise.all(
+      chains.map(async (chain) => {
+        await chain.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
+        return await chain.provider.getSigner(address);
+      })
+    );
+    return signers;
+  }
+
   it('interacts with chains', async function () {
-    const n = await chains[0].provider.getNetwork();
-    console.log({ n });
+    for (const chain of chains) {
+      const { chainId } = await chain.provider.getNetwork();
+      const proxyAddress = await chain.CoreProxy.address;
+      const owner = await chain.CoreProxy.owner();
+      console.log({ chainId, proxyAddress, owner });
+    }
+  });
+
+  it('cast a vote on satellite', async function () {
+    const [, satellite] = chains;
+    const [, voter] = await _fixtureSignerOnChains();
+
+    const tx = await satellite.CoreProxy.connect(voter).cast(
+      [ethers.Wallet.createRandom().address],
+      [1000000000]
+    );
+
+    const rx = await tx.wait();
+
+    console.log(rx);
   });
 });

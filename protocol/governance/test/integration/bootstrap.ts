@@ -8,18 +8,23 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
-type TestChain = 'sepolia' | 'optimistic-goerli' | 'avalanche-fuji';
+import type { CcipRouterMock } from '../generated/typechain';
+import type { CoreProxy as SepoliaCoreProxy } from '../generated/typechain/sepolia';
+import type { CoreProxy as OptimisticGoerliCoreProxy } from '../generated/typechain/optimistic-goerli';
+import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain/avalanche-fuji';
 
-interface Chain {
-  networkName: TestChain;
-  chainId: number;
-  provider: ethers.providers.JsonRpcProvider;
-}
+type TestChain = 'sepolia' | 'optimistic-goerli' | 'avalanche-fuji';
 
 const ownerAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
 
+type Chains = [
+  Awaited<ReturnType<typeof _spinNetwork<SepoliaCoreProxy>>>,
+  Awaited<ReturnType<typeof _spinNetwork<OptimisticGoerliCoreProxy>>>,
+  Awaited<ReturnType<typeof _spinNetwork<AvalancheFujiCoreProxy>>>,
+];
+
 export function integrationBootstrap() {
-  const chains: Chain[] = [];
+  const chains: Chains = [] as unknown as Chains;
 
   before(`setup chains`, async function () {
     this.timeout(90000);
@@ -29,26 +34,26 @@ export function integrationBootstrap() {
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
     /// @dev: show build logs with DEBUG=synthetix:core-modules:spawn
-    const res = await Promise.all([
-      _spinNetwork({
+    const res = (await Promise.all([
+      _spinNetwork<SepoliaCoreProxy>({
         networkName: 'sepolia',
         cannonfile: 'cannonfile.test.toml',
         typechainFolder,
         writeDeployments,
       }),
-      _spinNetwork({
+      _spinNetwork<OptimisticGoerliCoreProxy>({
         networkName: 'optimistic-goerli',
         cannonfile: 'cannonfile.satellite.test.toml',
         typechainFolder,
         writeDeployments,
       }),
-      _spinNetwork({
+      _spinNetwork<AvalancheFujiCoreProxy>({
         networkName: 'avalanche-fuji',
         cannonfile: 'cannonfile.satellite.test.toml',
         typechainFolder,
         writeDeployments,
       }),
-    ]);
+    ])) satisfies Chains;
 
     chains.push(...res);
   });
@@ -56,7 +61,7 @@ export function integrationBootstrap() {
   return { chains };
 }
 
-async function _spinNetwork({
+async function _spinNetwork<CoreProxy>({
   networkName,
   cannonfile,
   writeDeployments,
@@ -113,5 +118,17 @@ async function _spinNetwork({
     outDir: typechainFolder,
   });
 
-  return { networkName, chainId, provider };
+  const signer = await provider.getSigner(ownerAddress);
+
+  const coreProxy = require(`${writeDeployments}/CoreProxy.json`);
+  const CoreProxy = new ethers.Contract(coreProxy.address, coreProxy.abi, signer) as CoreProxy;
+
+  const ccipRouter = require(`${writeDeployments}/CcipRouterMock.json`);
+  const CcipRouter = new ethers.Contract(
+    ccipRouter.address,
+    ccipRouter.abi,
+    signer
+  ) as CcipRouterMock;
+
+  return { networkName, chainId, provider, CoreProxy, CcipRouter };
 }

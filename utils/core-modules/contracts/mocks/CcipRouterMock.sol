@@ -20,9 +20,9 @@ contract CcipRouterMock {
 
     function getFee(
         uint64, // destinationChainId
-        CcipClient.EVM2AnyMessage memory message
+        CcipClient.EVM2AnyMessage memory // message
     ) external view virtual returns (uint256 fee) {
         // TODO: some mock fee, maybe this should be hardcoded? more intelligent?
-        return message.data.length;
+        return 0;
     }
 }

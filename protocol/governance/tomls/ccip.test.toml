@@ -4,6 +4,7 @@
 #
 [contract.CcipRouterMock]
 artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
+create2 = true
 
 [invoke.set_supported_cross_chain_networks]
 target = ["CoreProxy"]
