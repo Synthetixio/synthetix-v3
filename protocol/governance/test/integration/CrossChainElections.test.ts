@@ -1,4 +1,6 @@
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
+import { ElectionPeriod } from '../constants';
 import { integrationBootstrap } from './bootstrap';
 
 describe('cross chain election testing', function () {
@@ -14,6 +16,11 @@ describe('cross chain election testing', function () {
     );
     return signers;
   }
+
+  it('shows that the current period is Administration', async function () {
+    const [mothership] = chains;
+    assertBn.equal(await mothership.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
+  });
 
   it('interacts with chains', async function () {
     for (const chain of chains) {

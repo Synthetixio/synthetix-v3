@@ -2,13 +2,12 @@ import path from 'node:path';
 import {
   cannonBuild,
   cannonInspect,
-  cannonRun,
 } from '@synthetixio/core-modules/test/integration/helpers/cannon';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
-import type { CcipRouterMock } from '../generated/typechain';
+import type { CcipRouterMock } from '../generated/typechain/sepolia';
 import type { CoreProxy as SepoliaCoreProxy } from '../generated/typechain/sepolia';
 import type { CoreProxy as OptimisticGoerliCoreProxy } from '../generated/typechain/optimistic-goerli';
 import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain/avalanche-fuji';
@@ -87,7 +86,7 @@ async function _spinNetwork<CoreProxy>({
 
   console.log(`  Building: ${cannonfile} - Network: ${networkName}`);
 
-  const { packageRef } = await cannonBuild({
+  const { packageRef, provider } = await cannonBuild({
     cannonfile,
     networkName,
     chainId,
@@ -96,11 +95,6 @@ async function _spinNetwork<CoreProxy>({
   });
 
   console.log(`  Running: ${packageRef} - Network: ${networkName}`);
-
-  const { provider } = await cannonRun({
-    networkName,
-    packageRef,
-  });
 
   await cannonInspect({
     networkName,

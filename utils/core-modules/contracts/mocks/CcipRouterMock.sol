@@ -6,7 +6,7 @@ import {CcipClient} from "../utils/CcipClient.sol";
 contract CcipRouterMock {
     event CCIPSend(uint64 destinationChainId, CcipClient.EVM2AnyMessage message, bytes32 messageId);
 
-    uint256 sendNonce = 0;
+    uint256 public sendNonce = 0;
 
     function ccipSend(
         uint64 destinationChainId,
