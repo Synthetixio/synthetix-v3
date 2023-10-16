@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "test": "TS_NODE_SKIP_IGNORE=true hardhat test",
-    "coverage": "hardhat coverage",
+    "test:gas": "REPORT_GAS=true TS_NODE_SKIP_IGNORE=true hardhat test",
+    "test:coverage": "hardhat coverage",
     "build": "hardhat cannon:build",
     "build:clean": "hardhat cannon:build --wipe",
     "contracts:size": "hardhat size-contracts",
