@@ -34,7 +34,7 @@ import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, owner, systems, provider, restore } = bs;
+  const { markets, collaterals, collateralsWithoutSusd, traders, owner, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -1691,9 +1691,11 @@ describe('MarginModule', async () => {
 
     it('should reflect collateral price changes', async () => {
       const { PerpMarketProxy } = systems();
-      const { trader, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(
         bs,
-        genTrader(bs)
+        genTrader(bs, { desiredCollateral: collateral })
       );
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
