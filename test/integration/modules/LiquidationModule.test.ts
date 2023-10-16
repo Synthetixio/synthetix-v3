@@ -3,7 +3,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
-import { BigNumber, Signer, ethers } from 'ethers';
+import { BigNumber, Signer, ethers, utils } from 'ethers';
 import { shuffle, times } from 'lodash';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
@@ -29,8 +29,11 @@ import {
   findEventSafe,
   SYNTHETIX_USD_MARKET_ID,
   fastForwardBySec,
+  extendContractAbi,
+  BURN_ADDRESS,
 } from '../../helpers';
 import { Trader } from '../../typed';
+import { assertEvents } from '../../assert';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -161,7 +164,78 @@ describe('LiquidationModule', () => {
 
     it('should not sell any synth collateral when all collateral is already sUSD');
 
-    it('should emit all events in correct order');
+    it('should emit all events in correct order', async () => {
+      const { PerpMarketProxy, Core, SpotMarket } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount, marginUsdDepositAmount, collateralPrice } =
+        await depositMargin(bs, genTrader(bs));
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+
+      assertBn.lte(healthFactor, wei(1).toBN());
+
+      const { tx, receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const keeperAddress = await keeper().getAddress();
+      // Create a contract that can parse all events emitted.
+      const spotMarketEvents = SpotMarket.interface.format(utils.FormatTypes.full);
+      const contractsWithAllEvents = extendContractAbi(
+        PerpMarketProxy,
+        Core.interface
+          .format(utils.FormatTypes.full)
+          .concat(spotMarketEvents)
+          .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+      );
+
+      // It's quite hard to calculate the skew fee from selling our collateral, so we cheat a little grab it from the event
+      const usdAmountAfterSpotSell = findEventSafe({
+        receipt,
+        eventName: 'SynthSold',
+        contract: contractsWithAllEvents,
+      })?.args.amountReturned as BigNumber;
+
+      // Assert that it's slightly smaller (or equal depending on skew scale) than the deposited amount
+      assertBn.lte(usdAmountAfterSpotSell, marginUsdDepositAmount);
+      // Some variables for readability
+      const spotMarketFees = `[0, 0, 0, 0]`;
+      const collectedFee = 0;
+      const referrer = BURN_ADDRESS;
+      const collateralAddress = collateral.synthMarket.synthAddress();
+      const synthId = collateral.synthMarket.marketId();
+
+      await assertEvents(
+        tx,
+        [
+          `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
+          `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
+          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
+          `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${collateralDepositAmount})`,
+          `Transfer("${BURN_ADDRESS}", "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell})`,
+          `MarketUsdWithdrawn(${synthId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${SpotMarket.address}")`,
+          `SynthSold(${synthId}, ${usdAmountAfterSpotSell}, ${spotMarketFees}, ${collectedFee}, "${referrer}", ${collateralPrice})`,
+          `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${usdAmountAfterSpotSell})`,
+          `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${PerpMarketProxy.address}")`,
+        ],
+        contractsWithAllEvents
+      );
+    });
 
     it('should revert when position already flagged', async () => {
       const { PerpMarketProxy } = systems();
