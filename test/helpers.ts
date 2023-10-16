@@ -26,7 +26,7 @@ export const mintAndApprove = async (
   const { PerpMarketProxy, SpotMarket } = systems();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
-  const synth = collateral.synthMarket.synth();
+  const synth = collateral.contract;
   const synthOwnerAddress = await synth.owner();
 
   await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
@@ -58,7 +58,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   await PerpMarketProxy.connect(trader.signer).modifyCollateral(
     trader.accountId,
     market.marketId(),
-    collateral.synthMarket.marketId(),
+    collateral.synthMarketId(),
     collateralDepositAmount
   );
 

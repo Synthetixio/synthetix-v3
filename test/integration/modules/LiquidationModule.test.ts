@@ -10,7 +10,6 @@ import { bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
-  genNonUsdCollateral,
   genNumber,
   genOneOf,
   genOrder,
@@ -37,7 +36,19 @@ import { assertEvents } from '../../assert';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, keeper, keeper2, keeper3, endorsedKeeper, systems, provider, restore } = bs;
+  const {
+    markets,
+    collaterals,
+    collateralsWithoutSusd,
+    traders,
+    keeper,
+    keeper2,
+    keeper3,
+    endorsedKeeper,
+    systems,
+    provider,
+    restore,
+  } = bs;
 
   beforeEach(restore);
 
@@ -112,7 +123,7 @@ describe('LiquidationModule', () => {
     it('should sell all available synth collateral for sUSD when flagging', async () => {
       const { PerpMarketProxy } = systems();
 
-      const collateral = genNonUsdCollateral(bs);
+      const collateral = genOneOf(collateralsWithoutSusd());
       const orderSide = genSide();
       const marginUsd = genOneOf([1000, 5000]);
 
@@ -130,7 +141,7 @@ describe('LiquidationModule', () => {
       // Verify no USD but _some_ non-USD collateral was used as margin.
       const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       const collateralBalanceBefore = d1.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
+        .filter((c) => c.synthMarketId.eq(collateral.synthMarketId()))
         .map((c) => c.available)[0];
       const usdBalanceBefore = d1.depositedCollaterals
         .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
@@ -152,7 +163,7 @@ describe('LiquidationModule', () => {
       const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
       const collateralBalanceAfter = d2.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
+        .filter((c) => c.synthMarketId.eq(collateral.synthMarketId()))
         .map((c) => c.available)[0];
       const usdBalanceAfter = d2.depositedCollaterals
         .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
@@ -213,12 +224,13 @@ describe('LiquidationModule', () => {
 
       // Assert that it's slightly smaller (or equal depending on skew scale) than the deposited amount
       assertBn.lte(usdAmountAfterSpotSell, marginUsdDepositAmount);
+
       // Some variables for readability
       const spotMarketFees = `[0, 0, 0, 0]`;
       const collectedFee = 0;
       const referrer = BURN_ADDRESS;
-      const collateralAddress = collateral.synthMarket.synthAddress();
-      const synthId = collateral.synthMarket.marketId();
+      const collateralAddress = collateral.synthAddress();
+      const synthId = collateral.synthMarketId();
 
       await assertEvents(
         tx,

@@ -26,7 +26,8 @@ import { PerpMarketProxy } from '../../generated/typechain';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, ethOracleNode, collaterals, markets, traders } = bs;
+  const { systems, restore, provider, keeper, ethOracleNode, collaterals, collateralsWithoutSusd, markets, traders } =
+    bs;
 
   beforeEach(restore);
 
@@ -626,9 +627,7 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Any collateral except sUSD can be used, we want to make sure a non-zero.
-      const collateral = genOneOf(
-        collaterals().filter(({ synthMarket }) => !synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID))
-      );
+      const collateral = genOneOf(collateralsWithoutSusd());
       const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
         bs,
         genTrader(bs, { desiredCollateral: collateral })
@@ -672,7 +671,7 @@ describe('OrderModule', () => {
 
       // Value of original collateral should also stay the same.
       assertBn.equal(
-        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId()))[0]
+        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarketId()))[0]
           .available,
         collateralDepositAmount
       );
@@ -682,9 +681,7 @@ describe('OrderModule', () => {
       const { PerpMarketProxy, USD } = systems();
 
       // Any collateral except sUSD can be used, we want to make sure a non-zero.
-      const collateral = genOneOf(
-        collaterals().filter(({ synthMarket }) => !synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID))
-      );
+      const collateral = genOneOf(collateralsWithoutSusd());
       const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
         bs,
         genTrader(bs, { desiredCollateral: collateral })
@@ -1112,7 +1109,7 @@ describe('OrderModule', () => {
         const takerFee = wei(0.02).toBN();
 
         // Update state to reflect explicit values.
-        await collateral.aggregator().mockSetCurrentPrice(collateralPrice);
+        await collateral.setPrice(collateralPrice);
         await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
         const marketId = market.marketId();
         await setMarketConfigurationById(bs, marketId, { makerFee, takerFee });

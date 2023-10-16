@@ -149,7 +149,7 @@ export const genTrader = async (
   const marginUsdDepositAmount = !isNil(options?.desiredMarginUsdDepositAmount)
     ? wei(options?.desiredMarginUsdDepositAmount)
     : wei(genOneOf([1000, 5000, 10_000, 15_000]));
-  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
+  const { answer: collateralPrice } = await collateral.getPrice();
   const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
   return {
@@ -163,10 +163,6 @@ export const genTrader = async (
     collateralPrice,
   };
 };
-
-/** Generate a non-USD collatearl */
-export const genNonUsdCollateral = ({ collaterals }: Bs) =>
-  genOneOf(collaterals().filter((x) => !x.synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID)));
 
 /** Generates a side randomly, 1 for long, -1 for short. */
 export const genSide = (): 1 | -1 => genOneOf([1, -1]);
@@ -193,7 +189,7 @@ export const genOrder = async (
   // Use a reasonable amount of leverage.
   const leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5]);
 
-  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
+  const { answer: collateralPrice } = await collateral.getPrice();
   const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
 
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());

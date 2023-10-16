@@ -511,10 +511,10 @@ describe('PerpMarketFactoryModule', () => {
         keeperProfitMarginPercent: BigNumber.from(0),
         maxKeeperFeeUsd: BigNumber.from(0),
       });
-      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarket.marketId(), BigNumber.from(0));
+      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), BigNumber.from(0));
 
       await market.aggregator().mockSetCurrentPrice(bn(2000));
-      await collateral.updatePrice(bn(1));
+      await collateral.setPrice(bn(1));
 
       // Deposit 1k USD worth of collateral into market for accountId.
       const { collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
