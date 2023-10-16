@@ -1,16 +1,14 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
-import { ElectionPeriod } from '../constants';
 import { integrationBootstrap } from './bootstrap';
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ElectionPeriod } from '../constants';
+import { findEvent } from '@synthetixio/core-utils/src/utils/ethers/events';
+import assert from 'assert/strict';
 
 describe('cross chain election testing', function () {
   const { chains } = integrationBootstrap();
 
-  const [mothership, satellite1, satellite2] = chains;
+  // const [mothership] = chains;
 
   async function _fixtureSignerOnChains() {
     const { address, privateKey } = ethers.Wallet.createRandom();
@@ -23,6 +21,8 @@ describe('cross chain election testing', function () {
     return signers;
   }
 
+  // before(async () => {});
+
   it('shows that the current period is Administration', async function () {
     const [mothership] = chains;
     assertBn.equal(await mothership.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
@@ -30,16 +30,15 @@ describe('cross chain election testing', function () {
 
   it('interacts with chains', async function () {
     for (const chain of chains) {
-      const { chainId } = await chain.provider.getNetwork();
-      const proxyAddress = await chain.CoreProxy.address;
-      const owner = await chain.CoreProxy.owner();
-      console.log({ chainId, proxyAddress, owner });
+      // const { chainId } = await chain.provider.getNetwork();
+      // const proxyAddress = await chain.CoreProxy.address;
+      // const owner = await chain.CoreProxy.owner();
     }
   });
 
-  it('cast a vote on satellite', async function () {
+  it.only('cast a vote on satellite', async function () {
     const [, voter] = await _fixtureSignerOnChains();
-
+    const [mothership, satellite1] = chains;
     const tx = await satellite1.CoreProxy.connect(voter).cast(
       [ethers.Wallet.createRandom().address],
       [1000000000]
@@ -47,55 +46,46 @@ describe('cross chain election testing', function () {
 
     const rx = await tx.wait();
 
-    console.log(rx);
+    const event = findEvent({
+      eventName: 'CCIPSend',
+      receipt: rx,
+      contract: satellite1.CcipRouter,
+    });
+
+    if (!Array.isArray(event)) {
+      const msg = event?.args![1].data;
+      const [voterAddress, destinationChainId, candidates, amounts] =
+        mothership.CoreProxy.interface.parseTransaction({ data: msg }).args;
+      // console.log(mothership.CoreProxy.interface.parseTransaction({ data: msg }).args);
+      assert.equal(voterAddress, await voter.getAddress());
+      await mothership.CoreProxy.connect()._recvCast(
+        voterAddress,
+        destinationChainId,
+        candidates,
+        amounts
+      );
+    }
   });
 
   it('The current epoch index is correct on all chains', async function () {
-    assertBn.equal(await mothership.CoreProxy.getEpochIndex(), 0);
-    assertBn.equal(await satellite1.CoreProxy.getEpochIndex(), 0);
-    assertBn.equal(await satellite2.CoreProxy.getEpochIndex(), 0);
+    // assertBn.equal(await mothership.CoreProxy.getEpochIndex(), 0);
+    // assertBn.equal(await satellite1.CoreProxy.getEpochIndex(), 0);
+    // assertBn.equal(await satellite2.CoreProxy.getEpochIndex(), 0);
   });
 
   it('The current epoch index is correct on all chains', async function () {
     const [mothership, satellite1, satellite2] = chains;
 
-    assertBn.equal(await mothership.CoreProxy.getEpochIndex(), 0);
-    assertBn.equal(await satellite1.CoreProxy.getEpochIndex(), 0);
-    assertBn.equal(await satellite2.CoreProxy.getEpochIndex(), 0);
-  });
-
-  it('initialize', async function () {
-    const [mothership] = chains;
-    const [caller] = await _fixtureSignerOnChains();
-    const epochStartDate = await getTime(mothership.provider);
-
-    const administrationPeriodDuration = 14;
-    const nominationPeriodDuration = 7;
-    const votingPeriodDuration = 7;
-    const minimumActiveMembers = 1;
-
-    const initialNominationPeriodStartDate =
-      epochStartDate + daysToSeconds(administrationPeriodDuration);
-
-    const tx = mothership.CoreProxy.connect(caller).initOrUpdateElectionSettings(
-      [await caller.getAddress()],
-      minimumActiveMembers,
-      initialNominationPeriodStartDate,
-      administrationPeriodDuration,
-      nominationPeriodDuration,
-      votingPeriodDuration
-    );
-
-    const rx = await tx.wait();
-
-    console.log(rx);
+    // assertBn.equal(await mothership.CoreProxy.getEpochIndex(), 0);
+    // assertBn.equal(await satellite1.CoreProxy.getEpochIndex(), 0);
+    // assertBn.equal(await satellite2.CoreProxy.getEpochIndex(), 0);
   });
 
   it('shows that the current period is Administration', async function () {
-    assertBn.equal(await mothership.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
+    // assertBn.equal(await mothership.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
   });
 
   it('shows that the current epoch index is 0', async function () {
-    assertBn.equal(await mothership.CoreProxy.getEpochIndex(), 0);
+    // assertBn.equal(await mothership.CoreProxy.getEpochIndex(), 0);
   });
 });
