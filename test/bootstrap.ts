@@ -118,12 +118,12 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const getCollaterals = () => [
     {
       name: 'swstETH',
-      initialPrice: genOneOf([bn(1500), bn(1650), bn(1750), bn(1850), bn(4800)]),
+      initialPrice: bn(genOneOf([1500, 1650, 1750, 1850, 4800])),
       max: bn(500_000),
     },
     {
       name: 'sAAA',
-      initialPrice: genOneOf([bn(10_000), bn(15_000), bn(25_000), bn(30_000)]),
+      initialPrice: bn(genOneOf([10_000, 15_000, 25_000, 30_000])),
       max: bn(100_000),
     },
   ];

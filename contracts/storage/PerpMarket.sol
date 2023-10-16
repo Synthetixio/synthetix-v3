@@ -109,19 +109,6 @@ library PerpMarket {
     // --- Member (mutative) --- //
 
     /**
-     * @dev Returns the relative debt correction for a single position (only used by `updateDebtCorrection`).
-     */
-    function getPositionDebtCorrection(
-        uint256 marginUsd,
-        int128 size,
-        uint256 entryPrice,
-        int256 entryFundingAccrued
-    ) internal pure returns (int256) {
-        // TODO figure out if we should be dedecuting fees here.
-        return marginUsd.toInt() - (size.mulDecimal(entryPrice.toInt() + entryFundingAccrued));
-    }
-
-    /**
      * @dev Updates the debt correction given an `oldPosition` and `newPosition`.
      */
     function updateDebtCorrection(

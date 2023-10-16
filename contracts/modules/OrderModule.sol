@@ -273,7 +273,11 @@ contract OrderModule is IOrderModule {
             runtime.trade.newMarginUsd
         );
 
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
+        // If maxKeeperFee configured to zero then we want to rpevent withdraws of 0.
+        if (runtime.trade.keeperFee > 0) {
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
+        }
+
         emit OrderSettled(
             accountId,
             marketId,

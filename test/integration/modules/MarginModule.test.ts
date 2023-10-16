@@ -630,20 +630,23 @@ describe('MarginModule', async () => {
         // Store balance to compare later.
         const balanceBefore = await collateral.contract.balanceOf(traderAddress);
 
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.synthMarket.marketId(),
-          withdrawAmount.mul(-1).toBN()
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarket.marketId(),
+              withdrawAmount.mul(-1).toBN()
+            ),
+          provider()
         );
-
         const marginWithdrawEventProperties = [
           `"${PerpMarketProxy.address}"`,
           `"${traderAddress}"`,
           withdrawAmount.toBN(),
           collateral.synthMarket.marketId(),
         ].join(', ');
-        await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
 
         const expectedBalanceAfter = wei(balanceBefore).add(withdrawAmount).toBN();
         const balanceAfter = await collateral.contract.balanceOf(traderAddress);
@@ -1233,10 +1236,13 @@ describe('MarginModule', async () => {
 
         const expectedCollateralBalanceAfterTrade = wei(startingCollateralBalance).add(collateralDiffAmount).toBN();
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
-        // We expect to be losing
+
+        // We expect to be losing.
         assertBn.lt(collateralDiffAmount.toBN(), 0);
+
         // Assert that the balance is correct.
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
+
         // Everything has been withdrawn. There should be no reportedDebt for this market.
         assertBn.isZero(await PerpMarketProxy.reportedDebt(marketId));
       });
@@ -1315,8 +1321,9 @@ describe('MarginModule', async () => {
       it('should revert when withdrawing all collateral of another account', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader1 = traders()[0];
-        const trader2 = traders()[1];
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
         const market = markets()[0];
 
         // Deposit many types of collateral for trader1.

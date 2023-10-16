@@ -15,7 +15,9 @@ import {
   genOneOf,
   genOrder,
   genOrderFromSizeDelta,
+  genSide,
   genTrader,
+  toRoundRobinGenerators,
 } from '../../generators';
 import {
   SECONDS_ONE_DAY,
@@ -23,14 +25,16 @@ import {
   commitAndSettle,
   depositMargin,
   fastForwardBySec,
+  setMarketConfiguration,
   setMarketConfigurationById,
 } from '../../helpers';
 import { Collateral, Market, Trader } from '../../typed';
 import { isSameSide } from '../../calculations';
+import { shuffle, times } from 'lodash';
 
 describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { traders, owner, markets, collaterals, systems, provider, restore } = bs;
+  const { traders, signers, owner, markets, collaterals, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -444,34 +448,301 @@ describe('PerpMarketFactoryModule', () => {
         desiredSide: 1,
         desiredLeverage: 1,
       });
+      await commitAndSettle(bs, marketId, trader, openOrder);
 
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
       const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
         await getTotalPositionPnl([trader], marketId)
       );
-      const reportedDebt1 = await PerpMarketProxy.reportedDebt(market.marketId());
-      assertBn.equal(reportedDebt1, expectedReportedDebtAfterOpen);
+      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+      assertBn.near(reportedDebt, expectedReportedDebtAfterOpen, bn(0.0000000001));
+    });
 
+    it('should expect sum of remaining all pnl to eq market debt (multiple markets)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const reportedDebts: BigNumber[] = [];
+      let accumulatedReportedDebt = BigNumber.from(0);
+      for (const market of markets()) {
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: 10_000 })
+        );
+
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: 1,
+          desiredLeverage: 1,
+        });
+        await commitAndSettle(bs, marketId, trader, openOrder);
+
+        const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+        const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
+          await getTotalPositionPnl([trader], marketId)
+        );
+        const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+        assertBn.near(reportedDebt, expectedReportedDebtAfterOpen, bn(0.0000000001));
+
+        reportedDebts.push(reportedDebt);
+        accumulatedReportedDebt = accumulatedReportedDebt.add(reportedDebt);
+      }
+
+      // Markets are isolated so debt is not shared between them.
+      reportedDebts.forEach((debt) => assertBn.gt(accumulatedReportedDebt, debt));
+    });
+
+    it('should expect sum of remaining all pnl to eq debt after a long period of trading');
+
+    it('should expect reportedDebt/totalDebt to be calculated correctly (concrete)', async () => {
+      const { PerpMarketProxy, Core, SpotMarket } = systems();
+
+      const collateral = collaterals()[0];
+      const market = markets()[1]; // ETHPERP.
+      const marketId = market.marketId();
+      const trader = traders()[0];
+
+      // Create a frictionless market for simplicity.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: BigNumber.from(0),
+        takerFee: BigNumber.from(0),
+        maxFundingVelocity: BigNumber.from(0),
+        skewScale: bn(1_000_000_000), // An extremely large skewScale to minimise price impact.
+      });
+      await setMarketConfiguration(bs, {
+        keeperProfitMarginPercent: BigNumber.from(0),
+        maxKeeperFeeUsd: BigNumber.from(0),
+      });
+      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarket.marketId(), BigNumber.from(0));
+
+      await market.aggregator().mockSetCurrentPrice(bn(2000));
+      await collateral.updatePrice(bn(1));
+
+      // Deposit 1k USD worth of collateral into market for accountId.
+      const { collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 1000,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredTrader: trader,
+        })
+      );
+
+      // No debt should be in the same system.
+      assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
+      assertBn.isZero(await Core.getMarketTotalDebt(marketId));
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Open a 1x long with deposit. This should also incur zero debt.
+      //
+      // NOTE: There is a slight extra in debt correction due to a tiny price impact incurred on the open order.
+      //
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
+      //              = 1000 + 0.5 * (2000 + 0) - 1000
+      //              = 1000
+      //
+      // totalDebt = reportedDebt + netIssuance - collateralValue
+      //           = 1000 + 0 - 1000
+      //           = 0
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(1000), bn(0.0001));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), BigNumber.from(0), bn(0.0001));
+
+      // Market does a 2x. Debt should increase appropriately.
+      //
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
+      //              = 1000 + 0.5 * (4000 + 0) - 1000
+      //              = 2000
+      //
+      // totalDebt = reportedDebt + netIssuance - collateralValue
+      //           = 2000 + 0 - 1000
+      //           = 1000
+      await market.aggregator().mockSetCurrentPrice(bn(4000));
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(2000), bn(0.0001));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
+
+      // Close out the position without withdrawing profits.
+      //
+      // We expect no change to the debt.
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(2000), bn(0.0001));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
+
+      // Withdraw all margin and exit.
+      //
+      // Expecting debt to stay at 1000 but also netIssuance to increase.
+      //
+      // reportedDebt = collateralValue + 0 * (price + funding) - debtCorrection
+      //              = 0 + 0 - 0
+      //              = 0
+      //
+      // totalDebt = reportedDebt + netIssuance - collateralValue
+      //           = 0 + 1000 - 0
+      //           = 1000
+      await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), BigNumber.from(0), bn(0.0001));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
+    });
+
+    it('should incur debt when a profitable position exits and withdraws all', async () => {
+      const { PerpMarketProxy, Core } = systems();
+
+      const orderSide = genSide();
+      const marginUsdDepositAmount = 10_000;
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: marginUsdDepositAmount })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredLeverage: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // 10% Profit meaning there _must_ be some debt incurred after everything is withdrawn.
+      const newMarketOraclePrice = wei(openOrder.oraclePrice)
+        .mul(orderSide === 1 ? 1.1 : 0.9)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Close out the position with profit.
       const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
       });
       await commitAndSettle(bs, marketId, trader, closeOrder);
 
-      const d2 = await PerpMarketProxy.getMarketDigest(marketId);
-      const expectedReportedDebtAfterClose = d2.totalCollateralValueUsd.add(
-        await getTotalPositionPnl([trader], marketId)
-      );
-      const reportedDebt2 = await PerpMarketProxy.reportedDebt(market.marketId());
-      assertBn.near(reportedDebt2, expectedReportedDebtAfterClose, bn(0.000001));
+      // Verify there is no position.
+      assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
+
+      // Withdraw all collateral out of perp market.
+      await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
+      // Note reportedDebt is ZERO however total market debt is gt 0.
+      const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+      assertBn.isZero(reportedDebt);
+
+      // Market reportable debt includes issued sUSD paid out to the trader.
+      const totalMarketDebt = await Core.getMarketTotalDebt(marketId);
+      assertBn.gt(totalMarketDebt, 0);
+      assertBn.lt(totalMarketDebt, bn(marginUsdDepositAmount));
     });
 
-    it('should expect sum of remaining margin to eq market debt (multiple markets)');
+    forEach(times(5, () => genNumber(0.1, 0.3) * genOneOf([1, -1]))).it(
+      'should reported same debt when skew=0 but with price fluctuations (%0.5f)',
+      async (priceDeviation: number) => {
+        const { PerpMarketProxy } = systems();
 
-    it('should expect sum of remaining margin to eq debt after a long period of trading');
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
 
-    it('should expect debt to be calculated correctly (concrete)');
+        const market = genOneOf(markets());
+        const marketId = market.marketId();
+        const marginUsdDepositAmount = genOneOf([5000, 10_000, 15_000]);
+        const orderSide = genSide();
 
-    it('should incur debt when a profitable position exits and withdraws all');
+        // Deposit and open position for trader1.
+        const deposit1 = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredTrader: trader1,
+            desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+          })
+        );
+        const order1 = await genOrder(bs, market, deposit1.collateral, deposit1.collateralDepositAmount, {
+          desiredLeverage: 1,
+          desiredSide: orderSide,
+        });
+        await commitAndSettle(bs, marketId, trader1, order1);
+
+        // Deposit and open position for trader2 (other side).
+        const deposit2 = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredTrader: trader2,
+            desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+          })
+        );
+        const order2 = await genOrder(bs, market, deposit2.collateral, deposit2.collateralDepositAmount, {
+          desiredSize: order1.sizeDelta.mul(-1),
+        });
+        await commitAndSettle(bs, marketId, trader2, order2);
+
+        const { skew, debtCorrection, totalCollateralValueUsd } = await PerpMarketProxy.getMarketDigest(marketId);
+        const expectedReportedDebt = totalCollateralValueUsd.sub(debtCorrection);
+
+        assertBn.isZero(skew);
+        assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
+
+        // Move the price.
+        await market.aggregator().mockSetCurrentPrice(
+          wei(order1.oraclePrice)
+            .mul(1 + priceDeviation)
+            .toBN()
+        );
+
+        // Expect reportedDebt to not change.
+        assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
+      }
+    );
+
+    it('should report collateral - debtCorrection when skew is zero (dn market, some positions)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+      const trader1 = tradersGenerator.next().value;
+      const trader2 = tradersGenerator.next().value;
+
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      const marginUsdDepositAmount = genOneOf([5000, 10_000, 15_000]);
+      const orderSide = genSide();
+
+      // Deposit and open position for trader1.
+      const deposit1 = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredTrader: trader1,
+          desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+        })
+      );
+      const order1 = await genOrder(bs, market, deposit1.collateral, deposit1.collateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader1, order1);
+
+      // Deposit and open position for trader2 (other side).
+      const deposit2 = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredTrader: trader2,
+          desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+        })
+      );
+      const order2 = await genOrder(bs, market, deposit2.collateral, deposit2.collateralDepositAmount, {
+        desiredSize: order1.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader2, order2);
+
+      const { skew, debtCorrection, totalCollateralValueUsd } = await PerpMarketProxy.getMarketDigest(marketId);
+      const expectedReportedDebt = totalCollateralValueUsd.sub(debtCorrection);
+      assertBn.isZero(skew);
+      assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
+    });
 
     it('should incur debt when trader is paid funding to hold position');
 
