@@ -7,11 +7,11 @@ describe('cross chain election testing', function () {
   const { chains } = integrationBootstrap();
 
   async function _fixtureSignerOnChains() {
-    const { address } = ethers.Wallet.createRandom();
+    const { address, privateKey } = ethers.Wallet.createRandom();
     const signers = await Promise.all(
       chains.map(async (chain) => {
         await chain.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
-        return await chain.provider.getSigner(address);
+        return new ethers.Wallet(privateKey, chain.provider);
       })
     );
     return signers;
