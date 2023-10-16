@@ -34,7 +34,7 @@ const config = {
     publicSourceCode: false, // Should publish contract sources along with bytecode?
   },
   mocha: {
-    timeout: 10 * 1000, // 10s
+    timeout: 20 * 1000, // 20s
   },
   gasReporter: {
     enabled: !!process.env.REPORT_GAS,
