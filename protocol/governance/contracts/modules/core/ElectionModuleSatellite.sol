@@ -39,6 +39,8 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
     ) public payable override {
         CrossChain.Data storage cc = CrossChain.load();
 
+        // TODO: validate vote power
+
         cc.transmit(
             cc.getChainIdAt(0),
             abi.encodeWithSelector(

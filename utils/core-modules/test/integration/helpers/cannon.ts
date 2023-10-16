@@ -15,13 +15,6 @@ interface BuildOptions {
   wipe?: boolean;
 }
 
-interface RunOptions {
-  packageRef: string;
-  networkName: string;
-  port?: number;
-  impersonate?: string;
-}
-
 interface InspectOptions {
   packageRef: string;
   networkName: string;
@@ -73,49 +66,9 @@ export async function cannonBuild(options: BuildOptions) {
     throw new Error(`Could not build ${options.cannonfile} with --network ${options.networkName}`);
   }
 
-  node.server.kill();
+  const provider = new ethers.providers.JsonRpcProvider(node.rpcUrl);
 
-  return { options, packageRef };
-}
-
-export async function cannonRun(options: RunOptions) {
-  if (!options.port) {
-    const { default: getPort } = await import('get-port');
-    options.port = await getPort();
-  }
-
-  const args = [
-    'hardhat',
-    '--network',
-    options.networkName,
-    'cannon:run',
-    options.packageRef,
-    '--logs',
-  ];
-
-  if (options.port) args.push('--port', `${options.port}`);
-  if (options.impersonate) args.push('--impersonate', options.impersonate);
-
-  const child = await spawn('yarn', args, {
-    env: { ...defaultEnv },
-    waitForText: (data) => {
-      return data.includes('has been deployed to a local node running');
-    },
-  });
-
-  const provider = new ethers.providers.JsonRpcProvider(`http://127.0.0.1:${options.port}/`);
-
-  // wait until server responds correctly
-  const retries = 6; // 3secs
-  for (let i = 0; i < retries; i++) {
-    try {
-      await provider.getNetwork();
-    } catch (err) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-  }
-
-  return { child, options, provider };
+  return { options, packageRef, provider };
 }
 
 export async function cannonInspect(options: InspectOptions) {

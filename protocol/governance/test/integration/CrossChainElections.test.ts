@@ -1,4 +1,6 @@
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
+import { ElectionPeriod } from '../constants';
 import { integrationBootstrap } from './bootstrap';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
@@ -11,15 +13,20 @@ describe('cross chain election testing', function () {
   const [mothership, satellite1, satellite2] = chains;
 
   async function _fixtureSignerOnChains() {
-    const { address } = ethers.Wallet.createRandom();
+    const { address, privateKey } = ethers.Wallet.createRandom();
     const signers = await Promise.all(
       chains.map(async (chain) => {
         await chain.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
-        return await chain.provider.getSigner(address);
+        return new ethers.Wallet(privateKey, chain.provider);
       })
     );
     return signers;
   }
+
+  it('shows that the current period is Administration', async function () {
+    const [mothership] = chains;
+    assertBn.equal(await mothership.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
+  });
 
   it('interacts with chains', async function () {
     for (const chain of chains) {

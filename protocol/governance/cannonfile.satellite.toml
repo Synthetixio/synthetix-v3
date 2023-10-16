@@ -18,11 +18,15 @@ artifact = "contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSat
 [contract.CouncilTokenModule]
 artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
 
+[contract.SnapshotVotePowerModule]
+artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
+
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
     "CrossChainModule",
     "ElectionModuleSatellite",
+    "SnapshotVotePowerModule",
     "InitialModuleBundle",
 ]
 
