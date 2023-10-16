@@ -68,6 +68,11 @@ library ERC721Storage {
     }
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/SetUtil.sol:SetUtil
 library SetUtil {
     struct UintSet {
@@ -80,14 +85,6 @@ library SetUtil {
         bytes32[] _values;
         mapping(bytes32 => uint) _positions;
     }
-}
-
-// @custom:artifact @synthetixio/core-modules/contracts/modules/CrossChainModule.sol:CrossChainModule
-contract CrossChainModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 }
 
 // @custom:artifact @synthetixio/core-modules/contracts/modules/NftModule.sol:NftModule
@@ -121,6 +118,7 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
+        mapping(uint64 => address) supportedNetworkTargets;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -176,6 +174,11 @@ contract ElectionModule {
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 }
 
+// @custom:artifact contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite
+contract ElectionModuleSatellite {
+    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
+}
+
 // @custom:artifact contracts/storage/Ballot.sol:Ballot
 library Ballot {
     struct Data {
@@ -202,13 +205,26 @@ library Council {
     }
     struct Data {
         bool initialized;
-        address councilToken;
-        SetUtil.AddressSet councilMembers;
-        mapping(address => uint) councilTokenIds;
         uint256 currentElectionId;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_COUNCIL_STORAGE;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/CouncilMembers.sol:CouncilMembers
+library CouncilMembers {
+    bytes32 private constant _STORAGE_SLOT = keccak256(abi.encode("io.synthetix.governance.CouncilMembers"));
+    struct Data {
+        address councilToken;
+        SetUtil.AddressSet councilMembers;
+        mapping(address => uint) councilTokenIds;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = _STORAGE_SLOT;
         assembly {
             store.slot := s
         }

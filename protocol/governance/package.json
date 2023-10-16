@@ -8,7 +8,9 @@
     "build": "yarn clean && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
     "build-testable": "yarn build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
-    "test": "yarn build-testable && hardhat test",
+    "test:integration": "hardhat test test/integration/**/*.test.ts",
+    "test:unit": "yarn build-testable && hardhat test test/contracts/**/*.test.ts",
+    "test": "yarn test:unit && yarn test:integration",
     "coverage": "yarn build && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
@@ -26,7 +28,9 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/router": "^3.3.0",
+    "@usecannon/cli": "2.8.1",
     "hardhat": "^2.17.4",
-    "solidity-docgen": "^0.6.0-beta.36"
+    "solidity-docgen": "^0.6.0-beta.36",
+    "typechain": "8.3.1"
   }
 }

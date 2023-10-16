@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -8,15 +9,21 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
-import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
 import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {Council} from "../../storage/Council.sol";
+import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 import {Election} from "../../storage/Election.sol";
 import {Epoch} from "../../storage/Epoch.sol";
 import {ElectionSettings} from "../../storage/ElectionSettings.sol";
+import {ElectionModuleSatellite} from "./ElectionModuleSatellite.sol";
 
-contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, InitializableMixin {
+contract ElectionModule is
+    IElectionModule,
+    ElectionModuleSatellite,
+    ElectionTally,
+    InitializableMixin
+{
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
     using ElectionSettings for ElectionSettings.Data;
@@ -27,6 +34,12 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 
+    /**
+     * @dev Do nothing when calling ElectionModuleSatellite initializer, this logic
+     * is being handled by initOrUpdateElectionSettings()
+     */
+    function initElectionModule(uint256, address[] memory) external pure override {}
+
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         uint8 minimumActiveMembers,
@@ -35,7 +48,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
         uint64 nominationPeriodDuration,
         uint64 votingPeriodDuration
     ) external override {
-        // TODO: initialization should be called only on mothership and broadcasted?
         OwnableStorage.onlyOwner();
 
         _initOrUpdateElectionSettings(
@@ -140,8 +152,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
     ) external override {
-        // TODO: onlyOnMothership?
-
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
@@ -169,8 +179,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
         uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) external override {
-        // TODO: onlyOnMothership?
-
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
@@ -185,64 +193,67 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
     }
 
     function dismissMembers(address[] calldata membersToDismiss) external override {
-        // TODO: onlyOnMothership?
-
         OwnableStorage.onlyOwner();
 
-        Council.Data storage store = Council.load();
+        Council.Data storage council = Council.load();
 
-        uint electionId = store.currentElectionId;
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvDismissMembers.selector,
+                membersToDismiss,
+                council.currentElectionId
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
 
-        _removeCouncilMembers(membersToDismiss, electionId);
-
-        emit CouncilMembersDismissed(membersToDismiss, electionId);
-
-        if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
+        CouncilMembers.Data storage membersStore = CouncilMembers.load();
+        if (council.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 
         // Don't immediately jump to an election if the council still has enough members
         if (
-            store.councilMembers.length() >= store.getCurrentElectionSettings().minimumActiveMembers
+            membersStore.councilMembers.length() >=
+            council.getCurrentElectionSettings().minimumActiveMembers
         ) {
             return;
         }
 
-        store.jumpToNominationPeriod();
+        council.jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted(electionId);
+        emit EmergencyElectionStarted(council.currentElectionId);
     }
 
     function nominate() public virtual override {
-        // TODO: onlyOnMothership?
-
         Council.onlyInPeriods(Council.ElectionPeriod.Nomination, Council.ElectionPeriod.Vote);
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        if (nominees.contains(msg.sender)) revert AlreadyNominated();
+        if (nominees.contains(ERC2771Context._msgSender())) revert AlreadyNominated();
 
-        nominees.add(msg.sender);
+        nominees.add(ERC2771Context._msgSender());
 
-        emit CandidateNominated(msg.sender, Council.load().currentElectionId);
+        emit CandidateNominated(ERC2771Context._msgSender(), Council.load().currentElectionId);
     }
 
     function withdrawNomination() external override {
-        // TODO: onlyOnMothership?
-
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
-        if (!nominees.contains(msg.sender)) revert NotNominated();
+        if (!nominees.contains(ERC2771Context._msgSender())) revert NotNominated();
 
-        nominees.remove(msg.sender);
+        nominees.remove(ERC2771Context._msgSender());
 
-        emit NominationWithdrawn(msg.sender, Council.load().currentElectionId);
+        emit NominationWithdrawn(ERC2771Context._msgSender(), Council.load().currentElectionId);
     }
 
-    /// @dev ElectionVotes needs to be extended to specify what determines voting power
-    function cast(
+    function _recvCast(
+        address voter,
+        uint256 chainId,
         address[] calldata candidates,
         uint256[] calldata amounts
-    ) public virtual override {
+    ) external override {
+        CrossChain.onlyCrossChain();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
         if (candidates.length > _MAX_BALLOT_SIZE) {
@@ -253,9 +264,11 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
             revert ParameterError.InvalidParameter("candidates", "length must match amounts");
         }
 
+        _validateCandidates(candidates);
+
         Ballot.Data storage ballot = Ballot.load(
             Council.load().currentElectionId,
-            msg.sender,
+            ERC2771Context._msgSender(),
             block.chainid
         );
 
@@ -273,21 +286,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
 
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
-
-        CrossChain.Data storage cc = CrossChain.load();
-        cc.transmit(
-            cc.getChainIdAt(0),
-            abi.encodeWithSelector(this._recvCast.selector, msg.sender, block.chainid, ballot),
-            _CROSSCHAIN_GAS_LIMIT
-        );
-    }
-
-    function _recvCast(address voter, uint256 chainId, Ballot.Data calldata ballot) external {
-        CrossChain.onlyOnChainAt(0);
-        CrossChain.onlyCrossChain();
-        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
-
-        _validateCandidates(ballot.votedCandidates);
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
@@ -310,7 +308,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint numBallots) external override {
-        CrossChain.onlyOnChainAt(0);
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Election.Data storage election = Council.load().getCurrentElection();
@@ -336,7 +333,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
 
     /// @dev Burns previous NFTs and mints new ones
     function resolve() public virtual override {
-        CrossChain.onlyOnChainAt(0);
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Council.Data storage store = Council.load();
@@ -352,21 +348,11 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
             abi.encodeWithSelector(
                 this._recvResolve.selector,
                 election.winners.values(),
+                store.currentElectionId,
                 newEpochIndex
             ),
             _CROSSCHAIN_GAS_LIMIT
         );
-    }
-
-    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
-        CrossChain.onlyOnChainAt(0);
-        CrossChain.onlyCrossChain();
-
-        Council.Data storage store = Council.load();
-        Election.Data storage election = store.getCurrentElection();
-
-        _removeAllCouncilMembers(newEpochIndex);
-        _addCouncilMembers(winners, newEpochIndex);
 
         election.resolved = true;
         store.newElection();
@@ -449,11 +435,11 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
     }
 
     function getCouncilToken() public view override returns (address) {
-        return Council.load().councilToken;
+        return CouncilMembers.load().councilToken;
     }
 
     function getCouncilMembers() external view override returns (address[] memory) {
-        return Council.load().councilMembers.values();
+        return CouncilMembers.load().councilMembers.values();
     }
 
     function _validateCandidates(address[] calldata candidates) internal virtual {

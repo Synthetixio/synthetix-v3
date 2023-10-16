@@ -32,6 +32,7 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
+        mapping(uint64 => address) supportedNetworkTargets;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -96,12 +97,6 @@ library CrossChain {
         }
     }
 
-    function onlyOnChainAt(uint64 chainIndex) internal view {
-        if (getChainIdAt(load(), chainIndex) != block.chainid.to64()) {
-            revert InvalidNetwork(block.chainid.to64());
-        }
-    }
-
     function getChainIdAt(Data storage self, uint64 index) internal view returns (uint64) {
         return self.supportedNetworks.valueAt(index + 1).to64();
     }
@@ -139,16 +134,21 @@ library CrossChain {
     ) internal returns (uint256 gasTokenUsed) {
         ICcipRouterClient router = self.ccipRouter;
 
-        CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
-            data, // Data payload
-            new CcipClient.EVMTokenAmount[](0), // Token transfers
-            address(0), // Address of feeToken. address(0) means you will send msg.value.
-            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
-        );
-
         for (uint i = 0; i < chains.length; i++) {
-            if (chains[i] == block.chainid) {
+            uint64 destChainId = chains[i];
+            address target = self.supportedNetworkTargets[destChainId] == address(0)
+                ? address(this)
+                : self.supportedNetworkTargets[destChainId];
+
+            CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
+                abi.encode(target), // abi.encode(receiver address) for dest EVM chains
+                data, // Data payload
+                new CcipClient.EVMTokenAmount[](0), // Token transfers
+                address(0), // Address of feeToken. address(0) means you will send msg.value.
+                CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
+            );
+
+            if (destChainId == block.chainid) {
                 (bool success, bytes memory result) = address(this).call(data);
 
                 if (!success) {
@@ -158,7 +158,7 @@ library CrossChain {
                     }
                 }
             } else {
-                uint64 chainSelector = self.ccipChainIdToSelector[chains[i]];
+                uint64 chainSelector = self.ccipChainIdToSelector[destChainId];
                 uint256 fee = router.getFee(chainSelector, sentMsg);
 
                 // need to check sufficient fee here or else the error is very confusing
@@ -189,8 +189,12 @@ library CrossChain {
         tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
 
         bytes memory data = abi.encode(ERC2771Context._msgSender());
+        address target = self.supportedNetworkTargets[destChainId] == address(0)
+            ? address(this)
+            : self.supportedNetworkTargets[destChainId];
+
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+            abi.encode(target), // abi.encode(receiver address) for dest EVM chains
             data,
             tokenAmounts,
             address(0), // Address of feeToken. address(0) means you will send msg.value.

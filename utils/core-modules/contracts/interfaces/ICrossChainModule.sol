@@ -11,16 +11,29 @@ interface ICrossChainModule {
     event NewSupportedCrossChainNetwork(uint64 newChainId);
 
     /**
-     * @notice Configure CCIP addresses on the stablecoin.
+     * @notice Configure CCIP addresses router.
      * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
-     * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
      */
-    function configureChainlinkCrossChain(address ccipRouter, address ccipTokenPool) external;
+    function configureChainlinkCrossChain(address ccipRouter) external;
 
     /**
      * @notice Used to add new cross chain networks to the protocol
      * Ignores a network if it matches the current chain id
-     * Ignores a network if it has already been added
+     * Ignores a network if it has already been added, but still updates target if changed
+     * @param supportedNetworks array of all networks that are supported by the protocol
+     * @param supportedNetworkTargets array of the target addresses for each network
+     * @param ccipSelectors the ccip "selector" which maps to the chain id on the same index. must be same length as `supportedNetworks`
+     * @return numRegistered the number of networks that were actually registered
+     */
+    function setSupportedCrossChainNetworksWithTargets(
+        uint64[] memory supportedNetworks,
+        address[] memory supportedNetworkTargets,
+        uint64[] memory ccipSelectors
+    ) external returns (uint256 numRegistered);
+
+    /**
+     * @notice Helper function for `setSupportedCrossChainNetworksWithTargets`, which allows you to not set
+     * the target addresses for each network, in which case is going to point to address(this).
      * @param supportedNetworks array of all networks that are supported by the protocol
      * @param ccipSelectors the ccip "selector" which maps to the chain id on the same index. must be same length as `supportedNetworks`
      * @return numRegistered the number of networks that were actually registered

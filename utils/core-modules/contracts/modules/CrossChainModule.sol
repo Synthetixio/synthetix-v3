@@ -21,31 +21,53 @@ contract CrossChainModule is ICrossChainModule {
     using SetUtil for SetUtil.UintSet;
     using SafeCastU256 for uint256;
 
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-
     /**
      * @inheritdoc ICrossChainModule
      */
-    function configureChainlinkCrossChain(
-        address ccipRouter,
-        address ccipTokenPool
-    ) external override {
+    function configureChainlinkCrossChain(address ccipRouter) external override {
         OwnableStorage.onlyOwner();
 
         CrossChain.Data storage cc = CrossChain.load();
 
         cc.ccipRouter = ICcipRouterClient(ccipRouter);
+    }
 
-        IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
-            AssociatedSystem.load(_USD_TOKEN).proxy
-        );
+    /**
+     * @inheritdoc ICrossChainModule
+     */
+    function setSupportedCrossChainNetworksWithTargets(
+        uint64[] memory supportedNetworks,
+        address[] memory supportedNetworkTargets,
+        uint64[] memory ccipSelectors
+    ) public returns (uint256 numRegistered) {
+        OwnableStorage.onlyOwner();
 
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipRouter);
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipRouter);
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_TOKEN_POOL, ccipTokenPool);
+        uint64 myChainId = block.chainid.to64();
+
+        if (supportedNetworkTargets.length != supportedNetworks.length) {
+            revert ParameterError.InvalidParameter("supportedNetworkTargets", "must match length");
+        }
+
+        if (ccipSelectors.length != supportedNetworks.length) {
+            revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
+        }
+
+        CrossChain.Data storage cc = CrossChain.load();
+        for (uint i = 0; i < supportedNetworks.length; i++) {
+            uint64 chainId = supportedNetworks[i];
+
+            if (chainId == myChainId) continue;
+
+            if (!cc.supportedNetworks.contains(chainId)) {
+                numRegistered++;
+                cc.supportedNetworks.add(chainId);
+                emit NewSupportedCrossChainNetwork(chainId);
+            }
+
+            cc.ccipChainIdToSelector[chainId] = ccipSelectors[i];
+            cc.ccipSelectorToChainId[ccipSelectors[i]] = chainId;
+            cc.supportedNetworkTargets[chainId] = supportedNetworkTargets[i];
+        }
     }
 
     /**
@@ -54,29 +76,12 @@ contract CrossChainModule is ICrossChainModule {
     function setSupportedCrossChainNetworks(
         uint64[] memory supportedNetworks,
         uint64[] memory ccipSelectors
-    ) external returns (uint256 numRegistered) {
-        OwnableStorage.onlyOwner();
-
-        uint64 myChainId = block.chainid.to64();
-
-        if (ccipSelectors.length != supportedNetworks.length) {
-            revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
-        }
-
-        CrossChain.Data storage cc = CrossChain.load();
-        for (uint i = 0; i < supportedNetworks.length; i++) {
-            if (supportedNetworks[i] == myChainId) continue;
-            if (
-                supportedNetworks[i] != myChainId &&
-                !cc.supportedNetworks.contains(supportedNetworks[i])
-            ) {
-                numRegistered++;
-                cc.supportedNetworks.add(supportedNetworks[i]);
-                emit NewSupportedCrossChainNetwork(supportedNetworks[i]);
-            }
-
-            cc.ccipChainIdToSelector[supportedNetworks[i]] = ccipSelectors[i];
-            cc.ccipSelectorToChainId[ccipSelectors[i]] = supportedNetworks[i];
-        }
+    ) public returns (uint256 numRegistered) {
+        return
+            setSupportedCrossChainNetworksWithTargets(
+                supportedNetworks,
+                new address[](supportedNetworks.length),
+                ccipSelectors
+            );
     }
 }

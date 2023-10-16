@@ -18,6 +18,11 @@ import "../../storage/Config.sol";
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
+    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
+    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+
     /**
      * @inheritdoc IUtilsModule
      */
@@ -63,5 +68,20 @@ contract UtilsModule is IUtilsModule {
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
         return interfaceId == this.supportsInterface.selector;
+    }
+
+    function configureUsdTokenChainlink(
+        address ccipRouter,
+        address ccipTokenPool
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
+            AssociatedSystem.load(_USD_TOKEN).getAddress()
+        );
+
+        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipRouter);
+        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipRouter);
+        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_TOKEN_POOL, ccipTokenPool);
     }
 }

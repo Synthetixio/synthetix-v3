@@ -132,14 +132,6 @@ library SetUtil {
     }
 }
 
-// @custom:artifact @synthetixio/core-modules/contracts/modules/CrossChainModule.sol:CrossChainModule
-contract CrossChainModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-}
-
 // @custom:artifact @synthetixio/core-modules/contracts/modules/NftModule.sol:NftModule
 contract NftModule {
     bytes32 internal constant _INITIALIZED_NAME = "NftModule";
@@ -370,6 +362,14 @@ contract PoolModule {
 contract RewardsManagerModule {
     uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
     bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
+}
+
+// @custom:artifact contracts/modules/core/UtilsModule.sol:UtilsModule
+contract UtilsModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
+    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
+    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 }
 
 // @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule

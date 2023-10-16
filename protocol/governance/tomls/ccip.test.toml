@@ -1,0 +1,22 @@
+# (required) CCIP Router address (should be one of https://docs.chain.link/ccip/supported-networks/)
+# [setting.ccip_router]
+# defaultValue = "0x261c05167db67B2b619f9d312e0753f3721ad6E8"
+#
+[contract.CcipRouterMock]
+artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
+create2 = true
+
+[invoke.set_supported_cross_chain_networks]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "setSupportedCrossChainNetworks"
+args = [
+    ["11155111", "420", "43113"],
+    ["16015286601757825753", "2664363617261496610", "14767482510784806043"]
+]
+
+[invoke.configure_chainlink_cross_chain]
+target = ["CoreProxy"]
+func = "configureChainlinkCrossChain"
+from = "<%= settings.owner %>"
+args = ["<%= contracts.CcipRouterMock.address %>"]
