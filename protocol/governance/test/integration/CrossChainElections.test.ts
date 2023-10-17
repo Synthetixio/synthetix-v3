@@ -28,13 +28,13 @@ describe('cross chain election testing', function () {
 
     const rx = await tx.wait();
 
-    const tx2 = await ccipReceive({
+    await ccipReceive({
       rx,
       sourceChainSelector: '2664363617261496610',
       targetSigner,
       ccipAddress: mothership.CcipRouter.address,
     });
-    await tx2.wait();
+
     assert.equal(
       await mothership.CoreProxy.hasVoted(
         randomVoter,
