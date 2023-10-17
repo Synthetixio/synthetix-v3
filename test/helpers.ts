@@ -187,13 +187,6 @@ export const commitAndSettle = async (
       }),
     provider()
   );
-  // TODO: Need to figure out if we can rely on wait (@joey).
-  //
-  // const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
-  //   value: updateFee,
-  // });
-  // const receipt = await tx.wait();
-
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
