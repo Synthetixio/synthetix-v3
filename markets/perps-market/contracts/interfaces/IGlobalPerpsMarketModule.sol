@@ -13,7 +13,7 @@ interface IGlobalPerpsMarketModule {
      */
     event CollateralConfigurationSet(
         uint128 indexed synthMarketId,
-        uint256 collateralAmount,
+        uint256 maxCollateralAmount,
         uint256 strictStalenessTolerance
     );
 

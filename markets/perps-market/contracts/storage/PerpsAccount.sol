@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -210,7 +211,7 @@ library PerpsAccount {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
         } else {
-            (amountToWithdrawUsd, ) = factory.getSynthValue(synthMarketId, amountToWithdraw, false);
+            amountToWithdrawUsd = factory.getSynthValue(synthMarketId, amountToWithdraw, false);
         }
 
         if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
@@ -235,7 +236,7 @@ library PerpsAccount {
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
-                (amountToAdd, ) = factory.getSynthValue(
+                amountToAdd = factory.getSynthValue(
                     synthMarketId,
                     amount,
                     useStrictStalenessTolerance

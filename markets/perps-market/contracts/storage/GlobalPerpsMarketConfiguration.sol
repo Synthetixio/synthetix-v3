@@ -73,7 +73,7 @@ library GlobalPerpsMarketConfiguration {
     function collateralStalenessTolerance(
         Data storage self,
         uint128 synthMarketId
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         return self.collateralStalenessTolerances[synthMarketId];
     }
 
