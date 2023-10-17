@@ -2,16 +2,9 @@ import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
-import {
-  PerpMarketProxy,
-  PerpAccountProxy,
-  SnxV3CollateralMock,
-  SynthetixCollateral2Mock,
-  PythMock,
-  AggregatorV3Mock,
-} from './generated/typechain';
+import { PerpMarketProxy, PerpAccountProxy, PythMock, AggregatorV3Mock } from './generated/typechain';
 import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
-import { BigNumber, utils, Signer, constants, ethers } from 'ethers';
+import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
@@ -40,8 +33,8 @@ export interface Contracts {
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];
   ['spotMarket.SpotMarketProxy']: Systems['SpotMarket'];
   ['spotMarket.SynthRouter']: Systems['Synth'];
-  SnxV3CollateralMock: SnxV3CollateralMock;
-  SynthetixCollateral2Mock: SynthetixCollateral2Mock;
+  CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
   PythMock: PythMock;
@@ -111,8 +104,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       // follow the same ERC20 standard, simply named differently.
       //
       // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
-      CollateralMock: getContract('SnxV3CollateralMock'),
-      Collateral2Mock: getContract('SynthetixCollateral2Mock'),
+      CollateralMock: getContract('CollateralMock'),
+      Collateral2Mock: getContract('Collateral2Mock'),
     };
   });
 
@@ -244,6 +237,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     const nonSusdCollaterals = collaterals.map((collateral, idx): PerpCollateral => {
       const synthMarket = synthMarkets[idx];
       const synth = synthMarket.synth();
+
       return {
         ...collateral,
         contract: synth,
@@ -305,8 +299,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       }
     }
 
-    // TODO: Replace `nonSusdCollaterals` with `allCollaterals` to start using sUSD.
-    collaterals = nonSusdCollaterals;
+    collaterals = allCollaterals;
     collateralsWithoutSusd = nonSusdCollaterals;
   });
 
