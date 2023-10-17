@@ -37,10 +37,7 @@ export async function ccipReceive({
     tokenAmounts: [],
   };
 
-  const tx = await CcipRouter.attach(ccipAddress)
+  return CcipRouter.attach(ccipAddress)
     .connect(targetSigner)
     .__ccipReceive(rx.to, message, { value: 0 });
-
-  await tx.wait();
-  return tx;
 }

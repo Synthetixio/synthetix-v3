@@ -3,7 +3,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { integrationBootstrap } from './bootstrap';
-import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
+import assert from 'assert';
 
 describe('cross chain election testing', function () {
   const { chains, mothership } = integrationBootstrap();
@@ -22,22 +22,25 @@ describe('cross chain election testing', function () {
   it('cast a vote on satellite', async function () {
     const [targetSigner, voter] = await _fixtureSignerOnChains();
     const [mothership, satellite1] = chains;
+    const randomVoter = ethers.Wallet.createRandom().address;
 
-    const tx = await satellite1.CoreProxy.connect(voter).cast(
-      [ethers.Wallet.createRandom().address],
-      [1000000000]
-    );
+    const tx = await satellite1.CoreProxy.connect(voter).cast([randomVoter], [1000000000]);
 
     const rx = await tx.wait();
 
-    await assertRevert(
-      ccipReceive({
-        rx,
-        sourceChainSelector: '2664363617261496610',
-        targetSigner,
-        ccipAddress: mothership.CcipRouter.address,
-      }),
-      'NotCallableInCurrentPeriod'
+    const tx2 = await ccipReceive({
+      rx,
+      sourceChainSelector: '2664363617261496610',
+      targetSigner,
+      ccipAddress: mothership.CcipRouter.address,
+    });
+    await tx2.wait();
+    assert.equal(
+      await mothership.CoreProxy.hasVoted(
+        randomVoter,
+        (await satellite1.provider.getNetwork()).chainId
+      ),
+      false
     );
   });
 
