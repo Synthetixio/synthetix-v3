@@ -2,6 +2,7 @@ import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import hre from 'hardhat';
 
 import type { CoreProxy, CouncilToken, SnapshotRecordMock } from './generated/typechain';
+import { ethers } from 'hardhat';
 
 interface Contracts {
   CoreProxy: CoreProxy;
@@ -21,6 +22,8 @@ function snapshotCheckpoint() {
 export function bootstrap() {
   const contracts: Partial<Contracts> = {};
   const c = contracts as Contracts;
+  const voter1 = ethers.Wallet.createRandom();
+  const voter2 = ethers.Wallet.createRandom();
 
   snapshotCheckpoint();
 
@@ -32,12 +35,23 @@ export function bootstrap() {
     });
   });
 
+  before('set snapshotRecordMock', async () => {
+    await c.CoreProxy.setBalanceOfOnPeriod(voter1, ethers.utils.parseEther('10000'), 0);
+    await c.CoreProxy.setBalanceOfOnPeriod(voter2, ethers.utils.parseEther('10000'), 0);
+  });
+
   return {
     c,
     getProvider,
     getSigners,
     getContract,
     snapshotCheckpoint,
+    voter1,
+    voter2,
+
+    async setVotingPowerOnPeriod(address: string, amount: string, epochIndex: number) {
+      await c.CoreProxy.setBalanceOfOnPeriod(address, amount, epochIndex);
+    },
 
     async deployNewProxy() {
       const [owner] = getSigners();
