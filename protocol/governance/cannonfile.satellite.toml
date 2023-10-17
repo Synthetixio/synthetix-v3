@@ -21,6 +21,9 @@ artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenMod
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
+[contract.CcipReceiverModule]
+artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
+
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
@@ -28,6 +31,7 @@ contracts = [
     "ElectionModuleSatellite",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
+    "CcipReceiverModule"
 ]
 
 [invoke.upgrade_core_proxy]

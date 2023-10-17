@@ -254,6 +254,7 @@ contract ElectionModule is
         uint256[] calldata amounts
     ) external override {
         CrossChain.onlyCrossChain();
+
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
         if (candidates.length > _MAX_BALLOT_SIZE) {

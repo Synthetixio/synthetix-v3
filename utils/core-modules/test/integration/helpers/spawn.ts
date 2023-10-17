@@ -1,10 +1,9 @@
 import { spawn as nodeSpawn } from 'node:child_process';
 import debug from 'debug';
 
-const log = debug('synthetix:core-modules:spawn');
-
 interface Options {
-  waitForText?: (data: string) => boolean;
+  timeout?: number;
+  waitForText?: string | ((data: string) => boolean);
   env?: { [key: string]: string };
 }
 
@@ -12,6 +11,7 @@ export async function spawn(cmd: string, args: string[] = [], opts: Options = {}
   const { pEvent } = await import('p-event');
 
   const spawnOptions = {
+    timeout: opts.timeout,
     env: { ...process.env, ...(opts.env || {}) },
   };
 
@@ -21,9 +21,15 @@ export async function spawn(cmd: string, args: string[] = [], opts: Options = {}
         .join(' ') + ' '
     : '';
 
-  console.log(`  Spawn: ${envs}${cmd} ${args.join(' ')}`);
+  const cmdPrint = `${envs}${cmd} ${args.join(' ')}`;
 
   const child = nodeSpawn(cmd, args, spawnOptions);
+
+  console.log(`  Spawn(pid: ${child.pid}): ${cmdPrint}`);
+
+  const log = debug(`spawn:${child.pid}`);
+
+  log(`spawn: ${cmdPrint}`);
 
   process.on('exit', function () {
     child.kill();
@@ -49,30 +55,36 @@ export async function spawn(cmd: string, args: string[] = [], opts: Options = {}
   }
 
   child.on('close', () => {
+    console.log(`  Close(pid: ${child.pid} - exitCode: ${child.exitCode}): ${cmdPrint}`);
     if (child.exitCode !== 0) {
       err.message = lastErrMessage || `There was an error when running "${cmd} ${args.join(' ')}".`;
       throw err;
     }
   });
 
-  // Wait for the child process to open
-  await pEvent(child, 'spawn');
+  child.on('error', (err) => {
+    log(err);
+  });
 
-  if (!child.stdout) {
-    throw new Error('Missing stdout');
-  }
-
-  // Wait for the anvil node to start, or fail when the process closes (most likely an error)
+  // Wait for the desired text to appear, or fail when the process closes (most likely an error)
   if (opts.waitForText) {
-    await Promise.race([
-      pEvent(child, 'close'),
+    const event = await Promise.race([
       pEvent(child.stdout, 'data', {
-        timeout: 30000,
         filter: (data: unknown) => {
-          return opts.waitForText ? opts.waitForText(`${data}`) : true;
+          return typeof opts.waitForText === 'string'
+            ? `${data}`.includes(opts.waitForText)
+            : opts.waitForText!(`${data}`);
         },
-      }),
+      }).then(() => 'data'),
+      pEvent(child, 'close').then(async () => 'close'),
     ]);
+
+    if (event === 'close') {
+      throw new Error(`Process closed before the expected event was emitted`);
+    }
+  } else {
+    // Wait for the child process to open
+    await pEvent(child, 'spawn');
   }
 
   return child;

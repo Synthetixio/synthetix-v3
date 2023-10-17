@@ -14,15 +14,29 @@ import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain
 
 type TestChain = 'sepolia' | 'optimistic-goerli' | 'avalanche-fuji';
 
+interface Proxies {
+  Sepolia: SepoliaCoreProxy;
+  OptimisticGoerli: OptimisticGoerliCoreProxy;
+  AvalancheFuji: AvalancheFujiCoreProxy;
+}
+
+enum ChainSelector {
+  Sepolia = '16015286601757825753',
+  OptimisticGoerli = '2664363617261496610',
+  AvalancheFuji = '14767482510784806043',
+}
+
 const ownerAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
 
-type Chains = [
-  Awaited<ReturnType<typeof _spinNetwork<SepoliaCoreProxy>>>,
-  Awaited<ReturnType<typeof _spinNetwork<OptimisticGoerliCoreProxy>>>,
-  Awaited<ReturnType<typeof _spinNetwork<AvalancheFujiCoreProxy>>>,
-];
+type Mothership = Awaited<ReturnType<typeof _spinNetwork<SepoliaCoreProxy>>>;
+type Satellite1 = Awaited<ReturnType<typeof _spinNetwork<OptimisticGoerliCoreProxy>>>;
+type Satellite2 = Awaited<ReturnType<typeof _spinNetwork<AvalancheFujiCoreProxy>>>;
+type Chains = [Mothership, Satellite1, Satellite2];
 
 export function integrationBootstrap() {
+  const mothership: Mothership = {} as unknown as Mothership;
+  const satellite1: Satellite1 = {} as unknown as Satellite1;
+  const satellite2: Satellite2 = {} as unknown as Satellite2;
   const chains: Chains = [] as unknown as Chains;
 
   before(`setup chains`, async function () {
@@ -32,32 +46,61 @@ export function integrationBootstrap() {
     const typechainFolder = path.resolve(generatedPath, 'typechain');
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
-    /// @dev: show build logs with DEBUG=synthetix:core-modules:spawn
-    const res = (await Promise.all([
-      _spinNetwork<SepoliaCoreProxy>({
+    /// @dev: show build logs with DEBUG=spawn:*
+    // const res = (await Promise.all([
+    //   _spinNetwork<SepoliaCoreProxy>({
+    //     networkName: 'sepolia',
+    //     cannonfile: 'cannonfile.test.toml',
+    //     typechainFolder,
+    //     writeDeployments,
+    //   }),
+    //   _spinNetwork<OptimisticGoerliCoreProxy>({
+    //     networkName: 'optimistic-goerli',
+    //     cannonfile: 'cannonfile.satellite.test.toml',
+    //     typechainFolder,
+    //     writeDeployments,
+    //   }),
+    //   _spinNetwork<AvalancheFujiCoreProxy>({
+    //     networkName: 'avalanche-fuji',
+    //     cannonfile: 'cannonfile.satellite.test.toml',
+    //     typechainFolder,
+    //     writeDeployments,
+    //   }),
+    // ])) satisfies Chains;
+
+    // TODO: There's an unknown error that causes to some builds to finish early
+    // without throwing error but they do not complete when running in parallel
+    const res = [
+      await _spinNetwork<Proxies['Sepolia']>({
         networkName: 'sepolia',
         cannonfile: 'cannonfile.test.toml',
         typechainFolder,
         writeDeployments,
+        chainSlector: ChainSelector.Sepolia,
       }),
-      _spinNetwork<OptimisticGoerliCoreProxy>({
+      await _spinNetwork<Proxies['OptimisticGoerli']>({
         networkName: 'optimistic-goerli',
         cannonfile: 'cannonfile.satellite.test.toml',
         typechainFolder,
         writeDeployments,
+        chainSlector: ChainSelector.OptimisticGoerli,
       }),
-      _spinNetwork<AvalancheFujiCoreProxy>({
+      await _spinNetwork<Proxies['AvalancheFuji']>({
         networkName: 'avalanche-fuji',
         cannonfile: 'cannonfile.satellite.test.toml',
         typechainFolder,
         writeDeployments,
+        chainSlector: ChainSelector.AvalancheFuji,
       }),
-    ])) satisfies Chains;
+    ] satisfies Chains;
 
     chains.push(...res);
+    Object.assign(mothership, res[0]);
+    Object.assign(satellite1, res[1]);
+    Object.assign(satellite2, res[2]);
   });
 
-  return { chains };
+  return { chains, mothership, satellite1, satellite2 };
 }
 
 async function _spinNetwork<CoreProxy>({
@@ -65,11 +108,13 @@ async function _spinNetwork<CoreProxy>({
   cannonfile,
   writeDeployments,
   typechainFolder,
+  chainSlector,
 }: {
   networkName: TestChain;
   cannonfile: string;
   writeDeployments: string;
   typechainFolder: string;
+  chainSlector: ChainSelector;
 }) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
@@ -93,8 +138,6 @@ async function _spinNetwork<CoreProxy>({
     impersonate: ownerAddress,
     wipe: true,
   });
-
-  console.log(`  Running: ${packageRef} - Network: ${networkName}`);
 
   await cannonInspect({
     networkName,
@@ -124,5 +167,5 @@ async function _spinNetwork<CoreProxy>({
     signer
   ) as CcipRouterMock;
 
-  return { networkName, chainId, provider, CoreProxy, CcipRouter };
+  return { networkName, chainId, chainSlector, provider, CoreProxy, CcipRouter };
 }

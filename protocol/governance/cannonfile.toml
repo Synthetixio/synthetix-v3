@@ -33,6 +33,9 @@ artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
+[contract.CcipReceiverModule]
+artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
+
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
@@ -41,6 +44,7 @@ contracts = [
     "ElectionModule",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
+    "CcipReceiverModule"
 ]
 
 [invoke.upgrade_core_proxy]
