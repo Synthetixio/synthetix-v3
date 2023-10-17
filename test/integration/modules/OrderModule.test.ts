@@ -26,7 +26,8 @@ import { PerpMarketProxy } from '../../generated/typechain';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, ethOracleNode, collaterals, markets, traders } = bs;
+  const { systems, restore, provider, keeper, ethOracleNode, collaterals, collateralsWithoutSusd, markets, traders } =
+    bs;
 
   beforeEach(restore);
 
@@ -62,12 +63,7 @@ describe('OrderModule', () => {
 
       // It's a little weird to get the event that we're asserting. We're doing this to get the correct base fee, anvil
       // have some issue with consistent base fee, which keeperFee is based on.
-      const { args: orderCommittedArgs } =
-        findEventSafe({
-          receipt,
-          eventName: 'OrderCommitted',
-          contract: PerpMarketProxy,
-        }) || {};
+      const { args: orderCommittedArgs } = findEventSafe(receipt, 'OrderCommitted', PerpMarketProxy) || {};
 
       const orderCommittedEventProperties = [
         trader.accountId,
@@ -396,13 +392,7 @@ describe('OrderModule', () => {
       const block = await provider().getBlock(receipt.blockNumber);
       const timestamp = block.timestamp;
 
-      const { args: orderSettledArgs } =
-        findEventSafe({
-          receipt,
-          eventName: 'OrderSettled',
-          contract: PerpMarketProxy,
-        }) || {};
-
+      const { args: orderSettledArgs } = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy) || {};
       const orderSettledEventProperties = [
         trader.accountId,
         marketId,
@@ -626,9 +616,7 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Any collateral except sUSD can be used, we want to make sure a non-zero.
-      const collateral = genOneOf(
-        collaterals().filter(({ synthMarket }) => !synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID))
-      );
+      const collateral = genOneOf(collateralsWithoutSusd());
       const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
         bs,
         genTrader(bs, { desiredCollateral: collateral })
@@ -667,12 +655,12 @@ describe('OrderModule', () => {
       // sUSD must be gt 0.
       assertBn.gt(
         d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available,
-        BigNumber.from(0)
+        bn(0)
       );
 
       // Value of original collateral should also stay the same.
       assertBn.equal(
-        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId()))[0]
+        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarketId()))[0]
           .available,
         collateralDepositAmount
       );
@@ -682,9 +670,7 @@ describe('OrderModule', () => {
       const { PerpMarketProxy, USD } = systems();
 
       // Any collateral except sUSD can be used, we want to make sure a non-zero.
-      const collateral = genOneOf(
-        collaterals().filter(({ synthMarket }) => !synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID))
-      );
+      const collateral = genOneOf(collateralsWithoutSusd());
       const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
         bs,
         genTrader(bs, { desiredCollateral: collateral })
@@ -707,13 +693,8 @@ describe('OrderModule', () => {
         desiredKeeper: keeper(),
       });
 
-      const keeperFee = findEventSafe({
-        receipt,
-        eventName: 'OrderSettled',
-        contract: PerpMarketProxy,
-      })?.args.keeperFee;
-
-      assertBn.gt(keeperFee, BigNumber.from(0));
+      const keeperFee = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args.keeperFee;
+      assertBn.gt(keeperFee, bn(0));
       assertBn.equal(await USD.balanceOf(await keeper().getAddress()), keeperFee);
     });
 
@@ -972,11 +953,11 @@ describe('OrderModule', () => {
               return getPythPriceData(bs, marketId, publishTime, 0);
             case ZeroPriceVariant.CL: {
               const oraclePrice = wei(order.oraclePrice).toNumber();
-              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              await market.aggregator().mockSetCurrentPrice(bn(0));
               return getPythPriceData(bs, marketId, publishTime, oraclePrice);
             }
             case ZeroPriceVariant.BOTH: {
-              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              await market.aggregator().mockSetCurrentPrice(bn(0));
               return getPythPriceData(bs, marketId, publishTime, 0);
             }
           }
@@ -1084,7 +1065,7 @@ describe('OrderModule', () => {
         });
 
         // Retrieve fees associated with this new order.
-        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, BigNumber.from(0));
+        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, bn(0));
         const { orderFee: expectedOrderFee } = await calcOrderFees(
           bs,
           marketId,
@@ -1100,19 +1081,19 @@ describe('OrderModule', () => {
 
         // Use explicit values to test a concrete example.
         const trader = traders()[0];
-        const collateral = collaterals()[0];
+        const collateral = collateralsWithoutSusd()[0];
         const market = markets()[0];
-        const marginUsdDepositAmount = wei(1000).toBN();
+        const marginUsdDepositAmount = bn(1000);
         const leverage = 1;
         const keeperFeeBufferUsd = 0;
-        const collateralDepositAmount = wei(10).toBN();
-        const collateralPrice = wei(100).toBN();
-        const marketOraclePrice = wei(1).toBN();
-        const makerFee = wei(0.01).toBN();
-        const takerFee = wei(0.02).toBN();
+        const collateralDepositAmount = bn(10);
+        const collateralPrice = bn(100);
+        const marketOraclePrice = bn(1);
+        const makerFee = bn(0.01);
+        const takerFee = bn(0.02);
 
         // Update state to reflect explicit values.
-        await collateral.aggregator().mockSetCurrentPrice(collateralPrice);
+        await collateral.setPrice(collateralPrice);
         await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
         const marketId = market.marketId();
         await setMarketConfigurationById(bs, marketId, { makerFee, takerFee });
@@ -1178,11 +1159,7 @@ describe('OrderModule', () => {
     // @see: https://github.com/NomicFoundation/hardhat/issues/3028
     describe.skip('keeperFee', () => {
       const getKeeperFee = (PerpMarketProxy: PerpMarketProxy, receipt: ethers.ContractReceipt): BigNumber =>
-        findEventSafe({
-          receipt,
-          eventName: 'OrderSettled',
-          contract: PerpMarketProxy,
-        })?.args.keeperFee;
+        findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args.keeperFee;
 
       it('should calculate keeper fees proportional to block.baseFee and profit margin', async () => {
         const { PerpMarketProxy } = systems();
@@ -1216,11 +1193,11 @@ describe('OrderModule', () => {
         const { PerpMarketProxy } = systems();
 
         // Set a really high ETH price of 4.9k USD (Dec 21' ATH).
-        await ethOracleNode().agg.mockSetCurrentPrice(wei(4900).toBN());
+        await ethOracleNode().agg.mockSetCurrentPrice(bn(4900));
 
         // Cap the max keeperFee to $50 USD
-        const maxKeeperFeeUsd = wei(50).toBN();
-        await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: wei(10).toBN() });
+        const maxKeeperFeeUsd = bn(50);
+        await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: bn(10) });
 
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,
@@ -1247,14 +1224,14 @@ describe('OrderModule', () => {
         const { PerpMarketProxy } = systems();
 
         // Lower the min requirements to reduce fees fairly significantly.
-        const minKeeperFeeUsd = wei(60).toBN();
+        const minKeeperFeeUsd = bn(60);
         await setMarketConfiguration(bs, {
           keeperSettlementGasUnits: 100_000,
-          maxKeeperFeeUsd: wei(100).toBN(),
+          maxKeeperFeeUsd: bn(100),
           minKeeperFeeUsd,
-          keeperProfitMarginPercent: wei(0).toBN(),
+          keeperProfitMarginPercent: bn(0),
         });
-        await ethOracleNode().agg.mockSetCurrentPrice(wei(100).toBN()); // $100 ETH
+        await ethOracleNode().agg.mockSetCurrentPrice(bn(100)); // $100 ETH
 
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,
@@ -1282,10 +1259,10 @@ describe('OrderModule', () => {
   describe('getFillPrice', () => {
     it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
-      const invalidMarketId = wei(42069).toBN();
+      const invalidMarketId = bn(42069);
 
       // Size to check fill price
-      const size = wei(genNumber(-10, 10)).toBN();
+      const size = bn(genNumber(-10, 10));
 
       assertRevert(PerpMarketProxy.getFillPrice(invalidMarketId, size), `MarketNotFound("${invalidMarketId}")`);
     });
@@ -1306,7 +1283,7 @@ describe('OrderModule', () => {
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
       // Using size to simulate short which will reduce the skew.
-      const size = wei(genNumber(1, 10)).toBN();
+      const size = bn(genNumber(1, 10));
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
 
@@ -1354,7 +1331,7 @@ describe('OrderModule', () => {
       const marketSkew = order.sizeDelta;
 
       // Size to check fill price.
-      const size = wei(0).toBN();
+      const size = bn(0);
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
       const expectedFillPrice = wei(1).add(wei(marketSkew).div(skewScale)).mul(oraclePrice).toBN();
@@ -1377,7 +1354,7 @@ describe('OrderModule', () => {
       const marketSkew = order.sizeDelta;
 
       // Size to check fill price.
-      const size = wei(genNumber(-10, 10)).toBN();
+      const size = bn(genNumber(-10, 10));
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
       const expectedFillPrice = calcFillPrice(marketSkew, skewScale, size, oraclePrice);

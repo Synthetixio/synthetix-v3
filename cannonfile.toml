@@ -141,27 +141,27 @@ factory.PerpAccountProxy.arg = 2
 
 # --- Mocks --- #
 
-[contract.SnxV3CollateralMock]
+[contract.CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "1"
 
-[contract.SynthetixCollateral2Mock]
+[contract.Collateral2Mock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "2"
 
 [invoke.initialize_snxCollateral]
-target = ["SnxV3CollateralMock"]
+target = ["CollateralMock"]
 func = "initialize"
 args = ["SNX V3","SNXV3","18"]
-depends = ["contract.SnxV3CollateralMock"]
+depends = ["contract.CollateralMock"]
 
 [invoke.initialize_xxxCollateral]
-target = ["SynthetixCollateral2Mock"]
+target = ["Collateral2Mock"]
 func = "initialize"
 args = ["XXX X","XXX","18"]
-depends = ["contract.SynthetixCollateral2Mock"]
+depends = ["contract.Collateral2Mock"]
 
 [contract.PythMock]
 artifact = "contracts/mocks/PythMock.sol:PythMock"

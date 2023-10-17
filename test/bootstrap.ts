@@ -2,14 +2,7 @@ import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
-import {
-  PerpMarketProxy,
-  PerpAccountProxy,
-  SnxV3CollateralMock,
-  SynthetixCollateral2Mock,
-  PythMock,
-  AggregatorV3Mock,
-} from './generated/typechain';
+import { PerpMarketProxy, PerpAccountProxy, PythMock, AggregatorV3Mock } from './generated/typechain';
 import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
 import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
@@ -40,8 +33,8 @@ export interface Contracts {
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];
   ['spotMarket.SpotMarketProxy']: Systems['SpotMarket'];
   ['spotMarket.SynthRouter']: Systems['Synth'];
-  SnxV3CollateralMock: SnxV3CollateralMock;
-  SynthetixCollateral2Mock: SynthetixCollateral2Mock;
+  CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
   PythMock: PythMock;
@@ -75,6 +68,19 @@ export interface GeneratedBootstrap {
   }[];
 }
 
+export interface PerpCollateral {
+  name: string;
+  initialPrice: BigNumber;
+  max: BigNumber;
+  contract:
+    | Systems['USD']
+    | ReturnType<ReturnType<ReturnType<typeof bootstrapSynthMarkets>['synthMarkets']>[number]['synth']>;
+  synthMarketId: () => BigNumber;
+  synthAddress: () => string;
+  getPrice: () => ReturnType<AggregatorV3Mock['latestRoundData']>;
+  setPrice: (price: BigNumber) => Promise<void>;
+}
+
 export const bootstrap = (args: GeneratedBootstrap) => {
   const { getContract, getSigners, getProvider } = _bootstraped;
 
@@ -98,8 +104,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       // follow the same ERC20 standard, simply named differently.
       //
       // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
-      CollateralMock: getContract('SnxV3CollateralMock'),
-      Collateral2Mock: getContract('SynthetixCollateral2Mock'),
+      CollateralMock: getContract('CollateralMock'),
+      Collateral2Mock: getContract('Collateral2Mock'),
     };
   });
 
@@ -115,7 +121,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const stakedPool = createStakedPool(core, args.pool.stakedCollateralPrice, args.pool.stakedAmount);
 
   // Additional collaterals to provision as spot Synth markets.
-  const getCollaterals = () => [
+  const getRawCollaterals = () => [
     {
       name: 'swstETH',
       initialPrice: bn(genOneOf([1500, 1650, 1750, 1850, 4800])),
@@ -129,7 +135,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   ];
 
   const spotMarket = bootstrapSynthMarkets(
-    getCollaterals().map(({ initialPrice, name }) => ({
+    getRawCollaterals().map(({ initialPrice, name }) => ({
       name,
       token: name,
       buyPrice: initialPrice,
@@ -137,44 +143,6 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     })),
     stakedPool
   );
-
-  // Overall market allows up to n collaterals, each having their own oracle node.
-  //
-  // NOTE: See below for the `before` block below on collateral management.
-  const configureCollateral = async () => {
-    const collaterals = getCollaterals();
-
-    // Amend sUSD as a collateral to configure.
-    const synthMarkets = spotMarket.synthMarkets();
-    const synthMarketIds = [SYNTHETIX_USD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
-    const maxAllowances = [bn(10_000_000)].concat(collaterals.map(({ max }) => max));
-
-    // Allow this collateral to be depositable into the perp market.
-    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(synthMarketIds, maxAllowances);
-
-    // TODO: This should be abstracted such that sUSD can be generated and used for all tests.
-    return collaterals.map((collateral, idx) => {
-      const synthMarket = synthMarkets[idx];
-      return {
-        ...collateral,
-        synthMarket,
-        contract: synthMarket.synth(),
-        // Why `sellAggregator`? All of BFP only uses `quoteSellExactIn`, so we only need to mock the `sellAggregator`.
-        // If we need to buy synths during tests and for whatever reason we cannot just mint with owner, then that can
-        // still be referenced via `collateral.synthMarket.buyAggregator()`.
-        //
-        // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
-        aggregator: synthMarket.sellAggregator,
-        // If you only update the price of the sell aggregator, and try to close a losing position things might fail.
-        // sellExactIn is called and will revert with Invalid prices, if they differ too much.
-        // Adding a convenient method here to update the prices for both
-        updatePrice: async (price: BigNumber) => {
-          await synthMarket.sellAggregator().mockSetCurrentPrice(price);
-          return synthMarket.buyAggregator().mockSetCurrentPrice(price);
-        },
-      };
-    });
-  };
 
   before(
     'configure global market',
@@ -250,20 +218,90 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     );
   });
 
-  let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
+  // Overall market allows up to n collaterals, each having their own oracle node.
+  //
+  // NOTE: See below for the `before` block below on collateral management.
+  const configureCollateral = async () => {
+    const collaterals = getRawCollaterals();
+
+    // Amend sUSD as a collateral to configure ()
+    const sUsdMaxDepositAllowance = bn(10_000_000);
+    const synthMarkets = spotMarket.synthMarkets();
+
+    // Allow this collateral to be depositable into the perp market.
+    const synthMarketIds = [SYNTHETIX_USD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
+    const maxAllowances = [sUsdMaxDepositAllowance].concat(collaterals.map(({ max }) => max));
+    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(synthMarketIds, maxAllowances);
+
+    // Collect non-sUSD collaterals along with their Synth Market.
+    const nonSusdCollaterals = collaterals.map((collateral, idx): PerpCollateral => {
+      const synthMarket = synthMarkets[idx];
+      const synth = synthMarket.synth();
+
+      return {
+        ...collateral,
+        contract: synth,
+        synthMarketId: () => synthMarket.marketId(),
+        synthAddress: () => synthMarket.synthAddress(),
+        // Why `sellAggregator`? All of BFP only uses `quoteSellExactIn`, so we only need to mock the `sellAggregator`.
+        // If we need to buy synths during tests and for whatever reason we cannot just mint with owner, then that can
+        // still be referenced via `collateral.synthMarket.buyAggregator()`.
+        //
+        // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
+        getPrice: () => synthMarket.sellAggregator().latestRoundData(),
+        // Why `setPrice`?
+        //
+        // If you only update the price of the sell aggregator, and try to close a losing position things might fail.
+        // sellExactIn is called and will revert with Invalid prices, if they differ too much.
+        // Adding a convenient method here to update the prices for both
+        setPrice: async (price: BigNumber) => {
+          await synthMarket.sellAggregator().mockSetCurrentPrice(price);
+          await synthMarket.buyAggregator().mockSetCurrentPrice(price);
+        },
+      };
+    });
+
+    // Mock a sUSD synth collateral so it can also be used as a random collateral.
+    //
+    // NOTE: The system recognises sUSD as $1 so this sUsdAggregator is really just a stub but will never
+    // be used in any capacity.
+    const { aggregator: sUsdAggregator } = await createOracleNode(getOwner(), bn(1), systems.OracleManager);
+    const sUsdCollateral: PerpCollateral = {
+      name: 'sUSD',
+      initialPrice: bn(1),
+      max: sUsdMaxDepositAllowance,
+      contract: systems.USD,
+      synthMarketId: () => SYNTHETIX_USD_MARKET_ID,
+      synthAddress: () => systems.USD.address,
+      getPrice: () => sUsdAggregator.latestRoundData(),
+      setPrice: async (price: BigNumber) => {
+        await sUsdAggregator.mockSetCurrentPrice(price);
+      },
+    };
+
+    return { sUsdCollateral, nonSusdCollaterals };
+  };
+
+  let collaterals: PerpCollateral[];
+  let collateralsWithoutSusd: PerpCollateral[];
+
   before('configure margin collaterals and their prices', async () => {
-    collaterals = await configureCollateral();
+    const { sUsdCollateral, nonSusdCollaterals } = await configureCollateral();
+    const allCollaterals = [sUsdCollateral].concat(nonSusdCollaterals);
 
     // Ensure core system has enough capacity to deposit this collateral for perp market x.
-    for (const collateral of collaterals) {
+    for (const collateral of allCollaterals) {
       for (const market of markets) {
         await systems.Core.connect(getOwner()).configureMaximumMarketCollateral(
           market.marketId(),
-          collateral.synthMarket.synthAddress(),
+          collateral.synthAddress(),
           constants.MaxUint256
         );
       }
     }
+
+    collaterals = allCollaterals;
+    collateralsWithoutSusd = nonSusdCollaterals;
   });
 
   let keeper: Signer;
@@ -331,6 +369,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     restore,
     markets: () => markets,
     collaterals: () => collaterals,
+    collateralsWithoutSusd: () => collateralsWithoutSusd,
     pool: () => ({
       id: stakedPool.poolId,
       stakerAccountId: stakedPool.accountId,

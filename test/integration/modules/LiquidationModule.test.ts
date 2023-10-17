@@ -6,11 +6,10 @@ import { wei } from '@synthetixio/wei';
 import { BigNumber, Signer, ethers, utils } from 'ethers';
 import { shuffle, times } from 'lodash';
 import forEach from 'mocha-each';
-import { bootstrap } from '../../bootstrap';
+import { PerpCollateral, bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
-  genNonUsdCollateral,
   genNumber,
   genOneOf,
   genOrder,
@@ -31,13 +30,28 @@ import {
   fastForwardBySec,
   extendContractAbi,
   BURN_ADDRESS,
+  getSusdCollateral,
+  isSusdCollateral,
+  findOrThrow,
 } from '../../helpers';
 import { Trader } from '../../typed';
 import { assertEvents } from '../../assert';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, keeper, keeper2, keeper3, endorsedKeeper, systems, provider, restore } = bs;
+  const {
+    markets,
+    collaterals,
+    collateralsWithoutSusd,
+    traders,
+    keeper,
+    keeper2,
+    keeper3,
+    endorsedKeeper,
+    systems,
+    provider,
+    restore,
+  } = bs;
 
   beforeEach(restore);
 
@@ -63,12 +77,15 @@ describe('LiquidationModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.lte(healthFactor, wei(1).toBN());
+      assertBn.lte(healthFactor, bn(1));
 
-      const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
       const keeperAddress = await keeper().getAddress();
       await assertEvent(
-        tx,
+        receipt,
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
@@ -99,20 +116,23 @@ describe('LiquidationModule', () => {
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
-      const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
       const keeperAddress = await keeper().getAddress();
       await assertEvent(
-        tx,
+        receipt,
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
-      await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
+      await assertEvent(receipt, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
     });
 
     it('should sell all available synth collateral for sUSD when flagging', async () => {
       const { PerpMarketProxy } = systems();
 
-      const collateral = genNonUsdCollateral(bs);
+      const collateral = genOneOf(collateralsWithoutSusd());
       const orderSide = genSide();
       const marginUsd = genOneOf([1000, 5000]);
 
@@ -129,12 +149,12 @@ describe('LiquidationModule', () => {
 
       // Verify no USD but _some_ non-USD collateral was used as margin.
       const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const collateralBalanceBefore = d1.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
-        .map((c) => c.available)[0];
-      const usdBalanceBefore = d1.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
-        .map((c) => c.available)[0];
+      const collateralBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(collateral.synthMarketId())
+      ).available;
+      const usdBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      ).available;
 
       assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
       assertBn.isZero(usdBalanceBefore);
@@ -151,12 +171,12 @@ describe('LiquidationModule', () => {
       // Assert the collateral has been sold and all that's left is sUSD (minus fees).
       const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
-      const collateralBalanceAfter = d2.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
-        .map((c) => c.available)[0];
-      const usdBalanceAfter = d2.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
-        .map((c) => c.available)[0];
+      const collateralBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(collateral.synthMarketId())
+      ).available;
+      const usdBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      ).available;
 
       assertBn.isZero(collateralBalanceAfter);
       assertBn.near(usdBalanceAfter, marginUsdDepositAmount); // .near to account for spot-market skewFee.
@@ -164,12 +184,15 @@ describe('LiquidationModule', () => {
 
     it('should not sell any synth collateral when all collateral is already sUSD');
 
-    it('should emit all events in correct order', async () => {
+    forEach([
+      ['sUSD', () => getSusdCollateral(collaterals())],
+      ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
+    ]).it('should emit all events in correct order (%s)', async (_, getCollateral: () => PerpCollateral) => {
       const { PerpMarketProxy, Core, SpotMarket } = systems();
 
       const orderSide = genSide();
-      const { trader, market, marketId, collateral, collateralDepositAmount, marginUsdDepositAmount, collateralPrice } =
-        await depositMargin(bs, genTrader(bs));
+      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount, collateral, collateralPrice } =
+        await depositMargin(bs, genTrader(bs, { desiredCollateral: getCollateral() }));
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -178,23 +201,24 @@ describe('LiquidationModule', () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       // Price falls/rises between 10% should results in a healthFactor of < 1.
-      // Whether it goes up or down depends on the side of the order.
       const newMarketOraclePrice = wei(order.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.lte(healthFactor, bn(1));
 
-      assertBn.lte(healthFactor, wei(1).toBN());
-
-      const { tx, receipt } = await withExplicitEvmMine(
+      const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
         provider()
       );
 
       const keeperAddress = await keeper().getAddress();
+
       // Create a contract that can parse all events emitted.
+      //
+      // This isn't necessary for sUSD collateral but it doesn't affect the correctness of this test.
       const spotMarketEvents = SpotMarket.interface.format(utils.FormatTypes.full);
       const contractsWithAllEvents = extendContractAbi(
         PerpMarketProxy,
@@ -204,26 +228,26 @@ describe('LiquidationModule', () => {
           .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
       );
 
-      // It's quite hard to calculate the skew fee from selling our collateral, so we cheat a little grab it from the event
-      const usdAmountAfterSpotSell = findEventSafe({
-        receipt,
-        eventName: 'SynthSold',
-        contract: contractsWithAllEvents,
-      })?.args.amountReturned as BigNumber;
+      let expectedEvents: string[] = [
+        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
+      ];
 
-      // Assert that it's slightly smaller (or equal depending on skew scale) than the deposited amount
-      assertBn.lte(usdAmountAfterSpotSell, marginUsdDepositAmount);
-      // Some variables for readability
-      const spotMarketFees = `[0, 0, 0, 0]`;
-      const collectedFee = 0;
-      const referrer = BURN_ADDRESS;
-      const collateralAddress = collateral.synthMarket.synthAddress();
-      const synthId = collateral.synthMarket.marketId();
+      if (!isSusdCollateral(collateral)) {
+        // It's quite hard to calculate the skew fee from selling our collateral, so we cheat a little grab it from the event
+        const usdAmountAfterSpotSell = findEventSafe(receipt, 'SynthSold', contractsWithAllEvents)?.args
+          .amountReturned as BigNumber;
 
-      await assertEvents(
-        tx,
-        [
-          `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
+        // Assert that it's slightly smaller (or equal depending on skew scale) than the deposited amount
+        assertBn.lte(usdAmountAfterSpotSell, marginUsdDepositAmount);
+
+        // Some variables for readability.
+        const spotMarketFees = `[0, 0, 0, 0]`;
+        const collectedFee = 0;
+        const referrer = BURN_ADDRESS;
+        const collateralAddress = collateral.synthAddress();
+        const synthId = collateral.synthMarketId();
+
+        expectedEvents = expectedEvents.concat([
           `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
           `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
           `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${collateralDepositAmount})`,
@@ -232,9 +256,10 @@ describe('LiquidationModule', () => {
           `SynthSold(${synthId}, ${usdAmountAfterSpotSell}, ${spotMarketFees}, ${collectedFee}, "${referrer}", ${collateralPrice})`,
           `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${usdAmountAfterSpotSell})`,
           `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${PerpMarketProxy.address}")`,
-        ],
-        contractsWithAllEvents
-      );
+        ]);
+      }
+
+      await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
     });
 
     it('should revert when position already flagged', async () => {
@@ -371,11 +396,7 @@ describe('LiquidationModule', () => {
         desiredKeeper
       );
 
-      const positionLiquidatedEvent = findEventSafe({
-        receipt,
-        eventName: 'PositionLiquidated',
-        contract: PerpMarketProxy,
-      });
+      const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const positionLiquidatedEventProperties = [
         trader.accountId,
         marketId,
@@ -414,13 +435,13 @@ describe('LiquidationModule', () => {
       );
 
       const { healthFactor: hf1 } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.lt(hf1, wei(1).toBN());
+      assertBn.lt(hf1, bn(1));
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
 
       // Price moves back and they're no longer in liquidation but already flagged.
-      await market.aggregator().mockSetCurrentPrice(wei(marketOraclePrice).toBN());
+      await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
       const { healthFactor: hf2 } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.gt(hf2, wei(1).toBN());
+      assertBn.gt(hf2, bn(1));
 
       // Attempt the liquidate. This should complete successfully.
       const { tx, receipt } = await withExplicitEvmMine(
@@ -429,11 +450,7 @@ describe('LiquidationModule', () => {
       );
       const keeperAddress = await keeper().getAddress();
 
-      const positionLiquidatedEvent = findEventSafe({
-        receipt,
-        eventName: 'PositionLiquidated',
-        contract: PerpMarketProxy,
-      });
+      const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const positionLiquidatedEventProperties = [
         trader.accountId,
         marketId,
@@ -549,11 +566,7 @@ describe('LiquidationModule', () => {
         provider()
       );
 
-      const positionLiquidatedEvent = findEventSafe({
-        receipt,
-        eventName: 'PositionLiquidated',
-        contract: PerpMarketProxy,
-      });
+      const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const liqReward = positionLiquidatedEvent?.args.liqReward as BigNumber;
       const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
 
@@ -596,11 +609,7 @@ describe('LiquidationModule', () => {
         provider()
       );
 
-      const positionLiquidatedEvent = findEventSafe({
-        receipt,
-        eventName: 'PositionLiquidated',
-        contract: PerpMarketProxy,
-      });
+      const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const liqReward = positionLiquidatedEvent?.args.liqReward as BigNumber;
       const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
       const expectedKeeperUsdBalance = liqReward.add(keeperFee);
@@ -644,11 +653,7 @@ describe('LiquidationModule', () => {
         provider()
       );
 
-      const positionLiquidatedEvent = findEventSafe({
-        receipt,
-        eventName: 'PositionLiquidated',
-        contract: PerpMarketProxy,
-      });
+      const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
 
       // Expect the flagger to receive _nothing_ and liquidator to receive just the keeperFee.
@@ -691,11 +696,7 @@ describe('LiquidationModule', () => {
         provider()
       );
 
-      const positionLiquidatedEvent = findEventSafe({
-        receipt,
-        eventName: 'PositionLiquidated',
-        contract: PerpMarketProxy,
-      });
+      const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
 
       // Only receive keeperFee, no liqReward should be sent.
@@ -996,7 +997,7 @@ describe('LiquidationModule', () => {
 
         // Be quite explicit with what market and market params we are using to ensure a partial liquidation.
         const market = markets()[0];
-        await market.aggregator().mockSetCurrentPrice(wei(25_000).toBN());
+        await market.aggregator().mockSetCurrentPrice(bn(25_000));
         const orderSide = genSide();
 
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -1038,11 +1039,7 @@ describe('LiquidationModule', () => {
           provider()
         );
 
-        const positionLiquidatedEvent = findEventSafe({
-          receipt,
-          eventName: 'PositionLiquidated',
-          contract: PerpMarketProxy,
-        });
+        const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
 
         const remainingSize = order.sizeDelta.abs().sub(capBefore.remainingCapacity).mul(orderSide);
         const positionLiquidatedEventProperties = [
@@ -1167,11 +1164,7 @@ describe('LiquidationModule', () => {
           provider()
         );
 
-        const positionLiquidatedEvent = findEventSafe({
-          receipt,
-          eventName: 'PositionLiquidated',
-          contract: PerpMarketProxy,
-        });
+        const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
 
         // Partial liquidation (again) - not high enough cap to fully liquidate but did bypass liquidations.
         //
@@ -1293,9 +1286,7 @@ describe('LiquidationModule', () => {
           orders.push(order);
         }
 
-        const sizeToLiquidate = orders.reduce((acc, order) => {
-          return acc.add(order.sizeDelta.abs());
-        }, BigNumber.from(0));
+        const sizeToLiquidate = orders.reduce((acc, order) => acc.add(order.sizeDelta.abs()), bn(0));
 
         // Verify that liquidating both will not incur any caps.
         const capBefore = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
@@ -1341,7 +1332,7 @@ describe('LiquidationModule', () => {
 
         const orderSide = genSide();
         const marginUsdDepositAmount = 15_000;
-        const collateral = collaterals()[0];
+        const collateral = collaterals()[0]; // sUSD
         const market = markets()[0];
         const marketId = market.marketId();
 

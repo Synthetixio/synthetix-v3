@@ -99,7 +99,7 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.depositMarketUsd(marketId, address(this), amount);
+            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             synth.transferFrom(msg.sender, address(this), amount);

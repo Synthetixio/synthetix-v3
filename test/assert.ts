@@ -29,12 +29,9 @@ export const assertEvents = async (
 ) => {
   // TODO: Consider wrapping this in autoMine: false; .wait(); mine(); autoMine: true.
   const receipt = 'wait' in txOrReceipt ? await txOrReceipt.wait() : txOrReceipt;
-  const spaces = ' '.repeat(6); // to align with assert output
+  const spaces = ' '.repeat(6); // Used to align with assert output.
 
   const { logs } = receipt;
-  if (logs.length !== expected.length) {
-    throw new Error(`Expected ${expected.length} events, got ${logs.length}`);
-  }
   let seenEvents: string[] = [];
   const parsedLogs = logs.map((log, i) => {
     try {
@@ -50,6 +47,13 @@ export const assertEvents = async (
       );
     }
   });
+
+  if (logs.length !== expected.length) {
+    throw new Error(
+      `Expected ${expected.length} events, got ${logs.length}.\n${spaces}${seenEvents.join(`\n${spaces}`)}`
+    );
+  }
+
   parsedLogs.forEach((event, i) => {
     const expectedAtIndex = expected[i];
     if (typeof expectedAtIndex === 'string' ? event === expectedAtIndex : event.match(expectedAtIndex)) {

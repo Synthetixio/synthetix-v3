@@ -1,11 +1,12 @@
 import { BigNumber, Contract, ContractReceipt, ethers, utils } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { genNumber } from './generators';
+import { genNumber, raise } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
+import { PerpCollateral } from './bootstrap';
 
 // --- Constants --- //
 
@@ -26,7 +27,7 @@ export const mintAndApprove = async (
   const { PerpMarketProxy, SpotMarket } = systems();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
-  const synth = collateral.synthMarket.synth();
+  const synth = collateral.contract;
   const synthOwnerAddress = await synth.owner();
 
   await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
@@ -58,7 +59,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   await PerpMarketProxy.connect(trader.signer).modifyCollateral(
     trader.accountId,
     market.marketId(),
-    collateral.synthMarket.marketId(),
+    collateral.synthMarketId(),
     collateralDepositAmount
   );
 
@@ -187,13 +188,6 @@ export const commitAndSettle = async (
       }),
     provider()
   );
-  // TODO: Need to figure out if we can rely on wait (@joey).
-  //
-  // const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
-  //   value: updateFee,
-  // });
-  // const receipt = await tx.wait();
-
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
@@ -221,15 +215,7 @@ export const fastForwardBySec = async (provider: ethers.providers.JsonRpcProvide
   await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);
 
 /** Search for events in `receipt.logs` in a non-throw (safe) way. */
-export const findEventSafe = ({
-  receipt,
-  eventName,
-  contract,
-}: {
-  receipt: ContractReceipt;
-  eventName: string;
-  contract: Contract;
-}) => {
+export const findEventSafe = (receipt: ContractReceipt, eventName: string, contract: Contract) => {
   return receipt.logs
     .map((log) => {
       try {
@@ -266,4 +252,18 @@ export const withExplicitEvmMine = async (
   await provider.send('evm_setAutomine', [true]);
 
   return { tx, receipt };
+};
+
+export const getSusdCollateral = (collaterals: PerpCollateral[]) => {
+  const sUsdCollateral = collaterals.filter((c) => c.synthMarketId() === SYNTHETIX_USD_MARKET_ID)[0];
+  return !sUsdCollateral
+    ? raise('sUSD collateral not found. Did you mistakenly use collatealsWithoutSusd()?')
+    : sUsdCollateral;
+};
+
+export const isSusdCollateral = (collateral: PerpCollateral) => collateral.synthMarketId() === SYNTHETIX_USD_MARKET_ID;
+
+export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
+  const found = l.find(p);
+  return found ? found : raise('Cannot find in l');
 };

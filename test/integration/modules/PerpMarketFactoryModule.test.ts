@@ -34,7 +34,7 @@ import { shuffle, times } from 'lodash';
 
 describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { traders, signers, owner, markets, collaterals, systems, provider, restore } = bs;
+  const { traders, signers, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -164,40 +164,40 @@ describe('PerpMarketFactoryModule', () => {
 
         // Configure funding and velocity specific parameters so we get deterministic results.
         await setMarketConfigurationById(bs, market.marketId(), {
-          skewScale: wei(100_000).toBN(),
-          maxFundingVelocity: wei(0.25).toBN(),
-          maxMarketSize: wei(500_000).toBN(),
+          skewScale: bn(100_000),
+          maxFundingVelocity: bn(0.25),
+          maxMarketSize: bn(500_000),
         });
 
         // Set the market price as funding is denominated in USD.
-        const marketOraclePrice = wei(100).toBN();
+        const marketOraclePrice = bn(100);
         await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
 
         // A static list of traders and amount of time to pass by trader and its expected funding.
         const trades = [
           // skew = long, r = (t 1000, s 1000)
           {
-            sizeDelta: wei(1000).toBN(),
+            sizeDelta: bn(1000),
             account: trader1,
             fastForwardInSec: 1000,
-            expectedFundingRate: BigNumber.from(0),
-            expectedFundingVelocity: wei(0.0025).toBN(),
+            expectedFundingRate: bn(0),
+            expectedFundingVelocity: bn(0.0025),
           },
           // skew = even more long, r = (t 30000, s 3000)
           {
-            sizeDelta: wei(2000).toBN(),
+            sizeDelta: bn(2000),
             account: trader2,
             fastForwardInSec: 29_000,
-            expectedFundingRate: wei(0.00083912).toBN(),
-            expectedFundingVelocity: wei(0.0075).toBN(),
+            expectedFundingRate: bn(0.00083912),
+            expectedFundingVelocity: bn(0.0075),
           },
           // skew = balanced but funding rate sticks, r (t 50000, s 0)
           {
-            sizeDelta: wei(-3000).toBN(),
+            sizeDelta: bn(-3000),
             account: trader3,
             fastForwardInSec: 20_000,
-            expectedFundingRate: wei(0.00257546).toBN(),
-            expectedFundingVelocity: BigNumber.from(0),
+            expectedFundingRate: bn(0.00257546),
+            expectedFundingVelocity: bn(0),
           },
           // See below for one final fundingRate observation without a trade (no change in rate).
         ];
@@ -210,7 +210,7 @@ describe('PerpMarketFactoryModule', () => {
           1_500_000 // 1.5M USD margin
         );
 
-        let lastFundingRate = BigNumber.from(0);
+        let lastFundingRate = bn(0);
         const { minOrderAge } = await PerpMarketProxy.getMarketConfiguration();
 
         for (const trade of trades) {
@@ -224,7 +224,7 @@ describe('PerpMarketFactoryModule', () => {
 
           const { fundingVelocity, fundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
 
-          assertBn.near(fundingRate, expectedFundingRate, wei(0.000001).toBN());
+          assertBn.near(fundingRate, expectedFundingRate, bn(0.000001));
           assertBn.equal(fundingVelocity, expectedFundingVelocity);
 
           lastFundingRate = fundingRate;
@@ -235,7 +235,7 @@ describe('PerpMarketFactoryModule', () => {
         const { fundingVelocity, fundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
 
         assertBn.equal(fundingRate, lastFundingRate);
-        assertBn.equal(fundingVelocity, BigNumber.from(0));
+        assertBn.equal(fundingVelocity, bn(0));
       });
 
       it('should demonstrate a balance market can have a non-zero funding', async () => {
@@ -255,7 +255,7 @@ describe('PerpMarketFactoryModule', () => {
         );
 
         // Open a position for trader1.
-        const sizeDelta = wei(genOneOf([genNumber(1, 10), genNumber(-10, -1)])).toBN();
+        const sizeDelta = bn(genOneOf([genNumber(1, 10), genNumber(-10, -1)]));
 
         const order1 = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
         await commitAndSettle(bs, market.marketId(), trader1, order1);
@@ -310,16 +310,16 @@ describe('PerpMarketFactoryModule', () => {
         );
 
         // Go short.
-        const order1 = await genOrderFromSizeDelta(bs, market, wei(genNumber(-10, -1)).toBN(), {
+        const order1 = await genOrderFromSizeDelta(bs, market, bn(genNumber(-10, -1)), {
           desiredKeeperFeeBufferUsd: 0,
         });
         await commitAndSettle(bs, market.marketId(), trader, order1);
         await fastForwardBySec(provider(), SECONDS_ONE_DAY);
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
-        assertBn.lt(d1.fundingRate, BigNumber.from(0));
+        assertBn.lt(d1.fundingRate, bn(0));
 
         // Go long.
-        const order2 = await genOrderFromSizeDelta(bs, market, wei(genNumber(11, 20)).toBN(), {
+        const order2 = await genOrderFromSizeDelta(bs, market, bn(genNumber(11, 20)), {
           desiredKeeperFeeBufferUsd: 0,
         });
         await commitAndSettle(bs, market.marketId(), trader, order2);
@@ -337,7 +337,7 @@ describe('PerpMarketFactoryModule', () => {
         const collateral = genOneOf(collaterals());
 
         // Set the price of market oracle to be something relatively small to avoid hitting insufficient margin.
-        await market.aggregator().mockSetCurrentPrice(wei(genNumber(50, 100)).toBN());
+        await market.aggregator().mockSetCurrentPrice(bn(genNumber(50, 100)));
 
         const marginUsdDepositAmount = 500_000; // 500k USD.
         const { trader } = await depositMargin(
@@ -352,10 +352,10 @@ describe('PerpMarketFactoryModule', () => {
         // Velocity is skew/skewScale * maxVelocity. So in order in order to get max velocity of 1 * max then
         // skew must be equal to skewScale. Here we force the size to equal skewScale to test that it's capped
         // at and above.
-        const skewScale = wei(1000).toBN();
+        const skewScale = bn(1000);
         await setMarketConfigurationById(bs, market.marketId(), { skewScale });
         const sizeSide = side === 'long' ? 1 : -1;
-        const sizeDelta = skewScale.add(wei(genNumber(1, 10)).toBN()).mul(sizeSide);
+        const sizeDelta = skewScale.add(bn(genNumber(1, 10))).mul(sizeSide);
 
         const order = await genOrderFromSizeDelta(bs, market, sizeDelta, {
           desiredKeeperFeeBufferUsd: 0,
@@ -388,7 +388,7 @@ describe('PerpMarketFactoryModule', () => {
           );
 
           const sizeSide = side === 'long' ? 1 : -1;
-          const sizeDelta = wei(genNumber(1, 10)).mul(sizeSide).toBN();
+          const sizeDelta = bn(genNumber(1, 10)).mul(sizeSide);
 
           const order = await genOrderFromSizeDelta(bs, market, sizeDelta, {
             desiredKeeperFeeBufferUsd: 0,
@@ -414,7 +414,7 @@ describe('PerpMarketFactoryModule', () => {
     const getTotalPositionPnl = async (traders: Trader[], marketId: BigNumber) => {
       const { PerpMarketProxy } = systems();
       const positions = await Promise.all(traders.map((t) => PerpMarketProxy.getPositionDigest(t.accountId, marketId)));
-      return positions.reduce((acc, p) => acc.add(p.pnl).sub(p.accruedFeesUsd), BigNumber.from(0));
+      return positions.reduce((acc, p) => acc.add(p.pnl).sub(p.accruedFeesUsd), bn(0));
     };
 
     it('should have a debt of zero when first initialized', async () => {
@@ -462,7 +462,7 @@ describe('PerpMarketFactoryModule', () => {
       const { PerpMarketProxy } = systems();
 
       const reportedDebts: BigNumber[] = [];
-      let accumulatedReportedDebt = BigNumber.from(0);
+      let accumulatedReportedDebt = bn(0);
       for (const market of markets()) {
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
           bs,
@@ -492,29 +492,31 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should expect sum of remaining all pnl to eq debt after a long period of trading');
 
-    it('should expect reportedDebt/totalDebt to be calculated correctly (concrete)', async () => {
+    it('should expect reportedDebt/totalDebt to be updated appropriately sUSD (concrete)');
+
+    it('should expect reportedDebt/totalDebt to be updated appropriately non-sUSD (concrete)', async () => {
       const { PerpMarketProxy, Core, SpotMarket } = systems();
 
-      const collateral = collaterals()[0];
+      const collateral = collateralsWithoutSusd()[0];
       const market = markets()[1]; // ETHPERP.
       const marketId = market.marketId();
       const trader = traders()[0];
 
       // Create a frictionless market for simplicity.
       await setMarketConfigurationById(bs, marketId, {
-        makerFee: BigNumber.from(0),
-        takerFee: BigNumber.from(0),
-        maxFundingVelocity: BigNumber.from(0),
+        makerFee: bn(0),
+        takerFee: bn(0),
+        maxFundingVelocity: bn(0),
         skewScale: bn(1_000_000_000), // An extremely large skewScale to minimise price impact.
       });
       await setMarketConfiguration(bs, {
-        keeperProfitMarginPercent: BigNumber.from(0),
-        maxKeeperFeeUsd: BigNumber.from(0),
+        keeperProfitMarginPercent: bn(0),
+        maxKeeperFeeUsd: bn(0),
       });
-      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarket.marketId(), BigNumber.from(0));
+      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
       await market.aggregator().mockSetCurrentPrice(bn(2000));
-      await collateral.updatePrice(bn(1));
+      await collateral.setPrice(bn(1));
 
       // Deposit 1k USD worth of collateral into market for accountId.
       const { collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
@@ -550,7 +552,7 @@ describe('PerpMarketFactoryModule', () => {
       //           = 0
       await commitAndSettle(bs, marketId, trader, openOrder);
       assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(1000), bn(0.0001));
-      assertBn.near(await Core.getMarketTotalDebt(marketId), BigNumber.from(0), bn(0.0001));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(0), bn(0.0001));
 
       // Market does a 2x. Debt should increase appropriately.
       //
@@ -588,7 +590,7 @@ describe('PerpMarketFactoryModule', () => {
       //           = 0 + 1000 - 0
       //           = 1000
       await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
-      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), BigNumber.from(0), bn(0.0001));
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(0), bn(0.0001));
       assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
     });
 
