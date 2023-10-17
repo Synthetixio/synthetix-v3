@@ -4,7 +4,6 @@ import { shuffle, isNil, random } from 'lodash';
 import { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
 import { Bs, Market, Trader, Collateral } from './typed';
-import { SYNTHETIX_USD_MARKET_ID } from './helpers';
 
 // --- Utils --- //
 
