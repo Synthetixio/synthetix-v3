@@ -257,13 +257,12 @@ describe('MarginModule', async () => {
           bs,
           await genTrader(bs, { desiredCollateral: getCollateral() })
         );
-        const { accountId, signer } = trader;
 
         // Perform the deposit.
         const { receipt } = await withExplicitEvmMine(
           () =>
-            PerpMarketProxy.connect(signer).modifyCollateral(
-              accountId,
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
               marketId,
               collateral.synthMarketId(),
               collateralDepositAmount
@@ -852,7 +851,7 @@ describe('MarginModule', async () => {
             trader.accountId,
             marketId,
             collateral.synthMarketId(),
-            wei(-0.01).toBN()
+            bn(-0.01)
           ),
           `CanLiquidatePosition()`,
           PerpMarketProxy
@@ -1035,7 +1034,7 @@ describe('MarginModule', async () => {
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
-        assertBn.lt(expectedChange.toBN(), wei(0).toBN());
+        assertBn.lt(expectedChange.toBN(), bn(0));
 
         assertBn.equal(actualBalance, startingCollateralBalance.add(expectedChange).toBN());
       });
@@ -1265,13 +1264,13 @@ describe('MarginModule', async () => {
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
 
         // We expect to be losing.
-        assertBn.lt(collateralDiffAmount.toBN(), 0);
+        assertBn.lt(collateralDiffAmount.toBN(), bn(0));
 
         // Assert that the balance is correct.
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
 
         // Everything has been withdrawn. There should be no reportedDebt for this market.
-        assertBn.near(await PerpMarketProxy.reportedDebt(marketId), BigNumber.from(0), bn(0.00001));
+        assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(0), bn(0.00001));
       });
 
       it('should revert with InsufficientMarketCollateralWithdrawable from synthetix.MarketCollateralModule');
@@ -1477,7 +1476,7 @@ describe('MarginModule', async () => {
       // Set zero allowable deposits.
       const supportedCollaterals = collaterals();
       const synthMarketIds = [supportedCollaterals[0].synthMarketId(), supportedCollaterals[1].synthMarketId()];
-      const maxAllowables = [BigNumber.from(0), BigNumber.from(0)];
+      const maxAllowables = [bn(0), bn(0)];
       await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables);
 
       // Depositing should cause a failure.
@@ -1634,7 +1633,7 @@ describe('MarginModule', async () => {
         .add(pnl);
 
       // Assert margin before price change
-      assertBn.near(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN(), wei(0.000001).toBN());
+      assertBn.near(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN(), bn(0.000001));
       // Change the price, this might lead to profit or loss, depending the the generated order is long or short
       const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
       // Update price
@@ -1655,7 +1654,7 @@ describe('MarginModule', async () => {
         .add(accruedFunding);
 
       // Assert marginUSD after price update.
-      assertBn.near(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN(), wei(0.000001).toBN());
+      assertBn.near(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN(), bn(0.000001));
     });
 
     it('should return 0 for underwater position not yet flagged', async () => {

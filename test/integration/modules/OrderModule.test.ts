@@ -655,7 +655,7 @@ describe('OrderModule', () => {
       // sUSD must be gt 0.
       assertBn.gt(
         d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available,
-        BigNumber.from(0)
+        bn(0)
       );
 
       // Value of original collateral should also stay the same.
@@ -694,7 +694,7 @@ describe('OrderModule', () => {
       });
 
       const keeperFee = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args.keeperFee;
-      assertBn.gt(keeperFee, BigNumber.from(0));
+      assertBn.gt(keeperFee, bn(0));
       assertBn.equal(await USD.balanceOf(await keeper().getAddress()), keeperFee);
     });
 
@@ -953,11 +953,11 @@ describe('OrderModule', () => {
               return getPythPriceData(bs, marketId, publishTime, 0);
             case ZeroPriceVariant.CL: {
               const oraclePrice = wei(order.oraclePrice).toNumber();
-              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              await market.aggregator().mockSetCurrentPrice(bn(0));
               return getPythPriceData(bs, marketId, publishTime, oraclePrice);
             }
             case ZeroPriceVariant.BOTH: {
-              await market.aggregator().mockSetCurrentPrice(BigNumber.from(0));
+              await market.aggregator().mockSetCurrentPrice(bn(0));
               return getPythPriceData(bs, marketId, publishTime, 0);
             }
           }
@@ -1065,7 +1065,7 @@ describe('OrderModule', () => {
         });
 
         // Retrieve fees associated with this new order.
-        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, BigNumber.from(0));
+        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, bn(0));
         const { orderFee: expectedOrderFee } = await calcOrderFees(
           bs,
           marketId,
@@ -1224,14 +1224,14 @@ describe('OrderModule', () => {
         const { PerpMarketProxy } = systems();
 
         // Lower the min requirements to reduce fees fairly significantly.
-        const minKeeperFeeUsd = wei(60).toBN();
+        const minKeeperFeeUsd = bn(60);
         await setMarketConfiguration(bs, {
           keeperSettlementGasUnits: 100_000,
-          maxKeeperFeeUsd: wei(100).toBN(),
+          maxKeeperFeeUsd: bn(100),
           minKeeperFeeUsd,
-          keeperProfitMarginPercent: wei(0).toBN(),
+          keeperProfitMarginPercent: bn(0),
         });
-        await ethOracleNode().agg.mockSetCurrentPrice(wei(100).toBN()); // $100 ETH
+        await ethOracleNode().agg.mockSetCurrentPrice(bn(100)); // $100 ETH
 
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,
@@ -1259,10 +1259,10 @@ describe('OrderModule', () => {
   describe('getFillPrice', () => {
     it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
-      const invalidMarketId = wei(42069).toBN();
+      const invalidMarketId = bn(42069);
 
       // Size to check fill price
-      const size = wei(genNumber(-10, 10)).toBN();
+      const size = bn(genNumber(-10, 10));
 
       assertRevert(PerpMarketProxy.getFillPrice(invalidMarketId, size), `MarketNotFound("${invalidMarketId}")`);
     });
@@ -1283,7 +1283,7 @@ describe('OrderModule', () => {
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
       // Using size to simulate short which will reduce the skew.
-      const size = wei(genNumber(1, 10)).toBN();
+      const size = bn(genNumber(1, 10));
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
 
@@ -1331,7 +1331,7 @@ describe('OrderModule', () => {
       const marketSkew = order.sizeDelta;
 
       // Size to check fill price.
-      const size = wei(0).toBN();
+      const size = bn(0);
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
       const expectedFillPrice = wei(1).add(wei(marketSkew).div(skewScale)).mul(oraclePrice).toBN();
@@ -1354,7 +1354,7 @@ describe('OrderModule', () => {
       const marketSkew = order.sizeDelta;
 
       // Size to check fill price.
-      const size = wei(genNumber(-10, 10)).toBN();
+      const size = bn(genNumber(-10, 10));
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
       const expectedFillPrice = calcFillPrice(marketSkew, skewScale, size, oraclePrice);

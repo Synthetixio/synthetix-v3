@@ -76,7 +76,7 @@ describe('LiquidationModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.lte(healthFactor, wei(1).toBN());
+      assertBn.lte(healthFactor, bn(1));
 
       const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
       const keeperAddress = await keeper().getAddress();
@@ -428,13 +428,13 @@ describe('LiquidationModule', () => {
       );
 
       const { healthFactor: hf1 } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.lt(hf1, wei(1).toBN());
+      assertBn.lt(hf1, bn(1));
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
 
       // Price moves back and they're no longer in liquidation but already flagged.
-      await market.aggregator().mockSetCurrentPrice(wei(marketOraclePrice).toBN());
+      await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
       const { healthFactor: hf2 } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.gt(hf2, wei(1).toBN());
+      assertBn.gt(hf2, bn(1));
 
       // Attempt the liquidate. This should complete successfully.
       const { tx, receipt } = await withExplicitEvmMine(
@@ -990,7 +990,7 @@ describe('LiquidationModule', () => {
 
         // Be quite explicit with what market and market params we are using to ensure a partial liquidation.
         const market = markets()[0];
-        await market.aggregator().mockSetCurrentPrice(wei(25_000).toBN());
+        await market.aggregator().mockSetCurrentPrice(bn(25_000));
         const orderSide = genSide();
 
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -1279,9 +1279,7 @@ describe('LiquidationModule', () => {
           orders.push(order);
         }
 
-        const sizeToLiquidate = orders.reduce((acc, order) => {
-          return acc.add(order.sizeDelta.abs());
-        }, BigNumber.from(0));
+        const sizeToLiquidate = orders.reduce((acc, order) => acc.add(order.sizeDelta.abs()), bn(0));
 
         // Verify that liquidating both will not incur any caps.
         const capBefore = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);

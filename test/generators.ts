@@ -71,7 +71,7 @@ export const genBootstrap = () => ({
     maxOrderAge: 60,
     minKeeperFeeUsd: bn(genNumber(10, 15)),
     maxKeeperFeeUsd: bn(genNumber(50, 100)),
-    keeperProfitMarginPercent: wei(genNumber(0.1, 0.2)).toBN(),
+    keeperProfitMarginPercent: bn(genNumber(0.1, 0.2)),
     keeperSettlementGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
@@ -244,7 +244,7 @@ export const genOrderFromSizeDelta = async (
   const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
 
   return {
-    marginUsd: BigNumber.from(0),
+    marginUsd: bn(0),
     leverage: 0,
     keeperFeeBufferUsd,
     sizeDelta,
