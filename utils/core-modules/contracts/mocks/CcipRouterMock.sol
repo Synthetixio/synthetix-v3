@@ -34,7 +34,7 @@ contract CcipRouterMock {
         address target,
         CcipClient.Any2EVMMessage memory message
     ) external payable {
-        (bool success, bytes memory result) = target.call(message.data);
+        (bool success, bytes memory result) = target.call{value: 0}(message.data);
 
         if (!success) {
             uint256 len = result.length;

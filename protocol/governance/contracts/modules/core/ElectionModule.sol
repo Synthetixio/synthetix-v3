@@ -248,62 +248,67 @@ contract ElectionModule is
     }
 
     function _recvCast(
-        address voter,
-        uint256 chainId,
-        address[] calldata candidates,
-        uint256[] calldata amounts
+        // address voter,
+        // uint256 chainId,
+        // address[] calldata candidates,
+        // uint256[] calldata amounts
+        address,
+        uint256,
+        address[] calldata,
+        uint256[] calldata
     ) external override {
         CrossChain.onlyCrossChain();
-        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
-        if (candidates.length > _MAX_BALLOT_SIZE) {
-            revert ParameterError.InvalidParameter("candidates", "too many candidates");
-        }
+        // Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
-        if (candidates.length != amounts.length) {
-            revert ParameterError.InvalidParameter("candidates", "length must match amounts");
-        }
+        // if (candidates.length > _MAX_BALLOT_SIZE) {
+        //     revert ParameterError.InvalidParameter("candidates", "too many candidates");
+        // }
 
-        _validateCandidates(candidates);
+        // if (candidates.length != amounts.length) {
+        //     revert ParameterError.InvalidParameter("candidates", "length must match amounts");
+        // }
 
-        Ballot.Data storage ballot = Ballot.load(
-            Council.load().currentElectionId,
-            ERC2771Context._msgSender(),
-            block.chainid
-        );
+        // _validateCandidates(candidates);
 
-        uint256 totalAmounts = 0;
-        for (uint i = 0; i < amounts.length; i++) {
-            totalAmounts += amounts[i];
-        }
+        // Ballot.Data storage ballot = Ballot.load(
+        //     Council.load().currentElectionId,
+        //     ERC2771Context._msgSender(),
+        //     block.chainid
+        // );
 
-        if (totalAmounts == 0 || ballot.votingPower != totalAmounts) {
-            revert ParameterError.InvalidParameter(
-                "amounts",
-                "must be nonzero and sum to ballot voting power"
-            );
-        }
+        // uint256 totalAmounts = 0;
+        // for (uint i = 0; i < amounts.length; i++) {
+        //     totalAmounts += amounts[i];
+        // }
 
-        ballot.votedCandidates = candidates;
-        ballot.amounts = amounts;
+        // if (totalAmounts == 0 || ballot.votingPower != totalAmounts) {
+        //     revert ParameterError.InvalidParameter(
+        //         "amounts",
+        //         "must be nonzero and sum to ballot voting power"
+        //     );
+        // }
 
-        Council.Data storage council = Council.load();
-        Election.Data storage election = council.getCurrentElection();
-        uint256 currentElectionId = council.currentElectionId;
+        // ballot.votedCandidates = candidates;
+        // ballot.amounts = amounts;
 
-        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, chainId);
+        // Council.Data storage council = Council.load();
+        // Election.Data storage election = council.getCurrentElection();
+        // uint256 currentElectionId = council.currentElectionId;
 
-        storedBallot.copy(ballot);
-        storedBallot.validate();
+        // Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, chainId);
 
-        bytes32 ballotPtr;
-        assembly {
-            ballotPtr := storedBallot.slot
-        }
+        // storedBallot.copy(ballot);
+        // storedBallot.validate();
 
-        election.ballotPtrs.push(ballotPtr);
+        // bytes32 ballotPtr;
+        // assembly {
+        //     ballotPtr := storedBallot.slot
+        // }
 
-        emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
+        // election.ballotPtrs.push(ballotPtr);
+
+        // emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
