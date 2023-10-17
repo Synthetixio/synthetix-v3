@@ -281,6 +281,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     return { sUsdCollateral, nonSusdCollaterals };
   };
+
   let collaterals: PerpCollateral[];
   let collateralsWithoutSusd: PerpCollateral[];
 

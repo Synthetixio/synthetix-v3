@@ -1,11 +1,12 @@
 import { BigNumber, Contract, ContractReceipt, ethers, utils } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { genNumber } from './generators';
+import { genNumber, raise } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
+import { PerpCollateral } from './bootstrap';
 
 // --- Constants --- //
 
@@ -214,15 +215,7 @@ export const fastForwardBySec = async (provider: ethers.providers.JsonRpcProvide
   await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);
 
 /** Search for events in `receipt.logs` in a non-throw (safe) way. */
-export const findEventSafe = ({
-  receipt,
-  eventName,
-  contract,
-}: {
-  receipt: ContractReceipt;
-  eventName: string;
-  contract: Contract;
-}) => {
+export const findEventSafe = (receipt: ContractReceipt, eventName: string, contract: Contract) => {
   return receipt.logs
     .map((log) => {
       try {
@@ -260,3 +253,12 @@ export const withExplicitEvmMine = async (
 
   return { tx, receipt };
 };
+
+export const getSusdCollateral = (collaterals: PerpCollateral[]) => {
+  const sUsdCollateral = collaterals.filter((c) => c.synthMarketId() === SYNTHETIX_USD_MARKET_ID)[0];
+  return !sUsdCollateral
+    ? raise('sUSD collateral not found. Did you mistakenly use collatealsWithoutSusd()?')
+    : sUsdCollateral;
+};
+
+export const isSusdCollateral = (collateral: PerpCollateral) => collateral.synthMarketId() === SYNTHETIX_USD_MARKET_ID;

@@ -63,12 +63,7 @@ describe('OrderModule', () => {
 
       // It's a little weird to get the event that we're asserting. We're doing this to get the correct base fee, anvil
       // have some issue with consistent base fee, which keeperFee is based on.
-      const { args: orderCommittedArgs } =
-        findEventSafe({
-          receipt,
-          eventName: 'OrderCommitted',
-          contract: PerpMarketProxy,
-        }) || {};
+      const { args: orderCommittedArgs } = findEventSafe(receipt, 'OrderCommitted', PerpMarketProxy) || {};
 
       const orderCommittedEventProperties = [
         trader.accountId,
@@ -397,13 +392,7 @@ describe('OrderModule', () => {
       const block = await provider().getBlock(receipt.blockNumber);
       const timestamp = block.timestamp;
 
-      const { args: orderSettledArgs } =
-        findEventSafe({
-          receipt,
-          eventName: 'OrderSettled',
-          contract: PerpMarketProxy,
-        }) || {};
-
+      const { args: orderSettledArgs } = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy) || {};
       const orderSettledEventProperties = [
         trader.accountId,
         marketId,
@@ -704,12 +693,7 @@ describe('OrderModule', () => {
         desiredKeeper: keeper(),
       });
 
-      const keeperFee = findEventSafe({
-        receipt,
-        eventName: 'OrderSettled',
-        contract: PerpMarketProxy,
-      })?.args.keeperFee;
-
+      const keeperFee = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args.keeperFee;
       assertBn.gt(keeperFee, BigNumber.from(0));
       assertBn.equal(await USD.balanceOf(await keeper().getAddress()), keeperFee);
     });
@@ -1175,11 +1159,7 @@ describe('OrderModule', () => {
     // @see: https://github.com/NomicFoundation/hardhat/issues/3028
     describe.skip('keeperFee', () => {
       const getKeeperFee = (PerpMarketProxy: PerpMarketProxy, receipt: ethers.ContractReceipt): BigNumber =>
-        findEventSafe({
-          receipt,
-          eventName: 'OrderSettled',
-          contract: PerpMarketProxy,
-        })?.args.keeperFee;
+        findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args.keeperFee;
 
       it('should calculate keeper fees proportional to block.baseFee and profit margin', async () => {
         const { PerpMarketProxy } = systems();
