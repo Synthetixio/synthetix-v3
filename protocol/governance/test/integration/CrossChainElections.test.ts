@@ -3,6 +3,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { integrationBootstrap } from './bootstrap';
+import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
 
 describe('cross chain election testing', function () {
   const { chains, mothership } = integrationBootstrap();
@@ -29,14 +30,15 @@ describe('cross chain election testing', function () {
 
     const rx = await tx.wait();
 
-    const tx2 = await ccipReceive({
-      rx,
-      sourceChainSelector: '2664363617261496610',
-      targetSigner,
-      ccipAddress: mothership.CcipRouter.address,
-    });
-
-    await tx2.wait();
+    await assertRevert(
+      ccipReceive({
+        rx,
+        sourceChainSelector: '2664363617261496610',
+        targetSigner,
+        ccipAddress: mothership.CcipRouter.address,
+      }),
+      'NotCallableInCurrentPeriod'
+    );
   });
 
   it('shows that the current period is Administration', async function () {
