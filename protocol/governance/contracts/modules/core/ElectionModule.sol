@@ -30,6 +30,7 @@ contract ElectionModule is
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using Ballot for Ballot.Data;
+    using Epoch for Epoch.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
@@ -88,7 +89,7 @@ contract ElectionModule is
             votingPeriodDuration;
 
         // Set the expected epoch durations for next council
-        Council.load().getNextElectionSettings().setElectionSettings(
+        store.getNextElectionSettings().setElectionSettings(
             epochSeatCount,
             minimumActiveMembers,
             epochDuration,
@@ -122,7 +123,7 @@ contract ElectionModule is
             initialNominationPeriodStartDate = votingPeriodStartDate - nominationPeriodDuration;
         }
 
-        Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
+        Epoch.Data storage firstEpoch = store.getCurrentEpoch();
         store.configureEpochSchedule(
             firstEpoch,
             epochStartDate,
@@ -153,11 +154,11 @@ contract ElectionModule is
         uint64 newEpochEndDate
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
 
         council.adjustEpochSchedule(
-            council.getCurrentElection().epoch,
+            council.getCurrentEpoch(),
             newNominationPeriodStartDate,
             newVotingPeriodStartDate,
             newEpochEndDate,
@@ -180,7 +181,7 @@ contract ElectionModule is
         uint64 maxDateAdjustmentTolerance
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
         Council.load().getNextElectionSettings().setElectionSettings(
             epochSeatCount,
@@ -196,6 +197,7 @@ contract ElectionModule is
         OwnableStorage.onlyOwner();
 
         Council.Data storage council = Council.load();
+        Epoch.Data storage epoch = council.getCurrentEpoch();
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.broadcast(
@@ -209,7 +211,7 @@ contract ElectionModule is
         );
 
         CouncilMembers.Data storage membersStore = CouncilMembers.load();
-        if (council.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
+        if (epoch.getCurrentPeriod() != Epoch.ElectionPeriod.Administration) return;
 
         // Don't immediately jump to an election if the council still has enough members
         if (
@@ -225,26 +227,29 @@ contract ElectionModule is
     }
 
     function nominate() public virtual override {
-        Council.onlyInPeriods(Council.ElectionPeriod.Nomination, Council.ElectionPeriod.Vote);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+        address sender = ERC2771Context._msgSender();
 
-        if (nominees.contains(ERC2771Context._msgSender())) revert AlreadyNominated();
+        if (nominees.contains(sender)) revert AlreadyNominated();
 
-        nominees.add(ERC2771Context._msgSender());
+        nominees.add(sender);
 
-        emit CandidateNominated(ERC2771Context._msgSender(), Council.load().currentElectionId);
+        emit CandidateNominated(sender, Council.load().currentElectionId);
     }
 
     function withdrawNomination() external override {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
-        Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Nomination);
 
-        if (!nominees.contains(ERC2771Context._msgSender())) revert NotNominated();
+        address sender = ERC2771Context._msgSender();
 
-        nominees.remove(ERC2771Context._msgSender());
+        if (!nominees.contains(sender)) revert NotNominated();
 
-        emit NominationWithdrawn(ERC2771Context._msgSender(), Council.load().currentElectionId);
+        nominees.remove(sender);
+
+        emit NominationWithdrawn(sender, Council.load().currentElectionId);
     }
 
     function _recvCast(
@@ -255,7 +260,7 @@ contract ElectionModule is
     ) external override {
         CrossChain.onlyCrossChain();
 
-        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
         if (candidates.length > _MAX_BALLOT_SIZE) {
             revert ParameterError.InvalidParameter("candidates", "too many candidates");
@@ -267,8 +272,10 @@ contract ElectionModule is
 
         _validateCandidates(candidates);
 
+        Council.Data storage council = Council.load();
+
         Ballot.Data storage ballot = Ballot.load(
-            Council.load().currentElectionId,
+            council.currentElectionId,
             ERC2771Context._msgSender(),
             block.chainid
         );
@@ -288,7 +295,6 @@ contract ElectionModule is
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
 
-        Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
         uint256 currentElectionId = council.currentElectionId;
 
@@ -309,15 +315,16 @@ contract ElectionModule is
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint numBallots) external override {
-        Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
-        Election.Data storage election = Council.load().getCurrentElection();
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
 
         if (election.evaluated) revert ElectionAlreadyEvaluated();
 
         _evaluateNextBallotBatch(numBallots);
 
-        uint currentEpochIndex = Council.load().currentElectionId;
+        uint currentEpochIndex = council.currentElectionId;
 
         uint totalBallots = election.ballotPtrs.length;
         if (election.numEvaluatedBallots < totalBallots) {
@@ -334,14 +341,14 @@ contract ElectionModule is
 
     /// @dev Burns previous NFTs and mints new ones
     function resolve() public virtual override {
-        Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
-        Council.Data storage store = Council.load();
-        Election.Data storage election = store.getCurrentElection();
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
 
         if (!election.evaluated) revert ElectionNotEvaluated();
 
-        uint newEpochIndex = store.currentElectionId + 1;
+        uint newEpochIndex = council.currentElectionId + 1;
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.broadcast(
@@ -349,20 +356,20 @@ contract ElectionModule is
             abi.encodeWithSelector(
                 this._recvResolve.selector,
                 election.winners.values(),
-                store.currentElectionId,
+                council.currentElectionId,
                 newEpochIndex
             ),
             _CROSSCHAIN_GAS_LIMIT
         );
 
         election.resolved = true;
-        store.newElection();
+        council.newElection();
 
         emit EpochStarted(newEpochIndex);
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
-        return Council.load().getCurrentElection().epoch;
+        return Council.load().getCurrentEpoch();
     }
 
     function getElectionSettings()
@@ -389,7 +396,7 @@ contract ElectionModule is
 
     function getCurrentPeriod() external view override returns (uint) {
         // solhint-disable-next-line numcast/safe-cast
-        return uint(Council.load().getCurrentPeriod());
+        return uint256(Council.load().getCurrentEpoch().getCurrentPeriod());
     }
 
     function isNominated(address candidate) external view override returns (bool) {

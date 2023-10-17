@@ -6,6 +6,7 @@ import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {ISnapshotVotePowerModule} from "../../interfaces/ISnapshotVotePowerModule.sol";
 import {ISnapshotRecord} from "../../interfaces/external/ISnapshotRecord.sol";
 import {Council} from "../../storage/Council.sol";
+import {Epoch} from "../../storage/Epoch.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {SnapshotVotePower} from "../../storage/SnapshotVotePower.sol";
 import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
@@ -15,7 +16,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
 
     function setSnapshotContract(address snapshotContract, bool enabled) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
         Council.Data storage council = Council.load();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
@@ -30,12 +31,12 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     function takeVotePowerSnapshot(
         address snapshotContract
     ) external override returns (uint128 snapshotId) {
-        // TODO: Another note, can remove only owner from takeVotePowerSnapshot,allow takeVotePowerSnapshot to be called in nomination period or election period
-        OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
+
         SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = SnapshotVotePower
             .load(snapshotContract)
             .epochs[Council.load().currentElectionId.to128()];
+
         if (snapshotVotePowerEpoch.snapshotId > 0) {
             revert SnapshotAlreadyTaken(snapshotVotePowerEpoch.snapshotId);
         }
@@ -69,7 +70,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     ) external override returns (uint256 power) {
         // TODO: Let's add also a comment in the prepareBallotWithSnapshot that this is where we'd add quadratic voting support (if we don't plan to add it as an option prior to audit)
         Council.Data storage council = Council.load();
-        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
         uint128 currentEpoch = council.currentElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
 

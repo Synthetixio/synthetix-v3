@@ -197,12 +197,6 @@ library Ballot {
 // @custom:artifact contracts/storage/Council.sol:Council
 library Council {
     bytes32 private constant _SLOT_COUNCIL_STORAGE = keccak256(abi.encode("io.synthetix.governance.Council"));
-    enum ElectionPeriod {
-        Administration,
-        Nomination,
-        Vote,
-        Evaluation
-    }
     struct Data {
         bool initialized;
         uint256 currentElectionId;
@@ -234,7 +228,6 @@ library CouncilMembers {
 // @custom:artifact contracts/storage/Election.sol:Election
 library Election {
     struct Data {
-        Epoch.Data epoch;
         bool evaluated;
         bool resolved;
         uint numEvaluatedBallots;
@@ -272,11 +265,23 @@ library ElectionSettings {
 
 // @custom:artifact contracts/storage/Epoch.sol:Epoch
 library Epoch {
+    enum ElectionPeriod {
+        Administration,
+        Nomination,
+        Vote,
+        Evaluation
+    }
     struct Data {
         uint64 startDate;
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
+    }
+    function load(uint epochIndex) internal pure returns (Data storage epoch) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Epoch", epochIndex));
+        assembly {
+            epoch.slot := s
+        }
     }
 }
 
