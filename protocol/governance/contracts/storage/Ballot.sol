@@ -33,12 +33,6 @@ library Ballot {
         }
     }
 
-    function copy(Data storage self, Data memory other) internal {
-        self.votingPower = other.votingPower;
-        self.votedCandidates = other.votedCandidates;
-        self.amounts = other.amounts;
-    }
-
     function hasVoted(Data storage self) internal view returns (bool) {
         return self.votedCandidates.length > 0;
     }

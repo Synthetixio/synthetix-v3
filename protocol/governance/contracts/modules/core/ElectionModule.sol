@@ -254,12 +254,12 @@ contract ElectionModule is
 
     function _recvCast(
         address voter,
+        uint256 votingPower,
         uint256 chainId,
         address[] calldata candidates,
         uint256[] calldata amounts
     ) external override {
         CrossChain.onlyCrossChain();
-
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
         if (candidates.length > _MAX_BALLOT_SIZE) {
@@ -274,47 +274,30 @@ contract ElectionModule is
 
         Council.Data storage council = Council.load();
 
-        Ballot.Data storage ballot = Ballot.load(
-            council.currentElectionId,
-            ERC2771Context._msgSender(),
-            block.chainid
-        );
-
-        uint256 totalAmounts = 0;
-        for (uint i = 0; i < amounts.length; i++) {
-            totalAmounts += amounts[i];
-        }
-
-        if (totalAmounts == 0 || ballot.votingPower != totalAmounts) {
-            revert ParameterError.InvalidParameter(
-                "amounts",
-                "must be nonzero and sum to ballot voting power"
-            );
-        }
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, block.chainid);
 
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
+        ballot.votingPower = votingPower;
+
+        ballot.validate();
 
         Election.Data storage election = council.getCurrentElection();
         uint256 currentElectionId = council.currentElectionId;
 
-        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, chainId);
-
-        storedBallot.copy(ballot);
-        storedBallot.validate();
-
         bytes32 ballotPtr;
         assembly {
-            ballotPtr := storedBallot.slot
+            ballotPtr := ballot.slot
         }
 
+        // TODO: Change for a SET
         election.ballotPtrs.push(ballotPtr);
 
         emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
-    function evaluate(uint numBallots) external override {
+    function evaluate(uint256 numBallots) external override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
         Council.Data storage council = Council.load();
@@ -324,9 +307,9 @@ contract ElectionModule is
 
         _evaluateNextBallotBatch(numBallots);
 
-        uint currentEpochIndex = council.currentElectionId;
+        uint256 currentEpochIndex = council.currentElectionId;
 
-        uint totalBallots = election.ballotPtrs.length;
+        uint256 totalBallots = election.ballotPtrs.length;
         if (election.numEvaluatedBallots < totalBallots) {
             emit ElectionBatchEvaluated(
                 currentEpochIndex,
@@ -348,7 +331,7 @@ contract ElectionModule is
 
         if (!election.evaluated) revert ElectionNotEvaluated();
 
-        uint newEpochIndex = council.currentElectionId + 1;
+        uint256 newEpochIndex = council.currentElectionId + 1;
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.broadcast(
@@ -390,11 +373,11 @@ contract ElectionModule is
         return Council.load().getNextElectionSettings();
     }
 
-    function getEpochIndex() external view override returns (uint) {
+    function getEpochIndex() external view override returns (uint256) {
         return Council.load().currentElectionId;
     }
 
-    function getCurrentPeriod() external view override returns (uint) {
+    function getCurrentPeriod() external view override returns (uint256) {
         // solhint-disable-next-line numcast/safe-cast
         return uint256(Council.load().getCurrentEpoch().getCurrentPeriod());
     }
@@ -417,7 +400,7 @@ contract ElectionModule is
         address user,
         uint256 chainId,
         uint256 electionId
-    ) external view override returns (uint) {
+    ) external view override returns (uint256) {
         Ballot.Data storage ballot = Ballot.load(electionId, user, chainId);
         return ballot.votingPower;
     }
@@ -434,7 +417,7 @@ contract ElectionModule is
         return Council.load().getCurrentElection().evaluated;
     }
 
-    function getCandidateVotes(address candidate) external view override returns (uint) {
+    function getCandidateVotes(address candidate) external view override returns (uint256) {
         return Council.load().getCurrentElection().candidateVoteTotals[candidate];
     }
 
@@ -451,7 +434,7 @@ contract ElectionModule is
     }
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
-        uint length = candidates.length;
+        uint256 length = candidates.length;
 
         if (length == 0) {
             revert NoCandidates();
@@ -459,7 +442,7 @@ contract ElectionModule is
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        for (uint i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             address candidate = candidates[i];
 
             // Reject candidates that are not nominated.
@@ -469,7 +452,7 @@ contract ElectionModule is
 
             // Reject duplicate candidates.
             if (i < length - 1) {
-                for (uint j = i + 1; j < length; j++) {
+                for (uint256 j = i + 1; j < length; j++) {
                     address otherCandidate = candidates[j];
 
                     if (candidate == otherCandidate) {

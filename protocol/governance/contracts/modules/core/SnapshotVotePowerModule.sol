@@ -68,10 +68,9 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         address snapshotContract,
         address voter
     ) external override returns (uint256 power) {
-        // TODO: Let's add also a comment in the prepareBallotWithSnapshot that this is where we'd add quadratic voting support (if we don't plan to add it as an option prior to audit)
-        Council.Data storage council = Council.load();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
-        uint128 currentEpoch = council.currentElectionId.to128();
+
+        uint128 currentEpoch = Council.load().currentElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
 
         if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {

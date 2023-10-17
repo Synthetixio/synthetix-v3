@@ -8,12 +8,18 @@ import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC277
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
+import {Ballot} from "../../storage/Ballot.sol";
 import {CouncilMembers} from "../../storage/CouncilMembers.sol";
+import {Council} from "../../storage/Council.sol";
+import {Epoch} from "../../storage/Epoch.sol";
 
 contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
-    using SetUtil for SetUtil.AddressSet;
-    using CrossChain for CrossChain.Data;
+    using Ballot for Ballot.Data;
+    using Council for Council.Data;
     using CouncilMembers for CouncilMembers.Data;
+    using CrossChain for CrossChain.Data;
+    using Epoch for Epoch.Data;
+    using SetUtil for SetUtil.AddressSet;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
@@ -37,15 +43,22 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         address[] calldata candidates,
         uint256[] calldata amounts
     ) public payable override {
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
+
+        address sender = ERC2771Context._msgSender();
+
+        /// @dev: load ballot with total votingPower, should have before been prepared
+        /// calling the prepareBallotWithSnapshot method
+        uint256 currentEpoch = Council.load().currentElectionId;
+        Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
+
         CrossChain.Data storage cc = CrossChain.load();
-
-        // TODO: validate vote power on current chain
-
         cc.transmit(
             cc.getChainIdAt(0),
             abi.encodeWithSelector(
                 IElectionModule._recvCast.selector,
-                ERC2771Context._msgSender(),
+                sender,
+                ballot.votingPower,
                 block.chainid,
                 candidates,
                 amounts
