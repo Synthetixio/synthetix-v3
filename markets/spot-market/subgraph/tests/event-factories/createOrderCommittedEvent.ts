@@ -3,7 +3,7 @@ import { newTypedMockEvent } from 'matchstick-as';
 import { OrderCommitted as OrderCommittedEvent } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createOrderCommittedEvent(
-  id: i32,
+  marketId: i32,
   orderType: i32,
   amountProvided: i64,
   asyncOrderId: i64,
@@ -16,7 +16,7 @@ export function createOrderCommittedEvent(
   const event = newTypedMockEvent<OrderCommittedEvent>();
 
   event.parameters = [];
-  event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));
+  event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));
   event.parameters.push(new ethereum.EventParam('orderType', ethereum.Value.fromI32(orderType)));
   event.parameters.push(
     new ethereum.EventParam(
