@@ -6,7 +6,7 @@ import {
 } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createOrderCancelledEvent(
-  id: i32,
+  marketId: i32,
   asyncOrderId: i64,
   // asyncOrderClaim tuple
   claimId: i64,
@@ -27,7 +27,7 @@ export function createOrderCancelledEvent(
   const event = newTypedMockEvent<OrderCancelledEvent>();
 
   event.parameters = [];
-  event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));
+  event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));
   event.parameters.push(
     new ethereum.EventParam(
       'asyncOrderId',
