@@ -583,17 +583,17 @@ describe('MarginModule', async () => {
 
         let expectedEvents: Array<string | RegExp> = [/FundingRecomputed/];
 
-        if (!isSusdCollateral(collateral)) {
-          expectedEvents = expectedEvents.concat([
-            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount})`, // From collateral ERC20 contract
-            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}")`, // From core
-            `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount})`, // From collateral ERC20 contract
-          ]);
-        } else {
+        if (isSusdCollateral(collateral)) {
           // Both of these events are emitted by the core protocol.
           expectedEvents = expectedEvents.concat([
             `Transfer("${BURN_ADDRESS}", "${traderAddress}", ${withdrawAmount})`,
             `MarketUsdWithdrawn(${marketId}, "${traderAddress}", ${withdrawAmount}, "${PerpMarketProxy.address}")`,
+          ]);
+        } else {
+          expectedEvents = expectedEvents.concat([
+            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount})`, // From collateral ERC20 contract
+            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}")`, // From core
+            `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount})`, // From collateral ERC20 contract
           ]);
         }
 
@@ -617,11 +617,15 @@ describe('MarginModule', async () => {
 
         // Perform the withdraw (partial amount).
         const withdrawAmount = collateralDepositAmount.div(2).mul(-1);
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.synthMarketId(),
-          withdrawAmount
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarketId(),
+              withdrawAmount
+            ),
+          provider()
         );
 
         const marginWithdrawEventProperties = [
@@ -631,7 +635,7 @@ describe('MarginModule', async () => {
           collateral.synthMarketId(),
         ].join(', ');
 
-        await assertEvent(tx, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
       });
 
       it('should allow partial withdraw when initial margin req are still met', async () => {
@@ -789,7 +793,7 @@ describe('MarginModule', async () => {
          * Error: Transaction was expected to revert with "InsufficientMargin()", but reverted with "CanLiquidatePosition()"
          * Error: transaction reverted in contract MarginModule: CanLiquidatePosition()
          *
-         * Need to make sure we are not liquidatable
+         * Need to make sure we are not liquidatable.
          */
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(

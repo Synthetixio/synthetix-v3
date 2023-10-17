@@ -255,10 +255,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         // sellExactIn is called and will revert with Invalid prices, if they differ too much.
         // Adding a convenient method here to update the prices for both
         setPrice: async (price: BigNumber) => {
-          await Promise.all([
-            synthMarket.sellAggregator().mockSetCurrentPrice(price),
-            synthMarket.buyAggregator().mockSetCurrentPrice(price),
-          ]);
+          await synthMarket.sellAggregator().mockSetCurrentPrice(price);
+          await synthMarket.buyAggregator().mockSetCurrentPrice(price);
         },
       };
     });

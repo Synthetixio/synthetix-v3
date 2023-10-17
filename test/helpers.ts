@@ -262,3 +262,8 @@ export const getSusdCollateral = (collaterals: PerpCollateral[]) => {
 };
 
 export const isSusdCollateral = (collateral: PerpCollateral) => collateral.synthMarketId() === SYNTHETIX_USD_MARKET_ID;
+
+export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
+  const found = l.find(p);
+  return found ? found : raise('Cannot find in l');
+};

@@ -32,6 +32,7 @@ import {
   BURN_ADDRESS,
   getSusdCollateral,
   isSusdCollateral,
+  findOrThrow,
 } from '../../helpers';
 import { Trader } from '../../typed';
 import { assertEvents } from '../../assert';
@@ -142,12 +143,12 @@ describe('LiquidationModule', () => {
 
       // Verify no USD but _some_ non-USD collateral was used as margin.
       const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const collateralBalanceBefore = d1.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(collateral.synthMarketId()))
-        .map((c) => c.available)[0];
-      const usdBalanceBefore = d1.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
-        .map((c) => c.available)[0];
+      const collateralBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(collateral.synthMarketId())
+      ).available;
+      const usdBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      ).available;
 
       assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
       assertBn.isZero(usdBalanceBefore);
@@ -164,12 +165,12 @@ describe('LiquidationModule', () => {
       // Assert the collateral has been sold and all that's left is sUSD (minus fees).
       const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
-      const collateralBalanceAfter = d2.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(collateral.synthMarketId()))
-        .map((c) => c.available)[0];
-      const usdBalanceAfter = d2.depositedCollaterals
-        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
-        .map((c) => c.available)[0];
+      const collateralBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(collateral.synthMarketId())
+      ).available;
+      const usdBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
+        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      ).available;
 
       assertBn.isZero(collateralBalanceAfter);
       assertBn.near(usdBalanceAfter, marginUsdDepositAmount); // .near to account for spot-market skewFee.
