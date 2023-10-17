@@ -79,10 +79,13 @@ describe('LiquidationModule', () => {
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       assertBn.lte(healthFactor, bn(1));
 
-      const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
       const keeperAddress = await keeper().getAddress();
       await assertEvent(
-        tx,
+        receipt,
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
@@ -113,14 +116,17 @@ describe('LiquidationModule', () => {
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
-      const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
       const keeperAddress = await keeper().getAddress();
       await assertEvent(
-        tx,
+        receipt,
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
-      await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
+      await assertEvent(receipt, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
     });
 
     it('should sell all available synth collateral for sUSD when flagging', async () => {
@@ -203,7 +209,7 @@ describe('LiquidationModule', () => {
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       assertBn.lte(healthFactor, bn(1));
 
-      const { tx, receipt } = await withExplicitEvmMine(
+      const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
         provider()
       );
@@ -253,7 +259,7 @@ describe('LiquidationModule', () => {
         ]);
       }
 
-      await assertEvents(tx, expectedEvents, contractsWithAllEvents);
+      await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
     });
 
     it('should revert when position already flagged', async () => {
