@@ -2,8 +2,6 @@ import commonConfig from '@synthetixio/common-config/hardhat.config';
 import 'solidity-docgen';
 import { templates } from '@synthetixio/docgen';
 
-import './tasks/cannon';
-
 const config = {
   ...commonConfig,
   solidity: {

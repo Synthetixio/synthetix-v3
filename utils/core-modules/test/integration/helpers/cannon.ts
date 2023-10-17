@@ -54,6 +54,7 @@ export async function cannonBuild(options: BuildOptions) {
 
   await spawn('yarn', args, {
     env: spawnEnv,
+    timeout: 60000,
     waitForText: (data) => {
       const m = data.match(/Successfully built package (\S+)/);
       if (!m) return false;
@@ -83,9 +84,8 @@ export async function cannonInspect(options: InspectOptions) {
   ];
 
   await spawn('yarn', args, {
+    timeout: 30000,
     env: { ...defaultEnv },
-    waitForText: (data) => {
-      return data.includes('has been deployed to a local node running');
-    },
+    waitForText: 'Cannonfile Topology',
   });
 }

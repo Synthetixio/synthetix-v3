@@ -39,7 +39,7 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
     ) public payable override {
         CrossChain.Data storage cc = CrossChain.load();
 
-        // TODO: validate vote power
+        // TODO: validate vote power on current chain
 
         cc.transmit(
             cc.getChainIdAt(0),
