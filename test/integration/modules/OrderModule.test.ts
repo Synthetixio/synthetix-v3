@@ -1097,16 +1097,16 @@ describe('OrderModule', () => {
 
         // Use explicit values to test a concrete example.
         const trader = traders()[0];
-        const collateral = collaterals()[0];
+        const collateral = collateralsWithoutSusd()[0];
         const market = markets()[0];
-        const marginUsdDepositAmount = wei(1000).toBN();
+        const marginUsdDepositAmount = bn(1000);
         const leverage = 1;
         const keeperFeeBufferUsd = 0;
-        const collateralDepositAmount = wei(10).toBN();
-        const collateralPrice = wei(100).toBN();
-        const marketOraclePrice = wei(1).toBN();
-        const makerFee = wei(0.01).toBN();
-        const takerFee = wei(0.02).toBN();
+        const collateralDepositAmount = bn(10);
+        const collateralPrice = bn(100);
+        const marketOraclePrice = bn(1);
+        const makerFee = bn(0.01);
+        const takerFee = bn(0.02);
 
         // Update state to reflect explicit values.
         await collateral.setPrice(collateralPrice);
@@ -1213,11 +1213,11 @@ describe('OrderModule', () => {
         const { PerpMarketProxy } = systems();
 
         // Set a really high ETH price of 4.9k USD (Dec 21' ATH).
-        await ethOracleNode().agg.mockSetCurrentPrice(wei(4900).toBN());
+        await ethOracleNode().agg.mockSetCurrentPrice(bn(4900));
 
         // Cap the max keeperFee to $50 USD
-        const maxKeeperFeeUsd = wei(50).toBN();
-        await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: wei(10).toBN() });
+        const maxKeeperFeeUsd = bn(50);
+        await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: bn(10) });
 
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,

@@ -1353,7 +1353,7 @@ describe('LiquidationModule', () => {
 
         const orderSide = genSide();
         const marginUsdDepositAmount = 15_000;
-        const collateral = collaterals()[0];
+        const collateral = collaterals()[0]; // sUSD
         const market = markets()[0];
         const marketId = market.marketId();
 

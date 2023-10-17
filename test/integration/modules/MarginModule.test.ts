@@ -1519,8 +1519,12 @@ describe('MarginModule', async () => {
 
     it('should return usd amount after price of collateral changes', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
-      const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice, collateralDepositAmount } =
-        await depositMargin(bs, genTrader(bs));
+
+      // We can't use sUSD here because it should alwyas be 1 within the system.
+      const collateral = genOneOf(collateralsWithoutSusd());
+
+      const { trader, marketId, marginUsdDepositAmount, collateralPrice, collateralDepositAmount } =
+        await depositMargin(bs, genTrader(bs, { desiredCollateral: collateral }));
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
 

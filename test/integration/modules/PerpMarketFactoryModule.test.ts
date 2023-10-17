@@ -34,7 +34,7 @@ import { shuffle, times } from 'lodash';
 
 describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { traders, signers, owner, markets, collaterals, systems, provider, restore } = bs;
+  const { traders, signers, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -492,10 +492,12 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should expect sum of remaining all pnl to eq debt after a long period of trading');
 
-    it('should expect reportedDebt/totalDebt to be calculated correctly (concrete)', async () => {
+    it('should expect reportedDebt/totalDebt to be updated appropriately sUSD (concrete)');
+
+    it('should expect reportedDebt/totalDebt to be updated appropriately non-sUSD (concrete)', async () => {
       const { PerpMarketProxy, Core, SpotMarket } = systems();
 
-      const collateral = collaterals()[0];
+      const collateral = collateralsWithoutSusd()[0];
       const market = markets()[1]; // ETHPERP.
       const marketId = market.marketId();
       const trader = traders()[0];
