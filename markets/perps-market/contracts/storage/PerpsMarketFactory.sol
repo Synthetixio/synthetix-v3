@@ -1,15 +1,23 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
  */
 library PerpsMarketFactory {
+    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using SafeCastI256 for int256;
+    using DecimalMath for uint256;
+
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
 
@@ -93,10 +101,11 @@ library PerpsMarketFactory {
      * @dev    Use the configured staleness tolerance if strict
      */
     function getSynthValue(
+        Data storage self,
         uint128 synthMarketId,
         uint256 synthAmount,
         bool useStrictStalenessTolerance
-    ) internal {
+    ) internal view returns (uint) {
         uint runtimeArgCount = useStrictStalenessTolerance ? 2 : 1;
         bytes32[] memory runtimeKeys = new bytes32[](runtimeArgCount);
         bytes32[] memory runtimeValues = new bytes32[](runtimeArgCount);
@@ -115,17 +124,20 @@ library PerpsMarketFactory {
             runtimeValues[0] = bytes32(synthAmount);
         }
 
-        bytes32 synthNodeId = getSynthOracle(synthMarketId);
-        NodeOutput.Data memory output = INodeModule(synthNodeId).processWithRuntime(
+        bytes32 synthNodeId = getSynthOracle(self, synthMarketId);
+        NodeOutput.Data memory output = self.oracle.processWithRuntime(
             synthNodeId,
             runtimeKeys,
             runtimeValues
         );
 
-        return output.price.toUint();
+        return output.price.toUint().mulDecimal(synthAmount);
     }
 
-    function getSynthOracle(Data storage self, uint128 synthMarketId) internal returns (bytes32) {
+    function getSynthOracle(
+        Data storage self,
+        uint128 synthMarketId
+    ) internal view returns (bytes32) {
         address synthToken = self.spotMarket.getSynth(synthMarketId);
         return self.synthetix.getCollateralConfiguration(synthToken).oracleNodeId;
     }
