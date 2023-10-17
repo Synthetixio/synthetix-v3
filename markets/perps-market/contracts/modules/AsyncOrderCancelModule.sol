@@ -10,12 +10,13 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
+import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 
 /**
  * @title Module for cancelling async orders.
  * @dev See IAsyncOrderCancelModule.
  */
-contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
+contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAccountEvents {
     using PerpsAccount for PerpsAccount.Data;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
@@ -100,7 +101,18 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents {
 
         if (runtime.settlementReward > 0) {
             // deduct keeper reward
-            PerpsAccount.load(runtime.accountId).deductFromAccount(runtime.settlementReward);
+            (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) = PerpsAccount
+                .load(runtime.accountId)
+                .deductFromAccount(runtime.settlementReward);
+            for (uint256 i = 0; i < deductedSynthIds.length; i++) {
+                if (deductedAmount[i] > 0) {
+                    emit CollateralDeducted(
+                        runtime.accountId,
+                        deductedSynthIds[i],
+                        deductedAmount[i]
+                    );
+                }
+            }
             // pay keeper
             PerpsMarketFactory.load().withdrawMarketUsd(
                 ERC2771Context._msgSender(),
