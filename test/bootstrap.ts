@@ -224,13 +224,13 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const configureCollateral = async () => {
     const collaterals = getRawCollaterals();
 
-    // Amend sUSD as a collateral to configure.
-    const sUsdMaxAllowance = bn(10_000_000);
+    // Amend sUSD as a collateral to configure ()
+    const sUsdMaxDepositAllowance = bn(10_000_000);
     const synthMarkets = spotMarket.synthMarkets();
 
     // Allow this collateral to be depositable into the perp market.
     const synthMarketIds = [SYNTHETIX_USD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
-    const maxAllowances = [sUsdMaxAllowance].concat(collaterals.map(({ max }) => max));
+    const maxAllowances = [sUsdMaxDepositAllowance].concat(collaterals.map(({ max }) => max));
     await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(synthMarketIds, maxAllowances);
 
     // Collect non-sUSD collaterals along with their Synth Market.
@@ -255,8 +255,10 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         // sellExactIn is called and will revert with Invalid prices, if they differ too much.
         // Adding a convenient method here to update the prices for both
         setPrice: async (price: BigNumber) => {
-          await synthMarket.sellAggregator().mockSetCurrentPrice(price);
-          await synthMarket.buyAggregator().mockSetCurrentPrice(price);
+          await Promise.all([
+            synthMarket.sellAggregator().mockSetCurrentPrice(price),
+            synthMarket.buyAggregator().mockSetCurrentPrice(price),
+          ]);
         },
       };
     });
@@ -269,7 +271,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     const sUsdCollateral: PerpCollateral = {
       name: 'sUSD',
       initialPrice: bn(1),
-      max: sUsdMaxAllowance,
+      max: sUsdMaxDepositAllowance,
       contract: systems.USD,
       synthMarketId: () => SYNTHETIX_USD_MARKET_ID,
       synthAddress: () => systems.USD.address,
