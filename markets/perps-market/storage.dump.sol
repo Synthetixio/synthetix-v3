@@ -510,18 +510,18 @@ library AsyncOrder {
         int128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
-        uint fillPrice;
-        uint orderFees;
-        uint availableMargin;
-        uint currentLiquidationMargin;
-        uint accumulatedLiquidationRewards;
-        uint currentLiquidationReward;
+        uint256 fillPrice;
+        uint256 orderFees;
+        uint256 availableMargin;
+        uint256 currentLiquidationMargin;
+        uint256 accumulatedLiquidationRewards;
+        uint256 currentLiquidationReward;
         int128 newPositionSize;
-        uint newNotionalValue;
+        uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint requiredMaintenanceMargin;
-        uint initialRequiredMargin;
-        uint totalRequiredMargin;
+        uint256 requiredMaintenanceMargin;
+        uint256 initialRequiredMargin;
+        uint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
     }

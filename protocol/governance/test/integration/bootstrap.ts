@@ -8,6 +8,7 @@ import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
 import type { CcipRouterMock } from '../generated/typechain/sepolia';
+import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
 import type { CoreProxy as SepoliaCoreProxy } from '../generated/typechain/sepolia';
 import type { CoreProxy as OptimisticGoerliCoreProxy } from '../generated/typechain/optimistic-goerli';
 import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain/avalanche-fuji';
@@ -20,7 +21,7 @@ interface Proxies {
   AvalancheFuji: AvalancheFujiCoreProxy;
 }
 
-enum ChainSelector {
+export enum ChainSelector {
   Sepolia = '16015286601757825753',
   OptimisticGoerli = '2664363617261496610',
   AvalancheFuji = '14767482510784806043',
@@ -47,29 +48,8 @@ export function integrationBootstrap() {
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
     /// @dev: show build logs with DEBUG=spawn:*
-    // const res = (await Promise.all([
-    //   _spinNetwork<SepoliaCoreProxy>({
-    //     networkName: 'sepolia',
-    //     cannonfile: 'cannonfile.test.toml',
-    //     typechainFolder,
-    //     writeDeployments,
-    //   }),
-    //   _spinNetwork<OptimisticGoerliCoreProxy>({
-    //     networkName: 'optimistic-goerli',
-    //     cannonfile: 'cannonfile.satellite.test.toml',
-    //     typechainFolder,
-    //     writeDeployments,
-    //   }),
-    //   _spinNetwork<AvalancheFujiCoreProxy>({
-    //     networkName: 'avalanche-fuji',
-    //     cannonfile: 'cannonfile.satellite.test.toml',
-    //     typechainFolder,
-    //     writeDeployments,
-    //   }),
-    // ])) satisfies Chains;
-
-    // TODO: There's an unknown error that causes to some builds to finish early
-    // without throwing error but they do not complete when running in parallel
+    // TODO: When running in parallel there's an unknown error that causes to some
+    // builds to finish early without throwing error but they do not complete.
     const res = [
       await _spinNetwork<Proxies['Sepolia']>({
         networkName: 'sepolia',
@@ -139,11 +119,13 @@ async function _spinNetwork<CoreProxy>({
     wipe: true,
   });
 
-  await cannonInspect({
+  const { artifacts } = await cannonInspect({
     networkName,
     packageRef,
     writeDeployments,
   });
+
+  provider.artifacts = artifacts;
 
   const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
@@ -155,10 +137,17 @@ async function _spinNetwork<CoreProxy>({
     outDir: typechainFolder,
   });
 
-  const signer = await provider.getSigner(ownerAddress);
+  const signer = provider.getSigner(ownerAddress);
 
   const coreProxy = require(`${writeDeployments}/CoreProxy.json`);
   const CoreProxy = new ethers.Contract(coreProxy.address, coreProxy.abi, signer) as CoreProxy;
+
+  const snapshotRecordMock = require(`${writeDeployments}/SnapshotRecordMock.json`);
+  const SnapshotRecordMock = new ethers.Contract(
+    snapshotRecordMock.address,
+    snapshotRecordMock.abi,
+    signer
+  ) as SnapshotRecordMock;
 
   const ccipRouter = require(`${writeDeployments}/CcipRouterMock.json`);
   const CcipRouter = new ethers.Contract(
@@ -167,5 +156,14 @@ async function _spinNetwork<CoreProxy>({
     signer
   ) as CcipRouterMock;
 
-  return { networkName, chainId, chainSlector, provider, CoreProxy, CcipRouter };
+  return {
+    networkName,
+    chainId,
+    chainSlector,
+    provider: provider as unknown as ethers.providers.JsonRpcProvider,
+    CoreProxy,
+    CcipRouter,
+    signer,
+    SnapshotRecordMock,
+  };
 }

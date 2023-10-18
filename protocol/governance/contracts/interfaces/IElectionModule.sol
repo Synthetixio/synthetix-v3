@@ -48,9 +48,6 @@ interface IElectionModule is IElectionModuleSatellite {
         uint64 votingPeriodDuration
     ) external;
 
-    /// @notice Shows whether the module has been initialized
-    function isElectionModuleInitialized() external view returns (bool);
-
     // ---------------------------------------
     // Owner write functions
     // ---------------------------------------
@@ -88,13 +85,14 @@ interface IElectionModule is IElectionModuleSatellite {
     /// @dev Internal voting logic, receiving end of CCIP voting
     function _recvCast(
         address voter,
+        uint256 votingPower,
         uint256 chainId,
         address[] calldata candidates,
         uint256[] calldata amounts
     ) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
-    function evaluate(uint numBallots) external;
+    function evaluate(uint256 numBallots) external;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
     function resolve() external;
@@ -116,10 +114,10 @@ interface IElectionModule is IElectionModuleSatellite {
         returns (ElectionSettings.Data memory settings);
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
-    function getEpochIndex() external view returns (uint);
+    function getEpochIndex() external view returns (uint256);
 
     /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
-    function getCurrentPeriod() external view returns (uint);
+    function getCurrentPeriod() external view returns (uint256);
 
     /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view returns (bool);
@@ -135,7 +133,7 @@ interface IElectionModule is IElectionModuleSatellite {
         address user,
         uint256 chainId,
         uint256 electionId
-    ) external view returns (uint);
+    ) external view returns (uint256);
 
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(
@@ -148,7 +146,7 @@ interface IElectionModule is IElectionModuleSatellite {
     function isElectionEvaluated() external view returns (bool);
 
     /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
-    function getCandidateVotes(address candidate) external view returns (uint);
+    function getCandidateVotes(address candidate) external view returns (uint256);
 
     /// @notice Returns the winners of the current election. Requires the election to be partially or totally evaluated
     function getElectionWinners() external view returns (address[] memory);

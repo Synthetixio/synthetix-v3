@@ -42,12 +42,3 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-
-[invoke.init_election_module]
-target = ["CoreProxy"]
-func = "initElectionModule"
-from = "<%= settings.owner %>"
-args = [
-    "<%= settings.initial_epoch_index %>",
-    ["<%= settings.initial_council_member %>"],
-]

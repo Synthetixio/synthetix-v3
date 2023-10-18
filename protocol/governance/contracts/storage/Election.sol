@@ -2,11 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import {Epoch} from "./Epoch.sol";
 
 library Election {
     struct Data {
-        Epoch.Data epoch;
         // True if ballots have been counted in this election
         bool evaluated;
         // True if NFTs have been re-shuffled in this election

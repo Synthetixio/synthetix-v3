@@ -42,6 +42,12 @@ library CrossChain {
         }
     }
 
+    function validateChainId(Data storage self, uint256 chainId) internal view {
+        if (!self.supportedNetworks.contains(chainId)) {
+            revert UnsupportedNetwork(chainId.to64());
+        }
+    }
+
     function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {
         if (
             address(self.ccipRouter) == address(0) ||
@@ -63,6 +69,8 @@ library CrossChain {
 
         address caller;
         bytes memory payload;
+        bool success;
+        bytes memory result;
 
         if (data.tokenAmounts.length == 1) {
             address to = abi.decode(data.data, (address));
@@ -73,13 +81,15 @@ library CrossChain {
                 to,
                 data.tokenAmounts[0].amount
             );
+
+            // at this point, everything should be good to send the message to ourselves.
+            // the below `onlyCrossChain` function will verify that the caller is self
+            (success, result) = caller.call(payload);
+        } else if (data.tokenAmounts.length == 0) {
+            (success, result) = address(this).call(data.data);
         } else {
             revert InvalidMessage();
         }
-
-        // at this point, everything should be good to send the message to ourselves.
-        // the below `onlyCrossChain` function will verify that the caller is self
-        (bool success, bytes memory result) = caller.call(payload);
 
         if (!success) {
             uint len = result.length;

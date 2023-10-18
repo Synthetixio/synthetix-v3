@@ -8,6 +8,7 @@ import {Election} from "./Election.sol";
 import {ElectionSettings} from "./ElectionSettings.sol";
 
 library Council {
+    using Epoch for Epoch.Data;
     using ElectionSettings for ElectionSettings.Data;
 
     error NotCallableInCurrentPeriod();
@@ -24,17 +25,6 @@ library Council {
         uint256 currentElectionId;
     }
 
-    enum ElectionPeriod {
-        // Council elected and active
-        Administration,
-        // Accepting nominations for next election
-        Nomination,
-        // Accepting votes for ongoing election
-        Vote,
-        // Votes being counted
-        Evaluation
-    }
-
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_COUNCIL_STORAGE;
         assembly {
@@ -43,9 +33,11 @@ library Council {
     }
 
     function newElection(Data storage self) internal returns (uint newElectionId) {
-        getNextElectionSettings(self).copyMissingFrom(getCurrentElectionSettings(self));
         newElectionId = ++self.currentElectionId;
-        initScheduleFromSettings(self);
+    }
+
+    function getCurrentEpoch(Data storage self) internal view returns (Epoch.Data storage epoch) {
+        return Epoch.load(self.currentElectionId);
     }
 
     function getCurrentElection(
@@ -80,41 +72,20 @@ library Council {
         return ElectionSettings.load(self.currentElectionId + 1);
     }
 
-    /// @dev Determines the current period type according to the current time and the epoch's dates
-    function getCurrentPeriod(Data storage self) internal view returns (Council.ElectionPeriod) {
-        Epoch.Data storage epoch = getCurrentElection(self).epoch;
-
-        // solhint-disable-next-line numcast/safe-cast
-        uint64 currentTime = uint64(block.timestamp);
-
-        if (currentTime >= epoch.endDate) {
-            return Council.ElectionPeriod.Evaluation;
-        }
-
-        if (currentTime >= epoch.votingPeriodStartDate) {
-            return Council.ElectionPeriod.Vote;
-        }
-
-        if (currentTime >= epoch.nominationPeriodStartDate) {
-            return Council.ElectionPeriod.Nomination;
-        }
-
-        return Council.ElectionPeriod.Administration;
-    }
-
     /// @dev Used to allow certain functions to only operate within a given period
-    function onlyInPeriod(Council.ElectionPeriod period) internal view {
-        if (getCurrentPeriod(load()) != period) {
+    function onlyInPeriod(Epoch.ElectionPeriod period) internal view {
+        Epoch.ElectionPeriod currentPeriod = getCurrentEpoch(load()).getCurrentPeriod();
+        if (currentPeriod != period) {
             revert NotCallableInCurrentPeriod();
         }
     }
 
     /// @dev Used to allow certain functions to only operate within a given periods
     function onlyInPeriods(
-        Council.ElectionPeriod period1,
-        Council.ElectionPeriod period2
+        Epoch.ElectionPeriod period1,
+        Epoch.ElectionPeriod period2
     ) internal view {
-        Council.ElectionPeriod currentPeriod = Council.getCurrentPeriod(load());
+        Epoch.ElectionPeriod currentPeriod = getCurrentEpoch(load()).getCurrentPeriod();
         if (currentPeriod != period1 && currentPeriod != period2) {
             revert NotCallableInCurrentPeriod();
         }
@@ -127,7 +98,7 @@ library Council {
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) private view {
+    ) internal view {
         if (epochEndDate <= votingPeriodStartDate) {
             revert InvalidEpochConfiguration(1, epochEndDate, votingPeriodStartDate);
         } else if (votingPeriodStartDate <= nominationPeriodStartDate) {
@@ -218,14 +189,14 @@ library Council {
             newEpochEndDate
         );
 
-        if (getCurrentPeriod(self) != Council.ElectionPeriod.Administration) {
+        if (epoch.getCurrentPeriod() != Epoch.ElectionPeriod.Administration) {
             revert ChangesCurrentPeriod();
         }
     }
 
     /// @dev Moves schedule forward to immediately jump to the nomination period
     function jumpToNominationPeriod(Data storage self) internal {
-        Epoch.Data storage currentEpoch = getCurrentElection(self).epoch;
+        Epoch.Data storage currentEpoch = getCurrentEpoch(self);
         ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
 
         // Keep the previous durations, but shift everything back
@@ -242,25 +213,6 @@ library Council {
             newNominationPeriodStartDate,
             newVotingPeriodStartDate,
             newEpochEndDate
-        );
-    }
-
-    function initScheduleFromSettings(Data storage self) internal {
-        ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
-
-        uint64 currentEpochStartDate = SafeCastU256.to64(block.timestamp);
-        uint64 currentEpochEndDate = currentEpochStartDate + settings.epochDuration;
-        uint64 currentVotingPeriodStartDate = currentEpochEndDate - settings.votingPeriodDuration;
-        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate -
-            settings.nominationPeriodDuration;
-
-        configureEpochSchedule(
-            self,
-            getCurrentElection(self).epoch,
-            currentEpochStartDate,
-            currentNominationPeriodStartDate,
-            currentVotingPeriodStartDate,
-            currentEpochEndDate
         );
     }
 

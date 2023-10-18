@@ -5,29 +5,31 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IElectionInspectorModule} from "../../interfaces/IElectionInspectorModule.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {Election} from "../../storage/Election.sol";
+import {Epoch} from "../../storage/Epoch.sol";
 
 contract ElectionInspectorModule is IElectionInspectorModule {
     using SetUtil for SetUtil.AddressSet;
     using Ballot for Ballot.Data;
+    using Epoch for Epoch.Data;
 
     function getEpochStartDateForIndex(uint256 epochIndex) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.startDate;
+        return Epoch.load(epochIndex).startDate;
     }
 
     function getEpochEndDateForIndex(uint256 epochIndex) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.endDate;
+        return Epoch.load(epochIndex).endDate;
     }
 
     function getNominationPeriodStartDateForIndex(
         uint256 epochIndex
     ) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.nominationPeriodStartDate;
+        return Epoch.load(epochIndex).nominationPeriodStartDate;
     }
 
     function getVotingPeriodStartDateForIndex(
         uint256 epochIndex
     ) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.votingPeriodStartDate;
+        return Epoch.load(epochIndex).votingPeriodStartDate;
     }
 
     function wasNominated(
