@@ -284,7 +284,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         Council.Data storage council = Council.load();
 
-        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, block.chainid);
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
 
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
