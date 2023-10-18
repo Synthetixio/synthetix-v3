@@ -1,6 +1,7 @@
 import { AnvilServer } from '@foundry-rs/hardhat-anvil/dist/src/anvil-server';
 import { ethers } from 'ethers';
 import { spawn } from './spawn';
+import { CannonWrapperGenericProvider } from '@usecannon/builder';
 
 interface NodeOptions {
   port?: number;
@@ -67,7 +68,10 @@ export async function cannonBuild(options: BuildOptions) {
     throw new Error(`Could not build ${options.cannonfile} with --network ${options.networkName}`);
   }
 
-  const provider = new ethers.providers.JsonRpcProvider(node.rpcUrl);
+  const provider = new CannonWrapperGenericProvider(
+    {},
+    new ethers.providers.JsonRpcProvider(node.rpcUrl)
+  );
 
   return { options, packageRef, provider };
 }

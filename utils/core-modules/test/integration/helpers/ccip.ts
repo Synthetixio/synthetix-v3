@@ -32,7 +32,7 @@ export async function ccipReceive({
   const message = {
     messageId: evt.args.messageId,
     sourceChainSelector,
-    sender: rx.to,
+    sender: ethers.utils.defaultAbiCoder.encode(['address'], [rx.to]),
     data: evt.args.message.data,
     tokenAmounts: [],
   };
