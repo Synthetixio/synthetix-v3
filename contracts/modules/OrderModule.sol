@@ -8,6 +8,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {PythUtil} from "../utils/PythUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
@@ -91,6 +92,7 @@ contract OrderModule is IOrderModule {
         uint256 publishTime,
         Position.TradeParams memory params
     ) private view {
+        // TODO I think we could remove this
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
             revert ErrorUtil.StalePrice();
@@ -102,7 +104,7 @@ contract OrderModule is IOrderModule {
         if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
             revert ErrorUtil.OrderNotReady();
         }
-
+        // TODO I think we could remove this
         // Time delta must be within pythPublishTimeMin and pythPublishTimeMax.
         //
         // If `minOrderAge` is 12s then publishTime must be between 8 and 12 (inclusive). When inferring
@@ -234,13 +236,12 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        // TODO: This can be optimized as not all settlements may need the Pyth priceUpdateData.
-        //
-        // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
-        // such that keepers can conditionally update prices only if necessary.
-        PerpMarket.updatePythPrice(priceUpdateData);
-
-        (runtime.pythPrice, runtime.publishTime) = market.getPythPrice(order.commitmentTime);
+        (runtime.pythPrice, runtime.publishTime) = PythUtil.parsePythPrice(
+            globalConfig,
+            marketConfig,
+            order.commitmentTime,
+            priceUpdateData[0] // TODO should we change calldata to not be an array?
+        );
         runtime.fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, runtime.pythPrice);
         runtime.params = Position.TradeParams(
             order.sizeDelta,
