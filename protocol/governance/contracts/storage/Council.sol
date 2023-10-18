@@ -33,9 +33,7 @@ library Council {
     }
 
     function newElection(Data storage self) internal returns (uint newElectionId) {
-        getNextElectionSettings(self).copyMissingFrom(getCurrentElectionSettings(self));
         newElectionId = ++self.currentElectionId;
-        initScheduleFromSettings(self);
     }
 
     function getCurrentEpoch(Data storage self) internal view returns (Epoch.Data storage epoch) {
@@ -100,7 +98,7 @@ library Council {
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) private view {
+    ) internal view {
         if (epochEndDate <= votingPeriodStartDate) {
             revert InvalidEpochConfiguration(1, epochEndDate, votingPeriodStartDate);
         } else if (votingPeriodStartDate <= nominationPeriodStartDate) {
@@ -218,23 +216,22 @@ library Council {
         );
     }
 
-    function initScheduleFromSettings(Data storage self) internal {
-        ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
-
-        uint64 currentEpochStartDate = SafeCastU256.to64(block.timestamp);
-        uint64 currentEpochEndDate = currentEpochStartDate + settings.epochDuration;
-        uint64 currentVotingPeriodStartDate = currentEpochEndDate - settings.votingPeriodDuration;
-        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate -
+    function computeEpochFromSettings(
+        ElectionSettings.Data storage settings
+    ) internal view returns (Epoch.Data memory epoch) {
+        uint64 startDate = SafeCastU256.to64(block.timestamp);
+        uint64 endDate = startDate + settings.epochDuration;
+        uint64 votingPeriodStartDate = endDate - settings.votingPeriodDuration;
+        uint64 nominationPeriodStartDate = votingPeriodStartDate -
             settings.nominationPeriodDuration;
 
-        configureEpochSchedule(
-            self,
-            getCurrentEpoch(self),
-            currentEpochStartDate,
-            currentNominationPeriodStartDate,
-            currentVotingPeriodStartDate,
-            currentEpochEndDate
-        );
+        return
+            Epoch.Data({
+                startDate: startDate,
+                votingPeriodStartDate: votingPeriodStartDate,
+                nominationPeriodStartDate: nominationPeriodStartDate,
+                endDate: endDate
+            });
     }
 
     function uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {

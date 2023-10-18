@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
@@ -13,7 +14,11 @@ import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 import {Council} from "../../storage/Council.sol";
 import {Epoch} from "../../storage/Epoch.sol";
 
-contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
+contract ElectionModuleSatellite is
+    IElectionModuleSatellite,
+    InitializableMixin,
+    ElectionCredentials
+{
     using Ballot for Ballot.Data;
     using Council for Council.Data;
     using CouncilMembers for CouncilMembers.Data;
@@ -23,20 +28,40 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
-    /**
-     * @dev When using ElectionModuleSatellite on the mothership, make sure to override
-     * this method to be not callable, and add your custom initialization logic.
-     */
-    function initElectionModule(
-        uint256 initialEpochIndex,
-        address[] memory initialCouncil
+    function _recvInitElectionModuleSatellite(
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate,
+        address[] calldata councilMembers
     ) external virtual {
-        OwnableStorage.onlyOwner();
-        CouncilMembers.Data storage store = CouncilMembers.load();
+        CrossChain.onlyCrossChain();
 
-        if (store.councilMembers.length() > 0) return;
+        Council.Data storage council = Council.load();
 
-        _addCouncilMembers(initialCouncil, initialEpochIndex);
+        if (_isInitialized()) {
+            return;
+        }
+
+        council.initialized = true;
+
+        _setupEpoch(
+            epochIndex,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate,
+            councilMembers
+        );
+    }
+
+    function isElectionModuleInitialized() public view override returns (bool) {
+        return _isInitialized();
+    }
+
+    function _isInitialized() internal view override returns (bool) {
+        return Council.load().initialized;
     }
 
     function cast(
@@ -79,13 +104,46 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
     }
 
     function _recvResolve(
-        address[] calldata winners,
-        uint256 prevEpochIndex,
-        uint256 newEpochIndex
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate,
+        address[] calldata councilMembers
     ) external override {
         CrossChain.onlyCrossChain();
 
+        _setupEpoch(
+            epochIndex,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate,
+            councilMembers
+        );
+    }
+
+    function _setupEpoch(
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate,
+        address[] calldata councilMembers
+    ) private {
+        Council.Data storage council = Council.load();
+        uint256 prevEpochIndex = council.currentElectionId;
+
+        council.currentElectionId = epochIndex;
+
+        Epoch.Data storage epoch = Epoch.load(epochIndex);
+
+        epoch.startDate = epochStartDate;
+        epoch.nominationPeriodStartDate = nominationPeriodStartDate;
+        epoch.votingPeriodStartDate = votingPeriodStartDate;
+        epoch.endDate = epochEndDate;
+
         _removeAllCouncilMembers(prevEpochIndex);
-        _addCouncilMembers(winners, newEpochIndex);
+        _addCouncilMembers(councilMembers, epochIndex);
     }
 }

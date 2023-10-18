@@ -20,12 +20,12 @@ library Epoch {
     struct Data {
         // Date at which the epoch started
         uint64 startDate;
-        // Date at which the epoch's voting period will end
-        uint64 endDate;
         // Date at which the epoch's nomination period will start
         uint64 nominationPeriodStartDate;
         // Date at which the epoch's voting period will start
         uint64 votingPeriodStartDate;
+        // Date at which the epoch's voting period will end
+        uint64 endDate;
     }
 
     function load(uint epochIndex) internal pure returns (Data storage epoch) {

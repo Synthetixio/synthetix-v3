@@ -48,9 +48,6 @@ interface IElectionModule is IElectionModuleSatellite {
         uint64 votingPeriodDuration
     ) external;
 
-    /// @notice Shows whether the module has been initialized
-    function isElectionModuleInitialized() external view returns (bool);
-
     // ---------------------------------------
     // Owner write functions
     // ---------------------------------------

@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
@@ -18,12 +17,7 @@ import {Epoch} from "../../storage/Epoch.sol";
 import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 import {ElectionModuleSatellite} from "./ElectionModuleSatellite.sol";
 
-contract ElectionModule is
-    IElectionModule,
-    ElectionModuleSatellite,
-    ElectionTally,
-    InitializableMixin
-{
+contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTally {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
     using ElectionSettings for ElectionSettings.Data;
@@ -36,10 +30,33 @@ contract ElectionModule is
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 
     /**
-     * @dev Do nothing when calling ElectionModuleSatellite initializer, this logic
-     * is being handled by initOrUpdateElectionSettings()
+     * @dev Utility method for initializing a new Satellite chain
      */
-    function initElectionModule(uint256, address[] memory) external pure override {}
+    function initElectionModuleSatellite(uint256 chainId) external {
+        OwnableStorage.onlyOwner();
+
+        CrossChain.Data storage cc = CrossChain.load();
+
+        cc.validateChainId(chainId);
+
+        Council.Data storage council = Council.load();
+        Epoch.Data memory epoch = council.getCurrentEpoch();
+        Election.Data storage election = council.getCurrentElection();
+
+        cc.transmit(
+            chainId.to64(),
+            abi.encodeWithSelector(
+                this._recvInitElectionModuleSatellite.selector,
+                council.currentElectionId,
+                epoch.startDate,
+                epoch.nominationPeriodStartDate,
+                epoch.votingPeriodStartDate,
+                epoch.endDate,
+                election.winners.values()
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+    }
 
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
@@ -138,14 +155,6 @@ contract ElectionModule is
 
         emit ElectionModuleInitialized();
         emit EpochStarted(0);
-    }
-
-    function isElectionModuleInitialized() public view override returns (bool) {
-        return _isInitialized();
-    }
-
-    function _isInitialized() internal view override returns (bool) {
-        return Council.load().initialized;
     }
 
     function tweakEpochSchedule(
@@ -331,24 +340,40 @@ contract ElectionModule is
 
         if (!election.evaluated) revert ElectionNotEvaluated();
 
-        uint256 newEpochIndex = council.currentElectionId + 1;
+        ElectionSettings.Data storage currentElectionSettings = council
+            .getCurrentElectionSettings();
+        ElectionSettings.Data storage nextElectionSettings = council.getNextElectionSettings();
+
+        nextElectionSettings.copyMissingFrom(currentElectionSettings);
+        Epoch.Data memory nextEpoch = Council.computeEpochFromSettings(nextElectionSettings);
+
+        council.newElection();
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.broadcast(
             cc.getSupportedNetworks(),
             abi.encodeWithSelector(
                 this._recvResolve.selector,
-                election.winners.values(),
                 council.currentElectionId,
-                newEpochIndex
+                nextEpoch.startDate,
+                nextEpoch.nominationPeriodStartDate,
+                nextEpoch.votingPeriodStartDate,
+                nextEpoch.endDate,
+                election.winners.values()
             ),
             _CROSSCHAIN_GAS_LIMIT
         );
 
-        election.resolved = true;
-        council.newElection();
+        council.validateEpochSchedule(
+            nextEpoch.startDate,
+            nextEpoch.nominationPeriodStartDate,
+            nextEpoch.votingPeriodStartDate,
+            nextEpoch.endDate
+        );
 
-        emit EpochStarted(newEpochIndex);
+        election.resolved = true;
+
+        emit EpochStarted(council.currentElectionId);
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {

@@ -42,6 +42,12 @@ library CrossChain {
         }
     }
 
+    function validateChainId(Data storage self, uint256 chainId) internal view {
+        if (!self.supportedNetworks.contains(chainId)) {
+            revert UnsupportedNetwork(chainId.to64());
+        }
+    }
+
     function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {
         if (
             address(self.ccipRouter) == address(0) ||
