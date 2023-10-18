@@ -68,7 +68,6 @@ describe('Position - funding', () => {
     |     0.03     | 404352   |   -4   | -19  |   -0.0057   |  0.00339 |    -274.626     |
     |      3       | 663552   |   19   |   0  |      0      | -0.01371 |    -893.826     |
     +------------------------------------------------------------------------------------+
-
   */
 
   [
@@ -83,14 +82,13 @@ describe('Position - funding', () => {
     { daysElapsed: 3, newOrderSize: bn(19) },
   ].reduce(
     (
-      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, prevSize, accDaysElapsed },
+      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed },
       { daysElapsed, newOrderSize }
     ) => {
       accDaysElapsed += daysElapsed;
 
       // ACCRUED FUNDING CALC ----------------------------------------------
       const currentSkew = prevSkew.add(newOrderSize);
-      const newSize = prevSize.add(newOrderSize);
       const frVelocity = wei(currentSkew).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
       const fundingRate = prevFrVelocity.mul(daysElapsed).add(prevFundingRate);
       const expectedAccruedFunding = Wei.avg(wei(prevFundingRate), wei(fundingRate))
@@ -140,7 +138,6 @@ describe('Position - funding', () => {
         prevFundingRate: fundingRate,
         prevAccruedFunding: expectedAccruedFunding,
         prevSkew: currentSkew,
-        prevSize: newSize,
         accDaysElapsed,
       };
     },
@@ -149,7 +146,6 @@ describe('Position - funding', () => {
       prevFundingRate: wei(0),
       prevAccruedFunding: wei(0),
       prevSkew: wei(20),
-      prevSize: wei(0),
       accDaysElapsed: 0,
     }
   );
