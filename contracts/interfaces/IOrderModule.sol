@@ -47,7 +47,7 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @notice Settles a previously committed order by `accountId` and `marketId`.
      */
-    function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
+    function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable;
 
     // --- Views --- //
 
