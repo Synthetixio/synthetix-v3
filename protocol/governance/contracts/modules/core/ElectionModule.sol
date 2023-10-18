@@ -19,6 +19,7 @@ import {ElectionModuleSatellite} from "./ElectionModuleSatellite.sol";
 
 contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTally {
     using SetUtil for SetUtil.AddressSet;
+    using SetUtil for SetUtil.Bytes32Set;
     using Council for Council.Data;
     using ElectionSettings for ElectionSettings.Data;
     using CouncilMembers for CouncilMembers.Data;
@@ -300,8 +301,11 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             ballotPtr := ballot.slot
         }
 
-        // TODO: Change for a SET
-        election.ballotPtrs.push(ballotPtr);
+        if (election.ballotPtrs.contains(ballotPtr)) {
+            election.ballotPtrs.remove(ballotPtr);
+        }
+
+        election.ballotPtrs.add(ballotPtr);
 
         emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
@@ -319,7 +323,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         uint256 currentEpochIndex = council.currentElectionId;
 
-        uint256 totalBallots = election.ballotPtrs.length;
+        uint256 totalBallots = election.ballotPtrs.length();
         if (election.numEvaluatedBallots < totalBallots) {
             emit ElectionBatchEvaluated(
                 currentEpochIndex,

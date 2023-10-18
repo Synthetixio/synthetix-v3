@@ -118,7 +118,6 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(uint64 => address) supportedNetworkTargets;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -233,7 +232,7 @@ library Election {
         uint numEvaluatedBallots;
         SetUtil.AddressSet nominees;
         SetUtil.AddressSet winners;
-        bytes32[] ballotPtrs;
+        SetUtil.Bytes32Set ballotPtrs;
         mapping(address => uint256) candidateVoteTotals;
     }
     function load(uint epochIndex) internal pure returns (Data storage election) {
