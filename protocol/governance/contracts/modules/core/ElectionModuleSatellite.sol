@@ -70,30 +70,30 @@ contract ElectionModuleSatellite is
     ) public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
-        address sender = ERC2771Context._msgSender();
+        // address sender = ERC2771Context._msgSender();
 
-        /// @dev: load ballot with total votingPower, should have before been prepared
-        /// calling the prepareBallotWithSnapshot method
-        uint256 currentEpoch = Council.load().currentElectionId;
-        Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
+        // /// @dev: load ballot with total votingPower, should have before been prepared
+        // /// calling the prepareBallotWithSnapshot method
+        // uint256 currentEpoch = Council.load().currentElectionId;
+        // Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
 
-        if (ballot.votingPower == 0) {
-            revert NoVotingPower(sender, currentEpoch);
-        }
+        // if (ballot.votingPower == 0) {
+        //     revert NoVotingPower(sender, currentEpoch);
+        // }
 
-        CrossChain.Data storage cc = CrossChain.load();
-        cc.transmit(
-            cc.getChainIdAt(0),
-            abi.encodeWithSelector(
-                IElectionModule._recvCast.selector,
-                sender,
-                ballot.votingPower,
-                block.chainid,
-                candidates,
-                amounts
-            ),
-            _CROSSCHAIN_GAS_LIMIT
-        );
+        // CrossChain.Data storage cc = CrossChain.load();
+        // cc.transmit(
+        //     cc.getChainIdAt(0),
+        //     abi.encodeWithSelector(
+        //         IElectionModule._recvCast.selector,
+        //         sender,
+        //         ballot.votingPower,
+        //         block.chainid,
+        //         candidates,
+        //         amounts
+        //     ),
+        //     _CROSSCHAIN_GAS_LIMIT
+        // );
     }
 
     function _recvDismissMembers(

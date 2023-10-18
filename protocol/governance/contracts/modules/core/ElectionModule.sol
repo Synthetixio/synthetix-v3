@@ -21,6 +21,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
     using ElectionSettings for ElectionSettings.Data;
+    using CouncilMembers for CouncilMembers.Data;
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using Ballot for Ballot.Data;
@@ -39,9 +40,9 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         cc.validateChainId(chainId);
 
+        CouncilMembers.Data storage councilMembers = CouncilMembers.load();
         Council.Data storage council = Council.load();
         Epoch.Data memory epoch = council.getCurrentEpoch();
-        Election.Data storage election = council.getCurrentElection();
 
         cc.transmit(
             chainId.to64(),
@@ -52,7 +53,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 epoch.nominationPeriodStartDate,
                 epoch.votingPeriodStartDate,
                 epoch.endDate,
-                election.winners.values()
+                councilMembers.councilMembers.values()
             ),
             _CROSSCHAIN_GAS_LIMIT
         );

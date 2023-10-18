@@ -20,7 +20,7 @@ interface Proxies {
   AvalancheFuji: AvalancheFujiCoreProxy;
 }
 
-enum ChainSelector {
+export enum ChainSelector {
   Sepolia = '16015286601757825753',
   OptimisticGoerli = '2664363617261496610',
   AvalancheFuji = '14767482510784806043',
