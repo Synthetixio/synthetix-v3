@@ -1,8 +1,5 @@
 import path from 'node:path';
-import {
-  cannonBuild,
-  cannonInspect,
-} from '@synthetixio/core-modules/test/integration/helpers/cannon';
+import { cannonBuild, cannonInspect } from '@synthetixio/core-modules/test/helpers/cannon';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
