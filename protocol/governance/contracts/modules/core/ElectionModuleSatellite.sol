@@ -77,6 +77,10 @@ contract ElectionModuleSatellite is
         uint256 currentEpoch = Council.load().currentElectionId;
         Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
 
+        if (ballot.votingPower == 0) {
+            revert NoVotingPower(sender, currentEpoch);
+        }
+
         CrossChain.Data storage cc = CrossChain.load();
         cc.transmit(
             cc.getChainIdAt(0),

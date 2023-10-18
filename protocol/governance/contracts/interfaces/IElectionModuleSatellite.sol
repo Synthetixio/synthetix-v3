@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 /// @title Election module council with minimal logic to be deployed on Satellite chains
 interface IElectionModuleSatellite {
+    error NoVotingPower(address sender, uint256 currentEpoch);
+
     event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
 
     /// @dev Initialize first epoch of the current election module. Can only be called once.

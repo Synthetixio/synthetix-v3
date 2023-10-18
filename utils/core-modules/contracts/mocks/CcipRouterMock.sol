@@ -2,6 +2,7 @@
 pragma solidity >=0.8.4;
 
 import {CcipClient} from "../utils/CcipClient.sol";
+import "../interfaces/external/IAny2EVMMessageReceiver.sol";
 
 contract CcipRouterMock {
     event CCIPSend(
@@ -34,12 +35,14 @@ contract CcipRouterMock {
         address target,
         CcipClient.Any2EVMMessage memory message
     ) external payable {
-        (bool success, bytes memory result) = target.delegatecall(message.data);
+        (bool success, bytes memory result) = target.call(
+            abi.encodeWithSelector(IAny2EVMMessageReceiver.ccipReceive.selector, message)
+        );
 
         if (!success) {
             uint256 len = result.length;
             assembly {
-                revert(result, len)
+                revert(add(result, 0x20), len)
             }
         }
     }
