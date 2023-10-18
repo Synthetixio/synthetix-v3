@@ -167,5 +167,5 @@ async function _spinNetwork<CoreProxy>({
     signer
   ) as CcipRouterMock;
 
-  return { networkName, chainId, chainSlector, provider, CoreProxy, CcipRouter };
+  return { networkName, chainId, chainSlector, provider, CoreProxy, CcipRouter, signer };
 }
