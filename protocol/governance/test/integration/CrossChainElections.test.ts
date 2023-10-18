@@ -20,16 +20,6 @@ describe('cross chain election testing', function () {
     await fastForwardTo(schedule.votingPeriodStartDate.toNumber() + 10, provider);
   };
 
-  const setVotingPower = async (
-    electionId: number,
-    voter: string,
-    chainId: number,
-    amount: string
-  ) => {
-    // await mothership.CoreProxy.prepareBallotWithSnapshot(electionId, voter);
-  };
-
-  let epochStartDate: number;
   let voterOnMothership: ethers.Wallet;
   let voterOnSatelliteOPGoerli: ethers.Wallet;
   let voterOnSatelliteAvalancheFuji: ethers.Wallet;
@@ -62,14 +52,14 @@ describe('cross chain election testing', function () {
     await ccipReceive({
       rx: rx1,
       sourceChainSelector: ChainSelector.Sepolia,
-      targetSigner: voterOnMothership,
+      targetSigner: voterOnSatelliteOPGoerli,
       ccipAddress: mothership.CcipRouter.address,
     });
 
     await ccipReceive({
       rx: rx2,
       sourceChainSelector: ChainSelector.Sepolia,
-      targetSigner: voterOnSatelliteOPGoerli,
+      targetSigner: voterOnSatelliteAvalancheFuji,
       ccipAddress: mothership.CcipRouter.address,
     });
   });
@@ -80,7 +70,7 @@ describe('cross chain election testing', function () {
       const randomVoter = ethers.Wallet.createRandom().address;
 
       await assertRevert(
-        satellite1.CoreProxy.connect(voterOnMothership).cast([randomVoter], [1000000000], {
+        satellite1.CoreProxy.connect(voterOnSatelliteOPGoerli).cast([randomVoter], [1000000000], {
           value: ethers.utils.parseUnits('0.05', 'gwei'),
         }),
         'NotCallableInCurrentPeriod'
@@ -89,26 +79,42 @@ describe('cross chain election testing', function () {
   });
 
   describe('successful voting', () => {
-    before('assign voting power', async () => {
-      const [mothership] = chains;
-      await mothership.SnapshotRecordMock?.setBalanceOfOnPeriod(
-        voterOnMothership.address,
+    it.only('cast a vote on satellite', async function () {
+      const [mothership, satellite1, satellite2] = chains;
+
+      await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
+        await voterOnSatelliteOPGoerli.getAddress(),
         ethers.utils.parseEther('100'),
         0
       );
-    });
+      // await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
+      //   await voterOnSatelliteAvalancheFuji.getAddress(),
+      //   ethers.utils.parseEther('100'),
+      //   0
+      // );
 
-    it.only('cast a vote on satellite', async function () {
-      const [mothership, satellite1] = chains;
+      await satellite1.CoreProxy.setSnapshotContract(satellite1.SnapshotRecordMock.address, true);
+      // await satellite2.CoreProxy.setSnapshotContract(satellite2.SnapshotRecordMock.address, true);
 
       await fastForwardToNominationPeriod(mothership.provider);
-
       await mothership.CoreProxy.connect(voterOnMothership).nominate();
-      console.log('all good?');
 
       await fastForwardToVotingPeriod(mothership.provider);
+      await fastForwardToVotingPeriod(satellite1.provider);
+      // await fastForwardToVotingPeriod(satellite2.provider);
 
-      const tx = await satellite1.CoreProxy.cast(
+      await satellite1.CoreProxy.takeVotePowerSnapshot(satellite1.SnapshotRecordMock.address);
+      await satellite1.CoreProxy.prepareBallotWithSnapshot(
+        satellite1.SnapshotRecordMock.address,
+        await voterOnSatelliteOPGoerli.getAddress()
+      );
+      // await satellite2.CoreProxy.takeVotePowerSnapshot(satellite2.SnapshotRecordMock.address);
+      // await satellite2.CoreProxy.prepareBallotWithSnapshot(
+      //   satellite2.SnapshotRecordMock.address,
+      //   await voterOnSatelliteAvalancheFuji.getAddress()
+      // );
+
+      const tx = await satellite1.CoreProxy.connect(voterOnSatelliteOPGoerli).cast(
         [voterOnMothership.address],
         [ethers.utils.parseEther('100')]
       );

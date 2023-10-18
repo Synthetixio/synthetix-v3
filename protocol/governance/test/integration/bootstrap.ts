@@ -142,15 +142,13 @@ async function _spinNetwork<CoreProxy>({
   const coreProxy = require(`${writeDeployments}/CoreProxy.json`);
   const CoreProxy = new ethers.Contract(coreProxy.address, coreProxy.abi, signer) as CoreProxy;
 
-  let SnapshotRecordMock;
-  if (networkName === 'sepolia') {
-    const snapshotRecordMock = require(`${writeDeployments}/SnapshotRecordMock.json`);
-    SnapshotRecordMock = new ethers.Contract(
-      snapshotRecordMock.address,
-      snapshotRecordMock.abi,
-      signer
-    ) as SnapshotRecordMock;
-  }
+  const snapshotRecordMock = require(`${writeDeployments}/SnapshotRecordMock.json`);
+  const SnapshotRecordMock = new ethers.Contract(
+    snapshotRecordMock.address,
+    snapshotRecordMock.abi,
+    signer
+  ) as SnapshotRecordMock;
+
   const ccipRouter = require(`${writeDeployments}/CcipRouterMock.json`);
   const CcipRouter = new ethers.Contract(
     ccipRouter.address,
