@@ -47,29 +47,8 @@ export function integrationBootstrap() {
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
     /// @dev: show build logs with DEBUG=spawn:*
-    // const res = (await Promise.all([
-    //   _spinNetwork<SepoliaCoreProxy>({
-    //     networkName: 'sepolia',
-    //     cannonfile: 'cannonfile.test.toml',
-    //     typechainFolder,
-    //     writeDeployments,
-    //   }),
-    //   _spinNetwork<OptimisticGoerliCoreProxy>({
-    //     networkName: 'optimistic-goerli',
-    //     cannonfile: 'cannonfile.satellite.test.toml',
-    //     typechainFolder,
-    //     writeDeployments,
-    //   }),
-    //   _spinNetwork<AvalancheFujiCoreProxy>({
-    //     networkName: 'avalanche-fuji',
-    //     cannonfile: 'cannonfile.satellite.test.toml',
-    //     typechainFolder,
-    //     writeDeployments,
-    //   }),
-    // ])) satisfies Chains;
-
-    // TODO: There's an unknown error that causes to some builds to finish early
-    // without throwing error but they do not complete when running in parallel
+    // TODO: When running in parallel there's an unknown error that causes to some
+    // builds to finish early without throwing error but they do not complete.
     const res = [
       await _spinNetwork<Proxies['Sepolia']>({
         networkName: 'sepolia',
@@ -139,11 +118,13 @@ async function _spinNetwork<CoreProxy>({
     wipe: true,
   });
 
-  await cannonInspect({
+  const { artifacts } = await cannonInspect({
     networkName,
     packageRef,
     writeDeployments,
   });
+
+  provider.artifacts = artifacts;
 
   const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 

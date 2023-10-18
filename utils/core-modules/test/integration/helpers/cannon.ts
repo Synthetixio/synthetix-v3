@@ -1,7 +1,8 @@
+import { spawnSync } from 'node:child_process';
 import { AnvilServer } from '@foundry-rs/hardhat-anvil/dist/src/anvil-server';
+import { CannonWrapperGenericProvider } from '@usecannon/builder';
 import { ethers } from 'ethers';
 import { spawn } from './spawn';
-import { CannonWrapperGenericProvider } from '@usecannon/builder';
 
 interface NodeOptions {
   port?: number;
@@ -85,11 +86,31 @@ export async function cannonInspect(options: InspectOptions) {
     options.packageRef,
     '--write-deployments',
     options.writeDeployments,
+    '--json',
   ];
 
-  await spawn('yarn', args, {
-    timeout: 30000,
-    env: { ...defaultEnv },
-    waitForText: 'Cannonfile Topology',
+  const res = await spawnSync('yarn', args, {
+    timeout: 90000,
+    env: { ...process.env, ...defaultEnv },
   });
+
+  if (res.error) {
+    throw res.error;
+  }
+
+  const result = JSON.parse(res.stdout.toString());
+
+  const artifacts = Object.values(result.state)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((s: any) => s.artifacts)
+    .reduce(
+      (artifacts, artifact) => {
+        if (artifact.imports) Object.assign(artifacts.imports, artifact.imports);
+        if (artifact.contracts) Object.assign(artifacts.contracts, artifact.contracts);
+        return artifacts;
+      },
+      { imports: {}, contracts: {} }
+    );
+
+  return { artifacts };
 }

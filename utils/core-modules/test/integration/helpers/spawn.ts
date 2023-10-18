@@ -4,6 +4,7 @@ import debug from 'debug';
 interface Options {
   timeout?: number;
   waitForText?: string | ((data: string) => boolean);
+  waitForClose?: boolean;
   env?: { [key: string]: string };
 }
 
@@ -35,18 +36,22 @@ export async function spawn(cmd: string, args: string[] = [], opts: Options = {}
     child.kill();
   });
 
+  let output = '';
   if (child.stdout) {
     child.stdout.on('data', (data: unknown) => {
       const msg = `${data}`.trim();
+      output += msg;
       if (msg) log(msg);
     });
   }
 
   let lastErrMessage = '';
+  let errOutput = '';
   const err = new Error();
   if (child.stderr) {
     child.stderr.on('data', (data: unknown) => {
       const msg = `${data}`.trim();
+      errOutput += '';
       if (msg) {
         log(msg);
         lastErrMessage = msg;
@@ -82,10 +87,13 @@ export async function spawn(cmd: string, args: string[] = [], opts: Options = {}
     if (event === 'close') {
       throw new Error(`Process closed before the expected event was emitted`);
     }
+  } else if (opts.waitForClose) {
+    // Wait for the process finish executing
+    await pEvent(child, 'close');
   } else {
     // Wait for the child process to open
     await pEvent(child, 'spawn');
   }
 
-  return child;
+  return { child, output, errOutput };
 }

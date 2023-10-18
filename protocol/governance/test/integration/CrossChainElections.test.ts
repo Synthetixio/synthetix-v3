@@ -1,12 +1,12 @@
 import { ccipReceive } from '@synthetixio/core-modules/test/integration/helpers/ccip';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
+import assert from 'assert';
 import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { ChainSelector, integrationBootstrap } from './bootstrap';
-import assert from 'assert';
-import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('cross chain election testing', function () {
   const { chains, mothership } = integrationBootstrap();
