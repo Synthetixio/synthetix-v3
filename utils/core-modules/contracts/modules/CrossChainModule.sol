@@ -35,18 +35,13 @@ contract CrossChainModule is ICrossChainModule {
     /**
      * @inheritdoc ICrossChainModule
      */
-    function setSupportedCrossChainNetworksWithTargets(
+    function setSupportedCrossChainNetworks(
         uint64[] memory supportedNetworks,
-        address[] memory supportedNetworkTargets,
         uint64[] memory ccipSelectors
     ) public returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
         uint64 myChainId = block.chainid.to64();
-
-        if (supportedNetworkTargets.length != supportedNetworks.length) {
-            revert ParameterError.InvalidParameter("supportedNetworkTargets", "must match length");
-        }
 
         if (ccipSelectors.length != supportedNetworks.length) {
             revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
@@ -66,22 +61,6 @@ contract CrossChainModule is ICrossChainModule {
 
             cc.ccipChainIdToSelector[chainId] = ccipSelectors[i];
             cc.ccipSelectorToChainId[ccipSelectors[i]] = chainId;
-            cc.supportedNetworkTargets[chainId] = supportedNetworkTargets[i];
         }
-    }
-
-    /**
-     * @inheritdoc ICrossChainModule
-     */
-    function setSupportedCrossChainNetworks(
-        uint64[] memory supportedNetworks,
-        uint64[] memory ccipSelectors
-    ) public returns (uint256 numRegistered) {
-        return
-            setSupportedCrossChainNetworksWithTargets(
-                supportedNetworks,
-                new address[](supportedNetworks.length),
-                ccipSelectors
-            );
     }
 }

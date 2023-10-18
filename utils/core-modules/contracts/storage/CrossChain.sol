@@ -32,7 +32,6 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(uint64 => address) supportedNetworkTargets;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -146,12 +145,9 @@ library CrossChain {
 
         for (uint i = 0; i < chains.length; i++) {
             uint64 destChainId = chains[i];
-            address target = self.supportedNetworkTargets[destChainId] == address(0)
-                ? address(this)
-                : self.supportedNetworkTargets[destChainId];
 
             CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-                abi.encode(target), // abi.encode(receiver address) for dest EVM chains
+                abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
                 data, // Data payload
                 new CcipClient.EVMTokenAmount[](0), // Token transfers
                 address(0), // Address of feeToken. address(0) means you will send msg.value.
@@ -199,12 +195,9 @@ library CrossChain {
         tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
 
         bytes memory data = abi.encode(ERC2771Context._msgSender());
-        address target = self.supportedNetworkTargets[destChainId] == address(0)
-            ? address(this)
-            : self.supportedNetworkTargets[destChainId];
 
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-            abi.encode(target), // abi.encode(receiver address) for dest EVM chains
+            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
             data,
             tokenAmounts,
             address(0), // Address of feeToken. address(0) means you will send msg.value.
