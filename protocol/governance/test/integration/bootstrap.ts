@@ -160,7 +160,7 @@ async function _spinNetwork<CoreProxy>({
     networkName,
     chainId,
     chainSlector,
-    provider,
+    provider: provider as unknown as ethers.providers.JsonRpcProvider,
     CoreProxy,
     CcipRouter,
     signer,

@@ -10,12 +10,12 @@ import { ChainSelector, integrationBootstrap } from './bootstrap';
 describe('cross chain election testing', function () {
   const { chains, mothership } = integrationBootstrap();
 
-  const fastForwardToNominationPeriod = async (provider: any) => {
+  const fastForwardToNominationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
     const schedule = await mothership.CoreProxy.getEpochSchedule();
     await fastForwardTo(schedule.nominationPeriodStartDate.toNumber() + 10, provider);
   };
 
-  const fastForwardToVotingPeriod = async (provider: any) => {
+  const fastForwardToVotingPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
     const schedule = await mothership.CoreProxy.getEpochSchedule();
     await fastForwardTo(schedule.votingPeriodStartDate.toNumber() + 10, provider);
   };
@@ -79,54 +79,87 @@ describe('cross chain election testing', function () {
   });
 
   describe('successful voting', () => {
-    it.only('cast a vote on satellite', async function () {
+    it('cast a vote on satellites', async function () {
       const [mothership, satellite1, satellite2] = chains;
-
-      await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
-        await voterOnSatelliteOPGoerli.getAddress(),
-        ethers.utils.parseEther('100'),
-        0
-      );
-      // await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
-      //   await voterOnSatelliteAvalancheFuji.getAddress(),
-      //   ethers.utils.parseEther('100'),
-      //   0
-      // );
-
       await satellite1.CoreProxy.setSnapshotContract(satellite1.SnapshotRecordMock.address, true);
-      // await satellite2.CoreProxy.setSnapshotContract(satellite2.SnapshotRecordMock.address, true);
+      await satellite2.CoreProxy.setSnapshotContract(satellite2.SnapshotRecordMock.address, true);
 
       await fastForwardToNominationPeriod(mothership.provider);
       await mothership.CoreProxy.connect(voterOnMothership).nominate();
 
       await fastForwardToVotingPeriod(mothership.provider);
       await fastForwardToVotingPeriod(satellite1.provider);
-      // await fastForwardToVotingPeriod(satellite2.provider);
+      await fastForwardToVotingPeriod(satellite2.provider);
 
+      //prepare voting for satellite1
+      const snapshotId1 = await satellite1.CoreProxy.callStatic.takeVotePowerSnapshot(
+        satellite1.SnapshotRecordMock.address
+      );
       await satellite1.CoreProxy.takeVotePowerSnapshot(satellite1.SnapshotRecordMock.address);
+      await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
+        await voterOnSatelliteOPGoerli.getAddress(),
+        ethers.utils.parseEther('100'),
+        snapshotId1.add(1).toString()
+      );
       await satellite1.CoreProxy.prepareBallotWithSnapshot(
         satellite1.SnapshotRecordMock.address,
         await voterOnSatelliteOPGoerli.getAddress()
       );
-      // await satellite2.CoreProxy.takeVotePowerSnapshot(satellite2.SnapshotRecordMock.address);
-      // await satellite2.CoreProxy.prepareBallotWithSnapshot(
-      //   satellite2.SnapshotRecordMock.address,
-      //   await voterOnSatelliteAvalancheFuji.getAddress()
-      // );
 
-      const tx = await satellite1.CoreProxy.connect(voterOnSatelliteOPGoerli).cast(
+      //prepare voting for satellite2
+      const snapshotId2 = await satellite2.CoreProxy.callStatic.takeVotePowerSnapshot(
+        satellite2.SnapshotRecordMock.address
+      );
+      await satellite2.CoreProxy.takeVotePowerSnapshot(satellite2.SnapshotRecordMock.address);
+      await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
+        await voterOnSatelliteAvalancheFuji.getAddress(),
+        ethers.utils.parseEther('100'),
+        snapshotId2.add(1).toString()
+      );
+      await satellite2.CoreProxy.prepareBallotWithSnapshot(
+        satellite2.SnapshotRecordMock.address,
+        await voterOnSatelliteAvalancheFuji.getAddress()
+      );
+
+      //vote on satellite1
+      const tx1 = await satellite1.CoreProxy.connect(voterOnSatelliteOPGoerli).cast(
         [voterOnMothership.address],
         [ethers.utils.parseEther('100')]
       );
-
-      const rx = await tx.wait();
-
+      const rx1 = await tx1.wait();
       await ccipReceive({
-        rx,
+        rx: rx1,
         sourceChainSelector: ChainSelector.OptimisticGoerli,
         targetSigner: voterOnMothership,
         ccipAddress: mothership.CcipRouter.address,
       });
+
+      //vote on satellite2
+      const tx2 = await satellite1.CoreProxy.connect(voterOnSatelliteAvalancheFuji).cast(
+        [voterOnMothership.address],
+        [ethers.utils.parseEther('100')]
+      );
+      const rx2 = await tx2.wait();
+      await ccipReceive({
+        rx: rx2,
+        sourceChainSelector: ChainSelector.AvalancheFuji,
+        targetSigner: voterOnMothership,
+        ccipAddress: mothership.CcipRouter.address,
+      });
+
+      const hasVoted1 = await mothership.CoreProxy.hasVoted(
+        await voterOnSatelliteOPGoerli.getAddress(),
+        420
+      );
+
+      assert.equal(hasVoted1, true);
+
+      const hasVoted2 = await mothership.CoreProxy.hasVoted(
+        await voterOnSatelliteAvalancheFuji.getAddress(),
+        43113
+      );
+
+      assert.equal(hasVoted2, true);
     });
   });
 
