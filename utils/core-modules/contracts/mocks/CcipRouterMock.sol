@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4;
 
 import {CcipClient} from "../utils/CcipClient.sol";
-import "../interfaces/external/IAny2EVMMessageReceiver.sol";
+import {IAny2EVMMessageReceiver} from "../interfaces/external/IAny2EVMMessageReceiver.sol";
 
 contract CcipRouterMock {
     event CCIPSend(

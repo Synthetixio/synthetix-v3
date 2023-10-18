@@ -1,8 +1,8 @@
 import { findSingleEvent } from '@synthetixio/core-utils/src/utils/ethers/events';
 import { ethers } from 'ethers';
-import { CcipRouterMock__factory } from '../../../typechain-types/factories/contracts/mocks/CcipRouterMock__factory';
+import { CcipRouterMock__factory } from '../../typechain-types/factories/contracts/mocks/CcipRouterMock__factory';
 
-import type { CcipRouterMock } from '../../../typechain-types/contracts/mocks/CcipRouterMock';
+import type { CcipRouterMock } from '../../typechain-types/contracts/mocks/CcipRouterMock';
 
 const CcipRouter = new ethers.Contract(
   ethers.constants.AddressZero,

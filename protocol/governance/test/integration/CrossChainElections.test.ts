@@ -1,4 +1,4 @@
-import { ccipReceive } from '@synthetixio/core-modules/test/integration/helpers/ccip';
+import { ccipReceive } from '@synthetixio/core-modules/test/helpers/ccip';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
