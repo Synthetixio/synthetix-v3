@@ -8,6 +8,7 @@ import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
 import type { CcipRouterMock } from '../generated/typechain/sepolia';
+import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
 import type { CoreProxy as SepoliaCoreProxy } from '../generated/typechain/sepolia';
 import type { CoreProxy as OptimisticGoerliCoreProxy } from '../generated/typechain/optimistic-goerli';
 import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain/avalanche-fuji';
@@ -136,11 +137,20 @@ async function _spinNetwork<CoreProxy>({
     outDir: typechainFolder,
   });
 
-  const signer = await provider.getSigner(ownerAddress);
+  const signer = provider.getSigner(ownerAddress);
 
   const coreProxy = require(`${writeDeployments}/CoreProxy.json`);
   const CoreProxy = new ethers.Contract(coreProxy.address, coreProxy.abi, signer) as CoreProxy;
 
+  let SnapshotRecordMock;
+  if (networkName === 'sepolia') {
+    const snapshotRecordMock = require(`${writeDeployments}/SnapshotRecordMock.json`);
+    SnapshotRecordMock = new ethers.Contract(
+      snapshotRecordMock.address,
+      snapshotRecordMock.abi,
+      signer
+    ) as SnapshotRecordMock;
+  }
   const ccipRouter = require(`${writeDeployments}/CcipRouterMock.json`);
   const CcipRouter = new ethers.Contract(
     ccipRouter.address,
@@ -148,5 +158,14 @@ async function _spinNetwork<CoreProxy>({
     signer
   ) as CcipRouterMock;
 
-  return { networkName, chainId, chainSlector, provider, CoreProxy, CcipRouter, signer };
+  return {
+    networkName,
+    chainId,
+    chainSlector,
+    provider,
+    CoreProxy,
+    CcipRouter,
+    signer,
+    SnapshotRecordMock,
+  };
 }

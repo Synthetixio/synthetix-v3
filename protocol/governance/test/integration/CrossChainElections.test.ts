@@ -1,8 +1,7 @@
 import { ccipReceive } from '@synthetixio/core-modules/test/integration/helpers/ccip';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assert from 'assert';
 import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
@@ -11,15 +10,34 @@ import { ChainSelector, integrationBootstrap } from './bootstrap';
 describe('cross chain election testing', function () {
   const { chains, mothership } = integrationBootstrap();
 
+  const fastForwardToNominationPeriod = async (provider: any) => {
+    const schedule = await mothership.CoreProxy.getEpochSchedule();
+    await fastForwardTo(schedule.nominationPeriodStartDate.toNumber() + 10, provider);
+  };
+
+  const fastForwardToVotingPeriod = async (provider: any) => {
+    const schedule = await mothership.CoreProxy.getEpochSchedule();
+    await fastForwardTo(schedule.votingPeriodStartDate.toNumber() + 10, provider);
+  };
+
+  const setVotingPower = async (
+    electionId: number,
+    voter: string,
+    chainId: number,
+    amount: string
+  ) => {
+    // await mothership.CoreProxy.prepareBallotWithSnapshot(electionId, voter);
+  };
+
   let epochStartDate: number;
-  let voter0: ethers.Wallet;
-  let voter1: ethers.Wallet;
-  let voter2: ethers.Wallet;
+  let voterOnMothership: ethers.Wallet;
+  let voterOnSatelliteOPGoerli: ethers.Wallet;
+  let voterOnSatelliteAvalancheFuji: ethers.Wallet;
 
   async function _fixtureSignerOnChains() {
-    const { address, privateKey } = ethers.Wallet.createRandom();
     const signers = await Promise.all(
       chains.map(async (chain) => {
+        const { address, privateKey } = ethers.Wallet.createRandom();
         await chain.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
         return new ethers.Wallet(privateKey, chain.provider);
       })
@@ -29,64 +47,40 @@ describe('cross chain election testing', function () {
 
   before('set up voters', async () => {
     const result = await _fixtureSignerOnChains();
-    voter0 = result[0];
-    voter1 = result[1];
-    voter2 = result[2];
+    voterOnMothership = result[0];
+    voterOnSatelliteOPGoerli = result[1];
+    voterOnSatelliteAvalancheFuji = result[2];
   });
 
-  // before('set the election settings', async () => {
-  //   epochStartDate = await getTime(mothership.provider);
-
-  //   const administrationPeriodDuration = 14;
-  //   const nominationPeriodDuration = 7;
-  //   const votingPeriodDuration = 7;
-  //   const minimumActiveMembers = 1;
-
-  //   const initialNominationPeriodStartDate =
-  //     epochStartDate + daysToSeconds(administrationPeriodDuration);
-
-  //   await mothership.CoreProxy.connect(voter0).initOrUpdateElectionSettings(
-  //     [await voter0.getAddress()],
-  //     minimumActiveMembers,
-  //     initialNominationPeriodStartDate,
-  //     administrationPeriodDuration,
-  //     nominationPeriodDuration,
-  //     votingPeriodDuration
-  //   );
-  // });
-
   before('setup election cross chain state', async () => {
-    const [mothership, satellite1] = chains;
+    const [mothership] = chains;
     const tx1 = await mothership.CoreProxy.initElectionModuleSatellite(420);
     const rx1 = await tx1.wait();
     const tx2 = await mothership.CoreProxy.initElectionModuleSatellite(43113);
     const rx2 = await tx2.wait();
 
-    const t = await ccipReceive({
+    await ccipReceive({
       rx: rx1,
       sourceChainSelector: ChainSelector.Sepolia,
-      targetSigner: voter1,
+      targetSigner: voterOnMothership,
       ccipAddress: mothership.CcipRouter.address,
     });
 
     await ccipReceive({
       rx: rx2,
       sourceChainSelector: ChainSelector.Sepolia,
-      targetSigner: voter2,
+      targetSigner: voterOnSatelliteOPGoerli,
       ccipAddress: mothership.CcipRouter.address,
     });
   });
 
   describe('expected reverts', () => {
-    it.only('cast will fail if not in voting period', async () => {
-      const [mothership, satellite1] = chains;
+    it('cast will fail if not in voting period', async () => {
+      const [, satellite1] = chains;
       const randomVoter = ethers.Wallet.createRandom().address;
 
-      console.log('IS INIT');
-      console.log(await satellite1.CoreProxy.isElectionModuleInitialized());
-
       await assertRevert(
-        satellite1.CoreProxy.connect(voter1).cast([randomVoter], [1000000000], {
+        satellite1.CoreProxy.connect(voterOnMothership).cast([randomVoter], [1000000000], {
           value: ethers.utils.parseUnits('0.05', 'gwei'),
         }),
         'NotCallableInCurrentPeriod'
@@ -94,28 +88,40 @@ describe('cross chain election testing', function () {
     });
   });
 
-  it('cast a vote on satellite', async function () {
-    const [mothership, satellite1] = chains;
-    const randomVoter = ethers.Wallet.createRandom().address;
-
-    const tx = await satellite1.CoreProxy.connect(voter1).cast([randomVoter], [1000000000]);
-
-    const rx = await tx.wait();
-
-    await ccipReceive({
-      rx,
-      sourceChainSelector: '2664363617261496610',
-      targetSigner: voter0,
-      ccipAddress: mothership.CcipRouter.address,
+  describe('successful voting', () => {
+    before('assign voting power', async () => {
+      const [mothership] = chains;
+      await mothership.SnapshotRecordMock?.setBalanceOfOnPeriod(
+        voterOnMothership.address,
+        ethers.utils.parseEther('100'),
+        0
+      );
     });
 
-    assert.equal(
-      await mothership.CoreProxy.hasVoted(
-        randomVoter,
-        (await satellite1.provider.getNetwork()).chainId
-      ),
-      false
-    );
+    it.only('cast a vote on satellite', async function () {
+      const [mothership, satellite1] = chains;
+
+      await fastForwardToNominationPeriod(mothership.provider);
+
+      await mothership.CoreProxy.connect(voterOnMothership).nominate();
+      console.log('all good?');
+
+      await fastForwardToVotingPeriod(mothership.provider);
+
+      const tx = await satellite1.CoreProxy.cast(
+        [voterOnMothership.address],
+        [ethers.utils.parseEther('100')]
+      );
+
+      const rx = await tx.wait();
+
+      await ccipReceive({
+        rx,
+        sourceChainSelector: ChainSelector.OptimisticGoerli,
+        targetSigner: voterOnMothership,
+        ccipAddress: mothership.CcipRouter.address,
+      });
+    });
   });
 
   it('shows that the current period is Administration', async function () {

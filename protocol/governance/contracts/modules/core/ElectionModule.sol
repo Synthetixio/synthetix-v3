@@ -236,7 +236,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit EmergencyElectionStarted(council.currentElectionId);
     }
 
-    function nominate() public virtual override {
+    function nominate() public override {
         Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
