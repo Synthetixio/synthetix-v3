@@ -32,7 +32,6 @@ contract OrderModule is IOrderModule {
 
     struct Runtime_settleOrder {
         uint256 pythPrice;
-        uint256 publishTime;
         int256 accruedFunding;
         int256 pnl;
         uint256 fillPrice;
@@ -89,7 +88,6 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
-        uint256 publishTime,
         Position.TradeParams memory params
     ) private view {
         // TODO I think we could remove this
@@ -103,18 +101,6 @@ contract OrderModule is IOrderModule {
         }
         if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
             revert ErrorUtil.OrderNotReady();
-        }
-        // TODO I think we could remove this
-        // Time delta must be within pythPublishTimeMin and pythPublishTimeMax.
-        //
-        // If `minOrderAge` is 12s then publishTime must be between 8 and 12 (inclusive). When inferring
-        // this parameter off-chain and prior to configuration, it must look at `minOrderAge` to a relative value.
-        uint256 publishCommitmentTimeDelta = publishTime - commitmentTime;
-        if (
-            publishCommitmentTimeDelta < globalConfig.pythPublishTimeMin ||
-            publishCommitmentTimeDelta > globalConfig.pythPublishTimeMax
-        ) {
-            revert ErrorUtil.InvalidPrice();
         }
 
         uint256 onchainPrice = market.getOraclePrice();
@@ -236,7 +222,7 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        (runtime.pythPrice, runtime.publishTime) = PythUtil.parsePythPrice(
+        runtime.pythPrice = PythUtil.parsePythPrice(
             globalConfig,
             marketConfig,
             order.commitmentTime,
@@ -253,7 +239,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
+        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.params);
 
         recomputeFunding(market, runtime.pythPrice);
 
