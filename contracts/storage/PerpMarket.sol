@@ -186,31 +186,6 @@ library PerpMarket {
     }
 
     /**
-     * @dev Returns the 'latest' Pyth price from the oracle predefined `pythPriceFeedId` between min/max.
-     */
-    function getPythPrice(
-        PerpMarket.Data storage self,
-        uint256 commitmentTime
-    ) internal view returns (uint256 price, uint256 publishTime) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-
-        // @see: external/pyth/IPyth.sol for more details.
-        uint256 maxAge = commitmentTime + globalConfig.pythPublishTimeMax;
-        PythStructs.Price memory latestPrice = globalConfig.pyth.getPriceNoOlderThan(
-            marketConfig.pythPriceFeedId,
-            maxAge
-        );
-
-        // @see: synthetix-v3/protocol/oracle-manager/contracts/nodes/PythNode.sol
-        int256 factor = 18 + latestPrice.expo;
-        price = (
-            factor > 0 ? latestPrice.price.upscale(factor.toUint()) : latestPrice.price.downscale((-factor).toUint())
-        ).toUint();
-        publishTime = latestPrice.publishTime;
-    }
-
-    /**
      * @dev Returns the rate of funding rate change.
      */
     function getCurrentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
