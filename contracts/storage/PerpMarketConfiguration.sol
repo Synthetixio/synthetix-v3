@@ -42,9 +42,9 @@ library PerpMarketConfiguration {
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
         uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
-        uint128 pythPublishTimeMin;
+        uint64 pythPublishTimeMin;
         // Max acceptable publishTime from Pyth.
-        uint128 pythPublishTimeMax;
+        uint64 pythPublishTimeMax;
         // Minimum amount of time (in seconds) required for an order to exist before settlement.
         uint128 minOrderAge;
         // Maximum order age (in seconds) before the order becomes stale.
