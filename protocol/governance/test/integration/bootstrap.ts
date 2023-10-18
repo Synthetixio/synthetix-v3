@@ -47,29 +47,29 @@ export function integrationBootstrap() {
     /// @dev: show build logs with DEBUG=spawn:*
     // TODO: When running in parallel there's an unknown error that causes to some
     // builds to finish early without throwing error but they do not complete.
-    const res = [
-      await _spinNetwork<Proxies['Sepolia']>({
+    const res = (await Promise.all([
+      _spinNetwork<Proxies['Sepolia']>({
         networkName: 'sepolia',
         cannonfile: 'cannonfile.test.toml',
         typechainFolder,
         writeDeployments,
         chainSlector: ChainSelector.Sepolia,
       }),
-      await _spinNetwork<Proxies['OptimisticGoerli']>({
+      _spinNetwork<Proxies['OptimisticGoerli']>({
         networkName: 'optimistic-goerli',
         cannonfile: 'cannonfile.satellite.test.toml',
         typechainFolder,
         writeDeployments,
         chainSlector: ChainSelector.OptimisticGoerli,
       }),
-      await _spinNetwork<Proxies['AvalancheFuji']>({
+      _spinNetwork<Proxies['AvalancheFuji']>({
         networkName: 'avalanche-fuji',
         cannonfile: 'cannonfile.satellite.test.toml',
         typechainFolder,
         writeDeployments,
         chainSlector: ChainSelector.AvalancheFuji,
       }),
-    ] satisfies Chains;
+    ])) satisfies Chains;
 
     chains.push(...res);
     Object.assign(mothership, res[0]);
@@ -108,21 +108,22 @@ async function _spinNetwork<CoreProxy>({
 
   console.log(`  Building: ${cannonfile} - Network: ${networkName}`);
 
-  const { packageRef, provider } = await cannonBuild({
-    cannonfile,
-    networkName,
+  const { packageRef, provider, outputs } = await cannonBuild({
+    cannonfile: path.join(hre.config.paths.root, cannonfile),
     chainId,
     impersonate: ownerAddress,
     wipe: true,
+    getArtifact: async (contractName: string) =>
+      await hre.run('cannon:get-artifact', { name: contractName }),
+    pkgInfo: require(path.join(hre.config.paths.root, 'package.json')),
+    projectDirectory: hre.config.paths.root,
   });
 
-  const { artifacts } = await cannonInspect({
-    networkName,
+  await cannonInspect({
+    chainId,
     packageRef,
     writeDeployments,
   });
-
-  provider.artifacts = artifacts;
 
   const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
@@ -136,20 +137,21 @@ async function _spinNetwork<CoreProxy>({
 
   const signer = provider.getSigner(ownerAddress);
 
-  const coreProxy = require(`${writeDeployments}/CoreProxy.json`);
-  const CoreProxy = new ethers.Contract(coreProxy.address, coreProxy.abi, signer) as CoreProxy;
+  const CoreProxy = new ethers.Contract(
+    outputs.contracts!.CoreProxy.address,
+    outputs.contracts!.CoreProxy.abi,
+    signer
+  ) as CoreProxy;
 
-  const snapshotRecordMock = require(`${writeDeployments}/SnapshotRecordMock.json`);
   const SnapshotRecordMock = new ethers.Contract(
-    snapshotRecordMock.address,
-    snapshotRecordMock.abi,
+    outputs.contracts!.SnapshotRecordMock.address,
+    outputs.contracts!.SnapshotRecordMock.abi,
     signer
   ) as SnapshotRecordMock;
 
-  const ccipRouter = require(`${writeDeployments}/CcipRouterMock.json`);
   const CcipRouter = new ethers.Contract(
-    ccipRouter.address,
-    ccipRouter.abi,
+    outputs.contracts!.CcipRouterMock.address,
+    outputs.contracts!.CcipRouterMock.abi,
     signer
   ) as CcipRouterMock;
 

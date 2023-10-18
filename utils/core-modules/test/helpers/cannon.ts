@@ -1,8 +1,7 @@
-import { spawnSync } from 'node:child_process';
 import { AnvilServer } from '@foundry-rs/hardhat-anvil/dist/src/anvil-server';
-import { CannonWrapperGenericProvider } from '@usecannon/builder';
+import { CannonWrapperGenericProvider, ContractArtifact } from '@usecannon/builder';
+import { build, inspect, loadCannonfile } from '@usecannon/cli';
 import { ethers } from 'ethers';
-import { spawn } from './spawn';
 
 interface NodeOptions {
   port?: number;
@@ -11,21 +10,19 @@ interface NodeOptions {
 
 interface BuildOptions {
   cannonfile: string;
-  networkName: string;
   chainId: number;
+  getArtifact: (name: string) => Promise<ContractArtifact>;
+  pkgInfo: object;
+  projectDirectory: string;
   impersonate?: string;
   wipe?: boolean;
 }
 
 interface InspectOptions {
   packageRef: string;
-  networkName: string;
+  chainId: number;
   writeDeployments: string;
 }
-
-const defaultEnv = {
-  CANNON_REGISTRY_PRIORITY: 'local',
-};
 
 export async function launchNode(options: NodeOptions = {}) {
   if (typeof options.port === 'undefined' || options.port === 0) {
@@ -43,74 +40,42 @@ export async function launchNode(options: NodeOptions = {}) {
 export async function cannonBuild(options: BuildOptions) {
   const node = await launchNode({ chainId: options.chainId });
 
-  const args = ['hardhat', '--network', options.networkName, 'cannon:build', options.cannonfile];
-  const spawnEnv: { [key: string]: string } = {
-    ...defaultEnv,
-    NETWORK_ENDPOINT: node.rpcUrl,
-  };
-
-  if (options.wipe) args.push('--wipe');
-  if (options.impersonate) args.push('--impersonate', options.impersonate);
-
-  let packageRef = '';
-
-  await spawn('yarn', args, {
-    env: spawnEnv,
-    timeout: 60000,
-    waitForText: (data) => {
-      const m = data.match(/Successfully built package (\S+)/);
-      if (!m) return false;
-      packageRef = m[1];
-      return true;
-    },
-  });
-
-  if (!packageRef) {
-    throw new Error(`Could not build ${options.cannonfile} with --network ${options.networkName}`);
-  }
-
   const provider = new CannonWrapperGenericProvider(
     {},
     new ethers.providers.JsonRpcProvider(node.rpcUrl)
   );
 
-  return { options, packageRef, provider };
+  const { name, version, def } = await loadCannonfile(options.cannonfile);
+
+  async function getSigner(addr: string) {
+    await provider.send('hardhat_impersonateAccount', [addr]);
+    await provider.send('hardhat_setBalance', [addr, `0x${(1e22).toString(16)}`]);
+    return provider.getSigner(addr);
+  }
+
+  const { outputs } = await build({
+    provider,
+    def,
+    packageDefinition: {
+      name,
+      version,
+      settings: {},
+    },
+    getArtifact: options.getArtifact,
+    getSigner,
+    getDefaultSigner: options.impersonate ? () => getSigner(options.impersonate!) : undefined,
+    pkgInfo: options.pkgInfo,
+    projectDirectory: options.projectDirectory,
+    wipe: options.wipe,
+    registryPriority: 'local',
+    publicSourceCode: false,
+  });
+
+  const packageRef = `${name}:${version}`;
+
+  return { packageRef, options, provider, outputs };
 }
 
 export async function cannonInspect(options: InspectOptions) {
-  const args = [
-    'hardhat',
-    '--network',
-    options.networkName,
-    'cannon:inspect',
-    options.packageRef,
-    '--write-deployments',
-    options.writeDeployments,
-    '--json',
-  ];
-
-  const res = await spawnSync('yarn', args, {
-    timeout: 90000,
-    env: { ...process.env, ...defaultEnv },
-  });
-
-  if (res.error) {
-    throw res.error;
-  }
-
-  const result = JSON.parse(res.stdout.toString());
-
-  const artifacts = Object.values(result.state)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((s: any) => s.artifacts)
-    .reduce(
-      (artifacts, artifact) => {
-        if (artifact.imports) Object.assign(artifacts.imports, artifact.imports);
-        if (artifact.contracts) Object.assign(artifacts.contracts, artifact.contracts);
-        return artifacts;
-      },
-      { imports: {}, contracts: {} }
-    );
-
-  return { artifacts };
+  return inspect(options.packageRef, options.chainId, '', false, options.writeDeployments);
 }
