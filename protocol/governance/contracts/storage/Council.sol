@@ -216,24 +216,6 @@ library Council {
         );
     }
 
-    function computeEpochFromSettings(
-        ElectionSettings.Data storage settings
-    ) internal view returns (Epoch.Data memory epoch) {
-        uint64 startDate = SafeCastU256.to64(block.timestamp);
-        uint64 endDate = startDate + settings.epochDuration;
-        uint64 votingPeriodStartDate = endDate - settings.votingPeriodDuration;
-        uint64 nominationPeriodStartDate = votingPeriodStartDate -
-            settings.nominationPeriodDuration;
-
-        return
-            Epoch.Data({
-                startDate: startDate,
-                votingPeriodStartDate: votingPeriodStartDate,
-                nominationPeriodStartDate: nominationPeriodStartDate,
-                endDate: endDate
-            });
-    }
-
     function uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
         return valueA > valueB ? valueA - valueB : valueB - valueA;
     }

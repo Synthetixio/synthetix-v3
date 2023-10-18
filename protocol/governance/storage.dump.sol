@@ -273,9 +273,9 @@ library Epoch {
     }
     struct Data {
         uint64 startDate;
-        uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
+        uint64 endDate;
     }
     function load(uint epochIndex) internal pure returns (Data storage epoch) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Epoch", epochIndex));

@@ -345,7 +345,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         ElectionSettings.Data storage nextElectionSettings = council.getNextElectionSettings();
 
         nextElectionSettings.copyMissingFrom(currentElectionSettings);
-        Epoch.Data memory nextEpoch = Council.computeEpochFromSettings(nextElectionSettings);
+        Epoch.Data memory nextEpoch = _computeEpochFromSettings(nextElectionSettings);
 
         council.newElection();
 
@@ -374,6 +374,24 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         election.resolved = true;
 
         emit EpochStarted(council.currentElectionId);
+    }
+
+    function _computeEpochFromSettings(
+        ElectionSettings.Data storage settings
+    ) private view returns (Epoch.Data memory epoch) {
+        uint64 startDate = SafeCastU256.to64(block.timestamp);
+        uint64 endDate = startDate + settings.epochDuration;
+        uint64 votingPeriodStartDate = endDate - settings.votingPeriodDuration;
+        uint64 nominationPeriodStartDate = votingPeriodStartDate -
+            settings.nominationPeriodDuration;
+
+        return
+            Epoch.Data({
+                startDate: startDate,
+                votingPeriodStartDate: votingPeriodStartDate,
+                nominationPeriodStartDate: nominationPeriodStartDate,
+                endDate: endDate
+            });
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
