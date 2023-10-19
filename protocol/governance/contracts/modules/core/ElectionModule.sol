@@ -301,11 +301,9 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             ballotPtr := ballot.slot
         }
 
-        if (election.ballotPtrs.contains(ballotPtr)) {
-            election.ballotPtrs.remove(ballotPtr);
+        if (!election.ballotPtrs.contains(ballotPtr)) {
+            election.ballotPtrs.add(ballotPtr);
         }
-
-        election.ballotPtrs.add(ballotPtr);
 
         emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
