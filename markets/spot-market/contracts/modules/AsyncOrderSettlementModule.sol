@@ -87,7 +87,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msg.value}(
+        ).parsePriceFeedUpdatesUnique{value: msg.value}(
             updateData,
             priceIds,
             asyncOrderClaim.settlementTime.to64(),
