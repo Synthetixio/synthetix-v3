@@ -31,7 +31,8 @@ contracts = [
     "ElectionModuleSatellite",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
-    "CcipReceiverModule"
+    "CcipReceiverModule",
+    "CouncilTokenModule"
 ]
 
 [invoke.upgrade_core_proxy]
