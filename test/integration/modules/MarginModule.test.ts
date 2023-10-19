@@ -1288,8 +1288,6 @@ describe('MarginModule', async () => {
         await assertEvents(
           closeReceipt,
           [
-            /PriceFeedUpdate/, // Pyth events
-            /BatchPriceFeedUpdate/, // Pyth events
             /FundingRecomputed/, // funding recomputed, don't care about the exact values here
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${amount})`,
             `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${amount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
