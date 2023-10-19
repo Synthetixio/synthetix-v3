@@ -11,13 +11,12 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         price = newPrice;
     }
 
-    // Pyth verifier
-    function parsePriceFeedUpdates(
+    function parsePriceFeedUpdatesInternal(
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
         uint64 minPublishTime,
         uint64 maxPublishTime
-    ) external payable override returns (IPythVerifier.PriceFeed[] memory priceFeeds) {
+    ) internal returns (IPythVerifier.PriceFeed[] memory priceFeeds) {
         // mention the variables in the block to prevent unused local variable warning
         updateData;
         maxPublishTime;
@@ -41,6 +40,25 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         });
     }
 
+    // Pyth verifier
+    function parsePriceFeedUpdates(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable override returns (IPythVerifier.PriceFeed[] memory priceFeeds) {
+        return parsePriceFeedUpdatesInternal(updateData, priceIds, minPublishTime, maxPublishTime);
+    }
+
+    function parsePriceFeedUpdatesUnique(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable override returns (IPythVerifier.PriceFeed[] memory priceFeeds) {
+        return parsePriceFeedUpdatesInternal(updateData, priceIds, minPublishTime, maxPublishTime);
+    }
+
     // Chainlink verifier
     function verify(
         bytes memory chainlinkBlob
@@ -52,9 +70,11 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }
 
-    function getUpdateFee(uint256 updateDataSize) external view override returns (uint256) {
+    function getUpdateFee(
+        bytes[] calldata updateData
+    ) external view override returns (uint feeAmount) {
         // mention the variables in the block to prevent unused local variable warning
-        updateDataSize;
+        updateData;
         return 1;
     }
 }
