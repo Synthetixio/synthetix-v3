@@ -435,7 +435,7 @@ describe('OrderModule', () => {
       const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFee);
       const { tx, receipt } = await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
             value: updateFee,
           }),
         provider()
@@ -637,7 +637,7 @@ describe('OrderModule', () => {
 
       const { receipt } = await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
             value: updateFee,
           }),
         provider()
@@ -878,7 +878,7 @@ describe('OrderModule', () => {
 
       const invalidAccountId = 69420;
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).settleOrder(invalidAccountId, marketId, [updateData], {
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(invalidAccountId, marketId, updateData, {
           value: updateFee,
         }),
         `OrderNotFound()`,
@@ -906,7 +906,7 @@ describe('OrderModule', () => {
 
       const invalidMarketId = 420420;
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, invalidMarketId, [updateData], {
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, invalidMarketId, updateData, {
           value: updateFee,
         }),
         `MarketNotFound("${invalidMarketId}")`,
@@ -939,7 +939,7 @@ describe('OrderModule', () => {
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
         `OrderNotReady()`,
@@ -969,7 +969,7 @@ describe('OrderModule', () => {
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
         `StaleOrder()`,
@@ -984,7 +984,7 @@ describe('OrderModule', () => {
       const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
 
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
         `OrderNotFound()`,
@@ -1072,7 +1072,7 @@ describe('OrderModule', () => {
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
         `PriceDivergenceExceeded("${bn(pythPrice)}", "${bn(oraclePrice)}")`,
@@ -1129,7 +1129,7 @@ describe('OrderModule', () => {
         await fastForwardTo(settlementTime, provider());
 
         await assertRevert(
-          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
             value: updateFee,
           }),
           'InvalidPrice()',
