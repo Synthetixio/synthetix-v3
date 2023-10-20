@@ -9,10 +9,8 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 
 library PythUtil {
     using DecimalMath for int64;
-    using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
-    using SafeCastI128 for int128;
 
     int256 private constant PRECISION = 18;
 
@@ -32,28 +30,23 @@ library PythUtil {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = priceUpdateData;
 
-        uint64 minPublishTime = commitmentTime.to64() + globalConfig.pythPublishTimeMin; // TODO should we store commitment time as 64 instead?
-        // Make sure it's inclusice
-        uint64 maxPublishTime = commitmentTime.to64() + globalConfig.pythPublishTimeMax;
-
         //TODO we want to use parsePriceFeedUpdatesUnique instead of parsePriceFeedUpdates, but to do that we need to update the pyth mock in orcacly manager to have that   method
         PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdates{value: msg.value}(
             updateData,
             priceIds,
-            minPublishTime,
-            maxPublishTime
+            commitmentTime.to64() + globalConfig.pythPublishTimeMin,
+            commitmentTime.to64() + globalConfig.pythPublishTimeMax
         );
 
         PythStructs.PriceFeed memory pythData = priceFeeds[0];
-        price = _getScaledPrice(pythData.price.price, pythData.price.expo);
+        price = getScaledPrice(pythData.price.price, pythData.price.expo);
     }
 
     /**
      * @dev gets scaled price. Borrowed from PythNode.sol.
      */
-    function _getScaledPrice(int64 price, int32 expo) private pure returns (uint256) {
+    function getScaledPrice(int64 price, int32 expo) private pure returns (uint256) {
         int256 factor = PRECISION + expo;
-        int256 scaledPrice = factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
-        return scaledPrice.toUint();
+        return (factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint())).toUint();
     }
 }
