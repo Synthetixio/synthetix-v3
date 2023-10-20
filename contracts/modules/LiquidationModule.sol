@@ -194,7 +194,7 @@ contract LiquidationModule is ILiquidationModule {
     ) external view returns (uint256 liqReward, uint256 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         liqReward = Position.getLiquidationReward(
-            market.positions[accountId].size,
+            MathUtil.abs(market.positions[accountId].size).to128(),
             market.getOraclePrice(),
             PerpMarketConfiguration.load(marketId)
         );

@@ -287,8 +287,8 @@ library Position {
         }
 
         // Determine the resulting position post liqudation.
-        liqSize = MathUtil.min(runtime.remainingCapacity, MathUtil.abs(oldPosition.size)).to128();
-        liqReward = getLiquidationReward(oldPosition.size, price, marketConfig);
+        liqSize = MathUtil.min(runtime.remainingCapacity, runtime.oldPositionSizeAbs).to128();
+        liqReward = getLiquidationReward(liqSize, price, marketConfig);
         keeperFee = getLiquidationKeeperFee();
         newPosition = Position.Data(
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
@@ -304,11 +304,11 @@ library Position {
      * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price).
      */
     function getLiquidationReward(
-        int128 positionSize,
+        uint128 positionSizeAbs,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
-        return MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
+        return positionSizeAbs.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
     }
 
     /**
@@ -328,17 +328,14 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 im, uint256 mm, uint256 liqReward) {
-        uint256 absSize = MathUtil.abs(positionSize);
+        uint128 absSize = MathUtil.abs(positionSize).to128();
         uint256 notional = absSize.mulDecimal(price);
 
         uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(marketConfig.incrementalMarginScalar) +
             marketConfig.minMarginRatio;
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
-        // Recalculating `abs(size) * price` but it's a small cost to ensure liqReward calculations are the same.
-        //
-        // See `getLiquidationReward` on why this is separated out.
-        liqReward = getLiquidationReward(positionSize, price, marketConfig);
+        liqReward = getLiquidationReward(absSize, price, marketConfig);
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
         mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqReward + getLiquidationKeeperFee();
     }
