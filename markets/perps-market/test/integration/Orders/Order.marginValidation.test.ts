@@ -3,12 +3,14 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { bn, bootstrapMarkets } from '../bootstrap';
 import {
   calculateFillPrice,
-  getMaxLiquidationReward,
   openPosition,
   requiredMargins,
+  getRequiredLiquidationRewardMargin,
 } from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
+
+const MIN_LIQUIDATION_REWARD = wei(100);
 
 describe('Orders - margin validation', () => {
   const liqParams = {
@@ -29,7 +31,7 @@ describe('Orders - margin validation', () => {
   const { systems, provider, trader1, perpsMarkets, keeper } = bootstrapMarkets({
     synthMarkets: [],
     liquidationGuards: {
-      minLiquidationReward: bn(100),
+      minLiquidationReward: MIN_LIQUIDATION_REWARD.toBN(),
       maxLiquidationReward: bn(500),
     },
     perpsMarkets: [
@@ -99,7 +101,7 @@ describe('Orders - margin validation', () => {
       );
 
       const totalRequiredMargin = initialMargin
-        .add(getMaxLiquidationReward(liquidationMargin, wei(100), wei(500)))
+        .add(getRequiredLiquidationRewardMargin(liquidationMargin, MIN_LIQUIDATION_REWARD))
         .add(orderFees);
 
       assertBn.equal(
@@ -185,7 +187,10 @@ describe('Orders - margin validation', () => {
         wei(1000)
       );
 
-      const liqReward = getMaxLiquidationReward(ethLiqMargin.add(btcLiqMargin), wei(100), wei(500));
+      const liqReward = getRequiredLiquidationRewardMargin(
+        ethLiqMargin.add(btcLiqMargin),
+        MIN_LIQUIDATION_REWARD
+      );
 
       const totalRequiredMargin = ethMaintMargin
         .add(btcInitialMargin)
@@ -274,7 +279,10 @@ describe('Orders - margin validation', () => {
         wei(1000)
       );
 
-      const liqReward = getMaxLiquidationReward(ethLiqMargin.add(btcLiqMargin), wei(100), wei(500));
+      const liqReward = getRequiredLiquidationRewardMargin(
+        ethLiqMargin.add(btcLiqMargin),
+        MIN_LIQUIDATION_REWARD
+      );
 
       const totalRequiredMargin = ethMaintMargin
         .add(btcInitialMargin)

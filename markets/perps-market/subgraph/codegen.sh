@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+export CANNON_IPFS_URL="https://ipfs.synthetix.io"
 
 codegen() {
   namespace=$1
@@ -30,7 +31,8 @@ codegen() {
 }
 
 
-releaseVersion=$(yarn workspace '@synthetixio/perps-market' node -p 'require(`./package.json`).version')
+# releaseVersion=$(yarn workspace '@synthetixio/perps-market' node -p 'require(`./package.json`).version')
+releaseVersion="latest"
 
 #codegen mainnet 1 "synthetix-perps-market:$releaseVersion" main
 #codegen goerli 5 "synthetix-perps-market:$releaseVersion" main

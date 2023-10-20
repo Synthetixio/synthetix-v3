@@ -1,6 +1,5 @@
 import { OrderSettled } from './generated/SpotMarketProxy/SpotMarketProxy';
 import { Order } from './generated/schema';
-import { addClaimToOrder } from './addClaimToOrder';
 
 export function handleOrderSettled(event: OrderSettled): void {
   let id = event.params.asyncOrderId.toString();
@@ -24,13 +23,15 @@ export function handleOrderSettled(event: OrderSettled): void {
   order.block = event.block.number;
   order.timestamp = event.block.timestamp;
 
-  addClaimToOrder(
-    order,
-    event.address,
-    event.params.marketId,
-    event.params.asyncOrderId,
-    'Settled'
-  );
+  order.status = 'Settled';
+
+  // TODO: order claim may need to be added to OrderSettled event
+  // let claim = event.params.asyncOrderClaim;
+  // order.amountEscrowed = claim.amountEscrowed;
+  // order.settlementStrategyId = claim.settlementStrategyId;
+  // order.settlementTime = claim.settlementTime;
+  // order.minimumSettlementAmount = claim.minimumSettlementAmount;
+  // order.settledAt = claim.settledAt;
 
   order.save();
 }
