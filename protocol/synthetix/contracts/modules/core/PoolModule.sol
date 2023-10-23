@@ -102,13 +102,13 @@ contract PoolModule is IPoolModule {
     function renouncePoolOwnership(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
 
-        if (pool.owner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         pool.owner = address(0);
 
-        emit PoolOwnershipRenounced(poolId, msg.sender);
+        emit PoolOwnershipRenounced(poolId, ERC2771Context._msgSender());
     }
 
     /**
