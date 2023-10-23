@@ -52,24 +52,32 @@ describe('cross chain election testing', function () {
   });
 
   it('NFT Module is not initialized', async () => {
-    const [, satellite1, satellite2] = chains;
+    const [mothership, satellite1, satellite2] = chains;
+    assert.equal(await mothership.CoreProxy.isInitialized(), false);
     assert.equal(await satellite1.CoreProxy.isInitialized(), false);
     assert.equal(await satellite2.CoreProxy.isInitialized(), false);
   });
 
   it('distributes NFTS after election', async () => {
-    const [, satellite1, satellite2] = chains;
+    const [mothership, satellite1, satellite2] = chains;
+    await mothership.CoreProxy.initialize(nftToken.tokenName, nftToken.tokenSymbol, nftToken.uri);
     await satellite1.CoreProxy.initialize(nftToken.tokenName, nftToken.tokenSymbol, nftToken.uri);
     await satellite2.CoreProxy.initialize(nftToken.tokenName, nftToken.tokenSymbol, nftToken.uri);
+    assert.equal(await mothership.CoreProxy.isInitialized(), true);
     assert.equal(await satellite1.CoreProxy.isInitialized(), true);
     assert.equal(await satellite2.CoreProxy.isInitialized(), true);
   });
 
   it('lets owner mint nft', async () => {
-    const [, satellite1, satellite2] = chains;
+    const [mothership, satellite1, satellite2] = chains;
+    await mothership.CoreProxy.mint(await mothership.signer.getAddress(), 1);
     await satellite1.CoreProxy.mint(await satellite1.signer.getAddress(), 1);
     await satellite2.CoreProxy.mint(await satellite2.signer.getAddress(), 1);
 
+    assert.equal(
+      (await mothership.CoreProxy.balanceOf(await mothership.signer.getAddress())).toString(),
+      '1'
+    );
     assert.equal(
       (await satellite1.CoreProxy.balanceOf(await satellite1.signer.getAddress())).toString(),
       '1'
@@ -81,10 +89,15 @@ describe('cross chain election testing', function () {
   });
 
   it('lets owner burn nft', async () => {
-    const [, satellite1, satellite2] = chains;
+    const [mothership, satellite1, satellite2] = chains;
+    await mothership.CoreProxy.burn(1);
     await satellite1.CoreProxy.burn(1);
     await satellite2.CoreProxy.burn(1);
 
+    assert.equal(
+      (await mothership.CoreProxy.balanceOf(await mothership.signer.getAddress())).toString(),
+      '0'
+    );
     assert.equal(
       (await satellite1.CoreProxy.balanceOf(await satellite1.signer.getAddress())).toString(),
       '0'
@@ -96,11 +109,17 @@ describe('cross chain election testing', function () {
   });
 
   it('random user cant mint', async () => {
-    const [, satellite1, satellite2] = chains;
+    const [mothership, satellite1, satellite2] = chains;
     const { privateKey, address } = ethers.Wallet.createRandom();
+    await mothership.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
     await satellite1.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
     await satellite2.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
     const randomUser = new ethers.Wallet(privateKey, satellite1.provider);
+
+    await assertRevert(
+      mothership.CoreProxy.connect(randomUser).mint(await mothership.signer.getAddress(), 1),
+      'Unauthorized'
+    );
     await assertRevert(
       satellite1.CoreProxy.connect(randomUser).mint(await satellite1.signer.getAddress(), 1),
       'Unauthorized'
