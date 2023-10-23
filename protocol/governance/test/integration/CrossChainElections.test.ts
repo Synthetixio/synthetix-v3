@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { ChainSelector, integrationBootstrap } from './bootstrap';
 
-describe('cross chain election testing', function () {
+describe('cross chain election testing', () => {
   const { chains, mothership } = integrationBootstrap();
 
   const fastForwardToNominationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
