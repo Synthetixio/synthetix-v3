@@ -34,7 +34,7 @@ import {
   isSusdCollateral,
   findOrThrow,
 } from '../../helpers';
-import { Trader } from '../../typed';
+import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
 
 describe('LiquidationModule', () => {
@@ -805,7 +805,7 @@ describe('LiquidationModule', () => {
       d1.depositedCollaterals.map((c) => assertBn.isZero(c.available));
     });
 
-    it('shuold remove all account margin collateral after full liquidation', async () => {
+    it('should remove all account margin collateral after full liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, marketId } = await commtAndSettleLiquidatedPosition(keeper());
@@ -980,11 +980,12 @@ describe('LiquidationModule', () => {
       });
     });
 
-    describe('{partialLiqudation,liqCaps,liqReward}', () => {
+    describe('{partialLiqudation,liquidationCapacity,liqReward}', () => {
       const configurePartiallyLiquidatedPosition = async (
         desiredFlagger?: Signer,
         desiredLiquidator?: Signer,
         desiredTrader?: Trader,
+        desiredMarket?: Market,
         desiredMarginUsdDepositAmount: number = 50_000
       ) => {
         const { PerpMarketProxy } = systems();
@@ -996,7 +997,7 @@ describe('LiquidationModule', () => {
         const liquidationKeeperAddr = await liquidationKeeper.getAddress();
 
         // Be quite explicit with what market and market params we are using to ensure a partial liquidation.
-        const market = markets()[0];
+        const market = desiredMarket ?? markets()[0];
         await market.aggregator().mockSetCurrentPrice(bn(25_000));
         const orderSide = genSide();
 
@@ -1008,7 +1009,6 @@ describe('LiquidationModule', () => {
           desiredLeverage: 10,
           desiredSide: orderSide,
         });
-
         await commitAndSettle(bs, marketId, trader, order);
 
         // Reconfigure market to lower the remainingCapacity such that it's < collateralDepositAmount but > 0.
@@ -1052,7 +1052,7 @@ describe('LiquidationModule', () => {
           positionLiquidatedEvent?.args.keeperFee,
           newMarketOraclePrice,
         ].join(', ');
-        await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
+        await assertEvent(receipt, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
 
         const capAfter = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
         assertBn.isZero(capAfter.remainingCapacity);
@@ -1136,6 +1136,7 @@ describe('LiquidationModule', () => {
           desiredKeeper,
           desiredKeeper,
           trader1,
+          undefined,
           desiredMarginUsdDepositAmount
         );
 
@@ -1315,7 +1316,27 @@ describe('LiquidationModule', () => {
 
       it('should use up cap (partial) before exceeding if pd < maxPd');
 
-      it('should track and include endorsed keeper activity (cap + time) on liquidations');
+      it('should track and include endorsed keeper activity (cap + time) on liquidations', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Use the endorsed keeper to liquidate.
+        const keeper = endorsedKeeper();
+        const market = markets()[0];
+        const marketId = market.marketId();
+
+        const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+
+        await configurePartiallyLiquidatedPosition(keeper, keeper, undefined, market);
+
+        const d2 = await PerpMarketProxy.getMarketDigest(marketId);
+
+        // Last liquidation time is the current block (i.e. the time the position was liquidated).
+        assertBn.isZero(d1.lastLiquidationTime);
+        assertBn.equal((await provider().getBlock('latest')).timestamp, d2.lastLiquidationTime);
+
+        // Ensure the capacity is also updated to reflect the liquidation.
+        assertBn.gt(d1.remainingLiquidatableSizeCapacity, d2.remainingLiquidatableSizeCapacity);
+      });
 
       it('should not remove flagger on partial liquidation', async () => {
         const { PerpMarketProxy } = systems();
