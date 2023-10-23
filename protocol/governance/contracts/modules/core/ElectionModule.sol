@@ -449,6 +449,14 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return ballot.votingPower;
     }
 
+    function getBallot(
+        address voter,
+        uint256 chainId,
+        uint256 electionId
+    ) external pure override returns (Ballot.Data memory) {
+        return Ballot.load(electionId, voter, chainId);
+    }
+
     function getBallotCandidates(
         address voter,
         uint256 chainId,

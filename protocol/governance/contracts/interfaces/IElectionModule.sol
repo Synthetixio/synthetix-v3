@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {IElectionModuleSatellite} from "./IElectionModuleSatellite.sol";
 import {ElectionSettings} from "../storage/ElectionSettings.sol";
 import {Epoch} from "../storage/Epoch.sol";
+import {Ballot} from "../storage/Ballot.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule is IElectionModuleSatellite {
@@ -144,6 +145,12 @@ interface IElectionModule is IElectionModuleSatellite {
 
     /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() external view returns (bool);
+
+    function getBallot(
+        address voter,
+        uint256 chainId,
+        uint256 electionId
+    ) external pure returns (Ballot.Data memory);
 
     /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
     function getCandidateVotes(address candidate) external view returns (uint256);
