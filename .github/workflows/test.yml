@@ -1,14 +1,14 @@
 name: Test
 
 on:
-  pull_request: {}
+  #  pull_request: {}
+  push:
+    branches:
+      - "test"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
     strategy:
       fail-fast: false
       matrix:
@@ -43,9 +43,34 @@ jobs:
         with:
           node-version: "16.20.1"
           cache: "yarn"
-      - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Cache Hardhat artifacts
+        uses: actions/cache@v3
         with:
-          run_daemon: true
+          key: hardhat-${{ matrix.workspace }}-${{ github.head_ref }}-${{ steps.date.outputs.date }}
+          restore-keys: |
+            hardhat-test-${{ matrix.workspace }}-${{ github.head_ref }}
+            hardhat-test-${{ matrix.workspace }}
+          path: |
+            markets/**/cache
+            markets/**/artifacts
+            markets/**/test/generated
+            markets/**/typechain-types
+            protocol/**/cache
+            protocol/**/artifacts
+            protocol/**/test/generated
+            protocol/**/typechain-types
+      - name: Cache Cannon packages
+        uses: actions/cache@v3
+        with:
+          key: cannon-${{ matrix.workspace }}-${{ github.head_ref }}-${{ steps.date.outputs.date }}
+          restore-keys: |
+            cannon-test-${{ matrix.workspace }}-${{ github.head_ref }}
+            cannon-test-${{ matrix.workspace }}
+          path: |
+            ~/.local/share/cannon
 
       - run: yarn install --immutable --immutable-cache
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build:ts

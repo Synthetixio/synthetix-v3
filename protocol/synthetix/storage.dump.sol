@@ -99,6 +99,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
     uint private constant _ROOT_INDEX = 1;
@@ -299,6 +304,9 @@ contract MarketManagerModule {
 // @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
 contract MulticallModule {
     bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
+    bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS = "_allowlistedMulticallTargets";
+    bytes32 private constant ALLOWED = bytes32(uint256(1));
+    bytes32 private constant DISALLOWED = bytes32(uint256(0));
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -357,6 +365,7 @@ library AccountRBAC {
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -544,12 +553,23 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
     }
 }
 

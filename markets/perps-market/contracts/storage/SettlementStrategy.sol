@@ -10,11 +10,9 @@ library SettlementStrategy {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    error PriceDeviationToleranceExceeded(uint256 deviation, uint tolerance);
-
     struct Data {
         /**
-         * @dev see Type.Data for more details
+         * @dev see Type for more details
          */
         Type strategyType;
         /**
@@ -48,10 +46,6 @@ library SettlementStrategy {
          */
         uint256 settlementReward;
         /**
-         * @dev the % deviation from onchain price that is allowed for offchain settlement.
-         */
-        uint256 priceDeviationTolerance;
-        /**
          * @dev whether the strategy is disabled or not.
          */
         bool disabled;
@@ -59,21 +53,5 @@ library SettlementStrategy {
 
     enum Type {
         PYTH
-    }
-
-    function checkPriceDeviation(
-        Data storage strategy,
-        uint offchainPrice,
-        uint onchainPrice
-    ) internal view {
-        uint priceDeviation = MathUtil.abs(offchainPrice.toInt() - onchainPrice.toInt());
-        uint priceDeviationPercentage = priceDeviation.divDecimal(onchainPrice);
-
-        if (priceDeviationPercentage > strategy.priceDeviationTolerance) {
-            revert PriceDeviationToleranceExceeded(
-                priceDeviationPercentage,
-                strategy.priceDeviationTolerance
-            );
-        }
     }
 }

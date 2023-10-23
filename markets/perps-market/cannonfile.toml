@@ -16,11 +16,14 @@ defaultValue = "synthetix:<%= package.version %>"
 [setting.synthetixPreset]
 defaultValue = "main"
 
+[setting.spotMarketPreset]
+defaultValue = "main"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
 [setting.salt]
-defaultValue = 'snax'
+defaultValue = "snax"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
@@ -28,6 +31,7 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
+preset = "<%= settings.spotMarketPreset %>"
 
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
@@ -35,8 +39,14 @@ artifact = "PerpsMarketFactoryModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AsyncOrderSettlementModule]
-artifact = "AsyncOrderSettlementModule"
+[contract.AsyncOrderSettlementEIP3668Module]
+artifact = "AsyncOrderSettlementEIP3668Module"
+
+[contract.AsyncOrderSettlementPythModule]
+artifact = "AsyncOrderSettlementPythModule"
+
+[contract.AsyncOrderCancelModule]
+artifact = "AsyncOrderCancelModule"
 
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
@@ -61,7 +71,6 @@ artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
-depends = ["contract.CoreModule"]
 
 [contract.GlobalPerpsMarketModule]
 artifact = "GlobalPerpsMarketModule"
@@ -69,31 +78,21 @@ artifact = "GlobalPerpsMarketModule"
 # Core
 [router.PerpsMarketRouter]
 contracts = [
-  "synthetix.AccountModule",
-  "synthetix.AssociatedSystemsModule",
-  "CoreModule",
-  "PerpsMarketFactoryModule",
-  "PerpsAccountModule",
-  "PerpsMarketModule",
-  "AsyncOrderModule",
-  "AsyncOrderSettlementModule",
-  "FeatureFlagModule",
-  "LiquidationModule",
-  "MarketConfigurationModule",
-  "GlobalPerpsMarketModule"
-]
-depends = [
-  "import.synthetix",
-  "contract.CoreModule",
-  "contract.PerpsMarketFactoryModule",
-  "contract.AsyncOrderModule",
-  "contract.AsyncOrderSettlementModule",
-  "contract.PerpsAccountModule",
-  "contract.PerpsMarketModule",
-  "contract.FeatureFlagModule",
-  "contract.LiquidationModule",
-  "contract.MarketConfigurationModule",
-  "contract.GlobalPerpsMarketModule"
+    "synthetix.AccountModule",
+    "synthetix.AssociatedSystemsModule",
+    "synthetix.MulticallModule",
+    "CoreModule",
+    "PerpsMarketFactoryModule",
+    "PerpsAccountModule",
+    "PerpsMarketModule",
+    "AsyncOrderModule",
+    "AsyncOrderSettlementEIP3668Module",
+    "AsyncOrderSettlementPythModule",
+    "AsyncOrderCancelModule",
+    "FeatureFlagModule",
+    "LiquidationModule",
+    "MarketConfigurationModule",
+    "GlobalPerpsMarketModule"
 ]
 
 [invoke.upgrade_proxy]
@@ -104,64 +103,58 @@ args = ["<%= contracts.PerpsMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
-depends = ["contract.InitialProxy", "router.PerpsMarketRouter"]
-
-[invoke.setSynthetix]
-target = ["PerpsMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "setSynthetix"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>",
-]
-depends = ["invoke.upgrade_proxy"]
-
-[invoke.setSpotMarket]
-target = ["PerpsMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "setSpotMarket"
-args = [
-  "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
-]
-depends = ["invoke.upgrade_proxy", "import.spotMarket"]
 
 [invoke.init_account]
 target = ["PerpsMarketProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
-  "<%= formatBytes32String('accountNft') %>",
-  "Perpetual Futures Account",
-  "snxPerpsAcct",
-  "",
-  "<%= imports.synthetix.contracts.AccountRouter.address %>"
+    "<%= formatBytes32String('accountNft') %>",
+    "Perpetual Futures Account",
+    "snxPerpsAcct",
+    "",
+    "<%= imports.synthetix.contracts.AccountRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_proxy"
-]
-factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
-factory.AccountProxy.event = "AssociatedSystemSet"
-factory.AccountProxy.arg = 2
+depends = ["invoke.upgrade_proxy"]
+factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.PerpsAccountProxy.event = "AssociatedSystemSet"
+factory.PerpsAccountProxy.arg = 2
 
 # add pool owner to feature flag allow list
 [invoke.addPerpsMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
-args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.PerpsMarketProxy.address %>"]
-depends = ['invoke.upgrade_proxy']
+args = [
+    "<%= formatBytes32String('registerMarket') %>",
+    "<%= contracts.PerpsMarketProxy.address %>"
+]
 
 [invoke.addCreateMarketToFeatureFlag]
 target = ["PerpsMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
-depends = ['invoke.setSynthetix']
 
 [invoke.initializeFactory]
 target = ["PerpsMarketProxy"]
 func = "initializeFactory"
+args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
+    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"
+]
 from = "<%= settings.owner %>"
-depends = ['invoke.setSynthetix']
-
 extra.superMarketId.event = "FactoryInitialized"
 extra.superMarketId.arg = 0
+
+[invoke.enableBasicFeatures]
+target = ["PerpsMarketProxy"]
+fromCall.func = "owner"
+func = "multicall"
+args = [
+    [
+        # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
+        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createAccount'), true]).slice(2) %>",
+    ]
+]
+depends = ["invoke.upgrade_proxy"]

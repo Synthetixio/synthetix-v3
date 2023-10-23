@@ -23,6 +23,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external override returns (uint256 strategyId) {
         OwnableStorage.onlyOwner();
 
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
@@ -103,14 +107,40 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function setMaxLiquidationParameters(
+        uint128 marketId,
+        uint256 maxLiquidationLimitAccumulationMultiplier,
+        uint256 maxSecondsInLiquidationWindow,
+        uint256 maxLiquidationPd,
+        address endorsedLiquidator
+    ) external override {
+        OwnableStorage.onlyOwner();
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        config
+            .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
+        config.maxLiquidationPd = maxLiquidationPd;
+        config.endorsedLiquidator = endorsedLiquidator;
+        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
+
+        emit MaxLiquidationParametersSet(
+            marketId,
+            maxLiquidationLimitAccumulationMultiplier,
+            maxSecondsInLiquidationWindow,
+            maxLiquidationPd,
+            endorsedLiquidator
+        );
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setLiquidationParameters(
         uint128 marketId,
         uint256 initialMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
         uint256 maintenanceMarginScalarD18,
         uint256 liquidationRewardRatioD18,
-        uint256 maxLiquidationLimitAccumulationMultiplier,
-        uint256 maxSecondsInLiquidationWindow,
         uint256 minimumPositionMargin
     ) external override {
         OwnableStorage.onlyOwner();
@@ -120,9 +150,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maintenanceMarginScalarD18 = maintenanceMarginScalarD18;
         config.minimumInitialMarginRatioD18 = minimumInitialMarginRatioD18;
         config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
-        config
-            .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
-        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
         config.minimumPositionMargin = minimumPositionMargin;
 
         emit LiquidationParametersSet(
@@ -131,8 +158,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             maintenanceMarginScalarD18,
             minimumInitialMarginRatioD18,
             liquidationRewardRatioD18,
-            maxLiquidationLimitAccumulationMultiplier,
-            maxSecondsInLiquidationWindow,
             minimumPositionMargin
         );
     }
@@ -160,6 +185,31 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getMaxLiquidationParameters(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (
+            uint256 maxLiquidationLimitAccumulationMultiplier,
+            uint256 maxSecondsInLiquidationWindow,
+            uint256 maxLiquidationPd,
+            address endorsedLiquidator
+        )
+    {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        maxLiquidationLimitAccumulationMultiplier = config
+            .maxLiquidationLimitAccumulationMultiplier;
+        maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
+        maxLiquidationPd = config.maxLiquidationPd;
+        endorsedLiquidator = config.endorsedLiquidator;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function getLiquidationParameters(
         uint128 marketId
     )
@@ -171,8 +221,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             uint256 minimumInitialMarginRatioD18,
             uint256 maintenanceMarginScalarD18,
             uint256 liquidationRewardRatioD18,
-            uint256 maxLiquidationLimitAccumulationMultiplier,
-            uint256 maxSecondsInLiquidationWindow,
             uint256 minimumPositionMargin
         )
     {
@@ -182,9 +230,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         minimumInitialMarginRatioD18 = config.minimumInitialMarginRatioD18;
         maintenanceMarginScalarD18 = config.maintenanceMarginScalarD18;
         liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
-        maxLiquidationLimitAccumulationMultiplier = config
-            .maxLiquidationLimitAccumulationMultiplier;
-        maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
         minimumPositionMargin = config.minimumPositionMargin;
     }
 

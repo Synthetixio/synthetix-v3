@@ -1,12 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
-import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
@@ -20,6 +22,7 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
  * @dev See IPerpsAccountModule.
  */
 contract PerpsAccountModule is IPerpsAccountModule {
+    using SetUtil for SetUtil.UintSet;
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -53,6 +56,8 @@ contract PerpsAccountModule is IPerpsAccountModule {
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = perpsMarketFactory.perpsMarketId;
 
+        PerpsAccount.validateMaxCollaterals(accountId, synthMarketId);
+
         AsyncOrder.checkPendingOrder(account.id);
 
         if (amountDelta > 0) {
@@ -60,14 +65,18 @@ contract PerpsAccountModule is IPerpsAccountModule {
         } else {
             uint256 amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            account.validateWithdrawableAmount(amountAbs);
+            account.validateWithdrawableAmount(
+                synthMarketId,
+                amountAbs,
+                perpsMarketFactory.spotMarket
+            );
             _withdrawMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountAbs);
         }
 
         // accounting
         account.updateCollateralAmount(synthMarketId, amountDelta);
 
-        emit CollateralModified(accountId, synthMarketId, amountDelta, msg.sender);
+        emit CollateralModified(accountId, synthMarketId, amountDelta, ERC2771Context._msgSender());
     }
 
     /**
@@ -142,12 +151,21 @@ contract PerpsAccountModule is IPerpsAccountModule {
             uint256 maxLiquidationReward
         )
     {
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        if (account.openPositionMarketIds.length() == 0) {
+            return (0, 0, 0, 0);
+        }
+
         (
             requiredInitialMargin,
             requiredMaintenanceMargin,
             totalAccumulatedLiquidationRewards,
             maxLiquidationReward
-        ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
+        ) = account.getAccountRequiredMargins();
+
+        // Include liquidation rewards to required initial margin and required maintenance margin
+        requiredInitialMargin += maxLiquidationReward;
+        requiredMaintenanceMargin += maxLiquidationReward;
     }
 
     /**
@@ -166,14 +184,18 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 synthMarketId,
         uint256 amount
     ) internal {
-        if (synthMarketId == 0) {
+        if (synthMarketId == SNX_USD_MARKET_ID) {
             // depositing into the USD market
-            perpsMarketFactory.synthetix.depositMarketUsd(perpsMarketId, msg.sender, amount);
+            perpsMarketFactory.synthetix.depositMarketUsd(
+                perpsMarketId,
+                ERC2771Context._msgSender(),
+                amount
+            );
         } else {
             ITokenModule synth = ITokenModule(
                 perpsMarketFactory.spotMarket.getSynth(synthMarketId)
             );
-            synth.transferFrom(msg.sender, address(this), amount);
+            synth.transferFrom(ERC2771Context._msgSender(), address(this), amount);
             // depositing into a synth market
             perpsMarketFactory.depositMarketCollateral(synth, amount);
         }
@@ -185,9 +207,13 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 synthMarketId,
         uint256 amount
     ) internal {
-        if (synthMarketId == 0) {
+        if (synthMarketId == SNX_USD_MARKET_ID) {
             // withdrawing from the USD market
-            perpsMarketFactory.synthetix.withdrawMarketUsd(perpsMarketId, msg.sender, amount);
+            perpsMarketFactory.synthetix.withdrawMarketUsd(
+                perpsMarketId,
+                ERC2771Context._msgSender(),
+                amount
+            );
         } else {
             ITokenModule synth = ITokenModule(
                 perpsMarketFactory.spotMarket.getSynth(synthMarketId)
@@ -198,7 +224,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
                 address(synth),
                 amount
             );
-            synth.transfer(msg.sender, amount);
+            synth.transfer(ERC2771Context._msgSender(), amount);
         }
     }
 }

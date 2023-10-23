@@ -3,6 +3,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import { openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { calculatePricePnl } from '../helpers/fillPrice';
+import { ethers } from 'ethers';
 
 describe('Account margins test', () => {
   const accountId = 4;
@@ -19,7 +20,7 @@ describe('Account margins test', () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(1000),
       },
       settlementStrategy: {
@@ -38,7 +39,7 @@ describe('Account margins test', () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(500),
       },
       settlementStrategy: {
@@ -67,9 +68,8 @@ describe('Account margins test', () => {
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin] = await systems().PerpsMarket.getRequiredMargins(
-        accountId
-      );
+      const [initialMargin, maintenanceMargin] =
+        await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(initialMargin, 0);
       assertBn.equal(maintenanceMargin, 0);
     });
@@ -105,6 +105,8 @@ describe('Account margins test', () => {
       initialPnl: Wei,
       btcInitialMargin: Wei,
       ethInitialMargin: Wei,
+      ethLiqMargin: Wei,
+      btcLiqMargin: Wei,
       btcMaintenanceMargin: Wei,
       ethMaintenanceMargin: Wei,
       minimumPositionMargin: Wei;
@@ -124,6 +126,9 @@ describe('Account margins test', () => {
 
       btcInitialMargin = notionalBtcValue.mul(btcInitialMarginRatio);
       ethInitialMargin = notionalEthValue.mul(ethInitialMarginRatio);
+
+      ethLiqMargin = notionalBtcValue.mul(0.05);
+      btcLiqMargin = notionalEthValue.mul(0.05);
 
       // maintenance margin ratio == 1
       btcMaintenanceMargin = btcInitialMargin.mul(wei(0.5));
@@ -147,21 +152,22 @@ describe('Account margins test', () => {
           .add(initialPnl)
           .sub(btcInitialMargin)
           .sub(ethInitialMargin)
+          .sub(ethLiqMargin)
+          .sub(btcLiqMargin)
           .sub(minimumPositionMargin)
           .toBN()
       );
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin] = await systems().PerpsMarket.getRequiredMargins(
-        accountId
-      );
+      const [initialMargin, maintenanceMargin, , maxLiquidationReward] =
+        await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(
-        initialMargin,
+        initialMargin.sub(maxLiquidationReward),
         btcInitialMargin.add(ethInitialMargin).add(minimumPositionMargin).toBN()
       );
       assertBn.equal(
-        maintenanceMargin,
+        maintenanceMargin.sub(maxLiquidationReward),
         btcMaintenanceMargin.add(ethMaintenanceMargin).add(minimumPositionMargin).toBN()
       );
     });

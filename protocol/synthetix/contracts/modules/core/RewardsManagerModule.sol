@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
@@ -48,8 +49,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
-        if (pool.owner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         // Limit the maximum amount of rewards distributors can be connected to each vault to prevent excessive gas usage on other calls
@@ -95,7 +96,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
         // Identify the reward id for the caller, and revert if it is not a registered reward distributor.
-        bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
+        bytes32 rewardId = _getRewardId(poolId, collateralType, ERC2771Context._msgSender());
         if (!rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter(
                 "poolId-collateralType-distributor",
@@ -115,7 +116,14 @@ contract RewardsManagerModule is IRewardsManagerModule {
             .toUint()
             .to128();
 
-        emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
+        emit RewardsDistributed(
+            poolId,
+            collateralType,
+            ERC2771Context._msgSender(),
+            amount,
+            start,
+            duration
+        );
     }
 
     /**
@@ -155,7 +163,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         if (address(vault.rewards[rewardId].distributor) != distributor) {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
@@ -169,7 +177,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             accountId,
             poolId,
             collateralType,
-            msg.sender,
+            ERC2771Context._msgSender(),
             rewardAmount
         );
 
@@ -239,8 +247,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
-        if (pool.owner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
@@ -250,10 +258,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         rewardIds.remove(rewardId);
-
-        if (distributor == address(0)) {
-            revert ParameterError.InvalidParameter("distributor", "must be non-zero");
-        }
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 

@@ -9,7 +9,7 @@ import { bootstrap } from '../../../bootstrap';
 describe('PoolConfigurationModule', function () {
   const { signers, systems } = bootstrap();
 
-  let owner: Ethers.Signer, user1: Ethers.Signer;
+  let owner: Ethers.Signer, user1: Ethers.Signer, user2: Ethers.Signer;
 
   let receipt: Ethers.providers.TransactionReceipt;
 
@@ -23,7 +23,7 @@ describe('PoolConfigurationModule', function () {
 
   describe('PoolConfigurationModule', function () {
     before('identify signers', async () => {
-      [owner, user1] = signers();
+      [owner, user1, user2] = signers();
     });
 
     describe('when some pools are created', function () {
@@ -181,6 +181,25 @@ describe('PoolConfigurationModule', function () {
               assert.equal(approvedPools.includes('3'), false);
             });
           });
+        });
+      });
+
+      describe('when the owner tries to disable/enable new collaterals by default', () => {
+        it('setPoolCollateralDisabledByDefault is restricted to the pool owner', async () => {
+          await assertRevert(
+            systems().Core.connect(user2).setPoolCollateralDisabledByDefault(1, true),
+            `Unauthorized("${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
+
+        it('pool owner disables new collaterals by default', async () => {
+          const tx = await systems()
+            .Core.connect(user1)
+            .setPoolCollateralDisabledByDefault(1, true);
+
+          receipt = await tx.wait();
+          await assertEvent(receipt, 'PoolCollateralDisabledByDefaultSet(1, true)', systems().Core);
         });
       });
     });

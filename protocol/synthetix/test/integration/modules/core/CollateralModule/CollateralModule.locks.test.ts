@@ -53,19 +53,16 @@ describe('CollateralModule', function () {
           0, // 0 is invalid for amount to lock
           1234123412341
         ),
-        'InvalidParameter("amount"',
+        'InvalidParameter("amount", "must be nonzero")',
         systems().Core
       );
     });
 
     it('fails when insufficient collateral in account to lock', async () => {
       await assertRevert(
-        systems().Core.connect(user1).createLock(
-          1,
-          collateralAddress(),
-          depositAmount.mul(10).add(1),
-          1234123412341 // timestamp is definitely in the past
-        ),
+        systems()
+          .Core.connect(user1)
+          .createLock(1, collateralAddress(), depositAmount.mul(1000).add(1), 1234123412341),
         'InsufficientAccountCollateral(',
         systems().Core
       );

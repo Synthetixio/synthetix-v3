@@ -35,6 +35,8 @@ export type PerpsMarketData = Array<{
     liquidationRewardRatio: ethers.BigNumber;
     maxSecondsInLiquidationWindow: ethers.BigNumber;
     minimumPositionMargin: ethers.BigNumber;
+    maxLiquidationPd?: ethers.BigNumber;
+    endorsedLiquidator?: string;
   };
   maxMarketValue?: ethers.BigNumber;
   lockedOiRatioD18?: ethers.BigNumber;
@@ -46,7 +48,6 @@ export type PerpsMarketData = Array<{
     feedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
-    priceDeviationTolerance: ethers.BigNumber;
     disabled: boolean;
   }>;
 }>;
@@ -61,7 +62,6 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   settlementWindowDuration: 120,
   priceWindowDuration: 110,
   settlementReward: bn(5),
-  priceDeviationTolerance: bn(0.01),
   disabled: false,
   url: 'https://fakeapi.pyth.synthetix.io/',
   feedId: ethers.utils.formatBytes32String('ETH/USD'),
@@ -79,9 +79,16 @@ export const bootstrapPerpsMarkets = (
   });
 
   before('create super market', async () => {
-    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory();
-    await contracts.PerpsMarket.initializeFactory();
-
+    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
+      contracts.Core.address,
+      contracts.SpotMarket.address,
+      'SuperMarket'
+    );
+    await contracts.PerpsMarket.initializeFactory(
+      contracts.Core.address,
+      contracts.SpotMarket.address,
+      'SuperMarket'
+    );
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
       {
         marketId: superMarketId,
@@ -105,8 +112,8 @@ export const bootstrapPerpsMarkets = (
       settlementStrategy,
     }) => {
       let oracleNodeId: string, aggregator: AggregatorV3Mock;
-      before('create price nodes', async () => {
-        const results = await createOracleNode(r.owner(), price, r.systems().OracleManager);
+      before('create perps price nodes', async () => {
+        const results = await createOracleNode(r.owner(), price, contracts.OracleManager);
         oracleNodeId = results.oracleNodeId;
         aggregator = results.aggregator;
       });
@@ -149,9 +156,15 @@ export const bootstrapPerpsMarkets = (
             liquidationParams.minimumInitialMarginRatio,
             liquidationParams.maintenanceMarginScalar,
             liquidationParams.liquidationRewardRatio,
+            liquidationParams.minimumPositionMargin
+          );
+
+          await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
+            marketId,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
             liquidationParams.maxSecondsInLiquidationWindow,
-            liquidationParams.minimumPositionMargin
+            liquidationParams.maxLiquidationPd ?? 0,
+            liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
           );
         });
       }

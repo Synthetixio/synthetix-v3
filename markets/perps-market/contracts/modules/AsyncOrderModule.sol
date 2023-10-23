@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
@@ -16,7 +17,7 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 
 /**
- * @title Module for committing and settling async orders.
+ * @title Module for committing async orders.
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
@@ -44,7 +45,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // Check if commitment.accountId is valid
         Account.exists(commitment.accountId);
 
-        // Check msg.sender can commit order for commitment.accountId
+        // Check ERC2771Context._msgSender() can commit order for commitment.accountId
         Account.loadAccountAndValidatePermission(
             commitment.accountId,
             AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
@@ -55,7 +56,23 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .loadValidSettlementStrategy(commitment.marketId, commitment.settlementStrategyId);
 
-        AsyncOrder.Data storage order = AsyncOrder.createValid(commitment, strategy);
+        AsyncOrder.Data storage order = AsyncOrder.load(commitment.accountId);
+
+        // if order (previous) sizeDelta is not zero and didn't revert while checking, it means the previous order expired
+        if (order.request.sizeDelta != 0) {
+            // @notice not including the expiration time since it requires the previous settlement strategy to be loaded and enabled, otherwise loading it will revert and will prevent new orders to be committed
+            emit PreviousOrderExpired(
+                order.request.marketId,
+                order.request.accountId,
+                order.request.sizeDelta,
+                order.request.acceptablePrice,
+                order.settlementTime,
+                order.request.trackingCode
+            );
+        }
+
+        order.updateValid(commitment, strategy);
+
         (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
@@ -70,7 +87,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             order.settlementTime,
             order.settlementTime + strategy.settlementWindowDuration,
             commitment.trackingCode,
-            msg.sender
+            ERC2771Context._msgSender()
         );
 
         return (order, feesAccrued);

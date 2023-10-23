@@ -1,19 +1,19 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { bootstrapStakers, createStakedPool } from '@synthetixio/main/test/common';
+import {
+  AccountProxy,
+  CollateralMock,
+  CoreProxy,
+  USDProxy,
+  USDRouter,
+} from '@synthetixio/main/test/generated/typechain';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
-import {
-  USDProxy,
-  CollateralMock,
-  USDRouter,
-  CoreProxy,
-  AccountProxy,
-} from '@synthetixio/main/test/generated/typechain';
-import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { AggregatorV3Mock, OracleVerifierMock } from '../typechain-types';
+import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;

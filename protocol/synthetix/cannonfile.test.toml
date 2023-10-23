@@ -1,10 +1,10 @@
 # overrides to create a testable deployment of the core system
-
 version = "<%= package.version %>-testable"
+include = ["cannonfile.toml"]
 
-include = [
-  "cannonfile.toml"
-]
+# use the testable oracle manager
+[setting.oracle_manager_source]
+defaultValue = "oracle-manager:<%= package.version %>-testable"
 
 # Test Modules
 [contract.TestableAccountStorage]
@@ -102,46 +102,6 @@ contracts = [
     "TestableVaultStorage",
 ]
 
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.FeatureFlagModule",
-  "contract.AccountModule",
-  "contract.AssociateDebtModule",
-  "contract.AssociatedSystemsModule",
-  "contract.CcipReceiverModule",
-  "contract.CollateralModule",
-  "contract.CollateralConfigurationModule",
-  "contract.CrossChainUSDModule",
-  "contract.IssueUSDModule",
-  "contract.LiquidationModule",
-  "contract.MarketCollateralModule",
-  "contract.MarketManagerModule",
-  "contract.MulticallModule",
-  "contract.PoolConfigurationModule",
-  "contract.PoolModule",
-  "contract.RewardsManagerModule",
-  "contract.UtilsModule",
-  "contract.VaultModule",
-  "contract.TestableAccountStorage",
-  "contract.TestableAccountRBACStorage",
-  "contract.TestableCollateralStorage",
-  "contract.TestableCollateralConfigurationStorage",
-  "contract.TestableCollateralLockStorage",
-  "contract.TestableCrossChainStorage",
-  "contract.TestableDistributionStorage",
-  "contract.TestableDistributionActorStorage",
-  "contract.TestableMarketStorage",
-  "contract.TestableMarketConfigurationStorage",
-  "contract.TestableMarketPoolInfoStorage",
-  "contract.TestablePoolStorage",
-  "contract.TestableSystemPoolConfigurationStorage",
-  "contract.TestableRewardDistributionStorage",
-  "contract.TestableRewardDistributionClaimStatusStorage",
-  "contract.TestableScalableMappingStorage",
-  "contract.TestableVaultEpochStorage",
-  "contract.TestableVaultStorage",
-]
-
 # Post stuff
 [contract.CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
@@ -153,17 +113,16 @@ salt = "2"
 [invoke.intializeCollateralMock]
 target = ["CollateralMock"]
 func = "initialize"
-args = ["SampleToken","TKN","18"]
-depends = ["contract.CollateralMock"]
+args = ["SampleToken", "TKN", "18"]
 
 [invoke.enableAllFeatures]
 target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "multicall"
-args = [[
-  # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('registerMarket'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
-]]
-
-depends = ["invoke.upgrade_core_proxy"]
+args = [
+    [
+        # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
+        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('registerMarket'), true]).slice(2) %>",
+        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
+    ]
+]

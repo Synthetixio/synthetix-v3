@@ -31,7 +31,6 @@ describe('Market Debt - single market', () => {
           orderFees,
           settlementStrategy: {
             settlementReward: bn(0),
-            priceDeviationTolerance: bn(50),
           },
         },
       ],

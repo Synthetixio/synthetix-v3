@@ -58,7 +58,7 @@ interface IIssueUSDModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
      * - After minting, the collateralization ratio of the liquidity position must not be below the target collateralization ratio for the corresponding collateral type.
      *
      * Emits a {UsdMinted} event.

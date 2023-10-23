@@ -2,19 +2,27 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, constants, ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithStakedPool } from '../../bootstrap';
+import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../verifications';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
 describe('IssueUSDModule', function () {
-  const { signers, systems, provider, accountId, poolId, depositAmount, collateralAddress } =
-    bootstrapWithStakedPool();
+  const {
+    signers,
+    systems,
+    provider,
+    accountId,
+    poolId,
+    depositAmount,
+    collateralAddress,
+    collateralContract,
+  } = bootstrapWithStakedPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
 
   let MockMarket: ethers.Contract;
   let marketId: BigNumber;
@@ -22,7 +30,7 @@ describe('IssueUSDModule', function () {
   const feeAddress = '0x1234567890123456789012345678901234567890';
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [owner, user1, user2, user3] = signers();
   });
 
   before('deploy and connect fake market', async () => {
@@ -53,6 +61,18 @@ describe('IssueUSDModule', function () {
           maxDebtShareValueD18: ethers.utils.parseEther('10000000000000000'),
         },
       ]);
+
+    await systems()
+      .Core.connect(owner)
+      .configureCollateral({
+        tokenAddress: await systems().Core.getUsdToken(),
+        oracleNodeId: ethers.utils.formatBytes32String(''),
+        issuanceRatioD18: bn(150),
+        liquidationRatioD18: bn(100),
+        liquidationRewardD18: 0,
+        minDelegationD18: 0,
+        depositingEnabled: true,
+      });
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -66,7 +86,7 @@ describe('IssueUSDModule', function () {
   ) {
     return async () => {
       assertBn.equal(
-        (await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress())).amount,
+        await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress()),
         collateralAmount
       );
       assertBn.equal(
@@ -145,6 +165,9 @@ describe('IssueUSDModule', function () {
           collateralAddress(),
           depositAmount.div(10) // should be enough
         );
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
       });
 
       it(
@@ -174,6 +197,10 @@ describe('IssueUSDModule', function () {
             collateralAddress(),
             depositAmount.div(10) // should be enough
           );
+
+          await systems()
+            .Core.connect(user1)
+            .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
         });
 
         it(
@@ -187,6 +214,73 @@ describe('IssueUSDModule', function () {
             depositAmount.div(5)
           );
         });
+      });
+    });
+
+    describe('mint/burn security check', () => {
+      before(restore);
+
+      before('mint', async () => {
+        await systems().Core.connect(user1).mintUsd(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        );
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
+      });
+
+      it('does not let another user pay back the debt without balance', async () => {
+        // User 1 mint some sUSD
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
+        // Mint some collateral for user3. It does not work without user3 having some collateral. (they will not loose any of this though.)
+        await collateralContract().mint(await user3.getAddress(), depositAmount);
+        const user3CollateralBalBefore = await collateralContract().balanceOf(
+          await user3.getAddress()
+        );
+        const user3sUSDBalanceBefore = await systems().USD.balanceOf(await user3.getAddress());
+        const user1DebtBefore = await systems()
+          .Core.connect(user1)
+          .callStatic.getPositionDebt(accountId, poolId, collateralAddress());
+
+        const user1SusdBalanceBefore = await systems().USD.balanceOf(await user1.getAddress());
+        console.log('user1DebtBefore', user1DebtBefore.toString());
+        console.log('user1SusdBalanceBefore', user1SusdBalanceBefore.toString());
+        console.log('user3CollateralBalBefore', user3CollateralBalBefore.toString());
+        console.log('user3sUSDBalanceBefore', user3sUSDBalanceBefore.toString());
+        console.log('Calling burnUSD connected as user3 but passing account id of user1...');
+        console.log('Note that user 3 does not have any sUSD');
+
+        // Try to burn for another user without having any sUSD
+        await assertRevert(
+          systems()
+            .Core.connect(user3)
+            .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10)),
+          'PermissionDenied'
+        );
+
+        const user3CollateralBalAfter = await collateralContract().balanceOf(
+          await user3.getAddress()
+        );
+        const user3sUSDBalanceAfter = await systems().USD.balanceOf(await user3.getAddress());
+        const user1DebtAfter = await systems()
+          .Core.connect(user1)
+          .callStatic.getPositionDebt(accountId, poolId, collateralAddress());
+
+        const user1SusdBalanceAfter = await systems().USD.balanceOf(await user1.getAddress());
+
+        console.log('Tx did not revert');
+        console.log('user3CollateralBalAfter', user3CollateralBalAfter.toString());
+        console.log('user3sUSDBalanceAfter', user3sUSDBalanceAfter.toString());
+        console.log('user1DebtAfter', user1DebtAfter.toString());
+        console.log('user1SusdBalanceAfter', user1SusdBalanceAfter.toString());
+        console.log('User3 have the same amount of collateral, and still 0 sUSD');
+        console.log('User1 now have less debt and the same amount of sUSD');
+        assertBn.equal(user1DebtBefore, user1DebtAfter);
       });
     });
 
@@ -216,6 +310,9 @@ describe('IssueUSDModule', function () {
           collateralAddress(),
           depositAmount.div(10) // should be enough
         );
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
       });
 
       it(
@@ -266,6 +363,9 @@ describe('IssueUSDModule', function () {
       await systems()
         .Core.connect(user1)
         .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
+      await systems()
+        .Core.connect(user1)
+        .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
     });
 
     const restoreBurn = snapshotCheckpoint(provider);
@@ -288,15 +388,30 @@ describe('IssueUSDModule', function () {
           .transfer(await user2.getAddress(), depositAmount.div(10));
       });
 
-      before('other account burn', async () => {
+      before('user deposit into other account', async () => {
+        await systems()
+          .USD.connect(user2)
+          .approve(systems().Core.address, constants.MaxUint256.toString());
         await systems()
           .Core.connect(user2)
-          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
+          .deposit(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
       });
 
-      it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
+      it('other account burn would revert', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user2)
+            .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10)),
+          'PermissionDenied'
+        );
+      });
 
-      it('took away from user2', async () => {
+      it(
+        'has correct debt',
+        verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(10))
+      );
+
+      it('did not took away from user2 balance', async () => {
         assertBn.equal(await systems().USD.balanceOf(await user2.getAddress()), 0);
       });
     });
@@ -319,6 +434,18 @@ describe('IssueUSDModule', function () {
       });
 
       before('account partial burn debt', async () => {
+        await systems()
+          .USD.connect(user1)
+          .approve(systems().Core.address, constants.MaxUint256.toString());
+
+        await systems()
+          .Core.connect(user1)
+          .deposit(
+            accountId,
+            await systems().Core.getUsdToken(),
+            depositAmount.div(20).add(depositAmount.div(2000))
+          );
+
         // in order to burn all with the fee we need a bit more
         await systems()
           .Core.connect(user1)
@@ -375,6 +502,22 @@ describe('IssueUSDModule', function () {
 
       before('account partial burn debt', async () => {
         // in order to burn all with the fee we need a bit more
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(1000));
+
+        await systems()
+          .USD.connect(user1)
+          .approve(systems().Core.address, constants.MaxUint256.toString());
+
+        await systems()
+          .Core.connect(user1)
+          .deposit(
+            accountId,
+            await systems().Core.getUsdToken(),
+            await systems().USD.balanceOf(await user1.getAddress())
+          );
+
         tx = await systems()
           .Core.connect(user1)
           .burnUsd(accountId, poolId, collateralAddress(), depositAmount); // pay off everything
@@ -460,6 +603,33 @@ describe('IssueUSDModule', function () {
       });
 
       it('try to create debt beyond system max c ratio', exploit(2));
+    });
+  });
+
+  describe('establish a more stringent collateralization ratio for the pool', async () => {
+    before(restore);
+
+    it('set the pool min collateral issuance ratio to 600%', async () => {
+      await systems()
+        .Core.connect(owner)
+        .setPoolCollateralConfiguration(poolId, collateralAddress(), {
+          collateralLimitD18: bn(10),
+          issuanceRatioD18: bn(6),
+        });
+    });
+
+    it('verifies sufficient c-ratio', async () => {
+      const price = await systems().Core.getCollateralPrice(collateralAddress());
+
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount),
+        `InsufficientCollateralRatio("${depositAmount}", "${depositAmount}", "${price}", "${bn(
+          6
+        ).toString()}")`,
+        systems().Core
+      );
     });
   });
 });

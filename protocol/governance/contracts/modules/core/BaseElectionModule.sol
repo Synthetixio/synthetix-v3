@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -224,11 +225,11 @@ contract BaseElectionModule is
     function nominate() public virtual override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        if (nominees.contains(msg.sender)) revert AlreadyNominated();
+        if (nominees.contains(ERC2771Context._msgSender())) revert AlreadyNominated();
 
-        nominees.add(msg.sender);
+        nominees.add(ERC2771Context._msgSender());
 
-        emit CandidateNominated(msg.sender, Council.load().lastElectionId);
+        emit CandidateNominated(ERC2771Context._msgSender(), Council.load().lastElectionId);
     }
 
     function withdrawNomination()
@@ -238,18 +239,18 @@ contract BaseElectionModule is
     {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        if (!nominees.contains(msg.sender)) revert NotNominated();
+        if (!nominees.contains(ERC2771Context._msgSender())) revert NotNominated();
 
-        nominees.remove(msg.sender);
+        nominees.remove(ERC2771Context._msgSender());
 
-        emit NominationWithdrawn(msg.sender, Council.load().lastElectionId);
+        emit NominationWithdrawn(ERC2771Context._msgSender(), Council.load().lastElectionId);
     }
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function cast(
         address[] calldata candidates
     ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        uint votePower = _getVotePower(msg.sender);
+        uint votePower = _getVotePower(ERC2771Context._msgSender());
 
         if (votePower == 0) revert NoVotePower();
 
@@ -259,21 +260,21 @@ contract BaseElectionModule is
 
         uint epochIndex = Council.load().lastElectionId;
 
-        if (hasVoted(msg.sender)) {
-            _withdrawCastedVote(msg.sender, epochIndex);
+        if (hasVoted(ERC2771Context._msgSender())) {
+            _withdrawCastedVote(ERC2771Context._msgSender(), epochIndex);
         }
 
-        ballotId = _recordVote(msg.sender, votePower, candidates);
+        ballotId = _recordVote(ERC2771Context._msgSender(), votePower, candidates);
 
-        emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
+        emit VoteRecorded(ERC2771Context._msgSender(), ballotId, epochIndex, votePower);
     }
 
     function withdrawVote() external override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        if (!hasVoted(msg.sender)) {
+        if (!hasVoted(ERC2771Context._msgSender())) {
             revert VoteNotCasted();
         }
 
-        _withdrawCastedVote(msg.sender, Council.load().lastElectionId);
+        _withdrawCastedVote(ERC2771Context._msgSender(), Council.load().lastElectionId);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted

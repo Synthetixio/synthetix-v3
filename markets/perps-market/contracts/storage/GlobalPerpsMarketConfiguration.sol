@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
@@ -43,6 +44,18 @@ library GlobalPerpsMarketConfiguration {
          * @dev maximum configured liquidation reward for the sender who liquidates the account
          */
         uint maxLiquidationRewardUsd;
+        /**
+         * @dev maximum configured number of concurrent positions per account.
+         * @notice If set to zero it means no new positions can be opened, but existing positions can be increased or decreased.
+         * @notice If set to a larger number (larger than number of markets created) it means is unlimited.
+         */
+        uint128 maxPositionsPerAccount;
+        /**
+         * @dev maximum configured number of concurrent collaterals per account.
+         * @notice If set to zero it means no new collaterals can be added accounts, but existing collaterals can be increased or decreased.
+         * @notice If set to a larger number (larger than number of collaterals enabled) it means is unlimited.
+         */
+        uint128 maxCollateralsPerAccount;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -64,6 +77,17 @@ library GlobalPerpsMarketConfiguration {
                 MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),
                 self.maxLiquidationRewardUsd
             );
+    }
+
+    /**
+     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against only min
+     * @notice this is used when calculating the required margin for an account as there's no upper cap since the total liquidation rewards are dependent on available amount in liquidation window
+     */
+    function minimumLiquidationReward(
+        Data storage self,
+        uint256 totalLiquidationRewards
+    ) internal view returns (uint256) {
+        return MathUtil.max(self.minLiquidationRewardUsd, totalLiquidationRewards);
     }
 
     function updateSynthDeductionPriority(
@@ -93,7 +117,7 @@ library GlobalPerpsMarketConfiguration {
         uint256 feeCollectorQuote = self.feeCollector.quoteFees(
             factory.perpsMarketId,
             remainingFees,
-            msg.sender
+            ERC2771Context._msgSender()
         );
 
         if (feeCollectorQuote == 0) {

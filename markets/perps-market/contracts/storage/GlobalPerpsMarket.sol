@@ -8,6 +8,7 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 
 /**
  * @title This library contains all global perps market data
@@ -68,7 +69,7 @@ library GlobalPerpsMarket {
         for (uint i = 1; i <= activeCollateralLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
 
-            if (synthMarketId == 0) {
+            if (synthMarketId == SNX_USD_MARKET_ID) {
                 total += self.collateralAmounts[synthMarketId];
             } else {
                 (uint collateralValue, ) = spotMarket.quoteSellExactIn(

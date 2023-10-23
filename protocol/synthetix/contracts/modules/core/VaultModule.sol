@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
@@ -85,6 +86,11 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18 - currentCollateralAmount
             );
 
+            Pool.loadExisting(poolId).checkPoolCollateralLimit(
+                collateralType,
+                newCollateralAmountD18 - currentCollateralAmount
+            );
+
             // if decreasing delegation amount, ensure min time has elapsed
         } else {
             Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
@@ -116,11 +122,17 @@ contract VaultModule is IVaultModule {
         if (newCollateralAmountD18 < currentCollateralAmount) {
             int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
 
+            uint256 minIssuanceRatioD18 = Pool
+                .loadExisting(poolId)
+                .collateralConfigurations[collateralType]
+                .issuanceRatioD18;
+
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
-                newCollateralAmountD18.mulDecimal(collateralPrice)
+                newCollateralAmountD18.mulDecimal(collateralPrice),
+                minIssuanceRatioD18
             );
 
             // Accounts cannot reduce collateral if any of the pool's
@@ -137,7 +149,7 @@ contract VaultModule is IVaultModule {
             collateralType,
             newCollateralAmountD18,
             leverage,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
@@ -169,8 +181,8 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view override returns (uint256 amount, uint256 value) {
-        (amount, value) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
+    ) external view override returns (uint256 amount) {
+        return Pool.load(poolId).vaults[collateralType].currentAccountCollateral(accountId);
     }
 
     /**

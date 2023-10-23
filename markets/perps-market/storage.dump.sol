@@ -43,6 +43,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
     uint private constant _ROOT_INDEX = 1;
@@ -133,6 +138,7 @@ library AccountRBAC {
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -288,12 +294,23 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
     }
 }
 
@@ -432,7 +449,7 @@ interface IAsyncOrderSettlementModule {
         uint256 referralFees;
         uint256 feeCollectorFees;
         Position.Data newPosition;
-        PerpsMarket.MarketUpdateData updateData;
+        MarketUpdate.Data updateData;
     }
 }
 
@@ -543,12 +560,33 @@ library GlobalPerpsMarketConfiguration {
         uint128[] synthDeductionPriority;
         uint minLiquidationRewardUsd;
         uint maxLiquidationRewardUsd;
+        uint128 maxPositionsPerAccount;
+        uint128 maxCollateralsPerAccount;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
         assembly {
             globalMarketConfig.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/Liquidation.sol:Liquidation
+library Liquidation {
+    struct Data {
+        uint128 amount;
+        uint256 timestamp;
+    }
+}
+
+// @custom:artifact contracts/storage/MarketUpdate.sol:MarketUpdate
+library MarketUpdate {
+    struct Data {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
     }
 }
 
@@ -587,18 +625,12 @@ library PerpsMarket {
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        uint128 __unused_1;
+        uint128 __unused_2;
         int256 debtCorrectionAccumulator;
         mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
-    }
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+        Liquidation.Data[] liquidationData;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
@@ -642,8 +674,7 @@ library PerpsMarketFactory {
         address synthetix;
         address spotMarket;
         uint128 perpsMarketId;
-        address owner;
-        address nominatedOwner;
+        string name;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
@@ -690,7 +721,6 @@ library SettlementStrategy {
         bytes32 feedId;
         string url;
         uint256 settlementReward;
-        uint256 priceDeviationTolerance;
         bool disabled;
     }
 }

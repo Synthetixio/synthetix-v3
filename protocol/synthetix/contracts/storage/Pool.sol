@@ -6,10 +6,13 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
+import "./PoolCollateralConfiguration.sol";
 import "./SystemPoolConfiguration.sol";
+import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
@@ -47,6 +50,16 @@ library Pool {
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
+    /**
+     * @dev Thrown when pool has surpassed max collateral deposit
+     */
+    error PoolCollateralLimitExceeded(
+        uint128 poolId,
+        address collateralType,
+        uint256 currentCollateral,
+        uint256 maxCollateral
+    );
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -113,6 +126,15 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        /**
+         * @dev A switch to make the pool opt-in for new collateral
+         *
+         * By default it's set to false, which means any new collateral accepeted by the system will be accpeted by the pool.
+         *
+         * If the pool owner sets this value to true, then new collaterals will be disabled for the pool unless a maxDeposit is set for a that collateral.
+         */
+        bool collateralDisabledByDefault;
     }
 
     /**
@@ -319,7 +341,9 @@ library Pool {
         address collateralType
     ) internal returns (uint256 collateralPriceD18) {
         // Get the latest collateral price.
-        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
+        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice(
+            DecimalMath.UNIT
+        );
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
         (uint256 usdWeightD18, ) = self.vaults[collateralType].updateCreditCapacity(
@@ -439,7 +463,7 @@ library Pool {
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice();
+            .getCollateralPrice(collateralAmountD18);
 
         collateralAmountD18 = self.vaults[collateralType].currentCollateral();
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
@@ -453,11 +477,10 @@ library Pool {
         address collateralType,
         uint128 accountId
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
+        collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice();
-
-        collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
+            .getCollateralPrice(collateralAmountD18);
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
     }
 
@@ -504,6 +527,29 @@ library Pool {
                 self.id,
                 // solhint-disable-next-line numcast/safe-cast
                 uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
+            );
+        }
+    }
+
+    function checkPoolCollateralLimit(
+        Data storage self,
+        address collateralType,
+        uint256 collateralAmountD18
+    ) internal view {
+        uint256 collateralLimitD18 = self
+            .collateralConfigurations[collateralType]
+            .collateralLimitD18;
+        uint256 currentCollateral = self.vaults[collateralType].currentCollateral();
+
+        if (
+            (self.collateralDisabledByDefault && collateralLimitD18 == 0) ||
+            (collateralLimitD18 > 0 && currentCollateral + collateralAmountD18 > collateralLimitD18)
+        ) {
+            revert PoolCollateralLimitExceeded(
+                self.id,
+                collateralType,
+                currentCollateral + collateralAmountD18,
+                collateralLimitD18
             );
         }
     }

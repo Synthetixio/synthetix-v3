@@ -1,13 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {Liquidation} from "./Liquidation.sol";
 
 /**
  * @title Data for a single perps market
@@ -21,11 +24,15 @@ library PerpsMarket {
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
+    /**
+     * @notice Thrown when attempting to create a market that already exists or invalid id was passed in
+     */
     error InvalidMarket(uint128 marketId);
 
+    /**
+     * @notice Thrown when attempting to load a market without a configured price feed
+     */
     error PriceFeedNotSet(uint128 marketId);
-
-    error MarketAlreadyExists(uint128 marketId);
 
     struct Data {
         string name;
@@ -33,13 +40,13 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        // TODO: move to new data structure?
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        // liquidation data
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128 __unused_1;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128 __unused_2;
         // debt calculation
         // accumulates total notional size of the market including accrued funding until the last time any position changed
         int256 debtCorrectionAccumulator;
@@ -47,6 +54,8 @@ library PerpsMarket {
         mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
+        // liquidation amounts
+        Liquidation.Data[] liquidationData;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -96,49 +105,106 @@ library PerpsMarket {
      */
     function maxLiquidatableAmount(
         Data storage self,
-        uint256 requestedLiquidationAmount
+        uint128 requestedLiquidationAmount
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
-        // this would only be 0 if fees or skew scale are configured to be 0.
-        // in that case, (very unlikely), allow full liquidation
-        if (maxLiquidationAmountPerSecond == 0) {
-            return requestedLiquidationAmount.to128();
+        // if endorsedLiquidator is configured and is the sender, allow full liquidation
+        if (ERC2771Context._msgSender() == marketConfig.endorsedLiquidator) {
+            _updateLiquidationData(self, requestedLiquidationAmount);
+            return requestedLiquidationAmount;
         }
 
-        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
-        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
+        (
+            uint liquidationCapacity,
+            uint maxLiquidationInWindow,
+            uint latestLiquidationTimestamp
+        ) = currentLiquidationCapacity(self, marketConfig);
 
-        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
-            maxLiquidationAmountPerSecond;
-        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
-            liquidatableAmount = MathUtil
-                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
-                .to128();
-            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
-        } else {
-            liquidatableAmount = MathUtil
-                .min(
-                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+        // this would only occur if there was a misconfiguration (like skew scale not being set)
+        // or the max liquidation window not being set etc.
+        // in this case, return the entire requested liquidation amount
+        if (maxLiquidationInWindow == 0) {
+            return requestedLiquidationAmount;
+        }
+
+        uint maxLiquidationPd = marketConfig.maxLiquidationPd;
+        // if liquidation capacity exists, update accordingly
+        if (liquidationCapacity != 0) {
+            liquidatableAmount = MathUtil.min128(
+                liquidationCapacity.to128(),
+                requestedLiquidationAmount
+            );
+        } else if (
+            maxLiquidationPd != 0 &&
+            // only allow this if the last update was not in the current block
+            latestLiquidationTimestamp != block.timestamp
+        ) {
+            /**
+                if capacity is at 0, but the market is under configured liquidation p/d,
+                another block of liquidation becomes allowable.
+             */
+            uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
+            if (currentPd < maxLiquidationPd) {
+                liquidatableAmount = MathUtil.min128(
+                    maxLiquidationInWindow.to128(),
                     requestedLiquidationAmount
-                )
-                .to128();
-            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
+                );
+            }
         }
 
-        // only update timestamp if there is something being liquidated
         if (liquidatableAmount > 0) {
-            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+            _updateLiquidationData(self, liquidatableAmount);
         }
     }
 
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+    function _updateLiquidationData(Data storage self, uint128 liquidationAmount) private {
+        uint liquidationDataLength = self.liquidationData.length;
+        uint currentTimestamp = liquidationDataLength == 0
+            ? 0
+            : self.liquidationData[liquidationDataLength - 1].timestamp;
+
+        if (currentTimestamp == block.timestamp) {
+            self.liquidationData[liquidationDataLength - 1].amount += liquidationAmount;
+        } else {
+            self.liquidationData.push(
+                Liquidation.Data({amount: liquidationAmount, timestamp: block.timestamp})
+            );
+        }
+    }
+
+    /**
+     * @dev Returns the current liquidation capacity for the market
+     * @notice This function sums up the liquidation amounts in the current liquidation window
+     * and returns the capacity left.
+     */
+    function currentLiquidationCapacity(
+        Data storage self,
+        PerpsMarketConfiguration.Data storage marketConfig
+    )
+        internal
+        view
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp)
+    {
+        maxLiquidationInWindow = marketConfig.maxLiquidationAmountInWindow();
+        uint accumulatedLiquidationAmounts;
+        uint liquidationDataLength = self.liquidationData.length;
+        if (liquidationDataLength == 0) return (maxLiquidationInWindow, maxLiquidationInWindow, 0);
+
+        uint currentIndex = liquidationDataLength - 1;
+        latestLiquidationTimestamp = self.liquidationData[currentIndex].timestamp;
+        uint windowStartTimestamp = block.timestamp - marketConfig.maxSecondsInLiquidationWindow;
+
+        while (self.liquidationData[currentIndex].timestamp > windowStartTimestamp) {
+            accumulatedLiquidationAmounts += self.liquidationData[currentIndex].amount;
+
+            if (currentIndex == 0) break;
+            currentIndex--;
+        }
+        int availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
+            accumulatedLiquidationAmounts.toInt();
+        // solhint-disable-next-line numcast/safe-cast
+        capacity = MathUtil.max(availableLiquidationCapacity, int(0)).toUint();
     }
 
     /**
@@ -150,13 +216,15 @@ library PerpsMarket {
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal returns (MarketUpdateData memory) {
+    ) internal returns (MarketUpdate.Data memory) {
         Position.Data storage oldPosition = self.positions[accountId];
 
         int128 oldPositionSize = oldPosition.size;
         int128 newPositionSize = newPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.size =
+            (self.size + MathUtil.abs128(newPositionSize)) -
+            MathUtil.abs128(oldPositionSize);
         self.skew += newPositionSize - oldPositionSize;
 
         uint currentPrice = newPosition.latestInteractionPrice;
@@ -173,7 +241,7 @@ library PerpsMarket {
         oldPosition.update(newPosition);
 
         return
-            MarketUpdateData(
+            MarketUpdate.Data(
                 self.id,
                 self.skew,
                 self.size,
@@ -255,7 +323,7 @@ library PerpsMarket {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
-        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     function validatePositionSize(

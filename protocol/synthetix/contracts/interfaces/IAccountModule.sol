@@ -80,7 +80,7 @@ interface IAccountModule {
     ) external view returns (AccountPermissions[] memory accountPerms);
 
     /**
-     * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
+     * @notice Mints an account token with id `requestedAccountId` to `ERC2771Context._msgSender()`.
      * @param requestedAccountId The id requested for the account being created. Reverts if id already exists.
      *
      * Requirements:
@@ -93,7 +93,7 @@ interface IAccountModule {
     function createAccount(uint128 requestedAccountId) external;
 
     /**
-     * @notice Mints an account token with an available id to `msg.sender`.
+     * @notice Mints an account token with an available id to `ERC2771Context._msgSender()`.
      *
      * Emits a {AccountCreated} event.
      */
@@ -107,7 +107,7 @@ interface IAccountModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the account token.
+     * - `ERC2771Context._msgSender()` must be the account token.
      */
     function notifyAccountTransfer(address to, uint128 accountId) external;
 
@@ -119,7 +119,7 @@ interface IAccountModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+     * - `ERC2771Context._msgSender()` must own the account token with ID `accountId` or have the "admin" permission.
      *
      * Emits a {PermissionGranted} event.
      */
@@ -133,14 +133,14 @@ interface IAccountModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+     * - `ERC2771Context._msgSender()` must own the account token with ID `accountId` or have the "admin" permission.
      *
      * Emits a {PermissionRevoked} event.
      */
     function revokePermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
-     * @notice Revokes `permission` from `msg.sender` for account `accountId`.
+     * @notice Revokes `permission` from `ERC2771Context._msgSender()` for account `accountId`.
      * @param accountId The id of the account whose permission was renounced.
      * @param permission The bytes32 identifier of the permission.
      *

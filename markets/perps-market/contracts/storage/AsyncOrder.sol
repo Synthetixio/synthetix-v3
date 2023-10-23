@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
@@ -20,15 +20,12 @@ library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint256;
-    using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using SafeCastI128 for int128;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
-    using Position for Position.Data;
 
     /**
      * @notice Thrown when settlement window is not open yet.
@@ -62,7 +59,12 @@ library AsyncOrder {
     /**
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
-    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+    error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
+
+    /**
+     * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
+     */
+    error AcceptablePriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
@@ -78,7 +80,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
      */
-    error InsufficientMargin(int availableMargin, uint minMargin);
+    error InsufficientMargin(int256 availableMargin, uint256 minMargin);
 
     struct Data {
         /**
@@ -145,29 +147,35 @@ library AsyncOrder {
             revert OrderNotValid();
         }
 
-        strategy = PerpsMarketConfiguration.load(order.request.marketId).settlementStrategies[
+        strategy = PerpsMarketConfiguration.loadValidSettlementStrategy(
+            order.request.marketId,
             order.request.settlementStrategyId
-        ];
+        );
         checkWithinSettlementWindow(order, strategy);
     }
 
     /**
-     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
-     * @dev non-existent order is considered an order with sizeDelta == 0.
+     * @dev Updates the order with the new commitment request data and settlement time.
+     * @dev Reverts if there's a pending order.
+     * @dev Reverts if accont cannot open a new position (due to max allowed reached).
      */
-    function createValid(
+    function updateValid(
+        Data storage self,
         OrderCommitmentRequest memory newRequest,
         SettlementStrategy.Data storage strategy
-    ) internal returns (Data storage order) {
-        order = checkPendingOrder(newRequest.accountId);
+    ) internal {
+        checkPendingOrder(newRequest.accountId);
 
-        order.settlementTime = block.timestamp + strategy.settlementDelay;
-        order.request = newRequest;
+        PerpsAccount.validateMaxPositions(newRequest.accountId, newRequest.marketId);
+
+        // Replace previous (or empty) order with the commitment request
+        self.settlementTime = block.timestamp + strategy.settlementDelay;
+        self.request = newRequest;
     }
 
     /**
      * @dev Reverts if there is a pending order.
-     * @dev A pending order is one that has a sizeDelta or isn't expired yet.
+     * @dev A pending order is one that has a sizeDelta and isn't expired yet.
      */
     function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
         order = load(accountId);
@@ -202,14 +210,14 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint settlementExpiration = self.settlementTime +
+        uint256 settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < self.settlementTime) {
             revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
         }
 
-        if (expired(self, settlementStrategy)) {
+        if (block.timestamp > settlementExpiration) {
             revert SettlementWindowExpired(
                 block.timestamp,
                 self.settlementTime,
@@ -225,7 +233,7 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view returns (bool) {
-        uint settlementExpiration = self.settlementTime +
+        uint256 settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
         return block.timestamp > settlementExpiration;
     }
@@ -237,18 +245,18 @@ library AsyncOrder {
         int128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
-        uint fillPrice;
-        uint orderFees;
-        uint availableMargin;
-        uint currentLiquidationMargin;
-        uint accumulatedLiquidationRewards;
-        uint currentLiquidationReward;
+        uint256 fillPrice;
+        uint256 orderFees;
+        uint256 availableMargin;
+        uint256 currentLiquidationMargin;
+        uint256 accumulatedLiquidationRewards;
+        uint256 currentLiquidationReward;
         int128 newPositionSize;
-        uint newNotionalValue;
+        uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint requiredMaintenanceMargin;
-        uint initialRequiredMargin;
-        uint totalRequiredMargin;
+        uint256 requiredMaintenanceMargin;
+        uint256 initialRequiredMargin;
+        uint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
     }
@@ -268,7 +276,7 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal returns (Position.Data memory, uint, uint, Position.Data storage oldPosition) {
+    ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
         runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
@@ -308,10 +316,7 @@ library AsyncOrder {
             orderPrice
         );
 
-        if (
-            (runtime.sizeDelta > 0 && runtime.fillPrice > order.request.acceptablePrice) ||
-            (runtime.sizeDelta < 0 && runtime.fillPrice < order.request.acceptablePrice)
-        ) {
+        if (acceptablePriceExceeded(order, runtime.fillPrice)) {
             revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
@@ -329,15 +334,15 @@ library AsyncOrder {
         }
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
             marketConfig.maxMarketSize,
             oldPosition.size,
-            runtime.sizeDelta
+            runtime.newPositionSize
         );
 
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
         runtime.totalRequiredMargin =
             getRequiredMarginWithNewPosition(
                 marketConfig,
@@ -364,6 +369,49 @@ library AsyncOrder {
     }
 
     /**
+     * @notice Checks if the order request can be cancelled.
+     * @notice This function doesn't check for liquidation or available margin since the fees to be paid are small and we did that check at commitment less than the settlement window time.
+     * @notice it won't check if the order exists since it was already checked when loading the order (loadValid)
+     * @dev it calculates fill price the order
+     * @dev and with that data it checks that:
+     * @dev - settlement window is open
+     * @dev - the fill price is outside the acceptable price range
+     * @dev if the order can be cancelled, it returns the fillPrice
+     */
+    function validateCancellation(
+        Data storage order,
+        SettlementStrategy.Data storage strategy,
+        uint256 orderPrice
+    ) internal view returns (uint256 fillPrice) {
+        SimulateDataRuntime memory runtime;
+        runtime.sizeDelta = order.request.sizeDelta;
+        runtime.accountId = order.request.accountId;
+        runtime.marketId = order.request.marketId;
+
+        checkWithinSettlementWindow(order, strategy);
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
+
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            runtime.marketId
+        );
+
+        runtime.fillPrice = AsyncOrder.calculateFillPrice(
+            perpsMarketData.skew,
+            marketConfig.skewScale,
+            runtime.sizeDelta,
+            orderPrice
+        );
+
+        // check if fill price exceeded acceptable price
+        if (!acceptablePriceExceeded(order, runtime.fillPrice)) {
+            revert AcceptablePriceNotExceeded(runtime.fillPrice, order.request.acceptablePrice);
+        }
+
+        return runtime.fillPrice;
+    }
+
+    /**
      * @notice Calculates the order fees.
      */
     function calculateOrderFee(
@@ -371,7 +419,7 @@ library AsyncOrder {
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
-    ) internal view returns (uint) {
+    ) internal view returns (uint256) {
         int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
@@ -381,7 +429,7 @@ library AsyncOrder {
             // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
 
-            uint staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
+            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
             return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
@@ -399,11 +447,11 @@ library AsyncOrder {
         //
         // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
 
-        uint makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
+        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.makerFee
         );
 
-        uint takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.takerFee
         );
 
@@ -418,7 +466,7 @@ library AsyncOrder {
         uint256 skewScale,
         int128 size,
         uint256 price
-    ) internal pure returns (uint) {
+    ) internal pure returns (uint256) {
         // How is the p/d-adjusted price calculated using an example:
         //
         // price      = $1200 USD (oracle)
@@ -472,31 +520,43 @@ library AsyncOrder {
         int128 oldPositionSize,
         int128 newPositionSize,
         uint256 fillPrice,
-        uint currentTotalMaintenanceMargin,
-        uint currentTotalLiquidationRewards
-    ) internal view returns (uint) {
+        uint256 currentTotalMaintenanceMargin,
+        uint256 currentTotalLiquidationRewards
+    ) internal view returns (uint256) {
         // get initial margin requirement for the new position
-        (, , uint newRequiredMargin, , uint newLiquidationReward) = marketConfig
+        (, , uint256 newRequiredMargin, , uint256 newLiquidationReward) = marketConfig
             .calculateRequiredMargins(newPositionSize, fillPrice);
 
         // get maintenance margin of old position
-        (, , , uint256 oldRequiredMargin, uint oldLiquidationReward) = marketConfig
+        (, , , uint256 oldRequiredMargin, uint256 oldLiquidationReward) = marketConfig
             .calculateRequiredMargins(oldPositionSize, PerpsPrice.getCurrentPrice(marketId));
 
         // remove the maintenance margin and add the initial margin requirement
         // this gets us our total required margin for new position
-        uint requiredMarginForNewPosition = currentTotalMaintenanceMargin +
+        uint256 requiredMarginForNewPosition = currentTotalMaintenanceMargin +
             newRequiredMargin -
             oldRequiredMargin;
 
-        // do same thing for liquidation rewards and compute against global configured min/max liq reward
-        uint requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
+        // do same thing for liquidation rewards and account for minimum liquidation margin
+        uint256 requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
             .load()
-            .liquidationReward(
+            .minimumLiquidationReward(
                 currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward
             );
 
         // this is the required margin for the new position (minus any order fees)
         return requiredMarginForNewPosition + requiredLiquidationRewardMargin;
+    }
+
+    /**
+     * @notice Checks if the fill price exceeds the acceptable price set at submission.
+     */
+    function acceptablePriceExceeded(
+        Data storage order,
+        uint256 fillPrice
+    ) internal view returns (bool exceeded) {
+        return
+            (order.request.sizeDelta > 0 && fillPrice > order.request.acceptablePrice) ||
+            (order.request.sizeDelta < 0 && fillPrice < order.request.acceptablePrice);
     }
 }

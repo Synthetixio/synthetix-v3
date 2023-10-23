@@ -104,7 +104,7 @@ describe('Offchain Async Order test - fees', () => {
     },
   ];
 
-  testCases.forEach((testCase) => {
+  for (const testCase of testCases) {
     describe(`Using ${testCase.name} as collateral`, () => {
       let balancesBeforeLong: {
         traderBalance: ethers.BigNumber;
@@ -341,11 +341,11 @@ describe('Offchain Async Order test - fees', () => {
         });
       });
     });
-  });
+  }
 
   const getBalances = async () => {
     const traderBalance = await systems().PerpsMarket.totalCollateralValue(2);
-    const keeperBalance = await systems().USD.balanceOf(keeper().getAddress());
+    const keeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
     const accountPnl = (await systems().PerpsMarket.getOpenPosition(2, ethMarketId))[0];
     return {
       traderBalance,

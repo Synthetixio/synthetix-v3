@@ -73,4 +73,9 @@ describe('utils/assertions/assert-bignumber.ts', function () {
     throws(() => bn.near(1, 3, 0), bn.BigNumberAssertionError);
     throws(() => bn.near(10000, 20000, 350), bn.BigNumberAssertionError);
   });
+
+  it('#notEqual', function () {
+    bn.notEqual(1, 2);
+    throws(() => bn.notEqual(1, 1), bn.BigNumberAssertionError);
+  });
 });

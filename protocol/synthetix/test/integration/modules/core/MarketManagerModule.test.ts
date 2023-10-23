@@ -93,6 +93,9 @@ describe('MarketManagerModule', function () {
 
     before('acquire USD', async () => {
       await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
+      await systems()
+        .Core.connect(user1)
+        .withdraw(accountId, await systems().Core.getUsdToken(), One);
     });
 
     it('should not work if user has not approved', async () => {
@@ -234,6 +237,9 @@ describe('MarketManagerModule', function () {
     describe('deposit into the pool', async () => {
       before('mint USD to use market', async () => {
         await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
       });

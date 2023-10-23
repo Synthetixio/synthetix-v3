@@ -18,7 +18,7 @@ contract VaultMock {
         bytes32 r,
         bytes32 s
     ) external {
-        token.permit(msg.sender, address(this), amount, deadline, v, r, s);
-        token.transferFrom(msg.sender, address(this), amount);
+        token.permit(ERC2771Context._msgSender(), address(this), amount, deadline, v, r, s);
+        token.transferFrom(ERC2771Context._msgSender(), address(this), amount);
     }
 }
