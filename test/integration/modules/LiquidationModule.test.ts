@@ -980,7 +980,7 @@ describe('LiquidationModule', () => {
       });
     });
 
-    describe('{partialLiqudation,liqCaps}', () => {
+    describe('{partialLiqudation,liqCaps,liqReward}', () => {
       const configurePartiallyLiquidatedPosition = async (
         desiredFlagger?: Signer,
         desiredLiquidator?: Signer,
@@ -1224,6 +1224,94 @@ describe('LiquidationModule', () => {
         const cap6 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
         assertBn.equal(cap6.remainingCapacity, cap6.maxLiquidatableCapacity);
       });
+
+      it('should pay out liquidation reward to flagger in chunks added up to total', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const marketOraclePrice1 = bn(10_000);
+        const market = markets()[0];
+        const collateral = getSusdCollateral(collaterals());
+        await market.aggregator().mockSetCurrentPrice(marketOraclePrice1);
+
+        // Open a decently large position that would result in a partial liquiadtion.
+        const { trader, marketId, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: 100_000,
+            desiredCollateral: collateral,
+          })
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: 10,
+          desiredSide: 1,
+          desiredKeeperFeeBufferUsd: 0,
+        });
+        await commitAndSettle(bs, marketId, trader, order);
+
+        // Reconfigure market to lower the remainingCapacity such that it's < collateralDepositAmount but > 0.
+        //
+        // This effectively gives us a liquidation max cap at 1.
+        const liquidationRewardPercent = bn(0.1);
+        await setMarketConfigurationById(bs, marketId, {
+          liquidationLimitScalar: bn(0.01),
+          makerFee: bn(0.0001),
+          takerFee: bn(0.0001),
+          skewScale: bn(500_000),
+          liquidationRewardPercent,
+        });
+
+        const capBefore = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.gt(capBefore.remainingCapacity, 0);
+        assertBn.lt(capBefore.remainingCapacity, collateralDepositAmount);
+
+        // Price moves 10% and results in a healthFactor of < 1.
+        //
+        // 10k -> 9k
+        const marketOraclePrice2 = wei(marketOraclePrice1).mul(0.9).toBN();
+        await market.aggregator().mockSetCurrentPrice(marketOraclePrice2);
+
+        // Expect liquidation reward to be 10% of the notional value.
+        //
+        // (100 * 9000) * 0.1 = 90k
+        const { liqReward: totalLiqRewards } = await PerpMarketProxy.getLiquidationFees(trader.accountId, marketId);
+        assertBn.equal(
+          wei(order.sizeDelta).mul(marketOraclePrice2).mul(liquidationRewardPercent).toBN(),
+          totalLiqRewards
+        );
+
+        // Dead.
+        await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+        let accLiqRewards = bn(0);
+        let remainingSize = bn(-1);
+
+        // Perform enough partial liquidations until fully liquidated.
+        while (!remainingSize.isZero()) {
+          const { receipt } = await withExplicitEvmMine(
+            () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+            provider()
+          );
+          const { liqReward: _liqReward, remainingSize: _remSize } = findEventSafe(
+            receipt,
+            'PositionLiquidated',
+            PerpMarketProxy
+          )?.args;
+          accLiqRewards = accLiqRewards.add(_liqReward);
+          remainingSize = _remSize;
+        }
+
+        // `sum(liqReward)` should equal to liqReward from the prior step.
+        assertBn.equal(accLiqRewards, totalLiqRewards);
+      });
+
+      it('should cap liqReward to the maxKeeperFee');
+
+      it('should cap liqreward to the minKeeperFee');
+
+      it('should result in a higher liqReward if market price moves in favour of position');
+
+      it('should result in a lower liqReward if market moves unfavourably of position');
 
       it('should use up cap (partial) before exceeding if pd < maxPd');
 

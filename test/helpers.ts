@@ -216,7 +216,7 @@ export const fastForwardBySec = async (provider: ethers.providers.JsonRpcProvide
 
 /** Search for events in `receipt.logs` in a non-throw (safe) way. */
 export const findEventSafe = (receipt: ContractReceipt, eventName: string, contract: Contract) => {
-  return receipt.logs
+  const logDescription = receipt.logs
     .map((log) => {
       try {
         return contract.interface.parseLog(log);
@@ -225,6 +225,8 @@ export const findEventSafe = (receipt: ContractReceipt, eventName: string, contr
       }
     })
     .find((parsedEvent) => parsedEvent?.name === eventName);
+
+  return logDescription ? logDescription : raise(`Cannot find '${eventName}' in logs`);
 };
 
 /**
