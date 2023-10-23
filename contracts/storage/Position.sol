@@ -301,14 +301,15 @@ library Position {
 
     /**
      * @dev Returns the liqReward (without IM/MM). Useful if you just want liqReward without the heavy gas costs of
-     * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price).
+     * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price). Note that size
+     * is a uint so shorts must be .abs before passed through.
      */
     function getLiquidationReward(
-        uint128 positionSizeAbs,
+        uint128 size,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
-        return positionSizeAbs.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
+        return size.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
     }
 
     /**
