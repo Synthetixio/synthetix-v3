@@ -411,7 +411,7 @@ describe('Cancel Offchain Async Order test', () => {
               .cancelPythOrder(pythPriceData, extraData, { value: updateFee });
           });
 
-          it('emits event cancelOrder event', async () => {
+          it('emits cancelOrder event', async () => {
             const accountId = 2;
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1051)).toBN();
             const sizeDelta = bn(1);
@@ -435,6 +435,31 @@ describe('Cancel Offchain Async Order test', () => {
             );
           });
 
+          it('emits collateral deducted events', async () => {
+            let pendingSettlementRewards = settlementReward;
+            const accountId = 2;
+
+            for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
+              const collateral = testCase.collateralData.collaterals[i];
+              const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
+              let deductedCollateralAmount: ethers.BigNumber = bn(0);
+              if (synthMarket == 0) {
+                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingSettlementRewards)
+                  ? collateral.snxUSDAmount()
+                  : pendingSettlementRewards;
+              } else {
+                deductedCollateralAmount = pendingSettlementRewards.div(10_000);
+              }
+              pendingSettlementRewards = pendingSettlementRewards.sub(deductedCollateralAmount);
+
+              await assertEvent(
+                settleTx,
+                `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
+                systems().PerpsMarket
+              );
+            }
+          });
+
           it('updates balances accordingly', async () => {
             const accountBalanceAfter = await systems().PerpsMarket.getAvailableMargin(2);
             const keeperBalanceAfter = await systems().USD.balanceOf(await keeper().getAddress());
@@ -451,69 +476,3 @@ describe('Cancel Offchain Async Order test', () => {
     });
   }
 });
-
-//   before('add collateral', async () => {
-//     await depositCollateral({
-//       systems,
-//       trader: trader1,
-//       accountId: () => 2,
-//       collaterals: [
-//         {
-//           snxUSDAmount: () => bn(10_000),
-//         },
-//       ],
-//     });
-//   });
-//   before('commit order', async () => {
-//     const tx = await systems()
-//       .PerpsMarket.connect(trader1())
-//       .commitOrder({
-//         marketId: ethMarketId,
-//         accountId: 2,
-//         sizeDelta: bn(1),
-//         settlementStrategyId: 0,
-//         acceptablePrice: bn(1050), // 5% slippage
-//         referrer: ethers.constants.AddressZero,
-//         trackingCode: ethers.constants.HashZero,
-//       });
-//     await tx.wait();
-//     assertBn.equal((await systems().PerpsMarket.getOrder(ethMarketId, 2)).sizeDelta, bn(1));
-//   });
-//   describe('errors', () => {
-//     it('commit can not be canceled when settlement window is withing range', async () => {
-//       await assertRevert(
-//         systems().PerpsMarket.cancelOrder(ethMarketId, 2),
-//         `SettlementWindowNotExpired`,
-//         systems().PerpsMarket
-//       );
-//     });
-
-//     it('commit can not be canceled when its not existing', async () => {
-//       await assertRevert(
-//         systems().PerpsMarket.cancelOrder(ethMarketId, 3),
-//         'OrderNotValid()',
-//         systems().PerpsMarket
-//       );
-//     });
-//   });
-
-//   describe('success', () => {
-//     let tx: ContractTransaction;
-//     before('fast forward outside of settlement window', async () => {
-//       await fastForwardTo((await getTime(provider())) + 9000000000, provider());
-//       tx = await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
-//     });
-//     it('emits event when order is canceled', async () => {
-//       // Ignore settlement time and price for the event
-//       await assertEvent(
-//         tx,
-//         `OrderCanceled(${perpsMarkets()[0].marketId()}, 2,`,
-//         systems().PerpsMarket
-//       );
-//     });
-//     it('sizeDelta is 0 when order is canceled', async () => {
-//       const orderAfterCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
-//       assertBn.equal(orderAfterCancelation.sizeDelta, bn(0));
-//     });
-//   });
-// });

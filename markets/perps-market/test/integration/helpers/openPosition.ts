@@ -65,5 +65,5 @@ export const openPosition = async (data: OpenPositionData) => {
   });
   const settleTime = await getTxTime(provider(), settleTx);
 
-  return settleTime;
+  return { settleTime, settleTx };
 };

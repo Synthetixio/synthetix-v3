@@ -431,7 +431,7 @@ describe('Settle Offchain Async Order test', () => {
               .settlePythOrder(pythPriceData, extraData, { value: updateFee });
           });
 
-          it('emits event settle event', async () => {
+          it('emits settle event', async () => {
             const accountId = 2;
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
             const sizeDelta = bn(1);
@@ -487,6 +487,31 @@ describe('Settle Offchain Async Order test', () => {
               `MarketUpdated(${params.join(', ')})`,
               systems().PerpsMarket
             );
+          });
+
+          it('emits collateral deducted events', async () => {
+            let pendingTotalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const accountId = 2;
+
+            for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
+              const collateral = testCase.collateralData.collaterals[i];
+              const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
+              let deductedCollateralAmount: ethers.BigNumber = bn(0);
+              if (synthMarket == 0) {
+                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingTotalFees)
+                  ? collateral.snxUSDAmount()
+                  : pendingTotalFees;
+              } else {
+                deductedCollateralAmount = pendingTotalFees.div(10_000);
+              }
+              pendingTotalFees = pendingTotalFees.sub(deductedCollateralAmount);
+
+              await assertEvent(
+                settleTx,
+                `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
+                systems().PerpsMarket
+              );
+            }
           });
 
           it('check position is live', async () => {

@@ -1793,31 +1793,6 @@ export class CoreProxy__getPositionResult {
   }
 }
 
-export class CoreProxy__getPositionCollateralResult {
-  value0: BigInt;
-  value1: BigInt;
-
-  constructor(value0: BigInt, value1: BigInt) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
-    return map;
-  }
-
-  getAmount(): BigInt {
-    return this.value0;
-  }
-
-  getValue(): BigInt {
-    return this.value1;
-  }
-}
-
 export class CoreProxy__getVaultCollateralResult {
   value0: BigInt;
   value1: BigInt;
@@ -3105,21 +3080,6 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getMessageSender(): Address {
-    let result = super.call('getMessageSender', 'getMessageSender():(address)', []);
-
-    return result[0].toAddress();
-  }
-
-  try_getMessageSender(): ethereum.CallResult<Address> {
-    let result = super.tryCall('getMessageSender', 'getMessageSender():(address)', []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toAddress());
-  }
-
   multicall(data: Array<Bytes>): Array<Bytes> {
     let result = super.call('multicall', 'multicall(bytes[]):(bytes[])', [
       ethereum.Value.fromBytesArray(data),
@@ -3471,6 +3431,40 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  getTrustedForwarder(): Address {
+    let result = super.call('getTrustedForwarder', 'getTrustedForwarder():(address)', []);
+
+    return result[0].toAddress();
+  }
+
+  try_getTrustedForwarder(): ethereum.CallResult<Address> {
+    let result = super.tryCall('getTrustedForwarder', 'getTrustedForwarder():(address)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  isTrustedForwarder(forwarder: Address): boolean {
+    let result = super.call('isTrustedForwarder', 'isTrustedForwarder(address):(bool)', [
+      ethereum.Value.fromAddress(forwarder),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_isTrustedForwarder(forwarder: Address): ethereum.CallResult<boolean> {
+    let result = super.tryCall('isTrustedForwarder', 'isTrustedForwarder(address):(bool)', [
+      ethereum.Value.fromAddress(forwarder),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
   setSupportedCrossChainNetworks(
     supportedNetworks: Array<BigInt>,
     ccipSelectors: Array<BigInt>
@@ -3576,14 +3570,10 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
-  getPositionCollateral(
-    accountId: BigInt,
-    poolId: BigInt,
-    collateralType: Address
-  ): CoreProxy__getPositionCollateralResult {
+  getPositionCollateral(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
       'getPositionCollateral',
-      'getPositionCollateral(uint128,uint128,address):(uint256,uint256)',
+      'getPositionCollateral(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3591,17 +3581,17 @@ export class CoreProxy extends ethereum.SmartContract {
       ]
     );
 
-    return new CoreProxy__getPositionCollateralResult(result[0].toBigInt(), result[1].toBigInt());
+    return result[0].toBigInt();
   }
 
   try_getPositionCollateral(
     accountId: BigInt,
     poolId: BigInt,
     collateralType: Address
-  ): ethereum.CallResult<CoreProxy__getPositionCollateralResult> {
+  ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
       'getPositionCollateral',
-      'getPositionCollateral(uint128,uint128,address):(uint256,uint256)',
+      'getPositionCollateral(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3612,9 +3602,7 @@ export class CoreProxy extends ethereum.SmartContract {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new CoreProxy__getPositionCollateralResult(value[0].toBigInt(), value[1].toBigInt())
-    );
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getPositionCollateralRatio(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
@@ -5556,82 +5544,6 @@ export class MulticallCall__Outputs {
 
   get results(): Array<Bytes> {
     return this._call.outputValues[0].value.toBytesArray();
-  }
-}
-
-export class MulticallThroughCall extends ethereum.Call {
-  get inputs(): MulticallThroughCall__Inputs {
-    return new MulticallThroughCall__Inputs(this);
-  }
-
-  get outputs(): MulticallThroughCall__Outputs {
-    return new MulticallThroughCall__Outputs(this);
-  }
-}
-
-export class MulticallThroughCall__Inputs {
-  _call: MulticallThroughCall;
-
-  constructor(call: MulticallThroughCall) {
-    this._call = call;
-  }
-
-  get to(): Array<Address> {
-    return this._call.inputValues[0].value.toAddressArray();
-  }
-
-  get data(): Array<Bytes> {
-    return this._call.inputValues[1].value.toBytesArray();
-  }
-
-  get values(): Array<BigInt> {
-    return this._call.inputValues[2].value.toBigIntArray();
-  }
-}
-
-export class MulticallThroughCall__Outputs {
-  _call: MulticallThroughCall;
-
-  constructor(call: MulticallThroughCall) {
-    this._call = call;
-  }
-
-  get results(): Array<Bytes> {
-    return this._call.outputValues[0].value.toBytesArray();
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall extends ethereum.Call {
-  get inputs(): SetAllowlistedMulticallTargetCall__Inputs {
-    return new SetAllowlistedMulticallTargetCall__Inputs(this);
-  }
-
-  get outputs(): SetAllowlistedMulticallTargetCall__Outputs {
-    return new SetAllowlistedMulticallTargetCall__Outputs(this);
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall__Inputs {
-  _call: SetAllowlistedMulticallTargetCall;
-
-  constructor(call: SetAllowlistedMulticallTargetCall) {
-    this._call = call;
-  }
-
-  get target(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get allowlisted(): boolean {
-    return this._call.inputValues[1].value.toBoolean();
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall__Outputs {
-  _call: SetAllowlistedMulticallTargetCall;
-
-  constructor(call: SetAllowlistedMulticallTargetCall) {
-    this._call = call;
   }
 }
 

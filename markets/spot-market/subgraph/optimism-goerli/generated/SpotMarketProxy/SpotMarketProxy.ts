@@ -1689,20 +1689,16 @@ export class SpotMarketProxy__addSettlementStrategyInputStrategyStruct extends e
     return this[6].toBigInt();
   }
 
-  get priceDeviationTolerance(): BigInt {
+  get minimumUsdExchangeAmount(): BigInt {
     return this[7].toBigInt();
   }
 
-  get minimumUsdExchangeAmount(): BigInt {
+  get maxRoundingLoss(): BigInt {
     return this[8].toBigInt();
   }
 
-  get maxRoundingLoss(): BigInt {
-    return this[9].toBigInt();
-  }
-
   get disabled(): boolean {
-    return this[10].toBoolean();
+    return this[9].toBoolean();
   }
 }
 
@@ -1735,20 +1731,16 @@ export class SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruc
     return this[6].toBigInt();
   }
 
-  get priceDeviationTolerance(): BigInt {
+  get minimumUsdExchangeAmount(): BigInt {
     return this[7].toBigInt();
   }
 
-  get minimumUsdExchangeAmount(): BigInt {
+  get maxRoundingLoss(): BigInt {
     return this[8].toBigInt();
   }
 
-  get maxRoundingLoss(): BigInt {
-    return this[9].toBigInt();
-  }
-
   get disabled(): boolean {
-    return this[10].toBoolean();
+    return this[9].toBoolean();
   }
 }
 
@@ -1880,6 +1872,25 @@ export class SpotMarketProxy__getMarketFeesResult {
 export class SpotMarketProxy extends ethereum.SmartContract {
   static bind(address: Address): SpotMarketProxy {
     return new SpotMarketProxy('SpotMarketProxy', address);
+  }
+
+  multicall(data: Array<Bytes>): Array<Bytes> {
+    let result = super.call('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+
+    return result[0].toBytesArray();
+  }
+
+  try_multicall(data: Array<Bytes>): ethereum.CallResult<Array<Bytes>> {
+    let result = super.tryCall('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytesArray());
   }
 
   getImplementation(): Address {
@@ -2700,7 +2711,7 @@ export class SpotMarketProxy extends ethereum.SmartContract {
   ): BigInt {
     let result = super.call(
       'addSettlementStrategy',
-      'addSettlementStrategy(uint128,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool)):(uint256)',
+      'addSettlementStrategy(uint128,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,bool)):(uint256)',
       [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromTuple(strategy)]
     );
 
@@ -2713,7 +2724,7 @@ export class SpotMarketProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
       'addSettlementStrategy',
-      'addSettlementStrategy(uint128,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool)):(uint256)',
+      'addSettlementStrategy(uint128,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,bool)):(uint256)',
       [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromTuple(strategy)]
     );
     if (result.reverted) {
@@ -2729,7 +2740,7 @@ export class SpotMarketProxy extends ethereum.SmartContract {
   ): SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruct {
     let result = super.call(
       'getSettlementStrategy',
-      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool))',
+      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,bool))',
       [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(strategyId)]
     );
 
@@ -2744,7 +2755,7 @@ export class SpotMarketProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruct> {
     let result = super.tryCall(
       'getSettlementStrategy',
-      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool))',
+      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,bool))',
       [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(strategyId)]
     );
     if (result.reverted) {
@@ -3117,6 +3128,40 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+}
+
+export class MulticallCall extends ethereum.Call {
+  get inputs(): MulticallCall__Inputs {
+    return new MulticallCall__Inputs(this);
+  }
+
+  get outputs(): MulticallCall__Outputs {
+    return new MulticallCall__Outputs(this);
+  }
+}
+
+export class MulticallCall__Inputs {
+  _call: MulticallCall;
+
+  constructor(call: MulticallCall) {
+    this._call = call;
+  }
+
+  get data(): Array<Bytes> {
+    return this._call.inputValues[0].value.toBytesArray();
+  }
+}
+
+export class MulticallCall__Outputs {
+  _call: MulticallCall;
+
+  constructor(call: MulticallCall) {
+    this._call = call;
+  }
+
+  get results(): Array<Bytes> {
+    return this._call.outputValues[0].value.toBytesArray();
   }
 }
 
@@ -4441,20 +4486,16 @@ export class AddSettlementStrategyCallStrategyStruct extends ethereum.Tuple {
     return this[6].toBigInt();
   }
 
-  get priceDeviationTolerance(): BigInt {
+  get minimumUsdExchangeAmount(): BigInt {
     return this[7].toBigInt();
   }
 
-  get minimumUsdExchangeAmount(): BigInt {
+  get maxRoundingLoss(): BigInt {
     return this[8].toBigInt();
   }
 
-  get maxRoundingLoss(): BigInt {
-    return this[9].toBigInt();
-  }
-
   get disabled(): boolean {
-    return this[10].toBoolean();
+    return this[9].toBoolean();
   }
 }
 

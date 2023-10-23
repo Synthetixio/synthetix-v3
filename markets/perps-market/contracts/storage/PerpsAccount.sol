@@ -342,30 +342,43 @@ library PerpsAccount {
         }
     }
 
+    /**
+     * @notice  This function deducts snxUSD from an account
+     * @dev It uses the synth deduction priority to determine which synth to deduct from first
+     * @dev if the synth is not snxUSD it will sell the synth for snxUSD
+     * @dev Returns two arrays with the synth ids and amounts deducted
+     */
     function deductFromAccount(
         Data storage self,
         uint amount // snxUSD
-    ) internal {
+    ) internal returns (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) {
         uint leftoverAmount = amount;
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
             .synthDeductionPriority;
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         ISpotMarketSystem spotMarket = factory.spotMarket;
+
+        deductedSynthIds = new uint128[](synthDeductionPriority.length);
+        deductedAmount = new uint256[](synthDeductionPriority.length);
+
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
             uint128 synthMarketId = synthDeductionPriority[i];
             uint availableAmount = self.collateralAmounts[synthMarketId];
             if (availableAmount == 0) {
                 continue;
             }
+            deductedSynthIds[i] = synthMarketId;
 
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
+                    deductedAmount[i] = leftoverAmount;
                     updateCollateralAmount(self, synthMarketId, -(leftoverAmount.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
+                    deductedAmount[i] = availableAmount;
                     updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= availableAmount;
                 }
@@ -393,6 +406,7 @@ library PerpsAccount {
 
                     factory.depositMarketUsd(leftoverAmount);
 
+                    deductedAmount[i] = amountToDeduct;
                     updateCollateralAmount(self, synthMarketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;
                     break;
@@ -412,6 +426,7 @@ library PerpsAccount {
 
                     factory.depositMarketUsd(amountToDeductUsd);
 
+                    deductedAmount[i] = availableAmount;
                     updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= amountToDeductUsd;
                 }
