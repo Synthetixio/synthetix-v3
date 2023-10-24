@@ -776,8 +776,20 @@ describe('SynthetixElectionModule - Elections', () => {
 
                     describe('when the election is resolved', () => {
                       before('resolve', async () => {
-                        const [mothership] = chains;
-                        await (await mothership.CoreProxy.resolve()).wait();
+                        const [mothership, satellite1, satellite2] = chains;
+                        const rx = await (await mothership.CoreProxy.resolve()).wait();
+                        await ccipReceive({
+                          rx,
+                          ccipAddress: satellite1.CcipRouter.address,
+                          sourceChainSelector: ChainSelector.Sepolia,
+                          targetSigner: satellite1.signer,
+                        });
+                        await ccipReceive({
+                          rx,
+                          ccipAddress: satellite2.CcipRouter.address,
+                          sourceChainSelector: ChainSelector.Sepolia,
+                          targetSigner: satellite2.signer,
+                        });
                       });
 
                       it('shows the expected NFT owners', async () => {
