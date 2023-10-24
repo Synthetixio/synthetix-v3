@@ -1,0 +1,10 @@
+name = "rewards-dsitributor"
+version = "<%= package.version %>"
+description = "Rewards distributor for Core Synthetix v3"
+keywords = ["rewards", "synthetix"]
+
+[setting.salt]
+defaultValue = "rewards"
+
+[contract.RewardsDistributor]
+artifact = "RewardsDistributor"
