@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IRewardsManagerModule} from "lib/synthetix-v3/protocol/synthetix/contracts/interfaces/IRewardsManagerModule.sol"; 
-import {IRewardDistributor} from "lib/synthetix-v3/protocol/synthetix/contracts/interfaces/external/IRewardDistributor.sol";
-import {AccessError} from "lib/synthetix-v3/utils/core-contracts/contracts/errors/AccessError.sol";
-import {IERC20} from "lib/synthetix-v3/utils/core-contracts/contracts/interfaces/IERC20.sol";
+import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol"; 
+import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 
 contract RewardsDistributor is IRewardDistributor {
     address private _rewardManager;
