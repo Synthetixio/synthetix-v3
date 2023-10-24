@@ -10,6 +10,7 @@ import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
 contract ElectionTally {
     using SetUtil for SetUtil.AddressSet;
+    using SetUtil for SetUtil.Bytes32Set;
     using Council for Council.Data;
 
     uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;
@@ -23,7 +24,7 @@ contract ElectionTally {
             numBallots = _DEFAULT_EVALUATION_BATCH_SIZE;
         }
 
-        uint totalBallots = election.ballotPtrs.length;
+        uint totalBallots = election.ballotPtrs.length();
 
         uint firstBallotIndex = election.numEvaluatedBallots;
 
@@ -44,7 +45,7 @@ contract ElectionTally {
         uint numSeats = settings.epochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
-            bytes32 ballotPtr = election.ballotPtrs[ballotIndex];
+            bytes32 ballotPtr = election.ballotPtrs.valueAt(ballotIndex + 1);
             Ballot.Data storage ballot;
 
             assembly {
