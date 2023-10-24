@@ -1253,12 +1253,13 @@ describe('LiquidationModule', () => {
         while (!position.size.isZero()) {
           // Attempt to liquidate.
           //
-          // No liquidations would have occurred during the first iteration. We will hit cap.
+          // No caps would have been met on the first iteration.
           await withExplicitEvmMine(
             () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
             provider()
           );
 
+          // Subsequent liquidation attempts should have reached cap.
           if (liquidationIterations > 0) {
             const { remainingCapacity } = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
             assertBn.isZero(remainingCapacity);
@@ -1267,7 +1268,6 @@ describe('LiquidationModule', () => {
           // Resulting position's size should be oldPosition.size - maxLiquidatableCapacity
           const nextPosition = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
           const amountLiquidated = Wei.min(wei(position.size.abs()), wei(maxLiquidatableCapacity)).toBN();
-
           assertBn.equal(nextPosition.size.abs(), position.size.abs().sub(amountLiquidated));
 
           // Open an order in the opposite side to bring skew / skewScale < maxPd
@@ -1281,7 +1281,7 @@ describe('LiquidationModule', () => {
             })
           );
           const order = await genOrder(bs, market, oCollateral, ocollateralDepositAmount, {
-            desiredSize: amountLiquidated.mul(orderSide).mul(orderSide),
+            desiredSize: amountLiquidated.mul(orderSide).mul(orderSide), // .mul . mul to ensure we're on the opposite side.
             desiredKeeperFeeBufferUsd: 0,
           });
           await commitAndSettle(bs, marketId, otherTrader, order);
