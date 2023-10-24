@@ -6,5 +6,18 @@ keywords = ["rewards", "synthetix"]
 [setting.salt]
 defaultValue = "rewards"
 
+[setting.rewardManager]
+defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+description="Initialization value for the reward manager (core proxy)"
+
+[setting.token]
+defaultValue = "0x2E5ED97596a8368EB9E44B1f3F25B2E813845303"
+description="Address of the distributed token"
+
+[setting.distributorName]
+defaultValue = "Rewards Distributor V3"
+description="Initialization value for the rewards distributor"
+
 [contract.RewardsDistributor]
 artifact = "RewardsDistributor"
+args = ["<%= settings.rewardManager %>", "<%= settings.token %>", "<%= settings.distributorName %>"]
