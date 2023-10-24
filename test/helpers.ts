@@ -269,3 +269,5 @@ export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
   const found = l.find(p);
   return found ? found : raise('Cannot find in l');
 };
+
+export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(() => resolve(), ms));
