@@ -25,6 +25,7 @@ This is a monorepo with the following folder structure and packages:
 │   └── spot-market              // Market extension for spot synths.
 │
 ├── protocol                     // Core Synthetix protocol projects.
+│   ├── governance               // Governance contracts for on chain voting.
 │   ├── oracle-manager           // Composable oracle and price provider for the core protocol.
 │   └── synthetix                // Core protocol (to be extended by markets).
 │
@@ -33,7 +34,8 @@ This is a monorepo with the following folder structure and packages:
     ├── core-contracts           // Standard contract implementations like ERC20, adapted for custom router storage.
     ├── core-modules             // Modules intended to be reused between multiple router based projects.
     ├── core-utils               // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
-    ├── router                   // Cannon plugin that merges multiple modules into a router contract.
+    ├── deps                     // Dependency handling (e.g. mismatched, circular etc.)
+    ├── docgen                   // Auto-generate docs from natspec etc.
     ├── hardhat-storage          // Hardhat plugin used to detect storage collisions between proxy implementations.
     └── sample-project           // Sample project based on router proxy and cannon.
 ```
