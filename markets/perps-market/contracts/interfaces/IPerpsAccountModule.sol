@@ -47,7 +47,7 @@ interface IPerpsAccountModule {
      * @notice Gets the account's collaterals ids
      * @param accountId Id of the account.
      */
-    function getAccounthCollateralIds(uint128 accountId) external view returns (uint256[] memory);
+    function getAccountCollateralIds(uint128 accountId) external view returns (uint256[] memory);
 
     /**
      * @notice Gets all markets that a given account id has a position in

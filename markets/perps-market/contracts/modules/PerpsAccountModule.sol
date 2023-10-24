@@ -181,7 +181,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     /**
      * @inheritdoc IPerpsAccountModule
      */
-    function getAccounthCollateralIds(
+    function getAccountCollateralIds(
         uint128 accountId
     ) external view override returns (uint256[] memory) {
         return PerpsAccount.load(accountId).activeCollateralTypes.values();
