@@ -39,7 +39,7 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@types/prompts": "^2.4.5",
-    "@usecannon/builder": "2.8.1",
+    "@usecannon/builder": "2.9.0-alpha.1",
     "ethers": "^5.7.2",
     "hardhat": "^2.17.4",
     "mocha": "^10.2.0",
