@@ -152,7 +152,7 @@ library PerpsMarketFactory {
 
         (, , uint256 stalenessTolerance) = abi.decode(
             nodeDef.parameters,
-            (address, uint128, uint256)
+            (address, bytes32, uint256)
         );
         return stalenessTolerance;
     }
