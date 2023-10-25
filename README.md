@@ -44,7 +44,7 @@ This is a monorepo with the following folder structure and packages:
 
 All projects in this monorepo that involve contracts use a proxy architecture developed by Synthetix referred to as the "Router Proxy". It is basically a way to merge several contracts, which we call "modules", into a single implementation contract which is the router itself. This router is used as the implementation of the main proxy of the system.
 
-See the [Router README](https://github.com/Synthetixio/synthetix-router/blob/master/README.md) for more details.
+See the [Router README](https://github.com/Synthetixio/synthetix-router) for more details.
 
 ⚠️ When using the Router as an implementation of a UUPS [Universal Upgradeable Proxy Standard](https://eips.ethereum.org/EIPS/eip-1822) be aware that any of the public functions defined in the Proxy could clash and override any of the Router modules functions. A malicious proxy owner could use this type of obfuscation to have users run code which they do not want to run. You can imagine scenarios where the function names do not look similar but share a function selector. ⚠️
 

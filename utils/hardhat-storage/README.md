@@ -8,7 +8,7 @@ Hardhat Plugin to validate storage usage on a set of solidity contracts. The int
 
 It makes sure that your contracts are not using [state variables](https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html) to avoid any storage collisions between different contracts executed behind the same Proxy.
 
-To avoid this error it is recommended to use [Storage Namespaces](https://github.com/Synthetixio/synthetix-router/blob/master/README.md#storage-namespaces).
+To avoid this error it is recommended to use [Storage Namespaces](https://github.com/Synthetixio/synthetix-router#storage-namespaces).
 
 ### Storage Namespace Slots
 
