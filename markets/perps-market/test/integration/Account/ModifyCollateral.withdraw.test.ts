@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { DEFAULT_PRICE_TOLERANCE, bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -44,7 +44,11 @@ describe('ModifyCollateral Withdraw', () => {
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(
+          synthBTCMarketId,
+          ethers.constants.MaxUint256,
+          DEFAULT_PRICE_TOLERANCE
+        );
     });
 
     before('trader1 buys 1 snxBTC', async () => {
@@ -97,7 +101,11 @@ describe('ModifyCollateral Withdraw', () => {
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(
+          synthBTCMarketId,
+          ethers.constants.MaxUint256,
+          DEFAULT_PRICE_TOLERANCE
+        );
     });
 
     before('trader1 buys 1 snxBTC', async () => {

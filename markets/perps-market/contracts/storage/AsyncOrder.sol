@@ -383,32 +383,25 @@ library AsyncOrder {
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
     ) internal view returns (uint256 fillPrice) {
-        SimulateDataRuntime memory runtime;
-        runtime.sizeDelta = order.request.sizeDelta;
-        runtime.accountId = order.request.accountId;
-        runtime.marketId = order.request.marketId;
-
         checkWithinSettlementWindow(order, strategy);
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
 
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            runtime.marketId
+            order.request.marketId
         );
 
-        runtime.fillPrice = AsyncOrder.calculateFillPrice(
+        fillPrice = calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
-            runtime.sizeDelta,
+            order.request.sizeDelta,
             orderPrice
         );
 
         // check if fill price exceeded acceptable price
-        if (!acceptablePriceExceeded(order, runtime.fillPrice)) {
-            revert AcceptablePriceNotExceeded(runtime.fillPrice, order.request.acceptablePrice);
+        if (!acceptablePriceExceeded(order, fillPrice)) {
+            revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice);
         }
-
-        return runtime.fillPrice;
     }
 
     /**
@@ -529,7 +522,7 @@ library AsyncOrder {
 
         // get maintenance margin of old position
         (, , , uint256 oldRequiredMargin, uint256 oldLiquidationReward) = marketConfig
-            .calculateRequiredMargins(oldPositionSize, PerpsPrice.getCurrentPrice(marketId, false));
+            .calculateRequiredMargins(oldPositionSize, PerpsPrice.getCurrentPrice(marketId, true));
 
         // remove the maintenance margin and add the initial margin requirement
         // this gets us our total required margin for new position

@@ -432,8 +432,20 @@ library OrderFees {
     }
 }
 
-// @custom:artifact contracts/interfaces/IAsyncOrderSettlementModule.sol:IAsyncOrderSettlementModule
-interface IAsyncOrderSettlementModule {
+// @custom:artifact contracts/interfaces/IAsyncOrderCancelModule.sol:IAsyncOrderCancelModule
+interface IAsyncOrderCancelModule {
+    struct CancelOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 sizeDelta;
+        uint256 settlementReward;
+        uint256 fillPrice;
+        uint256 acceptablePrice;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IAsyncOrderSettlementPythModule.sol:IAsyncOrderSettlementPythModule
+interface IAsyncOrderSettlementPythModule {
     struct SettleOrderRuntime {
         uint128 marketId;
         uint128 accountId;
@@ -480,11 +492,6 @@ interface IPythVerifier {
     }
 }
 
-// @custom:artifact contracts/modules/AsyncOrderSettlementModule.sol:AsyncOrderSettlementModule
-contract AsyncOrderSettlementModule {
-    int256 public constant PRECISION = 18;
-}
-
 // @custom:artifact contracts/modules/PerpsMarketFactoryModule.sol:PerpsMarketFactoryModule
 contract PerpsMarketFactoryModule {
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
@@ -510,18 +517,18 @@ library AsyncOrder {
         int128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
-        uint fillPrice;
-        uint orderFees;
-        uint availableMargin;
-        uint currentLiquidationMargin;
-        uint accumulatedLiquidationRewards;
-        uint currentLiquidationReward;
+        uint256 fillPrice;
+        uint256 orderFees;
+        uint256 availableMargin;
+        uint256 currentLiquidationMargin;
+        uint256 accumulatedLiquidationRewards;
+        uint256 currentLiquidationReward;
         int128 newPositionSize;
-        uint newNotionalValue;
+        uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint requiredMaintenanceMargin;
-        uint initialRequiredMargin;
-        uint totalRequiredMargin;
+        uint256 requiredMaintenanceMargin;
+        uint256 initialRequiredMargin;
+        uint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
     }
@@ -562,6 +569,7 @@ library GlobalPerpsMarketConfiguration {
         uint maxLiquidationRewardUsd;
         uint128 maxPositionsPerAccount;
         uint128 maxCollateralsPerAccount;
+        mapping(uint128 => uint) collateralStalenessTolerances;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -690,6 +698,7 @@ library PerpsMarketFactory {
 library PerpsPrice {
     struct Data {
         bytes32 feedId;
+        uint256 strictStalenessTolerance;
     }
     function load(uint128 marketId) internal pure returns (Data storage price) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Price", marketId));
@@ -725,4 +734,9 @@ library SettlementStrategy {
         uint256 settlementReward;
         bool disabled;
     }
+}
+
+// @custom:artifact contracts/utils/OffchainUtil.sol:OffchainUtil
+library OffchainUtil {
+    int256 private constant PRECISION = 18;
 }
