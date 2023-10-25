@@ -44,7 +44,7 @@ describe('MarketManagerModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'registerMarket',
-      () => systems().Core.connect(user2).registerMarket(user1.getAddress())
+      () => systems().Core.connect(user2).registerMarket(MockMarket().address)
     );
 
     it('reverts when trying to register a market that does not support the IMarket interface', async function () {
