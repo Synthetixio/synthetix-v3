@@ -45,7 +45,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert ExceedsMaxUsdAmount(maxUsdAmount, usdAmountCharged);
         }
 
-        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount);
+        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount, 0);
         if (sellUsd > usdAmountCharged) {
             revert InvalidPrices();
         }
@@ -118,7 +118,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, synthAmount);
         }
 
-        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount);
+        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount, 0);
         if (sellUsd > usdAmount) {
             revert InvalidPrices();
         }
@@ -153,7 +153,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         (synthAmount, fees, ) = MarketConfiguration.quoteBuyExactIn(
             marketId,
             usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY, priceStalenessTolerance),
+            Price.getCurrentPriceWithTolerance(
+                marketId,
+                Transaction.Type.BUY,
+                priceStalenessTolerance
+            ),
             ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );
@@ -164,14 +168,19 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteBuyExactOut(
         uint128 marketId,
-        uint256 synthAmount
+        uint256 synthAmount,
+        uint256 priceStalenessTolerance
     ) external view override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.load().validateMarket(marketId);
 
         (usdAmountCharged, fees, ) = MarketConfiguration.quoteBuyExactOut(
             marketId,
             synthAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            Price.getCurrentPriceWithTolerance(
+                marketId,
+                Transaction.Type.BUY,
+                priceStalenessTolerance
+            ),
             ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );
@@ -182,14 +191,19 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteSellExactIn(
         uint128 marketId,
-        uint256 synthAmount
+        uint256 synthAmount,
+        uint256 priceStalenessTolerance
     ) public view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().validateMarket(marketId);
 
         (returnAmount, fees, ) = MarketConfiguration.quoteSellExactIn(
             marketId,
             synthAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            Price.getCurrentPriceWithTolerance(
+                marketId,
+                Transaction.Type.SELL,
+                priceStalenessTolerance
+            ),
             ERC2771Context._msgSender(),
             Transaction.Type.SELL
         );
@@ -200,14 +214,19 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteSellExactOut(
         uint128 marketId,
-        uint256 usdAmount
+        uint256 usdAmount,
+        uint256 priceStalenessTolerance
     ) external view override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.load().validateMarket(marketId);
 
         (synthToBurn, fees, ) = MarketConfiguration.quoteSellExactOut(
             marketId,
             usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            Price.getCurrentPriceWithTolerance(
+                marketId,
+                Transaction.Type.SELL,
+                priceStalenessTolerance
+            ),
             ERC2771Context._msgSender(),
             Transaction.Type.SELL
         );
@@ -251,7 +270,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
         }
 
-        (uint buySynths, ) = quoteBuyExactIn(marketId, returnAmount);
+        (uint buySynths, ) = quoteBuyExactIn(marketId, returnAmount, 0);
         if (buySynths > synthAmount) {
             revert InvalidPrices();
         }
@@ -304,7 +323,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert ExceedsMaxSynthAmount(maxSynthAmount, synthToBurn);
         }
 
-        (uint buySynths, ) = quoteBuyExactIn(marketId, usdAmount);
+        (uint buySynths, ) = quoteBuyExactIn(marketId, usdAmount, 0);
         if (buySynths > synthToBurn) {
             revert InvalidPrices();
         }

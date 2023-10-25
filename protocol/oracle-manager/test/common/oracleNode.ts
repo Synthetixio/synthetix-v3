@@ -29,6 +29,29 @@ export const createOracleNode = async (
     aggregator,
   };
 };
+export const DEFAULT_PRICE_TOLERANCE = ethers.BigNumber.from(60 * 60);
+export const createPythNode = async (
+  owner: ethers.Signer,
+  price: ethers.BigNumber,
+  OracleManager: Proxy
+) => {
+  const abi = ethers.utils.defaultAbiCoder;
+  const factory = await hre.ethers.getContractFactory('MockPythExternalNode');
+  const aggregator = await factory.connect(owner).deploy();
+  await aggregator.mockSetCurrentPrice(price);
+
+  const params = abi.encode(
+    ['address', 'bytes32', 'uint256'],
+    [aggregator.address, ethers.utils.hexZeroPad('0x', 32), DEFAULT_PRICE_TOLERANCE]
+  );
+  await OracleManager.connect(owner).registerNode(NodeTypes.EXTERNAL, params, []);
+  const oracleNodeId = await OracleManager.connect(owner).getNodeId(NodeTypes.EXTERNAL, params, []);
+
+  return {
+    oracleNodeId,
+    aggregator,
+  };
+};
 
 // Note: must have deployed `MockExternalNode`
 export const generateExternalNode = async (OracleManager: Proxy, price: number) => {

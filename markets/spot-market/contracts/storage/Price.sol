@@ -35,23 +35,27 @@ library Price {
         }
     }
 
-    /**
-     * @dev Returns the current price data for the given transaction type.
-     * NodeOutput.Data is a struct from oracle manager containing the price, timestamp among others.
-     */
-    function getCurrentPriceData(
+    function getCurrentPrice(
         uint128 marketId,
         Transaction.Type transactionType
-    ) internal view returns (NodeOutput.Data memory price) {}
+    ) internal view returns (uint256 price) {
+        Data storage self = load(marketId);
+        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
+        bytes32 feedId = Transaction.isBuy(transactionType) ? self.buyFeedId : self.sellFeedId;
+
+        return INodeModule(factory.oracle).process(feedId).price.toUint();
+    }
 
     /**
-     * @dev Same as getCurrentPriceData but returns only the price.
+     * @dev Similar to getCurrentPrice, but allows for a staleness tolerance to be incorporated into the price.
      */
-    function getCurrentPrice(
+    function getCurrentPriceWithTolerance(
         uint128 marketId,
         Transaction.Type transactionType,
         uint256 priceStalenessTolerance
     ) internal view returns (uint256 price) {
+        if (priceStalenessTolerance == 0) return getCurrentPrice(marketId, transactionType);
+
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         bytes32 feedId = Transaction.isBuy(transactionType) ? self.buyFeedId : self.sellFeedId;
@@ -65,8 +69,7 @@ library Price {
             runtimeKeys,
             runtimeValues
         );
-
-        return output.price.toUint();
+        price = output.price.toUint();
     }
 
     /**
