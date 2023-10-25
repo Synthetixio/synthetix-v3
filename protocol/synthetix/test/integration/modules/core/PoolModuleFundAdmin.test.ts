@@ -775,5 +775,21 @@ describe('PoolModule Admin', function () {
         bn(2)
       );
     });
+
+    it('can get pool collateral configuration', async () => {
+      await systems()
+        .Core.connect(user1)
+        .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+          collateralLimitD18: bn(123),
+          issuanceRatioD18: bn(345),
+        });
+
+      const { collateralLimitD18, issuanceRatioD18 } =
+        await systems().Core.getPoolCollateralConfiguration(thirdPoolId, collateralAddress());
+      assert.deepEqual(
+        { collateralLimitD18, issuanceRatioD18 },
+        { collateralLimitD18: bn(123), issuanceRatioD18: bn(345) }
+      );
+    });
   });
 });
