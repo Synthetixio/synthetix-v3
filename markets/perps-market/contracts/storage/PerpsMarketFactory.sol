@@ -7,6 +7,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
+import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 
@@ -140,5 +141,19 @@ library PerpsMarketFactory {
     ) internal view returns (bytes32) {
         address synthToken = self.spotMarket.getSynth(synthMarketId);
         return self.synthetix.getCollateralConfiguration(synthToken).oracleNodeId;
+    }
+
+    function getStalenessToleranceForNode(
+        Data storage self,
+        uint128 synthMarketId
+    ) internal view returns (uint) {
+        bytes32 nodeId = getSynthOracle(self, synthMarketId);
+        NodeDefinition.Data memory nodeDef = self.oracle.getNode(nodeId);
+
+        (, , uint256 stalenessTolerance) = abi.decode(
+            nodeDef.parameters,
+            (address, uint128, uint256)
+        );
+        return stalenessTolerance;
     }
 }

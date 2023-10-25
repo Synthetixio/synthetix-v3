@@ -404,7 +404,8 @@ library PerpsAccount {
             } else {
                 (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
                     synthMarketId,
-                    leftoverAmount
+                    leftoverAmount,
+                    factory.getStalenessToleranceForNode(synthMarketId)
                 );
 
                 address synthToken = factory.spotMarket.getSynth(synthMarketId);

@@ -1,6 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { DEFAULT_PRICE_TOLERANCE, bn, bootstrapMarkets } from '../bootstrap';
 
 describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
@@ -46,11 +46,15 @@ describe('ModifyCollateral', () => {
     synthLINKMarketId = synthMarkets()[2].marketId();
   });
 
-  before('set setMaxCollateralAmount to 1 btc', async () => {
-    await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthBTCMarketId, bn(1));
+  before('set setCollateralConfiguration to 1 btc', async () => {
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setCollateralConfiguration(synthBTCMarketId, bn(1), DEFAULT_PRICE_TOLERANCE);
   });
-  before('set setMaxCollateralAmount to 0 link', async () => {
-    await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthLINKMarketId, bn(0));
+  before('set setCollateralConfiguration to 0 link', async () => {
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setCollateralConfiguration(synthLINKMarketId, bn(0), DEFAULT_PRICE_TOLERANCE);
   });
   before('trader1 buys 100 snxLink', async () => {
     const usdAmount = bn(100);
@@ -120,7 +124,9 @@ describe('ModifyCollateral', () => {
     });
 
     it('reverts if the trader does not have enough allowance', async () => {
-      await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthETHMarketId, oneBTC);
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setCollateralConfiguration(synthETHMarketId, oneBTC, DEFAULT_PRICE_TOLERANCE);
 
       await assertRevert(
         systems()
@@ -131,7 +137,9 @@ describe('ModifyCollateral', () => {
     });
 
     it('reverts if the trader does not have enough spot balance', async () => {
-      await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthBTCMarketId, oneBTC);
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setCollateralConfiguration(synthBTCMarketId, oneBTC, DEFAULT_PRICE_TOLERANCE);
 
       await synthMarkets()[0]
         .synth()

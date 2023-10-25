@@ -7,7 +7,7 @@ import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
 import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
-import { ethers } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
 import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
 
@@ -37,6 +37,8 @@ export type Systems = {
   Synth: (address: string) => SynthRouter;
 };
 
+export const DEFAULT_PRICE_TOLERANCE = BigNumber.from(60);
+
 const params = { cannonfile: 'cannonfile.test.toml' };
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>(params);
@@ -64,9 +66,10 @@ export function bootstrap() {
 
   before('set snxUSD limit to max', async () => {
     // set max collateral amt for snxUSD to maxUINT
-    await contracts.PerpsMarket.connect(getSigners()[0]).setMaxCollateralAmount(
+    await contracts.PerpsMarket.connect(getSigners()[0]).setCollateralConfiguration(
       0, // snxUSD
-      ethers.constants.MaxUint256
+      ethers.constants.MaxUint256,
+      DEFAULT_PRICE_TOLERANCE
     );
   });
 
@@ -110,7 +113,11 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
+        .setCollateralConfiguration(
+          marketId(),
+          ethers.constants.MaxUint256,
+          DEFAULT_PRICE_TOLERANCE
+        );
     }
   });
 
