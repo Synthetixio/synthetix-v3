@@ -53,7 +53,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
                 _settleOrder(
                     marketId,
                     asyncOrderId,
-                    Price.getCurrentPrice(marketId, asyncOrderClaim.orderType),
+                    Price.getCurrentPrice(marketId, asyncOrderClaim.orderType, true),
                     asyncOrderClaim,
                     settlementStrategy
                 );

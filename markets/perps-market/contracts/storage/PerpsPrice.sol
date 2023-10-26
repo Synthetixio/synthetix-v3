@@ -52,7 +52,8 @@ library PerpsPrice {
         return output.price.toUint();
     }
 
-    function update(Data storage self, bytes32 feedId) internal {
+    function update(Data storage self, bytes32 feedId, uint256 strictStalenessTolerance) internal {
         self.feedId = feedId;
+        self.strictStalenessTolerance = strictStalenessTolerance;
     }
 }

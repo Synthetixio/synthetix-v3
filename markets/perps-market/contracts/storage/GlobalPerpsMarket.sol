@@ -18,7 +18,6 @@ library GlobalPerpsMarket {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using SetUtil for SetUtil.UintSet;
-    using PerpsMarketFactory for PerpsMarketFactory.Data;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarket"));
@@ -64,7 +63,7 @@ library GlobalPerpsMarket {
     }
 
     function totalCollateralValue(Data storage self) internal view returns (uint256 total) {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
         uint256 activeCollateralLength = activeCollateralTypes.length();
         for (uint i = 1; i <= activeCollateralLength; i++) {
@@ -73,7 +72,7 @@ library GlobalPerpsMarket {
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 total += self.collateralAmounts[synthMarketId];
             } else {
-                uint collateralValue = factory.getSynthValue(
+                (uint collateralValue, ) = spotMarket.quoteSellExactIn(
                     synthMarketId,
                     self.collateralAmounts[synthMarketId],
                     false

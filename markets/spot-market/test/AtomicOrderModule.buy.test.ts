@@ -5,6 +5,7 @@ import { SynthRouter } from './generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
+import { STRICT_PRICE_TOLERANCE } from './common';
 
 describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
@@ -282,7 +283,7 @@ describe('Atomic Order Module buy()', () => {
 
       await systems()
         .SpotMarket.connect(marketOwner)
-        .updatePriceData(marketId(), nodeId100, nodeId200);
+        .updatePriceData(marketId(), nodeId100, nodeId200, STRICT_PRICE_TOLERANCE);
     });
 
     it('reverts buyExactIn', async () => {

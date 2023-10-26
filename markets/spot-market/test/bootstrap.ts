@@ -14,6 +14,7 @@ import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
 import { AggregatorV3Mock, OracleVerifierMock } from '../typechain-types';
 import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
+import { STRICT_PRICE_TOLERANCE } from './common';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -150,7 +151,8 @@ export function bootstrapWithSynth(name: string, token: string) {
     await contracts.SpotMarket.connect(marketOwner).updatePriceData(
       marketId,
       r.oracleNodeId(),
-      result.oracleNodeId
+      result.oracleNodeId,
+      STRICT_PRICE_TOLERANCE
     );
   });
 

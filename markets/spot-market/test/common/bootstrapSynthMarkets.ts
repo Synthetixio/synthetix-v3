@@ -21,6 +21,8 @@ export type SynthArguments = Array<{
   sellPrice: ethers.BigNumber;
 }>;
 
+export const STRICT_PRICE_TOLERANCE = ethers.BigNumber.from(60);
+
 export function bootstrapSynthMarkets(
   data: SynthArguments,
   r: ReturnType<typeof createStakedPool>
@@ -67,7 +69,8 @@ export function bootstrapSynthMarkets(
       await contracts.SpotMarket.connect(marketOwner).updatePriceData(
         marketId,
         buyNodeId,
-        sellNodeId
+        sellNodeId,
+        STRICT_PRICE_TOLERANCE
       );
       synthAddress = await contracts.SpotMarket.getSynth(marketId);
       synth = contracts.Synth(synthAddress);
