@@ -67,6 +67,8 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   feedId: ethers.utils.formatBytes32String('ETH/USD'),
 };
 
+export const STRICT_PRICE_TOLERANCE = ethers.BigNumber.from(60);
+
 export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
   chainState: IncomingChainState | undefined
@@ -120,7 +122,11 @@ export const bootstrapPerpsMarkets = (
 
       before(`create perps market ${name}`, async () => {
         await contracts.PerpsMarket.createMarket(marketId, name, token);
-        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
+        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(
+          marketId,
+          oracleNodeId,
+          STRICT_PRICE_TOLERANCE
+        );
       });
 
       before('set funding parameters', async () => {

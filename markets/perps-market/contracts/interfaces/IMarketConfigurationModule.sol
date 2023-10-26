@@ -23,8 +23,13 @@ interface IMarketConfigurationModule {
      * @notice Gets fired when feed id for perps market is updated.
      * @param marketId id of perps market
      * @param feedId oracle node id
+     * @param strictStalenessTolerance strict price tolerance in seconds (used for liquidations primarily)
      */
-    event MarketPriceDataUpdated(uint128 indexed marketId, bytes32 feedId);
+    event MarketPriceDataUpdated(
+        uint128 indexed marketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    );
 
     /**
      * @notice Gets fired when order fees are updated.
@@ -127,8 +132,13 @@ interface IMarketConfigurationModule {
      * @notice Set node id for perps market
      * @param perpsMarketId id of the market to set price feed.
      * @param feedId the node feed id
+     * @param strictStalenessTolerance strict price tolerance in seconds (used for liquidations primarily)
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external;
 
     /**
      * @notice Set funding parameters for a market with this function.

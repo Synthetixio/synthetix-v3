@@ -183,7 +183,7 @@ library PerpsAccount {
         Data storage self,
         uint128 synthMarketId,
         uint256 amountToWithdraw,
-        PerpsMarketFactory.Data storage factory
+        ISpotMarketSystem spotMarket
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
         uint collateralAmount = self.collateralAmounts[synthMarketId];
         if (collateralAmount < amountToWithdraw) {
@@ -211,7 +211,11 @@ library PerpsAccount {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
         } else {
-            amountToWithdrawUsd = factory.getSynthValue(synthMarketId, amountToWithdraw, false);
+            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
+                synthMarketId,
+                amountToWithdraw,
+                false
+            );
         }
 
         if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
@@ -227,7 +231,7 @@ library PerpsAccount {
         bool useStrictStalenessTolerance
     ) internal view returns (uint) {
         uint totalCollateralValue;
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             uint amount = self.collateralAmounts[synthMarketId];
@@ -236,7 +240,7 @@ library PerpsAccount {
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
-                amountToAdd = factory.getSynthValue(
+                (amountToAdd, ) = spotMarket.quoteSellExactIn(
                     synthMarketId,
                     amount,
                     useStrictStalenessTolerance
@@ -405,7 +409,7 @@ library PerpsAccount {
                 (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
                     synthMarketId,
                     leftoverAmount,
-                    factory.getStalenessToleranceForNode(synthMarketId)
+                    true
                 );
 
                 address synthToken = factory.spotMarket.getSynth(synthMarketId);

@@ -6,6 +6,7 @@ import { ethers as Ethers } from 'ethers';
 import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
+import { STRICT_PRICE_TOLERANCE } from './common';
 
 describe('Atomic Order Module sell()', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -230,7 +231,7 @@ describe('Atomic Order Module sell()', () => {
 
       await systems()
         .SpotMarket.connect(marketOwner)
-        .updatePriceData(marketId(), nodeId100, nodeId200);
+        .updatePriceData(marketId(), nodeId100, nodeId200, STRICT_PRICE_TOLERANCE);
     });
 
     it('reverts sellExactIn', async () => {

@@ -26,6 +26,10 @@ library Price {
          * @dev also used to for calculating reported debt
          */
         bytes32 sellFeedId;
+        /**
+         * @dev configurable staleness tolerance to use when fetching prices.
+         */
+        uint256 strictStalenessTolerance;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage price) {
@@ -37,38 +41,29 @@ library Price {
 
     function getCurrentPrice(
         uint128 marketId,
-        Transaction.Type transactionType
-    ) internal view returns (uint256 price) {
-        Data storage self = load(marketId);
-        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        bytes32 feedId = Transaction.isBuy(transactionType) ? self.buyFeedId : self.sellFeedId;
-
-        return INodeModule(factory.oracle).process(feedId).price.toUint();
-    }
-
-    /**
-     * @dev Similar to getCurrentPrice, but allows for a staleness tolerance to be incorporated into the price.
-     */
-    function getCurrentPriceWithTolerance(
-        uint128 marketId,
         Transaction.Type transactionType,
-        uint256 priceStalenessTolerance
+        bool useStrictStalenessTolerance
     ) internal view returns (uint256 price) {
-        if (priceStalenessTolerance == 0) return getCurrentPrice(marketId, transactionType);
-
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         bytes32 feedId = Transaction.isBuy(transactionType) ? self.buyFeedId : self.sellFeedId;
 
-        bytes32[] memory runtimeKeys = new bytes32[](1);
-        bytes32[] memory runtimeValues = new bytes32[](1);
-        runtimeKeys[0] = bytes32("stalenessTolerance");
-        runtimeValues[0] = bytes32(priceStalenessTolerance);
-        NodeOutput.Data memory output = INodeModule(factory.oracle).processWithRuntime(
-            feedId,
-            runtimeKeys,
-            runtimeValues
-        );
+        NodeOutput.Data memory output;
+
+        if (useStrictStalenessTolerance) {
+            bytes32[] memory runtimeKeys = new bytes32[](1);
+            bytes32[] memory runtimeValues = new bytes32[](1);
+            runtimeKeys[0] = bytes32("stalenessTolerance");
+            runtimeValues[0] = bytes32(self.strictStalenessTolerance);
+            output = INodeModule(factory.oracle).processWithRuntime(
+                feedId,
+                runtimeKeys,
+                runtimeValues
+            );
+        } else {
+            output = INodeModule(factory.oracle).process(feedId);
+        }
+
         price = output.price.toUint();
     }
 
@@ -76,35 +71,15 @@ library Price {
      * @dev Updates price feeds.  Function resides in SpotMarketFactory to update these values.
      * Only market owner can update these values.
      */
-    function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
+    function update(
+        Data storage self,
+        bytes32 buyFeedId,
+        bytes32 sellFeedId,
+        uint256 strictStalenessTolerance
+    ) internal {
         self.buyFeedId = buyFeedId;
         self.sellFeedId = sellFeedId;
-    }
-
-    /**
-     * @dev Utility function that returns the amount of synth to be received for a given amount of usd.
-     * Based on the transaction type, either the buy or sell feed node id is used.
-     */
-    function usdSynthExchangeRate(
-        uint128 marketId,
-        uint256 amountUsd,
-        Transaction.Type transactionType
-    ) internal view returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPrice(marketId, transactionType);
-        synthAmount = amountUsd.divDecimal(currentPrice);
-    }
-
-    /**
-     * @dev Utility function that returns the amount of usd to be received for a given amount of synth.
-     * Based on the transaction type, either the buy or sell feed node id is used.
-     */
-    function synthUsdExchangeRate(
-        uint128 marketId,
-        uint256 sellAmount,
-        Transaction.Type transactionType
-    ) internal view returns (uint256 amountUsd) {
-        uint256 currentPrice = getCurrentPrice(marketId, transactionType);
-        amountUsd = sellAmount.mulDecimal(currentPrice);
+        self.strictStalenessTolerance = strictStalenessTolerance;
     }
 
     /**

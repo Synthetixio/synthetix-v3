@@ -75,7 +75,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId, true)
+            PerpsPrice.getCurrentPrice(commitment.marketId, false)
         );
 
         emit OrderCommitted(

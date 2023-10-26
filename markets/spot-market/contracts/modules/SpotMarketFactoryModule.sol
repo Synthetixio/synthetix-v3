@@ -106,7 +106,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function reportedDebt(
         uint128 marketId
     ) external view override returns (uint256 reportedDebtAmount) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL, false);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -124,7 +124,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
             collateralLeverage == 0
                 ? 0
                 : totalBalance
-                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY))
+                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY, false))
                     .divDecimal(collateralLeverage);
     }
 
@@ -167,13 +167,19 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function updatePriceData(
         uint128 synthMarketId,
         bytes32 buyFeedId,
-        bytes32 sellFeedId
+        bytes32 sellFeedId,
+        uint256 strictPriceStalenessTolerance
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        Price.load(synthMarketId).update(buyFeedId, sellFeedId);
+        Price.load(synthMarketId).update(buyFeedId, sellFeedId, strictPriceStalenessTolerance);
 
-        emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
+        emit SynthPriceDataUpdated(
+            synthMarketId,
+            buyFeedId,
+            sellFeedId,
+            strictPriceStalenessTolerance
+        );
     }
 
     /**
