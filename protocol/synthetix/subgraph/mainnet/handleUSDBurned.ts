@@ -18,7 +18,7 @@ export function handleUSDBurned(event: UsdBurned): void {
       position.total_burned = event.params.amount.toBigDecimal();
     }
     if (position.net_issuance !== null) {
-      position.net_issuance = position.net_issuance!.plus(event.params.amount.toBigDecimal());
+      position.net_issuance = position.net_issuance!.minus(event.params.amount.toBigDecimal());
     } else {
       position.net_issuance = event.params.amount.toBigDecimal();
     }
