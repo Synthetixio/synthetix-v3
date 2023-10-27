@@ -16,6 +16,9 @@ library PerpsPrice {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
+    bool internal constant USE_STRICT_STALENESS_TOLERANCE = true;
+    bool internal constant USE_LAX_STALENESS_TOLERANCE = false;
+
     struct Data {
         bytes32 feedId;
         uint256 strictStalenessTolerance;

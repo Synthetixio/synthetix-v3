@@ -140,7 +140,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         for (uint i = 0; i < openPositionMarketIds.length; i++) {
             uint128 positionMarketId = openPositionMarketIds[i].to128();
-            uint256 price = PerpsPrice.getCurrentPrice(positionMarketId, true);
+            uint256 price = PerpsPrice.getCurrentPrice(
+                positionMarketId,
+                PerpsPrice.USE_STRICT_STALENESS_TOLERANCE
+            );
 
             (
                 uint256 amountLiquidated,

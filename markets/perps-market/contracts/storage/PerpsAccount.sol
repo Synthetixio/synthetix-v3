@@ -284,7 +284,7 @@ library PerpsAccount {
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (uint openInterest, , , , , ) = position.getPositionData(
-                PerpsPrice.getCurrentPrice(marketId, false)
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.USE_LAX_STALENESS_TOLERANCE)
             );
             totalAccountOpenInterest += openInterest;
         }
