@@ -1,6 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { DEFAULT_PRICE_TOLERANCE, bn, bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../bootstrap';
 
 describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
@@ -49,12 +49,12 @@ describe('ModifyCollateral', () => {
   before('set setCollateralConfiguration to 1 btc', async () => {
     await systems()
       .PerpsMarket.connect(owner())
-      .setCollateralConfiguration(synthBTCMarketId, bn(1), DEFAULT_PRICE_TOLERANCE);
+      .setCollateralConfiguration(synthBTCMarketId, bn(1));
   });
   before('set setCollateralConfiguration to 0 link', async () => {
     await systems()
       .PerpsMarket.connect(owner())
-      .setCollateralConfiguration(synthLINKMarketId, bn(0), DEFAULT_PRICE_TOLERANCE);
+      .setCollateralConfiguration(synthLINKMarketId, bn(0));
   });
   before('trader1 buys 100 snxLink', async () => {
     const usdAmount = bn(100);
@@ -126,7 +126,7 @@ describe('ModifyCollateral', () => {
     it('reverts if the trader does not have enough allowance', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(synthETHMarketId, oneBTC, DEFAULT_PRICE_TOLERANCE);
+        .setCollateralConfiguration(synthETHMarketId, oneBTC);
 
       await assertRevert(
         systems()
@@ -139,7 +139,7 @@ describe('ModifyCollateral', () => {
     it('reverts if the trader does not have enough spot balance', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(synthBTCMarketId, oneBTC, DEFAULT_PRICE_TOLERANCE);
+        .setCollateralConfiguration(synthBTCMarketId, oneBTC);
 
       await synthMarkets()[0]
         .synth()

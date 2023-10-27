@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
-import { DEFAULT_PRICE_TOLERANCE, bn, bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
@@ -21,8 +21,7 @@ describe('GlobalPerpsMarket', () => {
     async () => {
       await systems().PerpsMarket.setCollateralConfiguration(
         perpsMarkets()[0].marketId(),
-        bn(10000),
-        DEFAULT_PRICE_TOLERANCE
+        bn(10000)
       );
       await systems().PerpsMarket.setSynthDeductionPriority([1, 2]);
       await systems().PerpsMarket.setLiquidationRewardGuards(100, 500);
@@ -51,11 +50,10 @@ describe('GlobalPerpsMarket', () => {
   });
 
   it('returns maxCollateralAmount and strictStalenessTolerance for synth market id', async () => {
-    const { maxCollateralAmount, strictStalenessTolerance } =
-      await systems().PerpsMarket.getCollateralConfiguration(perpsMarkets()[0].marketId());
+    const maxCollateralAmount = await systems().PerpsMarket.getCollateralConfiguration(
+      perpsMarkets()[0].marketId()
+    );
     assertBn.equal(maxCollateralAmount, bn(10000));
-
-    assertBn.equal(strictStalenessTolerance, DEFAULT_PRICE_TOLERANCE);
   });
 
   it('returns the correct synthDeductionPriority ', async () => {
@@ -79,11 +77,7 @@ describe('GlobalPerpsMarket', () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(trader1())
-        .setCollateralConfiguration(
-          perpsMarkets()[0].marketId(),
-          bn(10000),
-          DEFAULT_PRICE_TOLERANCE
-        ),
+        .setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(10000)),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
