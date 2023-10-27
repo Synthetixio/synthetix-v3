@@ -16,6 +16,16 @@ import '@synthetixio/hardhat-storage';
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
+const lockedConfig = {
+  version: '0.8.17',
+  settings: {
+    optimizer: {
+      enabled: false,
+      runs: 200,
+    },
+  },
+};
+
 const config = {
   solidity: {
     compilers: [
@@ -30,14 +40,20 @@ const config = {
       },
     ],
     overrides: {
-      'contracts/Proxy.sol': {
-        version: '0.8.17',
-        settings: {
-          optimizer: {
-            enabled: false,
-          },
-        },
-      },
+      'contracts/Proxy.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/proxy/UUPSProxyWithOwner.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/errors/AccessError.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/errors/AddressError.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/proxy/AbstractProxy.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/utils/AddressUtil.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/ownership/Ownable.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/interfaces/IOwnable.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/errors/ChangeError.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol': lockedConfig,
+      '@synthetixio/core-contracts/contracts/interfaces/IUUPSImplementation.sol': lockedConfig,
     },
   },
   defaultNetwork: 'cannon',
