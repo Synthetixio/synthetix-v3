@@ -11,6 +11,7 @@ import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockG
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
   aggregator: () => AggregatorV3Mock;
+  keeperCost: () => MockGasPriceNode;
   strategyId: () => ethers.BigNumber;
 };
 
