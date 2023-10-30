@@ -1,5 +1,5 @@
 import { ethers, BigNumber } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets, createKeeperCostNode } from '../bootstrap';
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
@@ -106,6 +106,7 @@ describe('Create Market test', () => {
 
     const marketId = BigNumber.from(25);
     let oracleNodeId: string;
+    let keeperCostNodeId: string;
 
     before('create perps market', async () => {
       await systems().PerpsMarket.connect(owner()).createMarket(marketId, name, token);
@@ -115,15 +116,31 @@ describe('Create Market test', () => {
       await systems().PerpsMarket.connect(owner()).setMaxMarketSize(marketId, bn(99999999));
     });
 
-    before('create price nodes', async () => {
+    before('create price node', async () => {
       const results = await createOracleNode(owner(), price, systems().OracleManager);
       oracleNodeId = results.oracleNodeId;
+    });
+
+    before('create keeper reward node', async () => {
+      const results = await createKeeperCostNode(owner(), systems().OracleManager);
+      keeperCostNodeId = results.keeperCostNodeId;
     });
 
     describe('attempt to update price data with non-owner', () => {
       it('reverts', async () => {
         await assertRevert(
           systems().PerpsMarket.connect(randomAccount).updatePriceData(marketId, oracleNodeId),
+          'Unauthorized'
+        );
+      });
+    });
+
+    describe('attempt to update keeper cost with non-owner', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(randomAccount)
+            .updateKeeperRewardData(marketId, keeperCostNodeId),
           'Unauthorized'
         );
       });
@@ -151,6 +168,12 @@ describe('Create Market test', () => {
     describe('when price data is updated', () => {
       before('update price data', async () => {
         await systems().PerpsMarket.connect(owner()).updatePriceData(marketId, oracleNodeId);
+      });
+
+      before('update keeper reward data', async () => {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .updateKeeperRewardData(marketId, keeperCostNodeId);
       });
 
       before('create settlement strategy', async () => {

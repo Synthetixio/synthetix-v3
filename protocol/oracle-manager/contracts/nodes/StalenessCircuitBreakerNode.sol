@@ -5,6 +5,7 @@ import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 
 library StalenessCircuitBreakerNode {
+    // 0xff3259d0 == StalenessToleranceExceeded()
     error StalenessToleranceExceeded();
 
     function process(
