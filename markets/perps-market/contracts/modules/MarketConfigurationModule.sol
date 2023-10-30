@@ -6,6 +6,7 @@ import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModu
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.
@@ -13,6 +14,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsPrice for PerpsPrice.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
@@ -76,6 +78,17 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpsPrice.load(perpsMarketId).update(feedId);
 
         emit MarketPriceDataUpdated(perpsMarketId, feedId);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function updateKeeperRewardData(uint128 perpsMarketId, bytes32 feedId) external override {
+        OwnableStorage.onlyOwner();
+
+        KeeperCosts.load(perpsMarketId).update(feedId);
+
+        emit MarketKeeperRewardDataUpdated(perpsMarketId, feedId);
     }
 
     /**

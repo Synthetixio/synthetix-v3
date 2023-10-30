@@ -12,6 +12,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
+import {KeeperCosts} from "./KeeperCosts.sol";
 
 /**
  * @title Async order top level data storage
@@ -26,6 +27,7 @@ library AsyncOrder {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @notice Thrown when settlement window is not open yet.
@@ -327,6 +329,7 @@ library AsyncOrder {
                 perpsMarketData.skew,
                 marketConfig.orderFees
             ) +
+            KeeperCosts.load(runtime.marketId).getSettlementKeeperCosts(runtime.accountId) +
             strategy.settlementReward;
 
         if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {

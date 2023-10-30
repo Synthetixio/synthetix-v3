@@ -15,6 +15,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
 
 /**
  * @title Module for settling async orders using pyth as price feed.
@@ -32,6 +33,7 @@ contract AsyncOrderSettlementPythModule is
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using Position for Position.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @inheritdoc IAsyncOrderSettlementPythModule
@@ -64,8 +66,7 @@ contract AsyncOrderSettlementPythModule is
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
 
-        runtime.amountToDeduct += runtime.totalFees;
-
+        runtime.amountToDeduct = runtime.totalFees;
         runtime.newPositionSize = runtime.newPosition.size;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
@@ -118,7 +119,11 @@ contract AsyncOrderSettlementPythModule is
 
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
+            factory.withdrawMarketUsd(
+                ERC2771Context._msgSender(),
+                runtime.settlementReward +
+                    KeeperCosts.load(runtime.marketId).getSettlementKeeperCosts(runtime.accountId)
+            );
         }
 
         (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
