@@ -1,6 +1,8 @@
 import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
+import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
+import { logNumber } from './helpers';
 
 /** Calculates a position's unrealised PnL (no funding or fees) given the current and previous price. */
 export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
@@ -88,4 +90,69 @@ export const calcOrderFees = async (
   };
 
   return { notional, orderFee, calcKeeperOrderSettlementFee };
+};
+
+export const calculateTransactionCostInUSD = (
+  baseFeePerGas: BigNumber, // in gwei
+  gasUnitsForTx: BigNumber, // in gwei
+  ethPrice: BigNumber // in ether
+) => {
+  const costInGwei = baseFeePerGas.mul(gasUnitsForTx);
+  return costInGwei.mul(ethPrice).div(BigNumber.from(10).pow(18));
+};
+
+export const calculateFlagReward = (
+  ethPrice: BigNumber,
+  baseFeePerGas: BigNumber, // in gwei
+  sizeAbs: Wei,
+  price: Wei,
+  globalConfig: PerpMarketConfiguration.GlobalDataStructOutput,
+  marketConfig: PerpMarketConfiguration.DataStructOutput
+) => {
+  const flagExecutionCostInUSD = calculateTransactionCostInUSD(
+    baseFeePerGas,
+    globalConfig.keeperFlagGasUnits,
+    ethPrice
+  );
+
+  const flagFeeInUSD = Wei.max(
+    wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
+    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUSD))
+  );
+
+  const flagFeeWithRewardInUSD = flagFeeInUSD.add(sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent));
+
+  return {
+    result: Wei.min(flagFeeWithRewardInUSD, wei(globalConfig.maxKeeperFeeUsd)),
+    flagExecutionCostInUSD,
+    sizeReward: sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent),
+    flagFeeWithRewardInUSD,
+    flagFeeInUSD,
+  };
+};
+const divDecimalAndCeil = (a: Wei, b: Wei) => {
+  const x = wei(a).toNumber() / wei(b).toNumber();
+  return wei(Math.ceil(x));
+};
+export const calculateLiquidationKeeperFee = (
+  ethPrice: BigNumber,
+  baseFeePerGas: BigNumber, // in gwei
+  sizeAbs: Wei,
+  maxLiqCapacity: Wei,
+  globalConfig: PerpMarketConfiguration.GlobalDataStructOutput
+) => {
+  if (sizeAbs.eq(0)) return wei(0);
+  const iterations = divDecimalAndCeil(sizeAbs, maxLiqCapacity);
+  logNumber('iterations', iterations);
+  const totalGasUnitsToLiquidate = wei(globalConfig.keeperLiquidationGasUnits).toBN();
+  const flagExecutionCostInUSD = calculateTransactionCostInUSD(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
+  logNumber('totalGasUnitsToLiquidate', totalGasUnitsToLiquidate);
+  logNumber('globalConfig.keeperLiquidationGasUnits', globalConfig.keeperLiquidationGasUnits);
+
+  const liquidationFeeInUSD = Wei.max(
+    wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
+    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUSD))
+  );
+  logNumber('liquidationFeeInUSD', liquidationFeeInUSD);
+  return Wei.min(liquidationFeeInUSD, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);
 };
