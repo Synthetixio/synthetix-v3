@@ -173,6 +173,74 @@ describe('LiquidationModule', () => {
       assertBn.equal(await USD.balanceOf(await flagKeeper.getAddress()), flagEvent.args.flagKeeperReward);
     });
 
+    it("should update the position's accrued fees", async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Commit a new order but don't settle.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 0.5,
+        desiredSide: orderSide,
+      });
+      await commitOrder(bs, marketId, trader, order2);
+
+      // Price moves 10% and results in a healthFactor of < 1.
+      const newMarketOraclePrice = wei(order2.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      const flagKeeper = keeper2();
+      const posBefore = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(flagKeeper).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      const posAfter = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+
+      assertBn.gt(posAfter.accruedFeesUsd, posBefore.accruedFeesUsd);
+    });
+
+    it('should update reported debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Commit a new order but don't settle.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 0.5,
+        desiredSide: orderSide,
+      });
+      await commitOrder(bs, marketId, trader, order2);
+
+      // Price moves 10% and results in a healthFactor of < 1.
+      const newMarketOraclePrice = wei(order2.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      const flagKeeper = keeper2();
+      const marketBefore = await PerpMarketProxy.getMarketDigest(marketId);
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(flagKeeper).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      const marketAfter = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection);
+    });
+
     it('should sell all available synth collateral for sUSD when flagging', async () => {
       const { PerpMarketProxy } = systems();
 

@@ -98,6 +98,14 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
+        Position.Data memory newPosition = Position.Data(
+            position.size,
+            position.entryFundingAccrued,
+            position.entryPrice,
+            position.accruedFeesUsd + flagReward
+        );
+        market.updateDebtCorrection(market.positions[accountId], newPosition);
+        market.positions[accountId].update(newPosition);
         // Pay the keeper for flagging the position.
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
         // Flag and emit event.
