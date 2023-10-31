@@ -226,8 +226,7 @@ library Position {
         uint128 accountId,
         PerpMarket.Data storage market,
         PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
-        uint256 price
+        PerpMarketConfiguration.GlobalData storage globalConfig
     )
         internal
         view
@@ -235,8 +234,7 @@ library Position {
             Position.Data storage oldPosition,
             Position.Data memory newPosition,
             uint128 liqSize,
-            uint256 liqReward,
-            uint256 keeperFee
+            uint256 liqKeeperFee
         )
     {
         Position.Runtime_validateLiquidation memory runtime;
@@ -286,14 +284,16 @@ library Position {
 
         // Determine the resulting position post liqudation.
         liqSize = MathUtil.min(runtime.remainingCapacity, runtime.oldPositionSizeAbs).to128();
-        liqReward = getLiquidationReward(liqSize, price, marketConfig);
-        keeperFee = getLiquidationKeeperFee();
+        // TODO, need to have a chat about this
+        // The new position returned here will be used to update updateDebtCorrection
+        // liqFlagReward = getLiquidationFlagReward(liqSize, price, marketConfig, globalConfig);
+        liqKeeperFee = getLiquidationKeeperFee(liqSize, marketConfig, globalConfig);
         newPosition = Position.Data(
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryPrice,
             // An accumulation of fees paid on liquidation and reward paid out to the liquidator.
-            oldPosition.accruedFeesUsd + liqReward + keeperFee
+            oldPosition.accruedFeesUsd /*+ liqFlagReward*/ + liqKeeperFee
         );
     }
 
@@ -302,12 +302,23 @@ library Position {
      * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price). Note that size
      * is a uint so shorts must be .abs before passed through.
      */
-    function getLiquidationReward(
+    function getLiquidationFlagReward(
         uint128 size,
         uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        return size.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
+        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
+        uint256 flagExecutionCostInUSD = ethPrice.mulDecimal(block.basefee * globalConfig.keeperFlagGasUnits);
+
+        uint256 flagFeeInUSD = MathUtil.max(
+            flagExecutionCostInUSD.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            flagExecutionCostInUSD + globalConfig.keeperProfitMarginUSD
+        );
+        uint256 flagFeeWithRewardInUSD = flagFeeInUSD +
+            size.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
+
+        return MathUtil.min(flagFeeWithRewardInUSD, globalConfig.maxKeeperFeeUsd);
     }
 
     /**
@@ -326,35 +337,64 @@ library Position {
         int128 positionSize,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 im, uint256 mm, uint256 liqReward) {
+    ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         uint128 absSize = MathUtil.abs(positionSize).to128();
         uint256 notional = absSize.mulDecimal(price);
 
         uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(marketConfig.incrementalMarginScalar) +
             marketConfig.minMarginRatio;
+
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
-        liqReward = getLiquidationReward(absSize, price, marketConfig);
+        liqFlagReward = getLiquidationFlagReward(absSize, price, marketConfig, globalConfig);
+
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
-        mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqReward + getLiquidationKeeperFee();
+
+        mm =
+            notional.mulDecimal(mmr) +
+            marketConfig.minMarginUsd +
+            liqFlagReward +
+            getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
+    }
+
+    /**
+     * @dev Divides two low precision decimals and rounds up.
+     *
+     * If the division leaves a remainder, the result is rounded up.
+     */
+    function divDecimalAndCeil(uint256 a, uint256 b) internal pure returns (uint256 z) {
+        require(b > 0, "Division by zero");
+        uint256 quotient = a / b;
+        uint256 remainder = a % b;
+        return remainder == 0 ? quotient : quotient + 1;
     }
 
     /**
      * @dev Returns the fee in USD paid to keeper for performing the liquidation (not flagging).
      */
-    function getLiquidationKeeperFee() internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+    function getLiquidationKeeperFee(
+        uint128 size,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        if (size == 0) {
+            return 0;
+        }
 
         uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 baseKeeperFeeUsd = globalConfig.keeperLiquidationGasUnits * block.basefee * ethPrice;
-        uint256 boundedKeeperFeeUsd = MathUtil.max(
-            MathUtil.min(
-                globalConfig.minKeeperFeeUsd,
-                baseKeeperFeeUsd * (DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent)
-            ),
-            globalConfig.maxKeeperFeeUsd
+        uint256 maxLiqCapacity = PerpMarket.getMaxLiquidatableCapacity(marketConfig);
+        // TODO kaleb's spec says iteraction should be multiplied here, but I think we need to multiple the end result
+        uint256 totalGasUnitsToLiquidate = globalConfig.keeperLiquidationGasUnits;
+        uint256 liquidationExecutionCostUsd = ethPrice.mulDecimal(block.basefee * totalGasUnitsToLiquidate);
+
+        uint256 liquidationFeeInUSD = MathUtil.max(
+            liquidationExecutionCostUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            liquidationExecutionCostUsd + globalConfig.keeperProfitMarginUSD
         );
-        return boundedKeeperFeeUsd;
+
+        uint256 iterations = divDecimalAndCeil(size, maxLiqCapacity);
+        return MathUtil.min(liquidationFeeInUSD, globalConfig.maxKeeperFeeUsd) * iterations;
     }
 
     /**
