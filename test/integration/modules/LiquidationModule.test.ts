@@ -1403,8 +1403,7 @@ describe('LiquidationModule', () => {
         const marketOraclePrice2 = wei(marketOraclePrice1).mul(0.9).toBN();
         await market.aggregator().mockSetCurrentPrice(marketOraclePrice2);
 
-        await setBaseFeePerGas(1, provider());
-        const baseFeePerGas = BigNumber.from(0);
+        const baseFeePerGas = await setBaseFeePerGas(0, provider());
 
         const { liquidationKeeperFee } = await PerpMarketProxy.getLiquidationFees(trader.accountId, marketId);
 
@@ -1635,6 +1634,8 @@ describe('LiquidationModule', () => {
         const expectedKeeperFee = wei(expectedCostLiq).add(wei(keeperProfitMarginUSD));
 
         assertBn.equal(liquidationKeeperFee, wei(expectedKeeperFee).toBN());
+        // Reset base fee
+        await setBaseFeePerGas(1, provider());
       });
 
       it('should result in a higher liqReward if market price moves in favour of position');
