@@ -136,7 +136,7 @@ library PerpsAccount {
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
 
-    function flagForLiquidation(Data storage self) internal {
+    function flagForLiquidation(Data storage self) internal returns (uint256 flagKeeperCost) {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -144,6 +144,7 @@ library PerpsAccount {
         if (!liquidatableAccounts.contains(self.id)) {
             liquidatableAccounts.add(self.id);
             convertAllCollateralToUsd(self);
+            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
         }
     }
 

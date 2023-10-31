@@ -65,7 +65,7 @@ describe('Settle Offchain Async Order test - Keeper gas cost', () => {
   let settleTx: ethers.ContractTransaction;
 
   before('set keeper costs', async () => {
-    await perpsMarkets()[0].keeperCost().connect(owner()).setCosts(1111, 3333, 5555, 7777);
+    await perpsMarkets()[0].keeperCostNode().connect(owner()).setCosts(1111, 3333, 5555, 7777);
   });
 
   before('add collateral', async () => {

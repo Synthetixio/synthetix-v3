@@ -16,6 +16,7 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
 
 /**
  * @title Module for liquidating accounts.
@@ -31,6 +32,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @inheritdoc ILiquidationModule
@@ -44,13 +46,13 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             (bool isEligible, , , , , ) = account.isEligibleForLiquidation();
 
             if (isEligible) {
-                account.flagForLiquidation();
-                liquidationReward = _liquidateAccount(account);
+                uint flagCost = account.flagForLiquidation();
+                liquidationReward = _liquidateAccount(account, flagCost, true);
             } else {
                 revert NotEligibleForLiquidation(accountId);
             }
         } else {
-            liquidationReward = _liquidateAccount(account);
+            liquidationReward = _liquidateAccount(account, 0, false);
         }
     }
 
@@ -72,7 +74,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         for (uint i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
-            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, false);
         }
     }
 
@@ -92,7 +94,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 continue;
             }
 
-            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, false);
         }
     }
 
@@ -127,16 +129,23 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
     }
 
+    struct LiquidateAccountRuntime {
+        uint128 accountId;
+        uint256 totalLiquidationRewards;
+        bool accountFullyLiquidated;
+    }
+
     /**
      * @dev liquidates an account
      */
     function _liquidateAccount(
-        PerpsAccount.Data storage account
+        PerpsAccount.Data storage account,
+        uint costOfFlagExecution,
+        bool includeFlaggingReward
     ) internal returns (uint256 keeperLiquidationReward) {
-        uint128 accountId = account.id;
+        LiquidateAccountRuntime memory runtime;
+        runtime.accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
-
-        uint totalLiquidationRewards;
 
         for (uint i = 0; i < openPositionMarketIds.length; i++) {
             uint128 positionMarketId = openPositionMarketIds[i].to128();
@@ -163,30 +172,45 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 marketUpdateData.currentFundingVelocity
             );
 
-            emit PositionLiquidated(accountId, positionMarketId, amountLiquidated, newPositionSize);
+            emit PositionLiquidated(
+                runtime.accountId,
+                positionMarketId,
+                amountLiquidated,
+                newPositionSize
+            );
 
             // using amountToLiquidate to calculate liquidation reward
-            uint256 liquidationReward = PerpsMarketConfiguration
-                .load(positionMarketId)
-                .calculateLiquidationReward(amountLiquidated.mulDecimal(price));
+            uint256 liquidationReward = includeFlaggingReward
+                ? PerpsMarketConfiguration.load(positionMarketId).calculateLiquidationReward(
+                    amountLiquidated.mulDecimal(price)
+                )
+                : 0;
 
             // endorsed liquidators do not get liquidation rewards
             if (
                 ERC2771Context._msgSender() !=
                 PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator
             ) {
-                totalLiquidationRewards += liquidationReward;
+                runtime.totalLiquidationRewards += liquidationReward;
             }
         }
 
-        keeperLiquidationReward = _processLiquidationRewards(totalLiquidationRewards);
+        keeperLiquidationReward = _processLiquidationRewards(
+            runtime.totalLiquidationRewards +
+                costOfFlagExecution +
+                KeeperCosts.load().getLiquidateKeeperCosts()
+        );
 
-        bool accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
-        if (accountFullyLiquidated) {
-            GlobalPerpsMarket.load().liquidatableAccounts.remove(accountId);
+        runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
+        if (runtime.accountFullyLiquidated) {
+            GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
         }
 
-        emit AccountLiquidated(accountId, keeperLiquidationReward, accountFullyLiquidated);
+        emit AccountLiquidated(
+            runtime.accountId,
+            keeperLiquidationReward,
+            runtime.accountFullyLiquidated
+        );
     }
 
     /**

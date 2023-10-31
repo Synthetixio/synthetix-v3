@@ -11,7 +11,7 @@ import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockG
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
   aggregator: () => AggregatorV3Mock;
-  keeperCost: () => MockGasPriceNode;
+  keeperCostNode: () => MockGasPriceNode;
   strategyId: () => ethers.BigNumber;
 };
 
@@ -121,11 +121,11 @@ export const bootstrapPerpsMarkets = (
         aggregator = results.aggregator;
       });
 
-      let keeperCostNodeId: string, keeperCost: MockGasPriceNode;
+      let keeperCostNodeId: string, keeperCostNode: MockGasPriceNode;
       before('create perps gas usage nodes', async () => {
         const results = await createKeeperCostNode(r.owner(), contracts.OracleManager);
         keeperCostNodeId = results.keeperCostNodeId;
-        keeperCost = results.keeperCost;
+        keeperCostNode = results.keeperCostNode;
       });
 
       before(`create perps market ${name}`, async () => {
@@ -208,7 +208,7 @@ export const bootstrapPerpsMarkets = (
       return {
         marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
         aggregator: () => aggregator,
-        keeperCost: () => keeperCost,
+        keeperCostNode: () => keeperCostNode,
         strategyId: () => strategyId,
       };
     }
@@ -234,11 +234,11 @@ import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.
 export const createKeeperCostNode = async (owner: ethers.Signer, OracleManager: Proxy) => {
   const abi = ethers.utils.defaultAbiCoder;
   const factory = await hre.ethers.getContractFactory('MockGasPriceNode');
-  const keeperCost = await factory.connect(owner).deploy();
+  const keeperCostNode = await factory.connect(owner).deploy();
 
-  await keeperCost.setCosts(0, 0, 0, 0);
+  await keeperCostNode.setCosts(0, 0, 0, 0);
 
-  const params1 = abi.encode(['address'], [keeperCost.address]);
+  const params1 = abi.encode(['address'], [keeperCostNode.address]);
   await OracleManager.connect(owner).registerNode(NodeTypes.EXTERNAL, params1, []);
   const keeperCostNodeId = await OracleManager.connect(owner).getNodeId(
     NodeTypes.EXTERNAL,
@@ -248,6 +248,6 @@ export const createKeeperCostNode = async (owner: ethers.Signer, OracleManager: 
 
   return {
     keeperCostNodeId,
-    keeperCost,
+    keeperCostNode,
   };
 };
