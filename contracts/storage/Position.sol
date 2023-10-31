@@ -271,11 +271,9 @@ library Position {
             //  1. remainingCapacity is zero (as parent)
             //  2. This liquidation is _not_ in the same block as the most recent liquidation
             //  3. The current market premium/discount does not exceed a configurable maxPd.
-            //  4. The current position size as skew does not exceed a configurable maxPd.
             if (
                 runtime.lastLiquidationTime != block.timestamp &&
-                MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd &&
-                runtime.oldPositionSizeAbs.divDecimal(skewScale) < liquidationMaxPd
+                MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd
             ) {
                 runtime.remainingCapacity = runtime.oldPositionSizeAbs > runtime.maxLiquidatableCapacity
                     ? runtime.maxLiquidatableCapacity
