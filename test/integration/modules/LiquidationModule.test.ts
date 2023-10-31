@@ -36,6 +36,7 @@ import {
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
+  logNumber,
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
@@ -1188,12 +1189,14 @@ describe('LiquidationModule', () => {
 
           // Open an order in the opposite side to bring skew / skewScale < maxPd
           const otherTrader = otherTradersGenerator.next().value;
+
           const { collateral: oCollateral, collateralDepositAmount: ocollateralDepositAmount } = await depositMargin(
             bs,
             genTrader(bs, {
               desiredTrader: otherTrader,
               desiredMarket: market,
               desiredCollateral: getSusdCollateral(collaterals()),
+              desiredMarginUsdDepositAmount: marginUsdDepositAmount,
             })
           );
           const order = await genOrder(bs, market, oCollateral, ocollateralDepositAmount, {
