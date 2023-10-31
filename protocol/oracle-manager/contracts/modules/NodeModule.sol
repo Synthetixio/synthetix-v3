@@ -67,7 +67,7 @@ contract NodeModule is INodeModule {
      * @inheritdoc INodeModule
      */
     function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node) {
-        return NodeProcess.process(nodeId, new bytes32[](0), new bytes32[](0));
+        return NodeDefinition.process(nodeId, new bytes32[](0), new bytes32[](0));
     }
 
     /**
@@ -78,7 +78,7 @@ contract NodeModule is INodeModule {
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
     ) external view returns (NodeOutput.Data memory node) {
-        return NodeProcess.process(nodeId, runtimeKeys, runtimeValues);
+        return NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
     }
 
     /**

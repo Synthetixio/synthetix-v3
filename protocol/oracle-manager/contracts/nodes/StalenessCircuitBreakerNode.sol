@@ -2,9 +2,8 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastBytes32} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../storage/NodeDefinition.sol";
-import "../storage/NodeOutput.sol";
-import {NodeProcess} from "../utils/NodeProcess.sol";
+import {NodeDefinition} from "../storage/NodeDefinition.sol";
+import {NodeOutput} from "../storage/NodeOutput.sol";
 
 library StalenessCircuitBreakerNode {
     using SafeCastBytes32 for bytes32;
@@ -26,7 +25,7 @@ library StalenessCircuitBreakerNode {
         }
 
         bytes32 priceNodeId = nodeDefinition.parents[0];
-        NodeOutput.Data memory priceNodeOutput = NodeProcess.process(
+        NodeOutput.Data memory priceNodeOutput = NodeDefinition.process(
             priceNodeId,
             runtimeKeys,
             runtimeValues
@@ -38,7 +37,7 @@ library StalenessCircuitBreakerNode {
             revert StalenessToleranceExceeded();
         }
         // If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
-        return NodeProcess.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
+        return NodeDefinition.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
