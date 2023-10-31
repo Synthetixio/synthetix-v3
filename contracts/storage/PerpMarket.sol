@@ -151,8 +151,7 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 price
     ) internal returns (int256 fundingRate, int256 fundingAccrued) {
-        fundingRate = getCurrentFundingRate(self);
-        fundingAccrued = getNextFundingAccrued(self, price);
+        (fundingRate, fundingAccrued) = getUnrecordedFundingWithRate(self, price);
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed = fundingAccrued;
@@ -252,15 +251,17 @@ library PerpMarket {
     /**
      * @dev Returns the next market funding accrued value.
      */
-    function getNextFundingAccrued(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
-        int256 fundingRate = getCurrentFundingRate(self);
+    function getUnrecordedFundingWithRate(
+        PerpMarket.Data storage self,
+        uint256 price
+    ) internal view returns (int256 fundingRate, int256 unrecordedFunding) {
+        fundingRate = getCurrentFundingRate(self);
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
-        int256 unrecordedFunding = avgFundingRate.mulDecimal(getProportionalElapsed(self)).mulDecimal(price.toInt());
-        return self.currentFundingAccruedComputed + unrecordedFunding;
+        unrecordedFunding = avgFundingRate.mulDecimal(getProportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
     /**
