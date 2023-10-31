@@ -115,15 +115,13 @@ contract AsyncOrderSettlementPythModule is
                 }
             }
         }
-        runtime.settlementReward = settlementStrategy.settlementReward;
+        runtime.settlementReward =
+            settlementStrategy.settlementReward +
+            KeeperCosts.load(runtime.marketId).getSettlementKeeperCosts(runtime.accountId);
 
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.withdrawMarketUsd(
-                ERC2771Context._msgSender(),
-                runtime.settlementReward +
-                    KeeperCosts.load(runtime.marketId).getSettlementKeeperCosts(runtime.accountId)
-            );
+            factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
         (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
