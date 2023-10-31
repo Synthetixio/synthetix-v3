@@ -86,6 +86,13 @@ library PerpsMarketConfiguration {
             ) * self.maxSecondsInLiquidationWindow;
     }
 
+    function numberOfLiquidationChunks(
+        Data storage self,
+        uint positionSize
+    ) internal view returns (uint256) {
+        return ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
+    }
+
     function calculateLiquidationReward(
         Data storage self,
         uint256 notionalValue
@@ -145,5 +152,10 @@ library PerpsMarketConfiguration {
         if (strategy.disabled) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
+    }
+
+    function ceilDivide(uint a, uint b) internal pure returns (uint) {
+        if (b == 0) return 0;
+        return a / b + (a % b == 0 ? 0 : 1);
     }
 }

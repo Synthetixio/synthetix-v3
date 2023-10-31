@@ -329,7 +329,7 @@ library AsyncOrder {
                 perpsMarketData.skew,
                 marketConfig.orderFees
             ) +
-            KeeperCosts.load(runtime.marketId).getSettlementKeeperCosts(runtime.accountId) +
+            KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
             strategy.settlementReward;
 
         if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {

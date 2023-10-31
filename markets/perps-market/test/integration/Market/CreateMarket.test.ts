@@ -138,9 +138,7 @@ describe('Create Market test', () => {
     describe('attempt to update keeper cost with non-owner', () => {
       it('reverts', async () => {
         await assertRevert(
-          systems()
-            .PerpsMarket.connect(randomAccount)
-            .updateKeeperRewardData(marketId, keeperCostNodeId),
+          systems().PerpsMarket.connect(randomAccount).updateKeeperRewardData(keeperCostNodeId),
           'Unauthorized'
         );
       });
@@ -171,9 +169,7 @@ describe('Create Market test', () => {
       });
 
       before('update keeper reward data', async () => {
-        await systems()
-          .PerpsMarket.connect(owner())
-          .updateKeeperRewardData(marketId, keeperCostNodeId);
+        await systems().PerpsMarket.connect(owner()).updateKeeperRewardData(keeperCostNodeId);
       });
 
       before('create settlement strategy', async () => {

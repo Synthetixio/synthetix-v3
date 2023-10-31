@@ -14,6 +14,7 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -34,6 +35,7 @@ library PerpsAccount {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
+    using KeeperCosts for KeeperCosts.Data;
 
     struct Data {
         // @dev synth marketId => amount
@@ -285,6 +287,7 @@ library PerpsAccount {
             uint liquidationReward
         )
     {
+        uint maxNumberOfChunks;
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
@@ -306,7 +309,19 @@ library PerpsAccount {
             accumulatedLiquidationRewards += liquidationMargin;
             maintenanceMargin += positionMaintenanceMargin;
             initialMargin += positionInitialMargin;
+
+            uint numberOfChunks = marketConfig.numberOfLiquidationChunks(
+                MathUtil.abs(position.size)
+            );
+            maxNumberOfChunks = numberOfChunks > maxNumberOfChunks
+                ? numberOfChunks
+                : maxNumberOfChunks;
         }
+
+        accumulatedLiquidationRewards += KeeperCosts.load().getTotalFlagAndLiquidationCost(
+            self.id,
+            maxNumberOfChunks
+        );
 
         // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
         uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration

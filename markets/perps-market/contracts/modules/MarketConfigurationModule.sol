@@ -83,12 +83,12 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function updateKeeperRewardData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updateKeeperRewardData(bytes32 feedId) external override {
         OwnableStorage.onlyOwner();
 
-        KeeperCosts.load(perpsMarketId).update(feedId);
+        KeeperCosts.load().update(feedId);
 
-        emit MarketKeeperRewardDataUpdated(perpsMarketId, feedId);
+        emit KeeperRewardDataUpdated(feedId);
     }
 
     /**

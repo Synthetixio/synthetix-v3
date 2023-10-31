@@ -28,10 +28,9 @@ interface IMarketConfigurationModule {
 
     /**
      * @notice Gets fired when feed id for keeper rewards data for the perps market is updated.
-     * @param marketId id of perps market
      * @param feedId oracle node id
      */
-    event MarketKeeperRewardDataUpdated(uint128 indexed marketId, bytes32 feedId);
+    event KeeperRewardDataUpdated(bytes32 feedId);
 
     /**
      * @notice Gets fired when order fees are updated.
@@ -139,10 +138,9 @@ interface IMarketConfigurationModule {
 
     /**
      * @notice Set node id for keeper rewards perps market
-     * @param perpsMarketId id of the market to set keeper rewards feed.
      * @param feedId the node feed id
      */
-    function updateKeeperRewardData(uint128 perpsMarketId, bytes32 feedId) external;
+    function updateKeeperRewardData(bytes32 feedId) external;
 
     /**
      * @notice Set funding parameters for a market with this function.

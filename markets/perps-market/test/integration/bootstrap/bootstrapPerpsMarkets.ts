@@ -131,10 +131,7 @@ export const bootstrapPerpsMarkets = (
       before(`create perps market ${name}`, async () => {
         await contracts.PerpsMarket.createMarket(marketId, name, token);
         await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
-        await contracts.PerpsMarket.connect(r.owner()).updateKeeperRewardData(
-          marketId,
-          keeperCostNodeId
-        );
+        await contracts.PerpsMarket.connect(r.owner()).updateKeeperRewardData(keeperCostNodeId);
       });
 
       before('set funding parameters', async () => {
