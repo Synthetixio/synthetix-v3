@@ -2,7 +2,6 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { logNumber } from './helpers';
 
 /** Calculates a position's unrealised PnL (no funding or fees) given the current and previous price. */
 export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
@@ -143,16 +142,14 @@ export const calculateLiquidationKeeperFee = (
 ) => {
   if (sizeAbs.eq(0)) return wei(0);
   const iterations = divDecimalAndCeil(sizeAbs, maxLiqCapacity);
-  logNumber('iterations', iterations);
+
   const totalGasUnitsToLiquidate = wei(globalConfig.keeperLiquidationGasUnits).toBN();
   const flagExecutionCostInUSD = calculateTransactionCostInUSD(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
-  logNumber('totalGasUnitsToLiquidate', totalGasUnitsToLiquidate);
-  logNumber('globalConfig.keeperLiquidationGasUnits', globalConfig.keeperLiquidationGasUnits);
 
   const liquidationFeeInUSD = Wei.max(
     wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
     wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUSD))
   );
-  logNumber('liquidationFeeInUSD', liquidationFeeInUSD);
+
   return Wei.min(liquidationFeeInUSD, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);
 };
