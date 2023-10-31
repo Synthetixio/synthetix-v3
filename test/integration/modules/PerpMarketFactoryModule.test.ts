@@ -504,7 +504,7 @@ describe('PerpMarketFactoryModule', () => {
 
       // Create a frictionless market for simplicity.
       await setMarketConfigurationById(bs, marketId, {
-        makerFee: bn(0),
+        makerFee: bn(0.000000001),
         takerFee: bn(0),
         maxFundingVelocity: bn(0),
         skewScale: bn(1_000_000_000), // An extremely large skewScale to minimise price impact.
