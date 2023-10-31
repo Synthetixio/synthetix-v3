@@ -198,13 +198,14 @@ describe('LiquidationModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
       const flagKeeper = keeper2();
       const posBefore = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      await withExplicitEvmMine(
+      const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(flagKeeper).flagPosition(trader.accountId, marketId),
         provider()
       );
+      const flagEvent = findEventSafe(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
       const posAfter = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
 
-      assertBn.gt(posAfter.accruedFeesUsd, posBefore.accruedFeesUsd);
+      assertBn.equal(posAfter.accruedFeesUsd, posBefore.accruedFeesUsd.add(flagEvent.args.flagKeeperReward));
     });
 
     it('should update reported debt', async () => {
@@ -232,13 +233,14 @@ describe('LiquidationModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
       const flagKeeper = keeper2();
       const marketBefore = await PerpMarketProxy.getMarketDigest(marketId);
-      await withExplicitEvmMine(
+      const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(flagKeeper).flagPosition(trader.accountId, marketId),
         provider()
       );
+      const flagEvent = findEventSafe(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
       const marketAfter = await PerpMarketProxy.getMarketDigest(marketId);
 
-      assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection);
+      assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection.sub(flagEvent.args.flagKeeperReward));
     });
 
     it('should sell all available synth collateral for sUSD when flagging', async () => {
