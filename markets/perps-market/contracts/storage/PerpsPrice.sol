@@ -16,8 +16,10 @@ library PerpsPrice {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    bool internal constant USE_STRICT_STALENESS_TOLERANCE = true;
-    bool internal constant USE_LAX_STALENESS_TOLERANCE = false;
+    enum Tolerance {
+        DEFAULT,
+        STRICT
+    }
 
     struct Data {
         bytes32 feedId;
@@ -33,12 +35,12 @@ library PerpsPrice {
 
     function getCurrentPrice(
         uint128 marketId,
-        bool useStrictStalenessTolerance
+        Tolerance priceTolerance
     ) internal view returns (uint price) {
         Data storage self = load(marketId);
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         NodeOutput.Data memory output;
-        if (useStrictStalenessTolerance) {
+        if (priceTolerance == Tolerance.STRICT) {
             bytes32[] memory runtimeKeys = new bytes32[](1);
             bytes32[] memory runtimeValues = new bytes32[](1);
             runtimeKeys[0] = bytes32("stalenessTolerance");

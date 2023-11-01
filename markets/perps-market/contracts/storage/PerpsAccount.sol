@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
@@ -109,7 +110,7 @@ library PerpsAccount {
 
     function isEligibleForLiquidation(
         Data storage self,
-        bool useStrictStalenessTolerance
+        PerpsPrice.Tolerance stalenessTolerance
     )
         internal
         view
@@ -122,7 +123,7 @@ library PerpsAccount {
             uint256 liquidationReward
         )
     {
-        availableMargin = getAvailableMargin(self, useStrictStalenessTolerance);
+        availableMargin = getAvailableMargin(self, stalenessTolerance);
         if (self.openPositionMarketIds.length() == 0) {
             return (false, availableMargin, 0, 0, 0, 0);
         }
@@ -131,7 +132,7 @@ library PerpsAccount {
             requiredMaintenanceMargin,
             accumulatedLiquidationRewards,
             liquidationReward
-        ) = getAccountRequiredMargins(self, useStrictStalenessTolerance);
+        ) = getAccountRequiredMargins(self, stalenessTolerance);
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
 
@@ -197,7 +198,7 @@ library PerpsAccount {
             ,
             ,
             uint256 liquidationReward
-        ) = isEligibleForLiquidation(self, false);
+        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.DEFAULT);
 
         if (isEligible) {
             revert AccountLiquidatable(self.id);
@@ -214,7 +215,7 @@ library PerpsAccount {
             (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
                 synthMarketId,
                 amountToWithdraw,
-                false
+                Price.Tolerance.DEFAULT
             );
         }
 
@@ -228,7 +229,7 @@ library PerpsAccount {
 
     function getTotalCollateralValue(
         Data storage self,
-        bool useStrictStalenessTolerance
+        PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (uint) {
         uint totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
@@ -243,7 +244,7 @@ library PerpsAccount {
                 (amountToAdd, ) = spotMarket.quoteSellExactIn(
                     synthMarketId,
                     amount,
-                    useStrictStalenessTolerance
+                    Price.Tolerance(uint(stalenessTolerance))
                 );
             }
             totalCollateralValue += amountToAdd;
@@ -253,13 +254,13 @@ library PerpsAccount {
 
     function getAccountPnl(
         Data storage self,
-        bool useStrictStalenessTolerance
+        PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int totalPnl) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (int pnl, , , , ) = position.getPnl(
-                PerpsPrice.getCurrentPrice(marketId, useStrictStalenessTolerance)
+                PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
             totalPnl += pnl;
         }
@@ -267,11 +268,10 @@ library PerpsAccount {
 
     function getAvailableMargin(
         Data storage self,
-        bool useStrictStalenessTolerance
+        PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256) {
-        int256 totalCollateralValue = getTotalCollateralValue(self, useStrictStalenessTolerance)
-            .toInt();
-        int256 accountPnl = getAccountPnl(self, useStrictStalenessTolerance);
+        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance).toInt();
+        int256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
         return totalCollateralValue + accountPnl;
     }
@@ -284,7 +284,7 @@ library PerpsAccount {
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (uint openInterest, , , , , ) = position.getPositionData(
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.USE_LAX_STALENESS_TOLERANCE)
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
             totalAccountOpenInterest += openInterest;
         }
@@ -297,7 +297,7 @@ library PerpsAccount {
      */
     function getAccountRequiredMargins(
         Data storage self,
-        bool useStrictStalenessTolerance
+        PerpsPrice.Tolerance stalenessTolerance
     )
         internal
         view
@@ -323,7 +323,7 @@ library PerpsAccount {
                 uint256 liquidationMargin
             ) = marketConfig.calculateRequiredMargins(
                     position.size,
-                    PerpsPrice.getCurrentPrice(marketId, useStrictStalenessTolerance)
+                    PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
                 );
 
             accumulatedLiquidationRewards += liquidationMargin;
@@ -409,7 +409,7 @@ library PerpsAccount {
                 (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
                     synthMarketId,
                     leftoverAmount,
-                    true
+                    Price.Tolerance.STRICT
                 );
 
                 address synthToken = factory.spotMarket.getSynth(synthMarketId);

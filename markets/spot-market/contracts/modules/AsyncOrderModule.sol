@@ -61,7 +61,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             uint256 currentPrice = Price.getCurrentPrice(
                 marketId,
                 Transaction.Type.ASYNC_SELL,
-                true
+                Price.Tolerance.STRICT
             );
             uint256 usdAmount = amountProvided.mulDecimal(currentPrice);
 
