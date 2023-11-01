@@ -226,8 +226,8 @@ describe('Atomic Order Module sell()', () => {
     before(restore);
 
     before('set sell price higher than buy price', async () => {
-      const nodeId100 = await generateExternalNode(systems().OracleManager, 100);
-      const nodeId200 = await generateExternalNode(systems().OracleManager, 200);
+      const nodeId100 = await generateExternalNode(systems().OracleManager, 100, 10);
+      const nodeId200 = await generateExternalNode(systems().OracleManager, 200, 10);
 
       await systems()
         .SpotMarket.connect(marketOwner)
