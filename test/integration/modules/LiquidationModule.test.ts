@@ -36,11 +36,9 @@ import {
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
-  logNumber,
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
-import { parseUnits } from 'ethers/lib/utils';
 import { calculateLiquidationKeeperFee, calculateTransactionCostInUSD } from '../../calculations';
 
 describe('LiquidationModule', () => {
@@ -239,7 +237,7 @@ describe('LiquidationModule', () => {
       assertBn.equal(posAfter.accruedFeesUsd, posBefore.accruedFeesUsd.add(flagEvent.args.flagKeeperReward));
     });
 
-    it('should update reported debt', async () => {
+    it('should update reported debt (debtCorrection)', async () => {
       const { PerpMarketProxy } = systems();
 
       const orderSide = genSide();
@@ -648,6 +646,37 @@ describe('LiquidationModule', () => {
       assertBn.lt(d2.skew.abs(), d1.skew.abs());
       assertBn.isZero(d2.size);
       assertBn.isZero(d2.skew);
+    });
+
+    it('should update reported debt (debtCorrection)', async () => {
+      const { PerpMarketProxy } = systems();
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const marketBefore = await PerpMarketProxy.getMarketDigest(marketId);
+
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+      const marketAfter = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.lt(
+        marketBefore.debtCorrection,
+        marketAfter.debtCorrection.sub(order.sizeDelta.abs().add(newMarketOraclePrice))
+      );
     });
 
     it('should update lastLiq{time,utilization}', async () => {
