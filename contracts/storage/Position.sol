@@ -284,16 +284,13 @@ library Position {
 
         // Determine the resulting position post liqudation.
         liqSize = MathUtil.min(runtime.remainingCapacity, runtime.oldPositionSizeAbs).to128();
-        // TODO, need to have a chat about this
-        // The new position returned here will be used to update updateDebtCorrection
-        // liqFlagReward = getLiquidationFlagReward(liqSize, price, marketConfig, globalConfig);
         liqKeeperFee = getLiquidationKeeperFee(liqSize, marketConfig, globalConfig);
         newPosition = Position.Data(
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryPrice,
             // An accumulation of fees paid on liquidation and reward paid out to the liquidator.
-            oldPosition.accruedFeesUsd /*+ liqFlagReward*/ + liqKeeperFee
+            oldPosition.accruedFeesUsd + liqKeeperFee
         );
     }
 
@@ -384,9 +381,10 @@ library Position {
 
         uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
         uint256 maxLiqCapacity = PerpMarket.getMaxLiquidatableCapacity(marketConfig);
-        // TODO kaleb's spec says iteraction should be multiplied here, but I think we need to multiple the end result
-        uint256 totalGasUnitsToLiquidate = globalConfig.keeperLiquidationGasUnits;
-        uint256 liquidationExecutionCostUsd = ethPrice.mulDecimal(block.basefee * totalGasUnitsToLiquidate);
+
+        uint256 liquidationExecutionCostUsd = ethPrice.mulDecimal(
+            block.basefee * globalConfig.keeperLiquidationGasUnits
+        );
 
         uint256 liquidationFeeInUSD = MathUtil.max(
             liquidationExecutionCostUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),

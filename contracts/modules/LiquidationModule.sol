@@ -105,7 +105,9 @@ contract LiquidationModule is ILiquidationModule {
             position.accruedFeesUsd + flagReward
         );
         market.updateDebtCorrection(market.positions[accountId], newPosition);
+        // Update position accounting
         market.positions[accountId].update(newPosition);
+
         // Pay the keeper for flagging the position.
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
         // Flag and emit event.
