@@ -11,7 +11,6 @@ import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockG
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
   aggregator: () => AggregatorV3Mock;
-  keeperCostNode: () => MockGasPriceNode;
   strategyId: () => ethers.BigNumber;
 };
 
@@ -76,6 +75,7 @@ export const bootstrapPerpsMarkets = (
 ) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(2000));
   let contracts: Systems, superMarketId: ethers.BigNumber;
+  let keeperCostOracleNode: MockGasPriceNode;
 
   before('identify contracts', () => {
     contracts = r.systems() as Systems;
@@ -101,6 +101,14 @@ export const bootstrapPerpsMarkets = (
     ]);
   });
 
+  before('create perps gas usage nodes', async () => {
+    const results = await createKeeperCostNode(r.owner(), contracts.OracleManager);
+    const keeperCostNodeId = results.keeperCostNodeId;
+    keeperCostOracleNode = results.keeperCostNode;
+
+    await contracts.PerpsMarket.connect(r.owner()).updateKeeperRewardData(keeperCostNodeId);
+  });
+
   const perpsMarkets: PerpsMarkets = data.map(
     ({
       requestedMarketId: marketId,
@@ -121,17 +129,9 @@ export const bootstrapPerpsMarkets = (
         aggregator = results.aggregator;
       });
 
-      let keeperCostNodeId: string, keeperCostNode: MockGasPriceNode;
-      before('create perps gas usage nodes', async () => {
-        const results = await createKeeperCostNode(r.owner(), contracts.OracleManager);
-        keeperCostNodeId = results.keeperCostNodeId;
-        keeperCostNode = results.keeperCostNode;
-      });
-
       before(`create perps market ${name}`, async () => {
         await contracts.PerpsMarket.createMarket(marketId, name, token);
         await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
-        await contracts.PerpsMarket.connect(r.owner()).updateKeeperRewardData(keeperCostNodeId);
       });
 
       before('set funding parameters', async () => {
@@ -222,6 +222,7 @@ export const bootstrapPerpsMarkets = (
     superMarketId: () => superMarketId,
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,
+    keeperCostOracleNode: () => keeperCostOracleNode,
     poolId: r.poolId,
   };
 };
