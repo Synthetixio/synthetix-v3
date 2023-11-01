@@ -244,7 +244,7 @@ library PerpsAccount {
                 (amountToAdd, ) = spotMarket.quoteSellExactIn(
                     synthMarketId,
                     amount,
-                    Price.Tolerance(uint(stalenessTolerance))
+                    Price.Tolerance(uint(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
                 );
             }
             totalCollateralValue += amountToAdd;
