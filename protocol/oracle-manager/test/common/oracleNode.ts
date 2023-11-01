@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { BigNumberish, Contract, ethers } from 'ethers';
 import hre from 'hardhat';
 import { Proxy } from '../generated/typechain';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
@@ -54,9 +54,13 @@ export const createPythNode = async (
 };
 
 // Note: must have deployed `MockExternalNode`
-export const generateExternalNode = async (OracleManager: Proxy, price: number) => {
+export const generateExternalNode = async (
+  OracleManager: Proxy | Contract,
+  price: number,
+  timestamp: BigNumberish
+) => {
   const factory = await hre.ethers.getContractFactory('MockExternalNode');
-  const externalNode = await factory.deploy(price, 200); // used to have .connect(owner)
+  const externalNode = await factory.deploy(price, timestamp); // used to have .connect(owner)
 
   // Register the mock
   const NodeParameters = ethers.utils.defaultAbiCoder.encode(['address'], [externalNode.address]);
