@@ -27,6 +27,7 @@ library PythOffchainLookupNode {
 
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
             if (runtimeKeys[i] == "stalenessTolerance") {
+                // solhint-disable-next-line numcast/safe-cast
                 stalenessTolerance = uint256(runtimeValues[i]);
             }
         }
