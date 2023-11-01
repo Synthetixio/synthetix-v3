@@ -124,7 +124,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             for (uint i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
                 totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
-                    PerpsPrice.getCurrentPrice(marketId, false)
+                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 );
             }
 
@@ -152,7 +152,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 accumulatedMinimumCredit += PerpsMarket
                     .load(marketId)
                     .size
-                    .mulDecimal(PerpsPrice.getCurrentPrice(marketId, false))
+                    .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
                     .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
             }
 

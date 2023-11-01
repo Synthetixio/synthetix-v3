@@ -106,7 +106,11 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function reportedDebt(
         uint128 marketId
     ) external view override returns (uint256 reportedDebtAmount) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL, false);
+        uint256 price = Price.getCurrentPrice(
+            marketId,
+            Transaction.Type.SELL,
+            Price.Tolerance.DEFAULT
+        );
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -124,7 +128,13 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
             collateralLeverage == 0
                 ? 0
                 : totalBalance
-                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY, false))
+                    .mulDecimal(
+                        Price.getCurrentPrice(
+                            marketId,
+                            Transaction.Type.BUY,
+                            Price.Tolerance.DEFAULT
+                        )
+                    )
                     .divDecimal(collateralLeverage);
     }
 

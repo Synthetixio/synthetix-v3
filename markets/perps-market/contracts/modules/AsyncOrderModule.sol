@@ -75,7 +75,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId, false)
+            PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
         emit OrderCommitted(
@@ -128,7 +128,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             uint256 currentMaintenanceMargin,
             uint256 currentTotalLiquidationRewards,
 
-        ) = PerpsAccount.load(accountId).getAccountRequiredMargins(false);
+        ) = PerpsAccount.load(accountId).getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta);
 
         return
@@ -155,7 +155,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             skew,
             marketConfig.skewScale,
             sizeDelta,
-            PerpsPrice.getCurrentPrice(marketId, false)
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
         orderFees = AsyncOrder.calculateOrderFee(

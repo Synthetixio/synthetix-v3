@@ -5,6 +5,7 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
@@ -75,7 +76,7 @@ library GlobalPerpsMarket {
                 (uint collateralValue, ) = spotMarket.quoteSellExactIn(
                     synthMarketId,
                     self.collateralAmounts[synthMarketId],
-                    false
+                    Price.Tolerance.DEFAULT
                 );
                 total += collateralValue;
             }

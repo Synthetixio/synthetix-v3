@@ -296,7 +296,7 @@ library AsyncOrder {
             runtime.requiredMaintenanceMargin,
             runtime.accumulatedLiquidationRewards,
 
-        ) = account.isEligibleForLiquidation(false);
+        ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
 
         if (isEligible) {
             revert PerpsAccount.AccountLiquidatable(runtime.accountId);
@@ -522,7 +522,10 @@ library AsyncOrder {
 
         // get maintenance margin of old position
         (, , , uint256 oldRequiredMargin, uint256 oldLiquidationReward) = marketConfig
-            .calculateRequiredMargins(oldPositionSize, PerpsPrice.getCurrentPrice(marketId, false));
+            .calculateRequiredMargins(
+                oldPositionSize,
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            );
 
         // remove the maintenance margin and add the initial margin requirement
         // this gets us our total required margin for new position

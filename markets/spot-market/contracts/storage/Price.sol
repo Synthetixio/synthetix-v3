@@ -16,6 +16,11 @@ library Price {
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
 
+    enum Tolerance {
+        DEFAULT,
+        STRICT
+    }
+
     struct Data {
         /**
          * @dev The oracle manager node id used for buy transactions.
@@ -42,7 +47,7 @@ library Price {
     function getCurrentPrice(
         uint128 marketId,
         Transaction.Type transactionType,
-        bool useStrictStalenessTolerance
+        Tolerance priceTolerance
     ) internal view returns (uint256 price) {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
@@ -50,7 +55,7 @@ library Price {
 
         NodeOutput.Data memory output;
 
-        if (useStrictStalenessTolerance) {
+        if (priceTolerance == Tolerance.STRICT) {
             bytes32[] memory runtimeKeys = new bytes32[](1);
             bytes32[] memory runtimeValues = new bytes32[](1);
             runtimeKeys[0] = bytes32("stalenessTolerance");
