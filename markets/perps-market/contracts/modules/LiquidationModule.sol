@@ -200,7 +200,6 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 costOfFlagExecution +
                 KeeperCosts.load().getLiquidateKeeperCosts()
         );
-
         runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
         if (runtime.accountFullyLiquidated) {
             GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
