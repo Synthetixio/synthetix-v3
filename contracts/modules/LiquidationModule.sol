@@ -108,8 +108,12 @@ contract LiquidationModule is ILiquidationModule {
         // Update position accounting
         market.positions[accountId].update(newPosition);
 
-        // Pay the keeper for flagging the position.
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+        if (msg.sender != globalConfig.keeperLiquidationEndorsed) {
+            // TODO probably worth having a chat if we should affect reported debt, and should the event emit what the reward would have been or 0?
+
+            // As long as the keeper isn't the endorsed keeper, pay them for flagging the position.
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+        }
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);

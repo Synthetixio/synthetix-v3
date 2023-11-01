@@ -172,6 +172,37 @@ describe('LiquidationModule', () => {
 
       assertBn.equal(await USD.balanceOf(await flagKeeper.getAddress()), flagEvent.args.flagKeeperReward);
     });
+    it('should not send flagKeeperReward to endorsed keeper', async () => {
+      const { PerpMarketProxy, USD } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Commit a new order but don't settle.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 0.5,
+        desiredSide: orderSide,
+      });
+      await commitOrder(bs, marketId, trader, order2);
+
+      // Price moves 10% and results in a healthFactor of < 1.
+      const newMarketOraclePrice = wei(order2.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(endorsedKeeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+
+      assertBn.isZero(await USD.balanceOf(await endorsedKeeper().getAddress()));
+    });
 
     it("should update the position's accrued fees", async () => {
       const { PerpMarketProxy } = systems();
