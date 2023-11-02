@@ -299,4 +299,14 @@ interface IMarketConfigurationModule {
      * @return lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
     function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
+
+    /**
+     * @notice Set node id for perps market
+     * @param perpsMarketId id of the market to set price feed.
+     * @return feedId the node feed id to get price
+     * @param strictStalenessTolerance configured strict price tolerance in seconds
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance);
 }

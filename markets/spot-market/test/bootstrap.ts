@@ -7,7 +7,7 @@ import {
   USDProxy,
   USDRouter,
 } from '@synthetixio/main/test/generated/typechain';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
@@ -142,7 +142,7 @@ export function bootstrapWithSynth(name: string, token: string) {
   });
 
   before('setup buy and sell feeds', async () => {
-    const result = await createOracleNode(
+    const result = await createPythNode(
       r.signers()[0],
       ethers.utils.parseEther('900'),
       contracts.OracleManager

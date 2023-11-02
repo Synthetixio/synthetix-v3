@@ -2,13 +2,13 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
-import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
+import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
-  aggregator: () => AggregatorV3Mock;
+  aggregator: () => MockPythExternalNode;
   strategyId: () => ethers.BigNumber;
 };
 
@@ -113,9 +113,9 @@ export const bootstrapPerpsMarkets = (
       lockedOiRatioD18,
       settlementStrategy,
     }) => {
-      let oracleNodeId: string, aggregator: AggregatorV3Mock;
+      let oracleNodeId: string, aggregator: MockPythExternalNode;
       before('create perps price nodes', async () => {
-        const results = await createOracleNode(r.owner(), price, contracts.OracleManager);
+        const results = await createPythNode(r.owner(), price, contracts.OracleManager);
         oracleNodeId = results.oracleNodeId;
         aggregator = results.aggregator;
       });

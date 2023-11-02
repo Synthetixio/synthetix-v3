@@ -85,6 +85,17 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance) {
+        PerpsPrice.Data storage priceData = PerpsPrice.load(perpsMarketId);
+        feedId = priceData.feedId;
+        strictStalenessTolerance = priceData.strictStalenessTolerance;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
