@@ -71,13 +71,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "16.20.1"
+          node-version: "18.18.0"
           cache: "yarn"
       - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
         with:
           run_daemon: true
       - run: yarn install --immutable --immutable-cache
-      - run: yarn workspaces foreach --all --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build:ts
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build:ts
       - name: "Simulate release of '${{ matrix.cannonPackage }}' on chains '${{ matrix.chains }}'"
         run: |
           CHAINS="${{ matrix.chains }}"

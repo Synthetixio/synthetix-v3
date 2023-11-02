@@ -73,8 +73,8 @@ jobs:
             ~/.local/share/cannon
 
       - run: yarn install --immutable --immutable-cache
-      - run: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build:ts
-      - run: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build-testable
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build:ts
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build-testable
 
       - name: Execute size-contracts command
         run: |
