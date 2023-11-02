@@ -32,7 +32,7 @@ describe('PoolConfigurationModule', function () {
           .Core.connect(owner)
           .addToFeatureFlagAllowlist(
             Ethers.utils.formatBytes32String('createPool'),
-            user1.getAddress()
+            await user1.getAddress()
           );
       });
 
