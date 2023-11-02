@@ -260,7 +260,6 @@ options.synthetixPackage = "synthetix:dev"
 options.spotMarketPackage = "synthetix-spot-market:dev"
 options.synthetixPreset = "<%= settings.targetPreset %>"
 options.spotMarketPreset = "<%= settings.targetPreset %>"
-depends = ["provision.spot_factory"]
 
 [invoke.permit_owner_to_register_markets]
 target = ["synthetix.CoreProxy"]
@@ -496,14 +495,12 @@ fromCall.args = ["<%= extras.spartan_council_pool_id %>"]
 func = "setPoolConfiguration"
 args = [
     "<%= extras.spartan_council_pool_id %>",
-    []
     # TODO: for some reason all of these markets fail here with "Market does not exist" error. Need to figure it out
-    #[
-    #    { marketId = "<%= extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-    #    { marketId = "<%= extras.synth_btc_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-    #    { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-    #    { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" }
-    #]
+    [
+        { marketId = "<%= extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
+        { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
+        { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" }
+    ]
 ]
 
 #
