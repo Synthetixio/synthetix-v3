@@ -127,7 +127,7 @@ describe('Keeper Rewards - Caps', () => {
       before(restoreToConfiguration);
 
       before('set minLiquidationRewardUsd, maxLiquidationRewardUsd', async () => {
-        await systems().PerpsMarket.setLiquidationRewardGuards(test.lowerCap, test.higherCap);
+        await systems().PerpsMarket.setKeeperRewardGuards(test.lowerCap, test.higherCap);
       });
 
       before('set liquidation reward ratio', async () => {
@@ -198,7 +198,7 @@ describe('Keeper Rewards - Caps', () => {
       it('emits account liquidated event', async () => {
         await assertEvent(
           liquidateTxn,
-          `AccountLiquidated(2, ${test.expected}, true)`, // not capped
+          `AccountLiquidationAttempt(2, ${test.expected}, true)`, // not capped
           systems().PerpsMarket
         );
       });

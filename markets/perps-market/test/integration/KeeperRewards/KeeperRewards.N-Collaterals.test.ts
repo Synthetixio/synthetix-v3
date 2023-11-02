@@ -96,7 +96,7 @@ describe('Keeper Rewards - Multiple Collaterals', () => {
   });
 
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {
-    await systems().PerpsMarket.setLiquidationRewardGuards(1, bn(10));
+    await systems().PerpsMarket.setKeeperRewardGuards(1, bn(10));
   });
 
   before('set liquidation reward ratio', async () => {
@@ -157,7 +157,7 @@ describe('Keeper Rewards - Multiple Collaterals', () => {
 
     await assertEvent(
       liquidateTxn,
-      `AccountLiquidated(2, ${expected}, true)`, // not capped
+      `AccountLiquidationAttempt(2, ${expected}, true)`, // not capped
       systems().PerpsMarket
     );
   });

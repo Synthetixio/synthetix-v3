@@ -155,7 +155,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     before('set liquidation guards', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setLiquidationRewardGuards(
+        .setKeeperRewardGuards(
           liquidationGuards.minLiquidationReward,
           liquidationGuards.maxLiquidationReward
         );

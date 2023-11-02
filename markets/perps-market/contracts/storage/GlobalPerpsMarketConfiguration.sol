@@ -37,13 +37,13 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128[] synthDeductionPriority;
         /**
-         * @dev minimum configured liquidation reward for the sender who liquidates the account
+         * @dev minimum configured keeper reward for the sender who liquidates the account
          */
-        uint minLiquidationRewardUsd;
+        uint minKeeperRewardUsd;
         /**
-         * @dev maximum configured liquidation reward for the sender who liquidates the account
+         * @dev maximum configured keeper reward for the sender who liquidates the account
          */
-        uint maxLiquidationRewardUsd;
+        uint maxKeeperRewardUsd;
         /**
          * @dev maximum configured number of concurrent positions per account.
          * @notice If set to zero it means no new positions can be opened, but existing positions can be increased or decreased.
@@ -57,13 +57,13 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128 maxCollateralsPerAccount;
         /**
-         * @dev used together with minLiquidationRewardUsd to get the minumum liquidation reward for the sender who settles, or liquidates the account
+         * @dev used together with minKeeperRewardUsd to get the minumum keeper reward for the sender who settles, or liquidates the account
          */
-        uint minLiquidationProfitRatioD18;
+        uint minKeeperProfitRatioD18;
         /**
-         * @dev used together with maxLiquidationRewardUsd to get the maximum liquidation reward for the sender who settles, or liquidates the account
+         * @dev used together with maxKeeperRewardUsd to get the maximum keeper reward for the sender who settles, or liquidates the account
          */
-        uint maxLiquidationScalingRatioD18;
+        uint maxKeeperScalingRatioD18;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -74,28 +74,28 @@ library GlobalPerpsMarketConfiguration {
     }
 
     /**
-     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against min/max
+     * @dev returns the keeper reward based on total keeper rewards from all markets compared against min/max
      */
-    function liquidationReward(
+    function keeperReward(
         Data storage self,
-        uint256 totalLiquidationRewards
+        uint256 totalKeeperRewards
     ) internal view returns (uint256) {
         return
             MathUtil.min(
-                MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),
-                self.maxLiquidationRewardUsd
+                MathUtil.max(totalKeeperRewards, self.minKeeperRewardUsd),
+                self.maxKeeperRewardUsd
             );
     }
 
     /**
-     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against only min
-     * @notice this is used when calculating the required margin for an account as there's no upper cap since the total liquidation rewards are dependent on available amount in liquidation window
+     * @dev returns the keeper reward based on total keeper rewards from all markets compared against only min
+     * @notice this is used when calculating the required margin for an account as there's no upper cap since the total keeper rewards are dependent on available amount in keeper window
      */
-    function minimumLiquidationReward(
+    function minimumKeeperReward(
         Data storage self,
-        uint256 totalLiquidationRewards
+        uint256 totalKeeperRewards
     ) internal view returns (uint256) {
-        return MathUtil.max(self.minLiquidationRewardUsd, totalLiquidationRewards);
+        return MathUtil.max(self.minKeeperRewardUsd, totalKeeperRewards);
     }
 
     function updateSynthDeductionPriority(

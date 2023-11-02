@@ -67,7 +67,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
   });
 
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {
-    await systems().PerpsMarket.setLiquidationRewardGuards(1, bn(10));
+    await systems().PerpsMarket.setKeeperRewardGuards(1, bn(10));
   });
 
   before('set liquidation reward ratio', async () => {
@@ -147,7 +147,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
 
     await assertEvent(
       liquidateTxn,
-      `AccountLiquidated(2, ${expected}, false)`, // not capped
+      `AccountLiquidationAttempt(2, ${expected}, false)`, // not capped
       systems().PerpsMarket
     );
   });
@@ -172,7 +172,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
 
     await assertEvent(
       liquidateTxn,
-      `AccountLiquidated(2, ${expected}, false)`, // not capped
+      `AccountLiquidationAttempt(2, ${expected}, false)`, // not capped
       systems().PerpsMarket
     );
   });
@@ -196,7 +196,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
 
     await assertEvent(
       liquidateTxn,
-      `AccountLiquidated(2, ${expected}, true)`, // not capped
+      `AccountLiquidationAttempt(2, ${expected}, true)`, // not capped
       systems().PerpsMarket
     );
   });

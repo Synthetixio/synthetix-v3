@@ -68,50 +68,50 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setLiquidationRewardGuards(
-        uint256 minLiquidationRewardUsd,
-        uint256 minLiquidationProfitRatioD18,
-        uint256 maxLiquidationRewardUsd,
-        uint256 maxLiquidationScalingRatioD18
+    function setKeeperRewardGuards(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     ) external override {
         OwnableStorage.onlyOwner();
-        if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
-            revert ParameterError.InvalidParameter("min/maxLiquidationRewardUSD", "min > max");
+        if (minKeeperRewardUsd > maxKeeperRewardUsd) {
+            revert ParameterError.InvalidParameter("min/maxKeeperRewardUSD", "min > max");
         }
 
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.minLiquidationRewardUsd = minLiquidationRewardUsd;
-        store.minLiquidationProfitRatioD18 = minLiquidationProfitRatioD18;
-        store.minLiquidationRewardUsd = minLiquidationRewardUsd;
-        store.maxLiquidationScalingRatioD18 = maxLiquidationScalingRatioD18;
+        store.minKeeperRewardUsd = minKeeperRewardUsd;
+        store.minKeeperProfitRatioD18 = minKeeperProfitRatioD18;
+        store.minKeeperRewardUsd = minKeeperRewardUsd;
+        store.maxKeeperScalingRatioD18 = maxKeeperScalingRatioD18;
 
-        emit LiquidationRewardGuardsSet(
-            minLiquidationRewardUsd,
-            minLiquidationProfitRatioD18,
-            maxLiquidationRewardUsd,
-            maxLiquidationScalingRatioD18
+        emit KeeperRewardGuardsSet(
+            minKeeperRewardUsd,
+            minKeeperProfitRatioD18,
+            maxKeeperRewardUsd,
+            maxKeeperScalingRatioD18
         );
     }
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getLiquidationRewardGuards()
+    function getKeeperRewardGuards()
         external
         view
         override
         returns (
-            uint256 minLiquidationRewardUsd,
-            uint256 minLiquidationProfitRatioD18,
-            uint256 maxLiquidationRewardUsd,
-            uint256 maxLiquidationScalingRatioD18
+            uint256 minKeeperRewardUsd,
+            uint256 minKeeperProfitRatioD18,
+            uint256 maxKeeperRewardUsd,
+            uint256 maxKeeperScalingRatioD18
         )
     {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        minLiquidationRewardUsd = store.minLiquidationRewardUsd;
-        minLiquidationProfitRatioD18 = store.minLiquidationProfitRatioD18;
-        maxLiquidationRewardUsd = store.maxLiquidationRewardUsd;
-        maxLiquidationScalingRatioD18 = store.maxLiquidationScalingRatioD18;
+        minKeeperRewardUsd = store.minKeeperRewardUsd;
+        minKeeperProfitRatioD18 = store.minKeeperProfitRatioD18;
+        maxKeeperRewardUsd = store.maxKeeperRewardUsd;
+        maxKeeperScalingRatioD18 = store.maxKeeperScalingRatioD18;
     }
 
     /**

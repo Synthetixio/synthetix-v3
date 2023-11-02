@@ -19,17 +19,17 @@ interface IGlobalPerpsMarketModule {
     event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
 
     /**
-     * @notice Gets fired when liquidation reward guard is set or updated.
-     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @param minLiquidationProfitRatioD18 Minimum liquidation profit ratio used together with minLiquidationRewardUsd to calculate the minimum.
-     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
-     * @param maxLiquidationScalingRatioD18 Scaling used to calculate the Maximum liquidation reward together with maxLiquidationRewardUsd.
+     * @notice Gets fired when keeper reward guard is set or updated.
+     * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @param maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    event LiquidationRewardGuardsSet(
-        uint256 minLiquidationRewardUsd,
-        uint256 minLiquidationProfitRatioD18,
-        uint256 maxLiquidationRewardUsd,
-        uint256 maxLiquidationScalingRatioD18
+    event KeeperRewardGuardsSet(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     );
 
     /**
@@ -91,34 +91,34 @@ interface IGlobalPerpsMarketModule {
     function getSynthDeductionPriority() external view returns (uint128[] memory);
 
     /**
-     * @notice Sets the liquidation reward guard (min and max).
-     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @param minLiquidationProfitRatioD18 Minimum liquidation profit ratio used together with minLiquidationRewardUsd to calculate the minimum.
-     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
-     * @param maxLiquidationScalingRatioD18 Scaling used to calculate the Maximum liquidation reward together with maxLiquidationRewardUsd.
+     * @notice Sets the keeper reward guard (min and max).
+     * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @param maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    function setLiquidationRewardGuards(
-        uint256 minLiquidationRewardUsd,
-        uint256 minLiquidationProfitRatioD18,
-        uint256 maxLiquidationRewardUsd,
-        uint256 maxLiquidationScalingRatioD18
+    function setKeeperRewardGuards(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     ) external;
 
     /**
-     * @notice Gets the liquidation reward guard (min and max).
-     * @return minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @return minLiquidationProfitRatioD18 Minimum liquidation profit ratio used together with minLiquidationRewardUsd to calculate the minimum.
-     * @return maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
-     * @return maxLiquidationScalingRatioD18 Scaling used to calculate the Maximum liquidation reward together with maxLiquidationRewardUsd.
+     * @notice Gets the keeper reward guard (min and max).
+     * @return minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @return minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @return maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @return maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    function getLiquidationRewardGuards()
+    function getKeeperRewardGuards()
         external
         view
         returns (
-            uint256 minLiquidationRewardUsd,
-            uint256 minLiquidationProfitRatioD18,
-            uint256 maxLiquidationRewardUsd,
-            uint maxLiquidationScalingRatioD18
+            uint256 minKeeperRewardUsd,
+            uint256 minKeeperProfitRatioD18,
+            uint256 maxKeeperRewardUsd,
+            uint maxKeeperScalingRatioD18
         );
 
     /**
