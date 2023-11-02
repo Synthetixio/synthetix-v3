@@ -70,7 +70,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      */
     function setLiquidationRewardGuards(
         uint256 minLiquidationRewardUsd,
-        uint256 maxLiquidationRewardUsd
+        uint256 minLiquidationProfitRatioD18,
+        uint256 maxLiquidationRewardUsd,
+        uint256 maxLiquidationScalingRatioD18
     ) external override {
         OwnableStorage.onlyOwner();
         if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
@@ -79,9 +81,16 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
 
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
-        store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
+        store.minLiquidationProfitRatioD18 = minLiquidationProfitRatioD18;
+        store.minLiquidationRewardUsd = minLiquidationRewardUsd;
+        store.maxLiquidationScalingRatioD18 = maxLiquidationScalingRatioD18;
 
-        emit LiquidationRewardGuardsSet(minLiquidationRewardUsd, maxLiquidationRewardUsd);
+        emit LiquidationRewardGuardsSet(
+            minLiquidationRewardUsd,
+            minLiquidationProfitRatioD18,
+            maxLiquidationRewardUsd,
+            maxLiquidationScalingRatioD18
+        );
     }
 
     /**
@@ -91,11 +100,18 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         external
         view
         override
-        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
+        returns (
+            uint256 minLiquidationRewardUsd,
+            uint256 minLiquidationProfitRatioD18,
+            uint256 maxLiquidationRewardUsd,
+            uint256 maxLiquidationScalingRatioD18
+        )
     {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         minLiquidationRewardUsd = store.minLiquidationRewardUsd;
+        minLiquidationProfitRatioD18 = store.minLiquidationProfitRatioD18;
         maxLiquidationRewardUsd = store.maxLiquidationRewardUsd;
+        maxLiquidationScalingRatioD18 = store.maxLiquidationScalingRatioD18;
     }
 
     /**

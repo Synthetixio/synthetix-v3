@@ -207,13 +207,13 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             if (runtime.accountFullyLiquidated) {
                 GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
             }
-
-            emit AccountLiquidated(
-                runtime.accountId,
-                keeperLiquidationReward,
-                runtime.accountFullyLiquidated
-            );
         }
+
+        emit AccountLiquidationAttempt(
+            runtime.accountId,
+            keeperLiquidationReward,
+            runtime.accountFullyLiquidated
+        );
     }
 
     /**

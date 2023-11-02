@@ -21,11 +21,15 @@ interface IGlobalPerpsMarketModule {
     /**
      * @notice Gets fired when liquidation reward guard is set or updated.
      * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
+     * @param minLiquidationProfitRatioD18 Minimum liquidation profit ratio used together with minLiquidationRewardUsd to calculate the minimum.
      * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @param maxLiquidationScalingRatioD18 Scaling used to calculate the Maximum liquidation reward together with maxLiquidationRewardUsd.
      */
     event LiquidationRewardGuardsSet(
-        uint256 indexed minLiquidationRewardUsd,
-        uint256 indexed maxLiquidationRewardUsd
+        uint256 minLiquidationRewardUsd,
+        uint256 minLiquidationProfitRatioD18,
+        uint256 maxLiquidationRewardUsd,
+        uint256 maxLiquidationScalingRatioD18
     );
 
     /**
@@ -89,22 +93,33 @@ interface IGlobalPerpsMarketModule {
     /**
      * @notice Sets the liquidation reward guard (min and max).
      * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
+     * @param minLiquidationProfitRatioD18 Minimum liquidation profit ratio used together with minLiquidationRewardUsd to calculate the minimum.
      * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @param maxLiquidationScalingRatioD18 Scaling used to calculate the Maximum liquidation reward together with maxLiquidationRewardUsd.
      */
     function setLiquidationRewardGuards(
         uint256 minLiquidationRewardUsd,
-        uint256 maxLiquidationRewardUsd
+        uint256 minLiquidationProfitRatioD18,
+        uint256 maxLiquidationRewardUsd,
+        uint256 maxLiquidationScalingRatioD18
     ) external;
 
     /**
      * @notice Gets the liquidation reward guard (min and max).
      * @return minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
+     * @return minLiquidationProfitRatioD18 Minimum liquidation profit ratio used together with minLiquidationRewardUsd to calculate the minimum.
      * @return maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @return maxLiquidationScalingRatioD18 Scaling used to calculate the Maximum liquidation reward together with maxLiquidationRewardUsd.
      */
     function getLiquidationRewardGuards()
         external
         view
-        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd);
+        returns (
+            uint256 minLiquidationRewardUsd,
+            uint256 minLiquidationProfitRatioD18,
+            uint256 maxLiquidationRewardUsd,
+            uint maxLiquidationScalingRatioD18
+        );
 
     /**
      * @notice Gets the total collateral value of all deposited collateral from all traders.

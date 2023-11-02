@@ -56,6 +56,14 @@ library GlobalPerpsMarketConfiguration {
          * @notice If set to a larger number (larger than number of collaterals enabled) it means is unlimited.
          */
         uint128 maxCollateralsPerAccount;
+        /**
+         * @dev used together with minLiquidationRewardUsd to get the minumum liquidation reward for the sender who settles, or liquidates the account
+         */
+        uint minLiquidationProfitRatioD18;
+        /**
+         * @dev used together with maxLiquidationRewardUsd to get the maximum liquidation reward for the sender who settles, or liquidates the account
+         */
+        uint maxLiquidationScalingRatioD18;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
