@@ -9,7 +9,7 @@ import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 
-describe.only('Keeper Rewards - Settlement', () => {
+describe('Keeper Rewards - Settlement', () => {
   const KeeperCosts = {
     settlementCost: 1111,
     flagCost: 3333,

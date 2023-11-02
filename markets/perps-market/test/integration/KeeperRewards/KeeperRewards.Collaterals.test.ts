@@ -6,7 +6,7 @@ import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.only('Keeper Rewards - Collaterals', () => {
+describe('Keeper Rewards - Collaterals', () => {
   const KeeperCosts = {
     settlementCost: 1111,
     flagCost: 3333,
@@ -106,19 +106,12 @@ describe.only('Keeper Rewards - Collaterals', () => {
   });
 
   [
-    // {
-    //   name: 'uncapped just cost',
-    //   withRatio: false,
-    //   lowerCap: 1,
-    //   higherCap: bn(10),
-    //   expected: KeeperCosts.flagCost + KeeperCosts.liquidateCost,
-    // },
     {
       name: 'uncapped plus reward ratio',
       withRatio: true,
       lowerCap: 1,
       higherCap: bn(10),
-      expected: bn(5).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost),
+      expected: bn(5).add(KeeperCosts.flagCost * 3 + KeeperCosts.liquidateCost),
     },
   ].forEach((test) => {
     describe(`${test.name}`, () => {
@@ -161,24 +154,7 @@ describe.only('Keeper Rewards - Collaterals', () => {
       });
 
       before('add collateral', async () => {
-        const res = await depositCollateral(collateralsTestCase[0].collateralData);
-        // res.stats().forEach((stat) => {
-        //   console.log('spotInitialBalance', stat.spotInitialBalance().toString());
-        //   console.log('perpsInitialBalance', stat.perpsInitialBalance().toString());
-        //   console.log('tradeFee', stat.tradeFee().toString());
-        //   console.log('spotFinalBalance', stat.spotFinalBalance().toString());
-        //   console.log('perpsFinalBalance', stat.perpsFinalBalance().toString());
-        // });
-        console.log('xxxxx', await systems().PerpsMarket.totalCollateralValue(2));
-        console.log('xxxxx snxUSD', await systems().PerpsMarket.getCollateralAmount(2, 0));
-        console.log(
-          'xxxxx snxBTC',
-          await systems().PerpsMarket.getCollateralAmount(2, btcSynth.marketId())
-        );
-        console.log(
-          'xxxxx snxETH',
-          await systems().PerpsMarket.getCollateralAmount(2, ethSynth.marketId())
-        );
+        await depositCollateral(collateralsTestCase[0].collateralData);
       });
 
       before('open position', async () => {
