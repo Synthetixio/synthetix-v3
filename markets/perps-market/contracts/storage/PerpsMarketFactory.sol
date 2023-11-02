@@ -9,13 +9,11 @@ import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
  */
 library PerpsMarketFactory {
-    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
 
