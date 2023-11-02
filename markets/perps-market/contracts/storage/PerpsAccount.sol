@@ -142,9 +142,9 @@ library PerpsAccount {
             .liquidatableAccounts;
 
         if (!liquidatableAccounts.contains(self.id)) {
+            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
             convertAllCollateralToUsd(self);
-            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
         }
     }
 

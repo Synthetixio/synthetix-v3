@@ -14,7 +14,6 @@ describe.only('Keeper Rewards - Settlement', () => {
     settlementCost: 1111,
     flagCost: 3333,
     liquidateCost: 5555,
-    elegibilityCost: 7777,
   };
   const { systems, perpsMarkets, provider, trader1, keeperCostOracleNode, keeper, owner } =
     bootstrapMarkets({
@@ -76,12 +75,7 @@ describe.only('Keeper Rewards - Settlement', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(
-        KeeperCosts.settlementCost,
-        KeeperCosts.flagCost,
-        KeeperCosts.liquidateCost,
-        KeeperCosts.elegibilityCost
-      );
+      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
   });
 
   before('add collateral', async () => {

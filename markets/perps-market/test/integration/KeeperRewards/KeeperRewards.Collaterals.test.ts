@@ -2,49 +2,68 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { depositCollateral, openPosition } from '../helpers';
+import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.only('Keeper Rewards - Caps', () => {
+describe.only('Keeper Rewards - Collaterals', () => {
   const KeeperCosts = {
     settlementCost: 1111,
     flagCost: 3333,
     liquidateCost: 5555,
   };
-  const { systems, perpsMarkets, provider, trader1, keeperCostOracleNode, keeper, owner } =
-    bootstrapMarkets({
-      synthMarkets: [
-        {
-          name: 'Bitcoin',
-          token: 'snxBTC',
-          buyPrice: bn(10_000),
-          sellPrice: bn(10_000),
-        },
-      ],
-      perpsMarkets: [
-        {
-          requestedMarketId: 25,
-          name: 'Ether',
-          token: 'snxETH',
-          price: bn(1000),
-          fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
-        },
-        {
-          requestedMarketId: 30,
-          name: 'Link',
-          token: 'snxLINK',
-          price: bn(5000),
-          fundingParams: { skewScale: bn(200_000), maxFundingVelocity: bn(20) },
-        },
-      ],
-      traderAccountIds: [2, 3],
-    });
+  const {
+    systems,
+    perpsMarkets,
+    synthMarkets,
+    provider,
+    trader1,
+    keeperCostOracleNode,
+    keeper,
+    owner,
+  } = bootstrapMarkets({
+    synthMarkets: [
+      {
+        name: 'Bitcoin',
+        token: 'snxBTC',
+        buyPrice: bn(10_000),
+        sellPrice: bn(10_000),
+      },
+      {
+        name: 'Ethereum',
+        token: 'snxETH',
+        buyPrice: bn(1_000),
+        sellPrice: bn(1_000),
+      },
+    ],
+    perpsMarkets: [
+      {
+        requestedMarketId: 25,
+        name: 'Ether',
+        token: 'snxETH',
+        price: bn(1000),
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
+      },
+      {
+        requestedMarketId: 30,
+        name: 'Link',
+        token: 'snxLINK',
+        price: bn(5000),
+        fundingParams: { skewScale: bn(200_000), maxFundingVelocity: bn(20) },
+      },
+    ],
+    traderAccountIds: [2, 3],
+  });
   let ethMarketId: ethers.BigNumber;
   let ethSettlementStrategyId: ethers.BigNumber;
+  let btcSynth: SynthMarkets[number];
+  let ethSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
     ethSettlementStrategyId = perpsMarkets()[0].strategyId();
+    btcSynth = synthMarkets()[0];
+    ethSynth = synthMarkets()[1];
   });
 
   const collateralsTestCase = [
@@ -57,6 +76,14 @@ describe.only('Keeper Rewards - Caps', () => {
         collaterals: [
           {
             snxUSDAmount: () => bn(10_000),
+          },
+          {
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(1_000),
+          },
+          {
+            synthMarket: () => ethSynth,
+            snxUSDAmount: () => bn(1_000),
           },
         ],
       },
@@ -79,47 +106,19 @@ describe.only('Keeper Rewards - Caps', () => {
   });
 
   [
-    {
-      name: 'uncapped just cost',
-      withRatio: false,
-      lowerCap: 1,
-      higherCap: bn(10),
-      expected: KeeperCosts.flagCost + KeeperCosts.liquidateCost,
-    },
-    {
-      name: 'lower capped just cost',
-      withRatio: false,
-      lowerCap: 10_000,
-      higherCap: 10_0000,
-      expected: 10_000,
-    },
-    {
-      name: 'higher capped just cost',
-      withRatio: false,
-      lowerCap: 1,
-      higherCap: 100,
-      expected: 100,
-    },
+    // {
+    //   name: 'uncapped just cost',
+    //   withRatio: false,
+    //   lowerCap: 1,
+    //   higherCap: bn(10),
+    //   expected: KeeperCosts.flagCost + KeeperCosts.liquidateCost,
+    // },
     {
       name: 'uncapped plus reward ratio',
       withRatio: true,
       lowerCap: 1,
       higherCap: bn(10),
       expected: bn(5).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost),
-    },
-    {
-      name: 'lower capped plus reward ratio',
-      withRatio: true,
-      lowerCap: bn(8),
-      higherCap: bn(10),
-      expected: bn(8),
-    },
-    {
-      name: 'higher capped plus reward ratio',
-      withRatio: true,
-      lowerCap: bn(1),
-      higherCap: bn(3),
-      expected: bn(3),
     },
   ].forEach((test) => {
     describe(`${test.name}`, () => {
@@ -162,7 +161,24 @@ describe.only('Keeper Rewards - Caps', () => {
       });
 
       before('add collateral', async () => {
-        await depositCollateral(collateralsTestCase[0].collateralData);
+        const res = await depositCollateral(collateralsTestCase[0].collateralData);
+        // res.stats().forEach((stat) => {
+        //   console.log('spotInitialBalance', stat.spotInitialBalance().toString());
+        //   console.log('perpsInitialBalance', stat.perpsInitialBalance().toString());
+        //   console.log('tradeFee', stat.tradeFee().toString());
+        //   console.log('spotFinalBalance', stat.spotFinalBalance().toString());
+        //   console.log('perpsFinalBalance', stat.perpsFinalBalance().toString());
+        // });
+        console.log('xxxxx', await systems().PerpsMarket.totalCollateralValue(2));
+        console.log('xxxxx snxUSD', await systems().PerpsMarket.getCollateralAmount(2, 0));
+        console.log(
+          'xxxxx snxBTC',
+          await systems().PerpsMarket.getCollateralAmount(2, btcSynth.marketId())
+        );
+        console.log(
+          'xxxxx snxETH',
+          await systems().PerpsMarket.getCollateralAmount(2, ethSynth.marketId())
+        );
       });
 
       before('open position', async () => {
