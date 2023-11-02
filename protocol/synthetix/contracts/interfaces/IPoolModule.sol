@@ -127,7 +127,7 @@ interface IPoolModule {
 
     /**
      * @notice Retrieves the pool configuration of a specific collateral type.
-     * @param poolId The id of the pool whose configuration is being set.
+     * @param poolId The id of the pool whose configuration is being returned.
      * @param collateralType The address of the collateral.
      * @return config The PoolCollateralConfiguration object that describes the requested collateral configuration of the pool.
      */

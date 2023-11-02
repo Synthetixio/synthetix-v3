@@ -264,7 +264,6 @@ contract PoolModule is IPoolModule {
         uint128 poolId,
         address collateralType
     ) external view returns (PoolCollateralConfiguration.Data memory config) {
-        Pool.Data storage pool = Pool.loadExisting(poolId);
         return Pool.loadExisting(poolId).collateralConfigurations[collateralType];
     }
 
