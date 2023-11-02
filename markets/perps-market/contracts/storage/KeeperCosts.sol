@@ -15,6 +15,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 library KeeperCosts {
     using SafeCastI256 for int256;
     using SetUtil for SetUtil.UintSet;
+    using PerpsAccount for PerpsAccount.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     uint256 private constant KIND_SETTLEMENT = 0;
@@ -64,7 +65,7 @@ library KeeperCosts {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        uint numberOfUpdatedFeeds = account.activeCollateralTypes.length() +
+        uint numberOfUpdatedFeeds = account.getNumberOfCollaterals(false) +
             account.openPositionMarketIds.length();
 
         (bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) = getRuntime(
