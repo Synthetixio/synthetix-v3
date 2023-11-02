@@ -21,7 +21,7 @@ export type SynthArguments = Array<{
   sellPrice: ethers.BigNumber;
 }>;
 
-export const STRICT_PRICE_TOLERANCE = ethers.BigNumber.from(60);
+export const STRICT_PRICE_TOLERANCE = 60;
 
 export function bootstrapSynthMarkets(
   data: SynthArguments,
