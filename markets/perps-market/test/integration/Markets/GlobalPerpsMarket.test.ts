@@ -21,7 +21,7 @@ describe('GlobalPerpsMarket', () => {
     async () => {
       await systems().PerpsMarket.setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000));
       await systems().PerpsMarket.setSynthDeductionPriority([1, 2]);
-      await systems().PerpsMarket.setKeeperRewardGuards(100, 500);
+      await systems().PerpsMarket.setKeeperRewardGuards(100, 0, 500, 0);
     }
   );
 
@@ -60,15 +60,17 @@ describe('GlobalPerpsMarket', () => {
     });
   });
 
-  it('returns the correct minLiquidationRewardUsd ', async () => {
-    const liquidationGuards = await systems().PerpsMarket.getLiquidationRewardGuards();
-    assertBn.equal(liquidationGuards.minLiquidationRewardUsd, 100);
-    assertBn.equal(liquidationGuards.maxLiquidationRewardUsd, 500);
+  it('returns the correct minKeeperRewardUsd ', async () => {
+    const liquidationGuards = await systems().PerpsMarket.getKeeperRewardGuards();
+    assertBn.equal(liquidationGuards.minKeeperRewardUsd, 100);
+    assertBn.equal(liquidationGuards.minKeeperProfitRatioD18, 0);
+    assertBn.equal(liquidationGuards.maxKeeperRewardUsd, 500);
+    assertBn.equal(liquidationGuards.maxKeeperScalingRatioD18, 0);
   });
 
   it('transaction should fail if setter function are called by external user', async () => {
     await assertRevert(
-      systems().PerpsMarket.connect(trader1()).setKeeperRewardGuards(100, 500),
+      systems().PerpsMarket.connect(trader1()).setKeeperRewardGuards(100, 0, 500, 0),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
@@ -85,8 +87,8 @@ describe('GlobalPerpsMarket', () => {
 
   it('transaction should fail if min and max are inverted', async () => {
     await assertRevert(
-      systems().PerpsMarket.connect(owner()).setKeeperRewardGuards(500, 100),
-      'InvalidParameter("min/maxLiquidationRewardUSD", "min > max")'
+      systems().PerpsMarket.connect(owner()).setKeeperRewardGuards(500, 0, 100, 0),
+      'InvalidParameter("min/maxKeeperRewardUSD", "min > max")'
     );
   });
 

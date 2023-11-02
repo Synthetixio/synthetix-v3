@@ -84,7 +84,9 @@ type BootstrapArgs = {
   traderAccountIds: Array<number>;
   liquidationGuards?: {
     minLiquidationReward: ethers.BigNumber;
+    minKeeperProfitRatioD18: ethers.BigNumber;
     maxLiquidationReward: ethers.BigNumber;
+    maxKeeperScalingRatioD18: ethers.BigNumber;
   };
   maxPositionsPerAccount?: ethers.BigNumber;
   maxCollateralsPerAccount?: ethers.BigNumber;
@@ -157,7 +159,9 @@ export function bootstrapMarkets(data: BootstrapArgs) {
         .PerpsMarket.connect(owner())
         .setKeeperRewardGuards(
           liquidationGuards.minLiquidationReward,
-          liquidationGuards.maxLiquidationReward
+          liquidationGuards.minKeeperProfitRatioD18,
+          liquidationGuards.maxLiquidationReward,
+          liquidationGuards.maxKeeperScalingRatioD18
         );
     });
   }

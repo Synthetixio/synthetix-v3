@@ -543,7 +543,7 @@ library AsyncOrder {
         // do same thing for liquidation rewards and account for minimum liquidation margin
         uint256 requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
             .load()
-            .minimumLiquidationReward(
+            .minimumKeeperReward(
                 currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward
             );
 

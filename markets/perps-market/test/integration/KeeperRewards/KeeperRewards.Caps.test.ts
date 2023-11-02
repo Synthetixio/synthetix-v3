@@ -83,42 +83,54 @@ describe('Keeper Rewards - Caps', () => {
       name: 'uncapped just cost',
       withRatio: false,
       lowerCap: 1,
+      lowerProfitRatio: bn(0.005),
       higherCap: bn(10),
+      higherProfitRatio: bn(0.005),
       expected: KeeperCosts.flagCost + KeeperCosts.liquidateCost,
     },
     {
       name: 'lower capped just cost',
       withRatio: false,
       lowerCap: 10_000,
+      lowerProfitRatio: bn(0.005),
       higherCap: 10_0000,
+      higherProfitRatio: bn(0.005),
       expected: 10_000,
     },
     {
       name: 'higher capped just cost',
       withRatio: false,
       lowerCap: 1,
+      lowerProfitRatio: bn(0.005),
       higherCap: 100,
+      higherProfitRatio: bn(0.005),
       expected: 100,
     },
     {
       name: 'uncapped plus reward ratio',
       withRatio: true,
       lowerCap: 1,
+      lowerProfitRatio: bn(0.005),
       higherCap: bn(10),
+      higherProfitRatio: bn(0.005),
       expected: bn(5).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost),
     },
     {
       name: 'lower capped plus reward ratio',
       withRatio: true,
       lowerCap: bn(8),
+      lowerProfitRatio: bn(0.005),
       higherCap: bn(10),
+      higherProfitRatio: bn(0.005),
       expected: bn(8),
     },
     {
       name: 'higher capped plus reward ratio',
       withRatio: true,
       lowerCap: bn(1),
+      lowerProfitRatio: bn(0.005),
       higherCap: bn(3),
+      higherProfitRatio: bn(0.005),
       expected: bn(3),
     },
   ].forEach((test) => {
@@ -127,7 +139,12 @@ describe('Keeper Rewards - Caps', () => {
       before(restoreToConfiguration);
 
       before('set minLiquidationRewardUsd, maxLiquidationRewardUsd', async () => {
-        await systems().PerpsMarket.setKeeperRewardGuards(test.lowerCap, test.higherCap);
+        await systems().PerpsMarket.setKeeperRewardGuards(
+          test.lowerCap,
+          test.lowerProfitRatio,
+          test.higherCap,
+          test.higherProfitRatio
+        );
       });
 
       before('set liquidation reward ratio', async () => {

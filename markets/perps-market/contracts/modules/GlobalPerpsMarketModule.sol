@@ -82,7 +82,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minKeeperRewardUsd = minKeeperRewardUsd;
         store.minKeeperProfitRatioD18 = minKeeperProfitRatioD18;
-        store.minKeeperRewardUsd = minKeeperRewardUsd;
+        store.maxKeeperRewardUsd = maxKeeperRewardUsd;
         store.maxKeeperScalingRatioD18 = maxKeeperScalingRatioD18;
 
         emit KeeperRewardGuardsSet(

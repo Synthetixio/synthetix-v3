@@ -224,7 +224,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             return 0;
         }
         // pay out liquidation rewards
-        reward = GlobalPerpsMarketConfiguration.load().liquidationReward(totalRewards);
+        reward = GlobalPerpsMarketConfiguration.load().keeperReward(totalRewards);
         if (reward > 0) {
             PerpsMarketFactory.load().withdrawMarketUsd(ERC2771Context._msgSender(), reward);
         }
