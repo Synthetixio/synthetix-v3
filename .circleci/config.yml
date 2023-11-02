@@ -288,7 +288,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -320,7 +320,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -355,7 +355,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -391,7 +391,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run: yarn workspace "<< parameters.workspace >>" run compile-contracts
 
@@ -476,7 +476,7 @@ jobs:
             - hardhat-{{ .Environment.SOLC_VERSION }}
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
       - run:
           name: "Simulate release and test for Proxy change"
           command: |
