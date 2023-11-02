@@ -23,6 +23,7 @@ contract MockGasPriceNode is IExternalNode {
         liquidateCost = _liquidateCost;
     }
 
+    // solhint-disable numcast/safe-cast
     function process(
         NodeOutput.Data[] memory,
         bytes memory,
@@ -35,17 +36,14 @@ contract MockGasPriceNode is IExternalNode {
         uint256 numberOfUpdatedFeeds;
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
             if (runtimeKeys[i] == "executionKind") {
-                // solhint-disable-next-line numcast/safe-cast
                 executionKind = uint256(runtimeValues[i]);
                 continue;
             }
             if (runtimeKeys[i] == "numberOfChunks") {
-                // solhint-disable-next-line numcast/safe-cast
                 numberOfChunks = uint256(runtimeValues[i]);
                 continue;
             }
             if (runtimeKeys[i] == "numberOfUpdatedFeeds") {
-                // solhint-disable-next-line numcast/safe-cast
                 numberOfUpdatedFeeds = uint256(runtimeValues[i]);
                 continue;
             }
