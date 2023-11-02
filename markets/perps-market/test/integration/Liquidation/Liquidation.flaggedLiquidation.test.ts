@@ -11,7 +11,9 @@ describe('Liquidation - flaggedLiquidation', async () => {
     bootstrapMarkets({
       liquidationGuards: {
         minLiquidationReward: bn(5),
+        minKeeperProfitRatioD18: bn(0),
         maxLiquidationReward: bn(1000),
+        maxKeeperScalingRatioD18: bn(0),
       },
       synthMarkets: [],
       perpsMarkets: [

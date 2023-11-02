@@ -72,7 +72,9 @@ describe('Liquidation - multi collateral', async () => {
     bootstrapMarkets({
       liquidationGuards: {
         minLiquidationReward: bn(10),
+        minKeeperProfitRatioD18: bn(0),
         maxLiquidationReward: bn(1000),
+        maxKeeperScalingRatioD18: bn(0),
       },
       synthMarkets: [
         {
@@ -211,7 +213,7 @@ describe('Liquidation - multi collateral', async () => {
     it('emits account liquidated event', async () => {
       await assertEvent(
         liquidateTxn,
-        `AccountLiquidated(2, ${bn(1000)}, true)`, // max liquidation reward $1000
+        `AccountLiquidationAttempt(2, ${bn(1000)}, true)`, // max liquidation reward $1000
         systems().PerpsMarket
       );
     });

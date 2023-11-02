@@ -32,7 +32,9 @@ describe('Orders - margin validation', () => {
     synthMarkets: [],
     liquidationGuards: {
       minLiquidationReward: MIN_LIQUIDATION_REWARD.toBN(),
+      minKeeperProfitRatioD18: bn(0),
       maxLiquidationReward: bn(500),
+      maxKeeperScalingRatioD18: bn(0),
     },
     perpsMarkets: [
       {
