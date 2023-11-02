@@ -17,7 +17,7 @@
     "@typechain/hardhat": "^9.1.0",
     "dotenv": "^16.3.1",
     "hardhat": "^2.18.3",
-    "hardhat-cannon": "^2.9.1",
+    "hardhat-cannon": "^2.9.3",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-gas-reporter": "^1.0.9",
     "hardhat-ignore-warnings": "^0.2.9",
