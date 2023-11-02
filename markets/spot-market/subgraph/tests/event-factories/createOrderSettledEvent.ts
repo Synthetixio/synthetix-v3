@@ -6,7 +6,7 @@ import {
 } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createOrderSettledEvent(
-  id: i32,
+  marketId: i32,
   asyncOrderId: i64,
   finalOrderAmount: i64,
   // fees tuple
@@ -25,7 +25,7 @@ export function createOrderSettledEvent(
   const event = newTypedMockEvent<OrderSettledEvent>();
 
   event.parameters = [];
-  event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));
+  event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));
   event.parameters.push(
     new ethereum.EventParam(
       'asyncOrderId',

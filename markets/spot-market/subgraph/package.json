@@ -9,9 +9,9 @@
     "graph": "graph",
     "subgraphgen": "./codegen.sh",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
-    "satsuma:optimism-mainnet": "graph deploy spot-market-optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --version-label v1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
-    "satsuma:optimism-goerli": "graph deploy spot-market-optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --version-label v1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
-    "satsuma:base-goerli-competition": "graph deploy spot-market-base-testnet subgraph.base-goerli-competition.yaml --output-dir ./build/base-goerli-competition --version-label v3 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
+    "alchemy:optimism-mainnet": "graph deploy spot-market-optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
+    "alchemy:optimism-goerli": "graph deploy spot-market-optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
+    "alchemy:base-goerli-competition": "graph deploy spot-market-base-testnet subgraph.base-goerli-competition.yaml --output-dir ./build/base-goerli-competition --version-label v4 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
     "coverage": "yarn deployments:optimism-mainnet && yarn codegen:optimism-mainnet && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/spot-market-optimism-goerli",
@@ -19,11 +19,11 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/spot-market-optimism-goerli"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.58.0",
+    "@graphprotocol/graph-cli": "^0.60.0",
     "@graphprotocol/graph-ts": "^0.31.0",
-    "@usecannon/cli": "2.8.1",
+    "@usecannon/cli": "^2.9.3",
     "ethers": "^5.7.2",
-    "matchstick-as": "0.6.0-beta.2",
+    "matchstick-as": "^0.6.0",
     "prettier": "^3.0.3"
   }
 }

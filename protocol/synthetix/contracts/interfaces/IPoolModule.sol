@@ -126,6 +126,17 @@ interface IPoolModule {
     ) external;
 
     /**
+     * @notice Retrieves the pool configuration of a specific collateral type.
+     * @param poolId The id of the pool whose configuration is being returned.
+     * @param collateralType The address of the collateral.
+     * @return config The PoolCollateralConfiguration object that describes the requested collateral configuration of the pool.
+     */
+    function getPoolCollateralConfiguration(
+        uint128 poolId,
+        address collateralType
+    ) external view returns (PoolCollateralConfiguration.Data memory config);
+
+    /**
      * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
      * @param poolId The id of the pool.
      * @param disabled If set to true new collaterals will be disabled for the pool.

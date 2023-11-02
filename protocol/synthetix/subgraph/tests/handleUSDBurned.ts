@@ -59,6 +59,9 @@ export default function test(): void {
   // assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
   assert.fieldEquals('Position', `1-1-${address}`, 'leverage', '10');
   assert.fieldEquals('Position', `1-1-${address}`, 'total_burned', '2000');
+  assert.fieldEquals('Position', `1-1-${address}`, 'net_issuance', '0');
+
   handleUSDBurned(newUSDBurnedEvent);
   assert.fieldEquals('Position', `1-1-${address}`, 'total_burned', '4000');
+  assert.fieldEquals('Position', `1-1-${address}`, 'net_issuance', '-2000');
 }
