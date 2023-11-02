@@ -192,7 +192,7 @@ jobs:
       - checkout
       - install-foundry
       - yarn-install
-      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
 
       - restore_cache:
           keys:
@@ -226,7 +226,7 @@ jobs:
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
-      - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run build-testable
+      - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
           paths:
@@ -243,7 +243,7 @@ jobs:
             - "markets/spot-market/cache"
             - "markets/spot-market/typechain-types"
 
-      - run: yarn workspaces foreach --verbose run check:storage
+      - run: yarn workspaces foreach --all --verbose run check:storage
 
       - save_cache:
           key: cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
@@ -288,7 +288,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -320,7 +320,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -355,7 +355,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -391,7 +391,7 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run: yarn workspace "<< parameters.workspace >>" run compile-contracts
 
@@ -427,8 +427,8 @@ jobs:
     steps:
       - checkout
       - yarn-install
-      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
-      - run: yarn workspaces foreach --verbose run size-contracts
+      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach --all --verbose run size-contracts
 
   lint:
     docker:
@@ -476,7 +476,7 @@ jobs:
             - hardhat-{{ .Environment.SOLC_VERSION }}
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --all --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
       - run:
           name: "Simulate release and test for Proxy change"
           command: |
@@ -526,14 +526,14 @@ jobs:
 
       - run:
           name: "Build TS"
-          command: yarn workspaces foreach --topological-dev --verbose run build:ts
+          command: yarn workspaces foreach --all --topological-dev --verbose run build:ts
 
       - restore_cache:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
       - run:
           name: "Generate docs for each contract"
-          command: yarn workspaces foreach --verbose run docgen
+          command: yarn workspaces foreach --all --verbose run docgen
       - save_cache:
           key: hardhat-{{ .Environment.SOLC_VERSION }}
           paths:

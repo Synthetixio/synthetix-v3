@@ -77,7 +77,7 @@ jobs:
         with:
           run_daemon: true
       - run: yarn install --immutable --immutable-cache
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build:ts
+      - run: yarn workspaces foreach --all --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build:ts
       - name: "Simulate release of '${{ matrix.cannonPackage }}' on chains '${{ matrix.chains }}'"
         run: |
           CHAINS="${{ matrix.chains }}"
