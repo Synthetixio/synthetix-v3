@@ -132,6 +132,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     struct LiquidateAccountRuntime {
         uint128 accountId;
         uint256 totalLiquidationRewards;
+        uint256 totalLiquidated;
         bool accountFullyLiquidated;
     }
 
@@ -161,6 +162,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             if (amountLiquidated == 0) {
                 continue;
             }
+            runtime.totalLiquidated += amountLiquidated;
 
             emit MarketUpdated(
                 positionMarketId,
@@ -195,21 +197,23 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             }
         }
 
-        keeperLiquidationReward = _processLiquidationRewards(
-            runtime.totalLiquidationRewards +
-                costOfFlagExecution +
-                KeeperCosts.load().getLiquidateKeeperCosts()
-        );
-        runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
-        if (runtime.accountFullyLiquidated) {
-            GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
-        }
+        if (runtime.totalLiquidated > 0) {
+            keeperLiquidationReward = _processLiquidationRewards(
+                runtime.totalLiquidationRewards +
+                    costOfFlagExecution +
+                    KeeperCosts.load().getLiquidateKeeperCosts()
+            );
+            runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
+            if (runtime.accountFullyLiquidated) {
+                GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
+            }
 
-        emit AccountLiquidated(
-            runtime.accountId,
-            keeperLiquidationReward,
-            runtime.accountFullyLiquidated
-        );
+            emit AccountLiquidated(
+                runtime.accountId,
+                keeperLiquidationReward,
+                runtime.accountFullyLiquidated
+            );
+        }
     }
 
     /**
