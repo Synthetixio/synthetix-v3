@@ -11,7 +11,7 @@ description = "Sandbox environment for development with perps"
 #    "tomls/omnibus-base-goerli-competition/synths/btc.toml",
 #]
 [setting.targetPreset]
-defaultValue = "main"
+defaultValue = "sandbox"
 
 [setting.salt]
 defaultValue = "sandbox"
