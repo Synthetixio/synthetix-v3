@@ -47,12 +47,17 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
             if (isEligible) {
                 uint flagCost = account.flagForLiquidation();
-                liquidationReward = _liquidateAccount(account, flagCost, true);
+                liquidationReward = _liquidateAccount(
+                    account,
+                    flagCost,
+                    account.getTotalCollateralValue(),
+                    true
+                );
             } else {
                 revert NotEligibleForLiquidation(accountId);
             }
         } else {
-            liquidationReward = _liquidateAccount(account, 0, false);
+            liquidationReward = _liquidateAccount(account, 0, 0, false);
         }
     }
 
@@ -74,7 +79,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         for (uint i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
-            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, false);
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, 0, false);
         }
     }
 
@@ -94,7 +99,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 continue;
             }
 
-            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, false);
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, 0, false);
         }
     }
 
@@ -135,6 +140,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
+        uint256 i; // stack too deep to the extreme
     }
 
     /**
@@ -143,14 +149,15 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     function _liquidateAccount(
         PerpsAccount.Data storage account,
         uint costOfFlagExecution,
+        uint totalCollateralValue,
         bool includeFlaggingReward
     ) internal returns (uint256 keeperLiquidationReward) {
         LiquidateAccountRuntime memory runtime;
         runtime.accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
 
-        for (uint i = 0; i < openPositionMarketIds.length; i++) {
-            uint128 positionMarketId = openPositionMarketIds[i].to128();
+        for (runtime.i = 0; runtime.i < openPositionMarketIds.length; runtime.i++) {
+            uint128 positionMarketId = openPositionMarketIds[runtime.i].to128();
             uint256 price = PerpsPrice.getCurrentPrice(positionMarketId);
 
             (
@@ -205,7 +212,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             keeperLiquidationReward = _processLiquidationRewards(
                 runtime.totalLiquidationRewards + runtime.totalLiquidationCost,
                 runtime.totalLiquidationCost,
-                account.getTotalCollateralValue()
+                totalCollateralValue
             );
             runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
             if (runtime.accountFullyLiquidated) {

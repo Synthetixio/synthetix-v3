@@ -86,7 +86,7 @@ describe('Keeper Rewards - Caps', () => {
       lowerProfitRatio: bn(0.005),
       higherCap: bn(10),
       higherProfitRatio: bn(0.005),
-      expected: KeeperCosts.flagCost + KeeperCosts.liquidateCost,
+      expected: Math.trunc((KeeperCosts.flagCost + KeeperCosts.liquidateCost) * (1 + 0.005)),
     },
     {
       name: 'lower capped just cost',
@@ -95,7 +95,7 @@ describe('Keeper Rewards - Caps', () => {
       lowerProfitRatio: bn(0.005),
       higherCap: 10_0000,
       higherProfitRatio: bn(0.005),
-      expected: 10_000,
+      expected: 10_000 + (KeeperCosts.flagCost + KeeperCosts.liquidateCost),
     },
     {
       name: 'higher capped just cost',
@@ -113,7 +113,7 @@ describe('Keeper Rewards - Caps', () => {
       lowerProfitRatio: bn(0.005),
       higherCap: bn(10),
       higherProfitRatio: bn(0.005),
-      expected: bn(5).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost),
+      expected: bn(5).add(Math.trunc(KeeperCosts.flagCost + KeeperCosts.liquidateCost)),
     },
     {
       name: 'lower capped plus reward ratio',
@@ -122,7 +122,7 @@ describe('Keeper Rewards - Caps', () => {
       lowerProfitRatio: bn(0.005),
       higherCap: bn(10),
       higherProfitRatio: bn(0.005),
-      expected: bn(8),
+      expected: bn(8).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost),
     },
     {
       name: 'higher capped plus reward ratio',
@@ -157,8 +157,6 @@ describe('Keeper Rewards - Caps', () => {
           const minimumInitialMarginRatio = bn(0);
           const liquidationRewardRatio = bn(0.05); // 100 * 0.05 = 5
           const minimumPositionMargin = bn(0);
-          // const maxLiquidationLimitAccumulationMultiplier = bn(1);
-          // const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
           await systems()
             .PerpsMarket.connect(owner())
             .setLiquidationParameters(
@@ -169,15 +167,6 @@ describe('Keeper Rewards - Caps', () => {
               liquidationRewardRatio,
               minimumPositionMargin
             );
-          // await systems()
-          //   .PerpsMarket.connect(owner())
-          //   .setMaxLiquidationParameters(
-          //     ethMarketId,
-          //     maxLiquidationLimitAccumulationMultiplier,
-          //     maxSecondsInLiquidationWindow,
-          //     0,
-          //     ethers.constants.AddressZero
-          //   );
         }
       });
 

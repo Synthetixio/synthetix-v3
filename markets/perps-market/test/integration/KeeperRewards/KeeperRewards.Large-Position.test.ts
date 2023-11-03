@@ -66,8 +66,19 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
       .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
   });
 
+  const rewardGuards = {
+    minKeeperRewardUsd: 1,
+    minKeeperProfitRatioD18: bn(0),
+    maxKeeperRewardUsd: bn(10),
+    maxKeeperScalingRatioD18: bn(0),
+  };
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {
-    await systems().PerpsMarket.setKeeperRewardGuards(1, 0, bn(10), 0);
+    await systems().PerpsMarket.setKeeperRewardGuards(
+      rewardGuards.minKeeperRewardUsd,
+      rewardGuards.minKeeperProfitRatioD18,
+      rewardGuards.maxKeeperRewardUsd,
+      rewardGuards.maxKeeperScalingRatioD18
+    );
   });
 
   before('set liquidation reward ratio', async () => {
@@ -168,7 +179,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
 
     // emits account liquidated event
     // since it was flagged it only gets 1 liquidation txn cost
-    const expected = KeeperCosts.liquidateCost;
+    const expected = KeeperCosts.liquidateCost + rewardGuards.minKeeperRewardUsd;
 
     await assertEvent(
       liquidateTxn,
@@ -192,7 +203,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
 
     // emits account liquidated event
     // since it was flagged it only gets 1 liquidation txn cost
-    const expected = KeeperCosts.liquidateCost;
+    const expected = KeeperCosts.liquidateCost + rewardGuards.minKeeperRewardUsd;
 
     await assertEvent(
       liquidateTxn,

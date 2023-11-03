@@ -88,6 +88,11 @@ library GlobalPerpsMarketConfiguration {
         Data storage self,
         uint256 availableMarginInUsd
     ) internal view returns (uint256) {
+        // Note: if availableMarginInUsd is zero, it means the account was flagged, so the maximumKeeperRewardCap will just be maxKeeperRewardUsd
+        if (availableMarginInUsd == 0) {
+            return self.maxKeeperRewardUsd;
+        }
+
         return
             MathUtil.min(
                 availableMarginInUsd.mulDecimal(self.maxKeeperScalingRatioD18),
