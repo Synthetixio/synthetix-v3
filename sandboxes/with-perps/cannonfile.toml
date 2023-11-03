@@ -2,28 +2,13 @@ name = "synthetix-sandbox-with-perps"
 version = "1"
 description = "Sandbox environment for development with perps"
 
-#include = [
-#    "tomls/markets/spot/btc.toml",
-#    "tomls/markets/perps/btc.toml",
-#    # overrides for perp markets
-#    "tomls/omnibus-base-goerli-competition/perps/btc.toml",
-#    # overrides for synth markets
-#    "tomls/omnibus-base-goerli-competition/synths/btc.toml",
-#]
-[setting.targetPreset]
-defaultValue = "sandbox"
-
-[setting.salt]
-defaultValue = "sandbox"
-
-[setting.bundleSalt]
-defaultValue = "sandbox"
-
 [setting.owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+# Matches owner of core system that's provisions on Cannon network
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # PK 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# We can change the owner of pools and modules deployed in the Sandbox if we want
+#defaultValue = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" # PK 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 description = "Hardhat/Anvil first test account"
 
-# PK 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 #
 #
 # TODO: remove these
@@ -43,12 +28,8 @@ defaultValue = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57
 # Provision Synthetix V3 Core
 #
 #
-[provision.synthetix]
+[import.synthetix]
 source = "synthetix:dev"
-targetPreset = "<%= settings.targetPreset %>"
-options.owner = "<%= settings.owner %>"
-options.salt = "<%= settings.salt %>"
-options.bundleSalt = "<%= settings.bundleSalt %>"
 
 [invoke.configure_minimum_liquidity_ratio]
 target = ["synthetix.CoreProxy"]
@@ -62,7 +43,8 @@ fromCall.func = "owner"
 func = "setConfig"
 args = [
     "<%= formatBytes32String('accountTimeoutWithdraw') %>",
-    "<%= hexZeroPad(hexlify(60), 32) %>"
+    # seconds
+    "<%= hexZeroPad(hexlify(0), 32) %>"
 ]
 
 #
@@ -70,14 +52,8 @@ args = [
 # Provions Spot factory
 #
 #
-[provision.spot_factory]
+[import.spot_factory]
 source = "synthetix-spot-market:dev"
-targetPreset = "<%= settings.targetPreset %>"
-options.coreProxyOwner = "<%= settings.owner %>"
-options.owner = "<%= settings.owner %>"
-options.salt = "<%= settings.salt %>"
-options.synthetixPackage = "synthetix:dev"
-options.synthetixPreset = "<%= settings.targetPreset %>"
 
 #
 #
@@ -250,17 +226,9 @@ args = [
 # Provision Perps factory
 #
 #
-[provision.perps_factory]
+[import.perps_factory]
 source = "synthetix-perps-market:dev"
-targetPreset = "<%= settings.targetPreset %>"
-options.coreProxyOwner = "<%= settings.owner %>"
-options.owner = "<%= settings.owner %>"
-options.salt = "<%= settings.salt %>"
-options.synthetixPackage = "synthetix:dev"
-options.spotMarketPackage = "synthetix-spot-market:dev"
-options.synthetixPreset = "<%= settings.targetPreset %>"
-options.spotMarketPreset = "<%= settings.targetPreset %>"
-depends = ["provision.spot_factory"]
+depends = ["import.spot_factory"]
 
 [invoke.permit_owner_to_register_markets]
 target = ["synthetix.CoreProxy"]
@@ -420,44 +388,6 @@ args = ["5", "3"]
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 # Create Spartan Council pool
 #
 #
@@ -470,7 +400,7 @@ args = ["<%= formatBytes32String('createPool') %>", "<%= settings.owner %>"]
 [invoke.create_spartan_council_pool]
 target = ["synthetix.CoreProxy"]
 func = "createPool"
-fromCall.func = "owner"
+from = "<%= settings.owner %>"
 args = ["1", "<%= settings.owner %>"]
 extra.spartan_council_pool_id.event = "PoolCreated"
 extra.spartan_council_pool_id.arg = 0
@@ -496,128 +426,9 @@ fromCall.args = ["<%= extras.spartan_council_pool_id %>"]
 func = "setPoolConfiguration"
 args = [
     "<%= extras.spartan_council_pool_id %>",
-    # TODO: for some reason all of these markets fail here with "Market does not exist" error. Need to figure it out
     [
+        { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
         { marketId = "<%= extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-        { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-        { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" }
+        { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" }
     ]
 ]
-
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# test with build
-# 1. create account
-# 2. modify collateral
-# 3. open position
-# Run as test user
-# yarn cannon run synthetix-sandbox-with-perps:1@main --impersonate 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
-[setting.test_user]
-defaultValue = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-description = "Hardhat/Anvil second test account"
-
-# PK 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
-[setting.test_user_account_id]
-defaultValue = "1"
-
-[invoke.test_user_creates_account]
-target = ["synthetix.CoreProxy"]
-from = "<%= settings.test_user %>"
-func = "createAccount(uint128)"
-args = ["<%= settings.test_user_account_id %>"]
-extra.test_user_account_id.event = "AccountCreated"
-extra.test_user_account_id.arg = 0
-
-[invoke.test_user_mints_10k_box]
-target = ["box_token.MintableToken"]
-from = "<%= settings.test_user %>"
-func = "mint"
-args = ["<%= parseEther('10000') %>", "<%= settings.test_user %>"]
-
-[invoke.test_user_approves_10k_box_for_CoreProxy_to_spend]
-target = ["box_token.MintableToken"]
-from = "<%= settings.test_user %>"
-func = "approve"
-args = [
-    "<%= imports.synthetix.contracts.CoreProxy.address %>",
-    "<%= parseEther('10000') %>",
-]
-depends = ["invoke.test_user_mints_10k_box"]
-
-[invoke.test_user_deposits_1k_box]
-target = ["synthetix.CoreProxy"]
-from = "<%= settings.test_user %>"
-func = "deposit"
-args = [
-    "<%= extras.test_user_account_id %>",
-    "<%= imports.box_token.contracts.MintableToken.address %>",
-    "<%= parseEther('1000') %>",
-]
-depends = ["invoke.test_user_approves_10k_box_for_CoreProxy_to_spend"]
-
-[invoke.test_user_delegates_900_box]
-target = ["synthetix.CoreProxy"]
-from = "<%= settings.test_user %>"
-func = "delegateCollateral"
-args = [
-    "<%= extras.test_user_account_id %>",
-    "<%= extras.spartan_council_pool_id %>",
-    "<%= imports.box_token.contracts.MintableToken.address %>",
-    "<%= parseEther('900') %>",
-    "<%= parseEther('1') %>",
-]
-depends = ["invoke.test_user_deposits_1k_box"]
-
-[invoke.test_user_borrows_300_susd]
-target = ["synthetix.CoreProxy"]
-from = "<%= settings.test_user %>"
-func = "mintUsd"
-args = [
-    "<%= extras.test_user_account_id %>",
-    "<%= extras.spartan_council_pool_id %>",
-    "<%= imports.box_token.contracts.MintableToken.address %>",
-    "<%= parseEther('300') %>",
-]
-depends = ["invoke.test_user_delegates_900_box"]
