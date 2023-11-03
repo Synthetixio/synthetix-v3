@@ -260,6 +260,7 @@ options.synthetixPackage = "synthetix:dev"
 options.spotMarketPackage = "synthetix-spot-market:dev"
 options.synthetixPreset = "<%= settings.targetPreset %>"
 options.spotMarketPreset = "<%= settings.targetPreset %>"
+depends = ["provision.spot_factory"]
 
 [invoke.permit_owner_to_register_markets]
 target = ["synthetix.CoreProxy"]
