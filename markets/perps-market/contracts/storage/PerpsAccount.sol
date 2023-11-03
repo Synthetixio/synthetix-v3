@@ -120,18 +120,20 @@ library PerpsAccount {
             uint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
             uint256 accumulatedLiquidationRewards,
-            uint256 liquidationReward
+            uint256 liquidationReward,
+            uint256 costOfExecution
         )
     {
         availableMargin = getAvailableMargin(self);
         if (self.openPositionMarketIds.length() == 0) {
-            return (false, availableMargin, 0, 0, 0, 0);
+            return (false, availableMargin, 0, 0, 0, 0, 0);
         }
         (
             requiredInitialMargin,
             requiredMaintenanceMargin,
             accumulatedLiquidationRewards,
-            liquidationReward
+            liquidationReward,
+            costOfExecution
         ) = getAccountRequiredMargins(self);
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
@@ -197,7 +199,8 @@ library PerpsAccount {
             uint256 initialRequiredMargin,
             ,
             ,
-            uint256 liquidationReward
+            uint256 liquidationReward,
+
         ) = isEligibleForLiquidation(self);
 
         if (isEligible) {
@@ -301,7 +304,8 @@ library PerpsAccount {
             uint initialMargin,
             uint maintenanceMargin,
             uint accumulatedLiquidationRewards,
-            uint liquidationReward
+            uint liquidationReward,
+            uint costOfExecution
         )
     {
         uint maxNumberOfChunks;
@@ -335,21 +339,23 @@ library PerpsAccount {
                 : maxNumberOfChunks;
         }
 
-        accumulatedLiquidationRewards += KeeperCosts.load().getTotalFlagAndLiquidationCost(
+        costOfExecution = KeeperCosts.load().getTotalFlagAndLiquidationCost(
             self.id,
             maxNumberOfChunks
         );
+        accumulatedLiquidationRewards += costOfExecution;
 
         // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
         uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration
             .load()
-            .minimumKeeperReward(accumulatedLiquidationRewards);
+            .minimumKeeperReward(accumulatedLiquidationRewards, costOfExecution);
 
         return (
             initialMargin,
             maintenanceMargin,
             accumulatedLiquidationRewards,
-            possibleLiquidationReward
+            possibleLiquidationReward,
+            costOfExecution
         );
     }
 

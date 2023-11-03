@@ -43,7 +43,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , , , , ) = account.isEligibleForLiquidation();
+            (bool isEligible, , , , , , ) = account.isEligibleForLiquidation();
 
             if (isEligible) {
                 uint flagCost = account.flagForLiquidation();
@@ -109,7 +109,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @inheritdoc ILiquidationModule
      */
     function canLiquidate(uint128 accountId) external view override returns (bool isEligible) {
-        (isEligible, , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
+        (isEligible, , , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
     }
 
     /**
@@ -134,6 +134,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalLiquidationRewards;
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
+        uint256 totalLiquidationCost;
     }
 
     /**
@@ -197,11 +198,14 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             }
         }
 
+        runtime.totalLiquidationCost =
+            KeeperCosts.load().getLiquidateKeeperCosts() +
+            costOfFlagExecution;
         if (runtime.totalLiquidated > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
-                runtime.totalLiquidationRewards +
-                    costOfFlagExecution +
-                    KeeperCosts.load().getLiquidateKeeperCosts()
+                runtime.totalLiquidationRewards + runtime.totalLiquidationCost,
+                runtime.totalLiquidationCost,
+                account.getTotalCollateralValue()
             );
             runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
             if (runtime.accountFullyLiquidated) {
@@ -219,12 +223,20 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     /**
      * @dev process the accumulated liquidation rewards
      */
-    function _processLiquidationRewards(uint256 totalRewards) private returns (uint256 reward) {
+    function _processLiquidationRewards(
+        uint256 totalRewards,
+        uint256 costOfExecutionInUsd,
+        uint256 availableMarginInUsd
+    ) private returns (uint256 reward) {
         if (totalRewards == 0) {
             return 0;
         }
         // pay out liquidation rewards
-        reward = GlobalPerpsMarketConfiguration.load().keeperReward(totalRewards);
+        reward = GlobalPerpsMarketConfiguration.load().keeperReward(
+            totalRewards,
+            costOfExecutionInUsd,
+            availableMarginInUsd
+        );
         if (reward > 0) {
             PerpsMarketFactory.load().withdrawMarketUsd(ERC2771Context._msgSender(), reward);
         }

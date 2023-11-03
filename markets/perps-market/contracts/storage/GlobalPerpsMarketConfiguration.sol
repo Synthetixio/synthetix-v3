@@ -73,18 +73,40 @@ library GlobalPerpsMarketConfiguration {
         }
     }
 
+    function minimumKeeperRewardCap(
+        Data storage self,
+        uint256 costOfExecutionInUsd
+    ) internal view returns (uint256) {
+        return
+            MathUtil.max(
+                costOfExecutionInUsd + self.minKeeperRewardUsd,
+                costOfExecutionInUsd.mulDecimal(self.minKeeperProfitRatioD18 + DecimalMath.UNIT)
+            );
+    }
+
+    function maximumKeeperRewardCap(
+        Data storage self,
+        uint256 availableMarginInUsd
+    ) internal view returns (uint256) {
+        return
+            MathUtil.min(
+                availableMarginInUsd.mulDecimal(self.maxKeeperScalingRatioD18),
+                self.maxKeeperRewardUsd
+            );
+    }
+
     /**
      * @dev returns the keeper reward based on total keeper rewards from all markets compared against min/max
      */
     function keeperReward(
         Data storage self,
-        uint256 totalKeeperRewards
+        uint256 totalKeeperRewards,
+        uint256 costOfExecutionInUsd,
+        uint256 availableMarginInUsd
     ) internal view returns (uint256) {
-        return
-            MathUtil.min(
-                MathUtil.max(totalKeeperRewards, self.minKeeperRewardUsd),
-                self.maxKeeperRewardUsd
-            );
+        uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
+        uint maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
+        return MathUtil.min(MathUtil.max(minCap, totalKeeperRewards), maxCap);
     }
 
     /**
@@ -93,9 +115,11 @@ library GlobalPerpsMarketConfiguration {
      */
     function minimumKeeperReward(
         Data storage self,
-        uint256 totalKeeperRewards
+        uint256 totalKeeperRewards,
+        uint256 costOfExecutionInUsd
     ) internal view returns (uint256) {
-        return MathUtil.max(self.minKeeperRewardUsd, totalKeeperRewards);
+        uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
+        return MathUtil.max(minCap, totalKeeperRewards);
     }
 
     function updateSynthDeductionPriority(

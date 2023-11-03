@@ -127,7 +127,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             ,
             uint256 currentMaintenanceMargin,
             uint256 currentTotalLiquidationRewards,
-
+            ,
+            uint256 costOfExecutionInUsd
         ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta);
 
@@ -139,7 +140,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 oldPosition.size + sizeDelta,
                 fillPrice,
                 currentMaintenanceMargin,
-                currentTotalLiquidationRewards
+                currentTotalLiquidationRewards,
+                costOfExecutionInUsd
             ) + orderFees;
     }
 

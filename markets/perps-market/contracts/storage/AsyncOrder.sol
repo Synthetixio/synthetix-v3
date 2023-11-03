@@ -261,6 +261,7 @@ library AsyncOrder {
         uint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
+        uint256 costOfExecutionInUsd;
     }
 
     /**
@@ -297,7 +298,8 @@ library AsyncOrder {
             ,
             runtime.requiredMaintenanceMargin,
             runtime.accumulatedLiquidationRewards,
-
+            ,
+            runtime.costOfExecutionInUsd
         ) = account.isEligibleForLiquidation();
 
         if (isEligible) {
@@ -354,7 +356,8 @@ library AsyncOrder {
                 runtime.newPositionSize,
                 runtime.fillPrice,
                 runtime.requiredMaintenanceMargin,
-                runtime.accumulatedLiquidationRewards
+                runtime.accumulatedLiquidationRewards,
+                runtime.costOfExecutionInUsd
             ) +
             runtime.orderFees;
 
@@ -524,7 +527,8 @@ library AsyncOrder {
         int128 newPositionSize,
         uint256 fillPrice,
         uint256 currentTotalMaintenanceMargin,
-        uint256 currentTotalLiquidationRewards
+        uint256 currentTotalLiquidationRewards,
+        uint256 costOfExecutionInUsd
     ) internal view returns (uint256) {
         // get initial margin requirement for the new position
         (, , uint256 newRequiredMargin, , uint256 newLiquidationReward) = marketConfig
@@ -544,7 +548,8 @@ library AsyncOrder {
         uint256 requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
             .load()
             .minimumKeeperReward(
-                currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward
+                currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward,
+                costOfExecutionInUsd
             );
 
         // this is the required margin for the new position (minus any order fees)

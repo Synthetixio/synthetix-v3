@@ -78,7 +78,7 @@ describe('Keeper Rewards - Caps', () => {
     assertBn.equal(await keeperCostOracleNode().liquidateCost(), KeeperCosts.liquidateCost);
   });
 
-  [
+  const capTestCases = [
     {
       name: 'uncapped just cost',
       withRatio: false,
@@ -133,7 +133,10 @@ describe('Keeper Rewards - Caps', () => {
       higherProfitRatio: bn(0.005),
       expected: bn(3),
     },
-  ].forEach((test) => {
+  ];
+
+  for (let i = 0; i < capTestCases.length; i++) {
+    const test = capTestCases[i];
     describe(`${test.name}`, () => {
       let liquidateTxn: ethers.providers.TransactionResponse;
       before(restoreToConfiguration);
@@ -220,5 +223,5 @@ describe('Keeper Rewards - Caps', () => {
         );
       });
     });
-  });
+  }
 });
