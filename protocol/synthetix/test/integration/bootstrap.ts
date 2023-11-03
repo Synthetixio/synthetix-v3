@@ -81,11 +81,11 @@ export function bootstrapWithMockMarketAndPool() {
 
     MockMarket = await factory.connect(owner).deploy();
 
-    // give user1 permission to register market
+    // give user1 permission to register the market
     await r
       .systems()
       .Core.connect(owner)
-      .addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, user1.getAddress());
+      .addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, await user1.getAddress());
 
     marketId = await r.systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
 
