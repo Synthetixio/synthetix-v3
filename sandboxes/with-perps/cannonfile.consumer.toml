@@ -101,7 +101,7 @@ depends = ["invoke.borrow_300_susd"]
 #
 #
 #
-[invoke.test_user_creates_perps_account]
+[invoke.create_perps_account]
 target = ["perps_sandbox.perps_factory.PerpsMarketProxy"]
 from = "<%= settings.test_user %>"
 func = "createAccount(uint128)"
@@ -109,4 +109,23 @@ args = ["<%= settings.test_user_perps_account_id %>"]
 extra.test_user_perps_account_id.event = "AccountCreated"
 extra.test_user_perps_account_id.arg = 0
 # We want to ensure test user has some susd in their wallet to start interacting with perps market, so adding this dependency step
-depends = ["invoke.test_user_withdraw_300_susd"]
+depends = ["invoke.withdraw_300_susd"]
+
+[invoke.approve_300_susd_for_PerpsMarketProxy_to_spend]
+target = ["perps_sandbox.synthetix.USDProxy"]
+from = "<%= settings.test_user %>"
+func = "approve"
+args = [
+    "<%= imports.perps_sandbox.imports.perps_factory.contracts.PerpsMarketProxy.address %>",
+    "<%= parseEther('300') %>",
+]
+
+[invoke.deposit_300_susd_to_perps]
+target = ["perps_sandbox.perps_factory.PerpsMarketProxy"]
+from = "<%= settings.test_user %>"
+func = "modifyCollateral"
+args = [
+    "<%= extras.test_user_perps_account_id %>",
+    0, # 0 is a special market id for sUSD
+    "<%= parseEther('300') %>",
+]
