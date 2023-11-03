@@ -40,7 +40,7 @@ describe('Position - funding', () => {
 
   let openPositionTime: number;
   before('open 20 eth position', async () => {
-    openPositionTime = await openPosition({
+    ({ settleTime: openPositionTime } = await openPosition({
       systems,
       provider,
       trader: trader1(),
@@ -50,7 +50,7 @@ describe('Position - funding', () => {
       sizeDelta: _TRADER_SIZE,
       settlementStrategyId: ethMarket.strategyId(),
       price: bn(2000),
-    });
+    }));
   });
 
   /*

@@ -3,7 +3,7 @@ import { newTypedMockEvent } from 'matchstick-as';
 import { SettlementStrategyUpdated as SettlementStrategyUpdatedEvent } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createSettlementStrategyUpdatedEvent(
-  id: i32,
+  synthMarketId: i32,
   strategyId: i64,
   enabled: boolean,
   timestamp: i64,
@@ -13,7 +13,9 @@ export function createSettlementStrategyUpdatedEvent(
   const event = newTypedMockEvent<SettlementStrategyUpdatedEvent>();
 
   event.parameters = [];
-  event.parameters.push(new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(id)));
+  event.parameters.push(
+    new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(synthMarketId))
+  );
   event.parameters.push(
     new ethereum.EventParam(
       'strategyId',

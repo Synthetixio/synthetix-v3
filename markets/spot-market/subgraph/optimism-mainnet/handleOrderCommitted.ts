@@ -1,6 +1,5 @@
 import { OrderCommitted } from './generated/SpotMarketProxy/SpotMarketProxy';
 import { Order } from './generated/schema';
-import { addClaimToOrder } from './addClaimToOrder';
 
 export function handleOrderCommitted(event: OrderCommitted): void {
   let id = event.params.asyncOrderId.toString();
@@ -16,13 +15,15 @@ export function handleOrderCommitted(event: OrderCommitted): void {
   order.block = event.block.number;
   order.timestamp = event.block.timestamp;
 
-  addClaimToOrder(
-    order,
-    event.address,
-    event.params.marketId,
-    event.params.asyncOrderId,
-    'Commited'
-  );
+  order.status = 'Commited';
+
+  // TODO: order claim may need to be added to OrderCommitted event again (used to be there)
+  // let claim = event.params.asyncOrderClaim;
+  // order.amountEscrowed = claim.amountEscrowed;
+  // order.settlementStrategyId = claim.settlementStrategyId;
+  // order.settlementTime = claim.settlementTime;
+  // order.minimumSettlementAmount = claim.minimumSettlementAmount;
+  // order.settledAt = claim.settledAt;
 
   order.save();
 }
