@@ -280,5 +280,5 @@ export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(() => resolve(), ms));
 
 export const logNumber = (label = '', x: BigNumber | Wei) => {
-  console.log(label, x, ` (${wei(x).toNumber()})`);
+  console.log(label, `: ${wei(x).toNumber()}`);
 };

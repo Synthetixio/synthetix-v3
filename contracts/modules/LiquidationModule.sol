@@ -48,7 +48,7 @@ contract LiquidationModule is ILiquidationModule {
         market.skew = market.skew - oldPosition.size + newPosition.size;
         market.size -= liqSize;
 
-        // Update market debt relative to the liqReward and keeperFee incurred.
+        // Update market debt relative to the keeperFee incurred.
         market.updateDebtCorrection(market.positions[accountId], newPosition);
     }
 

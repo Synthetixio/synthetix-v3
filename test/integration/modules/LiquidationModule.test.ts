@@ -36,6 +36,7 @@ import {
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
+  logNumber,
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
@@ -616,36 +617,59 @@ describe('LiquidationModule', () => {
       assertBn.isZero(d2.size);
       assertBn.isZero(d2.skew);
     });
+    it('partial liquidation should update reported debt/ total debt');
 
-    it('should update reported debt (debtCorrection)', async () => {
-      const { PerpMarketProxy } = systems();
+    it('full liquidation should update reported debt/ total debt', async () => {
+      const { PerpMarketProxy, Core } = systems();
       const orderSide = genSide();
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+
+      const { trader, collateral, collateralDepositAmount, marginUsdDepositAmount, market, marketId } =
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredCollateral: getSusdCollateral(collaterals()),
+            desiredMarginUsdDepositAmount: 10000, // small enough to not be partial liq
+          })
+        );
+      await setMarketConfigurationById(bs, marketId, {
+        maxFundingVelocity: bn(0), // disable funding to avoid minor funding losses
+      });
+
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredLeverage: 2,
         desiredSide: orderSide,
+        desiredKeeperFeeBufferUsd: 0,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       const newMarketOraclePrice = wei(order.oraclePrice)
-        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .mul(orderSide === 1 ? 0.5 : 2)
         .toBN();
+
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
-      const marketBefore = await PerpMarketProxy.getMarketDigest(marketId);
+      const totalDebtAfterPriceChange = await Core.getMarketTotalDebt(marketId);
 
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const { receipt: flagReceipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
 
-      await withExplicitEvmMine(
+      const { receipt: liqReceipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
         provider()
       );
-      const marketAfter = await PerpMarketProxy.getMarketDigest(marketId);
 
-      assertBn.lt(
-        marketBefore.debtCorrection,
-        marketAfter.debtCorrection.sub(order.sizeDelta.abs().add(newMarketOraclePrice))
-      );
+      const totalDebtAfterLiq = await Core.getMarketTotalDebt(marketId);
+
+      const positionFlagEvent = findEventSafe(flagReceipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
+      const positionLiquidatedEvent = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy);
+
+      const totalDebtAfterFees = wei(totalDebtAfterPriceChange)
+        .add(positionLiquidatedEvent.args.liquidationKeeperFee)
+        .add(positionFlagEvent.args.flagKeeperReward);
+      // On a full liquidation
+      assertBn.equal(totalDebtAfterFees.toBN(), totalDebtAfterLiq);
     });
 
     it('should update lastLiq{time,utilization}', async () => {

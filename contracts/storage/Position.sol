@@ -289,7 +289,7 @@ library Position {
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryPrice,
-            // An accumulation of fees paid on liquidation and reward paid out to the liquidator.
+            // An accumulation of fees paid on liquidation paid out to the liquidator.
             oldPosition.accruedFeesUsd + liqKeeperFee
         );
     }
