@@ -22,7 +22,7 @@ defaultValue = "420"
 #
 #
 #
-[invoke.test_user_creates_account]
+[invoke.create_account]
 target = ["perps_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "createAccount(uint128)"
@@ -30,13 +30,13 @@ args = ["<%= settings.test_user_account_id %>"]
 extra.test_user_account_id.event = "AccountCreated"
 extra.test_user_account_id.arg = 0
 
-[invoke.test_user_mints_10k_box]
+[invoke.mint_10k_box]
 target = ["perps_sandbox.box_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "mint"
 args = ["<%= parseEther('10000') %>", "<%= settings.test_user %>"]
 
-[invoke.test_user_approves_10k_box_for_CoreProxy_to_spend]
+[invoke.approve_10k_box_for_CoreProxy_to_spend]
 target = ["perps_sandbox.box_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "approve"
@@ -44,9 +44,9 @@ args = [
     "<%= imports.perps_sandbox.imports.synthetix.contracts.CoreProxy.address %>",
     "<%= parseEther('10000') %>",
 ]
-depends = ["invoke.test_user_mints_10k_box"]
+depends = ["invoke.mint_10k_box"]
 
-[invoke.test_user_deposits_1k_box]
+[invoke.deposit_1k_box]
 target = ["perps_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "deposit"
@@ -55,9 +55,9 @@ args = [
     "<%= imports.perps_sandbox.imports.box_token.contracts.MintableToken.address %>",
     "<%= parseEther('1000') %>",
 ]
-depends = ["invoke.test_user_approves_10k_box_for_CoreProxy_to_spend"]
+depends = ["invoke.approve_10k_box_for_CoreProxy_to_spend"]
 
-[invoke.test_user_delegates_900_box]
+[invoke.delegate_900_box]
 target = ["perps_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "delegateCollateral"
@@ -69,9 +69,9 @@ args = [
     "<%= parseEther('900') %>",
     "<%= parseEther('1') %>",
 ]
-depends = ["invoke.test_user_deposits_1k_box"]
+depends = ["invoke.deposit_1k_box"]
 
-[invoke.test_user_borrows_300_susd]
+[invoke.borrow_300_susd]
 target = ["perps_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "mintUsd"
@@ -81,9 +81,9 @@ args = [
     "<%= imports.perps_sandbox.imports.box_token.contracts.MintableToken.address %>",
     "<%= parseEther('300') %>",
 ]
-depends = ["invoke.test_user_delegates_900_box"]
+depends = ["invoke.delegate_900_box"]
 
-[invoke.test_user_withdraw_300_susd]
+[invoke.withdraw_300_susd]
 target = ["perps_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "withdraw"
@@ -92,7 +92,7 @@ args = [
     "<%= imports.perps_sandbox.imports.synthetix.contracts.USDProxy.address %>",
     "<%= parseEther('300') %>",
 ]
-depends = ["invoke.test_user_borrows_300_susd"]
+depends = ["invoke.borrow_300_susd"]
 
 #
 #
