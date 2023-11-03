@@ -1,4 +1,4 @@
-name = "synthetix-sandbox-with-perps"
+name = "perps-sandbox"
 version = "1"
 description = "Sandbox environment for development with perps"
 

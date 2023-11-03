@@ -2,7 +2,7 @@
 
 ## Running custom code
 
-Building custom code on sandbox requires `synthetix-sandbox-with-perps` package to be published to Cannon registry.
+Building custom code on sandbox requires `perps-sandbox` package to be published to Cannon registry: https://usecannon.com/packages/perps-sandbox/latest/13370-main
 
 ```sh
 cannon build cannonfile.consumer.toml
@@ -167,15 +167,12 @@ EXTRA DATA:
 ║ spartan_council_pool_id │ 1                                                                  ║
 ╚═════════════════════════╧════════════════════════════════════════════════════════════════════╝
 
-Successfully built package synthetix-sandbox-with-perps:1@main
- - Deploy Url: ipfs://QmNmxcfUpjs5eZkD4KQRzU7oEwS2q7Bhp8f4dxQZuBCbAb
+Successfully built package perps-sandbox:1@main
+ - Deploy Url: ipfs://Qmb1S1qU7H1grnVw5fyJEvBBdr6FWXs8iMSaJzTST5ZDH2
 ```
 
 Then it needs to be published
 
 ```sh
-DEBUG=cannon:* cannon publish synthetix-sandbox-with-perps:1 \
-    --preset main \
-    --private-key $MAINNET_DEPLOYER_PRIVATE_KEY \
-    --tags latest
+DEBUG=cannon:* cannon publish perps-sandbox:1 --private-key $MAINNET_DEPLOYER_PRIVATE_KEY --tags latest
 ```

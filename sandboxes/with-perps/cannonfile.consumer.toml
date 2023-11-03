@@ -7,8 +7,8 @@ description = "Consumer of Perps Sandbox"
 # Provision Synthetix Sanbox with perps
 #
 #
-[import.synthetix_sanbox_with_perps]
-source = "synthetix-sandbox-with-perps:1"
+[import.perps_sanbox]
+source = "perps-sandbox"
 
 [setting.test_user]
 defaultValue = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" # PK 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
@@ -18,7 +18,7 @@ description = "Hardhat/Anvil second test account"
 defaultValue = "1"
 
 [invoke.test_user_creates_account]
-target = ["synthetix_sanbox_with_perps.synthetix.CoreProxy"]
+target = ["perps_sanbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "createAccount(uint128)"
 args = ["<%= settings.test_user_account_id %>"]
@@ -26,65 +26,65 @@ extra.test_user_account_id.event = "AccountCreated"
 extra.test_user_account_id.arg = 0
 
 [invoke.test_user_mints_10k_box]
-target = ["synthetix_sanbox_with_perps.box_token.MintableToken"]
+target = ["perps_sanbox.box_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "mint"
 args = ["<%= parseEther('10000') %>", "<%= settings.test_user %>"]
 
 [invoke.test_user_approves_10k_box_for_CoreProxy_to_spend]
-target = ["synthetix_sanbox_with_perps.box_token.MintableToken"]
+target = ["perps_sanbox.box_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "approve"
 args = [
-    "<%= imports.synthetix_sanbox_with_perps.imports.synthetix.contracts.CoreProxy.address %>",
+    "<%= imports.perps_sanbox.imports.synthetix.contracts.CoreProxy.address %>",
     "<%= parseEther('10000') %>",
 ]
 depends = ["invoke.test_user_mints_10k_box"]
 
 [invoke.test_user_deposits_1k_box]
-target = ["synthetix_sanbox_with_perps.synthetix.CoreProxy"]
+target = ["perps_sanbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "deposit"
 args = [
     "<%= extras.test_user_account_id %>",
-    "<%= imports.synthetix_sanbox_with_perps.imports.box_token.contracts.MintableToken.address %>",
+    "<%= imports.perps_sanbox.imports.box_token.contracts.MintableToken.address %>",
     "<%= parseEther('1000') %>",
 ]
 depends = ["invoke.test_user_approves_10k_box_for_CoreProxy_to_spend"]
 
 [invoke.test_user_delegates_900_box]
-target = ["synthetix_sanbox_with_perps.synthetix.CoreProxy"]
+target = ["perps_sanbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "delegateCollateral"
 args = [
     # examples of how to debug internal values line by line
     "<%= /* console.log(extras) || */ extras.test_user_account_id %>",
-    "<%= /* console.log(imports.synthetix_sanbox_with_perps.extras) || */imports.synthetix_sanbox_with_perps.extras.spartan_council_pool_id %>",
-    "<%= /* console.log(imports.synthetix_sanbox_with_perps.imports) || */ imports.synthetix_sanbox_with_perps.imports.box_token.contracts.MintableToken.address %>",
+    "<%= /* console.log(imports.perps_sanbox.extras) || */imports.perps_sanbox.extras.spartan_council_pool_id %>",
+    "<%= /* console.log(imports.perps_sanbox.imports) || */ imports.perps_sanbox.imports.box_token.contracts.MintableToken.address %>",
     "<%= parseEther('900') %>",
     "<%= parseEther('1') %>",
 ]
 depends = ["invoke.test_user_deposits_1k_box"]
 
 [invoke.test_user_borrows_300_susd]
-target = ["synthetix_sanbox_with_perps.synthetix.CoreProxy"]
+target = ["perps_sanbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "mintUsd"
 args = [
     "<%= extras.test_user_account_id %>",
-    "<%= imports.synthetix_sanbox_with_perps.extras.spartan_council_pool_id %>",
-    "<%= imports.synthetix_sanbox_with_perps.imports.box_token.contracts.MintableToken.address %>",
+    "<%= imports.perps_sanbox.extras.spartan_council_pool_id %>",
+    "<%= imports.perps_sanbox.imports.box_token.contracts.MintableToken.address %>",
     "<%= parseEther('300') %>",
 ]
 depends = ["invoke.test_user_delegates_900_box"]
 
 [invoke.test_user_withdraw_300_susd]
-target = ["synthetix_sanbox_with_perps.synthetix.CoreProxy"]
+target = ["perps_sanbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "withdraw"
 args = [
     "<%= extras.test_user_account_id %>",
-    "<%= imports.synthetix_sanbox_with_perps.imports.synthetix.contracts.USDProxy.address %>",
+    "<%= imports.perps_sanbox.imports.synthetix.contracts.USDProxy.address %>",
     "<%= parseEther('300') %>",
 ]
 depends = ["invoke.test_user_borrows_300_susd"]
