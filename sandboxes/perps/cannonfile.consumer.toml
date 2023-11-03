@@ -15,6 +15,10 @@ defaultValue = "69"
 [setting.test_user_perps_account_id]
 defaultValue = "420"
 
+[setting.another_user]
+defaultValue = "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720" # PK 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
+description = "Hardhat/Anvil test account (9)"
+
 #
 #
 #
@@ -111,23 +115,23 @@ extra.test_user_perps_account_id.arg = 0
 # We want to ensure test user has some susd in their wallet to start interacting with perps market, so adding this dependency step
 depends = ["invoke.withdraw_300_susd"]
 
-[invoke.approve_300_susd_for_PerpsMarketProxy_to_spend]
+[invoke.approve_100_susd_for_PerpsMarketProxy_to_spend]
 target = ["perps_sandbox.synthetix.USDProxy"]
 from = "<%= settings.test_user %>"
 func = "approve"
 args = [
     "<%= imports.perps_sandbox.imports.perps_factory.contracts.PerpsMarketProxy.address %>",
-    "<%= parseEther('300') %>",
+    "<%= parseEther('100') %>",
 ]
 
-[invoke.deposit_300_susd_to_perps]
+[invoke.deposit_100_susd_to_perps]
 target = ["perps_sandbox.perps_factory.PerpsMarketProxy"]
 from = "<%= settings.test_user %>"
 func = "modifyCollateral"
 args = [
     "<%= extras.test_user_perps_account_id %>",
     0, # 0 is a special market id for sUSD
-    "<%= parseEther('300') %>",
+    "<%= parseEther('100') %>",
 ]
 
 [invoke.commit_perps_eth_order]
@@ -138,4 +142,11 @@ args = [
     # eth price is $1000, acceptablePrice with 5% slippage: $1050
     { marketId = "<%= imports.perps_sandbox.extras.perps_eth_market_id %>", accountId = "<%= extras.test_user_perps_account_id %>", sizeDelta = "<%= parseEther('1') %>", settlementStrategyId = "0", acceptablePrice = "<%= parseEther('1050') %>", referrer = "<%= AddressZero %>", trackingCode = "<%= HashZero %>" },
 ]
-depends = ["invoke.deposit_300_susd_to_perps"]
+depends = ["invoke.deposit_100_susd_to_perps"]
+
+[invoke.transfer_100_susd_to_another_user]
+target = ["perps_sandbox.synthetix.USDProxy"]
+from = "<%= settings.test_user %>"
+func = "transfer"
+args = ["<%= settings.another_user %>", "<%= parseEther('100') %>"]
+depends = ["invoke.withdraw_300_susd"]

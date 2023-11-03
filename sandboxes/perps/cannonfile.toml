@@ -11,16 +11,16 @@ description = "Hardhat/Anvil first test account"
 
 #
 #
-# TODO: remove these
+# TODO: We will need to use Pyth Mock, so these settings will change.
 #
 #
-[setting.pythPriceVerificationAddress]
+[setting.pyth_price_verification_address]
 defaultValue = "0x5955C1478F0dAD753C7E2B4dD1b4bC530C64749f"
 
-[setting.pythFeedUrl]
+[setting.pyth_feed_url]
 defaultValue = "https://api.synthetix.io/pyth-testnet/api/get_vaa_ccip?data={data}"
 
-[setting.pythEthFeedId]
+[setting.pyth_eth_feed_id]
 defaultValue = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6"
 
 #
@@ -172,7 +172,7 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.synth_eth_market_id %>",
     # strategyType = 1 (pyth)
-    { strategyType = "1", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= settings.pythPriceVerificationAddress %>", feedId = "<%= settings.pythEthFeedId %>", url = "<%= settings.pythFeedUrl %>", settlementReward = 0, minimumUsdExchangeAmount = "<%= parseEther('0.000001') %>", maxRoundingLoss = "<%= parseEther('0.000001') %>", priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
+    { strategyType = "1", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_eth_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, minimumUsdExchangeAmount = "<%= parseEther('0.000001') %>", maxRoundingLoss = "<%= parseEther('0.000001') %>", priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
 ]
 
 [invoke.configure_async_fixed_fee_for_synth_eth]
@@ -267,7 +267,7 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_eth_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pythPriceVerificationAddress %>", feedId = "<%= settings.pythEthFeedId %>", url = "<%= settings.pythFeedUrl %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_eth_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
 ]
 
 [invoke.configure_funding_parameters_for_perps_eth]
