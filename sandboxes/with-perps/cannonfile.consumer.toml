@@ -2,11 +2,6 @@ name = "perps-sandbox-consumer-example"
 version = "1"
 description = "Consumer of Perps Sandbox"
 
-#
-#
-# Provision Synthetix Sanbox with perps
-#
-#
 [import.perps_sandbox]
 source = "perps-sandbox"
 
@@ -15,8 +10,18 @@ defaultValue = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" # PK 0x59c6995e998f9
 description = "Hardhat/Anvil second test account"
 
 [setting.test_user_account_id]
-defaultValue = "1"
+defaultValue = "69"
 
+[setting.test_user_perps_account_id]
+defaultValue = "420"
+
+#
+#
+#
+# Interacting with Core
+#
+#
+#
 [invoke.test_user_creates_account]
 target = ["perps_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
@@ -88,17 +93,20 @@ args = [
     "<%= parseEther('300') %>",
 ]
 depends = ["invoke.test_user_borrows_300_susd"]
+
 #
 #
 #
+# Interacting with Perps market
 #
-# Validating it works run as test user
 #
-# cannon run perps-sandbox-consumer-example:1@main --impersonate 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
 #
-# Pick a CONTRACT: › synthetix.USDProxy
-# Pick a FUNCTION: › balanceOf(address)
-#  owner (address) … 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
-#
-# Result:
-#  ↪ (uint256): 300000000000000000000 (300.00000)
+[invoke.test_user_creates_perps_account]
+target = ["perps_sandbox.perps_factory.PerpsMarketProxy"]
+from = "<%= settings.test_user %>"
+func = "createAccount(uint128)"
+args = ["<%= settings.test_user_perps_account_id %>"]
+extra.test_user_perps_account_id.event = "AccountCreated"
+extra.test_user_perps_account_id.arg = 0
+# We want to ensure test user has some susd in their wallet to start interacting with perps market, so adding this dependency step
+depends = ["invoke.test_user_withdraw_300_susd"]
