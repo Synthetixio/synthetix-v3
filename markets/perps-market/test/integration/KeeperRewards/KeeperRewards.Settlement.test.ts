@@ -124,10 +124,25 @@ describe('Keeper Rewards - Settlement', () => {
     updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
   });
 
+  let initialKeeperBalance: ethers.BigNumber;
+  before('call liquidate', async () => {
+    initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
+  });
+
   before('settle', async () => {
     settleTx = await systems()
       .PerpsMarket.connect(keeper())
       .settlePythOrder(pythPriceData, extraData, { value: updateFee });
+  });
+
+  it('keeper gets paid', async () => {
+    const keeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
+    assertBn.equal(
+      keeperBalance,
+      initialKeeperBalance
+        .add(DEFAULT_SETTLEMENT_STRATEGY.settlementReward)
+        .add(KeeperCosts.settlementCost)
+    );
   });
 
   it('emits settle event', async () => {
