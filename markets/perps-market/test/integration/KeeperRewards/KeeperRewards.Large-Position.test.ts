@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral, openPosition } from '../helpers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('Keeper Rewards - Multiple Liquidation steps', () => {
@@ -141,6 +142,8 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
   });
 
   it('liquidate account - 1st step (100 of 201)', async () => {
+    const initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
+
     // calls liquidate on the perps market, 1st step => will flag and will liquidate 100 of original 201
     liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
     latestLiquidationTime = await getTxTime(provider(), liquidateTxn);
@@ -161,10 +164,18 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
       `AccountLiquidationAttempt(2, ${expected}, false)`, // not capped
       systems().PerpsMarket
     );
+
+    // keeper gets paid
+    assertBn.equal(
+      await systems().USD.balanceOf(await keeper().getAddress()),
+      initialKeeperBalance.add(expected)
+    );
   });
 
   it('liquidate account - 2nd step (100 of 101)', async () => {
     await fastForwardTo(latestLiquidationTime + 35, provider());
+
+    const initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
 
     // calls liquidate on the perps market, 2nd step => won't flag and will liquidate 100 of original 201
     liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
@@ -186,10 +197,18 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
       `AccountLiquidationAttempt(2, ${expected}, false)`, // not capped
       systems().PerpsMarket
     );
+
+    // keeper gets paid
+    assertBn.equal(
+      await systems().USD.balanceOf(await keeper().getAddress()),
+      initialKeeperBalance.add(expected)
+    );
   });
 
   it('liquidate account - last step (1 of 1)', async () => {
     await fastForwardTo(latestLiquidationTime + 35, provider());
+
+    const initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
 
     // calls liquidate on the perps market, 3rd step => won't flag and will liquidate 1 of original 201
     liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
@@ -209,6 +228,12 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
       liquidateTxn,
       `AccountLiquidationAttempt(2, ${expected}, true)`, // not capped
       systems().PerpsMarket
+    );
+
+    // keeper gets paid
+    assertBn.equal(
+      await systems().USD.balanceOf(await keeper().getAddress()),
+      initialKeeperBalance.add(expected)
     );
   });
 });

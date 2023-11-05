@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral, openPosition } from '../helpers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('Keeper Rewards - Multiple Collaterals', () => {
@@ -139,6 +140,11 @@ describe('Keeper Rewards - Multiple Collaterals', () => {
     await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(1));
   });
 
+  let initialKeeperBalance: ethers.BigNumber;
+  before('call liquidate', async () => {
+    initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
+  });
+
   before('liquidate account', async () => {
     liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
   });
@@ -160,5 +166,11 @@ describe('Keeper Rewards - Multiple Collaterals', () => {
       `AccountLiquidationAttempt(2, ${expected}, true)`, // not capped
       systems().PerpsMarket
     );
+  });
+
+  it('keeper gets paid', async () => {
+    const keeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
+    const expected = bn(5).add(KeeperCosts.flagCost * 3 + KeeperCosts.liquidateCost);
+    assertBn.equal(keeperBalance, initialKeeperBalance.add(expected));
   });
 });
