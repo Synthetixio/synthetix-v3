@@ -24,7 +24,7 @@ library KeeperCosts {
     uint256 private constant KIND_LIQUIDATE = 3;
 
     struct Data {
-        bytes32 feedId;
+        bytes32 keeperCostNodeId;
     }
 
     function load() internal pure returns (Data storage price) {
@@ -34,8 +34,8 @@ library KeeperCosts {
         }
     }
 
-    function update(Data storage self, bytes32 feedId) internal {
-        self.feedId = feedId;
+    function update(Data storage self, bytes32 keeperCostNodeId) internal {
+        self.keeperCostNodeId = keeperCostNodeId;
     }
 
     function getSettlementKeeperCosts(
@@ -53,7 +53,7 @@ library KeeperCosts {
         );
 
         sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.feedId, runtimeKeys, runtimeValues)
+            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
             .price
             .toUint();
     }
@@ -75,7 +75,7 @@ library KeeperCosts {
         );
 
         sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.feedId, runtimeKeys, runtimeValues)
+            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
             .price
             .toUint();
     }
@@ -90,7 +90,7 @@ library KeeperCosts {
         );
 
         sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.feedId, runtimeKeys, runtimeValues)
+            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
             .price
             .toUint();
     }
@@ -113,7 +113,7 @@ library KeeperCosts {
         );
 
         sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.feedId, runtimeKeys, runtimeValues)
+            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
             .price
             .toUint();
     }

@@ -101,7 +101,7 @@ library PerpsMarket {
             revert PriceFeedNotSet(marketId);
         }
 
-        if (KeeperCosts.load().feedId == "") {
+        if (KeeperCosts.load().keeperCostNodeId == "") {
             revert KeeperCostsNotSet();
         }
     }

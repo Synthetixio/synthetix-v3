@@ -155,19 +155,19 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function updateKeeperRewardData(bytes32 feedId) external override {
+    function updateKeeperCostNodeId(bytes32 keeperCostNodeId) external override {
         OwnableStorage.onlyOwner();
 
-        KeeperCosts.load().update(feedId);
+        KeeperCosts.load().update(keeperCostNodeId);
 
-        emit KeeperRewardDataUpdated(feedId);
+        emit KeeperCostNodeIdpdated(keeperCostNodeId);
     }
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getKeeperRewardData() external view override returns (bytes32 feedId) {
-        return KeeperCosts.load().feedId;
+    function getKeeperCostNodeId() external view override returns (bytes32 keeperCostNodeId) {
+        return KeeperCosts.load().keeperCostNodeId;
     }
 
     /**

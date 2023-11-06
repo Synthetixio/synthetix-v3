@@ -106,7 +106,7 @@ export const bootstrapPerpsMarkets = (
     const keeperCostNodeId = results.keeperCostNodeId;
     keeperCostOracleNode = results.keeperCostNode;
 
-    await contracts.PerpsMarket.connect(r.owner()).updateKeeperRewardData(keeperCostNodeId);
+    await contracts.PerpsMarket.connect(r.owner()).updateKeeperCostNodeId(keeperCostNodeId);
   });
 
   const perpsMarkets: PerpsMarkets = data.map(

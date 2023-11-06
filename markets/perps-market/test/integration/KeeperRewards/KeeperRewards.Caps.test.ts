@@ -42,7 +42,7 @@ describe('Keeper Rewards - Caps', () => {
   let ethMarketId: ethers.BigNumber;
   let ethSettlementStrategyId: ethers.BigNumber;
 
-  before('identify actors', async () => {
+  before('identify actors', () => {
     ethMarketId = perpsMarkets()[0].marketId();
     ethSettlementStrategyId = perpsMarkets()[0].strategyId();
   });

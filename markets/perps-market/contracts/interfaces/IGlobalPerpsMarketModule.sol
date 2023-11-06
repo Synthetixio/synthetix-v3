@@ -53,10 +53,10 @@ interface IGlobalPerpsMarketModule {
     event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
-     * @notice Gets fired when feed id for keeper rewards data for the perps market is updated.
-     * @param feedId oracle node id
+     * @notice Gets fired when feed id for keeper cost node id is updated.
+     * @param keeperCostNodeId oracle node id
      */
-    event KeeperRewardDataUpdated(bytes32 feedId);
+    event KeeperCostNodeIdpdated(bytes32 keeperCostNodeId);
 
     /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
@@ -180,16 +180,16 @@ interface IGlobalPerpsMarketModule {
     function getReferrerShare(address referrer) external view returns (uint256 shareRatioD18);
 
     /**
-     * @notice Set node id for keeper rewards perps market
-     * @param feedId the node feed id
+     * @notice Set node id for keeper cost
+     * @param keeperCostNodeId the node id
      */
-    function updateKeeperRewardData(bytes32 feedId) external;
+    function updateKeeperCostNodeId(bytes32 keeperCostNodeId) external;
 
     /**
-     * @notice Get the node id for keeper rewards perps market
-     * @return feedId the node feed id
+     * @notice Get the node id for keeper cost
+     * @return keeperCostNodeId the node id
      */
-    function getKeeperRewardData() external view returns (bytes32 feedId);
+    function getKeeperCostNodeId() external view returns (bytes32 keeperCostNodeId);
 
     /**
      * @notice get all existing market ids
