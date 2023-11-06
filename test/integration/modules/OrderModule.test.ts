@@ -16,6 +16,7 @@ import {
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
+  getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
@@ -681,7 +682,90 @@ describe('OrderModule', () => {
       assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
     });
 
-    it('should allow position reduction even if insufficient unless in liquidation');
+    enum PositionReductionVariant {
+      MODIFY_BELOW_IM = 'MODIFY_BELOW_IM',
+      CLOSE_BELOW_IM = 'CLOSE_BELOW_IM',
+    }
+
+    forEach([PositionReductionVariant.MODIFY_BELOW_IM, PositionReductionVariant.CLOSE_BELOW_IM]).it.only(
+      'should allow position reduction (%s) even if position is below im',
+      async (variant: PositionReductionVariant) => {
+        const { PerpMarketProxy } = systems();
+
+        const market = genOneOf(markets());
+        const marketId = market.marketId();
+        const marketOraclePrice = bn(10_000);
+        await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
+        const collateral = genOneOf(collateralsWithoutSusd());
+        const marginUsdDepositAmount = 10_000;
+
+        const orderSide = genSide();
+        const { trader, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: marginUsdDepositAmount,
+            desiredCollateral: collateral,
+          })
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: 10,
+          desiredSide: orderSide,
+        });
+        await commitAndSettle(bs, marketId, trader, order);
+
+        // Ensure the we are > IM to start off fresh.
+        const { im } = await PerpMarketProxy.getLiquidationMarginUsd(trader.accountId, marketId);
+        const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        assertBn.gt(d1.position.remainingMarginUsd, im);
+
+        // Modify the position to be < IM by changing collateral value. This can also be acheived by moving
+        // market price but market price also affects IM so this is a bit easier.
+        //
+        // `remainingMarginUsd` is basically collateralValueUsd + otherStuff where `otherStuff` is largely
+        // negligible at this stage so we can mostly just look at `collateralValueUsd`.
+        //
+        // Bring the price of collateral down to something that pushes collateralUsd below IM.
+        const newCollateralPrice = wei(im).mul(0.95).div(collateralDepositAmount).toBN();
+        await collateral.setPrice(newCollateralPrice);
+
+        // Verify that the position margin < IM.
+        const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        const { im: im2 } = await PerpMarketProxy.getLiquidationMarginUsd(trader.accountId, marketId);
+        assertBn.lt(d2.position.remainingMarginUsd, im2);
+
+        switch (variant) {
+          case PositionReductionVariant.MODIFY_BELOW_IM: {
+            // Reduce the position but do not close (reducing or adding by a small amount 5%).
+            const desiredSizeDelta = wei(order.sizeDelta).mul(-0.05).toBN();
+
+            const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+              desiredSize: desiredSizeDelta,
+            });
+            await commitAndSettle(bs, marketId, trader, order2);
+
+            const position = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+            assertBn.equal(position.size, order.sizeDelta.add(desiredSizeDelta));
+            break;
+          }
+          case PositionReductionVariant.CLOSE_BELOW_IM: {
+            // Close the entire position.
+            const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+              desiredSize: order.sizeDelta.mul(-1),
+            });
+            await commitAndSettle(bs, marketId, trader, order2);
+
+            const position = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+            assertBn.isZero(position.size);
+
+            break;
+          }
+          default:
+            // Should never reach here but in the case more `PositionReductionVariant` are added.
+            assert.equal(true, false);
+        }
+      }
+    );
 
     it('should emit all events in correct order');
 
