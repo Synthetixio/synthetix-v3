@@ -1448,7 +1448,7 @@ describe('MarginModule', async () => {
     });
 
     it('should remove an unsupported collateral when set with new collaterals', async () => {
-      const { PerpMarketProxy } = systems();
+      const { PerpMarketProxy, Core, SpotMarket } = systems();
       const from = owner();
 
       // Set a known set of supported collaterals.
@@ -1466,9 +1466,20 @@ describe('MarginModule', async () => {
       await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds2, maxAllowables2);
 
       const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      const removedCollateral = supportedCollaterals[1];
+
+      const perpAllowance = await removedCollateral.contract.allowance(
+        PerpMarketProxy.address,
+        PerpMarketProxy.address
+      );
+      const coreAllowance = await removedCollateral.contract.allowance(PerpMarketProxy.address, Core.address);
+      const spotAllowance = await removedCollateral.contract.allowance(PerpMarketProxy.address, SpotMarket.address);
+      assertBn.isZero(perpAllowance);
+      assertBn.isZero(coreAllowance);
+      assertBn.isZero(spotAllowance);
       assert.equal(configuredCollaterals.length, 1);
       assert.equal(
-        configuredCollaterals.filter((c) => c.synthMarketId.eq(supportedCollaterals[1].synthMarketId())).length,
+        configuredCollaterals.filter((c) => c.synthMarketId.eq(removedCollateral.synthMarketId())).length,
         0
       );
     });
