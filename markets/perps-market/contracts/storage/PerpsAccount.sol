@@ -121,7 +121,7 @@ library PerpsAccount {
             uint256 requiredMaintenanceMargin,
             uint256 accumulatedLiquidationRewards,
             uint256 liquidationReward,
-            uint256 costOfExecution
+            uint256 costOfFlaggingAndLiquidation
         )
     {
         availableMargin = getAvailableMargin(self);
@@ -133,7 +133,7 @@ library PerpsAccount {
             requiredMaintenanceMargin,
             accumulatedLiquidationRewards,
             liquidationReward,
-            costOfExecution
+            costOfFlaggingAndLiquidation
         ) = getAccountRequiredMargins(self);
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
@@ -305,7 +305,7 @@ library PerpsAccount {
             uint maintenanceMargin,
             uint accumulatedLiquidationRewards,
             uint liquidationReward,
-            uint costOfExecution
+            uint costOfFlaggingAndLiquidation
         )
     {
         uint maxNumberOfChunks;
@@ -339,23 +339,23 @@ library PerpsAccount {
                 : maxNumberOfChunks;
         }
 
-        costOfExecution = KeeperCosts.load().getTotalFlagAndLiquidationCost(
+        costOfFlaggingAndLiquidation = KeeperCosts.load().getTotalFlagAndLiquidationCost(
             self.id,
             maxNumberOfChunks
         );
-        accumulatedLiquidationRewards += costOfExecution;
+        accumulatedLiquidationRewards += costOfFlaggingAndLiquidation;
 
         // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
         uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration
             .load()
-            .minimumKeeperReward(accumulatedLiquidationRewards, costOfExecution);
+            .minimumKeeperReward(accumulatedLiquidationRewards, costOfFlaggingAndLiquidation);
 
         return (
             initialMargin,
             maintenanceMargin,
             accumulatedLiquidationRewards,
             possibleLiquidationReward,
-            costOfExecution
+            costOfFlaggingAndLiquidation
         );
     }
 
