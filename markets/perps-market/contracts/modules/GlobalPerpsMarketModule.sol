@@ -11,6 +11,7 @@ import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.s
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -20,6 +21,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
@@ -148,6 +150,24 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      */
     function getFeeCollector() external view override returns (address feeCollector) {
         return address(GlobalPerpsMarketConfiguration.load().feeCollector);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function updateKeeperRewardData(bytes32 feedId) external override {
+        OwnableStorage.onlyOwner();
+
+        KeeperCosts.load().update(feedId);
+
+        emit KeeperRewardDataUpdated(feedId);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getKeeperRewardData() external view override returns (bytes32 feedId) {
+        return KeeperCosts.load().feedId;
     }
 
     /**

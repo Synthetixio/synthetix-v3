@@ -53,6 +53,12 @@ interface IGlobalPerpsMarketModule {
     event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
+     * @notice Gets fired when feed id for keeper rewards data for the perps market is updated.
+     * @param feedId oracle node id
+     */
+    event KeeperRewardDataUpdated(bytes32 feedId);
+
+    /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
      */
     error InvalidFeeCollectorInterface(address invalidFeeCollector);
@@ -172,6 +178,18 @@ interface IGlobalPerpsMarketModule {
      * @return shareRatioD18 The configured share percentage for the referrer
      */
     function getReferrerShare(address referrer) external view returns (uint256 shareRatioD18);
+
+    /**
+     * @notice Set node id for keeper rewards perps market
+     * @param feedId the node feed id
+     */
+    function updateKeeperRewardData(bytes32 feedId) external;
+
+    /**
+     * @notice Get the node id for keeper rewards perps market
+     * @return feedId the node feed id
+     */
+    function getKeeperRewardData() external view returns (bytes32 feedId);
 
     /**
      * @notice get all existing market ids

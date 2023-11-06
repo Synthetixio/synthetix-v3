@@ -11,6 +11,7 @@ import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
+import {KeeperCosts} from "./KeeperCosts.sol";
 
 /**
  * @title Data for a single perps market
@@ -33,6 +34,11 @@ library PerpsMarket {
      * @notice Thrown when attempting to load a market without a configured price feed
      */
     error PriceFeedNotSet(uint128 marketId);
+
+    /**
+     * @notice Thrown when attempting to load a market without a configured keeper costs
+     */
+    error KeeperCostsNotSet();
 
     struct Data {
         string name;
@@ -93,6 +99,10 @@ library PerpsMarket {
 
         if (PerpsPrice.load(marketId).feedId == "") {
             revert PriceFeedNotSet(marketId);
+        }
+
+        if (KeeperCosts.load().feedId == "") {
+            revert KeeperCostsNotSet();
         }
     }
 
