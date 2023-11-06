@@ -90,7 +90,7 @@ library PerpsMarketConfiguration {
         Data storage self,
         uint positionSize
     ) internal view returns (uint256) {
-        return ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
+        return MathUtil.ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
     }
 
     function calculateLiquidationReward(
@@ -152,10 +152,5 @@ library PerpsMarketConfiguration {
         if (strategy.disabled) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
-    }
-
-    function ceilDivide(uint a, uint b) internal pure returns (uint) {
-        if (b == 0) return 0;
-        return a / b + (a % b == 0 ? 0 : 1);
     }
 }
