@@ -19,9 +19,8 @@ library KeeperCosts {
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     uint256 private constant KIND_SETTLEMENT = 0;
-    uint256 private constant KIND_LIQUIDATION_ELIGIBILITY = 1;
-    uint256 private constant KIND_FLAG = 2;
-    uint256 private constant KIND_LIQUIDATE = 3;
+    uint256 private constant KIND_FLAG = 1;
+    uint256 private constant KIND_LIQUIDATE = 2;
 
     struct Data {
         bytes32 keeperCostNodeId;
@@ -83,7 +82,6 @@ library KeeperCosts {
     ) private view returns (uint sUSDCost) {
         bytes32[] memory runtimeKeys = new bytes32[](4);
         bytes32[] memory runtimeValues = new bytes32[](4);
-        runtimeKeys[0] = bytes32("numberOfChunks");
         runtimeKeys[1] = bytes32("numberOfUpdatedFeeds");
         runtimeKeys[2] = bytes32("executionKind");
         runtimeValues[0] = bytes32(numberOfChunks);

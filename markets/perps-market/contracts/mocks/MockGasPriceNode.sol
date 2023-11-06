@@ -7,9 +7,8 @@ contract MockGasPriceNode is IExternalNode {
     NodeOutput.Data private output;
 
     uint256 public constant KIND_SETTLEMENT = 0;
-    uint256 public constant KIND_LIQUIDATION_ELIGIBILITY = 1;
-    uint256 public constant KIND_FLAG = 2;
-    uint256 public constant KIND_LIQUIDATE = 3;
+    uint256 public constant KIND_FLAG = 1;
+    uint256 public constant KIND_LIQUIDATE = 2;
 
     uint public settlementCost;
     uint public flagCost;
@@ -32,15 +31,10 @@ contract MockGasPriceNode is IExternalNode {
     ) external view override returns (NodeOutput.Data memory) {
         NodeOutput.Data memory theOutput = output;
         uint256 executionKind;
-        uint256 numberOfChunks;
         uint256 numberOfUpdatedFeeds;
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
             if (runtimeKeys[i] == "executionKind") {
                 executionKind = uint256(runtimeValues[i]);
-                continue;
-            }
-            if (runtimeKeys[i] == "numberOfChunks") {
-                numberOfChunks = uint256(runtimeValues[i]);
                 continue;
             }
             if (runtimeKeys[i] == "numberOfUpdatedFeeds") {
@@ -51,10 +45,6 @@ contract MockGasPriceNode is IExternalNode {
 
         if (executionKind == KIND_SETTLEMENT) {
             theOutput.price = int(settlementCost);
-        } else if (executionKind == KIND_LIQUIDATION_ELIGIBILITY) {
-            theOutput.price = int(
-                (flagCost * numberOfUpdatedFeeds) + (liquidateCost * numberOfChunks)
-            );
         } else if (executionKind == KIND_FLAG) {
             theOutput.price = int(flagCost * numberOfUpdatedFeeds);
         } else if (executionKind == KIND_LIQUIDATE) {
