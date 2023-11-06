@@ -71,7 +71,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
     minKeeperRewardUsd: 1,
     minKeeperProfitRatioD18: bn(0),
     maxKeeperRewardUsd: bn(10),
-    maxKeeperScalingRatioD18: bn(0),
+    maxKeeperScalingRatioD18: bn(0.005),
   };
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {
     await systems().PerpsMarket.setKeeperRewardGuards(

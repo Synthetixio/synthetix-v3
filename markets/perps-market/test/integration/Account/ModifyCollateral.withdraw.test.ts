@@ -38,7 +38,7 @@ describe('ModifyCollateral Withdraw', () => {
 
   const restoreToSetup = snapshotCheckpoint(provider);
 
-  describe('withdraw without open position modifyCollateral() from another account', async () => {
+  describe('withdraw without open position modifyCollateral() from another account', () => {
     before(restoreToSetup);
 
     before('owner sets limits to max', async () => {
@@ -88,7 +88,7 @@ describe('ModifyCollateral Withdraw', () => {
     });
   });
 
-  describe('withdraw without open position modifyCollateral()', async () => {
+  describe('withdraw without open position modifyCollateral()', () => {
     let spotBalanceBefore: ethers.BigNumber;
     let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
 
@@ -279,7 +279,7 @@ describe('ModifyCollateral Withdraw', () => {
         });
       }
     });
-    describe('account check after initial positions open', async () => {
+    describe('account check after initial positions open', () => {
       it('should have correct open interest', async () => {
         const expectedOi = 100_000; // abs((-2 * 30000) + (20 * 2000))
         assertBn.equal(

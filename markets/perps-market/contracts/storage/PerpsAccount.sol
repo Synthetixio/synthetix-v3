@@ -138,7 +138,9 @@ library PerpsAccount {
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
 
-    function flagForLiquidation(Data storage self) internal returns (uint256 flagKeeperCost) {
+    function flagForLiquidation(
+        Data storage self
+    ) internal returns (uint256 flagKeeperCost, uint256 marginCollected) {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -146,7 +148,7 @@ library PerpsAccount {
         if (!liquidatableAccounts.contains(self.id)) {
             flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
-            convertAllCollateralToUsd(self);
+            marginCollected = convertAllCollateralToUsd(self);
         }
     }
 
@@ -359,7 +361,9 @@ library PerpsAccount {
         );
     }
 
-    function convertAllCollateralToUsd(Data storage self) internal {
+    function convertAllCollateralToUsd(
+        Data storage self
+    ) internal returns (uint256 totalConvertedCollateral) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         uint[] memory activeCollateralTypes = self.activeCollateralTypes.values();
 
@@ -369,13 +373,14 @@ library PerpsAccount {
         for (uint256 i = 0; i < activeCollateralTypes.length; i++) {
             uint128 synthMarketId = activeCollateralTypes[i].to128();
             if (synthMarketId == SNX_USD_MARKET_ID) {
+                totalConvertedCollateral += self.collateralAmounts[synthMarketId];
                 updateCollateralAmount(
                     self,
                     synthMarketId,
                     -(self.collateralAmounts[synthMarketId].toInt())
                 );
             } else {
-                _deductAllSynth(self, factory, synthMarketId);
+                totalConvertedCollateral += _deductAllSynth(self, factory, synthMarketId);
             }
         }
     }
@@ -532,7 +537,7 @@ library PerpsAccount {
         Data storage self,
         PerpsMarketFactory.Data storage factory,
         uint128 synthMarketId
-    ) private {
+    ) private returns (uint256 amountUsd) {
         uint amount = self.collateralAmounts[synthMarketId];
         address synth = factory.spotMarket.getSynth(synthMarketId);
 
@@ -540,7 +545,7 @@ library PerpsAccount {
         factory.synthetix.withdrawMarketCollateral(factory.perpsMarketId, synth, amount);
 
         // 2. sell collateral for snxUSD
-        (uint amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
+        (amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
             synthMarketId,
             amount,
             0,

@@ -81,7 +81,7 @@ describe('Keeper Rewards - Multiple Positions', () => {
   });
 
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {
-    await systems().PerpsMarket.setKeeperRewardGuards(1, 0, bn(100), 0);
+    await systems().PerpsMarket.setKeeperRewardGuards(1, 0, bn(100), bn(0.005));
   });
 
   before('set liquidation reward ratio', async () => {

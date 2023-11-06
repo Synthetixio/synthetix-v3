@@ -4,7 +4,7 @@ import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
-describe('Liquidation - max liquidatable amount with multiple continuing liquidations', async () => {
+describe('Liquidation - max liquidatable amount with multiple continuing liquidations', () => {
   const { systems, provider, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [

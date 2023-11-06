@@ -23,7 +23,7 @@ describe('Create Market test', () => {
     [, , , , randomAccount] = signers();
   });
 
-  describe('market initialization', async () => {
+  describe('market initialization', () => {
     before(restore);
 
     const marketId = BigNumber.from(25);
@@ -71,7 +71,7 @@ describe('Create Market test', () => {
     });
   });
 
-  describe('market initialization with invalid parameters', async () => {
+  describe('market initialization with invalid parameters', () => {
     before(restore);
     const marketId = BigNumber.from(25);
 
@@ -101,7 +101,7 @@ describe('Create Market test', () => {
     });
   });
 
-  describe('market operation and configuration', async () => {
+  describe('market operation and configuration', () => {
     before(restore);
 
     const marketId = BigNumber.from(25);
@@ -254,7 +254,7 @@ describe('Create Market test', () => {
     });
   });
 
-  describe('market interface views', async () => {
+  describe('market interface views', () => {
     before(restore);
 
     const marketId = BigNumber.from(25);
@@ -278,7 +278,7 @@ describe('Create Market test', () => {
     });
   });
 
-  describe('factory setup', async () => {
+  describe('factory setup', () => {
     before(restore);
 
     describe('attempt to do it with non-owner', () => {

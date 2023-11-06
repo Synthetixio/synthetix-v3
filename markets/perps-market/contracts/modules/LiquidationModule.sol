@@ -46,13 +46,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             (bool isEligible, , , , , , ) = account.isEligibleForLiquidation();
 
             if (isEligible) {
-                uint flagCost = account.flagForLiquidation();
-                liquidationReward = _liquidateAccount(
-                    account,
-                    flagCost,
-                    account.getTotalCollateralValue(),
-                    true
-                );
+                (uint flagCost, uint marginCollected) = account.flagForLiquidation();
+                liquidationReward = _liquidateAccount(account, flagCost, marginCollected, true);
             } else {
                 revert NotEligibleForLiquidation(accountId);
             }

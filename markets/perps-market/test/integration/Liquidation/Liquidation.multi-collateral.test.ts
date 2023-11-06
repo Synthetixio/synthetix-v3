@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import { calculatePricePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 
-describe('Liquidation - multi collateral', async () => {
+describe('Liquidation - multi collateral', () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -74,7 +74,7 @@ describe('Liquidation - multi collateral', async () => {
         minLiquidationReward: bn(10),
         minKeeperProfitRatioD18: bn(0),
         maxLiquidationReward: bn(1000),
-        maxKeeperScalingRatioD18: bn(0),
+        maxKeeperScalingRatioD18: bn(0.5),
       },
       synthMarkets: [
         {
@@ -135,7 +135,7 @@ describe('Liquidation - multi collateral', async () => {
     OpenPositionData,
     'systems' | 'provider' | 'trader' | 'accountId' | 'keeper'
   >;
-  before('identify common props', async () => {
+  before('identify common props', () => {
     commonOpenPositionProps = {
       systems,
       provider,
@@ -163,7 +163,7 @@ describe('Liquidation - multi collateral', async () => {
     }
   });
 
-  describe('account check after initial positions open', async () => {
+  describe('account check after initial positions open', () => {
     it('should have correct open interest', async () => {
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), bn(80_000));
     });

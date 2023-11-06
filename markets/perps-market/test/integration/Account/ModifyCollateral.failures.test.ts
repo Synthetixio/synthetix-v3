@@ -61,7 +61,7 @@ describe('ModifyCollateral', () => {
       .buy(synthLINKMarketId, usdAmount, minAmountReceived, referrer);
   });
 
-  describe('failure cases', async () => {
+  describe('failure cases', () => {
     it('reverts when the account does not exist', async () => {
       await assertRevert(
         systems()

@@ -32,7 +32,7 @@ describe('ModifyCollateral Deposit', () => {
     synthBTCMarketId = synthMarkets()[0].marketId(); // 3
   });
 
-  describe('deposit by modifyCollateral()', async () => {
+  describe('deposit by modifyCollateral()', () => {
     let spotBalanceBefore: ethers.BigNumber;
     let modifyCollateralTxn: ethers.providers.TransactionResponse;
 
