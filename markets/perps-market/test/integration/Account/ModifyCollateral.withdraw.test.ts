@@ -222,6 +222,13 @@ describe('ModifyCollateral Withdraw', () => {
     const { systems, provider, trader1, perpsMarkets, synthMarkets } = bootstrapMarkets({
       synthMarkets: spotMarketConfig,
       perpsMarkets: perpsMarketConfigs,
+      liquidationGuards: {
+        minLiquidationReward: bn(0),
+        minKeeperProfitRatioD18: bn(0),
+        maxLiquidationReward: bn(10_000),
+        maxKeeperScalingRatioD18: bn(1),
+      },
+
       traderAccountIds,
     });
     before('add some snx collateral to margin', async () => {

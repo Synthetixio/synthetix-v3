@@ -43,7 +43,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , , , , , ) = account.isEligibleForLiquidation();
+            (bool isEligible, , , , ) = account.isEligibleForLiquidation();
 
             if (isEligible) {
                 (uint flagCost, uint marginCollected) = account.flagForLiquidation();
@@ -109,7 +109,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @inheritdoc ILiquidationModule
      */
     function canLiquidate(uint128 accountId) external view override returns (bool isEligible) {
-        (isEligible, , , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
+        (isEligible, , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
     }
 
     /**
@@ -135,7 +135,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
-        uint256 i; // stack too deep to the extreme
+        uint256 loopIterator; // stack too deep to the extreme
     }
 
     /**
@@ -151,8 +151,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         runtime.accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
 
-        for (runtime.i = 0; runtime.i < openPositionMarketIds.length; runtime.i++) {
-            uint128 positionMarketId = openPositionMarketIds[runtime.i].to128();
+        for (
+            runtime.loopIterator = 0;
+            runtime.loopIterator < openPositionMarketIds.length;
+            runtime.loopIterator++
+        ) {
+            uint128 positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
             uint256 price = PerpsPrice.getCurrentPrice(positionMarketId);
 
             (

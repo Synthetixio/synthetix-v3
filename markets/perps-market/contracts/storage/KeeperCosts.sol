@@ -74,26 +74,6 @@ library KeeperCosts {
         sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, 0, KIND_LIQUIDATE);
     }
 
-    function getTotalFlagAndLiquidationCost(
-        Data storage self,
-        uint128 accountId,
-        uint256 numberOfChunks
-    ) internal view returns (uint sUSDCost) {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-
-        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        uint numberOfUpdatedFeeds = account.activeCollateralTypes.length() +
-            account.openPositionMarketIds.length();
-
-        sUSDCost = _processWithRuntime(
-            self.keeperCostNodeId,
-            factory,
-            numberOfChunks,
-            numberOfUpdatedFeeds,
-            KIND_LIQUIDATION_ELIGIBILITY
-        );
-    }
-
     function _processWithRuntime(
         bytes32 keeperCostNodeId,
         PerpsMarketFactory.Data storage factory,

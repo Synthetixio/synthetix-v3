@@ -119,21 +119,17 @@ library PerpsAccount {
             int256 availableMargin,
             uint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
-            uint256 accumulatedLiquidationRewards,
-            uint256 liquidationReward,
-            uint256 costOfFlaggingAndLiquidation
+            uint256 liquidationReward
         )
     {
         availableMargin = getAvailableMargin(self);
         if (self.openPositionMarketIds.length() == 0) {
-            return (false, availableMargin, 0, 0, 0, 0, 0);
+            return (false, availableMargin, 0, 0, 0);
         }
         (
             requiredInitialMargin,
             requiredMaintenanceMargin,
-            accumulatedLiquidationRewards,
-            liquidationReward,
-            costOfFlaggingAndLiquidation
+            liquidationReward
         ) = getAccountRequiredMargins(self);
         isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
@@ -200,9 +196,7 @@ library PerpsAccount {
             int256 availableMargin,
             uint256 initialRequiredMargin,
             ,
-            ,
-            uint256 liquidationReward,
-
+            uint256 liquidationReward
         ) = isEligibleForLiquidation(self);
 
         if (isEligible) {
@@ -283,6 +277,7 @@ library PerpsAccount {
         if (includeUSD) {
             numberOfCollaterals = self.activeCollateralTypes.length();
         } else {
+            // TODO use contains here
             for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
                 uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
                 if (synthMarketId != SNX_USD_MARKET_ID) {
@@ -302,15 +297,8 @@ library PerpsAccount {
     )
         internal
         view
-        returns (
-            uint initialMargin,
-            uint maintenanceMargin,
-            uint accumulatedLiquidationRewards,
-            uint liquidationReward,
-            uint costOfFlaggingAndLiquidation
-        )
+        returns (uint initialMargin, uint maintenanceMargin, uint possibleLiquidationReward)
     {
-        uint maxNumberOfChunks;
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
@@ -329,36 +317,69 @@ library PerpsAccount {
                     PerpsPrice.getCurrentPrice(marketId)
                 );
 
-            accumulatedLiquidationRewards += liquidationMargin;
             maintenanceMargin += positionMaintenanceMargin;
             initialMargin += positionInitialMargin;
+        }
 
-            uint numberOfChunks = marketConfig.numberOfLiquidationChunks(
-                MathUtil.abs(position.size)
+        possibleLiquidationReward = getKeeperRewardsAndCosts(
+            self,
+            // self.openPositionMarketIds.length(),
+            0,
+            0
+        );
+
+        return (initialMargin, maintenanceMargin, possibleLiquidationReward);
+    }
+
+    function getKeeperRewardsAndCosts(
+        Data storage self,
+        // uint numberOfOpenPositions,
+        uint128 overrideMarketId,
+        int overridePositionSize
+    ) internal view returns (uint possibleLiquidationReward) {
+        uint maxNumberOfChunks;
+        uint accumulatedLiquidationRewards;
+        // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
+        for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
+            uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+            Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
+            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+                marketId
             );
+
+            int overridenPositionSize = marketId == overrideMarketId
+                ? overridePositionSize
+                : position.size;
+            uint numberOfChunks = marketConfig.numberOfLiquidationChunks(
+                MathUtil.abs(overridenPositionSize)
+            );
+
+            uint256 liquidationMargin = marketConfig.calculateLiquidationReward(
+                MathUtil.abs(overridenPositionSize).mulDecimal(PerpsPrice.getCurrentPrice(marketId))
+            );
+            accumulatedLiquidationRewards += liquidationMargin;
+
             maxNumberOfChunks = numberOfChunks > maxNumberOfChunks
                 ? numberOfChunks
                 : maxNumberOfChunks;
         }
 
-        costOfFlaggingAndLiquidation = KeeperCosts.load().getTotalFlagAndLiquidationCost(
-            self.id,
-            maxNumberOfChunks
-        );
-        accumulatedLiquidationRewards += costOfFlaggingAndLiquidation;
-
-        // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
-        uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration
-            .load()
-            .minimumKeeperReward(accumulatedLiquidationRewards, costOfFlaggingAndLiquidation);
-
-        return (
-            initialMargin,
-            maintenanceMargin,
+        GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
+            .load();
+        KeeperCosts.Data storage keeperCosts = KeeperCosts.load();
+        uint costOfFlagging = keeperCosts.getFlagKeeperCosts(self.id);
+        uint costOfLiquidation = keeperCosts.getLiquidateKeeperCosts();
+        uint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
-            possibleLiquidationReward,
-            costOfFlaggingAndLiquidation
+            costOfFlagging,
+            getTotalCollateralValue(self)
         );
+        uint256 liquidateChunksCosts = maxNumberOfChunks == 0
+            ? 0
+            : globalConfig.keeperReward(costOfLiquidation, costOfLiquidation, 0) *
+                (maxNumberOfChunks - 1);
+
+        possibleLiquidationReward = liquidateAndFlagCost + liquidateChunksCosts;
     }
 
     function convertAllCollateralToUsd(

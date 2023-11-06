@@ -127,7 +127,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         int256 availableMargin = account.getAvailableMargin();
-        (uint256 initialRequiredMargin, , , uint256 liquidationReward, ) = account
+        (uint256 initialRequiredMargin, , uint256 liquidationReward) = account
             .getAccountRequiredMargins();
 
         uint256 requiredMargin = initialRequiredMargin + liquidationReward;
@@ -147,22 +147,16 @@ contract PerpsAccountModule is IPerpsAccountModule {
         returns (
             uint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
-            uint256 totalAccumulatedLiquidationRewards,
             uint256 maxLiquidationReward
         )
     {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (account.openPositionMarketIds.length() == 0) {
-            return (0, 0, 0, 0);
+            return (0, 0, 0);
         }
 
-        (
-            requiredInitialMargin,
-            requiredMaintenanceMargin,
-            totalAccumulatedLiquidationRewards,
-            maxLiquidationReward,
-
-        ) = account.getAccountRequiredMargins();
+        (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = account
+            .getAccountRequiredMargins();
 
         // Include liquidation rewards to required initial margin and required maintenance margin
         requiredInitialMargin += maxLiquidationReward;
