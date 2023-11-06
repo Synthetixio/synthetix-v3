@@ -46,16 +46,7 @@ library KeeperCosts {
 
         accountId; // unused for now, but will be used to calculate rewards based on account collaterals in the future
 
-        (bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) = getRuntime(
-            0,
-            0,
-            KIND_SETTLEMENT
-        );
-
-        sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
-            .price
-            .toUint();
+        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, 0, KIND_SETTLEMENT);
     }
 
     function getFlagKeeperCosts(
@@ -68,31 +59,19 @@ library KeeperCosts {
         uint numberOfUpdatedFeeds = account.getNumberOfCollaterals(false) +
             account.openPositionMarketIds.length();
 
-        (bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) = getRuntime(
+        sUSDCost = _processWithRuntime(
+            self.keeperCostNodeId,
+            factory,
             0,
             numberOfUpdatedFeeds,
             KIND_FLAG
         );
-
-        sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
-            .price
-            .toUint();
     }
 
     function getLiquidateKeeperCosts(Data storage self) internal view returns (uint sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
-        (bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) = getRuntime(
-            0,
-            0,
-            KIND_LIQUIDATE
-        );
-
-        sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
-            .price
-            .toUint();
+        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, 0, KIND_LIQUIDATE);
     }
 
     function getTotalFlagAndLiquidationCost(
@@ -106,30 +85,34 @@ library KeeperCosts {
         uint numberOfUpdatedFeeds = account.activeCollateralTypes.length() +
             account.openPositionMarketIds.length();
 
-        (bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) = getRuntime(
+        sUSDCost = _processWithRuntime(
+            self.keeperCostNodeId,
+            factory,
             numberOfChunks,
             numberOfUpdatedFeeds,
             KIND_LIQUIDATION_ELIGIBILITY
         );
-
-        sUSDCost = INodeModule(factory.oracle)
-            .processWithRuntime(self.keeperCostNodeId, runtimeKeys, runtimeValues)
-            .price
-            .toUint();
     }
 
-    function getRuntime(
+    function _processWithRuntime(
+        bytes32 keeperCostNodeId,
+        PerpsMarketFactory.Data storage factory,
         uint256 numberOfChunks,
         uint256 numberOfUpdatedFeeds,
         uint256 executionKind
-    ) private pure returns (bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) {
-        runtimeKeys = new bytes32[](4);
-        runtimeValues = new bytes32[](4);
+    ) private view returns (uint sUSDCost) {
+        bytes32[] memory runtimeKeys = new bytes32[](4);
+        bytes32[] memory runtimeValues = new bytes32[](4);
         runtimeKeys[0] = bytes32("numberOfChunks");
         runtimeKeys[1] = bytes32("numberOfUpdatedFeeds");
         runtimeKeys[2] = bytes32("executionKind");
         runtimeValues[0] = bytes32(numberOfChunks);
         runtimeValues[1] = bytes32(numberOfUpdatedFeeds);
         runtimeValues[2] = bytes32(executionKind);
+
+        sUSDCost = INodeModule(factory.oracle)
+            .processWithRuntime(keeperCostNodeId, runtimeKeys, runtimeValues)
+            .price
+            .toUint();
     }
 }
