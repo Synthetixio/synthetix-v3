@@ -357,6 +357,90 @@ describe('OrderModule', () => {
         `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
       );
     });
+
+    it('should revert when an existing position can be liquidated (but not flagged)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.lte(healthFactor, bn(1));
+
+      // Modify the order (either +/- by 1%)
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(order1.sizeDelta).mul(1.01).toBN(),
+      });
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd
+        ),
+        'CanLiquidatePosition()'
+      );
+    });
+
+    it('should revert when an existing position is flagged for liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.lte(healthFactor, bn(1));
+
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      // Modify the order (either +/- by 1%)
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(order1.sizeDelta).mul(1.01).toBN(),
+      });
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd
+        ),
+        'PositionFlagged()'
+      );
+    });
+
+    it('should revert when placing an existing position into instant liquidation');
+
+    it('should revert when placing a new position into instant liquidation');
   });
 
   describe('settleOrder', () => {
@@ -724,12 +808,6 @@ describe('OrderModule', () => {
 
     it('should revert when this order exceeds maxMarketSize (oi)');
 
-    it('should revert when an existing position can be liquidated');
-
-    it('should revert when an existing position is flagged for liquidation');
-
-    it('should revert when margin falls below maintenance margin');
-
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -864,9 +942,43 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert if long exceeds limit price');
+    forEach(['long', 'short']).it('should revert when side (%s) fillPrice exceeds limitPrice', async (side: string) => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert if short exceeds limit price');
+      const orderSide = side === 'long' ? 1 : -1;
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredSide: orderSide });
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      // Move price past limitPrice (+/- 30%).
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 1.3 : 0.7)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      await fastForwardTo(settlementTime, provider());
+
+      const { skewScale } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      const marketSkew = bn(0);
+      const fillPrice = calcFillPrice(marketSkew, skewScale, order.sizeDelta, newMarketOraclePrice);
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `PriceToleranceExceeded("${order.sizeDelta}", "${fillPrice}", "${order.limitPrice}")`,
+        PerpMarketProxy
+      );
+    });
 
     it('should revert if collateral price slips into insufficient margin on between commit and settle');
 
@@ -983,10 +1095,6 @@ describe('OrderModule', () => {
     it('should revert if pyth vaa merkle/blob is invalid');
 
     it('should revert when not enough wei is available to pay pyth fee');
-
-    it('should revert when placing an existing position into instant liquidation');
-
-    it('should revert when placing a new positin into instant liquidation');
   });
 
   describe('getOrderFees', () => {
