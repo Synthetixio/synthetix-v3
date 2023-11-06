@@ -16,7 +16,6 @@ import {
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
-  getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
@@ -687,7 +686,7 @@ describe('OrderModule', () => {
       CLOSE_BELOW_IM = 'CLOSE_BELOW_IM',
     }
 
-    forEach([PositionReductionVariant.MODIFY_BELOW_IM, PositionReductionVariant.CLOSE_BELOW_IM]).it.only(
+    forEach([PositionReductionVariant.MODIFY_BELOW_IM, PositionReductionVariant.CLOSE_BELOW_IM]).it(
       'should allow position reduction (%s) even if position is below im',
       async (variant: PositionReductionVariant) => {
         const { PerpMarketProxy } = systems();
