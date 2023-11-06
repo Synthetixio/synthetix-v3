@@ -92,7 +92,7 @@ describe('Market Debt - with funding', () => {
         settlementStrategyId: perpsMarket.strategyId(),
         price: bn(1000),
       });
-      openPositionTime = await openPosition({
+      ({ settleTime: openPositionTime } = await openPosition({
         systems,
         provider,
         trader: trader3(),
@@ -102,7 +102,7 @@ describe('Market Debt - with funding', () => {
         sizeDelta: bn(200),
         settlementStrategyId: perpsMarket.strategyId(),
         price: bn(1000),
-      });
+      }));
     });
 
     let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;

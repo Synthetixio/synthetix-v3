@@ -1,6 +1,6 @@
 # Synthetix Governance Modules
 
-Governance cotracts for on chain voting.
+Governance contracts for on chain voting.
 
 ## Cannon Usage
 

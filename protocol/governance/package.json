@@ -18,7 +18,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/router": "^3.3.0",
-    "hardhat": "^2.17.4",
+    "hardhat": "^2.18.3",
     "solidity-docgen": "^0.6.0-beta.36"
   }
 }
