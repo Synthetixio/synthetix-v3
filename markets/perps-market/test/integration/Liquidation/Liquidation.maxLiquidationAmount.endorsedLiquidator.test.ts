@@ -92,7 +92,7 @@ describe('Liquidation - endorsed liquidator', () => {
     });
 
     it('did not send any liquidation reward', async () => {
-      assertBn.equal(await systems().USD.balanceOf(keeper().getAddress()), 0);
+      assertBn.equal(await systems().USD.balanceOf(await keeper().getAddress()), 0);
     });
   });
 });
