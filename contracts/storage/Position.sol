@@ -164,15 +164,6 @@ library Position {
             if (isLiquidatable(currentPosition, market, marginUsd, params.fillPrice, marketConfig)) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
-
-            // Determine if the current position has enough margin to perform further changes.
-            //
-            // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
-            // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
-            (uint256 imcp, , ) = getLiquidationMarginUsd(currentPosition.size, params.fillPrice, marketConfig);
-            if (marginUsd < imcp) {
-                revert ErrorUtil.InsufficientMargin();
-            }
         }
 
         // --- New position validation (as though the order settled) --- //
@@ -197,7 +188,7 @@ library Position {
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        (uint256 imnp, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
+        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
 
         // `marginUsd` is the previous position margin (which includes accruedFeesUsd deducted with open
         // position). We `-fee and -keeperFee` here because the new position would have incurred additional fees if
@@ -206,7 +197,7 @@ library Position {
         // This is important as it helps avoid instant liquidation on successful settlement.
         uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
 
-        if (!positionDecreasing && newMarginUsd < imnp) {
+        if (!positionDecreasing && newMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
 
