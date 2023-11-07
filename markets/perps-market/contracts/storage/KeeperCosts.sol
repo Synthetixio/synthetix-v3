@@ -45,7 +45,7 @@ library KeeperCosts {
 
         accountId; // unused for now, but will be used to calculate rewards based on account collaterals in the future
 
-        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, 0, KIND_SETTLEMENT);
+        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_SETTLEMENT);
     }
 
     function getFlagKeeperCosts(
@@ -61,7 +61,6 @@ library KeeperCosts {
         sUSDCost = _processWithRuntime(
             self.keeperCostNodeId,
             factory,
-            0,
             numberOfUpdatedFeeds,
             KIND_FLAG
         );
@@ -70,23 +69,21 @@ library KeeperCosts {
     function getLiquidateKeeperCosts(Data storage self) internal view returns (uint sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
-        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, 0, KIND_LIQUIDATE);
+        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_LIQUIDATE);
     }
 
     function _processWithRuntime(
         bytes32 keeperCostNodeId,
         PerpsMarketFactory.Data storage factory,
-        uint256 numberOfChunks,
         uint256 numberOfUpdatedFeeds,
         uint256 executionKind
     ) private view returns (uint sUSDCost) {
         bytes32[] memory runtimeKeys = new bytes32[](4);
         bytes32[] memory runtimeValues = new bytes32[](4);
-        runtimeKeys[1] = bytes32("numberOfUpdatedFeeds");
-        runtimeKeys[2] = bytes32("executionKind");
-        runtimeValues[0] = bytes32(numberOfChunks);
-        runtimeValues[1] = bytes32(numberOfUpdatedFeeds);
-        runtimeValues[2] = bytes32(executionKind);
+        runtimeKeys[0] = bytes32("numberOfUpdatedFeeds");
+        runtimeKeys[1] = bytes32("executionKind");
+        runtimeValues[0] = bytes32(numberOfUpdatedFeeds);
+        runtimeValues[1] = bytes32(executionKind);
 
         sUSDCost = INodeModule(factory.oracle)
             .processWithRuntime(keeperCostNodeId, runtimeKeys, runtimeValues)

@@ -520,8 +520,8 @@ library AsyncOrder {
         uint256 oldRequiredMargin;
         uint256 requiredMarginForNewPosition;
         uint accumulatedLiquidationRewards;
-        uint maxNumberOfChunks;
-        uint numberOfChunks;
+        uint maxNumberOfWindows;
+        uint numberOfWindows;
         uint256 requiredRewardMargin;
     }
 
@@ -558,19 +558,22 @@ library AsyncOrder {
             runtime.newRequiredMargin -
             runtime.oldRequiredMargin;
 
-        (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfChunks) = account
+        (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
             .getKeeperRewardsAndCosts(marketId);
         runtime.accumulatedLiquidationRewards += marketConfig.calculateLiquidationReward(
             MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
         );
-        runtime.numberOfChunks = marketConfig.numberOfLiquidationChunks(
+        runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
             MathUtil.abs(newPositionSize)
         );
-        runtime.maxNumberOfChunks = MathUtil.max(runtime.numberOfChunks, runtime.maxNumberOfChunks);
+        runtime.maxNumberOfWindows = MathUtil.max(
+            runtime.numberOfWindows,
+            runtime.maxNumberOfWindows
+        );
 
         runtime.requiredRewardMargin = account.getPossibleLiquidationReward(
             runtime.accumulatedLiquidationRewards,
-            runtime.maxNumberOfChunks
+            runtime.maxNumberOfWindows
         );
 
         // this is the required margin for the new position (minus any order fees)

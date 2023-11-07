@@ -86,7 +86,7 @@ library PerpsMarketConfiguration {
             ) * self.maxSecondsInLiquidationWindow;
     }
 
-    function numberOfLiquidationChunks(
+    function numberOfLiquidationWindows(
         Data storage self,
         uint positionSize
     ) internal view returns (uint256) {

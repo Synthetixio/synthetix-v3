@@ -313,14 +313,14 @@ library PerpsAccount {
             initialMargin += positionInitialMargin;
         }
 
-        (uint accumulatedLiquidationRewards, uint maxNumberOfChunks) = getKeeperRewardsAndCosts(
+        (uint accumulatedLiquidationRewards, uint maxNumberOfWindows) = getKeeperRewardsAndCosts(
             self,
             0
         );
         possibleLiquidationReward = getPossibleLiquidationReward(
             self,
             accumulatedLiquidationRewards,
-            maxNumberOfChunks
+            maxNumberOfWindows
         );
 
         return (initialMargin, maintenanceMargin, possibleLiquidationReward);
@@ -329,7 +329,7 @@ library PerpsAccount {
     function getKeeperRewardsAndCosts(
         Data storage self,
         uint128 skipMarketId
-    ) internal view returns (uint accumulatedLiquidationRewards, uint maxNumberOfChunks) {
+    ) internal view returns (uint accumulatedLiquidationRewards, uint maxNumberOfWindows) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
@@ -339,7 +339,7 @@ library PerpsAccount {
                 marketId
             );
 
-            uint numberOfChunks = marketConfig.numberOfLiquidationChunks(
+            uint numberOfWindows = marketConfig.numberOfLiquidationWindows(
                 MathUtil.abs(position.size)
             );
 
@@ -348,14 +348,14 @@ library PerpsAccount {
             );
             accumulatedLiquidationRewards += liquidationMargin;
 
-            maxNumberOfChunks = MathUtil.max(numberOfChunks, maxNumberOfChunks);
+            maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }
     }
 
     function getPossibleLiquidationReward(
         Data storage self,
         uint accumulatedLiquidationRewards,
-        uint numOfChunks
+        uint numOfWindows
     ) internal view returns (uint possibleLiquidationReward) {
         GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
             .load();
@@ -367,12 +367,12 @@ library PerpsAccount {
             costOfFlagging,
             getTotalCollateralValue(self)
         );
-        uint256 liquidateChunksCosts = numOfChunks == 0
+        uint256 liquidateWindowsCosts = numOfWindows == 0
             ? 0
             : globalConfig.keeperReward(costOfLiquidation, costOfLiquidation, 0) *
-                (numOfChunks - 1);
+                (numOfWindows - 1);
 
-        possibleLiquidationReward = liquidateAndFlagCost + liquidateChunksCosts;
+        possibleLiquidationReward = liquidateAndFlagCost + liquidateWindowsCosts;
     }
 
     function convertAllCollateralToUsd(
