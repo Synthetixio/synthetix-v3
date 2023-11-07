@@ -310,7 +310,7 @@ library Position {
 
         uint256 flagFeeInUSD = MathUtil.max(
             flagExecutionCostInUSD.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
-            flagExecutionCostInUSD + globalConfig.keeperProfitMarginUSD
+            flagExecutionCostInUSD + globalConfig.keeperProfitMarginUsd
         );
         uint256 flagFeeWithRewardInUSD = flagFeeInUSD +
             size.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
@@ -388,7 +388,7 @@ library Position {
 
         uint256 liquidationFeeInUSD = MathUtil.max(
             liquidationExecutionCostUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
-            liquidationExecutionCostUsd + globalConfig.keeperProfitMarginUSD
+            liquidationExecutionCostUsd + globalConfig.keeperProfitMarginUsd
         );
 
         uint256 iterations = divDecimalAndCeil(size, maxLiqCapacity);

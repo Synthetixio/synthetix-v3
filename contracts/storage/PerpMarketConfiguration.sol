@@ -54,7 +54,7 @@ library PerpMarketConfiguration {
         // The maximum amount in USD a keeper should receive on settlements/liquidations.
         uint256 maxKeeperFeeUsd;
         // This is used to ensure we have incentives to liquidate small positions
-        uint128 keeperProfitMarginUSD;
+        uint128 keeperProfitMarginUsd;
         // A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
         uint128 keeperProfitMarginPercent;
         // Number of gas units required to perform an order settlement by a keeper.

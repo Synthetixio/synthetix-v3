@@ -116,7 +116,7 @@ export const calculateFlagReward = (
 
   const flagFeeInUSD = Wei.max(
     wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
-    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUSD))
+    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUsd))
   );
 
   const flagFeeWithRewardInUSD = flagFeeInUSD.add(sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent));
@@ -148,7 +148,7 @@ export const calculateLiquidationKeeperFee = (
 
   const liquidationFeeInUSD = Wei.max(
     wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
-    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUSD))
+    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUsd))
   );
 
   return Wei.min(liquidationFeeInUSD, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);

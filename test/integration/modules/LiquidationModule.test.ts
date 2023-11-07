@@ -1574,10 +1574,10 @@ describe('LiquidationModule', () => {
         const { PerpMarketProxy } = systems();
 
         const orderSide = genSide();
-        // keeperProfitMarginUSD set to 10, maxKeeperFeeUsd set to 1 means no matter the size of the pos, maxKeeperFeeUsd will be used as that's the determining factor
+        // keeperProfitMarginUsd set to 10, maxKeeperFeeUsd set to 1 means no matter the size of the pos, maxKeeperFeeUsd will be used as that's the determining factor
         await setMarketConfiguration(bs, {
           maxKeeperFeeUsd: bn(1),
-          keeperProfitMarginUSD: bn(10),
+          keeperProfitMarginUsd: bn(10),
         });
 
         const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -1612,7 +1612,7 @@ describe('LiquidationModule', () => {
         assertBn.equal(liquidationKeeperFee, bn(1));
       });
 
-      it('should use keeperProfitMarginPercent when bigger than keeperProfitMarginUSD', async () => {
+      it('should use keeperProfitMarginPercent when bigger than keeperProfitMarginUsd', async () => {
         const { PerpMarketProxy } = systems();
 
         const orderSide = genSide();
@@ -1637,7 +1637,7 @@ describe('LiquidationModule', () => {
         const { keeperProfitMarginPercent, keeperLiquidationGasUnits, keeperFlagGasUnits } =
           await setMarketConfiguration(bs, {
             maxKeeperFeeUsd: bn(1234567), // large max fee to make sure it's not used
-            keeperProfitMarginUSD: bn(0), // ensure keeperProfitMarginPercent would be used instead
+            keeperProfitMarginUsd: bn(0), // ensure keeperProfitMarginPercent would be used instead
             keeperLiquidationGasUnits: 500_000,
             keeperFlagGasUnits: 500_000,
           });
@@ -1684,7 +1684,7 @@ describe('LiquidationModule', () => {
         assertBn.equal(liquidationKeeperFee, wei(expectedKeeperFee).toBN());
       });
 
-      it('should use keeperProfitMarginUSD when keeperProfitMarginPercent is small', async () => {
+      it('should use keeperProfitMarginUsd when keeperProfitMarginPercent is small', async () => {
         const { PerpMarketProxy } = systems();
 
         const orderSide = genSide();
@@ -1706,11 +1706,11 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-        const { keeperProfitMarginUSD, keeperLiquidationGasUnits, keeperFlagGasUnits } = await setMarketConfiguration(
+        const { keeperProfitMarginUsd, keeperLiquidationGasUnits, keeperFlagGasUnits } = await setMarketConfiguration(
           bs,
           {
             maxKeeperFeeUsd: bn(1234567), // large max fee to make sure it's not used
-            keeperProfitMarginPercent: bn(0.00001), // small margin percent to ensure we use keeperProfitMarginUSD
+            keeperProfitMarginPercent: bn(0.00001), // small margin percent to ensure we use keeperProfitMarginUsd
             keeperLiquidationGasUnits: 500_000,
             keeperFlagGasUnits: 500_000,
           }
@@ -1748,13 +1748,13 @@ describe('LiquidationModule', () => {
         const sizeAbsUsd = wei(order.sizeDelta).abs().mul(flaggedPrice);
         const expectedCostFlag = calculateTransactionCostInUSD(baseFeePerGas, keeperFlagGasUnits, ethPrice);
         const expectedFlagReward = wei(expectedCostFlag)
-          .add(wei(keeperProfitMarginUSD))
+          .add(wei(keeperProfitMarginUsd))
           .add(sizeAbsUsd.mul(flagRewardPercent));
 
         assertBn.equal(flagKeeperReward, expectedFlagReward.toBN());
 
         const expectedCostLiq = calculateTransactionCostInUSD(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
-        const expectedKeeperFee = wei(expectedCostLiq).add(wei(keeperProfitMarginUSD));
+        const expectedKeeperFee = wei(expectedCostLiq).add(wei(keeperProfitMarginUsd));
 
         assertBn.equal(liquidationKeeperFee, wei(expectedKeeperFee).toBN());
         // Reset base fee
