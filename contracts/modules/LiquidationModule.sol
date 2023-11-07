@@ -104,9 +104,9 @@ contract LiquidationModule is ILiquidationModule {
             position.entryPrice,
             position.accruedFeesUsd + flagReward
         );
-        market.updateDebtCorrection(market.positions[accountId], newPosition);
+        market.updateDebtCorrection(position, newPosition);
         // Update position accounting
-        market.positions[accountId].update(newPosition);
+        position.update(newPosition);
         // Pay keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
         // Flag and emit event.
@@ -145,8 +145,6 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
-        address flagger = market.flaggedLiquidations[accountId];
-
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
             delete market.positions[accountId];
@@ -167,7 +165,7 @@ contract LiquidationModule is ILiquidationModule {
             marketId,
             newPosition.size,
             msg.sender,
-            flagger,
+            market.flaggedLiquidations[accountId],
             liquidationKeeperFee,
             oraclePrice
         );
