@@ -40,7 +40,7 @@ import {
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
-import { calculateLiquidationKeeperFee, calculateTransactionCostInUSD } from '../../calculations';
+import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '../../calculations';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -86,7 +86,6 @@ describe('LiquidationModule', () => {
 
       // set base fee to 0 gwei to avoid rounding errors
       await setBaseFeePerGas(0, provider());
-      // TODO we need to make sure this is tested properly somewhere too
       const { flagKeeperReward } = await PerpMarketProxy.getLiquidationFees(trader.accountId, marketId);
 
       const { receipt } = await withExplicitEvmMine(
@@ -523,7 +522,7 @@ describe('LiquidationModule', () => {
         0, // sizeRemaining (expected full liquidation).
         `"${keeperAddress}"`, // keeper
         `"${keeperAddress}"`, // flagger
-        positionLiquidatedEvent?.args.liquidationKeeperFee,
+        positionLiquidatedEvent?.args.liqKeeperFee,
         newMarketOraclePrice,
       ].join(', ');
 
@@ -576,7 +575,7 @@ describe('LiquidationModule', () => {
         0, // sizeRemaining (expected full liquidation).
         `"${keeperAddress}"`, // keeper
         `"${keeperAddress}"`, // flagger
-        positionLiquidatedEvent?.args.liquidationKeeperFee,
+        positionLiquidatedEvent?.args.liqKeeperFee,
         marketOraclePrice,
       ].join(', ');
 
@@ -666,7 +665,7 @@ describe('LiquidationModule', () => {
       const positionLiquidatedEvent = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy);
 
       const totalDebtAfterFees = wei(totalDebtAfterPriceChange)
-        .add(positionLiquidatedEvent.args.liquidationKeeperFee)
+        .add(positionLiquidatedEvent.args.liqKeeperFee)
         .add(positionFlagEvent.args.flagKeeperReward);
       // On a full liquidation
       assertBn.equal(totalDebtAfterFees.toBN(), totalDebtAfterLiq);
@@ -702,7 +701,7 @@ describe('LiquidationModule', () => {
       assertBn.lt(d2.remainingLiquidatableSizeCapacity, d1.remainingLiquidatableSizeCapacity);
     });
 
-    it('should send liquidationKeeperFee to liquidator', async () => {
+    it('should send liqKeeperFee to liquidator', async () => {
       const { PerpMarketProxy, USD } = systems();
 
       const settlementKeeper = keeper();
@@ -742,7 +741,7 @@ describe('LiquidationModule', () => {
 
       assertBn.equal(
         await USD.balanceOf(await liquidatorKeeper.getAddress()),
-        positionLiquidatedEvent.args.liquidationKeeperFee
+        positionLiquidatedEvent.args.liqKeeperFee
       );
     });
 
@@ -1023,7 +1022,7 @@ describe('LiquidationModule', () => {
       });
     });
 
-    describe('{partialLiquidation,liquidationCapacity,liquidationKeeperFee}', () => {
+    describe('{partialLiquidation,liquidationCapacity,liqKeeperFee}', () => {
       const configurePartiallyLiquidatedPosition = async (
         desiredFlagger?: Signer,
         desiredLiquidator?: Signer,
@@ -1091,7 +1090,7 @@ describe('LiquidationModule', () => {
           remainingSize,
           `"${flaggerKeeperAddr}"`,
           `"${liquidationKeeperAddr}"`,
-          positionLiquidatedEvent?.args.liquidationKeeperFee,
+          positionLiquidatedEvent?.args.liqKeeperFee,
           newMarketOraclePrice,
         ].join(', ');
         await assertEvent(receipt, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
@@ -1219,7 +1218,7 @@ describe('LiquidationModule', () => {
           expectedRemainingSize, // Remaining size to liquidate (none = dead).
           `"${desiredKeeperAddress}"`,
           `"${desiredKeeperAddress}"`,
-          positionLiquidatedEvent?.args.liquidationKeeperFee,
+          positionLiquidatedEvent?.args.liqKeeperFee,
           order.oraclePrice,
         ].join(', ');
 
@@ -1528,7 +1527,7 @@ describe('LiquidationModule', () => {
 
         const baseFeePerGas = await setBaseFeePerGas(0, provider());
 
-        const { liquidationKeeperFee } = await PerpMarketProxy.getLiquidationFees(trader.accountId, marketId);
+        const { liqKeeperFee } = await PerpMarketProxy.getLiquidationFees(trader.accountId, marketId);
 
         const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
         const expectedLiqFee = calculateLiquidationKeeperFee(
@@ -1538,7 +1537,7 @@ describe('LiquidationModule', () => {
           wei(capBefore.maxLiquidatableCapacity),
           globalConfig
         );
-        assertBn.equal(expectedLiqFee.toBN(), liquidationKeeperFee);
+        assertBn.equal(expectedLiqFee.toBN(), liqKeeperFee);
 
         // Dead.
         await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId, { maxPriorityFeePerGas: 0 });
@@ -1555,13 +1554,13 @@ describe('LiquidationModule', () => {
               }),
             provider()
           );
-          const { liquidationKeeperFee, remainingSize: _remSize } = findEventSafe(
+          const { liqKeeperFee, remainingSize: _remSize } = findEventSafe(
             receipt,
             'PositionLiquidated',
             PerpMarketProxy
           ).args;
 
-          accLiqRewards = accLiqRewards.add(liquidationKeeperFee);
+          accLiqRewards = accLiqRewards.add(liqKeeperFee);
           remainingSize = _remSize;
         }
         // `sum(liqReward)` should equal to liqReward from the prior step.
@@ -1570,7 +1569,7 @@ describe('LiquidationModule', () => {
         await setBaseFeePerGas(1, provider());
       });
 
-      it('should cap liquidationKeeperFee and flagKeeperReward to the maxKeeperFee', async () => {
+      it('should cap liqKeeperFee and flagKeeperReward to the maxKeeperFee', async () => {
         const { PerpMarketProxy } = systems();
 
         const orderSide = genSide();
@@ -1607,9 +1606,9 @@ describe('LiquidationModule', () => {
           provider()
         );
         const { flagKeeperReward } = findEventSafe(flagReceipt, 'PositionFlaggedLiquidation', PerpMarketProxy).args;
-        const { liquidationKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
+        const { liqKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
         assertBn.equal(flagKeeperReward, bn(1));
-        assertBn.equal(liquidationKeeperFee, bn(1));
+        assertBn.equal(liqKeeperFee, bn(1));
       });
 
       it('should use keeperProfitMarginPercent when bigger than keeperProfitMarginUsd', async () => {
@@ -1664,24 +1663,24 @@ describe('LiquidationModule', () => {
           provider()
         );
 
-        const { liquidationKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
+        const { liqKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
         const { flagKeeperReward, flaggedPrice } = findEventSafe(
           flagReceipt,
           'PositionFlaggedLiquidation',
           PerpMarketProxy
         ).args;
         const sizeAbsUsd = wei(order.sizeDelta).abs().mul(flaggedPrice);
-        const expectedCostFlag = calculateTransactionCostInUSD(baseFeePerGas, keeperFlagGasUnits, ethPrice);
+        const expectedCostFlag = calculateTransactionCostInUsd(baseFeePerGas, keeperFlagGasUnits, ethPrice);
         const expectedFlagReward = wei(expectedCostFlag)
           .mul(wei(1).add(keeperProfitMarginPercent))
           .add(sizeAbsUsd.mul(flagRewardPercent));
 
         assertBn.equal(flagKeeperReward, expectedFlagReward.toBN());
 
-        const expectedCostLiq = calculateTransactionCostInUSD(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
+        const expectedCostLiq = calculateTransactionCostInUsd(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
         const expectedKeeperFee = wei(expectedCostLiq).mul(wei(1).add(keeperProfitMarginPercent));
 
-        assertBn.equal(liquidationKeeperFee, wei(expectedKeeperFee).toBN());
+        assertBn.equal(liqKeeperFee, wei(expectedKeeperFee).toBN());
       });
 
       it('should use keeperProfitMarginUsd when keeperProfitMarginPercent is small', async () => {
@@ -1744,19 +1743,19 @@ describe('LiquidationModule', () => {
           'PositionFlaggedLiquidation',
           PerpMarketProxy
         ).args;
-        const { liquidationKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
+        const { liqKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
         const sizeAbsUsd = wei(order.sizeDelta).abs().mul(flaggedPrice);
-        const expectedCostFlag = calculateTransactionCostInUSD(baseFeePerGas, keeperFlagGasUnits, ethPrice);
+        const expectedCostFlag = calculateTransactionCostInUsd(baseFeePerGas, keeperFlagGasUnits, ethPrice);
         const expectedFlagReward = wei(expectedCostFlag)
           .add(wei(keeperProfitMarginUsd))
           .add(sizeAbsUsd.mul(flagRewardPercent));
 
         assertBn.equal(flagKeeperReward, expectedFlagReward.toBN());
 
-        const expectedCostLiq = calculateTransactionCostInUSD(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
+        const expectedCostLiq = calculateTransactionCostInUsd(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
         const expectedKeeperFee = wei(expectedCostLiq).add(wei(keeperProfitMarginUsd));
 
-        assertBn.equal(liquidationKeeperFee, wei(expectedKeeperFee).toBN());
+        assertBn.equal(liqKeeperFee, wei(expectedKeeperFee).toBN());
         // Reset base fee
         await setBaseFeePerGas(1, provider());
       });

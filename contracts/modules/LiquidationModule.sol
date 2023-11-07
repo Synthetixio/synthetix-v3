@@ -136,8 +136,9 @@ contract LiquidationModule is ILiquidationModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        address flagger = market.flaggedLiquidations[accountId];
 
-        (, Position.Data memory newPosition, uint256 liquidationKeeperFee) = updateMarketPreLiquidation(
+        (, Position.Data memory newPosition, uint256 liqKeeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
             market,
@@ -158,17 +159,9 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
         // Pay the keeper
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liquidationKeeperFee);
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
-        emit PositionLiquidated(
-            accountId,
-            marketId,
-            newPosition.size,
-            msg.sender,
-            market.flaggedLiquidations[accountId],
-            liquidationKeeperFee,
-            oraclePrice
-        );
+        emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqKeeperFee, oraclePrice);
     }
 
     // --- Views --- //
@@ -179,7 +172,7 @@ contract LiquidationModule is ILiquidationModule {
     function getLiquidationFees(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (uint256 flagKeeperReward, uint256 liquidationKeeperFee) {
+    ) external view returns (uint256 flagKeeperReward, uint256 liqKeeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
@@ -191,7 +184,7 @@ contract LiquidationModule is ILiquidationModule {
             marketConfig,
             globalConfig
         );
-        liquidationKeeperFee = Position.getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
+        liqKeeperFee = Position.getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
     }
 
     /**
