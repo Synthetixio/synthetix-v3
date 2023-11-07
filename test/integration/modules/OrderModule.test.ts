@@ -381,7 +381,7 @@ describe('OrderModule', () => {
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       assertBn.lte(healthFactor, bn(1));
 
-      // Modify the order (either +/- by 1%)
+      // Modify the position (either +/- by 1%)
       const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSize: wei(order1.sizeDelta).mul(1.01).toBN(),
       });
@@ -422,7 +422,7 @@ describe('OrderModule', () => {
 
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
 
-      // Modify the order (either +/- by 1%)
+      // Modify the position (either +/- by 1%)
       const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSize: wei(order1.sizeDelta).mul(1.01).toBN(),
       });
@@ -761,7 +761,7 @@ describe('OrderModule', () => {
           }
           default:
             // Should never reach here but in the case more `PositionReductionVariant` are added.
-            assert.equal(true, false);
+            throw Error(`Unhandled PositionReductionVariant '${variant}'`);
         }
       }
     );
