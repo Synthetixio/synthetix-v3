@@ -105,13 +105,13 @@ library GlobalPerpsMarketConfiguration {
      */
     function keeperReward(
         Data storage self,
-        uint256 totalKeeperRewards,
+        uint256 keeperRewards,
         uint256 costOfExecutionInUsd,
         uint256 availableMarginInUsd
     ) internal view returns (uint256) {
         uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
         uint maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
-        return MathUtil.min(MathUtil.max(minCap, totalKeeperRewards), maxCap);
+        return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
     }
 
     /**
@@ -120,11 +120,11 @@ library GlobalPerpsMarketConfiguration {
      */
     function minimumKeeperReward(
         Data storage self,
-        uint256 totalKeeperRewards,
+        uint256 keeperRewards,
         uint256 costOfExecutionInUsd
     ) internal view returns (uint256) {
         uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
-        return MathUtil.max(minCap, totalKeeperRewards);
+        return MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd);
     }
 
     function updateSynthDeductionPriority(

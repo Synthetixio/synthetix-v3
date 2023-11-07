@@ -369,8 +369,7 @@ library PerpsAccount {
         );
         uint256 liquidateWindowsCosts = numOfWindows == 0
             ? 0
-            : globalConfig.keeperReward(costOfLiquidation, costOfLiquidation, 0) *
-                (numOfWindows - 1);
+            : globalConfig.keeperReward(0, costOfLiquidation, 0) * (numOfWindows - 1);
 
         possibleLiquidationReward = liquidateAndFlagCost + liquidateWindowsCosts;
     }

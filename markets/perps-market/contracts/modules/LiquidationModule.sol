@@ -209,7 +209,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             costOfFlagExecution;
         if (runtime.totalLiquidated > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
-                runtime.totalLiquidationRewards + runtime.totalLiquidationCost,
+                runtime.totalLiquidationRewards,
                 runtime.totalLiquidationCost,
                 totalCollateralValue
             );
@@ -230,16 +230,16 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @dev process the accumulated liquidation rewards
      */
     function _processLiquidationRewards(
-        uint256 totalRewards,
+        uint256 keeperRewards,
         uint256 costOfExecutionInUsd,
         uint256 availableMarginInUsd
     ) private returns (uint256 reward) {
-        if (totalRewards == 0) {
+        if ((keeperRewards + costOfExecutionInUsd) == 0) {
             return 0;
         }
         // pay out liquidation rewards
         reward = GlobalPerpsMarketConfiguration.load().keeperReward(
-            totalRewards,
+            keeperRewards,
             costOfExecutionInUsd,
             availableMarginInUsd
         );
