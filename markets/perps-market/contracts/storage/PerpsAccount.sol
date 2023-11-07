@@ -306,26 +306,21 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            (
-                ,
-                ,
-                uint256 positionInitialMargin,
-                uint256 positionMaintenanceMargin,
-                uint256 liquidationMargin
-            ) = marketConfig.calculateRequiredMargins(
-                    position.size,
-                    PerpsPrice.getCurrentPrice(marketId)
-                );
+            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin, ) = marketConfig
+                .calculateRequiredMargins(position.size, PerpsPrice.getCurrentPrice(marketId));
 
             maintenanceMargin += positionMaintenanceMargin;
             initialMargin += positionInitialMargin;
         }
 
-        possibleLiquidationReward = getKeeperRewardsAndCosts(
+        (uint accumulatedLiquidationRewards, uint maxNumberOfChunks) = getKeeperRewardsAndCosts(
             self,
-            // self.openPositionMarketIds.length(),
-            0,
             0
+        );
+        possibleLiquidationReward = getPossibleLiquidationReward(
+            self,
+            accumulatedLiquidationRewards,
+            maxNumberOfChunks
         );
 
         return (initialMargin, maintenanceMargin, possibleLiquidationReward);
@@ -333,37 +328,35 @@ library PerpsAccount {
 
     function getKeeperRewardsAndCosts(
         Data storage self,
-        // uint numberOfOpenPositions,
-        uint128 overrideMarketId,
-        int overridePositionSize
-    ) internal view returns (uint possibleLiquidationReward) {
-        uint maxNumberOfChunks;
-        uint accumulatedLiquidationRewards;
+        uint128 skipMarketId
+    ) internal view returns (uint accumulatedLiquidationRewards, uint maxNumberOfChunks) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+            if (marketId == skipMarketId) continue;
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
 
-            int overridenPositionSize = marketId == overrideMarketId
-                ? overridePositionSize
-                : position.size;
             uint numberOfChunks = marketConfig.numberOfLiquidationChunks(
-                MathUtil.abs(overridenPositionSize)
+                MathUtil.abs(position.size)
             );
 
             uint256 liquidationMargin = marketConfig.calculateLiquidationReward(
-                MathUtil.abs(overridenPositionSize).mulDecimal(PerpsPrice.getCurrentPrice(marketId))
+                MathUtil.abs(position.size).mulDecimal(PerpsPrice.getCurrentPrice(marketId))
             );
             accumulatedLiquidationRewards += liquidationMargin;
 
-            maxNumberOfChunks = numberOfChunks > maxNumberOfChunks
-                ? numberOfChunks
-                : maxNumberOfChunks;
+            maxNumberOfChunks = MathUtil.max(numberOfChunks, maxNumberOfChunks);
         }
+    }
 
+    function getPossibleLiquidationReward(
+        Data storage self,
+        uint accumulatedLiquidationRewards,
+        uint numOfChunks
+    ) internal view returns (uint possibleLiquidationReward) {
         GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
             .load();
         KeeperCosts.Data storage keeperCosts = KeeperCosts.load();
@@ -374,10 +367,10 @@ library PerpsAccount {
             costOfFlagging,
             getTotalCollateralValue(self)
         );
-        uint256 liquidateChunksCosts = maxNumberOfChunks == 0
+        uint256 liquidateChunksCosts = numOfChunks == 0
             ? 0
             : globalConfig.keeperReward(costOfLiquidation, costOfLiquidation, 0) *
-                (maxNumberOfChunks - 1);
+                (numOfChunks - 1);
 
         possibleLiquidationReward = liquidateAndFlagCost + liquidateChunksCosts;
     }

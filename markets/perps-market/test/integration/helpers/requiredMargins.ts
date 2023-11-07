@@ -7,14 +7,14 @@ type Config = {
   liquidationRewardRatio: Wei;
 };
 
-export const requiredMargins = (config: Config, size: Wei, price: Wei, skewScale: Wei) => {
+export const requiredMargins = (config: Config, size: Wei, fillPrice: Wei, skewScale: Wei) => {
   const impactOnSkew = size.div(skewScale);
   const initialMarginRatio = impactOnSkew
     .mul(config.initialMarginRatio)
     .add(config.minimumInitialMarginRatio);
 
   const maintenanceMarginRatio = initialMarginRatio.mul(config.maintenanceMarginScalar);
-  const notional = size.mul(price);
+  const notional = size.mul(fillPrice);
 
   return {
     initialMargin: notional.mul(initialMarginRatio),

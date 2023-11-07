@@ -515,6 +515,16 @@ library AsyncOrder {
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
+    struct RequiredMarginWithNewPositionRuntime {
+        uint256 newRequiredMargin;
+        uint256 oldRequiredMargin;
+        uint256 requiredMarginForNewPosition;
+        uint accumulatedLiquidationRewards;
+        uint maxNumberOfChunks;
+        uint numberOfChunks;
+        uint256 requiredRewardMargin;
+    }
+
     /**
      * @notice After the required margins are calculated with the old position, this function replaces the
      * old position data with the new position margin requirements and returns them.
@@ -528,49 +538,55 @@ library AsyncOrder {
         uint256 fillPrice,
         uint256 currentTotalMaintenanceMargin
     ) internal view returns (uint256) {
+        RequiredMarginWithNewPositionRuntime memory runtime;
         // get initial margin requirement for the new position
-        (, , uint256 newRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
+        (, , runtime.newRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             newPositionSize,
             fillPrice
         );
 
         // get maintenance margin of old position
-        (, , , uint256 oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
+        (, , , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             oldPositionSize,
             PerpsPrice.getCurrentPrice(marketId)
         );
 
         // remove the maintenance margin and add the initial margin requirement
         // this gets us our total required margin for new position
-        uint256 requiredMarginForNewPosition = currentTotalMaintenanceMargin +
-            newRequiredMargin -
-            oldRequiredMargin;
+        runtime.requiredMarginForNewPosition =
+            currentTotalMaintenanceMargin +
+            runtime.newRequiredMargin -
+            runtime.oldRequiredMargin;
 
-        uint requiredRewardMargin = account.getKeeperRewardsAndCosts(
-            // getNewPositionsCount(account, oldPositionSize, newPositionSize),
-            marketId,
-            newPositionSize
+        (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfChunks) = account
+            .getKeeperRewardsAndCosts(marketId);
+        runtime.accumulatedLiquidationRewards += marketConfig.calculateLiquidationReward(
+            MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
+        );
+        runtime.numberOfChunks = marketConfig.numberOfLiquidationChunks(
+            MathUtil.abs(newPositionSize)
+        );
+        runtime.maxNumberOfChunks = MathUtil.max(runtime.numberOfChunks, runtime.maxNumberOfChunks);
+
+        runtime.requiredRewardMargin = account.getPossibleLiquidationReward(
+            runtime.accumulatedLiquidationRewards,
+            runtime.maxNumberOfChunks
         );
 
         // this is the required margin for the new position (minus any order fees)
-        return requiredMarginForNewPosition + requiredRewardMargin;
+        return runtime.requiredMarginForNewPosition + runtime.requiredRewardMargin;
     }
 
     function getNewPositionsCount(
-        PerpsAccount.Data storage account,
         int128 oldPositionSize,
         int128 newPositionSize
-    ) internal view returns (uint256) {
+    ) internal pure returns (bool openingNewPosition, bool closingPosition) {
         // newPosition>0 and oldPosition >0 => nothing changes
         // newPosition>0 and oldPosition ==0 => currentPositionsLenght+1
         // newPosition==0 and oldPosition >0 => currentPositionsLenght-1
-        uint accountPositionsLength = account.openPositionMarketIds.length();
-        if (newPositionSize > 0 && oldPositionSize == 0) {
-            accountPositionsLength += 1;
-        } else if (newPositionSize == 0 && oldPositionSize > 0) {
-            accountPositionsLength -= 1;
-        }
-        return accountPositionsLength;
+        openingNewPosition = (newPositionSize > 0 && oldPositionSize == 0);
+
+        closingPosition = newPositionSize == 0 && oldPositionSize > 0;
     }
 
     /**
