@@ -178,6 +178,10 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint128 absSize = MathUtil.abs(market.positions[accountId].size).to128();
 
+        if (absSize == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
+
         flagKeeperReward = Position.getLiquidationFlagReward(
             absSize,
             market.getOraclePrice(),
