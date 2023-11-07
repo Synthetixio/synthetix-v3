@@ -91,7 +91,7 @@ export const calcOrderFees = async (
   return { notional, orderFee, calcKeeperOrderSettlementFee };
 };
 
-export const calculateTransactionCostInUSD = (
+export const calculateTransactionCostInUsd = (
   baseFeePerGas: BigNumber, // in gwei
   gasUnitsForTx: BigNumber, // in gwei
   ethPrice: BigNumber // in ether
@@ -108,25 +108,25 @@ export const calculateFlagReward = (
   globalConfig: PerpMarketConfiguration.GlobalDataStructOutput,
   marketConfig: PerpMarketConfiguration.DataStructOutput
 ) => {
-  const flagExecutionCostInUSD = calculateTransactionCostInUSD(
+  const flagExecutionCostInUsd = calculateTransactionCostInUsd(
     baseFeePerGas,
     globalConfig.keeperFlagGasUnits,
     ethPrice
   );
 
-  const flagFeeInUSD = Wei.max(
-    wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
-    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUsd))
+  const flagFeeInUsd = Wei.max(
+    wei(flagExecutionCostInUsd).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
+    wei(flagExecutionCostInUsd).add(wei(globalConfig.keeperProfitMarginUsd))
   );
 
-  const flagFeeWithRewardInUSD = flagFeeInUSD.add(sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent));
+  const flagFeeWithRewardInUsd = flagFeeInUsd.add(sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent));
 
   return {
-    result: Wei.min(flagFeeWithRewardInUSD, wei(globalConfig.maxKeeperFeeUsd)),
-    flagExecutionCostInUSD,
+    result: Wei.min(flagFeeWithRewardInUsd, wei(globalConfig.maxKeeperFeeUsd)),
+    flagExecutionCostInUsd,
     sizeReward: sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent),
-    flagFeeWithRewardInUSD,
-    flagFeeInUSD,
+    flagFeeWithRewardInUsd,
+    flagFeeInUsd,
   };
 };
 const divDecimalAndCeil = (a: Wei, b: Wei) => {
@@ -144,12 +144,12 @@ export const calculateLiquidationKeeperFee = (
   const iterations = divDecimalAndCeil(sizeAbs, maxLiqCapacity);
 
   const totalGasUnitsToLiquidate = wei(globalConfig.keeperLiquidationGasUnits).toBN();
-  const flagExecutionCostInUSD = calculateTransactionCostInUSD(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
+  const flagExecutionCostInUsd = calculateTransactionCostInUsd(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
 
-  const liquidationFeeInUSD = Wei.max(
-    wei(flagExecutionCostInUSD).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
-    wei(flagExecutionCostInUSD).add(wei(globalConfig.keeperProfitMarginUsd))
+  const liquidationFeeInUsd = Wei.max(
+    wei(flagExecutionCostInUsd).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
+    wei(flagExecutionCostInUsd).add(wei(globalConfig.keeperProfitMarginUsd))
   );
 
-  return Wei.min(liquidationFeeInUSD, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);
+  return Wei.min(liquidationFeeInUsd, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);
 };

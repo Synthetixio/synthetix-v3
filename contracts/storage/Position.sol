@@ -306,16 +306,16 @@ library Position {
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 flagExecutionCostInUSD = ethPrice.mulDecimal(block.basefee * globalConfig.keeperFlagGasUnits);
+        uint256 flagExecutionCostInUsd = ethPrice.mulDecimal(block.basefee * globalConfig.keeperFlagGasUnits);
 
-        uint256 flagFeeInUSD = MathUtil.max(
-            flagExecutionCostInUSD.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
-            flagExecutionCostInUSD + globalConfig.keeperProfitMarginUsd
+        uint256 flagFeeInUsd = MathUtil.max(
+            flagExecutionCostInUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            flagExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
         );
-        uint256 flagFeeWithRewardInUSD = flagFeeInUSD +
+        uint256 flagFeeWithRewardInUsd = flagFeeInUsd +
             size.mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
 
-        return MathUtil.min(flagFeeWithRewardInUSD, globalConfig.maxKeeperFeeUsd);
+        return MathUtil.min(flagFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
     }
 
     /**
@@ -386,13 +386,13 @@ library Position {
             block.basefee * globalConfig.keeperLiquidationGasUnits
         );
 
-        uint256 liquidationFeeInUSD = MathUtil.max(
+        uint256 liquidationFeeInUsd = MathUtil.max(
             liquidationExecutionCostUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
             liquidationExecutionCostUsd + globalConfig.keeperProfitMarginUsd
         );
 
         uint256 iterations = divDecimalAndCeil(size, maxLiqCapacity);
-        return MathUtil.min(liquidationFeeInUSD, globalConfig.maxKeeperFeeUsd) * iterations;
+        return MathUtil.min(liquidationFeeInUsd, globalConfig.maxKeeperFeeUsd) * iterations;
     }
 
     /**
