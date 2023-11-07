@@ -672,7 +672,7 @@ workflows:
 
       - test-contracts:
           name: "test-perps-market"
-          requires: [build-testable]
+          requires: [test-spot-market, build-testable]
           workspace: "@synthetixio/perps-market"
           parallelism: 7
 
