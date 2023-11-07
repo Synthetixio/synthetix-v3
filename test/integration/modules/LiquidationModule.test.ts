@@ -59,6 +59,7 @@ describe('LiquidationModule', () => {
   } = bs;
 
   beforeEach(restore);
+  afterEach(() => setBaseFeePerGas(1, provider()));
 
   describe('flagPosition', () => {
     it('should flag a position with a health factor <= 1', async () => {
@@ -98,8 +99,6 @@ describe('LiquidationModule', () => {
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
-      // reset base fee
-      await setBaseFeePerGas(1, provider());
     });
 
     it('getLiquidationFees returns liqKeeperFees small position');
@@ -381,8 +380,6 @@ describe('LiquidationModule', () => {
       }
 
       await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
-      // Reset base fee
-      await setBaseFeePerGas(1, provider());
     });
 
     it('should revert when position already flagged', async () => {
@@ -1569,8 +1566,6 @@ describe('LiquidationModule', () => {
         }
         // `sum(liqReward)` should equal to liqReward from the prior step.
         assertBn.equal(accLiqRewards, expectedLiqFee.toBN());
-        // reset base fee
-        await setBaseFeePerGas(1, provider());
       });
 
       it('should cap liqKeeperFee and flagKeeperReward to the maxKeeperFee', async () => {
@@ -1760,8 +1755,6 @@ describe('LiquidationModule', () => {
         const expectedKeeperFee = wei(expectedCostLiq).add(wei(keeperProfitMarginUsd));
 
         assertBn.equal(liqKeeperFee, wei(expectedKeeperFee).toBN());
-        // Reset base fee
-        await setBaseFeePerGas(1, provider());
       });
 
       it('should result in a higher liqReward if market price moves in favour of position');
