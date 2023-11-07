@@ -295,9 +295,8 @@ library Position {
     }
 
     /**
-     * @dev Returns the liqReward (without IM/MM). Useful if you just want liqReward without the heavy gas costs of
-     * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price). Note that size
-     * is a uint so shorts must be .abs before passed through.
+     * @dev Returns the reward for flagging a position given a certian position size, "flagKeeperReward"
+     * Note that size here is a uint so we expect to be passed position.size.abs()
      */
     function getLiquidationFlagReward(
         uint128 size,
@@ -356,25 +355,30 @@ library Position {
     }
 
     /**
-     * @dev Divides two low precision decimals and rounds up.
+     * @dev Returns the number of partial liquidations are required given liquidation size and max liquidation size.
      *
-     * If the division leaves a remainder, the result is rounded up.
+     * The logic is Divide and Ceil
      */
-    function divDecimalAndCeil(uint256 a, uint256 b) internal pure returns (uint256 z) {
-        require(b > 0, "Division by zero");
-        uint256 quotient = a / b;
-        uint256 remainder = a % b;
+    function getLiquidationIterations(uint256 liqSize, uint256 maxLiqCapacity) internal pure returns (uint256) {
+        if (maxLiqCapacity == 0) {
+            return 0;
+        }
+
+        uint256 quotient = liqSize / maxLiqCapacity;
+        uint256 remainder = liqSize % maxLiqCapacity;
         return remainder == 0 ? quotient : quotient + 1;
     }
 
     /**
      * @dev Returns the fee in USD paid to keeper for performing the liquidation (not flagging).
+     * The size here is either liqSize or position.size.abs()
      */
     function getLiquidationKeeperFee(
         uint128 size,
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
+        // We exit early it size is 0, this would only happen then remaining liqcapacity is 0.
         if (size == 0) {
             return 0;
         }
@@ -391,7 +395,7 @@ library Position {
             liquidationExecutionCostUsd + globalConfig.keeperProfitMarginUsd
         );
 
-        uint256 iterations = divDecimalAndCeil(size, maxLiqCapacity);
+        uint256 iterations = getLiquidationIterations(size, maxLiqCapacity);
         return MathUtil.min(liquidationFeeInUsd, globalConfig.maxKeeperFeeUsd) * iterations;
     }
 

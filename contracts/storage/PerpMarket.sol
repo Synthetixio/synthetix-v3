@@ -266,7 +266,7 @@ library PerpMarket {
 
     function getMaxLiquidatableCapacity(
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 maxLiquidatableCapacity) {
+    ) internal view returns (uint128) {
         // How do we calculcate `maxLiquidatableCapacity`?
         //
         // As an example, assume the following example parameters for a ETH/USD market.
