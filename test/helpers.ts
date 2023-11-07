@@ -1,12 +1,13 @@
-import { BigNumber, Contract, ContractReceipt, ethers, utils } from 'ethers';
+import { BigNumber, Contract, ContractReceipt, ethers, utils, providers } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { genNumber, raise } from './generators';
-import { wei } from '@synthetixio/wei';
+import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
 import { PerpCollateral } from './bootstrap';
+import { parseUnits } from 'ethers/lib/utils';
 
 // --- Constants --- //
 
@@ -193,6 +194,12 @@ export const commitAndSettle = async (
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
 };
 
+// This is still quite buggy in anvil so use with care...
+export const setBaseFeePerGas = async (amountInGwei: number, provider: providers.JsonRpcProvider) => {
+  await provider.send('hardhat_setNextBlockBaseFeePerGas', [(amountInGwei * 1e9).toString(16)]);
+  return parseUnits(`${amountInGwei}`, 'gwei');
+};
+
 /** Updates the provided `contract` with more ABI details. */
 export const extendContractAbi = (contract: Contract, abi: string[]) => {
   utils.Logger.setLogLevel(LogLevel.OFF); // Silence ethers duplicated event warnings
@@ -271,3 +278,7 @@ export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
 };
 
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(() => resolve(), ms));
+
+export const logNumber = (label = '', x: BigNumber | Wei) => {
+  console.log(label, `: ${wei(x).toNumber()}`);
+};

@@ -13,8 +13,7 @@ interface ILiquidationModule is IBasePerpMarket {
         int128 remainingSize,
         address keeper,
         address flagger,
-        uint256 liqReward,
-        uint256 keeperFee,
+        uint256 liqKeeperFee,
         uint256 liquidationPrice
     );
 
@@ -23,6 +22,7 @@ interface ILiquidationModule is IBasePerpMarket {
         uint128 indexed accountId,
         uint128 marketId,
         address flagger,
+        uint256 flagKeeperReward,
         uint256 flaggedPrice
     );
 

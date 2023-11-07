@@ -23,8 +23,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.minKeeperFeeUsd = data.minKeeperFeeUsd;
         config.maxKeeperFeeUsd = data.maxKeeperFeeUsd;
         config.keeperProfitMarginPercent = data.keeperProfitMarginPercent;
+        config.keeperProfitMarginUsd = data.keeperProfitMarginUsd;
         config.keeperSettlementGasUnits = data.keeperSettlementGasUnits;
         config.keeperLiquidationGasUnits = data.keeperLiquidationGasUnits;
+        config.keeperFlagGasUnits = data.keeperFlagGasUnits;
         config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
         config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
 

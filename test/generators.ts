@@ -71,8 +71,10 @@ export const genBootstrap = () => ({
     maxOrderAge: 60,
     minKeeperFeeUsd: bn(genNumber(10, 15)),
     maxKeeperFeeUsd: bn(genNumber(50, 100)),
+    keeperProfitMarginUsd: bn(genNumber(5, 20)),
     keeperProfitMarginPercent: bn(genNumber(0.1, 0.2)),
     keeperSettlementGasUnits: 1_200_000,
+    keeperFlagGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Dummy address to be replaced later.

@@ -264,13 +264,9 @@ library PerpMarket {
         unrecordedFunding = avgFundingRate.mulDecimal(getProportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
-    /**
-     * @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
-     */
-    function getRemainingLiquidatableSizeCapacity(
-        PerpMarket.Data storage self,
+    function getMaxLiquidatableCapacity(
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTime) {
+    ) internal view returns (uint128) {
         // How do we calculcate `maxLiquidatableCapacity`?
         //
         // As an example, assume the following example parameters for a ETH/USD market.
@@ -282,10 +278,21 @@ library PerpMarket {
         //
         // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 1
         //                         = 80
-        maxLiquidatableCapacity = uint128(marketConfig.makerFee + marketConfig.takerFee)
-            .mulDecimal(marketConfig.skewScale)
-            .mulDecimal(marketConfig.liquidationLimitScalar)
-            .to128();
+        return
+            uint128(marketConfig.makerFee + marketConfig.takerFee)
+                .mulDecimal(marketConfig.skewScale)
+                .mulDecimal(marketConfig.liquidationLimitScalar)
+                .to128();
+    }
+
+    /**
+     * @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
+     */
+    function getRemainingLiquidatableSizeCapacity(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTime) {
+        maxLiquidatableCapacity = getMaxLiquidatableCapacity(marketConfig);
 
         // How is the liquidation cap inferred?
         //
