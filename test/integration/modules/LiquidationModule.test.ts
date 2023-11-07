@@ -102,6 +102,10 @@ describe('LiquidationModule', () => {
       await setBaseFeePerGas(1, provider());
     });
 
+    it('getLiquidationFees returns liqKeeperFees small position');
+    it('getLiquidationFees returns liqKeeperFees big position');
+    it('getLiquidationFees returns flagKeeperReward');
+
     it('should remove any pending orders when present', async () => {
       const { PerpMarketProxy } = systems();
 
