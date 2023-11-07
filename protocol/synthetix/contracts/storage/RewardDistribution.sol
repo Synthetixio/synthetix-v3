@@ -133,7 +133,7 @@ library RewardDistribution {
             return 0;
         }
 
-        // If the entry's duration is zero and the its last update is zero,
+        // If the entry's duration is zero and the its last update was before the start time,
         // consider the entry to be an instant distribution.
         if (self.duration == 0 && self.lastUpdate < self.start) {
             // Simply update the value per share to the total value divided by the total shares.
@@ -192,7 +192,7 @@ library RewardDistribution {
             return 0;
         }
 
-        // If the entry's duration is zero and the its last update is zero,
+        // If the entry's duration is zero and the its last update is before the start time,
         // consider the entry to be an instant distribution.
         if (self.duration == 0 && self.lastUpdate < self.start) {
             // Simply update the value per share to the total value divided by the total shares.
