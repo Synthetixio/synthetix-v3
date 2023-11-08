@@ -123,6 +123,7 @@ commands:
             markets/legacy-market/hardhat.config.ts \
             markets/legacy-market/cannonfile.toml \
             > /tmp/version--contracts.txt
+      - run: echo "Cannon $(yarn cannon --version)" >> /tmp/version--contracts.txt
       - run: cat /tmp/version--contracts.txt
 
   version-testable-contracts:
