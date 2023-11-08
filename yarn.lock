@@ -3757,9 +3757,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.9.7":
-  version: 2.9.7
-  resolution: "@usecannon/builder@npm:2.9.7"
+"@usecannon/builder@npm:2.8.1":
+  version: 2.8.1
+  resolution: "@usecannon/builder@npm:2.8.1"
   dependencies:
     "@synthetixio/router": "npm:^3.3.0"
     axios: "npm:^1.2.2"
@@ -3773,17 +3773,17 @@ __metadata:
     zod: "npm:^3.21.4"
   peerDependencies:
     ethers: ">=5.6.0 < 6.0.0"
-  checksum: 9f2eca64e386ccb43c7e8d693d9b3eafc66b7bc599367e23085dc7b1747d8d52c6d84740cafddadc3ef8143512908a5feb0aa71be6be5fd68b5fd349d6088b58
+  checksum: 30ccb94d3703f0ca20b03f6ba48876a108819da8c2ed7d1ebb084dd9fc473d6ab1ba41338f225267f6071e0db7a31cecfced552364ade4e14746019a727c6fd4
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.9.8":
-  version: 2.9.8
-  resolution: "@usecannon/cli@npm:2.9.8"
+"@usecannon/cli@npm:2.8.1":
+  version: 2.8.1
+  resolution: "@usecannon/cli@npm:2.8.1"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
     "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:^2.9.7"
+    "@usecannon/builder": "npm:^2.8.1"
     chalk: "npm:^4.1.2"
     commander: "npm:^9.5.0"
     debug: "npm:^4.3.4"
@@ -3792,15 +3792,14 @@ __metadata:
     fastq: "npm:^1.15.0"
     fs-extra: "npm:^10.1.0"
     lodash: "npm:^4.17.21"
-    promise-timeout: "npm:^1.3.0"
     prompts: "npm:^2.4.2"
     semver: "npm:^7.3.7"
     table: "npm:^6.8.0"
     tildify: "npm:2.0.0"
     untildify: "npm:^4.0.0"
   bin:
-    cannon: bin/cannon.js
-  checksum: dcbd251d9299f606b73d2094ce067ac6f031ab82680771cc6d45f76472e8b4621c6520e065638e4cad225b45bb55cedc48c5eda163acedadf21e777765871f63
+    cannon: dist/bin/cannon.js
+  checksum: 96ea1ad9d4ad5d7deeab42dcb8b69552f620c6b86d76cfcc7b621b94ec5e0e7db4561a274ae6e3eecec683c8a9c4e0ae76a533a20fefea1df5c6198193793b11
   languageName: node
   linkType: hard
 
@@ -8612,13 +8611,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:^2.9.8":
-  version: 2.9.8
-  resolution: "hardhat-cannon@npm:2.9.8"
+"hardhat-cannon@npm:2.8.1":
+  version: 2.8.1
+  resolution: "hardhat-cannon@npm:2.8.1"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
-    "@usecannon/builder": "npm:^2.9.7"
-    "@usecannon/cli": "npm:^2.9.8"
+    "@usecannon/builder": "npm:^2.8.1"
+    "@usecannon/cli": "npm:^2.8.1"
     adm-zip: "npm:^0.5.9"
     chalk: "npm:^4.1.2"
     debug: "npm:^4.3.3"
@@ -8634,7 +8633,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ">=2.0.0"
     "@nomiclabs/hardhat-etherscan": ">=3.0.0"
     hardhat: ">=2.0.0"
-  checksum: d6f8398c45d315c2e7cd8d8f8e345604aa17e3ad678a3b57d900d8af86c3bf90195163625bc7a4a51a580f0fc8122069ba40113c57ca89ca8a05a15621611410
+  checksum: 6f12ac3ece19f290c3e8d4094ff6ac8fa165b991ef9038aa3905c89d45a88a828724b6ff4cf93cd7ad96173ec89eacc0029ee9a96adf6022e5f194a6530b0987
   languageName: node
   linkType: hard
 
@@ -13486,13 +13485,6 @@ __metadata:
     err-code: "npm:^2.0.2"
     retry: "npm:^0.12.0"
   checksum: 96e1a82453c6c96eef53a37a1d6134c9f2482f94068f98a59145d0986ca4e497bf110a410adf73857e588165eab3899f0ebcf7b3890c1b3ce802abc0d65967d4
-  languageName: node
-  linkType: hard
-
-"promise-timeout@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "promise-timeout@npm:1.3.0"
-  checksum: 4faa906ba2f4d966c9cb5d033030f2d0c5c96465650ee42a130497c70c6ddb1a202bff85ef877898ffa0cf2a4ba0ac52228ea2a03b2ddbf4091153294e87d016
   languageName: node
   linkType: hard
 
