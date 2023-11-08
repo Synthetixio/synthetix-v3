@@ -56,7 +56,7 @@ interface IGlobalPerpsMarketModule {
      * @notice Gets fired when feed id for keeper cost node id is updated.
      * @param keeperCostNodeId oracle node id
      */
-    event KeeperCostNodeIdpdated(bytes32 keeperCostNodeId);
+    event KeeperCostNodeIdUpdated(bytes32 keeperCostNodeId);
 
     /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface

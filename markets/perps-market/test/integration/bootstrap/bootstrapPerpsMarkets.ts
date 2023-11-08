@@ -197,7 +197,6 @@ export const bootstrapPerpsMarkets = (
       return {
         marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
         aggregator: () => aggregator,
-        keeperCostNode: () => keeperCostNode,
         strategyId: () => strategyId,
       };
     }

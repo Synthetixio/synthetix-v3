@@ -160,7 +160,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
 
         KeeperCosts.load().update(keeperCostNodeId);
 
-        emit KeeperCostNodeIdpdated(keeperCostNodeId);
+        emit KeeperCostNodeIdUpdated(keeperCostNodeId);
     }
 
     /**
