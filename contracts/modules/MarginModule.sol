@@ -49,29 +49,6 @@ contract MarginModule is IMarginModule {
     }
 
     /**
-     * @dev Validates whether an order exists and if that order can be cancelled before performing margin ops.
-     */
-    function validateOrderAvailability(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private {
-        Order.Data storage order = market.orders[accountId];
-
-        // Margin cannot be modified if order is currently pending.
-        if (order.sizeDelta != 0) {
-            // Check if this order can be cancelled. If so, cancel and then proceed.
-            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
-                delete market.orders[accountId];
-                emit OrderCanceled(accountId, marketId, order.commitmentTime);
-            } else {
-                revert ErrorUtil.OrderFound();
-            }
-        }
-    }
-
-    /**
      * @dev Performs an collateral withdraw from Synthetix, ERC20 transfer, and emits event.
      */
     function withdrawAndTransfer(
@@ -120,7 +97,9 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Prevent collateral transfers when there's a pending order.
-        validateOrderAvailability(accountId, marketId, market, globalConfig);
+        if (market.orders[accountId].sizeDelta != 0) {
+            revert ErrorUtil.OrderFound();
+        }
 
         // Position is frozen due to prior flagged for liquidation.
         if (market.flaggedLiquidations[accountId] != address(0)) {
@@ -172,9 +151,6 @@ contract MarginModule is IMarginModule {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        // Prevent collateral transfers when there's a pending order.
-        validateOrderAvailability(accountId, marketId, market, globalConfig);
 
         // Prevent collateral transfers when there's a pending order.
         if (market.orders[accountId].sizeDelta != 0) {

@@ -44,7 +44,7 @@ describe('MarginModule', async () => {
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
-    it('should cancel order when modifying if pending order exists and expired (withdraw)', async () => {
+    it('should revert when modifying if expired order exists ', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -67,26 +67,15 @@ describe('MarginModule', async () => {
       const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
       await fastForwardBySec(provider(), maxOrderAge.toNumber() + 1);
 
-      const { receipt } = await withExplicitEvmMine(
-        () =>
-          PerpMarketProxy.connect(trader.signer).modifyCollateral(
-            trader.accountId,
-            marketId,
-            collateral.synthMarketId(),
-            collateralDepositAmount.mul(-1)
-          ),
-        provider()
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          marketId,
+          collateral.synthMarketId(),
+          collateralDepositAmount.mul(-1)
+        ),
+        `OrderFound()`
       );
-
-      const marginWithdrawEventProperties = [
-        `"${PerpMarketProxy.address}"`,
-        `"${await trader.signer.getAddress()}"`,
-        collateralDepositAmount,
-        collateral.synthMarketId(),
-      ].join(', ');
-
-      await assertEvent(receipt, `OrderCanceled()`, PerpMarketProxy);
-      await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
     });
 
     it('should revert when a transfer amount of 0', async () => {

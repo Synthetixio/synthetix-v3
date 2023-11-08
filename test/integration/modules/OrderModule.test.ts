@@ -77,39 +77,6 @@ describe('OrderModule', () => {
       await assertEvent(tx, `OrderCommitted(${orderCommittedEventProperties})`, PerpMarketProxy);
     });
 
-    it('should cancel order when commiting again with existing expired order', async () => {
-      const { PerpMarketProxy } = systems();
-
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd
-      );
-
-      const { commitmentTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
-      await fastForwardTo(commitmentTime + maxOrderAge.toNumber() + 1, provider());
-
-      // Committed, not settled, fastforward by maxAge, commit again, old order should be canceled.
-      const { receipt } = await withExplicitEvmMine(
-        () =>
-          PerpMarketProxy.connect(trader.signer).commitOrder(
-            trader.accountId,
-            marketId,
-            order.sizeDelta,
-            order.limitPrice,
-            order.keeperFeeBufferUsd
-          ),
-        provider()
-      );
-      await assertEvent(receipt, `OrderCanceled`, PerpMarketProxy);
-    });
-
     it('should emit all events in correct order');
 
     it('should revert insufficient margin when margin is less than initial margin', async () => {

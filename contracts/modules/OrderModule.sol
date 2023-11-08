@@ -42,29 +42,6 @@ contract OrderModule is IOrderModule {
     // --- Helpers --- //
 
     /**
-     * @dev Same implementation as `MarginModule.validateOrderAvailability`.
-     */
-    function validateOrderAvailability(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private {
-        Order.Data storage order = market.orders[accountId];
-
-        // A new order cannot be submitted if one is already pending.
-        if (order.sizeDelta != 0) {
-            // Check if this order can be cancelled. If so, cancel and then proceed.
-            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
-                delete market.orders[accountId];
-                emit OrderCanceled(accountId, marketId, order.commitmentTime);
-            } else {
-                revert ErrorUtil.OrderFound();
-            }
-        }
-    }
-
-    /**
      * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
@@ -188,7 +165,11 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        validateOrderAvailability(accountId, marketId, market, globalConfig);
+
+        if (market.orders[accountId].sizeDelta != 0) {
+            revert ErrorUtil.OrderFound();
+        }
+
         uint256 oraclePrice = market.getOraclePrice();
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
