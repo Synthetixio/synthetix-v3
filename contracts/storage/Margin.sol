@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
@@ -168,54 +168,6 @@ library Margin {
             // should also prevent this from happening too.
             if (amountToDeductUsd > 0) {
                 revert ErrorUtil.InsufficientMargin();
-            }
-        }
-    }
-
-    /**
-     * @dev Sell all deposited synth collateral for sUSD.
-     */
-    function sellAllSynthCollateralForUsd(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market
-    ) internal {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-
-        // Variable declaration outside of loop to be more gas efficient.
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 synthMarketId;
-        uint256 available;
-
-        for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = accountMargin.collaterals[synthMarketId];
-
-            // Skip this collateral if there is no collateral available to swap. Also avoid swapping sUSD for sUSD.
-            if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                address synth = globalConfig.spotMarket.getSynth(synthMarketId);
-
-                // Reduce amount withdrawn from internal accounting then withdrawl collateral.
-                accountMargin.collaterals[synthMarketId] = 0;
-                market.depositedCollateral[synthMarketId] -= available;
-                globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
-
-                // Sell collateral for sUSD, update accounting, then deposit as sUSD into core.
-                //
-                // - No requirement on minAmountReceived (hence 0)
-                // - No referrer
-                (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(synthMarketId, available, 0, address(0));
-
-                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += amountUsd;
-                market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] += amountUsd;
-
-                globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
-            }
-
-            unchecked {
-                ++i;
             }
         }
     }
