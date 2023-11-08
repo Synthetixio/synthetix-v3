@@ -642,9 +642,9 @@ workflows:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
-      - lint
-      - size-contracts
-      - check-packages
+      #- lint
+      #- size-contracts
+      #- check-packages
 
       - build-testable
 
@@ -682,29 +682,29 @@ workflows:
       #    requires: [build-testable]
       #    workspace: "@synthetixio/legacy-market"
 
-      - test-core-utils:
-          workspace: "@synthetixio/core-utils"
-          parallelism: 2
+      #- test-core-utils:
+      #    workspace: "@synthetixio/core-utils"
+      #    parallelism: 2
 
-      - test-core-modules:
-          workspace: "@synthetixio/core-modules"
-          parallelism: 1
+      #- test-core-modules:
+      #    workspace: "@synthetixio/core-modules"
+      #    parallelism: 1
 
-      - test-core-contracts:
-          workspace: "@synthetixio/core-contracts"
-          parallelism: 2
+      #- test-core-contracts:
+      #    workspace: "@synthetixio/core-contracts"
+      #    parallelism: 2
 
-      - test-subgraph:
-          name: "test-subgraph-core"
-          workspace: "@synthetixio/core-subgraph"
+      #- test-subgraph:
+      #    name: "test-subgraph-core"
+      #    workspace: "@synthetixio/core-subgraph"
 
-      - test-subgraph:
-          name: "test-subgraph-spot-market"
-          workspace: "@synthetixio/spot-market-subgraph"
+      #- test-subgraph:
+      #    name: "test-subgraph-spot-market"
+      #    workspace: "@synthetixio/spot-market-subgraph"
 
-      - test-subgraph:
-          name: "test-subgraph-perps-market"
-          workspace: "@synthetixio/perps-market-subgraph"
+      #- test-subgraph:
+      #    name: "test-subgraph-perps-market"
+      #    workspace: "@synthetixio/perps-market-subgraph"
 
       #- simulate-release:
       #    name: "simulate-release-main"

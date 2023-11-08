@@ -74,9 +74,9 @@
   },
   "resolutions": {
     "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors",
-    "@usecannon/cli": "2.8.1",
-    "@usecannon/builder": "2.8.1",
-    "hardhat-cannon": "2.8.1"
+    "@usecannon/cli": "2.8.0",
+    "@usecannon/builder": "2.8.0",
+    "hardhat-cannon": "2.8.0"
   },
   "pre-commit": [
     "check-staged"
