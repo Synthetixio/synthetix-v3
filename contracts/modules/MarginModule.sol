@@ -84,7 +84,7 @@ contract MarginModule is IMarginModule {
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
-            synth.transferFrom(address(this), msg.sender, amount);
+            synth.transfer(msg.sender, amount);
         }
         emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
     }
@@ -266,7 +266,9 @@ contract MarginModule is IMarginModule {
 
             synth.approve(address(globalMarketConfig.synthetix), 0);
             synth.approve(address(globalMarketConfig.spotMarket), 0);
-            synth.approve(address(this), 0);
+            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+                synth.approve(address(this), 0);
+            }
 
             unchecked {
                 ++i;
@@ -286,7 +288,9 @@ contract MarginModule is IMarginModule {
             // Perform approve _once_ when this collateral is added as a supported collateral.
             synth.approve(address(globalMarketConfig.synthetix), MAX_UINT256);
             synth.approve(address(globalMarketConfig.spotMarket), MAX_UINT256);
-            synth.approve(address(this), MAX_UINT256);
+            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+                synth.approve(address(this), MAX_UINT256);
+            }
 
             globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i]);
             newSupportedSynthMarketIds[i] = synthMarketId;
