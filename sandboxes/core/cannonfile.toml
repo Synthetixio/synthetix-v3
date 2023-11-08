@@ -47,7 +47,8 @@ source = "synthetix-spot-market:dev"
 #
 #
 [provision.box_token]
-source = "mintable-token:1.1"
+source = "mintable-token"
+sourcePreset = "permissionless-mint"
 options.symbol = "BOX"
 options.name = "Sandbox"
 
