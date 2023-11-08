@@ -37,7 +37,8 @@ source = "core-sandbox:1"
 #
 #
 [provision.weth_token]
-source = "mintable-token:1.1"
+source = "mintable-token"
+sourcePreset = "permissionless-mint"
 options.symbol = "WETH"
 options.name = "Wrapped Ethereum"
 
