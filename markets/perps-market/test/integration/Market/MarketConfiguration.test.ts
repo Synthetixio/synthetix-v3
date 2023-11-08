@@ -191,7 +191,7 @@ describe('MarketConfiguration', () => {
     assertBn.equal(lockedOiRatio, fixture.lockedOiPercentRatioD18);
   });
 
-  it('should revert transaction when not market owner sets parameters', async () => {
+  it('should revert when a non-owner owner attempts to set parameters', async () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)

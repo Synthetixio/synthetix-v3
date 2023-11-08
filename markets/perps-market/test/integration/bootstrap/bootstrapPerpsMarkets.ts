@@ -2,11 +2,9 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
-import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
 
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
@@ -75,7 +73,6 @@ export const bootstrapPerpsMarkets = (
 ) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(2000));
   let contracts: Systems, superMarketId: ethers.BigNumber;
-  let keeperCostOracleNode: MockGasPriceNode;
 
   before('identify contracts', () => {
     contracts = r.systems() as Systems;
@@ -99,14 +96,6 @@ export const bootstrapPerpsMarkets = (
         maxDebtShareValueD18: ethers.utils.parseEther('1'),
       },
     ]);
-  });
-
-  before('create perps gas usage nodes', async () => {
-    const results = await createKeeperCostNode(r.owner(), contracts.OracleManager);
-    const keeperCostNodeId = results.keeperCostNodeId;
-    keeperCostOracleNode = results.keeperCostNode;
-
-    await contracts.PerpsMarket.connect(r.owner()).updateKeeperCostNodeId(keeperCostNodeId);
   });
 
   const perpsMarkets: PerpsMarkets = data.map(
@@ -222,33 +211,8 @@ export const bootstrapPerpsMarkets = (
     superMarketId: () => superMarketId,
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,
-    keeperCostOracleNode: () => keeperCostOracleNode,
     poolId: r.poolId,
   };
 };
 
 const isNumber = (n: ethers.BigNumber | number): n is number => typeof n === 'number' && !isNaN(n);
-
-import { Proxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
-
-export const createKeeperCostNode = async (owner: ethers.Signer, OracleManager: Proxy) => {
-  const abi = ethers.utils.defaultAbiCoder;
-  const factory = await hre.ethers.getContractFactory('MockGasPriceNode');
-  const keeperCostNode = await factory.connect(owner).deploy();
-
-  await keeperCostNode.setCosts(0, 0, 0);
-
-  const params1 = abi.encode(['address'], [keeperCostNode.address]);
-  await OracleManager.connect(owner).registerNode(NodeTypes.EXTERNAL, params1, []);
-  const keeperCostNodeId = await OracleManager.connect(owner).getNodeId(
-    NodeTypes.EXTERNAL,
-    params1,
-    []
-  );
-
-  return {
-    keeperCostNodeId,
-    keeperCostNode,
-  };
-};

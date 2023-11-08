@@ -10,6 +10,8 @@ import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
 import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
+import { createKeeperCostNode } from './createKeeperCostNode';
+import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -90,6 +92,7 @@ type BootstrapArgs = {
   };
   maxPositionsPerAccount?: ethers.BigNumber;
   maxCollateralsPerAccount?: ethers.BigNumber;
+  skipKeeperCostOracleNode?: boolean;
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -97,22 +100,28 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const {
-    systems,
-    signers,
-    provider,
-    owner,
-    perpsMarkets,
-    poolId,
-    superMarketId,
-    keeperCostOracleNode,
-  } = chainStateWithPerpsMarkets;
+  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId } =
+    chainStateWithPerpsMarkets;
   const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
     signers,
     provider,
     owner,
     accountIds: data.traderAccountIds,
+  });
+
+  let keeperCostOracleNode: MockGasPriceNode;
+
+  before('create perps gas usage nodes', async () => {
+    if (data.skipKeeperCostOracleNode) {
+      return;
+    }
+
+    const results = await createKeeperCostNode(owner(), systems().OracleManager);
+    const keeperCostNodeId = results.keeperCostNodeId;
+    keeperCostOracleNode = results.keeperCostNode;
+
+    await systems().PerpsMarket.connect(owner()).updateKeeperCostNodeId(keeperCostNodeId);
   });
 
   // auto set all synth markets collaterals to max
@@ -179,7 +188,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     keeper,
     owner,
     perpsMarkets,
-    keeperCostOracleNode,
+    keeperCostOracleNode: () => keeperCostOracleNode,
     synthMarkets,
     superMarketId,
     poolId,
