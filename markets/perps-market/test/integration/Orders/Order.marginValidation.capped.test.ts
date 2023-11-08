@@ -10,8 +10,7 @@ import {
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
-const MIN_LIQUIDATION_REWARD = wei(100);
-describe('Orders - margin validation', () => {
+describe('Orders - capped margin validation', () => {
   const liqParams = {
     btc: {
       imRatio: wei(0.02),
@@ -27,10 +26,10 @@ describe('Orders - margin validation', () => {
     },
   };
   const liqGuards = {
-    minLiquidationReward: wei(MIN_LIQUIDATION_REWARD),
-    minKeeperProfitRatioD18: wei(0),
-    maxLiquidationReward: wei(10_000),
-    maxKeeperScalingRatioD18: wei(1000),
+    minLiquidationReward: wei(1),
+    minKeeperProfitRatioD18: wei(0.01),
+    maxLiquidationReward: wei(110),
+    maxKeeperScalingRatioD18: wei(10),
   };
 
   const { systems, provider, trader1, perpsMarkets, keeper } = bootstrapMarkets({
@@ -204,7 +203,7 @@ describe('Orders - margin validation', () => {
         liqGuards,
         {
           costOfTx: wei(0),
-          margin: wei(100),
+          margin: wei(200),
         }
       );
 
@@ -239,7 +238,7 @@ describe('Orders - margin validation', () => {
 
   describe('openPosition 2 success', () => {
     before('add more margin', async () => {
-      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(1100));
+      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(900));
     });
 
     before('open position', async () => {
@@ -300,7 +299,7 @@ describe('Orders - margin validation', () => {
         liqGuards,
         {
           costOfTx: wei(0),
-          margin: wei(100),
+          margin: wei(200 + 900),
         }
       );
 

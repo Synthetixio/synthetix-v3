@@ -1,4 +1,4 @@
-import Wei from '@synthetixio/wei';
+import { Wei } from '@synthetixio/wei';
 
 type Config = {
   initialMarginRatio: Wei;
@@ -23,6 +23,26 @@ export const requiredMargins = (config: Config, size: Wei, fillPrice: Wei, skewS
   };
 };
 
-export const getRequiredLiquidationRewardMargin = (reward: Wei, min: Wei) => {
-  return Wei.max(reward, min);
+export const getRequiredLiquidationRewardMargin = (
+  reward: Wei,
+  liqGuards: {
+    minLiquidationReward: Wei;
+    minKeeperProfitRatioD18: Wei;
+    maxLiquidationReward: Wei;
+    maxKeeperScalingRatioD18: Wei;
+  },
+  liqParams: {
+    costOfTx: Wei;
+    margin: Wei;
+  }
+) => {
+  const minCap = Wei.max(
+    liqGuards.minLiquidationReward,
+    liqParams.costOfTx.mul(liqGuards.minKeeperProfitRatioD18)
+  );
+  const maxCap = Wei.min(
+    liqGuards.maxLiquidationReward,
+    liqParams.margin.mul(liqGuards.maxKeeperScalingRatioD18)
+  );
+  return Wei.min(Wei.max(reward, minCap), maxCap);
 };
