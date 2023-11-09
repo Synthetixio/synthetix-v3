@@ -20,7 +20,7 @@
     "@synthetixio/router": "^3.3.0",
     "ethers": "^5.7.2",
     "hardhat": "^2.18.3",
-    "hardhat-cannon": "^2.9.3",
+    "hardhat-cannon": "^2.9.9",
     "solidity-coverage": "^0.8.5"
   }
 }
