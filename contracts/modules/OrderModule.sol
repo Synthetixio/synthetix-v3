@@ -13,7 +13,6 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "hardhat/console.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
