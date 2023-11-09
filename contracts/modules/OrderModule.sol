@@ -184,7 +184,6 @@ contract OrderModule is IOrderModule {
     ) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         if (market.orders[accountId].sizeDelta != 0) {
@@ -307,9 +306,9 @@ contract OrderModule is IOrderModule {
         if (!isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
             revert ErrorUtil.OrderNotStale();
         }
-        uint256 commitmentTime = order.commitmentTime;
+
+        emit OrderCanceled(accountId, marketId, order.commitmentTime);
         delete market.orders[accountId];
-        emit OrderCanceled(accountId, marketId, commitmentTime);
     }
 
     function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
@@ -361,10 +360,9 @@ contract OrderModule is IOrderModule {
             Margin.updateAccountCollateral(accountId, market, keeperFee.toInt() * -1);
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
-        uint256 commitmentTime = order.commitmentTime;
-        delete market.orders[accountId];
 
-        emit OrderCanceled(accountId, marketId, commitmentTime);
+        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        delete market.orders[accountId];
     }
 
     /**
