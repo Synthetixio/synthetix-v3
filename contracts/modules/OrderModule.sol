@@ -65,7 +65,7 @@ contract OrderModule is IOrderModule {
         uint256 onchainPrice,
         uint256 oraclePrice,
         uint256 priceDivergencePercent
-    ) private view returns (bool) {
+    ) private pure returns (bool) {
         // Ensure Pyth price does not diverge too far from on-chain price from CL.
         //
         // e.g. A maximum of 3% price divergence with the following prices:
@@ -311,7 +311,7 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
-    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+    function cancelOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
 
@@ -337,12 +337,14 @@ contract OrderModule is IOrderModule {
             }
         } else {
             // Order is ready and not stale, check if price tolerance is exceeded
-            uint256 pythPrice = PythUtil.parsePythPrice(
-                globalConfig,
-                marketConfig,
-                order.commitmentTime,
-                priceUpdateData
-            );
+            // TODO Remove ones pyth is updated, and use PythUtil.parsePythPrice
+
+            PerpMarket.updatePythPrice(priceUpdateData);
+            (uint256 pythPrice, uint256 publishTime) = market.getPythPrice(order.commitmentTime);
+            // The publishTime is _before_ the commitmentTime
+            if (publishTime < order.commitmentTime) {
+                revert ErrorUtil.StalePrice();
+            }
             uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
             uint256 onchainPrice = market.getOraclePrice();
 

@@ -44,7 +44,7 @@ describe('OrderModule Cancellations', () => {
       const invalidMarketId = bn(42069);
 
       await assertRevert(
-        PerpMarketProxy.cancelOrder(trader.accountId, invalidMarketId, updateData),
+        PerpMarketProxy.cancelOrder(trader.accountId, invalidMarketId, [updateData]),
         `MarketNotFound("${invalidMarketId}")`
       );
     });
@@ -71,7 +71,7 @@ describe('OrderModule Cancellations', () => {
       const invalidAccountId = bn(42069);
 
       await assertRevert(
-        PerpMarketProxy.cancelOrder(invalidAccountId, marketId, updateData),
+        PerpMarketProxy.cancelOrder(invalidAccountId, marketId, [updateData]),
         `AccountNotFound("${invalidAccountId}")`
       );
     });
@@ -80,8 +80,11 @@ describe('OrderModule Cancellations', () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
-      await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, [1]), `OrderNotFound()`);
+      const { updateData } = await getPythPriceData(bs, marketId, publishTime);
+
+      await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, [updateData]), `OrderNotFound()`);
     });
 
     it('should revert when order not ready', async () => {
@@ -101,7 +104,7 @@ describe('OrderModule Cancellations', () => {
 
       const { updateData } = await getPythPriceData(bs, marketId, publishTime);
 
-      await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, updateData), `OrderNotReady()`);
+      await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, [updateData]), `OrderNotReady()`);
     });
 
     it('should revert if onchain and pyth price exceeds priceDivergencePercent', async () => {
@@ -143,7 +146,7 @@ describe('OrderModule Cancellations', () => {
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).cancelOrder(trader.accountId, marketId, updateData, {
+        PerpMarketProxy.connect(bs.keeper()).cancelOrder(trader.accountId, marketId, [updateData], {
           value: updateFee,
         }),
         `PriceDivergenceExceeded("${bn(pythPrice)}", "${bn(oraclePrice)}")`,
@@ -173,11 +176,9 @@ describe('OrderModule Cancellations', () => {
       const { updateData } = await getPythPriceData(bs, marketId, publishTime);
 
       await assertRevert(
-        PerpMarketProxy.connect(tradersGenerator.next().value.signer).cancelOrder(
-          trader.accountId,
-          marketId,
-          updateData
-        ),
+        PerpMarketProxy.connect(tradersGenerator.next().value.signer).cancelOrder(trader.accountId, marketId, [
+          updateData,
+        ]),
         `StaleOrder()`
       );
     });
@@ -199,7 +200,7 @@ describe('OrderModule Cancellations', () => {
       const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
       const fillPrice = await PerpMarketProxy.getFillPrice(marketId, order.sizeDelta);
       await assertRevert(
-        PerpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData, { value: updateFee }),
+        PerpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, [updateData], { value: updateFee }),
         `PriceToleranceNotExceeded("${order.sizeDelta}", "${fillPrice}", "${order.limitPrice}")`
       );
     });
@@ -228,7 +229,7 @@ describe('OrderModule Cancellations', () => {
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
       const { receipt } = await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(trader.signer).cancelOrder(trader.accountId, marketId, updateData, {
+          PerpMarketProxy.connect(trader.signer).cancelOrder(trader.accountId, marketId, [updateData], {
             value: updateFee,
           }),
         provider()
@@ -241,7 +242,7 @@ describe('OrderModule Cancellations', () => {
         PerpMarketProxy
       );
       // We expect no transfer event because the order was cancelled by caller
-      assert.ok(findEventSafe(receipt, 'Transfer', PerpMarketProxy) === undefined);
+      assert.throws(() => findEventSafe(receipt, 'Transfer', PerpMarketProxy));
     });
     it('should cancel order if ready and price exceeds tolerance', async () => {
       const { PerpMarketProxy, Core } = systems();
@@ -276,7 +277,7 @@ describe('OrderModule Cancellations', () => {
 
       const { receipt } = await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData, {
+          PerpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, [updateData], {
             value: updateFee,
           }),
         provider()
@@ -353,7 +354,7 @@ describe('OrderModule Cancellations', () => {
 
       const { trader, marketId } = await depositMargin(bs, genTrader(bs));
 
-      await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, [1]), `OrderNotFound()`);
+      await assertRevert(PerpMarketProxy.clearStaleOrder(trader.accountId, marketId), `OrderNotFound()`);
     });
 
     it('should revert when order not ready', async () => {
