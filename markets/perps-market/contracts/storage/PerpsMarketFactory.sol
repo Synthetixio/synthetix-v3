@@ -93,4 +93,24 @@ library PerpsMarketFactory {
     function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
         self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
     }
+
+    function calculateMinimumCredit() internal view returns (uint256 accumulatedMinimumCredit) {
+        SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
+        uint256 activeMarketsLength = activeMarkets.length();
+        for (uint i = 1; i <= activeMarketsLength; i++) {
+            uint128 marketId = activeMarkets.valueAt(i).to128();
+
+            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId);
+        }
+    }
+
+    function utilizationRate(Data storage self) internal view returns (uint256 utilization) {
+        uint256 withdrawableUsd = self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
+        uint256 totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
+
+        uint256 delegatedCollateralValue = withdrawableUsd - totalCollateralValue;
+        uint256 minimumCredit = calculateMinimumCredit();
+
+        return minimumCredit.divDecimal(delegatedCollateralValue);
+    }
 }

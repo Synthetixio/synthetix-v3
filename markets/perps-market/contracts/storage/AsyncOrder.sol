@@ -9,6 +9,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
+import {InterestRate} from "./InterestRate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
@@ -287,6 +288,7 @@ library AsyncOrder {
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
         perpsMarketData.recomputeFunding(orderPrice);
+        InterestRate.update();
 
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             runtime.marketId

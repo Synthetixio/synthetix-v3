@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Position} from "./Position.sol";
@@ -12,6 +12,7 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
+import {InterestRate} from "./InterestRate.sol";
 
 /**
  * @title Data for a single perps market
@@ -250,6 +251,9 @@ library PerpsMarket {
 
         oldPosition.update(newPosition);
 
+        // after position is updated, update the market interest rate since OI has changed
+        InterestRate.update();
+
         return
             MarketUpdate.Data(
                 self.id,
@@ -387,6 +391,15 @@ library PerpsMarket {
         int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
 
         return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
+    }
+
+    function requiredCredit(uint128 marketId) internal view returns (uint) {
+        return
+            PerpsMarket
+                .load(marketId)
+                .size
+                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 
     function accountPosition(

@@ -72,6 +72,18 @@ library GlobalPerpsMarketConfiguration {
          * @dev set of supported collateral types. By supported we mean collateral types that have a maxCollateralAmount > 0
          */
         SetUtil.UintSet supportedCollateralTypes;
+        /**
+         * @dev TODO
+         */
+        uint128 lowUtilizationInterestRateGradient;
+        /**
+         * @dev TODO
+         */
+        uint128 interestRateGradientBreakpoint;
+        /**
+         * @dev TODO
+         */
+        uint128 highUtilizationInterestRateGradient;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -79,6 +91,15 @@ library GlobalPerpsMarketConfiguration {
         assembly {
             globalMarketConfig.slot := s
         }
+    }
+
+    function loadInterestRateParameters() internal view returns (uint256, uint256, uint256) {
+        Data storage self = load();
+        return (
+            self.lowUtilizationInterestRateGradient,
+            self.interestRateGradientBreakpoint,
+            self.highUtilizationInterestRateGradient
+        );
     }
 
     function minimumKeeperRewardCap(

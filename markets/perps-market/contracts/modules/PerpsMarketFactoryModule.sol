@@ -141,21 +141,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         if (factory.perpsMarketId == perpsMarketId) {
-            uint accumulatedMinimumCredit;
-
-            SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
-            uint256 activeMarketsLength = activeMarkets.length();
-            for (uint i = 1; i <= activeMarketsLength; i++) {
-                uint128 marketId = activeMarkets.valueAt(i).to128();
-
-                accumulatedMinimumCredit += PerpsMarket
-                    .load(marketId)
-                    .size
-                    .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
-                    .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
-            }
-
-            return accumulatedMinimumCredit;
+            return PerpsMarketFactory.calculateMinimumCredit();
         }
 
         return 0;

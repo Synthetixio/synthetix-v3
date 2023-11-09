@@ -13,6 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {MarketUpdate} from "./MarketUpdate.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
+import {InterestRate} from "./InterestRate.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
@@ -530,6 +531,7 @@ library PerpsAccount {
         Position.Data storage position = perpsMarket.positions[self.id];
 
         perpsMarket.recomputeFunding(price);
+        InterestRate.update();
 
         int128 oldPositionSize = position.size;
         oldPositionAbsSize = MathUtil.abs128(oldPositionSize);
