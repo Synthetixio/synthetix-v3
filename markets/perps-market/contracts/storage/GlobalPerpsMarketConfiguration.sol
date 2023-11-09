@@ -114,19 +114,6 @@ library GlobalPerpsMarketConfiguration {
         return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
     }
 
-    /**
-     * @dev returns the keeper reward based on total keeper rewards from all markets compared against only min
-     * @notice this is used when calculating the required margin for an account as there's no upper cap since the total keeper rewards are dependent on available amount in keeper window
-     */
-    function minimumKeeperReward(
-        Data storage self,
-        uint256 keeperRewards,
-        uint256 costOfExecutionInUsd
-    ) internal view returns (uint256) {
-        uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
-        return MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd);
-    }
-
     function updateSynthDeductionPriority(
         Data storage self,
         uint128[] memory newSynthDeductionPriority

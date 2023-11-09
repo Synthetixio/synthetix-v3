@@ -263,7 +263,6 @@ library AsyncOrder {
         uint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
-        uint256 oldCostOfFlaggingAndLiquidation;
     }
 
     /**

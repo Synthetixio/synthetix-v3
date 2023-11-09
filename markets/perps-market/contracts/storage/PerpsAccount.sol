@@ -270,23 +270,6 @@ library PerpsAccount {
         }
     }
 
-    function getNumberOfCollaterals(
-        Data storage self,
-        bool includeUSD
-    ) internal view returns (uint numberOfCollaterals) {
-        if (includeUSD) {
-            numberOfCollaterals = self.activeCollateralTypes.length();
-        } else {
-            // TODO use contains here
-            for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
-                uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
-                if (synthMarketId != SNX_USD_MARKET_ID) {
-                    numberOfCollaterals++;
-                }
-            }
-        }
-    }
-
     /**
      * @notice  This function returns the required margins for an account
      * @dev The initial required margin is used to determine withdrawal amount and when opening positions

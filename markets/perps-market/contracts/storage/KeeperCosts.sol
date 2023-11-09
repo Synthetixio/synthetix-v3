@@ -9,6 +9,8 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
+uint128 constant SNX_USD_MARKET_ID = 0;
+
 /**
  * @title Keeper txn execution costs for rewards calculation based on gas price
  */
@@ -55,7 +57,10 @@ library KeeperCosts {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        uint numberOfUpdatedFeeds = account.getNumberOfCollaterals(false) +
+        uint numberOfCollateralFeeds = account.activeCollateralTypes.contains(SNX_USD_MARKET_ID)
+            ? account.activeCollateralTypes.length() - 1
+            : account.activeCollateralTypes.length();
+        uint numberOfUpdatedFeeds = numberOfCollateralFeeds +
             account.openPositionMarketIds.length();
 
         sUSDCost = _processWithRuntime(
