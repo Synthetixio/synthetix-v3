@@ -13,6 +13,7 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "hardhat/console.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -292,6 +293,26 @@ contract OrderModule is IOrderModule {
             runtime.fillPrice
         );
     }
+
+    function clearStaleOrder(uint128 accountId, uint128 marketId) external {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Account.exists(accountId);
+
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta == 0) {
+            revert ErrorUtil.OrderNotFound();
+        }
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        if (!isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
+            revert ErrorUtil.OrderNotStale();
+        }
+        uint256 commitmentTime = order.commitmentTime;
+        delete market.orders[accountId];
+        emit OrderCanceled(accountId, marketId, commitmentTime);
+    }
+
     function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
