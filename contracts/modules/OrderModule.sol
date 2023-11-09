@@ -40,6 +40,46 @@ contract OrderModule is IOrderModule {
     }
 
     // --- Helpers --- //
+    function isPriceToleranceExceeded(
+        int128 sizeDelta,
+        uint256 fillPrice,
+        uint256 limitPrice
+    ) private pure returns (bool) {
+        // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
+        //
+        // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
+        return (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
+    }
+
+    function isOrderStale(uint256 commitmentTime, uint256 maxOrderAge) private view returns (bool) {
+        // A stale order is one where time passed is max age or older (>=).
+        return block.timestamp - commitmentTime >= maxOrderAge;
+    }
+
+    function isOrderReady(uint256 commitmentTime, uint256 minOrderAge) private view returns (bool) {
+        // Amount of time that has passed must be at least the minimum order age (>=).
+        return block.timestamp - commitmentTime >= minOrderAge;
+    }
+
+    function isPriceDivergenceExceeded(
+        uint256 onchainPrice,
+        uint256 oraclePrice,
+        uint256 priceDivergencePercent
+    ) private view returns (bool) {
+        // Ensure Pyth price does not diverge too far from on-chain price from CL.
+        //
+        // e.g. A maximum of 3% price divergence with the following prices:
+        //
+        // (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
+        // (1800, 1750) ~ 2.857143% divergence => Ok
+        // (1854, 1800) ~ 3%        divergence => Ok
+        // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
+        uint256 priceDelta = onchainPrice > oraclePrice
+            ? onchainPrice.divDecimal(oraclePrice) - DecimalMath.UNIT
+            : oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
+
+        return priceDelta > priceDivergencePercent;
+    }
 
     /**
      * @dev Validates that an order can only be settled iff time and price is acceptable.
@@ -55,12 +95,11 @@ contract OrderModule is IOrderModule {
         if (publishTime < commitmentTime) {
             revert ErrorUtil.StalePrice();
         }
-        // A stale order is one where time passed is max age or older (>=).
-        if (block.timestamp - commitmentTime >= globalConfig.maxOrderAge) {
+
+        if (isOrderStale(commitmentTime, globalConfig.maxOrderAge)) {
             revert ErrorUtil.StaleOrder();
         }
-        // Amount of time that has passed must be at least the minimum order age (>=).
-        if (block.timestamp - commitmentTime < globalConfig.minOrderAge) {
+        if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
             revert ErrorUtil.OrderNotReady();
         }
 
@@ -82,29 +121,11 @@ contract OrderModule is IOrderModule {
         if (onchainPrice == 0 || params.oraclePrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
-
-        // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
-        //
-        // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
-        if (
-            (params.sizeDelta > 0 && params.fillPrice > params.limitPrice) ||
-            (params.sizeDelta < 0 && params.fillPrice < params.limitPrice)
-        ) {
+        if (isPriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice)) {
             revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
         }
 
-        // Ensure Pyth price does not diverge too far from on-chain price from CL.
-        //
-        // e.g. A maximum of 3% price divergence with the following prices:
-        //
-        // (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
-        // (1800, 1750) ~ 2.857143% divergence => Ok
-        // (1854, 1800) ~ 3%        divergence => Ok
-        // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
-        uint256 priceDelta = onchainPrice > params.oraclePrice
-            ? onchainPrice.divDecimal(params.oraclePrice) - DecimalMath.UNIT
-            : params.oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
-        if (priceDelta > globalConfig.priceDivergencePercent) {
+        if (isPriceDivergenceExceeded(onchainPrice, params.oraclePrice, globalConfig.priceDivergencePercent)) {
             revert ErrorUtil.PriceDivergenceExceeded(params.oraclePrice, onchainPrice);
         }
     }
