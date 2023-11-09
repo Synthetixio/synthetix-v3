@@ -140,8 +140,8 @@ export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketI
   const settlementTime = Math.max(commitmentTime + minOrderAge, nowTime + 1);
 
   const publishTime = settlementTime - publishTimeDelta;
-
-  return { commitmentTime, settlementTime, publishTime };
+  const expireTime = commitmentTime + config.maxOrderAge.toNumber();
+  return { commitmentTime, settlementTime, publishTime, expireTime };
 };
 
 /** Commits a generated `order` for `trader` on `marketId` */
