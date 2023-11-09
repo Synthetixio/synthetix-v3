@@ -292,6 +292,60 @@ contract OrderModule is IOrderModule {
             runtime.fillPrice
         );
     }
+    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Account.Data storage account = Account.exists(accountId);
+
+        Order.Data storage order = market.orders[accountId];
+
+        // No order available to settle.
+        if (order.sizeDelta == 0) {
+            revert ErrorUtil.OrderNotFound();
+        }
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        if (!isOrderReady(order.commitmentTime, globalConfig.minOrderAge)) {
+            revert ErrorUtil.OrderNotReady();
+        }
+        bool isAccountOwner = msg.sender == account.rbac.owner;
+
+        // If order is stale allow cancelation from owner regardless of price.
+        if (isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
+            // Only allow owner to clear stale orders
+            if (!isAccountOwner) {
+                revert ErrorUtil.StaleOrder();
+            }
+        } else {
+            // Order is ready and not stale, check if price tolerance is exceeded
+            uint256 pythPrice = PythUtil.parsePythPrice(
+                globalConfig,
+                marketConfig,
+                order.commitmentTime,
+                priceUpdateData
+            );
+            uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
+            uint256 onchainPrice = market.getOraclePrice();
+
+            if (isPriceDivergenceExceeded(onchainPrice, pythPrice, globalConfig.priceDivergencePercent)) {
+                revert ErrorUtil.PriceDivergenceExceeded(pythPrice, onchainPrice);
+            }
+
+            if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
+                revert ErrorUtil.PriceToleranceNotExceeded(order.sizeDelta, fillPrice, order.limitPrice);
+            }
+        }
+
+        uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+        if (keeperFee > 0) {
+            Margin.updateAccountCollateral(accountId, market, keeperFee.toInt() * -1);
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+        }
+        uint256 commitmentTime = order.commitmentTime;
+        delete market.orders[accountId];
+
+        emit OrderCanceled(accountId, marketId, commitmentTime);
+    }
 
     /**
      * @inheritdoc IOrderModule

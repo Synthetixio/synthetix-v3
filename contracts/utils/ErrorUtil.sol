@@ -20,8 +20,14 @@ library ErrorUtil {
     // @notice Thrown when order not ready for settlement.
     error OrderNotReady();
 
+    // @notice Thrown when order trying owner trying to clear a stale order
+    error OrderNotStale();
+
     // @notice Thrown when an order cannot settle due to limitPrice tolerance not met.
     error PriceToleranceExceeded(int128 sizeDelta, uint256 price, uint256 limitPrice);
+
+    // @notice Thrown when an order cannot cancel due to limitPrice is met.
+    error PriceToleranceNotExceeded(int128 sizeDelta, uint256 price, uint256 limitPrice);
 
     // @notice Thrown during settlement when off-chain diverges too far from on-chain price.
     error PriceDivergenceExceeded(uint256 offchainPrice, uint256 onchainPrice);
@@ -79,4 +85,6 @@ library ErrorUtil {
 
     // @notice Thrown when trying to remove a collateral with money inside
     error MissingRequiredCollateral(uint128 synthMarketId);
+    // @notice Thrown when and action is only allowed by account owner
+    error OnlyAccountOwner();
 }
