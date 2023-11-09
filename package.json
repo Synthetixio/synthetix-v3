@@ -57,7 +57,7 @@
     "@types/node": "^18.18.9",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
-    "@usecannon/cli": "^2.9.8",
+    "@usecannon/cli": "^2.9.9",
     "eslint": "^8.53.0",
     "eslint-plugin-no-only-tests": "^3.1.0",
     "lint-staged": "^15.0.2",
@@ -73,10 +73,7 @@
     "typescript": "^5.2.2"
   },
   "resolutions": {
-    "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors",
-    "@usecannon/cli": "2.8.0",
-    "@usecannon/builder": "2.8.0",
-    "hardhat-cannon": "2.8.0"
+    "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors"
   },
   "pre-commit": [
     "check-staged"
