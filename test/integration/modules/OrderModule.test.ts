@@ -1022,7 +1022,7 @@ describe('OrderModule', () => {
       const marketSkew = bn(0);
       const fillPrice = calcFillPrice(marketSkew, skewScale, order.sizeDelta, newMarketOraclePrice);
       await assertRevert(
-        PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
         `PriceToleranceExceeded("${order.sizeDelta}", "${fillPrice}", "${order.limitPrice}")`,
