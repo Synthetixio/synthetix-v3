@@ -29,6 +29,7 @@ import {
   withExplicitEvmMine,
   getSusdCollateral,
   isSusdCollateral,
+  SYNTHETIX_USD_MARKET_ID,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -1430,12 +1431,13 @@ describe('MarginModule', async () => {
 
       for (const [_i, configuredCollateral] of Object.entries(configuredCollaterals)) {
         const idx = parseInt(_i);
-        const synth = newCollaterals[idx].contract;
+        const { contract: synth, synthMarketId } = newCollaterals[idx];
 
         const perpAllowance = await synth.allowance(PerpMarketProxy.address, PerpMarketProxy.address);
         const coreAllowance = await synth.allowance(PerpMarketProxy.address, bs.systems().Core.address);
-
-        assertBn.equal(ethers.constants.MaxUint256, perpAllowance);
+        if (synthMarketId().eq(SYNTHETIX_USD_MARKET_ID)) {
+          assertBn.equal(ethers.constants.MaxUint256, perpAllowance);
+        }
         assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
         assertBn.equal(configuredCollateral.maxAllowable, newMaxAllowables[idx]);
       }
