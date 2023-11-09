@@ -90,12 +90,6 @@ contract OrderModule is IOrderModule {
         uint256 commitmentTime,
         Position.TradeParams memory params
     ) private view {
-        // TODO I think we could remove this
-        // The publishTime is _before_ the commitmentTime
-        if (publishTime < commitmentTime) {
-            revert ErrorUtil.StalePrice();
-        }
-
         if (isOrderStale(commitmentTime, globalConfig.maxOrderAge)) {
             revert ErrorUtil.StaleOrder();
         }
@@ -293,7 +287,7 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
-    function cancelOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
+    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
 
@@ -319,14 +313,13 @@ contract OrderModule is IOrderModule {
             }
         } else {
             // Order is ready and not stale, check if price tolerance is exceeded
-            // TODO Remove ones pyth is updated, and use PythUtil.parsePythPrice
 
-            PerpMarket.updatePythPrice(priceUpdateData);
-            (uint256 pythPrice, uint256 publishTime) = market.getPythPrice(order.commitmentTime);
-            // The publishTime is _before_ the commitmentTime
-            if (publishTime < order.commitmentTime) {
-                revert ErrorUtil.StalePrice();
-            }
+            uint256 pythPrice = PythUtil.parsePythPrice(
+                globalConfig,
+                marketConfig,
+                order.commitmentTime,
+                priceUpdateData
+            );
             uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
             uint256 onchainPrice = market.getOraclePrice();
 
