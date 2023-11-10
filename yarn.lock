@@ -2872,7 +2872,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.60.0"
     "@graphprotocol/graph-ts": "npm:^0.31.0"
-    "@usecannon/cli": "npm:^2.9.10"
+    "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.0.3"
@@ -3032,7 +3032,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.60.0"
     "@graphprotocol/graph-ts": "npm:^0.31.0"
-    "@usecannon/cli": "npm:^2.9.10"
+    "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.0.3"
@@ -3053,7 +3053,7 @@ __metadata:
     "@synthetixio/router": "npm:^3.3.0"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
-    "@usecannon/cli": "npm:^2.9.10"
+    "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.0"
     solidity-docgen: "npm:^0.6.0-beta.36"
@@ -3101,7 +3101,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.60.0"
     "@graphprotocol/graph-ts": "npm:^0.31.0"
-    "@usecannon/cli": "npm:^2.9.10"
+    "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.0.3"
@@ -3122,7 +3122,7 @@ __metadata:
     "@synthetixio/router": "npm:^3.3.0"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node-fetch": "npm:^2.6.9"
-    "@usecannon/cli": "npm:^2.9.10"
+    "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.0"
     node-fetch: "npm:^2.7.0"
@@ -3816,6 +3816,33 @@ __metadata:
   bin:
     cannon: bin/cannon.js
   checksum: c6a6c75732872767ffd3c558df527c1c5384d3cdd35772875f91668b3e8423314141ce58a6c4ae631bf6b02d91487e8e7aa978ae3dd6a5110f1f5b458208e6ff
+  languageName: node
+  linkType: hard
+
+"@usecannon/cli@npm:^2.9.11-alpha.0":
+  version: 2.9.11-alpha.0
+  resolution: "@usecannon/cli@npm:2.9.11-alpha.0"
+  dependencies:
+    "@iarna/toml": "npm:^3.0.0"
+    "@synthetixio/wei": "npm:^2.74.1"
+    "@usecannon/builder": "npm:^2.9.10"
+    chalk: "npm:^4.1.2"
+    commander: "npm:^9.5.0"
+    debug: "npm:^4.3.4"
+    eth-provider: "npm:^0.13.6"
+    ethers: "npm:^5.7.1"
+    fastq: "npm:^1.15.0"
+    fs-extra: "npm:^10.1.0"
+    lodash: "npm:^4.17.21"
+    promise-timeout: "npm:^1.3.0"
+    prompts: "npm:^2.4.2"
+    semver: "npm:^7.3.7"
+    table: "npm:^6.8.0"
+    tildify: "npm:2.0.0"
+    untildify: "npm:^4.0.0"
+  bin:
+    cannon: bin/cannon.js
+  checksum: 8aa78f2e43b1849ba46aca28d8efc923097d490b57291ea52bfb4ac19f1c8b17c6d1184b1a82683423bcbdbdeb8422a81e4e5fbd6b181d90431c2de4c6e84612
   languageName: node
   linkType: hard
 
@@ -15788,7 +15815,7 @@ __metadata:
     "@types/node": "npm:^18.18.9"
     "@typescript-eslint/eslint-plugin": "npm:^6.10.0"
     "@typescript-eslint/parser": "npm:^6.10.0"
-    "@usecannon/cli": "npm:^2.9.10"
+    "@usecannon/cli": "npm:^2.9.11-alpha.0"
     eslint: "npm:^8.53.0"
     eslint-plugin-no-only-tests: "npm:^3.1.0"
     lint-staged: "npm:^15.0.2"
