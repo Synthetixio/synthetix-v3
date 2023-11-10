@@ -319,7 +319,7 @@ fromCall.func = "getPoolOwner"
 fromCall.args = ["<%= imports.core_sandbox.extras.spartan_council_pool_id %>"]
 func = "setPoolConfiguration"
 args = [
-    "<%= console.log('ARGS', {spartan_council_pool_id:imports.core_sandbox.extras.spartan_council_pool_id, superMarketId: imports.perps_factory.extras.superMarketId, synth_box_market_id: imports.core_sandbox.extras.synth_box_market_id, synth_eth_market_id: extras.synth_eth_market_id}) || imports.core_sandbox.extras.spartan_council_pool_id %>",
+    "<%= imports.core_sandbox.extras.spartan_council_pool_id %>",
     [
         { marketId = "<%= imports.core_sandbox.extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
         { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
