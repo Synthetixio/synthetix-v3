@@ -35,43 +35,68 @@ depends = ["import.andromeda_sandbox"]
 target = ["andromeda_sandbox.usdc_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "mint"
-args = ["<%= parseEther('10000') %>", "<%= settings.test_user %>"]
+args = ["<%= parseEther(String(10_000)) %>", "<%= settings.test_user %>"]
 depends = ["invoke.create_account"]
 
-[invoke.approve_10k_usdc_for_CoreProxy_to_spend]
+[invoke.approve_10k_usdc_for_SpotMarketProxy_to_wrap_for_liquidity]
 target = ["andromeda_sandbox.usdc_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "approve"
 args = [
-    "<%= imports.andromeda_sandbox.imports.synthetix.contracts.CoreProxy.address %>",
-    "<%= parseEther('10000') %>",
+    "<%= imports.andromeda_sandbox.imports.spot_factory.contracts.SpotMarketProxy.address %>",
+    "<%= parseEther(String(10_000)) %>",
 ]
 depends = ["invoke.mint_10k_usdc_for_liquidity"]
 
-[invoke.deposit_10k_usdc_for_liquidity]
+[invoke.wrap_10k_usdc_into_synth_usdc_for_liquidity]
+target = ["andromeda_sandbox.spot_factory.SpotMarketProxy"]
+from = "<%= settings.test_user %>"
+func = "wrap"
+args = [
+    # uint128 marketId
+    "<%= imports.andromeda_sandbox.extras.synth_usdc_market_id %>",
+    # uint256 wrapAmount
+    "<%= parseEther(String(10_000)) %>",
+    # uint256 minAmountReceived (0% slippage!)
+    "<%= parseEther(String(10_000)) %>"
+]
+depends = ["invoke.approve_10k_usdc_for_SpotMarketProxy_to_wrap_for_liquidity"]
+
+[invoke.approve_10k_synth_usdc_for_CoreProxy_to_deposit]
+target = ["<%= imports.andromeda_sandbox.extras.synth_usdc_token_address %>"]
+abi = "<%= JSON.stringify(['function approve(address spender, uint256 amount) returns (bool)']) %>"
+from = "<%= settings.test_user %>"
+func = "approve"
+args = [
+    "<%= imports.andromeda_sandbox.imports.synthetix.contracts.CoreProxy.address %>",
+    "<%= parseEther(String(10_000)) %>",
+]
+depends = ["invoke.wrap_10k_usdc_into_synth_usdc_for_liquidity"]
+
+[invoke.deposit_10k_synth_usdc_for_liquidity]
 target = ["andromeda_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "deposit"
 args = [
     "<%= extras.test_user_account_id %>",
-    "<%= imports.andromeda_sandbox.imports.usdc_token.contracts.MintableToken.address %>",
-    "<%= parseEther('10000') %>",
+    "<%= imports.andromeda_sandbox.extras.synth_usdc_token_address %>",
+    "<%= parseEther(String(10_000)) %>",
 ]
-depends = ["invoke.approve_10k_usdc_for_CoreProxy_to_spend"]
+depends = ["invoke.approve_10k_synth_usdc_for_CoreProxy_to_deposit"]
 
-[invoke.delegate_10k_usdc_to_pool]
+[invoke.delegate_10k_synth_usdc_to_pool]
 target = ["andromeda_sandbox.synthetix.CoreProxy"]
 from = "<%= settings.test_user %>"
 func = "delegateCollateral"
 args = [
     # examples of how to debug internal values line by line
     "<%= /* console.log(extras) || */ extras.test_user_account_id %>",
-    "<%= /* console.log(imports.andromeda_sandbox.extras) || */imports.andromeda_sandbox.extras.spartan_council_pool_id %>",
-    "<%= /* console.log(imports.andromeda_sandbox.imports) || */ imports.andromeda_sandbox.imports.usdc_token.contracts.MintableToken.address %>",
-    "<%= parseEther('10000') %>",
+    "<%= /* console.log(imports.andromeda_sandbox.extras) || */ imports.andromeda_sandbox.extras.spartan_council_pool_id %>",
+    "<%= /* console.log(imports.andromeda_sandbox.imports) || */ imports.andromeda_sandbox.extras.synth_usdc_token_address %>",
+    "<%= parseEther(String(10_000)) %>",
     "<%= parseEther('1') %>",
 ]
-depends = ["invoke.deposit_10k_usdc_for_liquidity"]
+depends = ["invoke.deposit_10k_synth_usdc_for_liquidity"]
 
 #
 #
@@ -84,16 +109,16 @@ depends = ["invoke.deposit_10k_usdc_for_liquidity"]
 target = ["andromeda_sandbox.usdc_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "mint"
-args = ["<%= parseEther('20000') %>", "<%= settings.test_user %>"]
-depends = ["invoke.delegate_10k_usdc_to_pool"]
+args = ["<%= parseEther(String(20_000)) %>", "<%= settings.test_user %>"]
+depends = ["invoke.delegate_10k_synth_usdc_to_pool"]
 
-[invoke.approve_unlimited_usdc_for_SpotMarketProxy]
+[invoke.approve_20k_usdc_for_SpotMarketProxy_for_wrapping]
 target = ["andromeda_sandbox.usdc_token.MintableToken"]
 from = "<%= settings.test_user %>"
 func = "approve"
 args = [
     "<%= imports.andromeda_sandbox.imports.spot_factory.contracts.SpotMarketProxy.address %>",
-    "<%= MaxUint256 %>",
+    "<%= parseEther(String(20_000)) %>",
 ]
 depends = ["invoke.mint_20k_usdc_for_perps"]
 
@@ -105,11 +130,11 @@ args = [
     # uint128 marketId
     "<%= imports.andromeda_sandbox.extras.synth_usdc_market_id %>",
     # uint256 wrapAmount
-    "<%= parseEther('20000') %>",
+    "<%= parseEther(String(20_000)) %>",
     # uint256 minAmountReceived (0% slippage!)
-    "<%= parseEther('20000') %>"
+    "<%= parseEther(String(20_000)) %>"
 ]
-depends = ["invoke.approve_unlimited_usdc_for_SpotMarketProxy"]
+depends = ["invoke.approve_20k_usdc_for_SpotMarketProxy_for_wrapping"]
 
 [invoke.atomic_sell_20k_synth_usdc_for_20k_susd]
 target = ["andromeda_sandbox.spot_factory.SpotMarketProxy"]
@@ -119,9 +144,9 @@ args = [
     # uint128 marketId
     "<%= imports.andromeda_sandbox.extras.synth_usdc_market_id %>",
     # uint256 synthAmount
-    "<%= parseEther('20000') %>",
+    "<%= parseEther(String(20_000)) %>",
     # uint256 minUsdAmount (0% slippage!)
-    "<%= parseEther('20000') %>",
+    "<%= parseEther(String(20_000)) %>",
     # address referrer
     "<%= AddressZero %>"
 ]
@@ -143,18 +168,18 @@ extra.test_user_perps_account_id.event = "AccountCreated"
 extra.test_user_perps_account_id.arg = 0
 depends = [
     # We want to ensure pool has some liquidity before test user start interacting with perps market, so adding this dependency step
-    "invoke.delegate_10k_usdc_to_pool",
+    "invoke.delegate_10k_synth_usdc_to_pool",
     # We want to ensure user has sUSD available in their wallet too
     "invoke.atomic_sell_20k_synth_usdc_for_20k_susd"
 ]
 
-[invoke.approve_unlimited_susd_for_PerpsMarketProxy]
+[invoke.approve_1k_susd_for_PerpsMarketProxy_to_trade]
 target = ["andromeda_sandbox.synthetix.USDProxy"]
 from = "<%= settings.test_user %>"
 func = "approve"
 args = [
     "<%= imports.andromeda_sandbox.imports.perps_factory.contracts.PerpsMarketProxy.address %>",
-    "<%= MaxUint256 %>",
+    "<%= parseEther(String(1_000)) %>",
 ]
 depends = ["invoke.create_perps_account"]
 
@@ -165,9 +190,9 @@ func = "modifyCollateral"
 args = [
     "<%= extras.test_user_perps_account_id %>",
     0, # 0 is a special market id for susd
-    "<%= parseEther('1000') %>",
+    "<%= parseEther(String(1_000)) %>",
 ]
-depends = ["invoke.approve_unlimited_susd_for_PerpsMarketProxy"]
+depends = ["invoke.approve_1k_susd_for_PerpsMarketProxy_to_trade"]
 
 #
 #
@@ -176,6 +201,16 @@ depends = ["invoke.approve_unlimited_susd_for_PerpsMarketProxy"]
 #
 #
 #
+[invoke.approve_700_susd_for_PerpsMarketProxy_to_withdraw]
+target = ["andromeda_sandbox.synthetix.USDProxy"]
+from = "<%= settings.test_user %>"
+func = "approve"
+args = [
+    "<%= imports.andromeda_sandbox.imports.perps_factory.contracts.PerpsMarketProxy.address %>",
+    "<%= parseEther(String(700)) %>",
+]
+depends = ["invoke.deposit_1k_susd_to_perps"]
+
 [invoke.withdraw_300_susd_from_perps]
 target = ["andromeda_sandbox.perps_factory.PerpsMarketProxy"]
 from = "<%= settings.test_user %>"
@@ -183,17 +218,17 @@ func = "modifyCollateral"
 args = [
     "<%= extras.test_user_perps_account_id %>",
     0, # 0 is a special market id for susd
-    "<%= parseEther('700') %>",
+    "<%= parseEther(String(700)) %>",
 ]
-depends = ["invoke.deposit_1k_susd_to_perps"]
+depends = ["invoke.approve_700_susd_for_PerpsMarketProxy_to_withdraw"]
 
-[invoke.approve_unlimited_susd_for_SpotMarketProxy]
+[invoke.approve_300_susd_for_SpotMarketProxy_to_buy_synth_usdc]
 target = ["andromeda_sandbox.synthetix.USDProxy"]
 from = "<%= settings.test_user %>"
 func = "approve"
 args = [
     "<%= imports.andromeda_sandbox.imports.spot_factory.contracts.SpotMarketProxy.address %>",
-    "<%= MaxUint256 %>",
+    "<%= parseEther('300') %>",
 ]
 depends = ["invoke.withdraw_300_susd_from_perps"]
 
@@ -211,7 +246,7 @@ args = [
     # address referrer
     "<%= AddressZero %>"
 ]
-depends = ["invoke.approve_unlimited_susd_for_SpotMarketProxy"]
+depends = ["invoke.approve_300_susd_for_SpotMarketProxy_to_buy_synth_usdc"]
 
 [invoke.unwrap_300_usdc_from_synth_usdc]
 target = ["andromeda_sandbox.spot_factory.SpotMarketProxy"]
