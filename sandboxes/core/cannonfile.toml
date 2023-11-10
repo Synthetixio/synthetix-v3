@@ -92,10 +92,16 @@ args = [
 [invoke.configure_box_token_as_collateral]
 target = ["synthetix.CoreProxy"]
 fromCall.func = "owner"
-func = "configureCollateral"
-args = [
-    { tokenAddress = "<%= imports.box_token.contracts.MintableToken.address %>", oracleNodeId = "<%= extras.box_oracle_id %>", issuanceRatioD18 = "<%= parseEther('2') %>", liquidationRatioD18 = "<%= parseEther('1.5') %>", liquidationRewardD18 = "<%= parseEther('1') %>", minDelegationD18 = "<%= parseEther('1') %>", depositingEnabled = true },
-]
+func = "configureCollateral" # args below
+
+[[invoke.configure_box_token_as_collateral.args]]
+tokenAddress = "<%= imports.box_token.contracts.MintableToken.address %>"
+oracleNodeId = "<%= extras.box_oracle_id %>"
+issuanceRatioD18 = "<%= parseEther('2') %>"
+liquidationRatioD18 = "<%= parseEther('1.5') %>"
+liquidationRewardD18 = "<%= parseEther('1') %>"
+minDelegationD18 = "<%= parseEther('1') %>"
+depositingEnabled = true
 
 #
 #

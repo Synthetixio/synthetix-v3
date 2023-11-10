@@ -137,12 +137,17 @@ args = [
 [invoke.commit_perps_eth_order]
 target = ["perps_sandbox.perps_factory.PerpsMarketProxy"]
 from = "<%= settings.test_user %>"
-func = "commitOrder"
-args = [
-    # eth price is $1000, acceptablePrice with 5% slippage: $1050
-    { marketId = "<%= imports.perps_sandbox.extras.perps_eth_market_id %>", accountId = "<%= extras.test_user_perps_account_id %>", sizeDelta = "<%= parseEther('1') %>", settlementStrategyId = "0", acceptablePrice = "<%= parseEther('1050') %>", referrer = "<%= AddressZero %>", trackingCode = "<%= HashZero %>" },
-]
+func = "commitOrder" # args below
 depends = ["invoke.deposit_100_susd_to_perps"]
+
+[[invoke.commit_perps_eth_order.args]]
+marketId = "<%= imports.perps_sandbox.extras.perps_eth_market_id %>"
+accountId = "<%= extras.test_user_perps_account_id %>"
+sizeDelta = "<%= parseEther('1') %>"
+settlementStrategyId = "0"
+acceptablePrice = "<%= parseEther(String(1000 * 1.05)) %>" # 5% slippage
+referrer = "<%= AddressZero %>"
+trackingCode = "<%= HashZero %>"
 
 [invoke.transfer_100_susd_to_another_user]
 target = ["perps_sandbox.synthetix.USDProxy"]
