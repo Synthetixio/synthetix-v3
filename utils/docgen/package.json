@@ -17,10 +17,5 @@
     "prettier": "^3.0.3",
     "solidity-ast": "^0.4.52",
     "solidity-docgen": "^0.6.0-beta.36"
-  },
-  "depcheck": {
-    "ignoreMatches": [
-      "@usecannon/cli"
-    ]
   }
 }

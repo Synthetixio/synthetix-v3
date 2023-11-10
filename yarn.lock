@@ -1004,9 +1004,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphprotocol/graph-cli@npm:^0.60.0":
-  version: 0.60.0
-  resolution: "@graphprotocol/graph-cli@npm:0.60.0"
+"@graphprotocol/graph-cli@npm:^0.61.0":
+  version: 0.61.0
+  resolution: "@graphprotocol/graph-cli@npm:0.61.0"
   dependencies:
     "@float-capital/float-subgraph-uncrashable": "npm:^0.0.0-alpha.4"
     "@oclif/core": "npm:2.8.6"
@@ -1038,7 +1038,7 @@ __metadata:
     yaml: "npm:1.10.2"
   bin:
     graph: bin/run
-  checksum: 6a8623a297dd625ca1ff11e1da59a6f8ffdacda6e007e2b73abf5cdfdef7db10563f3685e43025fa7f650c6583470b180393dc92837c17f4f44aac80d346392a
+  checksum: e592bca96c1f7d254d230c81e89948db43c12c54f4671cf0b0f26102cabd0ecc0faa9c4d29aa02b0b59e286b711a8683fb9334291a6237ba2029a771a791d412
   languageName: node
   linkType: hard
 
@@ -2870,7 +2870,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-subgraph@workspace:protocol/synthetix/subgraph"
   dependencies:
-    "@graphprotocol/graph-cli": "npm:^0.60.0"
+    "@graphprotocol/graph-cli": "npm:^0.61.0"
     "@graphprotocol/graph-ts": "npm:^0.31.0"
     "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
@@ -3030,7 +3030,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph"
   dependencies:
-    "@graphprotocol/graph-cli": "npm:^0.60.0"
+    "@graphprotocol/graph-cli": "npm:^0.61.0"
     "@graphprotocol/graph-ts": "npm:^0.31.0"
     "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
@@ -3099,7 +3099,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/spot-market-subgraph@workspace:markets/spot-market/subgraph"
   dependencies:
-    "@graphprotocol/graph-cli": "npm:^0.60.0"
+    "@graphprotocol/graph-cli": "npm:^0.61.0"
     "@graphprotocol/graph-ts": "npm:^0.31.0"
     "@usecannon/cli": "npm:^2.9.11-alpha.0"
     ethers: "npm:^5.7.2"
