@@ -29,7 +29,7 @@ defaultValue = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57
 #
 #
 [import.core_sandbox]
-source = "core-sandbox:1"
+source = "core-sandbox"
 
 #
 #
