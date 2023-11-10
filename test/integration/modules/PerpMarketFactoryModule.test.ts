@@ -127,6 +127,12 @@ describe('PerpMarketFactoryModule', () => {
     });
   });
 
+  it('getActiveMarketIds', async () => {
+    const { PerpMarketProxy } = systems();
+    const marketIds = await PerpMarketProxy.getActiveMarketIds();
+    assertBn.gt(marketIds.length, 1);
+  });
+
   describe('getMarketDigest', () => {
     describe('{fundingRate,fundingVelocity}', () => {
       const depostMarginToTraders = async (
