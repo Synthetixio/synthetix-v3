@@ -711,7 +711,7 @@ workflows:
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "InitialCoreProxy"
+          proxy: "Proxy"
           chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       - simulate-release:
@@ -719,7 +719,7 @@ workflows:
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "InitialProxy"
+          proxy: "Proxy"
           chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable after deployed
@@ -727,7 +727,7 @@ workflows:
       #    workspace: "@synthetixio/governance"
       #    cannonPackage: "governance"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
+      #    proxy: "Proxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable after v2x is updated
@@ -735,7 +735,7 @@ workflows:
       #    workspace: "@synthetixio/legacy-market"
       #    cannonPackage: "synthetix-legacy-market"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
+      #    proxy: "Proxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       - simulate-release:
@@ -743,7 +743,7 @@ workflows:
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "InitialProxy"
+          proxy: "Proxy"
           chains: "optimistic-mainnet optimistic-goerli"
 
       #- simulate-release: TODO: enable after deployed
@@ -751,7 +751,7 @@ workflows:
       #    workspace: "@synthetixio/perps-market"
       #    cannonPackage: "synthetix-perps-market"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
+      #    proxy: "Proxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
   docgen-contracts:
