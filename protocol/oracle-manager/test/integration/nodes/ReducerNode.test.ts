@@ -211,7 +211,7 @@ describe('ReducerNode', function () {
       ];
       await assertRevert(
         NodeModule.registerNode(NodeTypes.REDUCER, params, parents),
-        'UnprocessableNode',
+        'NodeNotRegistered',
         NodeModule
       );
     });

@@ -1,25 +1,43 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/NodeDefinition.sol";
-import "../storage/NodeOutput.sol";
+import {SafeCastBytes32} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {NodeDefinition} from "../storage/NodeDefinition.sol";
+import {NodeOutput} from "../storage/NodeOutput.sol";
 
 library StalenessCircuitBreakerNode {
-    // 0xff3259d0 == StalenessToleranceExceeded()
+    using SafeCastBytes32 for bytes32;
+
     error StalenessToleranceExceeded();
 
     function process(
-        NodeOutput.Data[] memory parentNodeOutputs,
-        bytes memory parameters
+        NodeDefinition.Data memory nodeDefinition,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
     ) internal view returns (NodeOutput.Data memory nodeOutput) {
-        uint256 stalenessTolerance = abi.decode(parameters, (uint256));
+        uint256 stalenessTolerance = abi.decode(nodeDefinition.parameters, (uint256));
 
-        if (block.timestamp - parentNodeOutputs[0].timestamp <= stalenessTolerance) {
-            return parentNodeOutputs[0];
-        } else if (parentNodeOutputs.length == 1) {
+        for (uint256 i = 0; i < runtimeKeys.length; i++) {
+            if (runtimeKeys[i] == "stalenessTolerance") {
+                stalenessTolerance = runtimeValues[i].toUint();
+                break;
+            }
+        }
+
+        bytes32 priceNodeId = nodeDefinition.parents[0];
+        NodeOutput.Data memory priceNodeOutput = NodeDefinition.process(
+            priceNodeId,
+            runtimeKeys,
+            runtimeValues
+        );
+
+        if (block.timestamp - priceNodeOutput.timestamp <= stalenessTolerance) {
+            return priceNodeOutput;
+        } else if (nodeDefinition.parents.length == 1) {
             revert StalenessToleranceExceeded();
         }
-        return parentNodeOutputs[1];
+        // If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
+        return NodeDefinition.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {

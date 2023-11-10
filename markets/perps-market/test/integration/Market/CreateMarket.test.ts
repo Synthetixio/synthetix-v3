@@ -1,5 +1,5 @@
 import { ethers, BigNumber } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { STRICT_PRICE_TOLERANCE, bn, bootstrapMarkets } from '../bootstrap';
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
@@ -131,7 +131,9 @@ describe('Create Market test', () => {
     describe('attempt to update price data with non-owner', () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(randomAccount).updatePriceData(marketId, oracleNodeId),
+          systems()
+            .PerpsMarket.connect(randomAccount)
+            .updatePriceData(marketId, oracleNodeId, STRICT_PRICE_TOLERANCE),
           'Unauthorized'
         );
       });
@@ -167,7 +169,9 @@ describe('Create Market test', () => {
 
     describe('when price data is updated', () => {
       before('update price data', async () => {
-        await systems().PerpsMarket.connect(owner()).updatePriceData(marketId, oracleNodeId);
+        await systems()
+          .PerpsMarket.connect(owner())
+          .updatePriceData(marketId, oracleNodeId, STRICT_PRICE_TOLERANCE);
       });
 
       describe('before setting up price data', () => {

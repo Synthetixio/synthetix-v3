@@ -39,7 +39,7 @@ describe('ModifyCollateral Deposit', () => {
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(synthBTCMarketId, ethers.constants.MaxUint256);
     });
 
     before('trader1 buys 1 snxBTC', async () => {

@@ -17,11 +17,6 @@ interface INodeModule {
     error InvalidNodeDefinition(NodeDefinition.Data nodeType);
 
     /**
-     * @notice Thrown when a node cannot be processed
-     */
-    error UnprocessableNode(bytes32 nodeId);
-
-    /**
      * @notice Emitted when `registerNode` is called.
      * @param nodeId The id of the registered node.
      * @param nodeType The nodeType assigned to this node.
