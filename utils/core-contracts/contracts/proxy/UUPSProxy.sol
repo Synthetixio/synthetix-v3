@@ -19,11 +19,6 @@ contract UUPSProxy is AbstractProxy, ProxyStorage {
         _proxyStore().implementation = firstImplementation;
     }
 
-    function forceFailure() public pure {
-        revert("ff");
-        //adding a function that should fail the simulate release
-    }
-
     function _getImplementation() internal view virtual override returns (address) {
         return _proxyStore().implementation;
     }
