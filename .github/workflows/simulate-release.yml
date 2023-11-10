@@ -94,7 +94,7 @@ jobs:
                 --upgrade-from ${{ matrix.cannonPackage }}:latest \
                 --impersonate ${{ matrix.impersonate }} | tee deployment.log
             
-            grep '💥 ${{ matrix.cannonPackage }} built on' deployment.log
+            grep '💥' deployment.log
             
             if [ $(grep -c '✔ Successfully deployed ${{ matrix.proxy }}' deployment.log) -gt 0 ]; then
               echo "Proxy ${{ matrix.proxy }} was modified"
