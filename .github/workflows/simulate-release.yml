@@ -17,14 +17,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        workspace: [
-            "@synthetixio/main",
-            "@synthetixio/oracle-manager",
-            # "@synthetixio/governance", TODO: enable after deployed
-            # "@synthetixio/legacy-market",  TODO: enable after v2x is updated
-            "@synthetixio/spot-market",
-            # "@synthetixio/perps-market", TODO: enable after deployed
-          ]
+        workspace: []
+        #"@synthetixio/main",
+        # "@synthetixio/oracle-manager",
+        # "@synthetixio/governance", TODO: enable after deployed
+        # "@synthetixio/legacy-market",  TODO: enable after v2x is updated
+        # "@synthetixio/spot-market",
+        # "@synthetixio/perps-market", TODO: enable after deployed
         include:
           - workspace: "@synthetixio/main"
             cannonPackage: "synthetix"
