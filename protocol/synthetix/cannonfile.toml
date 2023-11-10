@@ -116,7 +116,7 @@ contracts = [
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
-salt = "blah"
+salt = "<%= settings.salt %>"
 create2 = true
 
 [invoke.upgrade_core_proxy]

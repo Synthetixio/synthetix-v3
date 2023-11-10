@@ -22,7 +22,7 @@ create2 = true
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
-salt = "blah"
+salt = "<%= settings.salt %>"
 abiOf = ["CoreModule"]
 create2 = true
 
