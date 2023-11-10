@@ -53,7 +53,7 @@ artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
-salt = "<%= settings.salt %>"
+salt = "blah"
 
 # Core
 [router.SpotMarketRouter]

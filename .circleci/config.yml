@@ -497,7 +497,7 @@ jobs:
               
               grep '💥' deployment.log
               
-              if [ $(grep -c '✔ Successfully deployed << parameters.proxy >>' deployment.log) -gt 0 ]; then
+              if [ $(grep -c 'Successfully deployed << parameters.proxy >>' deployment.log) -gt 0 ]; then
                 echo "Proxy << parameters.proxy >> was modified"
                 exit 1
               fi
