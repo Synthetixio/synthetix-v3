@@ -495,9 +495,11 @@ jobs:
                   --upgrade-from << parameters.cannonPackage >>:latest \
                   --impersonate << parameters.impersonate >> | tee deployment.log
               
+              echo "grep '💥' deployment.log" 
               grep '💥' deployment.log
               
-              if [ $(grep -c 'Successfully deployed << parameters.proxy >>' deployment.log) -gt 0 ]; then
+              echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log" 
+              if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
                 echo "Proxy << parameters.proxy >> was modified"
                 exit 1
               fi
@@ -642,9 +644,9 @@ workflows:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
-      #- lint
-      #- size-contracts
-      #- check-packages
+      - lint
+      - size-contracts
+      - check-packages
 
       - build-testable
 
@@ -682,36 +684,36 @@ workflows:
       #    requires: [build-testable]
       #    workspace: "@synthetixio/legacy-market"
 
-      #- test-core-utils:
-      #    workspace: "@synthetixio/core-utils"
-      #    parallelism: 2
+      - test-core-utils:
+          workspace: "@synthetixio/core-utils"
+          parallelism: 2
 
-      #- test-core-modules:
-      #    workspace: "@synthetixio/core-modules"
-      #    parallelism: 1
+      - test-core-modules:
+          workspace: "@synthetixio/core-modules"
+          parallelism: 1
 
-      #- test-core-contracts:
-      #    workspace: "@synthetixio/core-contracts"
-      #    parallelism: 2
+      - test-core-contracts:
+          workspace: "@synthetixio/core-contracts"
+          parallelism: 2
 
-      #- test-subgraph:
-      #    name: "test-subgraph-core"
-      #    workspace: "@synthetixio/core-subgraph"
+      - test-subgraph:
+          name: "test-subgraph-core"
+          workspace: "@synthetixio/core-subgraph"
 
-      #- test-subgraph:
-      #    name: "test-subgraph-spot-market"
-      #    workspace: "@synthetixio/spot-market-subgraph"
+      - test-subgraph:
+          name: "test-subgraph-spot-market"
+          workspace: "@synthetixio/spot-market-subgraph"
 
-      #- test-subgraph:
-      #    name: "test-subgraph-perps-market"
-      #    workspace: "@synthetixio/perps-market-subgraph"
+      - test-subgraph:
+          name: "test-subgraph-perps-market"
+          workspace: "@synthetixio/perps-market-subgraph"
 
       - simulate-release:
           name: "simulate-release-main"
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "Proxy"
+          proxy: "contract.InitialCoreProxy"
           chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       - simulate-release:
@@ -719,7 +721,7 @@ workflows:
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "Proxy"
+          proxy: "contract.InitialProxy"
           chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable after deployed
@@ -727,7 +729,7 @@ workflows:
       #    workspace: "@synthetixio/governance"
       #    cannonPackage: "governance"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "Proxy"
+      #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable after v2x is updated
@@ -735,7 +737,7 @@ workflows:
       #    workspace: "@synthetixio/legacy-market"
       #    cannonPackage: "synthetix-legacy-market"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "Proxy"
+      #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       - simulate-release:
@@ -743,7 +745,7 @@ workflows:
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "Proxy"
+          proxy: "contract.InitialSpotMarketProxy"
           chains: "optimistic-mainnet optimistic-goerli"
 
       #- simulate-release: TODO: enable after deployed
@@ -751,7 +753,7 @@ workflows:
       #    workspace: "@synthetixio/perps-market"
       #    cannonPackage: "synthetix-perps-market"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "Proxy"
+      #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
   docgen-contracts:
