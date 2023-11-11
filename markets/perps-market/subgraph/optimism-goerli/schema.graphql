@@ -29,7 +29,6 @@ type Market @entity {
   maxLiquidationLimitAccumulationMultiplier: BigInt
   makerFee: BigInt
   takerFee: BigInt
-
   factoryInitialized: Boolean
 }
 
@@ -45,14 +44,12 @@ type Order @entity {
   expirationTime: BigInt
   trackingCode: Bytes
   owner: String
-
   fillPrice: BigInt
   accountPnlRealized: BigInt
   newSize: BigInt
   collectedFees: BigInt
   settlementReward: BigInt
   settler: String
-
   block: BigInt!
   timestamp: BigInt!
 }

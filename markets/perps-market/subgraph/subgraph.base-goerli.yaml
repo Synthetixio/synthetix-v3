@@ -60,6 +60,8 @@ dataSources:
             uint128,uint256,int256,int256,int128,int128,uint256,uint256,uint256,uint256,indexed
             bytes32,address)
           handler: handleOrderSettled
+        - event: OrderCancelled(indexed uint128, indexed uint128, uint256, uint256, int128, uint256, indexed bytes32, address)
+          handler: handleOrderCancelled
         - event: PreviousOrderExpired(indexed uint128,indexed
             uint128,int128,uint256,uint256,indexed bytes32)
           handler: handlePreviousOrderExpired
@@ -71,3 +73,5 @@ dataSources:
             CollateralModified(indexed uint128,indexed uint128,int256,indexed
             address)
           handler: handleCollateralModified
+        - event: CollateralDeducted(uint256,uint128,uint256)
+          handler: handleCollateralDeducted

@@ -29,7 +29,6 @@ type Market @entity {
   maxLiquidationLimitAccumulationMultiplier: BigInt
   makerFee: BigInt
   takerFee: BigInt
-
   factoryInitialized: Boolean
 }
 
@@ -45,14 +44,12 @@ type Order @entity {
   expirationTime: BigInt
   trackingCode: Bytes
   owner: String
-
   fillPrice: BigInt
   accountPnlRealized: BigInt
   newSize: BigInt
   collectedFees: BigInt
   settlementReward: BigInt
   settler: String
-
   block: BigInt!
   timestamp: BigInt!
 }
@@ -138,6 +135,18 @@ type OrderSettled @entity {
   totalFees: BigInt!
   referralFees: BigInt!
   collectedFees: BigInt!
+  settlementReward: BigInt!
+  trackingCode: Bytes!
+  settler: Bytes!
+}
+
+type OrderCancelled @entity {
+  id: ID!
+  marketId: BigInt!
+  accountId: BigInt!
+  desiredPrice: BigInt!
+  fillPrice: BigInt!
+  sizeDelta: BigInt!
   settlementReward: BigInt!
   trackingCode: Bytes!
   settler: Bytes!
