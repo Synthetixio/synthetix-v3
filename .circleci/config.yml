@@ -123,6 +123,7 @@ commands:
             markets/legacy-market/hardhat.config.ts \
             markets/legacy-market/cannonfile.toml \
             > /tmp/version--contracts.txt
+      - run: echo "Cannon $(yarn cannon --version)" >> /tmp/version--contracts.txt
       - run: cat /tmp/version--contracts.txt
 
   version-testable-contracts:
@@ -494,9 +495,11 @@ jobs:
                   --upgrade-from << parameters.cannonPackage >>:latest \
                   --impersonate << parameters.impersonate >> | tee deployment.log
               
-              grep 'Successfully built package << parameters.cannonPackage >>' deployment.log
+              echo "grep '💥' deployment.log" 
+              grep '💥' deployment.log
               
-              if [ $(grep -c 'exec: contract.<< parameters.proxy >>' deployment.log) -gt 0 ]; then
+              echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log" 
+              if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
                 echo "Proxy << parameters.proxy >> was modified"
                 exit 1
               fi
@@ -705,28 +708,28 @@ workflows:
           name: "test-subgraph-perps-market"
           workspace: "@synthetixio/perps-market-subgraph"
 
-      #- simulate-release:
-      #    name: "simulate-release-main"
-      #    workspace: "@synthetixio/main"
-      #    cannonPackage: "synthetix"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialCoreProxy"
-      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+      - simulate-release:
+          name: "simulate-release-main"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+          chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
-      #- simulate-release: TODO: enable when cannon has fixed RPC proxy
-      #    name: "simulate-release-oracle-manager"
-      #    workspace: "@synthetixio/oracle-manager"
-      #    cannonPackage: "oracle-manager"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
-      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+      - simulate-release:
+          name: "simulate-release-oracle-manager"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+          chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable after deployed
       #    name: "simulate-release-governance"
       #    workspace: "@synthetixio/governance"
       #    cannonPackage: "governance"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
+      #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable after v2x is updated
@@ -734,23 +737,23 @@ workflows:
       #    workspace: "@synthetixio/legacy-market"
       #    cannonPackage: "synthetix-legacy-market"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
+      #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
-      #- simulate-release: TODO: enable when cannon has fixed RPC proxy
-      #    name: "simulate-release-spot-market"
-      #    workspace: "@synthetixio/spot-market"
-      #    cannonPackage: "synthetix-spot-market"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
-      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+      - simulate-release:
+          name: "simulate-release-spot-market"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
+          chains: "optimistic-mainnet optimistic-goerli"
 
       #- simulate-release: TODO: enable after deployed
       #    name: "simulate-release-perps-market"
       #    workspace: "@synthetixio/perps-market"
       #    cannonPackage: "synthetix-perps-market"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "InitialProxy"
+      #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
   docgen-contracts:
