@@ -33,7 +33,7 @@
     "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
-    "hardhat": "^2.18.3",
+    "hardhat": "^2.19.0",
     "solidity-ast": "^0.4.52",
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.1"
