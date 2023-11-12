@@ -93,7 +93,7 @@ library GlobalPerpsMarketConfiguration {
         }
     }
 
-    function loadInterestRateParameters() internal view returns (uint256, uint256, uint256) {
+    function loadInterestRateParameters() internal view returns (uint128, uint128, uint128) {
         Data storage self = load();
         return (
             self.lowUtilizationInterestRateGradient,

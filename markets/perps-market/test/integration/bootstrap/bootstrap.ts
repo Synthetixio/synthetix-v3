@@ -98,6 +98,11 @@ type BootstrapArgs = {
     maxLiquidationReward: ethers.BigNumber;
     maxKeeperScalingRatioD18: ethers.BigNumber;
   };
+  interestRateParams?: {
+    lowUtilGradient: ethers.BigNumber;
+    gradientBreakpoint: ethers.BigNumber;
+    highUtilGradient: ethers.BigNumber;
+  };
   maxPositionsPerAccount?: ethers.BigNumber;
   maxCollateralsPerAccount?: ethers.BigNumber;
   skipKeeperCostOracleNode?: boolean;
@@ -182,6 +187,21 @@ export function bootstrapMarkets(data: BootstrapArgs) {
         );
     });
   }
+
+  const { interestRateParams } = data;
+  if (interestRateParams) {
+    before('set interest rate params', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setInterestRateParameters(
+          interestRateParams.lowUtilGradient,
+          interestRateParams.gradientBreakpoint,
+          interestRateParams.highUtilGradient
+        );
+    });
+  }
+
+  const restore = snapshotCheckpoint(provider);
 
   return {
     systems,

@@ -1,77 +1,226 @@
-import { DEFAULT_SETTLEMENT_STRATEGY, PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
+import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
+const _SECONDS_IN_YEAR = 31557600;
 
-const _SKEW_SCALE = bn(10_000);
-const _MAX_FUNDING_VELOCITY = bn(3);
-const _TRADER_SIZE = bn(20);
-const _ETH_PRICE = bn(2000);
+const _TRADER_SIZE = wei(20);
+const _ETH_PRICE = wei(2000);
+const _BTC_PRICE = wei(30_000);
+const _ETH_LOCKED_OI_RATIO = wei(1);
+const _BTC_LOCKED_OI_RATIO = wei(0.5);
 
-describe.only('Position - interest rates', () => {
-  const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
-    synthMarkets: [],
-    perpsMarkets: [
-      {
-        requestedMarketId: 25,
-        name: 'Ether',
-        token: 'snxETH',
-        price: _ETH_PRICE,
-        fundingParams: { skewScale: _SKEW_SCALE, maxFundingVelocity: bn(3) },
+const _TRADER1_LOCKED_OI = _TRADER_SIZE.mul(_ETH_PRICE).mul(_ETH_LOCKED_OI_RATIO);
+
+const interestRateParams = {
+  lowUtilGradient: wei(0.0003),
+  gradientBreakpoint: wei(0.75),
+  highUtilGradient: wei(0.01),
+};
+
+const calculateInterestRate = (
+  utilRate: Wei,
+  {
+    lowUtilGradient,
+    gradientBreakpoint,
+    highUtilGradient,
+  }: {
+    lowUtilGradient: Wei;
+    gradientBreakpoint: Wei;
+    highUtilGradient: Wei;
+  }
+) => {
+  return (
+    utilRate.lt(gradientBreakpoint)
+      ? utilRate.mul(lowUtilGradient)
+      : lowUtilGradient
+          .mul(gradientBreakpoint)
+          .add(utilRate.sub(gradientBreakpoint).mul(highUtilGradient))
+  ).mul(100);
+};
+
+const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR);
+
+describe('Position - interest rates', () => {
+  const { systems, perpsMarkets, superMarketId, provider, trader1, trader2, keeper } =
+    bootstrapMarkets({
+      interestRateParams: {
+        lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
+        gradientBreakpoint: interestRateParams.gradientBreakpoint.toBN(),
+        highUtilGradient: interestRateParams.highUtilGradient.toBN(),
       },
-    ],
-    traderAccountIds: [2, 3],
-  });
+      synthMarkets: [],
+      perpsMarkets: [
+        {
+          lockedOiRatioD18: _ETH_LOCKED_OI_RATIO.toBN(),
+          requestedMarketId: 25,
+          name: 'Ether',
+          token: 'snxETH',
+          price: _ETH_PRICE.toBN(),
+        },
+        {
+          lockedOiRatioD18: _BTC_LOCKED_OI_RATIO.toBN(),
+          requestedMarketId: 50,
+          name: 'Bitcoin',
+          token: 'snxBTC',
+          price: _BTC_PRICE.toBN(),
+        },
+      ],
+      traderAccountIds: [2, 3],
+    });
 
-  let ethMarket: PerpsMarket;
+  let ethMarket: PerpsMarket, btcMarket: PerpsMarket;
+
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
+    btcMarket = perpsMarkets()[1];
   });
 
   before('add collateral to margin', async () => {
-    // trader accruing funding
     await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(50_000));
-    // trader moving skew
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(1_000_000));
+    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(200_000));
   });
 
-  let openPositionTime: number;
+  const checkMarketInterestRate = () => {
+    it('has correct interest rate', async () => {
+      const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
+      const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
+      const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
+      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId()));
+
+      const utilRate = minCredit.div(delegatedCollateral);
+      const currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
+      assertBn.near(
+        await systems().PerpsMarket.interestRate(),
+        currentInterestRate.toBN(),
+        bn(0.0001)
+      );
+      assertBn.near(await systems().PerpsMarket.utilizationRate(), utilRate.toBN(), bn(0.0001));
+    });
+  };
+
+  let trader1OpenPositionTime: number, trader2OpenPositionTime: number;
+  // trader 1
   before('open 20 eth position', async () => {
-    ({ settleTime: openPositionTime } = await openPosition({
+    ({ settleTime: trader1OpenPositionTime } = await openPosition({
       systems,
       provider,
       trader: trader1(),
       accountId: 2,
       keeper: keeper(),
       marketId: ethMarket.marketId(),
-      sizeDelta: _TRADER_SIZE,
+      sizeDelta: _TRADER_SIZE.toBN(),
       settlementStrategyId: ethMarket.strategyId(),
-      price: bn(2000),
+      price: _ETH_PRICE.toBN(),
     }));
   });
 
-  /*
-    +------------------------------------------------------------------------------------+
-    | Days elapsed |   Time   | Δ Skew | Skew | FR Velocity |    FR    | Accrued Funding |
-    +------------------------------------------------------------------------------------+
-    |      0       |    0     |   0    |  20  |    0.006    |    0     |       0         |
-    |      1       |  86400   |  -60   | -40  |    -0.012   |  0.006   |      120        |
-    |      1       | 172800   |   15   | -25  |   -0.0075   |  -0.006  |      120        |
-    |     0.25     | 194400   |   37   |  12  |    0.0036   | -0.007875|     50.625      |
-    |      2       | 367200   |  -17   |  -5  |   -0.0015   | -0.000675|    -291.375     |
-    |     0.2      | 384480   |  155   | 150  |    0.045    | -0.000975|    -297.975     |
-    |     0.1      | 393120   | -150   |   0  |      0      | 0.003525 |    -292.875     |
-    |     0.1      | 401760   |  -15   | -15  |   -0.0045   | 0.003525 |    -278.775     |
-    |     0.03     | 404352   |   -4   | -19  |   -0.0057   |  0.00339 |    -274.626     |
-    |      3       | 663552   |   19   |   0  |      0      | -0.01371 |    -893.826     |
-    +------------------------------------------------------------------------------------+
-  */
+  checkMarketInterestRate();
 
-  it('works', async () => {
-    console.log(await systems().PerpsMarket.size(ethMarket.marketId()));
-    console.log(await systems().Core.getWithdrawableMarketUsd(ethMarket.marketId()));
+  let trader1InterestAccumulated: Wei = wei(0),
+    lastTimeInterestAccrued: number;
+
+  describe('a day passes by', () => {
+    before('fast forward time', async () => {
+      await fastForwardTo(trader1OpenPositionTime + _SECONDS_IN_DAY, provider());
+    });
+
+    describe('check trader 1 interest', () => {
+      it('has correct interest rate', async () => {
+        const { chargedInterest } = await systems().PerpsMarket.getOpenPosition(
+          2,
+          ethMarket.marketId()
+        );
+        const expectedInterest = _TRADER1_LOCKED_OI
+          .mul(wei(await systems().PerpsMarket.interestRate()))
+          .mul(proportionalTime(_SECONDS_IN_DAY));
+        trader1InterestAccumulated = trader1InterestAccumulated.add(chargedInterest);
+        lastTimeInterestAccrued = trader1OpenPositionTime + _SECONDS_IN_DAY;
+        assertBn.near(chargedInterest, expectedInterest.toBN(), bn(0.0001));
+      });
+    });
+  });
+
+  let newPositionSize = 0;
+  [
+    { size: -10, time: _SECONDS_IN_DAY },
+    { size: 115, time: _SECONDS_IN_DAY },
+    { size: -70, time: _SECONDS_IN_DAY * 0.25 },
+    { size: -25, time: _SECONDS_IN_DAY * 2 },
+    { size: 5, time: _SECONDS_IN_DAY * 0.1 },
+  ].forEach(({ size, time }) => {
+    describe('new trader enters', () => {
+      let previousMarketInterestRate: Wei;
+      before('identify interest rate', async () => {
+        previousMarketInterestRate = wei(await systems().PerpsMarket.interestRate());
+      });
+
+      before('trader2 changes OI', async () => {
+        newPositionSize += size;
+        ({ settleTime: trader2OpenPositionTime } = await openPosition({
+          systems,
+          provider,
+          trader: trader2(),
+          accountId: 3,
+          keeper: keeper(),
+          marketId: btcMarket.marketId(),
+          sizeDelta: bn(size),
+          settlementStrategyId: btcMarket.strategyId(),
+          price: _BTC_PRICE.toBN(),
+        }));
+      });
+
+      before('accumulate trader 1 interest', async () => {
+        const timeSinceLastAccrued = trader2OpenPositionTime - lastTimeInterestAccrued;
+        // track interest accrued during new order
+        const newInterestAccrued = _TRADER1_LOCKED_OI
+          .mul(previousMarketInterestRate)
+          .mul(proportionalTime(timeSinceLastAccrued));
+        trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
+      });
+
+      checkMarketInterestRate();
+    });
+
+    describe(`${time} seconds pass`, () => {
+      let normalizedTime: Wei;
+      before('fast forward time', async () => {
+        await fastForwardTo(trader2OpenPositionTime + time, provider());
+
+        const blockTime = await getTime(provider());
+        lastTimeInterestAccrued = blockTime;
+        normalizedTime = proportionalTime(blockTime - trader2OpenPositionTime);
+      });
+
+      it('accrued correct interest for trader 1', async () => {
+        const { chargedInterest } = await systems().PerpsMarket.getOpenPosition(
+          2,
+          ethMarket.marketId()
+        );
+
+        const newInterestAccrued = _TRADER1_LOCKED_OI
+          .mul(wei(await systems().PerpsMarket.interestRate()))
+          .mul(normalizedTime);
+        trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
+        assertBn.near(chargedInterest, trader1InterestAccumulated.toBN(), bn(0.0001));
+      });
+
+      it('accrued correct interest for trader 2', async () => {
+        const { chargedInterest } = await systems().PerpsMarket.getOpenPosition(
+          3,
+          btcMarket.marketId()
+        );
+
+        const trader2Oi = wei(Math.abs(newPositionSize)).mul(_BTC_PRICE).mul(_BTC_LOCKED_OI_RATIO);
+
+        const expectedInterest = trader2Oi
+          .mul(wei(await systems().PerpsMarket.interestRate()))
+          .mul(normalizedTime);
+        assertBn.near(chargedInterest, expectedInterest.toBN(), bn(0.00001));
+      });
+    });
   });
 });

@@ -102,15 +102,25 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function getOpenPosition(
         uint128 accountId,
         uint128 marketId
-    ) external view override returns (int256 totalPnl, int256 accruedFunding, int128 positionSize) {
+    )
+        external
+        view
+        override
+        returns (
+            int256 totalPnl,
+            uint256 chargedInterest,
+            int256 accruedFunding,
+            int128 positionSize
+        )
+    {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
         Position.Data storage position = perpsMarket.positions[accountId];
 
-        (, totalPnl, , accruedFunding, , ) = position.getPositionData(
+        (, totalPnl, , chargedInterest, accruedFunding, , ) = position.getPositionData(
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
-        return (totalPnl, accruedFunding, position.size);
+        return (totalPnl, chargedInterest, accruedFunding, position.size);
     }
 
     /**

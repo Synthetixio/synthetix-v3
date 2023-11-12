@@ -46,6 +46,15 @@ interface IGlobalPerpsMarketModule {
     event ReferrerShareUpdated(address referrer, uint256 shareRatioD18);
 
     /**
+     * @notice TODO
+     */
+    event InterestRateParametersSet(
+        uint256 lowUtilizationInterestRateGradient,
+        uint256 interestRateGradientBreakpoint,
+        uint256 highUtilizationInterestRateGradient
+    );
+
+    /**
      * @notice Gets fired when the max number of Positions and Collaterals per Account are set by owner.
      * @param maxPositionsPerAccount The max number of concurrent Positions per Account
      * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
@@ -207,4 +216,31 @@ interface IGlobalPerpsMarketModule {
      * @return marketIds an array of existing market ids
      */
     function getMarkets() external view returns (uint256[] memory marketIds);
+
+    /**
+     * @notice Sets the interest rate parameters
+     * @param lowUtilizationInterestRateGradient TODO
+     * @param interestRateGradientBreakpoint TODO
+     * @param highUtilizationInterestRateGradient TODO
+     */
+    function setInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 interestRateGradientBreakpoint,
+        uint128 highUtilizationInterestRateGradient
+    ) external;
+
+    /**
+     * @notice Gets the interest rate parameters
+     * @return lowUtilizationInterestRateGradient TODO
+     * @return interestRateGradientBreakpoint TODO
+     * @return highUtilizationInterestRateGradient TODO
+     */
+    function getInterestRateParameters()
+        external
+        view
+        returns (
+            uint128 lowUtilizationInterestRateGradient,
+            uint128 interestRateGradientBreakpoint,
+            uint128 highUtilizationInterestRateGradient
+        );
 }

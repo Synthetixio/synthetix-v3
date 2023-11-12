@@ -10,6 +10,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {Flags} from "../utils/Flags.sol";
+import {InterestRate} from "../storage/InterestRate.sol";
 import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
@@ -115,7 +116,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         if (factory.perpsMarketId == perpsMarketId) {
             // debt is the total debt of all markets
             // can be computed as total collateral value - sum_each_market( debt )
-            uint totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
+            uint collateralValue = GlobalPerpsMarket.load().totalCollateralValue();
             int totalMarketDebt;
 
             SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
@@ -127,7 +128,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 );
             }
 
-            int totalDebt = totalCollateralValue.toInt() + totalMarketDebt;
+            int totalDebt = collateralValue.toInt() + totalMarketDebt;
             return totalDebt < 0 ? 0 : totalDebt.toUint();
         }
 
@@ -145,6 +146,20 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         }
 
         return 0;
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketFactoryModule
+     */
+    function interestRate() external view override returns (uint128) {
+        return InterestRate.load().interestRate;
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketFactoryModule
+     */
+    function utilizationRate() external view override returns (uint256 rate) {
+        return PerpsMarketFactory.load().utilizationRate();
     }
 
     /**

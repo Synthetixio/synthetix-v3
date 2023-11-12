@@ -104,13 +104,13 @@ library PerpsMarketFactory {
         }
     }
 
-    function utilizationRate(Data storage self) internal view returns (uint256 utilization) {
+    function utilizationRate(Data storage self) internal view returns (uint128) {
         uint256 withdrawableUsd = self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
         uint256 totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
 
         uint256 delegatedCollateralValue = withdrawableUsd - totalCollateralValue;
         uint256 minimumCredit = calculateMinimumCredit();
 
-        return minimumCredit.divDecimal(delegatedCollateralValue);
+        return minimumCredit.divDecimal(delegatedCollateralValue).to128();
     }
 }

@@ -263,9 +263,7 @@ library PerpsAccount {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (int pnl, , , , ) = position.getPnl(
-                PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
-            );
+            (int pnl, , , , , ) = position.getPnl(PerpsPrice.getCurrentPrice(marketId, stalenessTolerance));
             totalPnl += pnl;
         }
     }
@@ -287,9 +285,13 @@ library PerpsAccount {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
+<<<<<<< HEAD
             (uint openInterest, , , , , ) = position.getPositionData(
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
+=======
+            uint openInterest = position.getNotionalValue(PerpsPrice.getCurrentPrice(marketId));
+>>>>>>> 47490693 (init)
             totalAccountOpenInterest += openInterest;
         }
     }
@@ -531,7 +533,6 @@ library PerpsAccount {
         Position.Data storage position = perpsMarket.positions[self.id];
 
         perpsMarket.recomputeFunding(price);
-        InterestRate.update();
 
         int128 oldPositionSize = position.size;
         oldPositionAbsSize = MathUtil.abs128(oldPositionSize);
@@ -554,6 +555,7 @@ library PerpsAccount {
                 marketId: marketId,
                 latestInteractionPrice: price.to128(),
                 latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
+                latestInterestAccrued: 0,
                 size: newPositionSize
             });
         }

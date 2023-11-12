@@ -86,7 +86,9 @@ contract AsyncOrderSettlementPythModule is
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
-        (runtime.pnl, , runtime.accruedFunding, , ) = oldPosition.getPnl(runtime.fillPrice);
+        (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
+            runtime.fillPrice
+        );
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
@@ -117,12 +119,16 @@ contract AsyncOrderSettlementPythModule is
         if (runtime.amountToDeduct > 0) {
             (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) = perpsAccount
                 .deductFromAccount(runtime.amountToDeduct);
-            for (uint256 i = 0; i < deductedSynthIds.length; i++) {
-                if (deductedAmount[i] > 0) {
+            for (
+                runtime.synthDeductionIterator = 0;
+                runtime.synthDeductionIterator < deductedSynthIds.length;
+                runtime.synthDeductionIterator++
+            ) {
+                if (deductedAmount[runtime.synthDeductionIterator] > 0) {
                     emit CollateralDeducted(
                         runtime.accountId,
-                        deductedSynthIds[i],
-                        deductedAmount[i]
+                        deductedSynthIds[runtime.synthDeductionIterator],
+                        deductedAmount[runtime.synthDeductionIterator]
                     );
                 }
             }
@@ -153,13 +159,13 @@ contract AsyncOrderSettlementPythModule is
             runtime.accountId,
             runtime.fillPrice,
             runtime.pnl,
+            runtime.chargedInterest,
             runtime.accruedFunding,
             runtime.sizeDelta,
             runtime.newPositionSize,
             runtime.totalFees,
             runtime.referralFees,
             runtime.feeCollectorFees,
-            runtime.settlementReward,
             asyncOrder.request.trackingCode,
             ERC2771Context._msgSender()
         );

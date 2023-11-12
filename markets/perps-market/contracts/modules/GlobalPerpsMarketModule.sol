@@ -246,4 +246,44 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         maxPositionsPerAccount = store.maxPositionsPerAccount;
         maxCollateralsPerAccount = store.maxCollateralsPerAccount;
     }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 interestRateGradientBreakpoint,
+        uint128 highUtilizationInterestRateGradient
+    ) external override {
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        store.lowUtilizationInterestRateGradient = lowUtilizationInterestRateGradient;
+        store.interestRateGradientBreakpoint = interestRateGradientBreakpoint;
+        store.highUtilizationInterestRateGradient = highUtilizationInterestRateGradient;
+
+        emit InterestRateParametersSet(
+            lowUtilizationInterestRateGradient,
+            interestRateGradientBreakpoint,
+            highUtilizationInterestRateGradient
+        );
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getInterestRateParameters()
+        external
+        view
+        override
+        returns (
+            uint128 lowUtilizationInterestRateGradient,
+            uint128 interestRateGradientBreakpoint,
+            uint128 highUtilizationInterestRateGradient
+        )
+    {
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        lowUtilizationInterestRateGradient = store.lowUtilizationInterestRateGradient;
+        interestRateGradientBreakpoint = store.interestRateGradientBreakpoint;
+        highUtilizationInterestRateGradient = store.highUtilizationInterestRateGradient;
+    }
 }

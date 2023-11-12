@@ -239,7 +239,7 @@ library PerpsMarket {
         self.skew += newPositionSize - oldPositionSize;
 
         uint currentPrice = newPosition.latestInteractionPrice;
-        (int totalPositionPnl, , , , ) = oldPosition.getPnl(currentPrice);
+        (int totalPositionPnl, , , , , ) = oldPosition.getPnl(currentPrice);
 
         int sizeDelta = newPositionSize - oldPositionSize;
         int fundingDelta = calculateNextFunding(self, currentPrice).mulDecimal(sizeDelta);
@@ -249,10 +249,9 @@ library PerpsMarket {
         // by adding the new updated notional (old - new size) plus old position pnl
         self.debtCorrectionAccumulator += fundingDelta + notionalDelta + totalPositionPnl;
 
-        oldPosition.update(newPosition);
+        oldPosition.update(newPosition, InterestRate.update());
 
         // after position is updated, update the market interest rate since OI has changed
-        InterestRate.update();
 
         return
             MarketUpdate.Data(
