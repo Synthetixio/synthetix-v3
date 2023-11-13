@@ -16,7 +16,7 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 
-describe('OrderModule Cancellations', () => {
+describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
   const { systems, restore, provider, keeper, traders } = bs;
 
@@ -79,7 +79,7 @@ describe('OrderModule Cancellations', () => {
     it('should revert when order does not exists', async () => {
       const { PerpMarketProxy } = systems();
 
-      const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+      const { trader, marketId } = await genTrader(bs);
       const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
       const { updateData } = await getPythPriceData(bs, marketId, publishTime);
@@ -109,12 +109,8 @@ describe('OrderModule Cancellations', () => {
 
     it('should revert if onchain and pyth price exceeds priceDivergencePercent', async () => {
       const { PerpMarketProxy } = systems();
-      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredTrader: tradersGenerator.next().value })
-      );
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       await PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -153,6 +149,7 @@ describe('OrderModule Cancellations', () => {
         PerpMarketProxy
       );
     });
+    it('should revert when price update from pyth is invalid');
 
     it('should revert if stale order is cancelled by non owner', async () => {
       const { PerpMarketProxy } = systems();

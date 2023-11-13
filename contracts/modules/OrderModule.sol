@@ -320,7 +320,7 @@ contract OrderModule is IOrderModule {
                 revert ErrorUtil.StaleOrder();
             }
         } else {
-            // Order is ready and not stale, check if price tolerance is exceeded
+            // Order is within settlement window. Check if price tolerance has exceeded
 
             uint256 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
