@@ -83,7 +83,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
      * @inheritdoc IPerpsAccountModule
      */
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
-        return PerpsAccount.load(accountId).getTotalCollateralValue();
+        return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**
@@ -105,7 +105,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         Position.Data storage position = perpsMarket.positions[accountId];
 
         (, totalPnl, , accruedFunding, , ) = position.getPositionData(
-            PerpsPrice.getCurrentPrice(marketId)
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
         return (totalPnl, accruedFunding, position.size);
     }
@@ -116,7 +116,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function getAvailableMargin(
         uint128 accountId
     ) external view override returns (int256 availableMargin) {
-        availableMargin = PerpsAccount.load(accountId).getAvailableMargin();
+        availableMargin = PerpsAccount.load(accountId).getAvailableMargin(
+            PerpsPrice.Tolerance.DEFAULT
+        );
     }
 
     /**
@@ -126,9 +128,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin();
+        int256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
         (uint256 initialRequiredMargin, , uint256 liquidationReward) = account
-            .getAccountRequiredMargins();
+            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
         uint256 requiredMargin = initialRequiredMargin + liquidationReward;
 
@@ -156,7 +158,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         }
 
         (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = account
-            .getAccountRequiredMargins();
+            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
         // Include liquidation rewards to required initial margin and required maintenance margin
         requiredInitialMargin += maxLiquidationReward;

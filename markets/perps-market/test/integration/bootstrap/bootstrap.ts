@@ -66,7 +66,7 @@ export function bootstrap() {
 
   before('set snxUSD limit to max', async () => {
     // set max collateral amt for snxUSD to maxUINT
-    await contracts.PerpsMarket.connect(getSigners()[0]).setMaxCollateralAmount(
+    await contracts.PerpsMarket.connect(getSigners()[0]).setCollateralConfiguration(
       0, // snxUSD
       ethers.constants.MaxUint256
     );
@@ -129,7 +129,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
+        .setCollateralConfiguration(marketId(), ethers.constants.MaxUint256);
     }
   });
 

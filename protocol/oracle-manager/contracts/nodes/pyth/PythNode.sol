@@ -4,9 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "../storage/NodeDefinition.sol";
-import "../storage/NodeOutput.sol";
-import "../interfaces/external/IPyth.sol";
+import "../../storage/NodeDefinition.sol";
+import "../../storage/NodeOutput.sol";
+import "../../interfaces/external/IPyth.sol";
 
 library PythNode {
     using DecimalMath for int64;
