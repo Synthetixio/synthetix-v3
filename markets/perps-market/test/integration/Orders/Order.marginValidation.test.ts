@@ -174,18 +174,17 @@ describe('Orders - margin validation', () => {
 
     it('reverts if not enough margin', async () => {
       // previous order margins
-      const { maintenanceMargin: ethMaintMargin, liquidationMargin: ethLiqMargin } =
-        requiredMargins(
-          {
-            initialMarginRatio: liqParams.eth.imRatio,
-            minimumInitialMarginRatio: liqParams.eth.minIm,
-            maintenanceMarginScalar: liqParams.eth.mmScalar,
-            liquidationRewardRatio: liqParams.eth.liqRatio,
-          },
-          wei(3),
-          wei(2000),
-          wei(10_000)
-        );
+      const { initialMargin: ethInitialMargin, liquidationMargin: ethLiqMargin } = requiredMargins(
+        {
+          initialMarginRatio: liqParams.eth.imRatio,
+          minimumInitialMarginRatio: liqParams.eth.minIm,
+          maintenanceMarginScalar: liqParams.eth.mmScalar,
+          liquidationRewardRatio: liqParams.eth.liqRatio,
+        },
+        wei(3),
+        wei(2000),
+        wei(10_000)
+      );
 
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
@@ -208,7 +207,7 @@ describe('Orders - margin validation', () => {
         }
       );
 
-      const totalRequiredMargin = ethMaintMargin
+      const totalRequiredMargin = ethInitialMargin
         .add(btcInitialMargin)
         .add(liqReward)
         .add(orderFees);
@@ -270,18 +269,17 @@ describe('Orders - margin validation', () => {
 
     it('reverts if not enough margin', async () => {
       // previous order margins
-      const { maintenanceMargin: ethMaintMargin, liquidationMargin: ethLiqMargin } =
-        requiredMargins(
-          {
-            initialMarginRatio: liqParams.eth.imRatio,
-            minimumInitialMarginRatio: liqParams.eth.minIm,
-            maintenanceMarginScalar: liqParams.eth.mmScalar,
-            liquidationRewardRatio: liqParams.eth.liqRatio,
-          },
-          wei(3),
-          wei(2000),
-          wei(10_000)
-        );
+      const { initialMargin: ethInitialMargin, liquidationMargin: ethLiqMargin } = requiredMargins(
+        {
+          initialMarginRatio: liqParams.eth.imRatio,
+          minimumInitialMarginRatio: liqParams.eth.minIm,
+          maintenanceMarginScalar: liqParams.eth.mmScalar,
+          liquidationRewardRatio: liqParams.eth.liqRatio,
+        },
+        wei(3),
+        wei(2000),
+        wei(10_000)
+      );
 
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
@@ -304,7 +302,7 @@ describe('Orders - margin validation', () => {
         }
       );
 
-      const totalRequiredMargin = ethMaintMargin
+      const totalRequiredMargin = ethInitialMargin
         .add(btcInitialMargin)
         .add(liqReward)
         .add(orderFees);

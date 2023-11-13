@@ -258,7 +258,7 @@ library AsyncOrder {
         int128 newPositionSize;
         uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint256 requiredMaintenanceMargin;
+        uint256 requiredInitialMargin;
         uint256 initialRequiredMargin;
         uint256 totalRequiredMargin;
         Position.Data newPosition;
@@ -296,8 +296,8 @@ library AsyncOrder {
         (
             isEligible,
             runtime.currentAvailableMargin,
+            runtime.requiredInitialMargin,
             ,
-            runtime.requiredMaintenanceMargin,
             runtime.currentLiquidationReward
         ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
 
@@ -355,7 +355,7 @@ library AsyncOrder {
                 oldPosition.size,
                 runtime.newPositionSize,
                 runtime.fillPrice,
-                runtime.requiredMaintenanceMargin
+                runtime.requiredInitialMargin
             ) +
             runtime.orderFees;
 
@@ -528,7 +528,7 @@ library AsyncOrder {
         int128 oldPositionSize,
         int128 newPositionSize,
         uint256 fillPrice,
-        uint256 currentTotalMaintenanceMargin
+        uint256 currentTotalInitialMargin
     ) internal view returns (uint256) {
         RequiredMarginWithNewPositionRuntime memory runtime;
         // get initial margin requirement for the new position
@@ -538,7 +538,7 @@ library AsyncOrder {
         );
 
         // get maintenance margin of old position
-        (, , , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
+        (, , runtime.oldRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             oldPositionSize,
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
@@ -546,7 +546,7 @@ library AsyncOrder {
         // remove the maintenance margin and add the initial margin requirement
         // this gets us our total required margin for new position
         runtime.requiredMarginForNewPosition =
-            currentTotalMaintenanceMargin +
+            currentTotalInitialMargin +
             runtime.newRequiredMargin -
             runtime.oldRequiredMargin;
 

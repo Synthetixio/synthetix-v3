@@ -124,7 +124,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (, uint256 currentMaintenanceMargin, ) = account.getAccountRequiredMargins(
+        (uint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
             PerpsPrice.Tolerance.DEFAULT
         );
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta);
@@ -137,7 +137,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 oldPosition.size,
                 oldPosition.size + sizeDelta,
                 fillPrice,
-                currentMaintenanceMargin
+                currentInitialMargin
             ) + orderFees;
     }
 
