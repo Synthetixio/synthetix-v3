@@ -1,5 +1,5 @@
 name = "perps-sandbox"
-version = "1"
+version = "2"
 description = "Sandbox environment for development with perps"
 
 [setting.owner]
