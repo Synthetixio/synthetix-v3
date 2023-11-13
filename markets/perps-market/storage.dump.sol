@@ -432,8 +432,20 @@ library OrderFees {
     }
 }
 
-// @custom:artifact contracts/interfaces/IAsyncOrderSettlementModule.sol:IAsyncOrderSettlementModule
-interface IAsyncOrderSettlementModule {
+// @custom:artifact contracts/interfaces/IAsyncOrderCancelModule.sol:IAsyncOrderCancelModule
+interface IAsyncOrderCancelModule {
+    struct CancelOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 sizeDelta;
+        uint256 settlementReward;
+        uint256 fillPrice;
+        uint256 acceptablePrice;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IAsyncOrderSettlementPythModule.sol:IAsyncOrderSettlementPythModule
+interface IAsyncOrderSettlementPythModule {
     struct SettleOrderRuntime {
         uint128 marketId;
         uint128 accountId;
@@ -478,11 +490,6 @@ interface IPythVerifier {
         Price price;
         Price emaPrice;
     }
-}
-
-// @custom:artifact contracts/modules/AsyncOrderSettlementModule.sol:AsyncOrderSettlementModule
-contract AsyncOrderSettlementModule {
-    int256 public constant PRECISION = 18;
 }
 
 // @custom:artifact contracts/modules/PerpsMarketFactoryModule.sol:PerpsMarketFactoryModule
@@ -725,4 +732,9 @@ library SettlementStrategy {
         uint256 settlementReward;
         bool disabled;
     }
+}
+
+// @custom:artifact contracts/utils/OffchainUtil.sol:OffchainUtil
+library OffchainUtil {
+    int256 private constant PRECISION = 18;
 }
