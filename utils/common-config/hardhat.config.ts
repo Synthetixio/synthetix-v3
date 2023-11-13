@@ -16,14 +16,32 @@ import '@synthetixio/hardhat-storage';
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
+const lockedConfig = {
+  version: '0.8.17',
+  settings: {
+    optimizer: {
+      enabled: false,
+      runs: 200,
+    },
+  },
+};
+
 const config = {
   solidity: {
-    version: '0.8.17',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: '0.8.22',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
+    ],
+    overrides: {
+      'contracts/Proxy.sol': lockedConfig,
+      'contracts/modules/CoreModule.sol': lockedConfig,
     },
   },
   defaultNetwork: 'cannon',

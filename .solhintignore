@@ -5,6 +5,7 @@ node_modules/
 **/contracts/routers
 \*\*/typechain-types
 utils/core-contracts/contracts/utils/SafeCast
+storage.dump.sol
 
 # files that we cannot change due to immutable proxies
 
@@ -12,4 +13,3 @@ utils/core-contracts/contracts/utils/SafeCast
 utils/core-modules/contracts/modules/UpgradeModule.sol
 utils/core-contracts/contracts/ownership/Ownable.sol
 utils/core-contracts/contracts/ownership/OwnableStorage.sol
-storage.dump.sol

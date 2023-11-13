@@ -9,20 +9,14 @@ export function verifyUsesFeatureFlag(
   txn: () => Promise<unknown>
 ) {
   describe(`when ${flagName} feature disabled`, () => {
-    before('disable feature', async () => {
-      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), true);
-    });
-
-    after('re-enable feature', async () => {
-      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), false);
-    });
-
     it('it fails with feature unavailable', async () => {
+      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), true);
       await assertRevert(
         txn(),
         `FeatureUnavailable("${ethers.utils.formatBytes32String(flagName)}")`,
         c()
       );
+      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), false);
     });
   });
 }
