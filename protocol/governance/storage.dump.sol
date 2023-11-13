@@ -232,7 +232,7 @@ library Election {
         uint numEvaluatedBallots;
         SetUtil.AddressSet nominees;
         SetUtil.AddressSet winners;
-        bytes32[] ballotPtrs;
+        SetUtil.Bytes32Set ballotPtrs;
         mapping(address => uint256) candidateVoteTotals;
     }
     function load(uint epochIndex) internal pure returns (Data storage election) {
