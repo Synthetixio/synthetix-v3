@@ -39,4 +39,4 @@ releaseVersion="latest"
 #codegen optimism-mainnet 10 "synthetix-perps-market:$releaseVersion" main
 codegen optimism-goerli 420 "synthetix-perps-market:$releaseVersion" main
 #codegen base-goerli 84531 "synthetix-perps-market:$releaseVersion" main
-codegen base-goerli-competition 84531 "synthetix-perps-market:latest" competition
+codegen base-goerli 84531 "synthetix-perps-market:$releaseVersion" main
