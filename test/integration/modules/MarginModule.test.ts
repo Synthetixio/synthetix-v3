@@ -555,6 +555,42 @@ describe('MarginModule', async () => {
         await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
       });
 
+      it('should allow withdraw of collateral when collateral maxAllowable is 0', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+
+        await PerpMarketProxy.setCollateralConfiguration(
+          configuredCollaterals.map((x) => x.synthMarketId),
+          // Set maxAllowable to 0 for all collaterals
+          configuredCollaterals.map((_) => BigNumber.from(0))
+        );
+
+        // Perform the withdraw (full amount).
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarketId(),
+              collateralDepositAmount.mul(-1)
+            ),
+          provider()
+        );
+
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          collateralDepositAmount,
+          collateral.synthMarketId(),
+        ].join(', ');
+
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      });
+
       forEach([
         ['sUSD', () => getSusdCollateral(collaterals())],
         ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],

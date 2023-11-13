@@ -192,10 +192,9 @@ contract MarginModule is IMarginModule {
         uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
 
         Margin.CollateralType storage collateral = globalMarginConfig.supported[synthMarketId];
-        uint256 maxAllowable = collateral.maxAllowable;
 
         // Prevent any operations if this synth isn't supported as collateral.
-        if (maxAllowable == 0) {
+        if (!collateral.exists) {
             revert ErrorUtil.UnsupportedCollateral(synthMarketId);
         }
 
@@ -209,6 +208,7 @@ contract MarginModule is IMarginModule {
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
+            uint256 maxAllowable = collateral.maxAllowable;
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (totalMarketAvailableAmount + absAmountDelta > maxAllowable) {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);

@@ -26,6 +26,8 @@ library Margin {
     struct CollateralType {
         // Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
+        // Adding exists so we can differentiate maxAllowable from 0 and unset in the supported mapping below.
+        bool exists;
     }
 
     // --- Storage --- //
