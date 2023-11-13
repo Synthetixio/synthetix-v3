@@ -5,7 +5,7 @@ import {PerpMarket} from "./PerpMarket.sol";
 
 library GlobalPerpMarket {
     struct Data {
-        // Array of supported synth spot market ids useable as collateral for margin.
+        // Array all market ids in the system
         uint128[] activeMarketIds;
     }
     bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
