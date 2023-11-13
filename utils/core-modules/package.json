@@ -21,11 +21,9 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@foundry-rs/hardhat-anvil": "^0.1.7",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/router": "^3.3.0",
-    "@types/debug": "^4.1.9",
     "ethers": "^5.7.2",
     "get-port": "^7.0.0",
     "hardhat": "^2.19.0"
