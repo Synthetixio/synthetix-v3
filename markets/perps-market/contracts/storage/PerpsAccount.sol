@@ -353,7 +353,9 @@ library PerpsAccount {
             );
 
             uint256 liquidationMargin = marketConfig.calculateLiquidationReward(
-                MathUtil.abs(position.size).mulDecimal(PerpsPrice.getCurrentPrice(marketId))
+                MathUtil.abs(position.size).mulDecimal(
+                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+                )
             );
             accumulatedLiquidationRewards += liquidationMargin;
 
@@ -374,7 +376,7 @@ library PerpsAccount {
         uint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
             costOfFlagging,
-            getTotalCollateralValue(self)
+            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT)
         );
         uint256 liquidateWindowsCosts = numOfWindows == 0
             ? 0
