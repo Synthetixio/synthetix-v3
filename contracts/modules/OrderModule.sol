@@ -40,6 +40,7 @@ contract OrderModule is IOrderModule {
     }
 
     // --- Helpers --- //
+
     function isPriceToleranceExceeded(
         int128 sizeDelta,
         uint256 fillPrice,
@@ -51,29 +52,33 @@ contract OrderModule is IOrderModule {
         return (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
     }
 
+    /**
+     * @dev A stale order is one where time passed is max age or older (>=).
+     */
     function isOrderStale(uint256 commitmentTime, uint256 maxOrderAge) private view returns (bool) {
-        // A stale order is one where time passed is max age or older (>=).
         return block.timestamp - commitmentTime >= maxOrderAge;
     }
 
+    /**
+     * @dev Amount of time that has passed must be at least the minimum order age (>=).
+     */
     function isOrderReady(uint256 commitmentTime, uint256 minOrderAge) private view returns (bool) {
-        // Amount of time that has passed must be at least the minimum order age (>=).
         return block.timestamp - commitmentTime >= minOrderAge;
     }
 
+    /**
+     * @dev Ensure Pyth price does not diverge too far from on-chain price from CL.
+     *  e.g. A maximum of 3% price divergence with the following prices:
+     * (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
+     * (1800, 1750) ~ 2.857143% divergence => Ok
+     * (1854, 1800) ~ 3%        divergence => Ok
+     * (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
+     */
     function isPriceDivergenceExceeded(
         uint256 onchainPrice,
         uint256 oraclePrice,
         uint256 priceDivergencePercent
     ) private pure returns (bool) {
-        // Ensure Pyth price does not diverge too far from on-chain price from CL.
-        //
-        // e.g. A maximum of 3% price divergence with the following prices:
-        //
-        // (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
-        // (1800, 1750) ~ 2.857143% divergence => Ok
-        // (1854, 1800) ~ 3%        divergence => Ok
-        // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
         uint256 priceDelta = onchainPrice > oraclePrice
             ? onchainPrice.divDecimal(oraclePrice) - DecimalMath.UNIT
             : oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
@@ -287,6 +292,9 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
+    /**
+     * @inheritdoc IOrderModule
+     */
     function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
