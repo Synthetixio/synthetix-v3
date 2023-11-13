@@ -12,14 +12,17 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "../storage/Margin.sol";
+import {GlobalPerpMarket} from "../storage/GlobalPerpMarket.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using GlobalPerpMarket for GlobalPerpMarket.Data;
 
     // --- Helpers --- //
 
@@ -274,6 +277,8 @@ contract MarginModule is IMarginModule {
                 ++i;
             }
         }
+
+        uint128[] memory previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
         delete globalMarginConfig.supportedSynthMarketIds;
 
         // Update with passed in configuration.
@@ -292,7 +297,7 @@ contract MarginModule is IMarginModule {
                 synth.approve(address(this), MAX_UINT256);
             }
 
-            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i]);
+            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i], true);
             newSupportedSynthMarketIds[i] = synthMarketId;
 
             unchecked {
@@ -300,6 +305,23 @@ contract MarginModule is IMarginModule {
             }
         }
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
+
+        GlobalPerpMarket.Data storage globalPerpMarket = GlobalPerpMarket.load();
+        uint256 previousSupportedSynthMarketIdsLength = previousSupportedSynthMarketIds.length;
+        for (uint i = 0; i < previousSupportedSynthMarketIdsLength; i++) {
+            uint128 synthMarketId = previousSupportedSynthMarketIds[i];
+            uint256 totalCollateralAmount = globalPerpMarket.getTotalCollateralAmounts(synthMarketId);
+            // If collateral amount is 0, we can skip this check
+            if (totalCollateralAmount == 0) {
+                continue;
+            }
+            // If the previous collateral had a balance, but is not in the new collateral list, revert.
+            // We do this to ensure that approvals for collateral in the system still exists.
+            // Worth noting that market owner can still set maxAllowable to 0 to disable deposits for the collateral.
+            if (!globalMarginConfig.supported[synthMarketId].exists) {
+                revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
+            }
+        }
 
         emit CollateralConfigured(msg.sender, length1);
     }
