@@ -46,7 +46,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 
@@ -696,7 +696,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 
@@ -730,7 +730,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
           ethers.utils.formatBytes32String('createPool'),
-          user1.getAddress()
+          await user1.getAddress()
         );
     });
 
@@ -756,7 +756,7 @@ describe('PoolModule Admin', function () {
     });
 
     it('min collateral ratio is set to zero for the pool by default', async () => {
-      await assert.equal(
+      assert.equal(
         await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),
         0
       );
@@ -770,9 +770,25 @@ describe('PoolModule Admin', function () {
           issuanceRatioD18: bn(2),
         });
 
-      await assertBn.equal(
+      assertBn.equal(
         await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),
         bn(2)
+      );
+    });
+
+    it('can get pool collateral configuration', async () => {
+      await systems()
+        .Core.connect(user1)
+        .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+          collateralLimitD18: bn(123),
+          issuanceRatioD18: bn(345),
+        });
+
+      const { collateralLimitD18, issuanceRatioD18 } =
+        await systems().Core.getPoolCollateralConfiguration(thirdPoolId, collateralAddress());
+      assert.deepEqual(
+        { collateralLimitD18, issuanceRatioD18 },
+        { collateralLimitD18: bn(123), issuanceRatioD18: bn(345) }
       );
     });
   });

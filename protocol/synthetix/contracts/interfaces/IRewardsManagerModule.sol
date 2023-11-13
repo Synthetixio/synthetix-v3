@@ -161,4 +161,19 @@ interface IRewardsManagerModule {
         address collateralType,
         address distributor
     ) external view returns (uint256 rateD18);
+
+    /**
+     * @notice Returns the amount of claimable rewards for a given accountId for a vault distributor.
+     * @param accountId The id of the account to look up rewards on.
+     * @param poolId The id of the pool to claim rewards on.
+     * @param collateralType The address of the collateral used in the pool's rewards.
+     * @param distributor The address of the rewards distributor associated with the rewards being claimed.
+     * @return rewardAmount The amount of available rewards that are available for the provided account.
+     */
+    function getAvailableRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external view returns (uint256 rewardAmount);
 }
