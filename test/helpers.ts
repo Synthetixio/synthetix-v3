@@ -115,7 +115,8 @@ export const getPythPriceData = async (
     -priceExpo,
     pythPrice,
     priceConfidence,
-    publishTime ?? Math.floor(Date.now() / 1000)
+    publishTime ?? Math.floor(Date.now() / 1000),
+    0
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };

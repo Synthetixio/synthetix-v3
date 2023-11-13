@@ -2,7 +2,7 @@ import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
-import { PerpMarketProxy, PerpAccountProxy, PythMock, AggregatorV3Mock } from './generated/typechain';
+import { PerpMarketProxy, PerpAccountProxy, AggregatorV3Mock } from './generated/typechain';
 import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
 import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
@@ -11,6 +11,19 @@ import { bn, genOneOf } from './generators';
 import { SYNTHETIX_USD_MARKET_ID } from './helpers';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
+type PythMock = {
+  createPriceFeedUpdateData(
+    id: string,
+    price: BigNumber,
+    conf: number,
+    expo: number,
+    emaPrice: BigNumber,
+    emaConf: number,
+    publishTime: number,
+    prevPublishTime: number
+  ): string;
+  getUpdateFee(updateData: string[]): BigNumber;
+};
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
@@ -33,11 +46,11 @@ export interface Contracts {
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];
   ['spotMarket.SpotMarketProxy']: Systems['SpotMarket'];
   ['spotMarket.SynthRouter']: Systems['Synth'];
+  ['pyth.Pyth']: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
-  PythMock: PythMock;
   AggregatorV3Mock: AggregatorV3Mock;
 }
 
@@ -95,7 +108,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       AggregatorV3Mock: getContract('AggregatorV3Mock'),
-      PythMock: getContract('PythMock'),
+      PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
       // Difference between this and `Collateral{2}Mock`?

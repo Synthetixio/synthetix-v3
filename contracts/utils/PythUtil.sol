@@ -30,8 +30,9 @@ library PythUtil {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = priceUpdateData;
 
-        //TODO we want to use parsePriceFeedUpdatesUnique instead of parsePriceFeedUpdates, but to do that we need to update the pyth mock in orcacly manager to have that   method
-        PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdates{value: msg.value}(
+        PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdatesUnique{
+            value: msg.value
+        }(
             updateData,
             priceIds,
             commitmentTime.to64() + globalConfig.pythPublishTimeMin,

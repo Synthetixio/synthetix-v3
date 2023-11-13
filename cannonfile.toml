@@ -158,9 +158,10 @@ func = "initialize"
 args = ["XXX X", "XXX", "18"]
 depends = ["contract.Collateral2Mock"]
 
-[contract.PythMock]
-artifact = "contracts/mocks/PythMock.sol:PythMock"
-args = [120, 1]                                    # 120s, 1wei
+[import.pyth]
+source = "pyth:1.4.0"
+# args = [120, # 120s, 1wei TODO add back cannon package have support for this.
+
 
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
@@ -186,8 +187,8 @@ depends = ["invoke.upgradeProxy", "import.spotMarket"]
 target = ["PerpMarketProxy"]
 fromCall.func = "owner"
 func = "setPyth"
-args = ["<%= contracts.PythMock.address %>"]
-depends = ["invoke.upgradeProxy", "contract.PythMock"]
+args = ["<%= imports.pyth.contracts.Pyth.address %>"]
+depends = ["invoke.upgradeProxy", "import.pyth"]
 
 # --- Feature Flags --- #
 
