@@ -12,8 +12,6 @@ library PythUtil {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
-    int256 private constant PRECISION = 18;
-
     /**
      * @dev parses the result from the offchain lookup data and returns the offchain price plus order and settlementStrategy.
      * @notice parsePriceFeedUpdates will revert if the price timestamp is outside the acceptable window.
@@ -44,10 +42,10 @@ library PythUtil {
     }
 
     /**
-     * @dev gets scaled price. Borrowed from PythNode.sol.
+     * @dev gets scaled price to 18 decimals. Borrowed from PythNode.sol.
      */
     function getScaledPrice(int64 price, int32 expo) private pure returns (uint256) {
-        int256 factor = PRECISION + expo;
+        int256 factor = 18 + expo;
         return (factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint())).toUint();
     }
 }
