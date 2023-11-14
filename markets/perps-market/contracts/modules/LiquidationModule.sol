@@ -163,7 +163,13 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 marketUpdateData.currentFundingVelocity
             );
 
-            emit PositionLiquidated(accountId, positionMarketId, amountLiquidated, newPositionSize);
+            emit PositionLiquidated(
+                accountId,
+                positionMarketId,
+                amountLiquidated,
+                newPositionSize,
+                ERC2771Context._msgSender()
+            );
 
             // using amountToLiquidate to calculate liquidation reward
             uint256 liquidationReward = PerpsMarketConfiguration
@@ -186,7 +192,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             GlobalPerpsMarket.load().liquidatableAccounts.remove(accountId);
         }
 
-        emit AccountLiquidated(accountId, keeperLiquidationReward, accountFullyLiquidated);
+        emit AccountLiquidated(
+            accountId,
+            keeperLiquidationReward,
+            accountFullyLiquidated,
+            ERC2771Context._msgSender()
+        );
     }
 
     /**
