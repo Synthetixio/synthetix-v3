@@ -3,6 +3,7 @@ import { ccipReceive } from '@synthetixio/core-modules/test/helpers/ccip';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { typedValues } from '../helpers/object';
 import { spinChain } from '../helpers/spin-chain';
 
 import type { CoreProxy as SepoliaCoreProxy } from '../generated/typechain/sepolia';
@@ -40,21 +41,22 @@ const chains: Chains = {} as unknown as Chains;
 let snapshotsIds: string[] = [];
 async function createSnapshots() {
   snapshotsIds = await Promise.all(
-    Object.values(chains).map((c) => c.provider.send('evm_snapshot', []))
+    typedValues(chains).map((c) => c.provider.send('evm_snapshot', []))
   );
 }
 
 async function restoreSnapshots() {
   await Promise.all(
-    Object.values(chains).map((c, i) => c.provider.send('evm_revert', [snapshotsIds[i]]))
+    typedValues(chains).map((c, i) => c.provider.send('evm_revert', [snapshotsIds[i]]))
   );
   await createSnapshots();
 }
 
 async function fixtureSignerOnChains() {
   const { address, privateKey } = ethers.Wallet.createRandom();
+
   const signers = await Promise.all(
-    Object.values(chains).map(async (chain) => {
+    typedValues(chains).map(async (chain) => {
       await chain.provider.send('hardhat_setBalance', [address, `0x${(1e22).toString(16)}`]);
       return new ethers.Wallet(privateKey, chain.provider);
     })
