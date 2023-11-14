@@ -61,6 +61,12 @@ echo "" >> $OUT
 cat ./docs/84531-competition.md >> $OUT
 echo "" >> $OUT
 
+node ./abis.js 84531 andromeda
+echo "## Andromeda on Base Goerli" >> $OUT
+echo "" >> $OUT
+cat ./docs/84531-andromeda.md >> $OUT
+echo "" >> $OUT
+
 cp -r ./abis $ROOT/docs/abis
 
 echo "OK Generating ABIs"
