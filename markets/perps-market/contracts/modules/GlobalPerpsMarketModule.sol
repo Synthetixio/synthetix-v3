@@ -11,6 +11,7 @@ import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.s
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -20,28 +21,30 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setMaxCollateralAmount(
+    function setCollateralConfiguration(
         uint128 synthMarketId,
-        uint256 collateralAmount
+        uint256 maxCollateralAmount
     ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.maxCollateralAmounts[synthMarketId] = collateralAmount;
+        store.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
 
-        emit MaxCollateralAmountSet(synthMarketId, collateralAmount);
+        emit CollateralConfigurationSet(synthMarketId, maxCollateralAmount);
     }
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getMaxCollateralAmount(
+    function getCollateralConfiguration(
         uint128 synthMarketId
-    ) external view override returns (uint256) {
-        return GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthMarketId];
+    ) external view override returns (uint256 maxCollateralAmount) {
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        maxCollateralAmount = store.maxCollateralAmounts[synthMarketId];
     }
 
     /**
@@ -68,34 +71,50 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setLiquidationRewardGuards(
-        uint256 minLiquidationRewardUsd,
-        uint256 maxLiquidationRewardUsd
+    function setKeeperRewardGuards(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     ) external override {
         OwnableStorage.onlyOwner();
-        if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
-            revert ParameterError.InvalidParameter("min/maxLiquidationRewardUSD", "min > max");
+        if (minKeeperRewardUsd > maxKeeperRewardUsd) {
+            revert ParameterError.InvalidParameter("min/maxKeeperRewardUSD", "min > max");
         }
 
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.minLiquidationRewardUsd = minLiquidationRewardUsd;
-        store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
+        store.minKeeperRewardUsd = minKeeperRewardUsd;
+        store.minKeeperProfitRatioD18 = minKeeperProfitRatioD18;
+        store.maxKeeperRewardUsd = maxKeeperRewardUsd;
+        store.maxKeeperScalingRatioD18 = maxKeeperScalingRatioD18;
 
-        emit LiquidationRewardGuardsSet(minLiquidationRewardUsd, maxLiquidationRewardUsd);
+        emit KeeperRewardGuardsSet(
+            minKeeperRewardUsd,
+            minKeeperProfitRatioD18,
+            maxKeeperRewardUsd,
+            maxKeeperScalingRatioD18
+        );
     }
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getLiquidationRewardGuards()
+    function getKeeperRewardGuards()
         external
         view
         override
-        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
+        returns (
+            uint256 minKeeperRewardUsd,
+            uint256 minKeeperProfitRatioD18,
+            uint256 maxKeeperRewardUsd,
+            uint256 maxKeeperScalingRatioD18
+        )
     {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        minLiquidationRewardUsd = store.minLiquidationRewardUsd;
-        maxLiquidationRewardUsd = store.maxLiquidationRewardUsd;
+        minKeeperRewardUsd = store.minKeeperRewardUsd;
+        minKeeperProfitRatioD18 = store.minKeeperProfitRatioD18;
+        maxKeeperRewardUsd = store.maxKeeperRewardUsd;
+        maxKeeperScalingRatioD18 = store.maxKeeperScalingRatioD18;
     }
 
     /**
@@ -132,6 +151,24 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      */
     function getFeeCollector() external view override returns (address feeCollector) {
         return address(GlobalPerpsMarketConfiguration.load().feeCollector);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function updateKeeperCostNodeId(bytes32 keeperCostNodeId) external override {
+        OwnableStorage.onlyOwner();
+
+        KeeperCosts.load().update(keeperCostNodeId);
+
+        emit KeeperCostNodeIdUpdated(keeperCostNodeId);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getKeeperCostNodeId() external view override returns (bytes32 keeperCostNodeId) {
+        return KeeperCosts.load().keeperCostNodeId;
     }
 
     /**

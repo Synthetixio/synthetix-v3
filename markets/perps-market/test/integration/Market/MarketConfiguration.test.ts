@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
-describe('MarketConfiguration', async () => {
+describe('MarketConfiguration', () => {
   const { systems, signers, owner } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [],
@@ -191,7 +191,7 @@ describe('MarketConfiguration', async () => {
     assertBn.equal(lockedOiRatio, fixture.lockedOiPercentRatioD18);
   });
 
-  it('should revert transaction when not market owner sets parameters', async () => {
+  it('should revert when a non-owner owner attempts to set parameters', async () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)

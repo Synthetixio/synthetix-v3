@@ -42,6 +42,5 @@ export const settleOrder = async ({
   const tx = await systems()
     .PerpsMarket.connect(keeper)
     .settlePythOrder(pythPriceData, extraData, { value: updateFee });
-
   return tx;
 };

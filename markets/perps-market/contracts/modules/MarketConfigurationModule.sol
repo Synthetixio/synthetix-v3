@@ -70,12 +70,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external override {
         OwnableStorage.onlyOwner();
 
-        PerpsPrice.load(perpsMarketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId, strictStalenessTolerance);
 
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
+        emit MarketPriceDataUpdated(perpsMarketId, feedId, strictStalenessTolerance);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance) {
+        PerpsPrice.Data storage priceData = PerpsPrice.load(perpsMarketId);
+        feedId = priceData.feedId;
+        strictStalenessTolerance = priceData.strictStalenessTolerance;
     }
 
     /**

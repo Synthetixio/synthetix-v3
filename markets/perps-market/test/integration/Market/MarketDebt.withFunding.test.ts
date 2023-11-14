@@ -47,6 +47,12 @@ describe('Market Debt - with funding', () => {
         },
       ],
       traderAccountIds,
+      liquidationGuards: {
+        minLiquidationReward: bn(0),
+        minKeeperProfitRatioD18: bn(0),
+        maxLiquidationReward: bn(10_000),
+        maxKeeperScalingRatioD18: bn(1),
+      },
     });
 
   let perpsMarket: PerpsMarket;

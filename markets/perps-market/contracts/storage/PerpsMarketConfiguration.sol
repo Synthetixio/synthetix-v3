@@ -86,6 +86,13 @@ library PerpsMarketConfiguration {
             ) * self.maxSecondsInLiquidationWindow;
     }
 
+    function numberOfLiquidationWindows(
+        Data storage self,
+        uint positionSize
+    ) internal view returns (uint256) {
+        return MathUtil.ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
+    }
+
     function calculateLiquidationReward(
         Data storage self,
         uint256 notionalValue

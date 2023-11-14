@@ -8,9 +8,9 @@ interface IGlobalPerpsMarketModule {
     /**
      * @notice Gets fired when max collateral amount for synth for all the markets is set by owner.
      * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount max amount that was set for the synth
+     * @param maxCollateralAmount max amount that was set for the synth
      */
-    event MaxCollateralAmountSet(uint128 indexed synthMarketId, uint256 collateralAmount);
+    event CollateralConfigurationSet(uint128 indexed synthMarketId, uint256 maxCollateralAmount);
 
     /**
      * @notice Gets fired when the synth deduction priority is updated by owner.
@@ -19,13 +19,17 @@ interface IGlobalPerpsMarketModule {
     event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
 
     /**
-     * @notice Gets fired when liquidation reward guard is set or updated.
-     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @notice Gets fired when keeper reward guard is set or updated.
+     * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @param maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    event LiquidationRewardGuardsSet(
-        uint256 indexed minLiquidationRewardUsd,
-        uint256 indexed maxLiquidationRewardUsd
+    event KeeperRewardGuardsSet(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     );
 
     /**
@@ -49,6 +53,12 @@ interface IGlobalPerpsMarketModule {
     event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
+     * @notice Gets fired when feed id for keeper cost node id is updated.
+     * @param keeperCostNodeId oracle node id
+     */
+    event KeeperCostNodeIdUpdated(bytes32 keeperCostNodeId);
+
+    /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
      */
     error InvalidFeeCollectorInterface(address invalidFeeCollector);
@@ -61,16 +71,18 @@ interface IGlobalPerpsMarketModule {
     /**
      * @notice Sets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount Max collateral amount to set for the synth market id.
+     * @param maxCollateralAmount Max collateral amount to set for the synth market id.
      */
-    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
+    function setCollateralConfiguration(uint128 synthMarketId, uint maxCollateralAmount) external;
 
     /**
      * @notice Gets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @return maxCollateralAmount max collateral amount of the specified synth market id
      */
-    function getMaxCollateralAmount(uint128 synthMarketId) external view returns (uint);
+    function getCollateralConfiguration(
+        uint128 synthMarketId
+    ) external view returns (uint256 maxCollateralAmount);
 
     /**
      * @notice Sets the synth deduction priority ordered list.
@@ -87,24 +99,35 @@ interface IGlobalPerpsMarketModule {
     function getSynthDeductionPriority() external view returns (uint128[] memory);
 
     /**
-     * @notice Sets the liquidation reward guard (min and max).
-     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @notice Sets the keeper reward guard (min and max).
+     * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @param maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    function setLiquidationRewardGuards(
-        uint256 minLiquidationRewardUsd,
-        uint256 maxLiquidationRewardUsd
+    function setKeeperRewardGuards(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     ) external;
 
     /**
-     * @notice Gets the liquidation reward guard (min and max).
-     * @return minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @return maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @notice Gets the keeper reward guard (min and max).
+     * @return minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @return minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @return maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @return maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    function getLiquidationRewardGuards()
+    function getKeeperRewardGuards()
         external
         view
-        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd);
+        returns (
+            uint256 minKeeperRewardUsd,
+            uint256 minKeeperProfitRatioD18,
+            uint256 maxKeeperRewardUsd,
+            uint maxKeeperScalingRatioD18
+        );
 
     /**
      * @notice Gets the total collateral value of all deposited collateral from all traders.
@@ -157,6 +180,18 @@ interface IGlobalPerpsMarketModule {
      * @return shareRatioD18 The configured share percentage for the referrer
      */
     function getReferrerShare(address referrer) external view returns (uint256 shareRatioD18);
+
+    /**
+     * @notice Set node id for keeper cost
+     * @param keeperCostNodeId the node id
+     */
+    function updateKeeperCostNodeId(bytes32 keeperCostNodeId) external;
+
+    /**
+     * @notice Get the node id for keeper cost
+     * @return keeperCostNodeId the node id
+     */
+    function getKeeperCostNodeId() external view returns (bytes32 keeperCostNodeId);
 
     /**
      * @notice get all existing market ids

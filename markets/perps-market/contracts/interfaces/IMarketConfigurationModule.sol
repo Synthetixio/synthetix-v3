@@ -23,8 +23,13 @@ interface IMarketConfigurationModule {
      * @notice Gets fired when feed id for perps market is updated.
      * @param marketId id of perps market
      * @param feedId oracle node id
+     * @param strictStalenessTolerance strict price tolerance in seconds (used for liquidations primarily)
      */
-    event MarketPriceDataUpdated(uint128 indexed marketId, bytes32 feedId);
+    event MarketPriceDataUpdated(
+        uint128 indexed marketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    );
 
     /**
      * @notice Gets fired when order fees are updated.
@@ -127,8 +132,13 @@ interface IMarketConfigurationModule {
      * @notice Set node id for perps market
      * @param perpsMarketId id of the market to set price feed.
      * @param feedId the node feed id
+     * @param strictStalenessTolerance strict price tolerance in seconds (used for liquidations primarily)
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external;
 
     /**
      * @notice Set funding parameters for a market with this function.
@@ -289,4 +299,14 @@ interface IMarketConfigurationModule {
      * @return lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
     function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
+
+    /**
+     * @notice Set node id for perps market
+     * @param perpsMarketId id of the market to set price feed.
+     * @return feedId the node feed id to get price
+     * @param strictStalenessTolerance configured strict price tolerance in seconds
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance);
 }

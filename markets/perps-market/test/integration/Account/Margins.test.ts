@@ -51,6 +51,12 @@ describe('Account margins test', () => {
     synthMarkets: [],
     perpsMarkets: perpsMarketConfig,
     traderAccountIds: [accountId, 5],
+    liquidationGuards: {
+      minLiquidationReward: bn(0),
+      minKeeperProfitRatioD18: bn(0),
+      maxLiquidationReward: bn(10_000),
+      maxKeeperScalingRatioD18: bn(1),
+    },
   });
 
   // add $100k
@@ -160,7 +166,7 @@ describe('Account margins test', () => {
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin, , maxLiquidationReward] =
+      const [initialMargin, maintenanceMargin, maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(
         initialMargin.sub(maxLiquidationReward),

@@ -32,14 +32,14 @@ describe('ModifyCollateral Deposit', () => {
     synthBTCMarketId = synthMarkets()[0].marketId(); // 3
   });
 
-  describe('deposit by modifyCollateral()', async () => {
+  describe('deposit by modifyCollateral()', () => {
     let spotBalanceBefore: ethers.BigNumber;
     let modifyCollateralTxn: ethers.providers.TransactionResponse;
 
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(synthBTCMarketId, ethers.constants.MaxUint256);
     });
 
     before('trader1 buys 1 snxBTC', async () => {
