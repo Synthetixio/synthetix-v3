@@ -1,23 +1,22 @@
 import { ccipReceive } from '@synthetixio/core-modules/test/helpers/ccip';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assert from 'assert';
 import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { ChainSelector, integrationBootstrap, SignerOnChains } from './bootstrap';
 
 describe('cross chain election testing', () => {
-  const { chains, fixtureSignerOnChains } = integrationBootstrap();
+  const { chains, fixtureSignerOnChains, fastForwardChainsTo } = integrationBootstrap();
 
-  const fastForwardToNominationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
+  const fastForwardToNominationPeriod = async () => {
     const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
-    await fastForwardTo(schedule.nominationPeriodStartDate.toNumber() + 10, provider);
+    await fastForwardChainsTo(schedule.nominationPeriodStartDate.toNumber() + 10);
   };
 
-  const fastForwardToVotingPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
+  const fastForwardToVotingPeriod = async () => {
     const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
-    await fastForwardTo(schedule.votingPeriodStartDate.toNumber() + 10, provider);
+    await fastForwardChainsTo(schedule.votingPeriodStartDate.toNumber() + 10);
   };
 
   let voter: SignerOnChains;
@@ -62,14 +61,13 @@ describe('cross chain election testing', () => {
       await satellite1.CoreProxy.setSnapshotContract(satellite1.SnapshotRecordMock.address, true);
       await satellite2.CoreProxy.setSnapshotContract(satellite2.SnapshotRecordMock.address, true);
 
-      await fastForwardToNominationPeriod(mothership.provider);
+      await fastForwardToNominationPeriod();
+
       await mothership.CoreProxy.connect(voter.mothership).nominate();
 
-      await fastForwardToVotingPeriod(mothership.provider);
-      await fastForwardToVotingPeriod(satellite1.provider);
-      await fastForwardToVotingPeriod(satellite2.provider);
+      await fastForwardToVotingPeriod();
 
-      //prepare voting for satellite1
+      // prepare voting for satellite1
       const snapshotId1 = await satellite1.CoreProxy.callStatic.takeVotePowerSnapshot(
         satellite1.SnapshotRecordMock.address
       );
@@ -84,7 +82,7 @@ describe('cross chain election testing', () => {
         await voter.satellite1.getAddress()
       );
 
-      //prepare voting for satellite2
+      // prepare voting for satellite2
       const snapshotId2 = await satellite2.CoreProxy.callStatic.takeVotePowerSnapshot(
         satellite2.SnapshotRecordMock.address
       );
@@ -99,7 +97,7 @@ describe('cross chain election testing', () => {
         await voter.satellite2.getAddress()
       );
 
-      //vote on satellite1
+      // vote on satellite1
       const tx1 = await satellite1.CoreProxy.connect(voter.satellite1).cast(
         [await voter.mothership.getAddress()],
         [ethers.utils.parseEther('100')]
@@ -107,12 +105,12 @@ describe('cross chain election testing', () => {
       const rx1 = await tx1.wait();
       await ccipReceive({
         rx: rx1,
-        sourceChainSelector: ChainSelector.OptimisticGoerli,
+        sourceChainSelector: ChainSelector.satellite1,
         targetSigner: voter.mothership,
         ccipAddress: mothership.CcipRouter.address,
       });
 
-      //vote on satellite2
+      // vote on satellite2
       const tx2 = await satellite1.CoreProxy.connect(voter.satellite2).cast(
         [await voter.mothership.getAddress()],
         [ethers.utils.parseEther('100')]
@@ -120,7 +118,7 @@ describe('cross chain election testing', () => {
       const rx2 = await tx2.wait();
       await ccipReceive({
         rx: rx2,
-        sourceChainSelector: ChainSelector.AvalancheFuji,
+        sourceChainSelector: ChainSelector.satellite2,
         targetSigner: voter.mothership,
         ccipAddress: mothership.CcipRouter.address,
       });

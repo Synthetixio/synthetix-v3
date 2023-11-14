@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { ccipReceive } from '@synthetixio/core-modules/test/helpers/ccip';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { spinChain } from '../helpers/spin-chain';
@@ -9,15 +10,15 @@ import type { CoreProxy as OptimisticGoerliCoreProxy } from '../generated/typech
 import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain/avalanche-fuji';
 
 interface Proxies {
-  Sepolia: SepoliaCoreProxy;
-  OptimisticGoerli: OptimisticGoerliCoreProxy;
-  AvalancheFuji: AvalancheFujiCoreProxy;
+  mothership: SepoliaCoreProxy;
+  satellite1: OptimisticGoerliCoreProxy;
+  satellite2: AvalancheFujiCoreProxy;
 }
 
 export enum ChainSelector {
-  Sepolia = '16015286601757825753',
-  OptimisticGoerli = '2664363617261496610',
-  AvalancheFuji = '14767482510784806043',
+  mothership = '16015286601757825753',
+  satellite1 = '2664363617261496610',
+  satellite2 = '14767482510784806043',
 }
 
 export interface SignerOnChains {
@@ -26,10 +27,12 @@ export interface SignerOnChains {
   satellite2: ethers.Signer;
 }
 
+export type Chain<TChainProxy> = Awaited<ReturnType<typeof spinChain<TChainProxy>>>;
+
 export interface Chains {
-  mothership: Awaited<ReturnType<typeof spinChain<SepoliaCoreProxy>>>;
-  satellite1: Awaited<ReturnType<typeof spinChain<OptimisticGoerliCoreProxy>>>;
-  satellite2: Awaited<ReturnType<typeof spinChain<AvalancheFujiCoreProxy>>>;
+  mothership: Chain<Proxies['mothership']>;
+  satellite1: Chain<Proxies['satellite1']>;
+  satellite2: Chain<Proxies['satellite2']>;
 }
 
 const chains: Chains = {} as unknown as Chains;
@@ -64,6 +67,12 @@ async function fixtureSignerOnChains() {
   } satisfies SignerOnChains;
 }
 
+async function fastForwardChainsTo(timestamp: number) {
+  return await Promise.all(
+    Object.values(chains).map((chain) => fastForwardTo(timestamp, chain.provider))
+  );
+}
+
 before(`setup integration chains`, async function () {
   this.timeout(90000);
 
@@ -75,26 +84,26 @@ before(`setup integration chains`, async function () {
   // TODO: When running in parallel there's an unknown error that causes to some
   // builds to finish early without throwing error but they do not complete.
   const [mothership, satellite1, satellite2] = await Promise.all([
-    spinChain<Proxies['Sepolia']>({
+    spinChain<Proxies['mothership']>({
       networkName: 'sepolia',
       cannonfile: 'cannonfile.test.toml',
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.Sepolia,
+      chainSlector: ChainSelector.mothership,
     }),
-    spinChain<Proxies['OptimisticGoerli']>({
+    spinChain<Proxies['satellite1']>({
       networkName: 'optimistic-goerli',
       cannonfile: 'cannonfile.satellite.test.toml',
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.OptimisticGoerli,
+      chainSlector: ChainSelector.satellite1,
     }),
-    spinChain<Proxies['AvalancheFuji']>({
+    spinChain<Proxies['satellite2']>({
       networkName: 'avalanche-fuji',
       cannonfile: 'cannonfile.satellite.test.toml',
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.AvalancheFuji,
+      chainSlector: ChainSelector.satellite2,
     }),
   ]);
 
@@ -125,5 +134,5 @@ before('snapshot checkpoint', createSnapshots);
 
 export function integrationBootstrap() {
   before('back to snapshot', restoreSnapshots);
-  return { chains, fixtureSignerOnChains };
+  return { chains, fixtureSignerOnChains, fastForwardChainsTo };
 }

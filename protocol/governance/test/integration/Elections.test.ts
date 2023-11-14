@@ -752,13 +752,13 @@ describe('SynthetixElectionModule - Elections', () => {
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite1.CcipRouter.address,
-                          sourceChainSelector: ChainSelector.Sepolia,
+                          sourceChainSelector: ChainSelector.mothership,
                           targetSigner: satellite1.signer,
                         });
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite2.CcipRouter.address,
-                          sourceChainSelector: ChainSelector.Sepolia,
+                          sourceChainSelector: ChainSelector.mothership,
                           targetSigner: satellite2.signer,
                         });
                       });
