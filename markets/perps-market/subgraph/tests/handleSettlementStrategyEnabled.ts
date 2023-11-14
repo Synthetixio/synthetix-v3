@@ -18,7 +18,6 @@ export default function test(): void {
   const feedId = '0x6900000000000000000000000000000000000000';
   const url = 'https://example.com';
   const settlementReward = 10_000;
-  const priceDeviationTolerance = 10_000;
   const disabled = false;
   const strategyId = 1;
   const timestamp = 10_000;
@@ -36,7 +35,6 @@ export default function test(): void {
       feedId,
       url,
       settlementReward,
-      priceDeviationTolerance,
       disabled,
       strategyId,
       timestamp,

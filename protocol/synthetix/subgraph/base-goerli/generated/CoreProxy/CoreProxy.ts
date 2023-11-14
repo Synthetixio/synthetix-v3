@@ -1605,6 +1605,34 @@ export class CoreProxy__getCollateralConfigurationsResultValue0Struct extends et
   }
 }
 
+export class CoreProxy__liquidateResultLiquidationDataStruct extends ethereum.Tuple {
+  get debtLiquidated(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get collateralLiquidated(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get amountRewarded(): BigInt {
+    return this[2].toBigInt();
+  }
+}
+
+export class CoreProxy__liquidateVaultResultLiquidationDataStruct extends ethereum.Tuple {
+  get debtLiquidated(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get collateralLiquidated(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get amountRewarded(): BigInt {
+    return this[2].toBigInt();
+  }
+}
+
 export class CoreProxy__getMarketFeesResult {
   value0: BigInt;
   value1: BigInt;
@@ -1630,6 +1658,63 @@ export class CoreProxy__getMarketFeesResult {
   }
 }
 
+export class CoreProxy__getMarketPoolDebtDistributionResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromSignedBigInt(this.value2));
+    return map;
+  }
+
+  getSharesD18(): BigInt {
+    return this.value0;
+  }
+
+  getTotalSharesD18(): BigInt {
+    return this.value1;
+  }
+
+  getValuePerShareD27(): BigInt {
+    return this.value2;
+  }
+}
+
+export class CoreProxy__getMarketPoolsResult {
+  value0: Array<BigInt>;
+  value1: Array<BigInt>;
+
+  constructor(value0: Array<BigInt>, value1: Array<BigInt>) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigIntArray(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigIntArray(this.value1));
+    return map;
+  }
+
+  getInRangePoolIds(): Array<BigInt> {
+    return this.value0;
+  }
+
+  getOutRangePoolIds(): Array<BigInt> {
+    return this.value1;
+  }
+}
+
 export class CoreProxy__getPoolConfigurationResultValue0Struct extends ethereum.Tuple {
   get marketId(): BigInt {
     return this[0].toBigInt();
@@ -1641,6 +1726,70 @@ export class CoreProxy__getPoolConfigurationResultValue0Struct extends ethereum.
 
   get maxDebtShareValueD18(): BigInt {
     return this[2].toBigInt();
+  }
+}
+
+export class CoreProxy__updateRewardsResult {
+  value0: Array<BigInt>;
+  value1: Array<Address>;
+
+  constructor(value0: Array<BigInt>, value1: Array<Address>) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigIntArray(this.value0));
+    map.set('value1', ethereum.Value.fromAddressArray(this.value1));
+    return map;
+  }
+
+  getValue0(): Array<BigInt> {
+    return this.value0;
+  }
+
+  getValue1(): Array<Address> {
+    return this.value1;
+  }
+}
+
+export class CoreProxy__getPositionResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+  value3: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt, value3: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+    this.value3 = value3;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromSignedBigInt(this.value2));
+    map.set('value3', ethereum.Value.fromUnsignedBigInt(this.value3));
+    return map;
+  }
+
+  getCollateralAmount(): BigInt {
+    return this.value0;
+  }
+
+  getCollateralValue(): BigInt {
+    return this.value1;
+  }
+
+  getDebt(): BigInt {
+    return this.value2;
+  }
+
+  getCollateralizationRatio(): BigInt {
+    return this.value3;
   }
 }
 
@@ -1845,6 +1994,21 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
+  createAccount(): BigInt {
+    let result = super.call('createAccount', 'createAccount():(uint128)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_createAccount(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('createAccount', 'createAccount():(uint128)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getAccountLastInteraction(accountId: BigInt): BigInt {
     let result = super.call(
       'getAccountLastInteraction',
@@ -1985,6 +2149,53 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
+  associateDebt(
+    marketId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    accountId: BigInt,
+    amount: BigInt
+  ): BigInt {
+    let result = super.call(
+      'associateDebt',
+      'associateDebt(uint128,uint128,address,uint128,uint256):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_associateDebt(
+    marketId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    accountId: BigInt,
+    amount: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'associateDebt',
+      'associateDebt(uint128,uint128,address,uint128,uint256):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getAssociatedSystem(id: Bytes): CoreProxy__getAssociatedSystemResult {
     let result = super.call(
       'getAssociatedSystem',
@@ -2008,6 +2219,49 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new CoreProxy__getAssociatedSystemResult(value[0].toAddress(), value[1].toBytes())
     );
+  }
+
+  cleanExpiredLocks(
+    accountId: BigInt,
+    collateralType: Address,
+    offset: BigInt,
+    count: BigInt
+  ): BigInt {
+    let result = super.call(
+      'cleanExpiredLocks',
+      'cleanExpiredLocks(uint128,address,uint256,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(offset),
+        ethereum.Value.fromUnsignedBigInt(count),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_cleanExpiredLocks(
+    accountId: BigInt,
+    collateralType: Address,
+    offset: BigInt,
+    count: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'cleanExpiredLocks',
+      'cleanExpiredLocks(uint128,address,uint256,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(offset),
+        ethereum.Value.fromUnsignedBigInt(count),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getAccountAvailableCollateral(accountId: BigInt, collateralType: Address): BigInt {
@@ -2197,6 +2451,153 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  isPositionLiquidatable(accountId: BigInt, poolId: BigInt, collateralType: Address): boolean {
+    let result = super.call(
+      'isPositionLiquidatable',
+      'isPositionLiquidatable(uint128,uint128,address):(bool)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+
+    return result[0].toBoolean();
+  }
+
+  try_isPositionLiquidatable(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address
+  ): ethereum.CallResult<boolean> {
+    let result = super.tryCall(
+      'isPositionLiquidatable',
+      'isPositionLiquidatable(uint128,uint128,address):(bool)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  isVaultLiquidatable(poolId: BigInt, collateralType: Address): boolean {
+    let result = super.call('isVaultLiquidatable', 'isVaultLiquidatable(uint128,address):(bool)', [
+      ethereum.Value.fromUnsignedBigInt(poolId),
+      ethereum.Value.fromAddress(collateralType),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_isVaultLiquidatable(poolId: BigInt, collateralType: Address): ethereum.CallResult<boolean> {
+    let result = super.tryCall(
+      'isVaultLiquidatable',
+      'isVaultLiquidatable(uint128,address):(bool)',
+      [ethereum.Value.fromUnsignedBigInt(poolId), ethereum.Value.fromAddress(collateralType)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  liquidate(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    liquidateAsAccountId: BigInt
+  ): CoreProxy__liquidateResultLiquidationDataStruct {
+    let result = super.call(
+      'liquidate',
+      'liquidate(uint128,uint128,address,uint128):((uint256,uint256,uint256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(liquidateAsAccountId),
+      ]
+    );
+
+    return changetype<CoreProxy__liquidateResultLiquidationDataStruct>(result[0].toTuple());
+  }
+
+  try_liquidate(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    liquidateAsAccountId: BigInt
+  ): ethereum.CallResult<CoreProxy__liquidateResultLiquidationDataStruct> {
+    let result = super.tryCall(
+      'liquidate',
+      'liquidate(uint128,uint128,address,uint128):((uint256,uint256,uint256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(liquidateAsAccountId),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      changetype<CoreProxy__liquidateResultLiquidationDataStruct>(value[0].toTuple())
+    );
+  }
+
+  liquidateVault(
+    poolId: BigInt,
+    collateralType: Address,
+    liquidateAsAccountId: BigInt,
+    maxUsd: BigInt
+  ): CoreProxy__liquidateVaultResultLiquidationDataStruct {
+    let result = super.call(
+      'liquidateVault',
+      'liquidateVault(uint128,address,uint128,uint256):((uint256,uint256,uint256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(liquidateAsAccountId),
+        ethereum.Value.fromUnsignedBigInt(maxUsd),
+      ]
+    );
+
+    return changetype<CoreProxy__liquidateVaultResultLiquidationDataStruct>(result[0].toTuple());
+  }
+
+  try_liquidateVault(
+    poolId: BigInt,
+    collateralType: Address,
+    liquidateAsAccountId: BigInt,
+    maxUsd: BigInt
+  ): ethereum.CallResult<CoreProxy__liquidateVaultResultLiquidationDataStruct> {
+    let result = super.tryCall(
+      'liquidateVault',
+      'liquidateVault(uint128,address,uint128,uint256):((uint256,uint256,uint256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(liquidateAsAccountId),
+        ethereum.Value.fromUnsignedBigInt(maxUsd),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      changetype<CoreProxy__liquidateVaultResultLiquidationDataStruct>(value[0].toTuple())
+    );
+  }
+
   getMarketCollateralAmount(marketId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
       'getMarketCollateralAmount',
@@ -2272,6 +2673,64 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  depositMarketUsd(marketId: BigInt, target: Address, amount: BigInt): BigInt {
+    let result = super.call(
+      'depositMarketUsd',
+      'depositMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_depositMarketUsd(
+    marketId: BigInt,
+    target: Address,
+    amount: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'depositMarketUsd',
+      'depositMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  distributeDebtToPools(marketId: BigInt, maxIter: BigInt): boolean {
+    let result = super.call(
+      'distributeDebtToPools',
+      'distributeDebtToPools(uint128,uint256):(bool)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(maxIter)]
+    );
+
+    return result[0].toBoolean();
+  }
+
+  try_distributeDebtToPools(marketId: BigInt, maxIter: BigInt): ethereum.CallResult<boolean> {
+    let result = super.tryCall(
+      'distributeDebtToPools',
+      'distributeDebtToPools(uint128,uint256):(bool)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(maxIter)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
   getMarketAddress(marketId: BigInt): Address {
     let result = super.call('getMarketAddress', 'getMarketAddress(uint128):(address)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
@@ -2301,6 +2760,25 @@ export class CoreProxy extends ethereum.SmartContract {
 
   try_getMarketCollateral(marketId: BigInt): ethereum.CallResult<BigInt> {
     let result = super.tryCall('getMarketCollateral', 'getMarketCollateral(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getMarketDebtPerShare(marketId: BigInt): BigInt {
+    let result = super.call('getMarketDebtPerShare', 'getMarketDebtPerShare(uint128):(int256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_getMarketDebtPerShare(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMarketDebtPerShare', 'getMarketDebtPerShare(uint128):(int256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
     if (result.reverted) {
@@ -2377,6 +2855,69 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getMarketPoolDebtDistribution(
+    marketId: BigInt,
+    poolId: BigInt
+  ): CoreProxy__getMarketPoolDebtDistributionResult {
+    let result = super.call(
+      'getMarketPoolDebtDistribution',
+      'getMarketPoolDebtDistribution(uint128,uint128):(uint256,uint128,int128)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(poolId)]
+    );
+
+    return new CoreProxy__getMarketPoolDebtDistributionResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_getMarketPoolDebtDistribution(
+    marketId: BigInt,
+    poolId: BigInt
+  ): ethereum.CallResult<CoreProxy__getMarketPoolDebtDistributionResult> {
+    let result = super.tryCall(
+      'getMarketPoolDebtDistribution',
+      'getMarketPoolDebtDistribution(uint128,uint128):(uint256,uint128,int128)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(poolId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketPoolDebtDistributionResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
+  }
+
+  getMarketPools(marketId: BigInt): CoreProxy__getMarketPoolsResult {
+    let result = super.call('getMarketPools', 'getMarketPools(uint128):(uint128[],uint128[])', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return new CoreProxy__getMarketPoolsResult(
+      result[0].toBigIntArray(),
+      result[1].toBigIntArray()
+    );
+  }
+
+  try_getMarketPools(marketId: BigInt): ethereum.CallResult<CoreProxy__getMarketPoolsResult> {
+    let result = super.tryCall('getMarketPools', 'getMarketPools(uint128):(uint128[],uint128[])', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketPoolsResult(value[0].toBigIntArray(), value[1].toBigIntArray())
+    );
   }
 
   getMarketReportedDebt(marketId: BigInt): BigInt {
@@ -2510,6 +3051,60 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
+  registerMarket(market: Address): BigInt {
+    let result = super.call('registerMarket', 'registerMarket(address):(uint128)', [
+      ethereum.Value.fromAddress(market),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_registerMarket(market: Address): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('registerMarket', 'registerMarket(address):(uint128)', [
+      ethereum.Value.fromAddress(market),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  withdrawMarketUsd(marketId: BigInt, target: Address, amount: BigInt): BigInt {
+    let result = super.call(
+      'withdrawMarketUsd',
+      'withdrawMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_withdrawMarketUsd(
+    marketId: BigInt,
+    target: Address,
+    amount: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'withdrawMarketUsd',
+      'withdrawMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getMessageSender(): Address {
     let result = super.call('getMessageSender', 'getMessageSender():(address)', []);
 
@@ -2523,6 +3118,25 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  multicall(data: Array<Bytes>): Array<Bytes> {
+    let result = super.call('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+
+    return result[0].toBytesArray();
+  }
+
+  try_multicall(data: Array<Bytes>): ethereum.CallResult<Array<Bytes>> {
+    let result = super.tryCall('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytesArray());
   }
 
   getApprovedPools(): Array<BigInt> {
@@ -2682,6 +3296,49 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  claimRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): BigInt {
+    let result = super.call(
+      'claimRewards',
+      'claimRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_claimRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'claimRewards',
+      'claimRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getRewardRate(poolId: BigInt, collateralType: Address, distributor: Address): BigInt {
     let result = super.call('getRewardRate', 'getRewardRate(uint128,address,address):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(poolId),
@@ -2711,6 +3368,50 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  updateRewards(
+    poolId: BigInt,
+    collateralType: Address,
+    accountId: BigInt
+  ): CoreProxy__updateRewardsResult {
+    let result = super.call(
+      'updateRewards',
+      'updateRewards(uint128,address,uint128):(uint256[],address[])',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(accountId),
+      ]
+    );
+
+    return new CoreProxy__updateRewardsResult(
+      result[0].toBigIntArray(),
+      result[1].toAddressArray()
+    );
+  }
+
+  try_updateRewards(
+    poolId: BigInt,
+    collateralType: Address,
+    accountId: BigInt
+  ): ethereum.CallResult<CoreProxy__updateRewardsResult> {
+    let result = super.tryCall(
+      'updateRewards',
+      'updateRewards(uint128,address,uint128):(uint256[],address[])',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(accountId),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__updateRewardsResult(value[0].toBigIntArray(), value[1].toAddressArray())
+    );
   }
 
   getConfig(k: Bytes): Bytes {
@@ -2770,6 +3471,41 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  setSupportedCrossChainNetworks(
+    supportedNetworks: Array<BigInt>,
+    ccipSelectors: Array<BigInt>
+  ): BigInt {
+    let result = super.call(
+      'setSupportedCrossChainNetworks',
+      'setSupportedCrossChainNetworks(uint64[],uint64[]):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigIntArray(supportedNetworks),
+        ethereum.Value.fromUnsignedBigIntArray(ccipSelectors),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_setSupportedCrossChainNetworks(
+    supportedNetworks: Array<BigInt>,
+    ccipSelectors: Array<BigInt>
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'setSupportedCrossChainNetworks',
+      'setSupportedCrossChainNetworks(uint64[],uint64[]):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigIntArray(supportedNetworks),
+        ethereum.Value.fromUnsignedBigIntArray(ccipSelectors),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   supportsInterface(interfaceId: Bytes): boolean {
     let result = super.call('supportsInterface', 'supportsInterface(bytes4):(bool)', [
       ethereum.Value.fromFixedBytes(interfaceId),
@@ -2787,6 +3523,57 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  getPosition(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address
+  ): CoreProxy__getPositionResult {
+    let result = super.call(
+      'getPosition',
+      'getPosition(uint128,uint128,address):(uint256,uint256,int256,uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+
+    return new CoreProxy__getPositionResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt(),
+      result[3].toBigInt()
+    );
+  }
+
+  try_getPosition(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address
+  ): ethereum.CallResult<CoreProxy__getPositionResult> {
+    let result = super.tryCall(
+      'getPosition',
+      'getPosition(uint128,uint128,address):(uint256,uint256,int256,uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getPositionResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt(),
+        value[3].toBigInt()
+      )
+    );
   }
 
   getPositionCollateral(
@@ -2830,6 +3617,76 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
+  getPositionCollateralRatio(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
+    let result = super.call(
+      'getPositionCollateralRatio',
+      'getPositionCollateralRatio(uint128,uint128,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getPositionCollateralRatio(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getPositionCollateralRatio',
+      'getPositionCollateralRatio(uint128,uint128,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getPositionDebt(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
+    let result = super.call(
+      'getPositionDebt',
+      'getPositionDebt(uint128,uint128,address):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getPositionDebt(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getPositionDebt',
+      'getPositionDebt(uint128,uint128,address):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getVaultCollateral(poolId: BigInt, collateralType: Address): CoreProxy__getVaultCollateralResult {
     let result = super.call(
       'getVaultCollateral',
@@ -2856,6 +3713,53 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new CoreProxy__getVaultCollateralResult(value[0].toBigInt(), value[1].toBigInt())
     );
+  }
+
+  getVaultCollateralRatio(poolId: BigInt, collateralType: Address): BigInt {
+    let result = super.call(
+      'getVaultCollateralRatio',
+      'getVaultCollateralRatio(uint128,address):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(poolId), ethereum.Value.fromAddress(collateralType)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getVaultCollateralRatio(
+    poolId: BigInt,
+    collateralType: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getVaultCollateralRatio',
+      'getVaultCollateralRatio(uint128,address):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(poolId), ethereum.Value.fromAddress(collateralType)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getVaultDebt(poolId: BigInt, collateralType: Address): BigInt {
+    let result = super.call('getVaultDebt', 'getVaultDebt(uint128,address):(int256)', [
+      ethereum.Value.fromUnsignedBigInt(poolId),
+      ethereum.Value.fromAddress(collateralType),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_getVaultDebt(poolId: BigInt, collateralType: Address): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getVaultDebt', 'getVaultDebt(uint128,address):(int256)', [
+      ethereum.Value.fromUnsignedBigInt(poolId),
+      ethereum.Value.fromAddress(collateralType),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 }
 
