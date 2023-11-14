@@ -100,7 +100,8 @@
   "workspaces": [
     "utils/**",
     "protocol/**",
-    "markets/**"
+    "markets/**",
+    "auxilary/**"
   ],
   "engines": {
     "node": "^18.16.0"

@@ -6,7 +6,9 @@
     "./protocol/**/*.ts",
     "./protocol/**/*.js",
     "./markets/**/*.ts",
-    "./markets/**/*.js"
+    "./markets/**/*.js",
+    "./auxilary/**/*.js",
+    "./auxilary/**/*.ts"
   ],
   "exclude": [],
   "compilerOptions": {
