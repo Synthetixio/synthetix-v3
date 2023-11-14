@@ -11,7 +11,7 @@ interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
-        // Name of the market to be created e.g, swstETHsUSDPERP.
+        // Name of the market to be created e.g, ETHPERP
         bytes32 name;
     }
 
