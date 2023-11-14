@@ -1,14 +1,12 @@
 import { assert, log } from 'matchstick-as';
-import { handleSettlementStrategyAdded, handleSettlementStrategyEnabled } from '../optimism-goerli';
+import { handleSettlementStrategyAdded } from '../../base-goerli-andromeda';
 import { createSettlementStrategyAddedEvent } from './event-factories/createSettlementStrategyAddedEvent';
-import { createSettlementStrategyEnabledEvent } from './event-factories/createSettlementStrategyEnabledEvent';
 
 export default function test(): void {
   assert.entityCount('SettlementStrategy', 0);
 
-  log.info('Should create a new record for the Settlement Strategy', []);
+  log.info('Should create a new record for the SettlementStrategy', []);
 
-  // create a SettlementStrategy
   const marketId = 1;
   const strategyType = 1;
   const settlementDelay = 10_000;
@@ -44,30 +42,25 @@ export default function test(): void {
   );
 
   assert.entityCount('SettlementStrategy', 1);
+  assert.fieldEquals('SettlementStrategy', '1-1', 'id', '1-1');
+  assert.fieldEquals('SettlementStrategy', '1-1', 'strategyId', '1');
+  assert.fieldEquals('SettlementStrategy', '1-1', 'marketId', '1');
+  assert.fieldEquals('SettlementStrategy', '1-1', 'strategyType', strategyType.toString());
+  assert.fieldEquals('SettlementStrategy', '1-1', 'settlementDelay', settlementDelay.toString());
+  assert.fieldEquals(
+    'SettlementStrategy',
+    '1-1',
+    'settlementWindowDuration',
+    settlementWindowDuration.toString()
+  );
+  assert.fieldEquals(
+    'SettlementStrategy',
+    '1-1',
+    'priceVerificationContract',
+    priceVerificationContract.toString()
+  );
+  assert.fieldEquals('SettlementStrategy', '1-1', 'feedId', feedId.toString());
+  assert.fieldEquals('SettlementStrategy', '1-1', 'url', url);
+  assert.fieldEquals('SettlementStrategy', '1-1', 'settlementReward', settlementReward.toString());
   assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', (!disabled).toString());
-
-  log.info('Should disable the Settlement Strategy', []);
-
-  handleSettlementStrategyEnabled(
-    createSettlementStrategyEnabledEvent(
-      marketId,
-      strategyId,
-      false,
-      timestamp,
-      blockNumber,
-      logIndex
-    )
-  );
-
-  assert.entityCount('SettlementStrategy', 1);
-  assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', 'false');
-
-  log.info(
-    'Should skip even if Settlement Strategy does not exist and not add any more records',
-    []
-  );
-  handleSettlementStrategyEnabled(
-    createSettlementStrategyEnabledEvent(marketId, 123123, false, timestamp, blockNumber, logIndex)
-  );
-  assert.entityCount('SettlementStrategy', 1);
 }
