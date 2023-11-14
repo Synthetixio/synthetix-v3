@@ -5,7 +5,11 @@ import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/ge
 import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
-import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
+import {
+  SpotMarketProxy,
+  SynthRouter,
+  TrustedMulticallForwarder,
+} from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
@@ -22,6 +26,7 @@ type Proxies = {
   PerpsMarketProxy: PerpsMarketProxy;
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
+  ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
   ['MockPyth']: MockPyth;
   ['FeeCollectorMock']: FeeCollectorMock;
 };
@@ -35,6 +40,7 @@ export type Systems = {
   OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
+  TrustedMulticallForwarder: TrustedMulticallForwarder;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
@@ -56,6 +62,9 @@ export function bootstrap() {
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       CollateralMock: getContract('synthetix.CollateralMock'),
+      TrustedMulticallForwarder: getContract(
+        'synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder'
+      ),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
       MockPyth: getContract('MockPyth'),
