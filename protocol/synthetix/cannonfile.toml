@@ -214,6 +214,18 @@ fromCall.func = "owner"
 func = "setFeatureFlagAllowAll"
 args = ["<%= formatBytes32String('liquidateVault') %>", true]
 
+[invoke.enable_feature_depositMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketCollateral') %>", true]
+
+[invoke.enable_feature_withdrawMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketCollateral') %>", true]
+
 [invoke.enable_feature_depositMarketUsd]
 target = ["CoreProxy"]
 fromCall.func = "owner"
