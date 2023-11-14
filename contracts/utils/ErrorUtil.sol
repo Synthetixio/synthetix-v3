@@ -20,7 +20,7 @@ library ErrorUtil {
     // @notice Thrown when order not ready for settlement.
     error OrderNotReady();
 
-    // @notice Thrown when order trying owner trying to clear a stale order
+    // @notice Thrown when owner trying to clear a fresh (not stale) order
     error OrderNotStale();
 
     // @notice Thrown when an order cannot settle due to limitPrice tolerance not met.
