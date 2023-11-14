@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./optimism-mainnet/schema.graphql
+  file: ./base-goerli-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
-    network: optimism
+    network: base-testnet
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0xffffffaEff0B96Ea8e4f94b2253f31abdD875847"
-      startBlock: 94845805
+      address: "0xd7cFdcf6499896a1E15Db92629AAC8085af8B2ac"
+      startBlock: 11920399
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./optimism-mainnet/index.ts
+      file: ./base-goerli-andromeda/index.ts
       abis:
         - name: CoreProxy
-          file: ./optimism-mainnet/deployments/system/CoreProxy.json
+          file: ./base-goerli-andromeda/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
