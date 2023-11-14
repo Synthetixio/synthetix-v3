@@ -179,44 +179,28 @@ async function run() {
     );
   }
 
-  // Fake USDC collateral token
-  const usdcMockCollateral =
-    deployments?.state?.['provision.usdc_mock_collateral']?.artifacts?.imports
-      ?.usdc_mock_collateral;
-  if (usdcMockCollateral) {
-    console.log(`Writing ${chainId}-${preset}-MintableUSDCToken.json`);
-    await fs.writeFile(
-      `./abis/${chainId}-${preset}-MintableUSDCToken.json`,
-      await prettyJson(usdcMockCollateral.contracts.MintableToken)
-    );
-    out.push(
-      `| Fake mintable USDC Token | [${
-        usdcMockCollateral.contracts.MintableToken.address
-      }](${etherscanLink(
-        chainId,
-        usdcMockCollateral.contracts.MintableToken.address
-      )}) | [View/Download](./abis/${chainId}-${preset}-MintableUSDCToken.json) |`
-    );
+  async function mintableToken(provisionStep) {
+    const fakeCollateral =
+      deployments?.state?.[`provision.${provisionStep}`]?.artifacts?.imports?.[provisionStep];
+    if (fakeCollateral) {
+      const [name, ticker] = fakeCollateral.contracts.MintableToken.constructorArgs;
+      console.log(`Writing ${chainId}-${preset}-FakeCollateral${ticker}.json`);
+      await fs.writeFile(
+        `./abis/${chainId}-${preset}-FakeCollateral${ticker}.json`,
+        await prettyJson(fakeCollateral.contracts.MintableToken)
+      );
+      out.push(
+        `| Fake Collateral ${name} $${ticker} | [${
+          fakeCollateral.contracts.MintableToken.address
+        }](${etherscanLink(
+          chainId,
+          fakeCollateral.contracts.MintableToken.address
+        )}) | [View/Download](./abis/${chainId}-${preset}-FakeCollateral${ticker}.json) |`
+      );
+    }
   }
-
-  // Fake SNX collateral token
-  const snxMockCollateral =
-    deployments?.state?.['provision.mintableToken']?.artifacts?.imports?.mintableToken;
-  if (snxMockCollateral) {
-    console.log(`Writing ${chainId}-${preset}-MintableSNXToken.json`);
-    await fs.writeFile(
-      `./abis/${chainId}-${preset}-MintableSNXToken.json`,
-      await prettyJson(snxMockCollateral.contracts.MintableToken)
-    );
-    out.push(
-      `| Fake mintable SNX Token | [${
-        snxMockCollateral.contracts.MintableToken.address
-      }](${etherscanLink(
-        chainId,
-        snxMockCollateral.contracts.MintableToken.address
-      )}) | [View/Download](./abis/${chainId}-${preset}-MintableSNXToken.json) |`
-    );
-  }
+  await mintableToken('usdc_mock_collateral');
+  await mintableToken('mintableToken');
 
   // Real SNX token
   const configureSnxCollateral =
