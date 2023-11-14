@@ -26,6 +26,14 @@ interface IElectionModuleSatellite {
     /// @dev Burn the council tokens from the given members; receiving end of CCIP members dismissal
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;
 
+    /// @dev Tweak the epoch dates to the given ones, without validation because we assume that it was started from mothership
+    function _recvTweakEpochSchedule(
+        uint256 epochIndex,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    ) external;
+
     /// @dev Burn current epoch council tokens and assign new ones, setup epoch dates. Receiving end of CCIP epoch resolution.
     function _recvResolve(
         uint256 epochIndex,
