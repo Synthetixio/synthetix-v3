@@ -179,19 +179,42 @@ async function run() {
     );
   }
 
-  // Fake SNX token
-  const configureFakeSnxCollateral =
-    deployments?.state?.['invoke.configureFakeSnxCollateral']?.artifacts?.txns
-      ?.configureFakeSnxCollateral;
-  const [fakeSnxCollateralConfiguredEvent] =
-    configureFakeSnxCollateral?.events?.CollateralConfigured ?? [];
-  const [fakeSnxAddress] = fakeSnxCollateralConfiguredEvent?.args ?? [];
-  if (fakeSnxAddress) {
+  // Fake USDC collateral token
+  const usdcMockCollateral =
+    deployments?.state?.['provision.usdc_mock_collateral']?.artifacts?.imports
+      ?.usdc_mock_collateral;
+  if (usdcMockCollateral) {
+    console.log(`Writing ${chainId}-${preset}-MintableUSDCToken.json`);
+    await fs.writeFile(
+      `./abis/${chainId}-${preset}-MintableUSDCToken.json`,
+      await prettyJson(usdcMockCollateral.contracts.MintableToken)
+    );
     out.push(
-      `| Fake SNX Token | [${fakeSnxAddress}](${etherscanLink(
+      `| Fake mintable USDC Token | [${
+        usdcMockCollateral.contracts.MintableToken.address
+      }](${etherscanLink(
         chainId,
-        fakeSnxAddress
-      )}) | _ERC-20 compliant_ |`
+        usdcMockCollateral.contracts.MintableToken.address
+      )}) | [View/Download](./abis/${chainId}-${preset}-MintableUSDCToken.json) |`
+    );
+  }
+
+  // Fake SNX collateral token
+  const snxMockCollateral =
+    deployments?.state?.['provision.mintableToken']?.artifacts?.imports?.mintableToken;
+  if (snxMockCollateral) {
+    console.log(`Writing ${chainId}-${preset}-MintableSNXToken.json`);
+    await fs.writeFile(
+      `./abis/${chainId}-${preset}-MintableSNXToken.json`,
+      await prettyJson(snxMockCollateral.contracts.MintableToken)
+    );
+    out.push(
+      `| Fake mintable SNX Token | [${
+        snxMockCollateral.contracts.MintableToken.address
+      }](${etherscanLink(
+        chainId,
+        snxMockCollateral.contracts.MintableToken.address
+      )}) | [View/Download](./abis/${chainId}-${preset}-MintableSNXToken.json) |`
     );
   }
 
