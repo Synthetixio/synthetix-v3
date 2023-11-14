@@ -41,14 +41,15 @@ contract OrderModule is IOrderModule {
 
     // --- Helpers --- //
 
+    /**
+     * @dev Ensure fillPrice does not exceed limitPrice.
+     * NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
+     */
     function isPriceToleranceExceeded(
         int128 sizeDelta,
         uint256 fillPrice,
         uint256 limitPrice
     ) private pure returns (bool) {
-        // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
-        //
-        // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
         return (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
     }
 
