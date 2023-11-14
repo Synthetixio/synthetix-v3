@@ -276,16 +276,13 @@ contract OrderModule is IOrderModule {
 
     function clearStaleOrder(uint128 accountId, uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Account.exists(accountId);
 
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound();
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        if (!isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
+        if (!isOrderStale(order.commitmentTime, PerpMarketConfiguration.load().maxOrderAge)) {
             revert ErrorUtil.OrderNotStale();
         }
 

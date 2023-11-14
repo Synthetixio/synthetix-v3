@@ -342,10 +342,7 @@ describe('OrderModule Cancelations', () => {
 
       const invalidAccountId = bn(42069);
 
-      await assertRevert(
-        PerpMarketProxy.clearStaleOrder(invalidAccountId, marketId),
-        `AccountNotFound("${invalidAccountId}")`
-      );
+      await assertRevert(PerpMarketProxy.clearStaleOrder(invalidAccountId, marketId), `OrderNotFound()`);
     });
 
     it('should revert when order does not exists', async () => {
