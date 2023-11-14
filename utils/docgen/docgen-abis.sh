@@ -43,6 +43,12 @@ echo "" >> $OUT
 cat ./docs/420-main.md >> $OUT
 echo "" >> $OUT
 
+node ./abis.js 420 dev
+echo "## Dev on Optimism Goerli" >> $OUT
+echo "" >> $OUT
+cat ./docs/420-dev.md >> $OUT
+echo "" >> $OUT
+
 node ./abis.js 80001 main
 echo "## Polygon Mumbai" >> $OUT
 echo "" >> $OUT
