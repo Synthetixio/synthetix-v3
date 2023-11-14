@@ -133,12 +133,8 @@ describe('Liquidation - max pd', async () => {
   describe('more liquidation of trader 1 since under max pd', () => {
     describe('same block', () => {
       before('call liquidate twice more since under max pd', async () => {
-        await systems()
-          .PerpsMarket.connect(keeper())
-          .multicall([
-            systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-            systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-          ]);
+        await systems().PerpsMarket.liquidate(2);
+        await systems().PerpsMarket.liquidate(2);
       });
 
       it('liquidated 25 OP more', async () => {
