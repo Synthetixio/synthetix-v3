@@ -101,7 +101,7 @@
     "utils/**",
     "protocol/**",
     "markets/**",
-    "auxilary/**"
+    "auxiliary/**"
   ],
   "engines": {
     "node": "^18.16.0"

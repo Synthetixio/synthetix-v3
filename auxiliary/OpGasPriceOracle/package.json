@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio-auxilary/op-gas-price-oracle",
+  "name": "@synthetixio-auxiliary/op-gas-price-oracle",
   "version": "3.3.4",
   "description": "Optimism Gas Price Oracle Node",
   "publishConfig": {

@@ -2821,9 +2821,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio-auxilary/op-gas-price-oracle@workspace:auxilary/OpGasPriceOracle":
+"@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
   version: 0.0.0-use.local
-  resolution: "@synthetixio-auxilary/op-gas-price-oracle@workspace:auxilary/OpGasPriceOracle"
+  resolution: "@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
@@ -2842,9 +2842,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio-auxilary/spot-market-oracle@workspace:auxilary/SpotMarketOracle":
+"@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
   version: 0.0.0-use.local
-  resolution: "@synthetixio-auxilary/spot-market-oracle@workspace:auxilary/SpotMarketOracle"
+  resolution: "@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
