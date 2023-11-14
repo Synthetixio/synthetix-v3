@@ -768,25 +768,24 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - docgen-contracts:
-          name: "docgen-contracts-dev"
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              only: /check-deploys/
 
-  check-deploys:
+  update-subgraphs:
     when:
       and:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
         - equal: ["Check deploys", << pipeline.schedule.name >>]
     jobs:
       - update-subgraphs
+
+  docgen-abis:
+    when:
+      and:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+        - equal: ["Check deploys", << pipeline.schedule.name >>]
+    jobs:
       - docgen-abis
 
-  # for dev
-  test-check-deploys:
+  dev-update-subgraphs:
     unless:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
@@ -794,8 +793,26 @@ workflows:
       - update-subgraphs:
           filters:
             branches:
-              only: /check-deploys/
+              only: /update-subgraphs/
+
+  dev-docgen-abis:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
       - docgen-abis:
           filters:
             branches:
-              only: /check-deploys/
+              only: /docgen-abis/
+
+  dev-docgen-contracts:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
+      - docgen-contracts:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /docgen-contracts/
