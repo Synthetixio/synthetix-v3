@@ -1019,6 +1019,35 @@ describe('MarginModule', async () => {
         );
       });
 
+      it('should allow withdrawal of collateral when collateral maxAllowable is 0', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+
+        await PerpMarketProxy.setCollateralConfiguration(
+          configuredCollaterals.map((x) => x.synthMarketId),
+          // Set maxAllowable to 0 for all collaterals
+          configuredCollaterals.map((_) => BigNumber.from(0))
+        );
+
+        // Perform the withdraw (full amount).
+        const { receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          provider()
+        );
+
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          collateralDepositAmount,
+          collateral.synthMarketId(),
+        ].join(', ');
+
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      });
       it('should cancel order when withdrawing all if pending order exists and expired');
 
       it('should recompute funding', async () => {
@@ -1539,7 +1568,7 @@ describe('MarginModule', async () => {
       assertBn.isZero(configuredCollaterals[1].maxAllowable);
     });
 
-    it('should not allow removal of collateral with amounts in the system', async () => {
+    it('should revert when removal of collateral with amounts in the system', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
