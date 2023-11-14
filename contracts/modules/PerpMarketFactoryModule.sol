@@ -134,6 +134,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Views --- //
 
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function getActiveMarketIds() external view returns (uint128[] memory) {
         return PerpMarket.load().activeMarketIds;
     }
