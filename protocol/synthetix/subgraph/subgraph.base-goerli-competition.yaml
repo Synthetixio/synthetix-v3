@@ -16,7 +16,7 @@ dataSources:
       file: ./base-goerli-competition/index.ts
       abis:
         - name: CoreProxy
-          file: ./base-goerli-competition/deployments/CoreProxy.json
+          file: ./base-goerli-competition/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
