@@ -103,7 +103,7 @@ describe('cross chain election testing', function () {
       await tx.wait();
 
       const hasVoted = await mothership.CoreProxy.hasVoted(
-        await voter.satellite1.getAddress(),
+        await voter.mothership.getAddress(),
         mothership.chainId
       );
 
