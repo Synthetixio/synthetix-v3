@@ -33,6 +33,10 @@ library PerpMarket {
     using Position for Position.Data;
     using Order for Order.Data;
 
+    // --- Constants --- //
+
+    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket"));
+
     // --- Storage --- //
 
     struct Data {
@@ -67,8 +71,20 @@ library PerpMarket {
         uint128[2][] pastLiquidations;
     }
 
+    struct GlobalData {
+        // Array all market ids in the system
+        uint128[] activeMarketIds;
+    }
+
+    function load() internal pure returns (GlobalData storage d) {
+        bytes32 s = keccak256(abi.encode(SLOT_NAME));
+        assembly {
+            d.slot := s
+        }
+    }
+
     function load(uint128 id) internal pure returns (Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket", id));
+        bytes32 s = keccak256(abi.encode(SLOT_NAME, id));
 
         assembly {
             d.slot := s

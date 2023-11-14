@@ -12,7 +12,6 @@ import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {GlobalPerpMarket} from "../storage/GlobalPerpMarket.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
@@ -74,12 +73,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        GlobalPerpMarket.Data storage global = GlobalPerpMarket.load();
 
         uint128 id = globalConfig.synthetix.registerMarket(address(this));
 
         PerpMarket.create(id, data.name);
-        global.activeMarketIds.push(id);
+        PerpMarket.load().activeMarketIds.push(id);
         emit MarketCreated(id, data.name);
 
         return id;
@@ -135,9 +133,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     }
 
     // --- Views --- //
+
     function getActiveMarketIds() external view returns (uint128[] memory) {
-        GlobalPerpMarket.Data storage global = GlobalPerpMarket.load();
-        return global.activeMarketIds;
+        return PerpMarket.load().activeMarketIds;
     }
 
     /**

@@ -14,7 +14,6 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {Position} from "../storage/Position.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "../storage/Margin.sol";
-import {GlobalPerpMarket} from "../storage/GlobalPerpMarket.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -22,7 +21,6 @@ contract MarginModule is IMarginModule {
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
-    using GlobalPerpMarket for GlobalPerpMarket.Data;
 
     // --- Helpers --- //
 
@@ -241,6 +239,25 @@ contract MarginModule is IMarginModule {
         }
     }
 
+    function isCollateralDeposited(uint128 synthMarketId) internal view returns (bool) {
+        PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
+
+        uint128[] memory activeMarketIds = globalPerpMarket.activeMarketIds;
+        uint256 activeMarketIdsLength = activeMarketIds.length;
+        // Accumulate collateral amounts for active markets
+        for (uint256 i = 0; i < activeMarketIdsLength; ) {
+            uint128 marketId = activeMarketIds[i];
+            PerpMarket.Data storage market = PerpMarket.load(marketId);
+            if (market.depositedCollateral[synthMarketId] > 0) {
+                return true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        return false;
+    }
+
     /**
      * @inheritdoc IMarginModule
      */
@@ -306,13 +323,15 @@ contract MarginModule is IMarginModule {
         }
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
 
-        GlobalPerpMarket.Data storage globalPerpMarket = GlobalPerpMarket.load();
         uint256 previousSupportedSynthMarketIdsLength = previousSupportedSynthMarketIds.length;
         for (uint i = 0; i < previousSupportedSynthMarketIdsLength; i++) {
             uint128 synthMarketId = previousSupportedSynthMarketIds[i];
-            uint256 totalCollateralAmount = globalPerpMarket.getTotalCollateralAmounts(synthMarketId);
-            // If collateral amount is 0, we can skip this check
-            if (totalCollateralAmount == 0) {
+
+            // If no collateral deposited we can skip the check
+            if (!isCollateralDeposited(synthMarketId)) {
+                unchecked {
+                    ++i;
+                }
                 continue;
             }
             // If the previous collateral had a balance, but is not in the new collateral list, revert.
@@ -320,6 +339,10 @@ contract MarginModule is IMarginModule {
             // Worth noting that market owner can still set maxAllowable to 0 to disable deposits for the collateral.
             if (!globalMarginConfig.supported[synthMarketId].exists) {
                 revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
+            }
+
+            unchecked {
+                ++i;
             }
         }
 
