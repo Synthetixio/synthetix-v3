@@ -16,7 +16,7 @@ dataSources:
       file: ./optimism-mainnet/index.ts
       abis:
         - name: SpotMarketProxy
-          file: ./optimism-mainnet/deployments/SpotMarketProxy.json
+          file: ./optimism-mainnet/deployments/spotFactory/SpotMarketProxy.json
       entities:
         - Wrapper
         - Order
