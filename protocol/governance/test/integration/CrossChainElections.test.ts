@@ -93,6 +93,23 @@ describe('cross chain election testing', function () {
       }
     });
 
+    it('casts vote on mothership', async function () {
+      const { mothership } = chains;
+
+      const tx = await mothership.CoreProxy.connect(voter.mothership).cast(
+        [await nominee.mothership.getAddress()],
+        [ethers.utils.parseEther('100')]
+      );
+      await tx.wait();
+
+      const hasVoted = await mothership.CoreProxy.hasVoted(
+        await voter.mothership.getAddress(),
+        mothership.chainId
+      );
+
+      assert.equal(hasVoted, true);
+    });
+
     it('casts vote on satellite1', async function () {
       const { mothership, satellite1 } = chains;
 

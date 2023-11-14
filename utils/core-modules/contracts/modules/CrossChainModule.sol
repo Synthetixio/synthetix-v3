@@ -41,8 +41,6 @@ contract CrossChainModule is ICrossChainModule {
     ) public returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
-        uint64 myChainId = block.chainid.to64();
-
         if (ccipSelectors.length != supportedNetworks.length) {
             revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
         }
@@ -50,8 +48,6 @@ contract CrossChainModule is ICrossChainModule {
         CrossChain.Data storage cc = CrossChain.load();
         for (uint i = 0; i < supportedNetworks.length; i++) {
             uint64 chainId = supportedNetworks[i];
-
-            if (chainId == myChainId) continue;
 
             if (!cc.supportedNetworks.contains(chainId)) {
                 numRegistered++;
@@ -61,6 +57,14 @@ contract CrossChainModule is ICrossChainModule {
 
             cc.ccipChainIdToSelector[chainId] = ccipSelectors[i];
             cc.ccipSelectorToChainId[ccipSelectors[i]] = chainId;
+        }
+
+        uint64 myChainId = block.chainid.to64();
+        if (!cc.supportedNetworks.contains(myChainId)) {
+            revert ParameterError.InvalidParameter(
+                "supportedNetworks",
+                "must include current chain"
+            );
         }
     }
 }

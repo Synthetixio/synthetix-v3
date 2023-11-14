@@ -146,14 +146,6 @@ library CrossChain {
         for (uint i = 0; i < chains.length; i++) {
             uint64 destChainId = chains[i];
 
-            CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-                abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
-                data, // Data payload
-                new CcipClient.EVMTokenAmount[](0), // Token transfers
-                address(0), // Address of feeToken. address(0) means you will send msg.value.
-                CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
-            );
-
             if (destChainId == block.chainid) {
                 (bool success, bytes memory result) = address(this).call(data);
 
@@ -164,6 +156,14 @@ library CrossChain {
                     }
                 }
             } else {
+                CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
+                    abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+                    data, // Data payload
+                    new CcipClient.EVMTokenAmount[](0), // Token transfers
+                    address(0), // Address of feeToken. address(0) means you will send msg.value.
+                    CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
+                );
+
                 uint64 chainSelector = self.ccipChainIdToSelector[destChainId];
                 uint256 fee = router.getFee(chainSelector, sentMsg);
 
