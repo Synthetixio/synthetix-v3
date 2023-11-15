@@ -168,18 +168,33 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
 
-        council.adjustEpochSchedule(
-            council.getCurrentEpoch(),
-            newNominationPeriodStartDate,
-            newVotingPeriodStartDate,
-            newEpochEndDate,
-            true /*ensureChangesAreSmall = true*/
-        );
-
-        emit EpochScheduleUpdated(
+        Epoch.Data storage currentEpoch = council.getCurrentEpoch();
+        Epoch.Data memory newEpoch = Epoch.Data(
+            currentEpoch.startDate,
             newNominationPeriodStartDate,
             newVotingPeriodStartDate,
             newEpochEndDate
+        );
+
+        council.validateEpochScheduleTweak(currentEpoch, newEpoch);
+
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvTweakEpochSchedule.selector,
+                council.currentElectionId,
+                newEpoch.nominationPeriodStartDate,
+                newEpoch.votingPeriodStartDate,
+                newEpoch.endDate
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+
+        emit EpochScheduleUpdated(
+            newEpoch.nominationPeriodStartDate,
+            newEpoch.votingPeriodStartDate,
+            newEpoch.endDate
         );
     }
 

@@ -150,46 +150,48 @@ library Council {
             epochEndDate
         );
 
-        epoch.startDate = epochStartDate;
-        epoch.nominationPeriodStartDate = nominationPeriodStartDate;
-        epoch.votingPeriodStartDate = votingPeriodStartDate;
-        epoch.endDate = epochEndDate;
+        epoch.setEpochDates(
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
     }
 
     /// @dev Changes epoch dates, with validations
-    function adjustEpochSchedule(
+    function validateEpochScheduleTweak(
         Data storage self,
-        Epoch.Data storage epoch,
-        uint64 newNominationPeriodStartDate,
-        uint64 newVotingPeriodStartDate,
-        uint64 newEpochEndDate,
-        bool ensureChangesAreSmall
-    ) internal {
-        if (ensureChangesAreSmall) {
-            ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
+        Epoch.Data storage currentEpoch,
+        Epoch.Data memory newEpoch
+    ) internal view {
+        ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
 
-            if (
-                uint64AbsDifference(newEpochEndDate, epoch.startDate + settings.epochDuration) >
-                settings.maxDateAdjustmentTolerance ||
-                uint64AbsDifference(newNominationPeriodStartDate, epoch.nominationPeriodStartDate) >
-                settings.maxDateAdjustmentTolerance ||
-                uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) >
-                settings.maxDateAdjustmentTolerance
-            ) {
-                revert InvalidEpochConfiguration(7, 0, 0);
-            }
+        if (
+            uint64AbsDifference(newEpoch.endDate, currentEpoch.startDate + settings.epochDuration) >
+            settings.maxDateAdjustmentTolerance ||
+            uint64AbsDifference(
+                newEpoch.nominationPeriodStartDate,
+                currentEpoch.nominationPeriodStartDate
+            ) >
+            settings.maxDateAdjustmentTolerance ||
+            uint64AbsDifference(
+                newEpoch.votingPeriodStartDate,
+                currentEpoch.votingPeriodStartDate
+            ) >
+            settings.maxDateAdjustmentTolerance
+        ) {
+            revert InvalidEpochConfiguration(7, 0, 0);
         }
 
-        configureEpochSchedule(
+        validateEpochSchedule(
             self,
-            epoch,
-            epoch.startDate,
-            newNominationPeriodStartDate,
-            newVotingPeriodStartDate,
-            newEpochEndDate
+            currentEpoch.startDate,
+            newEpoch.nominationPeriodStartDate,
+            newEpoch.votingPeriodStartDate,
+            newEpoch.endDate
         );
 
-        if (epoch.getCurrentPeriod() != Epoch.ElectionPeriod.Administration) {
+        if (Epoch.getPeriodFor(newEpoch) != Epoch.ElectionPeriod.Administration) {
             revert ChangesCurrentPeriod();
         }
     }

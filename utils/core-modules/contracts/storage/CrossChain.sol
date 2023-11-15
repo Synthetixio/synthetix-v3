@@ -152,7 +152,7 @@ library CrossChain {
                 if (!success) {
                     uint256 len = result.length;
                     assembly {
-                        revert(result, len)
+                        revert(add(result, 0x20), len)
                     }
                 }
             } else {
@@ -227,7 +227,7 @@ library CrossChain {
         if (!success) {
             uint256 len = result.length;
             assembly {
-                revert(result, len)
+                revert(add(result, 0x20), len)
             }
         }
     }

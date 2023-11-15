@@ -127,6 +127,24 @@ contract ElectionModuleSatellite is
         );
     }
 
+    function _recvTweakEpochSchedule(
+        uint256 epochIndex,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    ) external override {
+        CrossChain.onlyCrossChain();
+
+        Epoch.Data storage epoch = Epoch.load(epochIndex);
+
+        epoch.setEpochDates(
+            epoch.startDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
+    }
+
     function _setupEpoch(
         uint256 epochIndex,
         uint64 epochStartDate,
@@ -141,11 +159,12 @@ contract ElectionModuleSatellite is
         council.currentElectionId = epochIndex;
 
         Epoch.Data storage epoch = Epoch.load(epochIndex);
-
-        epoch.startDate = epochStartDate;
-        epoch.nominationPeriodStartDate = nominationPeriodStartDate;
-        epoch.votingPeriodStartDate = votingPeriodStartDate;
-        epoch.endDate = epochEndDate;
+        epoch.setEpochDates(
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
 
         _removeAllCouncilMembers(prevEpochIndex);
         _addCouncilMembers(councilMembers, epochIndex);
