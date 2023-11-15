@@ -25,16 +25,33 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
      */
     function createRewardDistributor(
         IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParameters calldata data
-    ) external returns (bytes32 id, address distributor) {
+    ) external returns (address) {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        distributor = globalConfig.rewardDistributorImplementation.clone();
+        address distributor = globalConfig.rewardDistributorImplementation.clone();
         IPerpRewardDistributor(distributor).initialize(address(globalConfig.synthetix), data.token, data.name);
 
-        id = getRewardId(data.poolId, data.collateralType, distributor);
+        emit RewardDistributorCreated(distributor);
+        return distributor;
+    }
 
-        // TODO: Consider pull this out so that there's a separate register function as this only accepts one collateralType.
-        globalConfig.synthetix.registerRewardsDistributor(data.poolId, data.collateralType, distributor);
+    /**
+     * @inheritdoc IPerpRewardDistributorFactoryModule
+     */
+    function registerRewardDistributor(
+        IPerpRewardDistributorFactoryModule.RegsiterPerpRewardDistributorParameters calldata data
+    ) external {
+        OwnableStorage.onlyOwner();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 length = data.collateralTypes.length;
+        for (uint256 i = 0; i < length; ) {
+            globalConfig.synthetix.registerRewardsDistributor(data.poolId, data.collateralTypes[i], data.distributor);
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 }
