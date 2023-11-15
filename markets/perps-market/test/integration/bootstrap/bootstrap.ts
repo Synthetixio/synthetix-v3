@@ -1,4 +1,3 @@
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
 import { CollateralMock } from '@synthetixio/main/typechain-types';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
@@ -184,13 +183,10 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     });
   }
 
-  const restore = snapshotCheckpoint(provider);
-
   return {
     systems,
     signers,
     provider,
-    restore,
     trader1,
     trader2,
     trader3,

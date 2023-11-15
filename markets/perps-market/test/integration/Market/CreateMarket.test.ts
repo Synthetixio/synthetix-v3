@@ -6,13 +6,14 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { createKeeperCostNode } from '../bootstrap/createKeeperCostNode';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Create Market test', () => {
   const name = 'Ether',
     token = 'snxETH',
     price = bn(1000);
 
-  const { systems, signers, owner, restore, trader1, superMarketId } = bootstrapMarkets({
+  const { systems, signers, owner, provider, trader1, superMarketId } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [], // don't create a market in bootstrap
     traderAccountIds: [2, 3],
@@ -20,6 +21,8 @@ describe('Create Market test', () => {
   });
 
   let randomAccount: ethers.Signer;
+
+  const restore = snapshotCheckpoint(provider);
 
   before('identify actors', async () => {
     [, , , , randomAccount] = signers();
