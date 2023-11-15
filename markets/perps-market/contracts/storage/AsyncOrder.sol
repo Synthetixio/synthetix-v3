@@ -537,7 +537,7 @@ library AsyncOrder {
             fillPrice
         );
 
-        // get maintenance margin of old position
+        // get initial margin of old position
         (, , runtime.oldRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             oldPositionSize,
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
