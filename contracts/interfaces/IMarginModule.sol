@@ -11,6 +11,8 @@ interface IMarginModule is IBasePerpMarket {
         uint128 synthMarketId;
         // Maximum allowable deposited amount.
         uint128 maxAllowable;
+        // Address of the associated rewards distributor.
+        address rewardDistributor;
     }
 
     // --- Events --- //
@@ -51,7 +53,11 @@ interface IMarginModule is IBasePerpMarket {
      * The order in which `synthMarketIds` is defined is also used as the deduction priority. It is recommended to use
      * sUSD as the first `synthMarketId` so that negative PnL/fees are deducted from sUSD before other collateral types.
      */
-    function setCollateralConfiguration(uint128[] calldata synthMarketIds, uint128[] calldata maxAllowables) external;
+    function setCollateralConfiguration(
+        uint128[] calldata synthMarketIds,
+        uint128[] calldata maxAllowables,
+        address[] calldata rewardDistributors
+    ) external;
 
     // --- Views --- //
 

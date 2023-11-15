@@ -53,6 +53,9 @@ library ErrorUtil {
     // @notice Thrown when we expect amount to be non zero.
     error ZeroAmount();
 
+    // @notice Thrown when a non-zero address is expected.
+    error ZeroAddress();
+
     // @notice Thrown when an order pushes past a market's max allowable market size.
     error MaxMarketSizeExceeded();
 

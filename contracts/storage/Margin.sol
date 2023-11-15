@@ -26,6 +26,8 @@ library Margin {
     struct CollateralType {
         // Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
+        // Address of the associated reward distributor.
+        address rewardDistributor;
     }
 
     // --- Storage --- //

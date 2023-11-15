@@ -241,7 +241,11 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function setCollateralConfiguration(uint128[] calldata synthMarketIds, uint128[] calldata maxAllowables) external {
+    function setCollateralConfiguration(
+        uint128[] calldata synthMarketIds,
+        uint128[] calldata maxAllowables,
+        address[] calldata rewardDistributors
+    ) external {
         OwnableStorage.onlyOwner();
 
         // Ensure all arrays have the same length.
@@ -288,11 +292,19 @@ contract MarginModule is IMarginModule {
             // Perform approve _once_ when this collateral is added as a supported collateral.
             synth.approve(address(globalMarketConfig.synthetix), MAX_UINT256);
             synth.approve(address(globalMarketConfig.spotMarket), MAX_UINT256);
+
+            address rewardDistributor = rewardDistributors[i];
+
+            // sUSD vs other synth configuration.
             if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
                 synth.approve(address(this), MAX_UINT256);
+            } else {
+                if (rewardDistributor == address(0)) {
+                    revert ErrorUtil.ZeroAddress();
+                }
             }
 
-            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i]);
+            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i], rewardDistributor);
             newSupportedSynthMarketIds[i] = synthMarketId;
 
             unchecked {
@@ -319,7 +331,7 @@ contract MarginModule is IMarginModule {
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             Margin.CollateralType storage c = globalMarginConfig.supported[synthMarketId];
-            collaterals[i] = AvailableCollateral(synthMarketId, c.maxAllowable);
+            collaterals[i] = AvailableCollateral(synthMarketId, c.maxAllowable, c.rewardDistributor);
 
             unchecked {
                 ++i;

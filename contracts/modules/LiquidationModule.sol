@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -105,10 +107,13 @@ contract LiquidationModule is ILiquidationModule {
             position.accruedFeesUsd + flagReward
         );
         market.updateDebtCorrection(position, newPosition);
+
         // Update position accounting
         position.update(newPosition);
+
         // Pay keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);
@@ -148,9 +153,31 @@ contract LiquidationModule is ILiquidationModule {
             Margin.Data storage accountMargin = Margin.load(accountId, marketId);
             market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+
+            // For any non-sUSD collateral, send them all to their respective reward distributor.
+            Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+            uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+            uint128 synthMarketId;
+            uint256 available;
+
+            for (uint256 i = 0; i < length; ++i) {
+                synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+                available = accountMargin.collaterals[synthMarketId];
+
+                // TODO: Distribute reward to every collateral in pool.
+                // if (available > 0) {
+                //     address synth = globalConfig.spotMarket.getSynth(synthMarketId);
+                //     globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
+                //     address rewardDistributor = globalMarginConfig.supported[synthMarketId].rewardDistributor;
+                //     ITokenModule(synth).transfer(rewardDistributor, available);
+                //     IRewardDistributor(rewardDistributor).distributeRewards();
+                // }
+            }
         } else {
             market.positions[accountId].update(newPosition);
         }
+
         // Pay the keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
