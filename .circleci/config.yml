@@ -84,55 +84,6 @@ commands:
           name: "Wait for IPFS daemon to start"
           command: wget --output-document - --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
 
-  version-contracts:
-    steps:
-      # Find the last update of any contract
-      - run: |
-          git log -1 -- \
-            utils/common-config/hardhat.config.ts \
-            utils/core-modules/contracts \
-            utils/core-modules/cannonfile.test.toml \
-            utils/core-modules/hardhat.config.ts \
-            utils/core-modules/storage.dump.sol \
-            utils/core-contracts/contracts \
-            utils/core-contracts/hardhat.config.ts \
-            protocol/synthetix/contracts \
-            protocol/synthetix/cannonfile.test.toml \
-            protocol/synthetix/cannonfile.toml \
-            protocol/synthetix/hardhat.config.ts \
-            protocol/synthetix/storage.dump.sol \
-            protocol/governance/contracts \
-            protocol/governance/cannonfile.toml \
-            protocol/governance/hardhat.config.ts \
-            protocol/oracle-manager/contracts \
-            protocol/oracle-manager/cannonfile.test.toml \
-            protocol/oracle-manager/cannonfile.toml \
-            protocol/oracle-manager/hardhat.config.ts \
-            protocol/oracle-manager/storage.dump.sol \
-            markets/spot-market/contracts \
-            markets/spot-market/cannonfile.test.toml \
-            markets/spot-market/cannonfile.toml \
-            markets/spot-market/hardhat.config.ts \
-            markets/spot-market/storage.dump.sol \
-            markets/perps-market/contracts \
-            markets/perps-market/cannonfile.test.toml \
-            markets/perps-market/cannonfile.toml \
-            markets/perps-market/hardhat.config.ts \
-            markets/perps-market/storage.dump.sol \
-            markets/legacy-market/contracts \
-            markets/legacy-market/hardhat.config.ts \
-            markets/legacy-market/cannonfile.toml \
-            > /tmp/version--contracts.txt
-      - run: echo "Cannon $(yarn cannon --version)" >> /tmp/version--contracts.txt
-      - run: cat /tmp/version--contracts.txt
-
-  version-testable-contracts:
-    steps:
-      # Currently we only have testable contracts generated for @synthetixio/main
-      # Add more folders to version calc (space separated)
-      - run: git log -1 -- protocol/synthetix/contracts > /tmp/version--testable-contracts.txt
-      - run: cat /tmp/version--testable-contracts.txt
-
   github-pr:
     parameters:
       working_directory:
@@ -199,37 +150,23 @@ jobs:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
 
-      - version-contracts
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
-            - cannon-{{ .Environment.CACHE_VERSION }}-
-
-      - version-testable-contracts
-      - restore_cache:
-          keys:
-            - generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
-
       - run:
-          name: "@synthetixio/main: generate-testable"
-          command: |-
-            if test -d "protocol/synthetix/contracts/generated/test" && [ $(ls protocol/synthetix/contracts/generated/test | wc -l) -gt 1  ]; then
-              echo "SKIP, no changes detected"
-            else
-              yarn workspace "@synthetixio/main" run generate-testable
-            fi
+          name: "Generate testable contracts sources"
+          command: yarn workspaces foreach --all --topological-dev --verbose run generate-testable
       - save_cache:
-          key: generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+          key: generated-testable-{{ .Environment.CIRCLE_BUILD_NUM }}
           paths:
             - "protocol/synthetix/contracts/generated"
             # Add more folders here if we generate more
 
-      - restore_cache:
-          keys:
-            - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+      - run:
+          name: "Build testable contracts"
+          command: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
+
       - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
+
       - save_cache:
-          key: testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+          key: testable-hardhat-cache-{{ .Environment.CIRCLE_BUILD_NUM }}
           paths:
             - "protocol/synthetix/artifacts"
             - "protocol/synthetix/cache"
@@ -247,7 +184,7 @@ jobs:
       - run: yarn workspaces foreach --all --verbose run check:storage
 
       - save_cache:
-          key: cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+          key: cannon-{{ .Environment.CIRCLE_BUILD_NUM }}
           paths:
             - "~/.local/share/cannon"
       - save_cache:
@@ -273,19 +210,15 @@ jobs:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
 
-      - version-contracts
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
-            - cannon-{{ .Environment.CACHE_VERSION }}-
+            - cannon-{{ .Environment.CIRCLE_BUILD_NUM }}
       - restore_cache:
           keys:
-            - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
-
-      - version-testable-contracts
+            - testable-hardhat-cache-{{ .Environment.CIRCLE_BUILD_NUM }}
       - restore_cache:
           keys:
-            - generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+            - generated-testable-{{ .Environment.CIRCLE_BUILD_NUM }}
 
       - run:
           name: "Compile TS"
