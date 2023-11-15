@@ -2821,6 +2821,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
   version: 0.0.0-use.local
   resolution: "@synthetixio/common-config@workspace:utils/common-config"
