@@ -365,6 +365,13 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         nextElectionSettings.copyMissingFrom(currentElectionSettings);
         Epoch.Data memory nextEpoch = _computeEpochFromSettings(nextElectionSettings);
 
+        council.validateEpochSchedule(
+            nextEpoch.startDate,
+            nextEpoch.nominationPeriodStartDate,
+            nextEpoch.votingPeriodStartDate,
+            nextEpoch.endDate
+        );
+
         council.newElection();
 
         CrossChain.Data storage cc = CrossChain.load();
@@ -380,13 +387,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 election.winners.values()
             ),
             _CROSSCHAIN_GAS_LIMIT
-        );
-
-        council.validateEpochSchedule(
-            nextEpoch.startDate,
-            nextEpoch.nominationPeriodStartDate,
-            nextEpoch.votingPeriodStartDate,
-            nextEpoch.endDate
         );
 
         election.resolved = true;

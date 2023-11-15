@@ -45,12 +45,12 @@ describe('SynthetixElectionModule - Elections', () => {
     // {
     //   index: 1,
     //   blockNumber: 23100007,
-    //   winners: () => [addresses[3].address,
+    //   winners: () => [addresses[3].address],
     // },
     // {
     //   index: 2,
     //   blockNumber: 30043001,
-    //   winners: () => [addresses[5].address,
+    //   winners: () => [addresses[5].address],
     // },
   ];
 
@@ -764,7 +764,7 @@ describe('SynthetixElectionModule - Elections', () => {
                             value: ethers.utils.parseEther('0.01'),
                           })
                         ).wait();
-
+                        console.log(rx);
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite1.CcipRouter.address,
