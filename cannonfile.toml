@@ -32,7 +32,7 @@ preset = "<%= settings.synthetixPreset %>"
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
 
-# --- Market Contracts --- #
+# --- Module Contracts --- #
 
 [contract.OrderModule]
 artifact = "OrderModule"
@@ -58,12 +58,22 @@ args = []
 artifact = "MarginModule"
 args = []
 
+[contract.PerpRewardDistributorFactoryModule]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
+args = []
+
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 args = []
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
+args = []
+
+# --- Distributor --- #
+
+[contract.PerpRewardDistributor]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
 args = []
 
 # --- Market Proxy Contract --- #
@@ -90,7 +100,8 @@ contracts = [
   "PerpAccountModule",
   "MarginModule",
   "OrderModule",
-  "LiquidationModule"
+  "LiquidationModule",
+  "PerpRewardDistributorFactoryModule"
 ]
 depends = [
   "import.synthetix",
@@ -102,6 +113,7 @@ depends = [
   "contract.MarginModule",
   "contract.OrderModule",
   "contract.LiquidationModule",
+  "contract.PerpRewardDistributorFactoryModule"
 ]
 
 # --- Proxy Post Deployment --- #
@@ -199,6 +211,15 @@ args = [
   "<%= contracts.PythMock.address %>",
 ]
 depends = ["invoke.upgradeProxy", "contract.PythMock"]
+
+[invoke.setRewardDistributorImplementation]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = [
+  "<%= contracts.PerpRewardDistributor.address %>",
+]
+depends = ["invoke.upgradeProxy", "contract.PerpRewardDistributor"]
 
 # --- Feature Flags --- #
 
