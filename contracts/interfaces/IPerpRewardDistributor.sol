@@ -5,7 +5,13 @@ import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/externa
 
 // @see: https://github.com/Synthetixio/rewards-distributors
 interface IPerpRewardDistributor is IRewardDistributor {
+    /**
+     * @notice Initializes the PerpRewardDistributor with references, name, token to distribute etc.
+     */
     function initialize(address rewardManager, address token, string memory name) external;
 
+    /**
+     * @notice Creates a new distribution entry for LPs of `collateralType` to `amount` of tokens.
+     */
     function distributeRewards(uint128 poolId, address collateralType, uint256 amount) external;
 }
