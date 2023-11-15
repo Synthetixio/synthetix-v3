@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "./external/ISpotMarketSystem.sol";
+import {IPythERC7412Wrapper} from "./external/IPythERC7412Wrapper.sol";
 
 /**
  * @title Perps Market Factory module
@@ -31,6 +32,7 @@ interface IPerpsMarketFactoryModule is IMarket {
     function initializeFactory(
         ISynthetixSystem synthetix,
         ISpotMarketSystem spotMarket,
+        IPythERC7412Wrapper pythERC7412Wrapper,
         string memory marketName
     ) external returns (uint128);
 

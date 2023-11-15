@@ -66,6 +66,9 @@ artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
+[contract.PythERC7412WrapperModule]
+artifact = "contracts/external/PythERC7412WrapperModule.sol:PythERC7412WrapperModule"
+
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
@@ -140,7 +143,8 @@ target = ["PerpsMarketProxy"]
 func = "initializeFactory"
 args = [
     "<%= imports.synthetix.contracts.CoreProxy.address %>",
-    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"
+    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
+    "<%= contracts.PythERC7412WrapperModule.address %>"
 ]
 from = "<%= settings.owner %>"
 extra.superMarketId.event = "FactoryInitialized"

@@ -9,6 +9,7 @@ import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
@@ -36,6 +37,10 @@ library PerpsMarketFactory {
         ISpotMarketSystem spotMarket;
         uint128 perpsMarketId;
         string name;
+        /**
+         * @dev PythERC7412Wrapper address used for getting settelment prices
+         */
+        IPythERC7412Wrapper pythERC7412Wrapper;
     }
 
     function onlyIfInitialized(Data storage self) internal view {
@@ -61,6 +66,7 @@ library PerpsMarketFactory {
         Data storage self,
         ISynthetixSystem synthetix,
         ISpotMarketSystem spotMarket,
+        IPythERC7412Wrapper pythERC7412Wrapper,
         string memory name
     ) internal returns (uint128 perpsMarketId) {
         onlyIfNotInitialized(self); // redundant check, but kept here in case this internal is called somewhere else
@@ -70,6 +76,7 @@ library PerpsMarketFactory {
 
         self.spotMarket = spotMarket;
         self.synthetix = synthetix;
+        self.pythERC7412Wrapper = pythERC7412Wrapper;
         self.name = name;
         self.usdToken = ITokenModule(usdTokenAddress);
         self.oracle = synthetix.getOracleManager();

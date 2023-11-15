@@ -64,6 +64,9 @@ salt = "<%= settings.salt %>"
 [contract.GlobalPerpsMarketModule]
 artifact = "GlobalPerpsMarketModule"
 
+[contract.PythERC7412WrapperModule]
+artifact = "contracts/external/PythERC7412WrapperModule.sol:PythERC7412WrapperModule"
+
 # Core
 [router.PerpsMarketRouter]
 contracts = [

@@ -11,6 +11,7 @@ import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
@@ -43,6 +44,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     function initializeFactory(
         ISynthetixSystem synthetix,
         ISpotMarketSystem spotMarket,
+        IPythERC7412Wrapper pythERC7412Wrapper,
         string memory marketName
     ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
@@ -52,7 +54,12 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            perpsMarketId = factory.initialize(synthetix, spotMarket, marketName);
+            perpsMarketId = factory.initialize(
+                synthetix,
+                spotMarket,
+                pythERC7412Wrapper,
+                marketName
+            );
         } else {
             perpsMarketId = factory.perpsMarketId;
         }
