@@ -519,7 +519,7 @@ library AsyncOrder {
 
     /**
      * @notice After the required margins are calculated with the old position, this function replaces the
-     * old position data with the new position margin requirements and returns them.
+     * old position initial margin with the new position initial margin requirements and returns them.
      */
     function getRequiredMarginWithNewPosition(
         PerpsAccount.Data storage account,
@@ -543,7 +543,7 @@ library AsyncOrder {
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
-        // remove the maintenance margin and add the initial margin requirement
+        // remove the old initial margin and add the new initial margin requirement
         // this gets us our total required margin for new position
         runtime.requiredMarginForNewPosition =
             currentTotalInitialMargin +
