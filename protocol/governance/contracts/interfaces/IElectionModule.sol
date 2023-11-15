@@ -71,7 +71,7 @@ interface IElectionModule is IElectionModuleSatellite {
     ) external;
 
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
-    function dismissMembers(address[] calldata members) external;
+    function dismissMembers(address[] calldata members) external payable;
 
     // ---------------------------------------
     // User write functions

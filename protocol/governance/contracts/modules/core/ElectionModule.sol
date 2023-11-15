@@ -34,7 +34,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     /**
      * @dev Utility method for initializing a new Satellite chain
      */
-    function initElectionModuleSatellite(uint256 chainId) external {
+    function initElectionModuleSatellite(uint256 chainId) external payable {
         OwnableStorage.onlyOwner();
 
         CrossChain.Data storage cc = CrossChain.load();
@@ -219,7 +219,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         );
     }
 
-    function dismissMembers(address[] calldata membersToDismiss) external override {
+    function dismissMembers(address[] calldata membersToDismiss) external payable override {
         OwnableStorage.onlyOwner();
 
         Council.Data storage council = Council.load();
