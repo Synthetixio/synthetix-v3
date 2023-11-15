@@ -26,6 +26,7 @@ contract PerpRewardDistributor is IPerpRewardDistributor {
     }
 
     function setShouldFailPayout(bool fail) external {
+        OwnableStorage.onlyOwner();
         shouldFailPayout = fail;
     }
 
@@ -70,7 +71,8 @@ contract PerpRewardDistributor is IPerpRewardDistributor {
     /**
      * @inheritdoc IPerpRewardDistributor
      */
-    function distributeRewards(uint128 poolId, address collateralType, uint256 amount) public {
+    function distributeRewards(uint128 poolId, address collateralType, uint256 amount) external {
+        OwnableStorage.onlyOwner();
         IRewardsManagerModule(_rewardManager).distributeRewards(
             poolId,
             collateralType,
