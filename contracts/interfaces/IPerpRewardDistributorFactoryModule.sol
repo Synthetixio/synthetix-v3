@@ -13,7 +13,7 @@ interface IPerpRewardDistributorFactoryModule {
         address token;
     }
 
-    struct RegsiterPerpRewardDistributorParameters {
+    struct RegisterPerpRewardDistributorParameters {
         // The pool the distributor will be registered with.
         uint128 poolId;
         // The collateral in the pool to be registered against.
@@ -40,6 +40,6 @@ interface IPerpRewardDistributorFactoryModule {
      * @notice Registers a previously created reward distributor with `collateralTypes` in `poolId`.
      */
     function registerRewardDistributor(
-        IPerpRewardDistributorFactoryModule.RegsiterPerpRewardDistributorParameters calldata data
+        IPerpRewardDistributorFactoryModule.RegisterPerpRewardDistributorParameters calldata data
     ) external;
 }

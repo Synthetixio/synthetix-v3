@@ -40,7 +40,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
      * @inheritdoc IPerpRewardDistributorFactoryModule
      */
     function registerRewardDistributor(
-        IPerpRewardDistributorFactoryModule.RegsiterPerpRewardDistributorParameters calldata data
+        IPerpRewardDistributorFactoryModule.RegisterPerpRewardDistributorParameters calldata data
     ) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
