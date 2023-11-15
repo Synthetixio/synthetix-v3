@@ -64,9 +64,6 @@ salt = "<%= settings.salt %>"
 [contract.GlobalPerpsMarketModule]
 artifact = "GlobalPerpsMarketModule"
 
-[contract.PythERC7412WrapperModule]
-artifact = "contracts/external/PythERC7412WrapperModule.sol:PythERC7412WrapperModule"
-
 # Core
 [router.PerpsMarketRouter]
 contracts = [
@@ -140,3 +137,6 @@ args = [100, 1]
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[contract.PythERC7412Wrapper]
+artifact = "contracts/external/PythERC7412WrapperModule.sol:PythERC7412WrapperModule"

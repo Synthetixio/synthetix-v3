@@ -12,7 +12,12 @@ import {
 } from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
+import {
+  AccountProxy,
+  FeeCollectorMock,
+  PerpsMarketProxy,
+  PythERC7412WrapperModule,
+} from '../../generated/typechain';
 import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
@@ -29,6 +34,7 @@ type Proxies = {
   ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
   ['MockPyth']: MockPyth;
   ['FeeCollectorMock']: FeeCollectorMock;
+  ['PythERC7412Wrapper']: PythERC7412WrapperModule;
 };
 
 export type Systems = {
@@ -43,6 +49,7 @@ export type Systems = {
   TrustedMulticallForwarder: TrustedMulticallForwarder;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
+  PythERC7412Wrapper: PythERC7412WrapperModule;
 };
 
 const params = { cannonfile: 'cannonfile.test.toml' };
@@ -69,6 +76,7 @@ export function bootstrap() {
       Account: getContract('AccountProxy'),
       MockPyth: getContract('MockPyth'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
+      PythERC7412Wrapper: getContract('PythERC7412Wrapper'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });

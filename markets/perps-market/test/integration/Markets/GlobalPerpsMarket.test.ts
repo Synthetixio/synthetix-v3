@@ -40,6 +40,7 @@ describe('GlobalPerpsMarket', () => {
         .initializeFactory(
           await trader1().getAddress(),
           await trader1().getAddress(),
+          await trader1().getAddress(),
           'other name'
         ),
       'FactoryInitialized(1)',

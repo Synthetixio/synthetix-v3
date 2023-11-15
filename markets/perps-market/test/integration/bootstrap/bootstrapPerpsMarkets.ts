@@ -84,11 +84,13 @@ export const bootstrapPerpsMarkets = (
     superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
       contracts.Core.address,
       contracts.SpotMarket.address,
+      contracts.PythERC7412Wrapper.address,
       'SuperMarket'
     );
     await contracts.PerpsMarket.initializeFactory(
       contracts.Core.address,
       contracts.SpotMarket.address,
+      contracts.PythERC7412Wrapper.address,
       'SuperMarket'
     );
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
