@@ -6,7 +6,8 @@ import { bootstrap } from '../../bootstrap';
 describe('ElectionModule - voting', () => {
   const { c, getSigners, getProvider } = bootstrap();
 
-  let user: ethers.Signer, otherUser: ethers.Signer;
+  let user: ethers.Signer;
+  let otherUser: ethers.Signer;
 
   before('identify signers', async () => {
     [, user, otherUser] = getSigners();
@@ -50,6 +51,13 @@ describe('ElectionModule - voting', () => {
       });
 
       it('reverts if voting power does not exist', async () => {
+        const res = await c.CoreProxy.getBallot(
+          await otherUser.getAddress(),
+          13370,
+          await c.CoreProxy.getEpochIndex()
+        );
+
+        console.log({ res });
         await assertRevert(
           c.CoreProxy.connect(user).cast([await otherUser.getAddress()], [0]),
           'InvalidParameter("amounts"',
