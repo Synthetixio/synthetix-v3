@@ -211,7 +211,7 @@ args = [
 ]
 depends = ["invoke.deposit_1k_susd_to_perps"]
 
-[invoke.withdraw_300_susd_from_perps]
+[invoke.withdraw_700_susd_from_perps]
 target = ["andromeda_sandbox.perps_factory.PerpsMarketProxy"]
 from = "<%= settings.test_user %>"
 func = "modifyCollateral"
@@ -230,7 +230,7 @@ args = [
     "<%= imports.andromeda_sandbox.imports.spot_factory.contracts.SpotMarketProxy.address %>",
     "<%= parseEther('300') %>",
 ]
-depends = ["invoke.withdraw_300_susd_from_perps"]
+depends = ["invoke.withdraw_700_susd_from_perps"]
 
 [invoke.atomic_buy_300_synth_usdc_with_300_susd]
 target = ["andromeda_sandbox.spot_factory.SpotMarketProxy"]
