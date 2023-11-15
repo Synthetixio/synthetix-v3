@@ -1,5 +1,5 @@
 name = "perps-sandbox"
-version = "1"
+version = "2"
 description = "Sandbox environment for development with perps"
 
 [setting.owner]
@@ -11,104 +11,25 @@ description = "Hardhat/Anvil first test account"
 
 #
 #
-# TODO: remove these
+# TODO: We will need to use Pyth Mock, so these settings will change.
 #
 #
-[setting.pythPriceVerificationAddress]
+[setting.pyth_price_verification_address]
 defaultValue = "0x5955C1478F0dAD753C7E2B4dD1b4bC530C64749f"
 
-[setting.pythFeedUrl]
+[setting.pyth_feed_url]
 defaultValue = "https://api.synthetix.io/pyth-testnet/api/get_vaa_ccip?data={data}"
 
-[setting.pythEthFeedId]
+[setting.pyth_eth_feed_id]
 defaultValue = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6"
 
 #
 #
-# Provision Synthetix V3 Core
+# Provision Synthetix V3 Core sandbox
 #
 #
-[import.synthetix]
-source = "synthetix:dev"
-
-[invoke.configure_minimum_liquidity_ratio]
-target = ["synthetix.CoreProxy"]
-fromCall.func = "owner"
-func = "setMinLiquidityRatio(uint256)"
-args = ["<%= parseEther('2') %>"]
-
-[invoke.configure_withdraw_timeout]
-target = ["synthetix.CoreProxy"]
-fromCall.func = "owner"
-func = "setConfig"
-args = [
-    "<%= formatBytes32String('accountTimeoutWithdraw') %>",
-    # seconds
-    "<%= hexZeroPad(hexlify(0), 32) %>"
-]
-
-#
-#
-# Provions Spot factory
-#
-#
-[import.spot_factory]
-source = "synthetix-spot-market:dev"
-
-#
-#
-# Provision Mintable Sandbox token $BOX
-#
-#
-[provision.box_token]
-source = "mintable-token:1.1"
-options.symbol = "BOX"
-options.name = "Sandbox"
-
-#
-#
-# Synth BOX
-#
-#
-[invoke.create_synth_box]
-target = ["spot_factory.SpotMarketProxy"]
-fromCall.func = "owner"
-func = "createSynth"
-args = ["Synthetic BOX", "sBOX", "<%= settings.owner %>"]
-extra.synth_box_market_id.event = "SynthRegistered"
-extra.synth_box_market_id.arg = 0
-extra.synth_box_token_address.event = "SynthRegistered"
-extra.synth_box_token_address.arg = 1
-
-[invoke.register_box_oracle_node_with_constant_price]
-target = ["synthetix.oracle_manager.Proxy"]
-func = "registerNode"
-args = [
-    8, # 8 = constant
-    "<%= defaultAbiCoder.encode(['int256'], [parseEther('10')]) %>", # 1 parameter: price
-    []
-]
-extra.box_oracle_id.event = "NodeRegistered"
-extra.box_oracle_id.arg = 0
-
-[invoke.configure_price_data_for_synth_box]
-target = ["spot_factory.SpotMarketProxy"]
-fromCall.func = "getMarketOwner"
-fromCall.args = ["<%= extras.synth_box_market_id %>"]
-func = "updatePriceData"
-args = [
-    "<%= extras.synth_box_market_id %>",
-    "<%= extras.box_oracle_id %>",
-    "<%= extras.box_oracle_id %>"
-]
-
-[invoke.configure_box_token_as_collateral]
-target = ["synthetix.CoreProxy"]
-fromCall.func = "owner"
-func = "configureCollateral"
-args = [
-    { tokenAddress = "<%= imports.box_token.contracts.MintableToken.address %>", oracleNodeId = "<%= extras.box_oracle_id %>", issuanceRatioD18 = "<%= parseEther('2') %>", liquidationRatioD18 = "<%= parseEther('1.5') %>", liquidationRewardD18 = "<%= parseEther('1') %>", minDelegationD18 = "<%= parseEther('1') %>", depositingEnabled = true },
-]
+[import.core_sandbox]
+source = "core-sandbox"
 
 #
 #
@@ -116,7 +37,8 @@ args = [
 #
 #
 [provision.weth_token]
-source = "mintable-token:1.1"
+source = "mintable-token"
+sourcePreset = "permissionless-mint"
 options.symbol = "WETH"
 options.name = "Wrapped Ethereum"
 
@@ -126,7 +48,7 @@ options.name = "Wrapped Ethereum"
 #
 #
 [invoke.create_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "owner"
 func = "createSynth"
 args = ["Synthetic ETH", "sETH", "<%= settings.owner %>"]
@@ -136,7 +58,7 @@ extra.synth_eth_token_address.event = "SynthRegistered"
 extra.synth_eth_token_address.arg = 1
 
 [invoke.register_eth_oracle_node_with_constant_price]
-target = ["synthetix.oracle_manager.Proxy"]
+target = ["core_sandbox.synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     8, # 8 = constant
@@ -147,7 +69,7 @@ extra.eth_oracle_id.event = "NodeRegistered"
 extra.eth_oracle_id.arg = 0
 
 [invoke.configure_price_data_for_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "updatePriceData"
@@ -158,32 +80,32 @@ args = [
 ]
 
 [invoke.configure_atomic_fixed_fee_for_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "setAtomicFixedFee"
 args = ["<%= extras.synth_eth_market_id %>", "<%= MaxUint256 %>"]
 
 [invoke.configure_settlement_strategy_for_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "addSettlementStrategy"
 args = [
     "<%= extras.synth_eth_market_id %>",
     # strategyType = 1 (pyth)
-    { strategyType = "1", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= settings.pythPriceVerificationAddress %>", feedId = "<%= settings.pythEthFeedId %>", url = "<%= settings.pythFeedUrl %>", settlementReward = 0, minimumUsdExchangeAmount = "<%= parseEther('0.000001') %>", maxRoundingLoss = "<%= parseEther('0.000001') %>", priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
+    { strategyType = "1", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_eth_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, minimumUsdExchangeAmount = "<%= parseEther('0.000001') %>", maxRoundingLoss = "<%= parseEther('0.000001') %>", priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
 ]
 
 [invoke.configure_async_fixed_fee_for_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "setAsyncFixedFee"
 args = ["<%= extras.synth_eth_market_id %>", "<%= parseEther('0.001') %>"]
 
 [invoke.configure_maximum_market_collateral_for_synth_eth]
-target = ["synthetix.CoreProxy"]
+target = ["core_sandbox.synthetix.CoreProxy"]
 fromCall.func = "owner"
 func = "configureMaximumMarketCollateral"
 args = [
@@ -193,7 +115,7 @@ args = [
 ]
 
 [invoke.initialise_synth_weth_wrapper_with_unlimited_cap]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "setWrapper"
@@ -204,14 +126,14 @@ args = [
 ]
 
 [invoke.configure_market_skew_scale_for_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "setMarketSkewScale"
 args = ["<%= extras.synth_eth_market_id %>", "<%= parseEther('100000') %>"]
 
 [invoke.configure_wrapper_fees_for_synth_eth]
-target = ["spot_factory.SpotMarketProxy"]
+target = ["core_sandbox.spot_factory.SpotMarketProxy"]
 fromCall.func = "getMarketOwner"
 fromCall.args = ["<%= extras.synth_eth_market_id %>"]
 func = "setWrapperFees"
@@ -226,12 +148,12 @@ args = [
 # Provision Perps factory
 #
 #
-[import.perps_factory]
+[provision.perps_factory]
 source = "synthetix-perps-market:dev"
-depends = ["import.spot_factory"]
+depends = ["import.core_sandbox"]
 
 [invoke.permit_owner_to_register_markets]
-target = ["synthetix.CoreProxy"]
+target = ["core_sandbox.synthetix.CoreProxy"]
 fromCall.func = "owner"
 func = "addToFeatureFlagAllowlist"
 args = ["<%= formatBytes32String('registerMarket') %>", "<%= settings.owner %>"]
@@ -267,7 +189,7 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_eth_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pythPriceVerificationAddress %>", feedId = "<%= settings.pythEthFeedId %>", url = "<%= settings.pythFeedUrl %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_eth_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
 ]
 
 [invoke.configure_funding_parameters_for_perps_eth]
@@ -372,7 +294,7 @@ fromCall.func = "owner"
 func = "setSynthDeductionPriority"
 args = [
     [
-        "<%= extras.synth_box_market_id %>",
+        "<%= imports.core_sandbox.extras.synth_box_market_id %>",
         "<%= extras.synth_eth_market_id %>",
         #        "<%= extras.synth_btc_market_id %>",
         "0"
@@ -391,44 +313,16 @@ args = ["5", "3"]
 # Create Spartan Council pool
 #
 #
-[invoke.permit_owner_to_create_pools]
-target = ["synthetix.CoreProxy"]
-fromCall.func = "owner"
-func = "addToFeatureFlagAllowlist"
-args = ["<%= formatBytes32String('createPool') %>", "<%= settings.owner %>"]
-
-[invoke.create_spartan_council_pool]
-target = ["synthetix.CoreProxy"]
-func = "createPool"
-from = "<%= settings.owner %>"
-args = ["1", "<%= settings.owner %>"]
-extra.spartan_council_pool_id.event = "PoolCreated"
-extra.spartan_council_pool_id.arg = 0
-depends = ["invoke.permit_owner_to_create_pools"]
-
-[invoke.configure_spartan_council_pool_name]
-target = ["synthetix.CoreProxy"]
-fromCall.func = "getPoolOwner"
-fromCall.args = ["<%= extras.spartan_council_pool_id %>"]
-func = "setPoolName"
-args = ["<%= extras.spartan_council_pool_id %>", "Spartan Council Pool"]
-
-[invoke.make_spartan_council_pool_a_preferred_pool]
-target = ["synthetix.CoreProxy"]
-fromCall.func = "owner"
-func = "setPreferredPool"
-args = ["<%= extras.spartan_council_pool_id %>"]
-
 [invoke.configure_spartan_council_pool]
-target = ["synthetix.CoreProxy"]
+target = ["core_sandbox.synthetix.CoreProxy"]
 fromCall.func = "getPoolOwner"
-fromCall.args = ["<%= extras.spartan_council_pool_id %>"]
+fromCall.args = ["<%= imports.core_sandbox.extras.spartan_council_pool_id %>"]
 func = "setPoolConfiguration"
 args = [
-    "<%= extras.spartan_council_pool_id %>",
+    "<%= imports.core_sandbox.extras.spartan_council_pool_id %>",
     [
+        { marketId = "<%= imports.core_sandbox.extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
+        { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
         { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-        { marketId = "<%= extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-        { marketId = "<%= extras.synth_eth_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" }
     ]
 ]
