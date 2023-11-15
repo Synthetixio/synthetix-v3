@@ -29,23 +29,28 @@ describe('SynthetixElectionModule - Elections', () => {
     await fastForwardTo(schedule.votingPeriodStartDate.toNumber() + 10, provider);
   };
 
+  const fastForwardToEvaluationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
+    const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
+    await fastForwardTo(schedule.endDate.add(10).toNumber(), provider);
+  };
+
   const addresses = generateRandomAddresses();
 
   const epochs = [
     {
       index: 0,
       blockNumber: 21000000,
-      winners: () => [addresses[3].address, addresses[4].address],
+      winners: () => [addresses[3].address],
     },
     // {
     //   index: 1,
     //   blockNumber: 23100007,
-    //   winners: () => [addresses[3]!, addresses[5]!],
+    //   winners: () => [addresses[3].address,
     // },
     // {
     //   index: 2,
     //   blockNumber: 30043001,
-    //   winners: () => [addresses[5]!, addresses[4]!],
+    //   winners: () => [addresses[5].address,
     // },
   ];
 
@@ -316,33 +321,6 @@ describe('SynthetixElectionModule - Elections', () => {
         });
 
         describe('when cross chain debt share data is collected', () => {
-          describe('when a user attempts to declare cross chain debt shares and the merkle root is not set', () => {
-            // let snapshotIdMotherShipChain: number;
-            // let snapshotIdSatellite1: number;
-            // let snapshotIdSatellite2: number;
-            // before('take snapshot', async () => {
-            //   const {mothership, satellite1, satellite2} = chains;
-            //   snapshotIdMotherShipChain = (
-            //     await mothership.CoreProxy.getVotePowerSnapshotId(
-            //       mothership.SnapshotRecordMock.address,
-            //       epoch.index
-            //     )
-            //   ).toNumber();
-            //   snapshotIdSatellite1 = (
-            //     await satellite1.CoreProxy.getVotePowerSnapshotId(
-            //       mothership.SnapshotRecordMock.address,
-            //       epoch.index
-            //     )
-            //   ).toNumber();
-            //   snapshotIdSatellite2 = (
-            //     await satellite2.CoreProxy.getVotePowerSnapshotId(
-            //       mothership.SnapshotRecordMock.address,
-            //       epoch.index
-            //     )
-            //   ).toNumber();
-            // });
-          });
-
           before('nominate', async () => {
             const { mothership } = chains;
 
@@ -555,18 +533,20 @@ describe('SynthetixElectionModule - Elections', () => {
               describe('when users cast votes', () => {
                 before('vote', async () => {
                   const { mothership } = chains;
+
                   await mothership.CoreProxy.connect(
                     addresses[0].connect(mothership.provider)
-                  ).cast([addresses[3].address], [ethers.utils.parseEther('10')]);
+                  ).cast([addresses[3].address], [ethers.utils.parseEther('100')]);
+
                   await mothership.CoreProxy.connect(
                     addresses[1].connect(mothership.provider)
-                  ).cast([addresses[3].address], [ethers.utils.parseEther('10')]);
+                  ).cast([addresses[3].address], [ethers.utils.parseEther('100')]);
 
                   // addresses[2] didn't declare cross chain debt shares yet
                   await assertRevert(
                     mothership.CoreProxy.connect(addresses[2].connect(mothership.provider)).cast(
                       [addresses[4].address],
-                      [ethers.utils.parseEther('10')]
+                      [ethers.utils.parseEther('100')]
                     ),
                     'NoVotingPower',
                     mothership.CoreProxy
@@ -574,56 +554,118 @@ describe('SynthetixElectionModule - Elections', () => {
 
                   await mothership.CoreProxy.connect(
                     addresses[3].connect(mothership.provider)
-                  ).cast([addresses[5].address], [ethers.utils.parseEther('10')]);
+                  ).cast([addresses[5].address], [ethers.utils.parseEther('100')]);
+
                   await mothership.CoreProxy.connect(
                     addresses[4].connect(mothership.provider)
-                  ).cast([addresses[3].address], [ethers.utils.parseEther('10')]);
+                  ).cast([addresses[3].address], [ethers.utils.parseEther('100')]);
+                });
+
+                it('do not allow partial voting', async () => {
+                  const { mothership } = chains;
+                  await assertRevert(
+                    mothership.CoreProxy.connect(addresses[0].connect(mothership.provider)).cast(
+                      [addresses[3].address],
+                      [ethers.utils.parseEther('10')]
+                    ),
+                    'InvalidBallot',
+                    mothership.CoreProxy
+                  );
                 });
 
                 it('keeps track of which ballot each user voted on', async () => {
                   const { mothership } = chains;
 
-                  assert.equal(
-                    await mothership.CoreProxy.getBallot(
-                      addresses[0].address,
-                      (await mothership.provider.getNetwork()).chainId,
-                      epoch.index
-                    ),
-                    ''
-                  );
-                  assert.equal(
-                    await mothership.CoreProxy.getBallot(
-                      addresses[1].address,
-                      (await mothership.provider.getNetwork()).chainId,
-                      epoch.index
-                    ),
-                    ''
+                  const ballotForFirstAddress = await mothership.CoreProxy.getBallot(
+                    addresses[0].address,
+                    (await mothership.provider.getNetwork()).chainId,
+                    epoch.index
                   );
 
-                  // should be empty
-                  assert.equal(
-                    await mothership.CoreProxy.getBallot(
-                      addresses[2].address,
-                      (await mothership.provider.getNetwork()).chainId,
-                      epoch.index
-                    ),
-                    []
+                  const ballotForSecondAddress = await mothership.CoreProxy.getBallot(
+                    addresses[1].address,
+                    (await mothership.provider.getNetwork()).chainId,
+                    epoch.index
                   );
-                  assert.equal(
-                    await mothership.CoreProxy.getBallot(
-                      addresses[3].address,
-                      (await mothership.provider.getNetwork()).chainId,
-                      epoch.index
-                    ),
-                    ''
+
+                  const ballotForThirdAddress = await mothership.CoreProxy.getBallot(
+                    addresses[2].address,
+                    (await mothership.provider.getNetwork()).chainId,
+                    epoch.index
                   );
-                  assert.equal(
-                    await mothership.CoreProxy.getBallot(
-                      addresses[4].address,
-                      (await mothership.provider.getNetwork()).chainId,
-                      epoch.index
-                    ),
-                    ''
+
+                  const ballotForFourthAddress = await mothership.CoreProxy.getBallot(
+                    addresses[3].address,
+                    (await mothership.provider.getNetwork()).chainId,
+                    epoch.index
+                  );
+
+                  const ballotForFifthAddress = await mothership.CoreProxy.getBallot(
+                    addresses[4].address,
+                    (await mothership.provider.getNetwork()).chainId,
+                    epoch.index
+                  );
+
+                  assert.deepEqual(
+                    [
+                      ballotForFirstAddress.amounts,
+                      ballotForFirstAddress.votedCandidates,
+                      ballotForFirstAddress.votingPower,
+                    ],
+                    [
+                      [ethers.utils.parseEther('100')],
+                      [addresses[3].address],
+                      ethers.utils.parseEther('100'),
+                    ]
+                  );
+
+                  assert.deepEqual(
+                    [
+                      ballotForSecondAddress.amounts,
+                      ballotForSecondAddress.votedCandidates,
+                      ballotForSecondAddress.votingPower,
+                    ],
+                    [
+                      [ethers.utils.parseEther('100')],
+                      [addresses[3].address],
+                      ethers.utils.parseEther('100'),
+                    ]
+                  );
+
+                  //  should be empty
+                  assert.deepEqual(
+                    [
+                      ballotForThirdAddress.amounts,
+                      ballotForThirdAddress.votedCandidates,
+                      ballotForThirdAddress.votingPower,
+                    ],
+                    [[], [], ethers.utils.parseEther('0')]
+                  );
+
+                  assert.deepEqual(
+                    [
+                      ballotForFourthAddress.amounts,
+                      ballotForFourthAddress.votedCandidates,
+                      ballotForFourthAddress.votingPower,
+                    ],
+                    [
+                      [ethers.utils.parseEther('100')],
+                      [addresses[5].address],
+                      ethers.utils.parseEther('100'),
+                    ]
+                  );
+
+                  assert.deepEqual(
+                    [
+                      ballotForFifthAddress.amounts,
+                      ballotForFifthAddress.votedCandidates,
+                      ballotForFifthAddress.votingPower,
+                    ],
+                    [
+                      [ethers.utils.parseEther('100')],
+                      [addresses[3].address],
+                      ethers.utils.parseEther('100'),
+                    ]
                   );
                 });
 
@@ -651,7 +693,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       11155111,
                       epoch.index
                     ),
-                    [addresses[4].address]
+                    []
                   );
                   assert.deepEqual(
                     await mothership.CoreProxy.getBallotCandidates(
@@ -671,19 +713,18 @@ describe('SynthetixElectionModule - Elections', () => {
                   );
                 });
 
-                it('keeps track of vote power in each ballot', async () => {});
-
                 describe('when voting ends', () => {
                   before('fast forward', async () => {
                     const { mothership, satellite1, satellite2 } = chains;
-                    await fastForwardToVotingPeriod(mothership.provider);
-                    await fastForwardToVotingPeriod(satellite1.provider);
-                    await fastForwardToVotingPeriod(satellite2.provider);
+                    await fastForwardToEvaluationPeriod(mothership.provider);
+                    await fastForwardToEvaluationPeriod(satellite1.provider);
+                    await fastForwardToEvaluationPeriod(satellite2.provider);
                   });
 
                   it('shows that the current period is Evaluation', async () => {
+                    const { mothership } = chains;
                     assertBn.equal(
-                      await chains.mothership.CoreProxy.getCurrentPeriod(),
+                      await mothership.CoreProxy.getCurrentPeriod(),
                       ElectionPeriod.Evaluation
                     );
                   });
@@ -698,7 +739,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     it('emits the event ElectionEvaluated', async () => {
                       await assertEvent(
                         rx,
-                        `ElectionEvaluated(${epoch.index}, 3)`,
+                        `ElectionEvaluated(${epoch.index}, 4)`,
                         chains.mothership.CoreProxy
                       );
                     });
@@ -707,40 +748,10 @@ describe('SynthetixElectionModule - Elections', () => {
                       assert.equal(await chains.mothership.CoreProxy.isElectionEvaluated(), true);
                     });
 
-                    it('shows each candidates votes', async function () {
-                      // const votesUser4 = (
-                      //   await expectedVotePower(users[0]!, epoch.debtShareSnapshotId)
-                      // )
-                      //   .add(await expectedVotePower(users[1]!, epoch.debtShareSnapshotId))
-                      //   .add(await expectedVotePower(users[4]!, epoch.debtShareSnapshotId));
-                      // const votesUser5 = await expectedVotePower(
-                      //   users[2]!,
-                      //   epoch.debtShareSnapshotId
-                      // );
-                      // const votesUser6 = await expectedVotePower(
-                      //   users[3]!,
-                      //   epoch.debtShareSnapshotId
-                      // );
-                      // assertBn.equal(
-                      //   await c.CoreProxy.getCandidateVotes(addresses[3].address!),
-                      //   votesUser4
-                      // );
-                      // assertBn.equal(
-                      //   await c.CoreProxy.getCandidateVotes(addresses[4].address!),
-                      //   votesUser5
-                      // );
-                      // assertBn.equal(
-                      //   await c.CoreProxy.getCandidateVotes(addresses[5].address!),
-                      //   votesUser6
-                      // );
-                      // assertBn.equal(await c.CoreProxy.getCandidateVotes(addresses[6].address!), 0);
-                      // assertBn.equal(await c.CoreProxy.getCandidateVotes(addresses[7].address!), 0);
-                      // assertBn.equal(await c.CoreProxy.getCandidateVotes(addresses[8].address!), 0);
-                    });
-
                     it('shows the election winners', async () => {
+                      const { mothership } = chains;
                       assert.deepEqual(
-                        await chains.mothership.CoreProxy.getElectionWinners(),
+                        await mothership.CoreProxy.getElectionWinners(),
                         epoch.winners()
                       );
                     });
@@ -748,13 +759,19 @@ describe('SynthetixElectionModule - Elections', () => {
                     describe('when the election is resolved', () => {
                       before('resolve', async () => {
                         const { mothership, satellite1, satellite2 } = chains;
-                        const rx = await (await mothership.CoreProxy.resolve()).wait();
+                        const rx = await (
+                          await mothership.CoreProxy.resolve({
+                            value: ethers.utils.parseEther('0.01'),
+                          })
+                        ).wait();
+
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite1.CcipRouter.address,
                           sourceChainSelector: ChainSelector.mothership,
                           targetSigner: satellite1.signer,
                         });
+
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite2.CcipRouter.address,

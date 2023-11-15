@@ -350,7 +350,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     }
 
     /// @dev Burns previous NFTs and mints new ones
-    function resolve() public virtual override {
+    function resolve() public payable virtual override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
         Council.Data storage council = Council.load();

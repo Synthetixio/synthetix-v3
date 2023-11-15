@@ -96,7 +96,7 @@ interface IElectionModule is IElectionModuleSatellite {
     function evaluate(uint256 numBallots) external;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
-    function resolve() external;
+    function resolve() external payable;
 
     // ---------------------------------------
     // View functions
