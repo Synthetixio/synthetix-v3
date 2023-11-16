@@ -35,7 +35,15 @@ export function findEvent({
     (contract && !events) ||
     (Array.isArray(events) && events.some((e) => e.event === undefined) && contract)
   ) {
-    events = parseLogs({ contract, logs: receipt.logs });
+    try {
+      events = parseLogs({ contract, logs: receipt.logs });
+    } catch (error) {
+      throw new Error(
+        `event name: ${eventName} is not present in this receipt, all event names: ${events
+          ?.map((e) => e.event)
+          .toString()}`
+      );
+    }
   }
 
   if (!Array.isArray(events)) {

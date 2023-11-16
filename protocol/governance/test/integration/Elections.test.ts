@@ -761,16 +761,20 @@ describe('SynthetixElectionModule - Elections', () => {
                         const { mothership, satellite1, satellite2 } = chains;
                         const rx = await (
                           await mothership.CoreProxy.resolve({
-                            value: ethers.utils.parseEther('0.01'),
+                            value: ethers.utils.parseEther('1'),
                           })
                         ).wait();
-                        console.log(rx);
+
+                        console.log(rx.events);
+
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite1.CcipRouter.address,
                           sourceChainSelector: ChainSelector.mothership,
                           targetSigner: satellite1.signer,
                         });
+
+                        console.log('second round');
 
                         await ccipReceive({
                           rx,
