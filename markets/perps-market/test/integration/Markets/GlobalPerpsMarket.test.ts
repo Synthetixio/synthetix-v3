@@ -7,14 +7,15 @@ import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('GlobalPerpsMarket', () => {
-  const { systems, perpsMarkets, signers, trader1, superMarketId, owner } = bootstrapMarkets({
-    synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
-    perpsMarkets: [
-      { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
-      { requestedMarketId: 50, name: 'Btc', token: 'snxBTC', price: bn(10000) },
-    ],
-    traderAccountIds: [],
-  });
+  const { systems, perpsMarkets, synthMarkets, signers, trader1, superMarketId, owner } =
+    bootstrapMarkets({
+      synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
+      perpsMarkets: [
+        { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
+        { requestedMarketId: 50, name: 'Btc', token: 'snxBTC', price: bn(10000) },
+      ],
+      traderAccountIds: [],
+    });
 
   before(
     'set maxCollateralAmounts, synthDeductionPriority, minLiquidationRewardUsd, maxLiquidationRewardUsd',
@@ -31,6 +32,18 @@ describe('GlobalPerpsMarket', () => {
   it('returns the supermarket name', async () => {
     assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
     assert.equal(await systems().PerpsMarket.name(0), '');
+  });
+
+  it('returns the list of supported collaterals', async () => {
+    const supportedCollaterals = await systems().PerpsMarket.getSupportedCollaterals();
+    // Note bootstrapMarkets will add snxUSD as the first collateral and then all the synthMarkets
+    assert.equal(supportedCollaterals.length, 3);
+    // index 0 is the snxUSD
+    assertBn.equal(supportedCollaterals[0], bn(0));
+    // index 1 is the synthMarket for snxETH
+    assertBn.equal(supportedCollaterals[1], synthMarkets()[0].marketId());
+    // index 2 is perps market for snxETH (added in the before)
+    assertBn.equal(supportedCollaterals[2], perpsMarkets()[0].marketId());
   });
 
   it('can call initialize again but will not change the config', async () => {
@@ -153,6 +166,19 @@ describe('GlobalPerpsMarket', () => {
       // check defaults set in bootstrap
       assertBn.equal(maxPositionsPerAccount, 100_000);
       assertBn.equal(maxCollateralsPerAccount, 100_000);
+    });
+  });
+
+  describe('remove a supported collaterals', () => {
+    before('remove a supported collateral by setting its max to zero', async () => {
+      await systems().PerpsMarket.setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(0));
+    });
+
+    it('the removed market was gone from supportedCollaterals', async () => {
+      const supportedCollaterals = await systems().PerpsMarket.getSupportedCollaterals();
+      assert.equal(supportedCollaterals.length, 2);
+      assertBn.equal(supportedCollaterals[0], bn(0));
+      assertBn.equal(supportedCollaterals[1], synthMarkets()[0].marketId());
     });
   });
 });

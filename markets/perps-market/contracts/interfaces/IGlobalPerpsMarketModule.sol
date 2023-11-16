@@ -85,6 +85,15 @@ interface IGlobalPerpsMarketModule {
     ) external view returns (uint256 maxCollateralAmount);
 
     /**
+     * @notice Gets the list of supported collaterals.
+     * @return supportedCollaterals list of supported collateral ids. By supported collateral we mean a collateral which max is greater than zero
+     */
+    function getSupportedCollaterals()
+        external
+        view
+        returns (uint256[] memory supportedCollaterals);
+
+    /**
      * @notice Sets the synth deduction priority ordered list.
      * @dev The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
      * @param newSynthDeductionPriority Ordered array of synth market ids for deduction priority.
