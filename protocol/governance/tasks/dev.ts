@@ -30,63 +30,70 @@ const chains = [
   },
 ] as const;
 
-task('dev', 'spins up locally 3 nodes ready for test purposes').setAction(async (_, hre) => {
-  const [signer] = await hre.ethers.getSigners();
+task('dev', 'spins up locally 3 nodes ready for test purposes')
+  .addOptionalParam(
+    'ownerAddress',
+    'Wallet address to use as signer',
+    '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+  )
+  .setAction(async ({ ownerAddress }, hre) => {
+    const nodes = await Promise.all(
+      chains.map(({ networkName, cannonfile }) =>
+        _spinChain({ hre, networkName, cannonfile, ownerAddress })
+      )
+    );
 
-  const nodes = await Promise.all(
-    chains.map(({ networkName, cannonfile }) => _spinChain({ hre, networkName, cannonfile }))
-  );
+    for (const [index, chain] of Object.entries(chains)) {
+      const node = nodes[index as unknown as number]!;
 
-  for (const [index, chain] of Object.entries(chains)) {
-    const node = nodes[index as unknown as number]!;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rpcUrl = (node.provider.passThroughProvider as any).connection.url;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rpcUrl = (node.provider.passThroughProvider as any).connection.url;
+      console.log();
+      console.log(`Chain: ${chain.name}`);
+      console.log(`  cannonfile: ${path.basename(node.options.cannonfile)}`);
+      console.log(`  network: ${chain.networkName}`);
+      console.log(`  chainId: ${node.options.chainId}`);
+      console.log(`  rpc: ${rpcUrl}`);
 
-    console.log();
-    console.log(`Chain: ${chain.name}`);
-    console.log(`  cannonfile: ${path.basename(node.options.cannonfile)}`);
-    console.log(`  network: ${chain.networkName}`);
-    console.log(`  chainId: ${node.options.chainId}`);
-    console.log(`  rpc: ${rpcUrl}`);
+      // Listen for cross chain message send events, and pass it on to the target network
+      CcipRouter.connect(node.provider)
+        .attach(node.outputs.contracts!.CcipRouterMock.address)
+        .on(
+          'CCIPSend',
+          async (chainSelector: string, message: string, messageId: string, evt: ethers.Event) => {
+            console.log('CCIPSend', { chainSelector, message, messageId });
 
-    // Listen for cross chain message send events, and pass it on to the target network
-    CcipRouter.connect(node.provider)
-      .attach(node.outputs.contracts!.CcipRouterMock.address)
-      .on(
-        'CCIPSend',
-        async (chainSelector: string, message: string, messageId: string, evt: ethers.Event) => {
-          console.log('CCIPSend', { chainSelector, message, messageId });
+            const targetChainIndex = chains.findIndex((c) => c.chainSelector === chainSelector);
+            const targetChain = chains[targetChainIndex]!;
+            const targetNode = nodes[targetChainIndex]!;
 
-          const targetChainIndex = chains.findIndex((c) => c.chainSelector === chainSelector);
-          const targetChain = chains[targetChainIndex]!;
-          const targetNode = nodes[targetChainIndex]!;
+            const rx = await node.provider.getTransactionReceipt(evt.transactionHash);
+            const targetSigner = await targetNode.provider.getSigner(ownerAddress);
 
-          const rx = await node.provider.getTransactionReceipt(evt.transactionHash);
+            await ccipReceive({
+              rx,
+              sourceChainSelector: targetChain.chainSelector,
+              targetSigner,
+              ccipAddress: targetNode.outputs.contracts!.CcipRouterMock.address,
+            });
+          }
+        );
+    }
 
-          await ccipReceive({
-            rx,
-            sourceChainSelector: targetChain.chainSelector,
-            targetSigner: signer.connect(targetNode.provider),
-            ccipAddress: targetNode.outputs.contracts!.CcipRouterMock.address,
-          });
-        }
-      );
-  }
-
-  await _keepAlive();
-});
+    await _keepAlive();
+  });
 
 async function _spinChain({
   hre,
   networkName,
   cannonfile,
-  ownerAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+  ownerAddress,
 }: {
   hre: HardhatRuntimeEnvironment;
   networkName: string;
   cannonfile: string;
-  ownerAddress?: string;
+  ownerAddress: string;
 }) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
