@@ -11,6 +11,10 @@ import {ICouncilTokenModule} from "../../interfaces/ICouncilTokenModule.sol";
  */
 // solhint-disable-next-line no-empty-blocks
 contract CouncilTokenModule is ICouncilTokenModule, NftModule {
+    error NotImplemented();
 
+    function _transfer(address, address, uint256) internal pure override {
+        revert NotImplemented();
+    }
 }
 /* solhint-enable no-empty-blocks */

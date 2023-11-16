@@ -6,6 +6,7 @@ import type { CoreProxy, CouncilToken, SnapshotRecordMock } from './generated/ty
 interface Contracts {
   CoreProxy: CoreProxy;
   CouncilToken: CouncilToken;
+  CouncilTokenRouter: CouncilToken;
   SnapshotRecordMock: SnapshotRecordMock;
 }
 
@@ -28,6 +29,7 @@ export function bootstrap() {
     Object.assign(contracts, {
       CoreProxy: getContract('CoreProxy'),
       CouncilToken: getContract('CouncilToken'),
+      CouncilTokenRouter: getContract('CouncilTokenRouter'),
       SnapshotRecordMock: getContract('SnapshotRecordMock'),
     });
   });
@@ -39,11 +41,11 @@ export function bootstrap() {
     getContract,
     snapshotCheckpoint,
 
-    async deployNewProxy() {
+    async deployNewProxy(implementation?: string) {
       const [owner] = getSigners();
       const factory = await hre.ethers.getContractFactory('Proxy', owner);
       const NewProxy = await factory.deploy(
-        await c.CoreProxy.getImplementation(),
+        implementation || (await c.CoreProxy.getImplementation()),
         await owner.getAddress()
       );
       return c.CoreProxy.attach(NewProxy.address);
