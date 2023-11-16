@@ -343,8 +343,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                     this._recvTweakEpochSchedule.selector,
                     council.currentElectionId,
                     epoch.nominationPeriodStartDate,
-                    epoch.votingPeriodStartDate + 5 days,
-                    epoch.endDate + 5 days
+                    epoch.votingPeriodStartDate,
+                    epoch.endDate + electionSettings.votingPeriodDuration
                 ),
                 _CROSSCHAIN_GAS_LIMIT
             );
