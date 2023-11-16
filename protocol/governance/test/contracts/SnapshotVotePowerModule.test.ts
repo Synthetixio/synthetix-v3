@@ -19,6 +19,8 @@ describe('SnapshotVotePowerModule', function () {
   const restore = snapshotCheckpoint(getProvider);
 
   describe('#setSnapshotContract', function () {
+    before(restore);
+
     it('should revert when not owner', async function () {
       await assertRevert(
         c.CoreProxy.connect(user).setSnapshotContract(c.SnapshotRecordMock.address, true),
@@ -27,42 +29,41 @@ describe('SnapshotVotePowerModule', function () {
       );
     });
 
-    it('should set snapshot contract', async function () {
-      await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
-      // shouldn't be valid for current epoch
+    it('should not be valid until initialized', async function () {
       assert.equal(
-        await c.CoreProxy.isSnapshotVotePowerValid(c.SnapshotRecordMock.address, 0),
+        await c.CoreProxy.SnapshotVotePower_get_enabled(c.SnapshotRecordMock.address),
         false
       );
-      // should be valid for next epoch
+    });
+
+    it('should set snapshot contract', async function () {
+      await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
       assert.equal(
-        await c.CoreProxy.isSnapshotVotePowerValid(c.SnapshotRecordMock.address, 1),
+        await c.CoreProxy.SnapshotVotePower_get_enabled(c.SnapshotRecordMock.address),
         true
       );
     });
 
-    it('should allow for snapshot contracts to be removed on the next epoch', async function () {
-      await c.CoreProxy.Council_set_currentElectionId(0);
-      await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
-      await c.CoreProxy.Council_newElection();
+    it('should unset snapshot contract', async function () {
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, false);
-      // should still be valid for this epoch
       assert.equal(
-        await c.CoreProxy.isSnapshotVotePowerValid(c.SnapshotRecordMock.address, 1),
-        true
-      );
-      // should not be valid for next epoch
-      assert.equal(
-        await c.CoreProxy.isSnapshotVotePowerValid(c.SnapshotRecordMock.address, 2),
+        await c.CoreProxy.SnapshotVotePower_get_enabled(c.SnapshotRecordMock.address),
         false
       );
     });
   });
 
   describe('#takeVotePowerSnapshot', function () {
-    before('set snapshot contract', async function () {
+    before(restore);
+
+    const disabledSnapshotContract = ethers.Wallet.createRandom().address;
+    before('setup snapshot contracts', async function () {
+      // setup main snapshot contract
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
-      await c.CoreProxy.Council_newElection();
+
+      // setup and disable an snapshot contract
+      await c.CoreProxy.setSnapshotContract(disabledSnapshotContract, true);
+      await c.CoreProxy.setSnapshotContract(disabledSnapshotContract, false);
     });
 
     it('should revert when not correct epoch phase', async function () {
@@ -79,8 +80,23 @@ describe('SnapshotVotePowerModule', function () {
         await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
       });
 
+      it('should revert when using invalid snapshot contract', async function () {
+        await assertRevert(
+          c.CoreProxy.takeVotePowerSnapshot(ethers.Wallet.createRandom().address),
+          'InvalidSnapshotContract',
+          c.CoreProxy
+        );
+      });
+
+      it('should revert when using disabled snapshot contract', async function () {
+        await assertRevert(
+          c.CoreProxy.takeVotePowerSnapshot(disabledSnapshotContract),
+          'InvalidSnapshotContract',
+          c.CoreProxy
+        );
+      });
+
       it('should take vote power snapshot', async function () {
-        // sanity
         assertBn.equal(
           await c.CoreProxy.getVotePowerSnapshotId(
             c.SnapshotRecordMock.address,
@@ -110,9 +126,17 @@ describe('SnapshotVotePowerModule', function () {
 
   describe('#prepareBallotWithSnapshot', function () {
     before(restore);
+
+    const disabledSnapshotContract = ethers.Wallet.createRandom().address;
+
+    before('setup disabled snapshot contract', async function () {
+      // setup and disable an snapshot contract
+      await c.CoreProxy.setSnapshotContract(disabledSnapshotContract, true);
+      await c.CoreProxy.setSnapshotContract(disabledSnapshotContract, false);
+    });
+
     before('set snapshot contract', async function () {
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
-      await c.CoreProxy.Council_newElection();
       const settings = await c.CoreProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
       await c.CoreProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
@@ -140,6 +164,14 @@ describe('SnapshotVotePowerModule', function () {
       before('advance time', async function () {
         const settings = await c.CoreProxy.getEpochSchedule();
         await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
+      });
+
+      it('should revert when using disabled snapshot contract', async function () {
+        await assertRevert(
+          c.CoreProxy.prepareBallotWithSnapshot(disabledSnapshotContract, await user.getAddress()),
+          'InvalidSnapshotContract',
+          c.CoreProxy
+        );
       });
 
       it('should create an empty ballot with voting power for specified user', async function () {
