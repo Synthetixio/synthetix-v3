@@ -516,6 +516,7 @@ library PerpsAccount {
             uint128 amountToLiquidate,
             int128 newPositionSize,
             int128 sizeDelta,
+            uint128 positionFlaggedAmount,
             MarketUpdate.Data memory marketUpdateData
         )
     {
@@ -525,10 +526,11 @@ library PerpsAccount {
         perpsMarket.recomputeFunding(price);
 
         int128 oldPositionSize = position.size;
-        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs128(oldPositionSize));
+        positionFlaggedAmount = MathUtil.abs128(oldPositionSize);
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(positionFlaggedAmount);
 
         if (amountToLiquidate == 0) {
-            return (0, oldPositionSize, 0, marketUpdateData);
+            return (0, oldPositionSize, 0, positionFlaggedAmount, marketUpdateData);
         }
 
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
@@ -555,7 +557,13 @@ library PerpsAccount {
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
         sizeDelta = newPositionSize - oldPositionSize;
 
-        return (amountToLiquidate, newPositionSize, sizeDelta, marketUpdateData);
+        return (
+            amountToLiquidate,
+            newPositionSize,
+            sizeDelta,
+            positionFlaggedAmount,
+            marketUpdateData
+        );
     }
 
     function _deductAllSynth(

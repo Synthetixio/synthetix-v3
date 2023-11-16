@@ -139,6 +139,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
+        uint256 price;
+        uint128 positionMarketId;
+        uint256 liquidationReward;
         uint256 loopIterator; // stack too deep to the extreme
     }
 
@@ -160,9 +163,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             runtime.loopIterator < openPositionMarketIds.length;
             runtime.loopIterator++
         ) {
-            uint128 positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
-            uint256 price = PerpsPrice.getCurrentPrice(
-                positionMarketId,
+            runtime.positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
+            runtime.price = PerpsPrice.getCurrentPrice(
+                runtime.positionMarketId,
                 PerpsPrice.Tolerance.STRICT
             );
 
@@ -170,17 +173,34 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 uint256 amountLiquidated,
                 int128 newPositionSize,
                 int128 sizeDelta,
+                uint256 positionFlaggedAmount,
                 MarketUpdate.Data memory marketUpdateData
-            ) = account.liquidatePosition(positionMarketId, price);
+            ) = account.liquidatePosition(runtime.positionMarketId, runtime.price);
+
+            // using amountToLiquidate to calculate liquidation reward
+            runtime.liquidationReward = includeFlaggingReward
+                ? PerpsMarketConfiguration
+                    .load(runtime.positionMarketId)
+                    .calculateLiquidationReward(positionFlaggedAmount.mulDecimal(runtime.price))
+                : 0;
+
+            // endorsed liquidators do not get liquidation rewards
+            if (
+                ERC2771Context._msgSender() !=
+                PerpsMarketConfiguration.load(runtime.positionMarketId).endorsedLiquidator
+            ) {
+                runtime.totalLiquidationRewards += runtime.liquidationReward;
+            }
 
             if (amountLiquidated == 0) {
                 continue;
             }
+
             runtime.totalLiquidated += amountLiquidated;
 
             emit MarketUpdated(
-                positionMarketId,
-                price,
+                runtime.positionMarketId,
+                runtime.price,
                 marketUpdateData.skew,
                 marketUpdateData.size,
                 sizeDelta,
@@ -190,31 +210,16 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
             emit PositionLiquidated(
                 runtime.accountId,
-                positionMarketId,
+                runtime.positionMarketId,
                 amountLiquidated,
                 newPositionSize
             );
-
-            // using amountToLiquidate to calculate liquidation reward
-            uint256 liquidationReward = includeFlaggingReward
-                ? PerpsMarketConfiguration.load(positionMarketId).calculateLiquidationReward(
-                    amountLiquidated.mulDecimal(price)
-                )
-                : 0;
-
-            // endorsed liquidators do not get liquidation rewards
-            if (
-                ERC2771Context._msgSender() !=
-                PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator
-            ) {
-                runtime.totalLiquidationRewards += liquidationReward;
-            }
         }
 
         runtime.totalLiquidationCost =
             KeeperCosts.load().getLiquidateKeeperCosts() +
             costOfFlagExecution;
-        if (runtime.totalLiquidated > 0) {
+        if (includeFlaggingReward || runtime.totalLiquidated > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
                 runtime.totalLiquidationRewards,
                 runtime.totalLiquidationCost,
