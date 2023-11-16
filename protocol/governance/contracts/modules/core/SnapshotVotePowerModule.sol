@@ -63,7 +63,10 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         uint128 currentEpoch = Council.load().currentElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
 
-        // TODO: check that snapshotVotePower is enabled
+        if (!snapshotVotePower.enabled) {
+            revert InvalidSnapshotContract();
+        }
+
         if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
             revert SnapshotNotTaken(snapshotContract, currentEpoch);
         }

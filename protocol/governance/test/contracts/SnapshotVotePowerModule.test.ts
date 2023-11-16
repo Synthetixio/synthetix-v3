@@ -127,6 +127,14 @@ describe('SnapshotVotePowerModule', function () {
   describe('#prepareBallotWithSnapshot', function () {
     before(restore);
 
+    const disabledSnapshotContract = ethers.Wallet.createRandom().address;
+
+    before('setup disabled snapshot contract', async function () {
+      // setup and disable an snapshot contract
+      await c.CoreProxy.setSnapshotContract(disabledSnapshotContract, true);
+      await c.CoreProxy.setSnapshotContract(disabledSnapshotContract, false);
+    });
+
     before('set snapshot contract', async function () {
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
       const settings = await c.CoreProxy.getEpochSchedule();
@@ -156,6 +164,14 @@ describe('SnapshotVotePowerModule', function () {
       before('advance time', async function () {
         const settings = await c.CoreProxy.getEpochSchedule();
         await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
+      });
+
+      it('should revert when using disabled snapshot contract', async function () {
+        await assertRevert(
+          c.CoreProxy.prepareBallotWithSnapshot(disabledSnapshotContract, await user.getAddress()),
+          'InvalidSnapshotContract',
+          c.CoreProxy
+        );
       });
 
       it('should create an empty ballot with voting power for specified user', async function () {
