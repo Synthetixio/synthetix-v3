@@ -43,10 +43,10 @@ describe('ElectionSettings', function () {
       const tx = await c.CoreProxy.connect(caller).setNextElectionSettings(
         settings.epochSeatCount ?? 2,
         settings.minimumActiveMembers ?? 1,
-        settings.epochDuration ?? daysToSeconds(90),
-        settings.nominationPeriodDuration ?? daysToSeconds(2),
-        settings.votingPeriodDuration ?? daysToSeconds(2),
-        settings.maxDateAdjustmentTolerance ?? daysToSeconds(2)
+        settings.epochDuration ?? 90,
+        settings.nominationPeriodDuration ?? 2,
+        settings.votingPeriodDuration ?? 2,
+        settings.maxDateAdjustmentTolerance ?? 2
       );
       await tx.wait();
       return tx;
@@ -95,20 +95,31 @@ describe('ElectionSettings', function () {
         const newSettings = {
           epochSeatCount: 5,
           minimumActiveMembers: 2,
-          epochDuration: daysToSeconds(30),
-          nominationPeriodDuration: daysToSeconds(7),
-          votingPeriodDuration: daysToSeconds(7),
-          maxDateAdjustmentTolerance: daysToSeconds(3),
+          epochDuration: 30,
+          nominationPeriodDuration: 7,
+          votingPeriodDuration: 7,
+          maxDateAdjustmentTolerance: 3,
         } as ElectionSettings;
 
         await _setNextElectionSettings(newSettings);
 
         const result = await c.CoreProxy.getNextElectionSettings();
 
-        for (const k of Object.keys(newSettings)) {
-          const key = k as keyof ElectionSettings;
-          assertBn.equal(result[key], newSettings[key]);
-        }
+        assertBn.equal(result.epochSeatCount, newSettings.epochSeatCount);
+        assertBn.equal(result.minimumActiveMembers, newSettings.minimumActiveMembers);
+        assertBn.equal(result.epochDuration, daysToSeconds(newSettings.epochDuration as number));
+        assertBn.equal(
+          result.nominationPeriodDuration,
+          daysToSeconds(newSettings.nominationPeriodDuration as number)
+        );
+        assertBn.equal(
+          result.votingPeriodDuration,
+          daysToSeconds(newSettings.votingPeriodDuration as number)
+        );
+        assertBn.equal(
+          result.maxDateAdjustmentTolerance,
+          daysToSeconds(newSettings.maxDateAdjustmentTolerance as number)
+        );
       });
     });
 

@@ -96,10 +96,6 @@ contract ElectionCredentials {
         emit CouncilMemberRemoved(member, epochIndex);
     }
 
-    function _getCouncilToken() private view returns (IERC721) {
-        return AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft();
-    }
-
     function _getCouncilMemberTokenId(address member) private view returns (uint) {
         uint tokenId = CouncilMembers.load().councilTokenIds[member];
 

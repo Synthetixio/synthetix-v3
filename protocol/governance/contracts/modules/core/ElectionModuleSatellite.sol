@@ -72,7 +72,7 @@ contract ElectionModuleSatellite is
 
         address sender = ERC2771Context._msgSender();
 
-        /// @dev: load ballot with total votingPower, should have before been prepared
+        /// @dev: load ballot with total votingPower, should have been prepared before,
         /// calling the prepareBallotWithSnapshot method
         uint256 currentEpoch = Council.load().currentElectionId;
         Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
