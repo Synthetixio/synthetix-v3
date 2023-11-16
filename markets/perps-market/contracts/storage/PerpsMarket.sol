@@ -251,8 +251,6 @@ library PerpsMarket {
 
         oldPosition.update(newPosition, InterestRate.update());
 
-        // after position is updated, update the market interest rate since OI has changed
-
         return
             MarketUpdate.Data(
                 self.id,

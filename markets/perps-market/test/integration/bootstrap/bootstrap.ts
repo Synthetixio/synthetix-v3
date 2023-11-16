@@ -136,6 +136,24 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
     await systems().PerpsMarket.connect(owner()).updateKeeperCostNodeId(keeperCostNodeId);
   });
+  
+  before('set pool config', async () => {
+    const synthMarketConfigs = synthMarkets().map((s) => ({
+      marketId: s.marketId(),
+      weightD18: ethers.utils.parseEther('1'),
+      maxDebtShareValueD18: ethers.utils.parseEther('1'),
+    }));
+    await systems()
+      .Core.connect(owner())
+      .setPoolConfiguration(poolId, [
+        {
+          marketId: superMarketId(),
+          weightD18: ethers.utils.parseEther('1'),
+          maxDebtShareValueD18: ethers.utils.parseEther('1'),
+        },
+        ...synthMarketConfigs,
+      ]);
+  });
 
   // auto set all synth markets collaterals to max
   before('set collateral max', async () => {

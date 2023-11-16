@@ -111,6 +111,10 @@ library PerpsMarketFactory {
         uint256 delegatedCollateralValue = withdrawableUsd - totalCollateralValue;
         uint256 minimumCredit = calculateMinimumCredit();
 
+        if (delegatedCollateralValue == 0) {
+            return 0;
+        }
+
         return minimumCredit.divDecimal(delegatedCollateralValue).to128();
     }
 }

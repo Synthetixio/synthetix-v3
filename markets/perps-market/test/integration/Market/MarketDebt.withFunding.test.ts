@@ -8,10 +8,17 @@ const _SKEW_SCALE = bn(25_000);
 const _MAX_FUNDING_VELOCITY = bn(3);
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 
+const interestRateParams = {
+  lowUtilGradient: bn(0.0003),
+  gradientBreakpoint: bn(0.75),
+  highUtilGradient: bn(0.01),
+};
+
 describe('Market Debt - with funding', () => {
   const traderAccountIds = [2, 3, 4];
   const { systems, superMarketId, perpsMarkets, provider, trader1, trader2, trader3, keeper } =
     bootstrapMarkets({
+      interestRateParams,
       synthMarkets: [
         {
           name: 'Bitcoin',
@@ -26,6 +33,7 @@ describe('Market Debt - with funding', () => {
           name: 'Ether',
           token: 'snxETH',
           price: bn(1000),
+          lockedOiRatioD18: bn(1),
           // setting to 0 to avoid funding and p/d price change affecting pnl
           orderFees: {
             makerFee: bn(0.0005), // 0bps no fees
@@ -56,7 +64,7 @@ describe('Market Debt - with funding', () => {
     });
 
   let perpsMarket: PerpsMarket;
-  before('identify actors', () => {
+  before('identify actors', async () => {
     perpsMarket = perpsMarkets()[0];
   });
 
@@ -76,6 +84,7 @@ describe('Market Debt - with funding', () => {
   let openPositionTime: number;
   describe('open positions', () => {
     before(async () => {
+      console.log(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       await openPosition({
         systems,
         provider,
@@ -133,9 +142,13 @@ describe('Market Debt - with funding', () => {
 
     let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
     before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
+      const { totalPnl: trader1Pnl, chargedInterest: i1 } =
+        await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
+      const { totalPnl: trader2Pnl, chargedInterest: i2 } =
+        await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
+      const { totalPnl: trader3Pnl, chargedInterest: i3 } =
+        await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
+      console.log(i1, i2, i3);
       unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
       totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
     });

@@ -93,7 +93,7 @@ library Position {
 
         chargedInterest = interestAccrued(self, price);
 
-        totalPnl = pricePnl + accruedFunding + chargedInterest.toInt();
+        totalPnl = pricePnl + accruedFunding - chargedInterest.toInt();
     }
 
     function interestAccrued(
@@ -108,9 +108,7 @@ library Position {
         );
 
         // The interest is charged pro-rata on this position's contribution to the locked OI requirement
-        chargedInterest = getNotionalValue(self, price)
-            .mulDecimal(PerpsMarketConfiguration.load(self.marketId).lockedOiRatioD18)
-            .mulDecimal(netInterestPerDollar);
+        chargedInterest = lockedNotional.mulDecimal(netInterestPerDollar);
     }
 
     function getNotionalValue(Data storage self, uint256 price) internal view returns (uint256) {

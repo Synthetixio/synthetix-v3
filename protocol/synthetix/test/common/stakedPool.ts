@@ -59,6 +59,7 @@ export const createStakedPool = (
 
   before('stake', async () => {
     const [, staker] = r.signers();
+    console.log('STAKEDAMT', stakedAmount);
     await stake(
       { Core: r.systems().Core, CollateralMock: r.systems().CollateralMock },
       poolId,
