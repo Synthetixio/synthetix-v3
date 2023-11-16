@@ -1,5 +1,7 @@
 import path from 'node:path';
 import { cannonBuild } from '@synthetixio/core-modules/test/helpers/cannon';
+import { ccipReceive, CcipRouter } from '@synthetixio/core-modules/test/helpers/ccip';
+import { ethers } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -7,35 +9,69 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
  * > DEBUG=hardhat::plugin::anvil::spawn yarn hardhat dev
  */
 
-task('dev', 'spins up locally 3 nodes ready for test purposes').setAction(async (_, hre) => {
-  const nodes = await Promise.all([
-    _spinChain({
-      hre,
-      networkName: 'sepolia',
-      cannonfile: 'cannonfile.test.toml',
-    }),
-    _spinChain({
-      hre,
-      networkName: 'optimistic-goerli',
-      cannonfile: 'cannonfile.satellite.test.toml',
-    }),
-    _spinChain({
-      hre,
-      networkName: 'avalanche-fuji',
-      cannonfile: 'cannonfile.satellite.test.toml',
-    }),
-  ]);
+const chains = [
+  {
+    name: 'mothership',
+    networkName: 'sepolia',
+    cannonfile: 'cannonfile.test.toml',
+    chainSelector: '16015286601757825753',
+  },
+  {
+    name: 'satellite1',
+    networkName: 'optimistic-goerli',
+    cannonfile: 'cannonfile.satellite.test.toml',
+    chainSelector: '2664363617261496610',
+  },
+  {
+    name: 'satellite2',
+    networkName: 'avalanche-fuji',
+    cannonfile: 'cannonfile.satellite.test.toml',
+    chainSelector: '14767482510784806043',
+  },
+] as const;
 
-  for (const node of nodes) {
-    const network = await node.provider.getNetwork();
+task('dev', 'spins up locally 3 nodes ready for test purposes').setAction(async (_, hre) => {
+  const [signer] = await hre.ethers.getSigners();
+
+  const nodes = await Promise.all(
+    chains.map(({ networkName, cannonfile }) => _spinChain({ hre, networkName, cannonfile }))
+  );
+
+  for (const [index, chain] of Object.entries(chains)) {
+    const node = nodes[index as unknown as number]!;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rpcUrl = (node.provider.passThroughProvider as any).connection.url;
 
     console.log();
-    console.log(`Network: ${network.name}`);
+    console.log(`Chain: ${chain.name}`);
     console.log(`  cannonfile: ${path.basename(node.options.cannonfile)}`);
+    console.log(`  network: ${chain.networkName}`);
     console.log(`  chainId: ${node.options.chainId}`);
     console.log(`  rpc: ${rpcUrl}`);
+
+    // Listen for cross chain message send events, and pass it on to the target network
+    CcipRouter.connect(node.provider)
+      .attach(node.outputs.contracts!.CcipRouterMock.address)
+      .on(
+        'CCIPSend',
+        async (chainSelector: string, message: string, messageId: string, evt: ethers.Event) => {
+          console.log('CCIPSend', { chainSelector, message, messageId });
+
+          const targetChainIndex = chains.findIndex((c) => c.chainSelector === chainSelector);
+          const targetChain = chains[targetChainIndex]!;
+          const targetNode = nodes[targetChainIndex]!;
+
+          const rx = await node.provider.getTransactionReceipt(evt.transactionHash);
+
+          await ccipReceive({
+            rx,
+            sourceChainSelector: targetChain.chainSelector,
+            targetSigner: signer.connect(targetNode.provider),
+            ccipAddress: targetNode.outputs.contracts!.CcipRouterMock.address,
+          });
+        }
+      );
   }
 
   await _keepAlive();

@@ -4,7 +4,7 @@ import { CcipRouterMock__factory } from '../../typechain-types/factories/contrac
 
 import type { CcipRouterMock } from '../../typechain-types/contracts/mocks/CcipRouterMock';
 
-const CcipRouter = new ethers.Contract(
+export const CcipRouter = new ethers.Contract(
   ethers.constants.AddressZero,
   CcipRouterMock__factory.abi
 ) as CcipRouterMock;
