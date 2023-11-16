@@ -1,7 +1,7 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import hre from 'hardhat';
 
-import type { CoreProxy, CouncilToken, SnapshotRecordMock } from './generated/typechain';
+import { CoreProxy, CouncilToken, SnapshotRecordMock } from './generated/typechain';
 
 interface Contracts {
   CoreProxy: CoreProxy;

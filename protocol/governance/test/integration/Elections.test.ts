@@ -42,16 +42,16 @@ describe('SynthetixElectionModule - Elections', () => {
       blockNumber: 21000000,
       winners: () => [addresses[3].address],
     },
-    // {
-    //   index: 1,
-    //   blockNumber: 23100007,
-    //   winners: () => [addresses[3].address],
-    // },
-    // {
-    //   index: 2,
-    //   blockNumber: 30043001,
-    //   winners: () => [addresses[5].address],
-    // },
+    {
+      index: 1,
+      blockNumber: 23100007,
+      winners: () => [addresses[3].address],
+    },
+    {
+      index: 2,
+      blockNumber: 30043001,
+      winners: () => [addresses[5].address],
+    },
   ];
 
   before('set snapshot contract', async () => {
@@ -326,6 +326,11 @@ describe('SynthetixElectionModule - Elections', () => {
 
             await (
               await mothership.CoreProxy.connect(
+                addresses[1].connect(mothership.provider)
+              ).nominate()
+            ).wait();
+            await (
+              await mothership.CoreProxy.connect(
                 addresses[3].connect(mothership.provider)
               ).nominate()
             ).wait();
@@ -536,11 +541,11 @@ describe('SynthetixElectionModule - Elections', () => {
 
                   await mothership.CoreProxy.connect(
                     addresses[0].connect(mothership.provider)
-                  ).cast([addresses[3].address], [ethers.utils.parseEther('100')]);
+                  ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
 
                   await mothership.CoreProxy.connect(
                     addresses[1].connect(mothership.provider)
-                  ).cast([addresses[3].address], [ethers.utils.parseEther('100')]);
+                  ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
 
                   // addresses[2] didn't declare cross chain debt shares yet
                   await assertRevert(
@@ -554,11 +559,11 @@ describe('SynthetixElectionModule - Elections', () => {
 
                   await mothership.CoreProxy.connect(
                     addresses[3].connect(mothership.provider)
-                  ).cast([addresses[5].address], [ethers.utils.parseEther('100')]);
+                  ).cast([addresses[1].address], [ethers.utils.parseEther('100')]);
 
                   await mothership.CoreProxy.connect(
                     addresses[4].connect(mothership.provider)
-                  ).cast([addresses[3].address], [ethers.utils.parseEther('100')]);
+                  ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
                 });
 
                 it('do not allow partial voting', async () => {
@@ -614,7 +619,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     ],
                     [
                       [ethers.utils.parseEther('100')],
-                      [addresses[3].address],
+                      [epoch.winners()[0]],
                       ethers.utils.parseEther('100'),
                     ]
                   );
@@ -627,7 +632,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     ],
                     [
                       [ethers.utils.parseEther('100')],
-                      [addresses[3].address],
+                      [epoch.winners()[0]],
                       ethers.utils.parseEther('100'),
                     ]
                   );
@@ -650,7 +655,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     ],
                     [
                       [ethers.utils.parseEther('100')],
-                      [addresses[5].address],
+                      [addresses[1].address],
                       ethers.utils.parseEther('100'),
                     ]
                   );
@@ -663,7 +668,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     ],
                     [
                       [ethers.utils.parseEther('100')],
-                      [addresses[3].address],
+                      [epoch.winners()[0]],
                       ethers.utils.parseEther('100'),
                     ]
                   );
@@ -677,7 +682,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       11155111,
                       epoch.index
                     ),
-                    [addresses[3].address]
+                    [epoch.winners()[0]]
                   );
                   assert.deepEqual(
                     await mothership.CoreProxy.getBallotCandidates(
@@ -685,7 +690,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       11155111,
                       epoch.index
                     ),
-                    [addresses[3].address]
+                    [epoch.winners()[0]]
                   );
                   assert.deepEqual(
                     await mothership.CoreProxy.getBallotCandidates(
@@ -701,7 +706,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       11155111,
                       epoch.index
                     ),
-                    [addresses[5].address]
+                    [addresses[1].address]
                   );
                   assert.deepEqual(
                     await mothership.CoreProxy.getBallotCandidates(
@@ -709,7 +714,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       11155111,
                       epoch.index
                     ),
-                    [addresses[3].address]
+                    [epoch.winners()[0]]
                   );
                 });
 
@@ -765,49 +770,29 @@ describe('SynthetixElectionModule - Elections', () => {
                           })
                         ).wait();
 
-                        console.log(rx.events);
-
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite1.CcipRouter.address,
                           sourceChainSelector: ChainSelector.mothership,
                           targetSigner: satellite1.signer,
+                          index: 0,
                         });
-
-                        console.log('second round');
 
                         await ccipReceive({
                           rx,
                           ccipAddress: satellite2.CcipRouter.address,
                           sourceChainSelector: ChainSelector.mothership,
                           targetSigner: satellite2.signer,
+                          index: 1,
                         });
                       });
 
                       it('shows the expected NFT owners', async () => {
                         const { mothership } = chains;
-                        const winners = epoch.winners();
-                        const owner = await mothership.signer.getAddress();
 
                         assertBn.equal(
-                          await mothership.CoreProxy.balanceOf(owner),
-                          winners.includes(owner) ? 1 : 0
-                        );
-                        assertBn.equal(
-                          await mothership.CoreProxy.balanceOf(addresses[3].address!),
-                          winners.includes(addresses[3].address) ? 1 : 0
-                        );
-                        assertBn.equal(
-                          await mothership.CoreProxy.balanceOf(addresses[4].address!),
-                          winners.includes(addresses[4].address) ? 1 : 0
-                        );
-                        assertBn.equal(
-                          await mothership.CoreProxy.balanceOf(addresses[5].address!),
-                          winners.includes(addresses[5].address) ? 1 : 0
-                        );
-                        assertBn.equal(
-                          await mothership.CoreProxy.balanceOf(addresses[6].address!),
-                          winners.includes(addresses[6].address) ? 1 : 0
+                          await mothership.CouncilToken.balanceOf(epoch.winners()[0]),
+                          1
                         );
                       });
                     });
