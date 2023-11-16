@@ -365,13 +365,12 @@ library PerpMarket {
      */
     function getTotalCollateralValueUsd(PerpMarket.Data storage self) internal view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
         uint256 totalValueUsd;
         uint256 available;
-
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         for (uint256 i = 0; i < length; ++i) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
@@ -381,12 +380,8 @@ library PerpMarket {
                 continue;
             }
 
-            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-                totalValueUsd += self.depositedCollateral[synthMarketId];
-            } else {
-                (uint256 amountUsd, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
-                totalValueUsd += amountUsd;
-            }
+            uint256 price = Margin.getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+            totalValueUsd += available.mulDecimal(price);
         }
 
         return totalValueUsd;
