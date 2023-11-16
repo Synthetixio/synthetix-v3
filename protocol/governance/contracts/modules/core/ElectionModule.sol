@@ -63,10 +63,10 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 initialNominationPeriodStartDate,
-        uint64 administrationPeriodDuration,
-        uint64 nominationPeriodDuration,
-        uint64 votingPeriodDuration
+        uint64 initialNominationPeriodStartDate, // timestamp
+        uint64 administrationPeriodDuration, // days
+        uint64 nominationPeriodDuration, // days
+        uint64 votingPeriodDuration // days
     ) external override {
         OwnableStorage.onlyOwner();
 
@@ -77,18 +77,18 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             administrationPeriodDuration,
             nominationPeriodDuration,
             votingPeriodDuration,
-            3 days
+            3
         );
     }
 
     function _initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 initialNominationPeriodStartDate,
-        uint64 administrationPeriodDuration,
-        uint64 nominationPeriodDuration,
-        uint64 votingPeriodDuration,
-        uint64 maxDateAdjustmentTolerance
+        uint64 initialNominationPeriodStartDate, // timestamp
+        uint64 administrationPeriodDuration, // days
+        uint64 nominationPeriodDuration, // days
+        uint64 votingPeriodDuration, // days
+        uint64 maxDateAdjustmentTolerance // days
     ) internal {
         Council.Data storage store = Council.load();
 
@@ -102,6 +102,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         administrationPeriodDuration = administrationPeriodDuration * 1 days;
         nominationPeriodDuration = nominationPeriodDuration * 1 days;
         votingPeriodDuration = votingPeriodDuration * 1 days;
+        maxDateAdjustmentTolerance = maxDateAdjustmentTolerance * 1 days;
 
         uint64 epochDuration = administrationPeriodDuration +
             nominationPeriodDuration +
@@ -201,10 +202,10 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     function setNextElectionSettings(
         uint8 epochSeatCount,
         uint8 minimumActiveMembers,
-        uint64 epochDuration,
-        uint64 nominationPeriodDuration,
-        uint64 votingPeriodDuration,
-        uint64 maxDateAdjustmentTolerance
+        uint64 epochDuration, // days
+        uint64 nominationPeriodDuration, // days
+        uint64 votingPeriodDuration, // days
+        uint64 maxDateAdjustmentTolerance // days
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
@@ -212,10 +213,10 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         Council.load().getNextElectionSettings().setElectionSettings(
             epochSeatCount,
             minimumActiveMembers,
-            epochDuration,
-            nominationPeriodDuration,
-            votingPeriodDuration,
-            maxDateAdjustmentTolerance
+            epochDuration * 1 days,
+            nominationPeriodDuration * 1 days,
+            votingPeriodDuration * 1 days,
+            maxDateAdjustmentTolerance * 1 days
         );
     }
 

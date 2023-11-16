@@ -21,9 +21,9 @@ describe('ElectionModule - Initialization', function () {
     caller = owner,
     minimumActiveMembers = 1,
     initialNominationPeriodStartDate = 0,
-    administrationPeriodDuration = daysToSeconds(14),
-    nominationPeriodDuration = daysToSeconds(7),
-    votingPeriodDuration = daysToSeconds(7),
+    administrationPeriodDuration = 14,
+    nominationPeriodDuration = 7,
+    votingPeriodDuration = 7,
   } = {}) {
     return ElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
