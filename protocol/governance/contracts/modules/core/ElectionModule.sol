@@ -279,6 +279,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     }
 
     function _recvCast(
+        uint256 epochIndex,
         address voter,
         uint256 votingPower,
         uint256 chainId,
@@ -296,9 +297,15 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             revert ParameterError.InvalidParameter("candidates", "length must match amounts");
         }
 
-        _validateCandidates(candidates);
-
         Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        uint256 currentElectionId = council.currentElectionId;
+
+        if (epochIndex != currentElectionId) {
+            revert ParameterError.InvalidParameter("epochIndex", "invalid epoch index");
+        }
+
+        _validateCandidates(candidates);
 
         Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
 
@@ -307,9 +314,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         ballot.votingPower = votingPower;
 
         ballot.validate();
-
-        Election.Data storage election = council.getCurrentElection();
-        uint256 currentElectionId = council.currentElectionId;
 
         bytes32 ballotPtr;
         assembly {

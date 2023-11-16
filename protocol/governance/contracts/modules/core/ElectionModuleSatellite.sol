@@ -86,6 +86,7 @@ contract ElectionModuleSatellite is
             cc.getChainIdAt(0),
             abi.encodeWithSelector(
                 IElectionModule._recvCast.selector,
+                currentEpoch,
                 sender,
                 ballot.votingPower,
                 block.chainid,
