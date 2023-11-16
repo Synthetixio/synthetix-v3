@@ -221,6 +221,18 @@ args = [
 ]
 depends = ["invoke.upgradeProxy", "contract.PerpRewardDistributor"]
 
+# # --- Create and Register PerpRewardDistributor(s) --- #
+
+# [invoke.createRewardDistributor_swsteth]
+# target = ["PerpMarketProxy"]
+# fromCall.func = "owner"
+# func = "createRewardDistributor"
+# args = [
+#   { name = "swsteth Perp Reward Distributor", token = "0x0000000000000000000000000000000000000000" }
+# ]
+# extra.createRewardDistributor_swsteth.event = "RewardDistributorCreated"
+# extra.createRewardDistributor_swsteth.arg = 0
+
 # --- Feature Flags --- #
 
 [invoke.addToFeatureFlagAllowlist_registerMarket]
