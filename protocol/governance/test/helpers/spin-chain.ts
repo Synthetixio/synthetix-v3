@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
-import type { CcipRouterMock } from '../generated/typechain/sepolia';
+import type { CcipRouterMock, CouncilToken } from '../generated/typechain/sepolia';
 import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
 
 export async function spinChain<CoreProxy>({
@@ -84,12 +84,19 @@ export async function spinChain<CoreProxy>({
     signer
   ) as CcipRouterMock;
 
+  const CouncilToken = new ethers.Contract(
+    outputs.contracts!.CouncilToken.address,
+    outputs.contracts!.CouncilToken.abi,
+    signer
+  ) as CouncilToken;
+
   return {
     networkName,
     chainId,
     chainSlector,
     provider: provider as unknown as ethers.providers.JsonRpcProvider,
     CoreProxy,
+    CouncilToken,
     CcipRouter,
     signer,
     SnapshotRecordMock,

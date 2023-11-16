@@ -1,4 +1,4 @@
-import { findSingleEvent } from '@synthetixio/core-utils/src/utils/ethers/events';
+import { findEvent, findSingleEvent } from '@synthetixio/core-utils/src/utils/ethers/events';
 import { ethers } from 'ethers';
 import { CcipRouterMock__factory } from '../../typechain-types/factories/contracts/mocks/CcipRouterMock__factory';
 
@@ -17,27 +17,43 @@ export async function ccipReceive({
   sourceChainSelector,
   targetSigner,
   ccipAddress,
+  index,
 }: {
   rx: ethers.ContractReceipt;
   sourceChainSelector: ethers.BigNumberish;
   targetSigner: ethers.Signer;
   ccipAddress: string;
+  index?: number;
 }) {
-  const evt = findSingleEvent({
-    eventName: 'CCIPSend',
-    receipt: rx,
-    contract: CcipRouter,
-  });
+  let evt;
+  if (typeof index !== 'number') {
+    evt = findSingleEvent({
+      eventName: 'CCIPSend',
+      receipt: rx,
+      contract: CcipRouter,
+    });
+  } else {
+    evt = findEvent({
+      eventName: 'CCIPSend',
+      receipt: rx,
+      contract: CcipRouter,
+    } as Parameters<typeof findEvent>[0]);
+    evt = Array.isArray(evt) ? evt[index] : evt;
+  }
 
-  const message = {
-    messageId: evt.args.messageId,
-    sourceChainSelector,
-    sender: ethers.utils.defaultAbiCoder.encode(['address'], [rx.to]),
-    data: evt.args.message.data,
-    tokenAmounts: [],
-  };
+  if (evt && evt.args) {
+    const message = {
+      messageId: evt.args.messageId,
+      sourceChainSelector,
+      sender: ethers.utils.defaultAbiCoder.encode(['address'], [rx.to]),
+      data: evt.args.message.data,
+      tokenAmounts: [],
+    };
 
-  return CcipRouter.attach(ccipAddress)
-    .connect(targetSigner)
-    .__ccipReceive(rx.to, message, { value: 0 });
+    return CcipRouter.attach(ccipAddress)
+      .connect(targetSigner)
+      .__ccipReceive(rx.to, message, { value: 0 });
+  } else {
+    throw new Error('no CCIPSend event found');
+  }
 }
