@@ -154,7 +154,7 @@ jobs:
           name: "Generate testable contracts sources"
           command: yarn workspaces foreach --all --topological-dev --verbose run generate-testable
       - save_cache:
-          key: generated-testable-{{ .Environment.CIRCLE_BUILD_NUM }}
+          key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "protocol/synthetix/contracts/generated"
             # Add more folders here if we generate more
@@ -166,7 +166,7 @@ jobs:
       - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
 
       - save_cache:
-          key: testable-hardhat-cache-{{ .Environment.CIRCLE_BUILD_NUM }}
+          key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "protocol/synthetix/artifacts"
             - "protocol/synthetix/cache"
@@ -184,7 +184,7 @@ jobs:
       - run: yarn workspaces foreach --all --verbose run check:storage
 
       - save_cache:
-          key: cannon-{{ .Environment.CIRCLE_BUILD_NUM }}
+          key: cannon-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "~/.local/share/cannon"
       - save_cache:
@@ -212,13 +212,13 @@ jobs:
 
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CIRCLE_BUILD_NUM }}
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           keys:
-            - testable-hardhat-cache-{{ .Environment.CIRCLE_BUILD_NUM }}
+            - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           keys:
-            - generated-testable-{{ .Environment.CIRCLE_BUILD_NUM }}
+            - generated-testable-{{ .Environment.CIRCLE_SHA1 }}
 
       - run:
           name: "Compile TS"
