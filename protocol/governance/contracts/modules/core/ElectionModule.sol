@@ -317,29 +317,49 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
 
+    error Test(bool);
+
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint256 numBallots) external override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
-
-        if (election.evaluated) revert ElectionAlreadyEvaluated();
-
-        _evaluateNextBallotBatch(numBallots);
-
-        uint256 currentEpochIndex = council.currentElectionId;
-
-        uint256 totalBallots = election.ballotPtrs.length();
-        if (election.numEvaluatedBallots < totalBallots) {
-            emit ElectionBatchEvaluated(
-                currentEpochIndex,
-                election.numEvaluatedBallots,
-                totalBallots
+        Epoch.Data memory epoch = council.getCurrentEpoch();
+        ElectionSettings.Data storage electionSettings = ElectionSettings.load(
+            council.currentElectionId
+        );
+        if (election.nominees.values().length < electionSettings.minimumActiveMembers) {
+            CrossChain.Data storage cc = CrossChain.load();
+            cc.broadcast(
+                cc.getSupportedNetworks(),
+                abi.encodeWithSelector(
+                    this._recvTweakEpochSchedule.selector,
+                    council.currentElectionId,
+                    epoch.nominationPeriodStartDate,
+                    epoch.votingPeriodStartDate,
+                    epoch.endDate + electionSettings.votingPeriodDuration
+                ),
+                _CROSSCHAIN_GAS_LIMIT
             );
         } else {
-            election.evaluated = true;
-            emit ElectionEvaluated(currentEpochIndex, totalBallots);
+            if (election.evaluated) revert ElectionAlreadyEvaluated();
+
+            _evaluateNextBallotBatch(numBallots);
+
+            uint256 currentEpochIndex = council.currentElectionId;
+
+            uint256 totalBallots = election.ballotPtrs.length();
+            if (election.numEvaluatedBallots < totalBallots) {
+                emit ElectionBatchEvaluated(
+                    currentEpochIndex,
+                    election.numEvaluatedBallots,
+                    totalBallots
+                );
+            } else {
+                election.evaluated = true;
+                emit ElectionEvaluated(currentEpochIndex, totalBallots);
+            }
         }
     }
 
