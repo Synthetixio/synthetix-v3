@@ -37,10 +37,6 @@ describe('Evaluation', function () {
         index: 1,
       });
 
-      console.log(
-        (await mothership.CoreProxy.getEpochSchedule()).toString(),
-        await mothership.provider.getBlockNumber()
-      );
       assert.equal((await mothership.CoreProxy.getCurrentPeriod()).toNumber(), 2);
     });
   });
