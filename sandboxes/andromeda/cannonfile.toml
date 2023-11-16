@@ -9,6 +9,9 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # PK 0xac0974bec39a1
 #defaultValue = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" # PK 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 description = "Hardhat/Anvil first test account"
 
+[setting.version]
+defaultValue = "3.3.3-dev.a31b56e8"
+
 #
 #
 # TODO: We will need to use Pyth Mock, so these settings will change.
@@ -38,7 +41,7 @@ defaultValue = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea3
 #
 #
 [import.synthetix]
-source = "synthetix:dev"
+source = "synthetix:<%= settings.version %>"
 
 [invoke.configure_minimum_liquidity_ratio]
 target = ["synthetix.CoreProxy"]
@@ -107,7 +110,7 @@ args = [
 #
 #
 [import.spot_factory]
-source = "synthetix-spot-market:dev"
+source = "synthetix-spot-market:<%= settings.version %>"
 
 #
 #
@@ -215,7 +218,7 @@ depositingEnabled = true
 #
 #
 [import.perps_factory]
-source = "synthetix-perps-market:dev"
+source = "synthetix-perps-market:<%= settings.version %>"
 depends = ["import.spot_factory"]
 
 [invoke.permit_owner_to_register_markets]
