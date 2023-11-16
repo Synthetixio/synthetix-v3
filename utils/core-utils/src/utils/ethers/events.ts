@@ -1,5 +1,5 @@
-import { LogDescription } from '@ethersproject/abi/lib/interface';
 import { Result } from '@ethersproject/abi';
+import { LogDescription } from '@ethersproject/abi/lib/interface';
 import { ethers } from 'ethers';
 
 /**
@@ -39,7 +39,7 @@ export function findEvent({
       events = parseLogs({ contract, logs: receipt.logs });
     } catch (error) {
       throw new Error(
-        `event name: ${eventName} is not present in this receipt, all event names: ${events
+        `event name: ${eventName} is not present in this receipt or the given ABI cannot parse it, parsed event names: ${events
           ?.map((e) => e.event)
           .toString()}`
       );
@@ -71,11 +71,13 @@ export function parseLogs({
   contract: ethers.Contract;
   logs: ethers.providers.Log[];
 }) {
-  return logs.map((log) => {
-    const event = contract.interface.parseLog(log) as unknown as ethers.Event;
-    event.event = (event as unknown as LogDescription).name;
-    return event;
-  });
+  return logs
+    .filter((log) => log.data !== '0x')
+    .map((log) => {
+      const event = contract.interface.parseLog(log) as unknown as ethers.Event;
+      event.event = (event as unknown as LogDescription).name;
+      return event;
+    });
 }
 
 interface EventWithArgs extends ethers.Event {
