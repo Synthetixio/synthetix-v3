@@ -85,6 +85,7 @@ interface IElectionModule is IElectionModuleSatellite {
 
     /// @dev Internal voting logic, receiving end of CCIP voting
     function _recvCast(
+        uint256 epochIndex,
         address voter,
         uint256 votingPower,
         uint256 chainId,
