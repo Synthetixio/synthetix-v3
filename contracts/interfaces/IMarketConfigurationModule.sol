@@ -25,6 +25,8 @@ interface IMarketConfigurationModule {
         uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
         address keeperLiquidationEndorsed;
+        uint128 minCollateralHaircut;
+        uint128 maxCollateralHaircut;
     }
 
     // @notice See PerpMarketConfiguration.Data for more details.

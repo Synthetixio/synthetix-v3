@@ -21,6 +21,14 @@ contract MarginModule is IMarginModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
+    // --- Runtime structs --- //
+
+    struct Runtime_setCollateralConfiguration {
+        uint256 lengthBefore;
+        uint256 lengthAfter;
+        uint256 maxApproveAmount;
+    }
+
     // --- Helpers --- //
 
     /**
@@ -106,6 +114,25 @@ contract MarginModule is IMarginModule {
             globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
         emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
+    }
+
+    /**
+     * @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
+     */
+    function approveSynthCollateral(
+        uint128 synthMarketId,
+        uint256 amount,
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig
+    ) private {
+        ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
+            ? ITokenModule(globalMarketConfig.usdToken)
+            : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
+
+        synth.approve(address(globalMarketConfig.synthetix), amount);
+        synth.approve(address(globalMarketConfig.spotMarket), amount);
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            synth.approve(address(this), amount);
+        }
     }
 
     // --- Mutative --- //
@@ -242,6 +269,7 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function setCollateralConfiguration(
+        bytes32[] calldata oracleNodeIds,
         uint128[] calldata synthMarketIds,
         uint128[] calldata maxAllowables,
         address[] calldata rewardDistributors
@@ -256,23 +284,16 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
-        uint256 MAX_UINT256 = type(uint256).max;
+        Runtime_setCollateralConfiguration memory runtime;
+        runtime.lengthBefore = globalMarginConfig.supportedSynthMarketIds.length;
+        runtime.lengthAfter = synthMarketIds.length;
+        runtime.maxApproveAmount = type(uint256).max;
 
         // Clear existing collateral configuration to be replaced with new.
-        uint256 length0 = globalMarginConfig.supportedSynthMarketIds.length;
-        for (uint256 i = 0; i < length0; ) {
+        for (uint256 i = 0; i < runtime.lengthBefore; ) {
             uint128 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             delete globalMarginConfig.supported[synthMarketId];
-
-            ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
-                ? ITokenModule(globalMarketConfig.usdToken)
-                : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
-
-            synth.approve(address(globalMarketConfig.synthetix), 0);
-            synth.approve(address(globalMarketConfig.spotMarket), 0);
-            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-                synth.approve(address(this), 0);
-            }
+            approveSynthCollateral(synthMarketId, 0, globalMarketConfig);
 
             unchecked {
                 ++i;
@@ -281,30 +302,23 @@ contract MarginModule is IMarginModule {
         delete globalMarginConfig.supportedSynthMarketIds;
 
         // Update with passed in configuration.
-        uint256 length1 = synthMarketIds.length;
-        uint128[] memory newSupportedSynthMarketIds = new uint128[](length1);
-        for (uint256 i = 0; i < length1; ) {
+        uint128[] memory newSupportedSynthMarketIds = new uint128[](runtime.lengthAfter);
+        for (uint256 i = 0; i < runtime.lengthAfter; ) {
             uint128 synthMarketId = synthMarketIds[i];
-            ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
-                ? ITokenModule(globalMarketConfig.usdToken)
-                : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
 
             // Perform approve _once_ when this collateral is added as a supported collateral.
-            synth.approve(address(globalMarketConfig.synthetix), MAX_UINT256);
-            synth.approve(address(globalMarketConfig.spotMarket), MAX_UINT256);
+            approveSynthCollateral(synthMarketId, runtime.maxApproveAmount, globalMarketConfig);
 
-            address rewardDistributor = rewardDistributors[i];
-
-            // sUSD vs other synth configuration.
-            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-                synth.approve(address(this), MAX_UINT256);
-            } else {
-                if (rewardDistributor == address(0)) {
-                    revert ErrorUtil.ZeroAddress();
-                }
+            // Non sUSD collaterals must have a rewards distributor.
+            if (synthMarketId != SYNTHETIX_USD_MARKET_ID && rewardDistributors[i] == address(0)) {
+                revert ErrorUtil.ZeroAddress();
             }
 
-            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i], rewardDistributor);
+            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(
+                oracleNodeIds[i],
+                maxAllowables[i],
+                rewardDistributors[i]
+            );
             newSupportedSynthMarketIds[i] = synthMarketId;
 
             unchecked {
@@ -313,7 +327,7 @@ contract MarginModule is IMarginModule {
         }
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
 
-        emit CollateralConfigured(msg.sender, length1);
+        emit CollateralConfigured(msg.sender, runtime.lengthAfter);
     }
 
     // --- Views --- //

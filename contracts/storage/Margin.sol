@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
@@ -12,6 +13,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 library Margin {
     using DecimalMath for uint256;
+    using DecimalMath for int256;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
@@ -24,6 +26,8 @@ library Margin {
     // --- Structs --- //
 
     struct CollateralType {
+        // Underlying sell oracle used by this spot collateral bytes32(0) if sUSD.
+        bytes32 oracleNodeId;
         // Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
         // Address of the associated reward distributor.
@@ -119,7 +123,7 @@ library Margin {
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
                 if (available > 0) {
-                    price = getCollateralPrice(synthMarketId, available, globalConfig);
+                    price = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
 
@@ -177,26 +181,6 @@ library Margin {
     // --- Views --- //
 
     /**
-     * @dev Returns the collateral price based on the quote price from the spot market. This is necessary to discount
-     * the collateral value relative fees incurred on the sale during liquidation. Fees might be either the skew fee
-     * incurred if skewed is expanded on spot and/or a flat fee on the market to spot market LPs.
-     */
-    function getCollateralPrice(
-        uint128 synthMarketId,
-        uint256 available,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
-        if (available == 0) {
-            return 0;
-        }
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            return DecimalMath.UNIT;
-        }
-        (uint256 usdAmount, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
-        return usdAmount.divDecimal(available);
-    }
-
-    /**
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256) {
@@ -216,7 +200,9 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralUsd += available.mulDecimal(getCollateralPrice(synthMarketId, available, globalConfig));
+                collateralUsd += available.mulDecimal(
+                    getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig)
+                );
             }
 
             unchecked {
@@ -257,5 +243,48 @@ library Margin {
                     0
                 )
                 .toUint();
+    }
+
+    // --- Member (views) --- //
+
+    /**
+     * @dev Returns the haircut adjusted collateral price.
+     */
+    function getCollateralPrice(
+        Margin.GlobalData storage self,
+        uint128 synthMarketId,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            return DecimalMath.UNIT;
+        }
+
+        uint256 oraclePrice = globalConfig
+            .oracleManager
+            .process(self.supported[synthMarketId].oracleNodeId)
+            .price
+            .toUint();
+
+        // TODO: Need to get the actual collateral wrapped amount.
+        ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
+        int256 spotMarketSkew = synth.totalSupply().toInt() -
+            globalConfig
+                .synthetix
+                .getMarketCollateralAmount(synthMarketId, 0x0000000000000000000000000000000000000000)
+                .toInt();
+
+        // TODO: Add this back after upgrading spot-market dependency.
+        int256 spotMarketSkewScale = 1;
+        // int256 spotMarketSkewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId).toInt();
+
+        uint256 haircut = MathUtil.min(
+            MathUtil.max(
+                MathUtil.abs(spotMarketSkew.divDecimal(spotMarketSkewScale)),
+                globalConfig.minCollateralHaircut
+            ),
+            globalConfig.minCollateralHaircut
+        );
+
+        return oraclePrice.mulDecimal(DecimalMath.UNIT - haircut);
     }
 }

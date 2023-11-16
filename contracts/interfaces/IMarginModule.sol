@@ -54,6 +54,7 @@ interface IMarginModule is IBasePerpMarket {
      * sUSD as the first `synthMarketId` so that negative PnL/fees are deducted from sUSD before other collateral types.
      */
     function setCollateralConfiguration(
+        bytes32[] calldata oracleNodeIds,
         uint128[] calldata synthMarketIds,
         uint128[] calldata maxAllowables,
         address[] calldata rewardDistributors
