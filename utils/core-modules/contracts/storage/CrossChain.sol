@@ -177,6 +177,8 @@ library CrossChain {
                 gasTokenUsed += fee;
             }
         }
+
+        CrossChain.refundLeftoverGas(gasTokenUsed);
     }
 
     /**
