@@ -214,7 +214,6 @@ library CouncilMembers {
     struct Data {
         address councilToken;
         SetUtil.AddressSet councilMembers;
-        mapping(address => uint) councilTokenIds;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _STORAGE_SLOT;

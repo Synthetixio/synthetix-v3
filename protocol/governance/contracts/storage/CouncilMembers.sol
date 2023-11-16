@@ -12,8 +12,6 @@ library CouncilMembers {
         address councilToken;
         // Council member addresses
         SetUtil.AddressSet councilMembers;
-        // Council token id's by council member address
-        mapping(address => uint) councilTokenIds;
     }
 
     function load() internal pure returns (Data storage store) {
