@@ -123,7 +123,7 @@ library Margin {
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
                 if (available > 0) {
-                    price = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                    price = getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
 
@@ -201,7 +201,7 @@ library Margin {
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
                 collateralUsd += available.mulDecimal(
-                    getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig)
+                    getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
                 );
             }
 
@@ -248,43 +248,33 @@ library Margin {
     // --- Member (views) --- //
 
     /**
-     * @dev Returns the haircut adjusted collateral price.
+     * @dev Returns haircut adjusted collateral price. Discount proportional to `available`, scaled by a spot skew scale.
      */
     function getCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,
+        uint256 available,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             return DecimalMath.UNIT;
         }
 
+        // Fetch the raw oracle price.
         uint256 oraclePrice = globalConfig
             .oracleManager
             .process(self.supported[synthMarketId].oracleNodeId)
             .price
             .toUint();
 
-        // TODO: Need to get the actual collateral wrapped amount.
-        ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-        int256 spotMarketSkew = synth.totalSupply().toInt() -
-            globalConfig
-                .synthetix
-                .getMarketCollateralAmount(synthMarketId, 0x0000000000000000000000000000000000000000)
-                .toInt();
-
-        // TODO: Add this back after upgrading spot-market dependency.
-        int256 spotMarketSkewScale = 1;
-        // int256 spotMarketSkewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId).toInt();
-
+        // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
+        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
         uint256 haircut = MathUtil.min(
-            MathUtil.max(
-                MathUtil.abs(spotMarketSkew.divDecimal(spotMarketSkewScale)),
-                globalConfig.minCollateralHaircut
-            ),
+            MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
             globalConfig.minCollateralHaircut
         );
 
+        // Apply discount on price by the haircut.
         return oraclePrice.mulDecimal(DecimalMath.UNIT - haircut);
     }
 }

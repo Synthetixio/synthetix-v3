@@ -154,7 +154,8 @@ contract LiquidationModule is ILiquidationModule {
             market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
 
-            // For any non-sUSD collateral, send them all to their respective reward distributor.
+            // For any non-sUSD collateral, send them all to their respective reward distributor and
+            // distribute to each collateral in the pool.
             Margin.GlobalData storage globalMarginConfig = Margin.load();
 
             uint256 length = globalMarginConfig.supportedSynthMarketIds.length;

@@ -380,7 +380,7 @@ library PerpMarket {
                 continue;
             }
 
-            uint256 price = Margin.getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+            uint256 price = Margin.getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig);
             totalValueUsd += available.mulDecimal(price);
         }
 
