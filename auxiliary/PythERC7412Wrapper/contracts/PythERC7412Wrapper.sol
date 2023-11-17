@@ -3,9 +3,9 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
-import "./interfaces/IERC7412.sol";
+import {IERC7412} from "./interfaces/IERC7412.sol";
+import {Price} from "./storage/Price.sol";
 
 contract PythERC7412Wrapper is IERC7412 {
     using DecimalMath for int64;
@@ -14,8 +14,6 @@ contract PythERC7412Wrapper is IERC7412 {
     error NotSupported(uint8 updateType);
 
     address public immutable pythAddress;
-
-    mapping(bytes32 => mapping(uint64 => PythStructs.Price)) public benchmarkPrices;
 
     constructor(address _pythAddress) {
         pythAddress = _pythAddress;
@@ -29,7 +27,7 @@ contract PythERC7412Wrapper is IERC7412 {
         bytes32 priceId,
         uint64 requestedTime
     ) external view returns (int64) {
-        PythStructs.Price memory priceData = benchmarkPrices[priceId][requestedTime];
+        PythStructs.Price memory priceData = Price.load(priceId).benchmarkPrices[requestedTime];
 
         if (priceData.price > 0) {
             return priceData.price;
@@ -95,7 +93,7 @@ contract PythERC7412Wrapper is IERC7412 {
             )
         returns (PythStructs.PriceFeed[] memory priceFeeds) {
             for (uint i = 0; i < priceFeeds.length; i++) {
-                benchmarkPrices[priceIds[i]][timestamp] = priceFeeds[i].price;
+                Price.load(priceIds[i]).benchmarkPrices[timestamp] = priceFeeds[i].price;
             }
         } catch (bytes memory reason) {
             if (
