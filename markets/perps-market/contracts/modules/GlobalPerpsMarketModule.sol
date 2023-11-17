@@ -2,7 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
@@ -19,10 +18,9 @@ import {KeeperCosts} from "../storage/KeeperCosts.sol";
  * @dev See IGlobalPerpsMarketModule.
  */
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
-    using SetUtil for SetUtil.UintSet;
-    using SafeCastU128 for uint128;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using SetUtil for SetUtil.UintSet;
     using KeeperCosts for KeeperCosts.Data;
 
     /**
@@ -33,15 +31,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint256 maxCollateralAmount
     ) external override {
         OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
-
-        bool isSupportedCollateral = store.supportedCollateralTypes.contains(synthMarketId);
-        if (maxCollateralAmount > 0 && !isSupportedCollateral) {
-            store.supportedCollateralTypes.add(synthMarketId.to256());
-        } else if (maxCollateralAmount == 0 && isSupportedCollateral) {
-            store.supportedCollateralTypes.remove(synthMarketId.to256());
-        }
+        GlobalPerpsMarketConfiguration.load().updateCollateral(synthMarketId, maxCollateralAmount);
 
         emit CollateralConfigurationSet(synthMarketId, maxCollateralAmount);
     }
