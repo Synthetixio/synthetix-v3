@@ -16,7 +16,7 @@ dataSources:
       file: ./optimism-mainnet/index.ts
       abis:
         - name: CoreProxy
-          file: ./optimism-mainnet/deployments/CoreProxy.json
+          file: ./optimism-mainnet/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
