@@ -7009,6 +7009,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "eslint-config-prettier@npm:9.0.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: 276b0b5b5b19066962a9ff3a16a553bdad28e1c0a2ea33a1d75d65c0428bb7b37f6e85ac111ebefcc9bdefb544385856dbe6eaeda5279c639e5549c113d27dda
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-no-only-tests@npm:^3.1.0":
   version: 3.1.0
   resolution: "eslint-plugin-no-only-tests@npm:3.1.0"
@@ -15820,6 +15831,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^6.10.0"
     "@usecannon/cli": "npm:^2.9.11"
     eslint: "npm:^8.53.0"
+    eslint-config-prettier: "npm:^9.0.0"
     eslint-plugin-no-only-tests: "npm:^3.1.0"
     lint-staged: "npm:^15.0.2"
     mocha: "npm:^10.2.0"
