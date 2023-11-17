@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI64, SafeCastU64} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
@@ -26,6 +26,8 @@ import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.so
  */
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     using SafeCastI256 for int256;
+    using SafeCastI64 for int64;
+    using SafeCastU64 for uint64;
     using SafeCastU256 for uint256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
@@ -74,6 +76,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         bytes calldata result,
         bytes calldata extraData
     ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
+        //TODO remove this empty usage
+        result;
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -85,7 +89,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         }
 
         uint256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
-            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrder.settlementTime);
+            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrderClaim.settlementTime.to64())
+            .toUint()
+            .to256();
 
         return
             _settleOrder(
