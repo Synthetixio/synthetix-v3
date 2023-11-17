@@ -532,13 +532,13 @@ library AsyncOrder {
     ) internal view returns (uint256) {
         RequiredMarginWithNewPositionRuntime memory runtime;
         // get initial margin requirement for the new position
-        (, , runtime.newRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
+        (, , runtime.newRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             newPositionSize,
             fillPrice
         );
 
         // get initial margin of old position
-        (, , runtime.oldRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
+        (, , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             oldPositionSize,
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
@@ -552,7 +552,7 @@ library AsyncOrder {
 
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
             .getKeeperRewardsAndCosts(marketId);
-        runtime.accumulatedLiquidationRewards += marketConfig.calculateLiquidationReward(
+        runtime.accumulatedLiquidationRewards += marketConfig.calculateFlagReward(
             MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
         );
         runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
