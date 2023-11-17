@@ -126,9 +126,9 @@ args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 
 [invoke.addPerpsSystemToFeatureFlag]
 target = ["PerpsMarketProxy"]
-func = "addToFeatureFlagAllowlist"
+func = "setFeatureFlagAllowAll"
 from = "<%= settings.owner %>"
-args = ["<%= formatBytes32String('perpsSystem') %>", "<%= settings.owner %>"]
+args = ["<%= formatBytes32String('perpsSystem') %>", 1]
 
 # add snxUSD as the only priority to deduct from on a given account, as default
 [invoke.setSynthDeductionPriority]
