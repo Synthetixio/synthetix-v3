@@ -246,7 +246,7 @@ args = [
     "<%= parseEther('1') %>", # uint256 initialMarginRatioD18
     "<%= parseEther('0.02') %>", # uint256 minimumInitialMarginRatioD18
     "<%= parseEther('0.5') %>", # uint256 maintenanceMarginScalarD18
-    "<%= parseEther('0.01') %>", # uint256 liquidationRewardRatioD18
+    "<%= parseEther('0.01') %>", # uint256 flagRewardRatioD18
     "<%= parseEther('0') %>"
     # uint256 minimumPositionMargin
 ]

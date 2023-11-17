@@ -184,7 +184,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 // using oldPositionAbsSize to calculate flag reward
                 runtime.totalFlaggingRewards += PerpsMarketConfiguration
                     .load(runtime.positionMarketId)
-                    .calculateLiquidationReward(oldPositionAbsSize.mulDecimal(runtime.price));
+                    .calculateFlagReward(oldPositionAbsSize.mulDecimal(runtime.price));
             }
 
             if (amountLiquidated == 0) {

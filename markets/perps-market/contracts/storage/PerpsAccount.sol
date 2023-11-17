@@ -312,7 +312,7 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin, ) = marketConfig
+            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin) = marketConfig
                 .calculateRequiredMargins(
                     position.size,
                     PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
@@ -352,12 +352,12 @@ library PerpsAccount {
                 MathUtil.abs(position.size)
             );
 
-            uint256 liquidationMargin = marketConfig.calculateLiquidationReward(
+            uint256 flagReward = marketConfig.calculateFlagReward(
                 MathUtil.abs(position.size).mulDecimal(
                     PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 )
             );
-            accumulatedLiquidationRewards += liquidationMargin;
+            accumulatedLiquidationRewards += flagReward;
 
             maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }

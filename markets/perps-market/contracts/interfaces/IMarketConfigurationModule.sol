@@ -70,7 +70,7 @@ interface IMarketConfigurationModule {
      * @param marketId udpates funding parameters to this specific market.
      * @param initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
      * @param maintenanceMarginRatioD18 the maintenance margin ratio (as decimal with 18 digits precision).
-     * @param liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
+     * @param flagRewardRatioD18 the flag reward ratio (as decimal with 18 digits precision).
      * @param minimumPositionMargin the minimum position margin.
      */
     event LiquidationParametersSet(
@@ -78,7 +78,7 @@ interface IMarketConfigurationModule {
         uint256 initialMarginRatioD18,
         uint256 maintenanceMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
-        uint256 liquidationRewardRatioD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     );
 
@@ -174,7 +174,7 @@ interface IMarketConfigurationModule {
      * @param initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
      * @param minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
      * @param maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
-     * @param liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
+     * @param flagRewardRatioD18 the flag reward ratio (as decimal with 18 digits precision).
      * @param minimumPositionMargin the minimum position margin.
      */
     function setLiquidationParameters(
@@ -182,7 +182,7 @@ interface IMarketConfigurationModule {
         uint256 initialMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
         uint256 maintenanceMarginScalarD18,
-        uint256 liquidationRewardRatioD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     ) external;
 
@@ -250,7 +250,7 @@ interface IMarketConfigurationModule {
      * @return initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
      * @return minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
      * @return maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
-     * @return liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
+     * @return flagRewardRatioD18 the flag reward ratio (as decimal with 18 digits precision).
      * @return minimumPositionMargin the minimum position margin.
      */
     function getLiquidationParameters(
@@ -262,7 +262,7 @@ interface IMarketConfigurationModule {
             uint256 initialMarginRatioD18,
             uint256 minimumInitialMarginRatioD18,
             uint256 maintenanceMarginScalarD18,
-            uint256 liquidationRewardRatioD18,
+            uint256 flagRewardRatioD18,
             uint256 minimumPositionMargin
         );
 
