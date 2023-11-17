@@ -105,5 +105,8 @@
   "engines": {
     "node": "^18.16.0"
   },
-  "packageManager": "yarn@4.0.1"
+  "packageManager": "yarn@4.0.1",
+  "dependencies": {
+    "eslint-config-prettier": "^9.0.0"
+  }
 }
