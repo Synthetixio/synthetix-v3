@@ -160,7 +160,7 @@ depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
 source = "pyth:1.4.0"
-# args = [120, # 120s, 1wei TODO add back cannon package have support for this.
+args = [120, 1]       # 120s, 1wei
 
 
 [contract.AggregatorV3Mock]
