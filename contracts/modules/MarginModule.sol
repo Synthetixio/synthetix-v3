@@ -261,6 +261,27 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
+    function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external {
+        OwnableStorage.onlyOwner();
+
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        for (uint256 i = 0; i < length; ) {
+            uint128 currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            if (currentSynthMarketId == synthMarketId) {
+                globalMarginConfig.supported[currentSynthMarketId].maxAllowable = maxAllowable;
+                return;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        revert ErrorUtil.UnsupportedCollateral(synthMarketId);
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
     function setCollateralConfiguration(uint128[] calldata synthMarketIds, uint128[] calldata maxAllowables) external {
         OwnableStorage.onlyOwner();
 
