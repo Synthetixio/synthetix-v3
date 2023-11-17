@@ -3,11 +3,12 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {AbstractProxy} from "@synthetixio/core-contracts/contracts/proxy/AbstractProxy.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {IERC7412} from "./interfaces/IERC7412.sol";
 import {Price} from "./storage/Price.sol";
 
-contract PythERC7412Wrapper is IERC7412 {
+contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     using DecimalMath for int64;
     using SafeCastI256 for int256;
 
@@ -17,6 +18,10 @@ contract PythERC7412Wrapper is IERC7412 {
 
     constructor(address _pythAddress) {
         pythAddress = _pythAddress;
+    }
+
+    function _getImplementation() internal view returns (address) {
+        return pythAddress;
     }
 
     function oracleId() external pure returns (bytes32) {

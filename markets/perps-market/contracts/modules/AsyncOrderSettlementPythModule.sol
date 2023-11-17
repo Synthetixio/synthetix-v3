@@ -18,6 +18,8 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
+import {SafeCastU256, SafeCastI256, SafeCastI64} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for settling async orders using pyth as price feed.
@@ -28,6 +30,9 @@ contract AsyncOrderSettlementPythModule is
     IMarketEvents,
     IAccountEvents
 {
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using SafeCastI64 for int64;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -40,15 +45,18 @@ contract AsyncOrderSettlementPythModule is
     /**
      * @inheritdoc IAsyncOrderSettlementPythModule
      */
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
+    function settleOrder(uint128 accountId) external {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
-        (
-            uint256 offchainPrice,
-            AsyncOrder.Data storage order,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = OffchainUtil.parsePythPrice(result, extraData);
 
-        _settleOrder(offchainPrice, order, settlementStrategy);
+        (
+            AsyncOrder.Data storage asyncOrder,
+            SettlementStrategy.Data storage settlementStrategy
+        ) = AsyncOrder.loadValid(accountId);
+
+        int64 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
+            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrder.settlementTime.to64());
+
+        _settleOrder(offchainPrice.toUint().to256().toUint(), asyncOrder, settlementStrategy);
     }
 
     /**

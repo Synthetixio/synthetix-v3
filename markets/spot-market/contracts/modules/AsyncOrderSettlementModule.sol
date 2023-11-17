@@ -17,6 +17,7 @@ import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {SynthUtil} from "../utils/SynthUtil.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 
 /**
  * @title Module to settle asyncronous orders
@@ -83,23 +84,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             revert InvalidSettlementStrategy(settlementStrategy.strategyType);
         }
 
-        bytes32[] memory priceIds = new bytes32[](1);
-        priceIds[0] = settlementStrategy.feedId;
-
-        bytes[] memory updateData = new bytes[](1);
-        updateData[0] = result;
-
-        IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
-            settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msg.value}(
-            updateData,
-            priceIds,
-            asyncOrderClaim.settlementTime.to64(),
-            (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration).to64()
-        );
-
-        IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
-        uint256 offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
+        uint256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
+            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrder.settlementTime);
 
         return
             _settleOrder(
