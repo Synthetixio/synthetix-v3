@@ -224,6 +224,29 @@ describe('SafeCast', function () {
     });
   });
 
+  describe('SafeCastI64', function () {
+    describe('toUint()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'int64toInt64(int64)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 8));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(64));
+      });
+
+      it('throws on overflows', async function () {
+        //@ts-ignore
+        await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt64ToUint64()');
+      });
+    });
+  });
+
   describe('SafeCastI128', function () {
     describe('toUint()', function () {
       before('set the target cast function', async function () {

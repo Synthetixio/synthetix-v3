@@ -20,7 +20,7 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         pythAddress = _pythAddress;
     }
 
-    function _getImplementation() internal view returns (address) {
+    function _getImplementation() internal view override returns (address) {
         return pythAddress;
     }
 
