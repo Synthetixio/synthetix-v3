@@ -1,10 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IAsyncOrderSettlementEIP3668Module} from "../interfaces/IAsyncOrderSettlementEIP3668Module.sol";
 import {IAsyncOrderSettlementPythModule} from "../interfaces/IAsyncOrderSettlementPythModule.sol";
 import {OffchainUtil} from "../utils/OffchainUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
@@ -21,6 +23,7 @@ contract AsyncOrderSettlementEIP3668Module is IAsyncOrderSettlementEIP3668Module
      * @inheritdoc IAsyncOrderSettlementEIP3668Module
      */
     function settle(uint128 accountId) external view {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
