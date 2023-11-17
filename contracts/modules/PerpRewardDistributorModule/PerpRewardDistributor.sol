@@ -3,32 +3,87 @@ pragma solidity 0.8.19;
 
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
+import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 
 // @see: https://github.com/Synthetixio/rewards-distributors
 contract PerpRewardDistributor is IPerpRewardDistributor {
     address private _rewardManager;
+    address private _perpMarket;
     address private _token;
     string private _name;
+    uint128 private _poolId;
+
     bool public shouldFailPayout;
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
+     */
+    function onlyPerpMarket() private view {
+        if (msg.sender != _perpMarket) {
+            revert ErrorUtil.Unauthorized(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
+     */
+    function onlyRewardManager() private view {
+        if (msg.sender != _rewardManager) {
+            revert ErrorUtil.Unauthorized(msg.sender);
+        }
+    }
 
     /**
      * @inheritdoc IPerpRewardDistributor
      */
-    function initialize(address rewardManager, address token_, string memory name_) external {
+    function initialize(
+        address rewardManager,
+        address perpMarket,
+        uint128 poolId_,
+        address token_,
+        string memory name_
+    ) external {
         _rewardManager = rewardManager;
+        _perpMarket = perpMarket;
+        _poolId = poolId_;
         _token = token_;
         _name = name_;
     }
 
-    function setShouldFailPayout(bool fail) external {
-        OwnableStorage.onlyOwner();
-        shouldFailPayout = fail;
+    /**
+     * @inheritdoc IPerpRewardDistributor
+     */
+    function distributeRewards(address collateralType, uint256 amount) external {
+        onlyPerpMarket();
+        IRewardsManagerModule(_rewardManager).distributeRewards(
+            _poolId,
+            collateralType,
+            amount,
+            uint64(block.timestamp),
+            0
+        );
     }
+
+    /**
+     * @inheritdoc IPerpRewardDistributor
+     */
+    function poolId() external view returns (uint128) {
+        return _poolId;
+    }
+
+    /**
+     * @inheritdoc IPerpRewardDistributor
+     */
+    function setShouldFailPayout(bool _shouldFailedPayout) external {
+        OwnableStorage.onlyOwner();
+        shouldFailPayout = _shouldFailedPayout;
+    }
+
+    // --- IRewardDistributor Requirements --- //
 
     /**
      * @inheritdoc IRewardDistributor
@@ -48,10 +103,7 @@ contract PerpRewardDistributor is IPerpRewardDistributor {
      * @inheritdoc IRewardDistributor
      */
     function payout(uint128, uint128, address, address sender, uint256 amount) external returns (bool) {
-        // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
-        if (msg.sender != _rewardManager) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
+        onlyRewardManager();
         IERC20(_token).transfer(sender, amount);
         return !shouldFailPayout;
     }
@@ -66,19 +118,5 @@ contract PerpRewardDistributor is IPerpRewardDistributor {
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
         return interfaceId == type(IRewardDistributor).interfaceId || interfaceId == this.supportsInterface.selector;
-    }
-
-    /**
-     * @inheritdoc IPerpRewardDistributor
-     */
-    function distributeRewards(uint128 poolId, address collateralType, uint256 amount) external {
-        OwnableStorage.onlyOwner();
-        IRewardsManagerModule(_rewardManager).distributeRewards(
-            poolId,
-            collateralType,
-            amount,
-            uint64(block.timestamp),
-            0
-        );
     }
 }

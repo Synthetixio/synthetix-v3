@@ -79,4 +79,7 @@ library ErrorUtil {
 
     // @notice Thrown when the input arrays have mismatched lengths.
     error ArrayLengthMismatch();
+
+    // @notice Thrown when msg.sender is not authorized.
+    error Unauthorized(address sender);
 }

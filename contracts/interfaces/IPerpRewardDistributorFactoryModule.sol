@@ -7,6 +7,8 @@ interface IPerpRewardDistributorFactoryModule {
     // --- Structs --- //
 
     struct CreatePerpRewardDistributorParameters {
+        // The pool the distributor will be registered with.
+        uint128 poolId;
         // Name of the distributor to be created e.g, ETHPERP Distributor.
         string name;
         // The reward ERC20 token this distributor is meant to distribute.
@@ -14,8 +16,6 @@ interface IPerpRewardDistributorFactoryModule {
     }
 
     struct RegisterPerpRewardDistributorParameters {
-        // The pool the distributor will be registered with.
-        uint128 poolId;
         // The collateral in the pool to be registered against.
         address[] collateralTypes;
         // A reward distributor for token distributions.

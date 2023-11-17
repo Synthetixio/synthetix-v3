@@ -18,6 +18,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
     // - Add docs for getRewardId??? or just remove
     // - Either update cannon or replace existing spot (possibly core) bootstrap to re-use and configure pools
     // - Update distribute function should perform all calculcations and does it make sense to pull here?
+    // - Initialize on PerpRewardDistributor
 
     function getRewardId(uint128 poolId, address collateralType, address distributor) internal pure returns (bytes32) {
         return keccak256(abi.encode(poolId, collateralType, distributor));
@@ -35,7 +36,13 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         address distributor = globalConfig.rewardDistributorImplementation.clone();
-        IPerpRewardDistributor(distributor).initialize(address(globalConfig.synthetix), data.token, data.name);
+        IPerpRewardDistributor(distributor).initialize(
+            address(globalConfig.synthetix),
+            address(this),
+            data.poolId,
+            data.token,
+            data.name
+        );
 
         emit RewardDistributorCreated(distributor);
         return distributor;
@@ -52,7 +59,11 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
 
         uint256 length = data.collateralTypes.length;
         for (uint256 i = 0; i < length; ) {
-            globalConfig.synthetix.registerRewardsDistributor(data.poolId, data.collateralTypes[i], data.distributor);
+            globalConfig.synthetix.registerRewardsDistributor(
+                IPerpRewardDistributor(data.distributor).poolId(),
+                data.collateralTypes[i],
+                data.distributor
+            );
 
             unchecked {
                 ++i;

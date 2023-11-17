@@ -166,8 +166,7 @@ contract LiquidationModule is ILiquidationModule {
                 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
                 available = accountMargin.collaterals[synthMarketId];
 
-                // TODO: Distribute reward to every collateral in pool.
-                // if (available > 0) {
+                // if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
                 //     address synth = globalConfig.spotMarket.getSynth(synthMarketId);
                 //     globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
                 //     address rewardDistributor = globalMarginConfig.supported[synthMarketId].rewardDistributor;
