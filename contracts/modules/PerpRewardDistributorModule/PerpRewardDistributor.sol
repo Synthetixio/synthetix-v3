@@ -6,18 +6,22 @@ import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRew
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
 import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 
 // @see: https://github.com/Synthetixio/rewards-distributors
-contract PerpRewardDistributor is IPerpRewardDistributor {
+contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     address private _rewardManager;
     address private _perpMarket;
     address private _token;
     string private _name;
     uint128 private _poolId;
-
     bool public shouldFailPayout;
+
+    constructor() {
+        _disableInitializers();
+    }
 
     /**
      * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
@@ -46,7 +50,7 @@ contract PerpRewardDistributor is IPerpRewardDistributor {
         uint128 poolId_,
         address token_,
         string memory name_
-    ) external {
+    ) external initializer {
         _rewardManager = rewardManager;
         _perpMarket = perpMarket;
         _poolId = poolId_;

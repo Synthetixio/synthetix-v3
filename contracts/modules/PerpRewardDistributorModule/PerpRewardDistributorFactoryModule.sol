@@ -15,14 +15,8 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
     // --- Views --- //
 
     // TODO: More tasks
-    // - Add docs for getRewardId??? or just remove
     // - Either update cannon or replace existing spot (possibly core) bootstrap to re-use and configure pools
     // - Update distribute function should perform all calculcations and does it make sense to pull here?
-    // - Initialize on PerpRewardDistributor
-
-    function getRewardId(uint128 poolId, address collateralType, address distributor) internal pure returns (bytes32) {
-        return keccak256(abi.encode(poolId, collateralType, distributor));
-    }
 
     // --- Mutative --- //
 
