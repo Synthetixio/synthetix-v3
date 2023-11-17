@@ -227,7 +227,7 @@ describe('SafeCast', function () {
   describe('SafeCastI64', function () {
     describe('toUint()', function () {
       before('set the target cast function', async function () {
-        castFunction = 'int64toInt64(int64)';
+        castFunction = 'int64toUint64(int64)';
       });
 
       it('produces expected results', async function () {
