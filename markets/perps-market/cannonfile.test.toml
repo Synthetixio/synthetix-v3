@@ -68,7 +68,6 @@ artifact = "GlobalPerpsMarketModule"
 [router.PerpsMarketRouter]
 contracts = [
     "synthetix.AccountModule",
-    "synthetix.MulticallModule",
     "synthetix.AssociatedSystemsModule",
     "CoreModule",
     "PerpsMarketFactoryModule",

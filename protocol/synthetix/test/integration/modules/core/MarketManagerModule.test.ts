@@ -44,7 +44,7 @@ describe('MarketManagerModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'registerMarket',
-      () => systems().Core.connect(user2).registerMarket(user1.getAddress())
+      () => systems().Core.connect(user2).registerMarket(MockMarket().address)
     );
 
     it('reverts when trying to register a market that does not support the IMarket interface', async function () {
@@ -145,6 +145,30 @@ describe('MarketManagerModule', function () {
           assertBn.equal(
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             0
+          );
+        });
+
+        it('emits event', async () => {
+          const target = `"${await user1.getAddress()}"`;
+          const amount = bn(1).toString();
+          const market = `"${MockMarket().address}"`;
+          const creditCapacity = bn(1001).toString();
+          const netIssuance = bn(-1).toString();
+          const depositedCollateralValue = bn(0).toString();
+          const reportedDebt = bn(1).toString();
+          await assertEvent(
+            txn,
+            `MarketUsdDeposited(${[
+              marketId(),
+              target,
+              amount,
+              market,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+              reportedDebt,
+            ].join(', ')})`,
+            systems().Core
           );
         });
       });
@@ -284,6 +308,30 @@ describe('MarketManagerModule', function () {
           assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One.div(2));
         });
 
+        it('emits event', async () => {
+          const target = `"${await user1.getAddress()}"`;
+          const amount = bn(0.5).toString();
+          const market = `"${MockMarket().address}"`;
+          const creditCapacity = bn(1000.5).toString();
+          const netIssuance = bn(-0.5).toString();
+          const depositedCollateralValue = bn(0).toString();
+          const reportedDebt = bn(0.5).toString();
+          await assertEvent(
+            txn,
+            `MarketUsdWithdrawn(${[
+              marketId(),
+              target,
+              amount,
+              market,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+              reportedDebt,
+            ].join(', ')})`,
+            systems().Core
+          );
+        });
+
         describe('withdraw the rest', async () => {
           before('mint USD to use market', async () => {
             txn = await MockMarket().connect(user1).sellSynth(One.div(2));
@@ -300,6 +348,30 @@ describe('MarketManagerModule', function () {
 
           it('makes USD', async () => {
             assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One);
+          });
+
+          it('emits event', async () => {
+            const target = `"${await user1.getAddress()}"`;
+            const amount = bn(0.5).toString();
+            const market = `"${MockMarket().address}"`;
+            const creditCapacity = bn(1000).toString();
+            const netIssuance = bn(0).toString();
+            const depositedCollateralValue = bn(0).toString();
+            const reportedDebt = bn(0).toString();
+            await assertEvent(
+              txn,
+              `MarketUsdWithdrawn(${[
+                marketId(),
+                target,
+                amount,
+                market,
+                creditCapacity,
+                netIssuance,
+                depositedCollateralValue,
+                reportedDebt,
+              ].join(', ')})`,
+              systems().Core
+            );
           });
         });
       });

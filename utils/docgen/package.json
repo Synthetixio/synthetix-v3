@@ -12,15 +12,10 @@
     "docgen:contracts": "./docgen-contracts.sh"
   },
   "devDependencies": {
-    "@usecannon/builder": "2.8.1",
+    "@usecannon/builder": "^2.9.11",
     "handlebars": "^4.7.8",
     "prettier": "^3.0.3",
     "solidity-ast": "^0.4.52",
     "solidity-docgen": "^0.6.0-beta.36"
-  },
-  "depcheck": {
-    "ignoreMatches": [
-      "@usecannon/cli"
-    ]
   }
 }

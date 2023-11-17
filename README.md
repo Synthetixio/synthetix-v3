@@ -25,6 +25,7 @@ This is a monorepo with the following folder structure and packages:
 │   └── spot-market              // Market extension for spot synths.
 │
 ├── protocol                     // Core Synthetix protocol projects.
+│   ├── governance               // Governance contracts for on chain voting.
 │   ├── oracle-manager           // Composable oracle and price provider for the core protocol.
 │   └── synthetix                // Core protocol (to be extended by markets).
 │
@@ -33,7 +34,8 @@ This is a monorepo with the following folder structure and packages:
     ├── core-contracts           // Standard contract implementations like ERC20, adapted for custom router storage.
     ├── core-modules             // Modules intended to be reused between multiple router based projects.
     ├── core-utils               // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
-    ├── router                   // Cannon plugin that merges multiple modules into a router contract.
+    ├── deps                     // Dependency handling (e.g. mismatched, circular etc.)
+    ├── docgen                   // Auto-generate docs from natspec etc.
     ├── hardhat-storage          // Hardhat plugin used to detect storage collisions between proxy implementations.
     └── sample-project           // Sample project based on router proxy and cannon.
 ```
@@ -42,7 +44,7 @@ This is a monorepo with the following folder structure and packages:
 
 All projects in this monorepo that involve contracts use a proxy architecture developed by Synthetix referred to as the "Router Proxy". It is basically a way to merge several contracts, which we call "modules", into a single implementation contract which is the router itself. This router is used as the implementation of the main proxy of the system.
 
-See the [Router README](utils/router/README.md) for more details.
+See the [Router README](https://github.com/Synthetixio/synthetix-router) for more details.
 
 ⚠️ When using the Router as an implementation of a UUPS [Universal Upgradeable Proxy Standard](https://eips.ethereum.org/EIPS/eip-1822) be aware that any of the public functions defined in the Proxy could clash and override any of the Router modules functions. A malicious proxy owner could use this type of obfuscation to have users run code which they do not want to run. You can imagine scenarios where the function names do not look similar but share a function selector. ⚠️
 

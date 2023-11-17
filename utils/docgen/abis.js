@@ -179,21 +179,28 @@ async function run() {
     );
   }
 
-  // Fake SNX token
-  const configureFakeSnxCollateral =
-    deployments?.state?.['invoke.configureFakeSnxCollateral']?.artifacts?.txns
-      ?.configureFakeSnxCollateral;
-  const [fakeSnxCollateralConfiguredEvent] =
-    configureFakeSnxCollateral?.events?.CollateralConfigured ?? [];
-  const [fakeSnxAddress] = fakeSnxCollateralConfiguredEvent?.args ?? [];
-  if (fakeSnxAddress) {
-    out.push(
-      `| Fake SNX Token | [${fakeSnxAddress}](${etherscanLink(
-        chainId,
-        fakeSnxAddress
-      )}) | _ERC-20 compliant_ |`
-    );
+  async function mintableToken(provisionStep) {
+    const fakeCollateral =
+      deployments?.state?.[`provision.${provisionStep}`]?.artifacts?.imports?.[provisionStep];
+    if (fakeCollateral) {
+      const [name, ticker] = fakeCollateral.contracts.MintableToken.constructorArgs;
+      console.log(`Writing ${chainId}-${preset}-FakeCollateral${ticker}.json`);
+      await fs.writeFile(
+        `./abis/${chainId}-${preset}-FakeCollateral${ticker}.json`,
+        await prettyJson(fakeCollateral.contracts.MintableToken)
+      );
+      out.push(
+        `| Fake Collateral ${name} $${ticker} | [${
+          fakeCollateral.contracts.MintableToken.address
+        }](${etherscanLink(
+          chainId,
+          fakeCollateral.contracts.MintableToken.address
+        )}) | [View/Download](./abis/${chainId}-${preset}-FakeCollateral${ticker}.json) |`
+      );
+    }
   }
+  await mintableToken('usdc_mock_collateral');
+  await mintableToken('mintableToken');
 
   // Real SNX token
   const configureSnxCollateral =

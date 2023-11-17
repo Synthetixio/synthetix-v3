@@ -16,7 +16,7 @@ dataSources:
       file: ./optimism-goerli/index.ts
       abis:
         - name: SpotMarketProxy
-          file: ./optimism-goerli/deployments/SpotMarketProxy.json
+          file: ./optimism-goerli/deployments/spotFactory/SpotMarketProxy.json
       entities:
         - Wrapper
         - Order
