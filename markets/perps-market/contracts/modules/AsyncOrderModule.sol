@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
@@ -15,6 +16,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {Flags} from "../utils/Flags.sol";
 
 /**
  * @title Module for committing async orders.
@@ -40,6 +42,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
@@ -124,7 +127,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (, uint256 currentMaintenanceMargin, ) = account.getAccountRequiredMargins(
+        (uint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
             PerpsPrice.Tolerance.DEFAULT
         );
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta);
@@ -137,7 +140,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 oldPosition.size,
                 oldPosition.size + sizeDelta,
                 fillPrice,
-                currentMaintenanceMargin
+                currentInitialMargin
             ) + orderFees;
     }
 

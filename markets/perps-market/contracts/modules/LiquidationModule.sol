@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
@@ -38,6 +40,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @inheritdoc ILiquidationModule
      */
     function liquidate(uint128 accountId) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -64,6 +68,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     function liquidateFlagged(
         uint256 maxNumberOfAccounts
     ) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts
@@ -86,6 +92,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     function liquidateFlaggedAccounts(
         uint128[] calldata accountIds
     ) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
