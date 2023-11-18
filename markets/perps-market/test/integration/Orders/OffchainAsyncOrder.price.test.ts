@@ -106,9 +106,10 @@ describe('Offchain Async Order - Price tests', () => {
               -4,
               1000_0000,
               1,
-              startTime + 6
+              startTime + 6,
+              0
             );
-            updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
+            updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
           });
 
           before('settles the order', async () => {
@@ -135,9 +136,10 @@ describe('Offchain Async Order - Price tests', () => {
               -4,
               1000_0000,
               1,
-              startTime + 6
+              startTime + 6,
+              0
             );
-            updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
+            updateFee = await await systems().MockPyth.getUpdateFee([validPythPriceData]);
           });
 
           before('settles the order', async () => {
@@ -202,9 +204,10 @@ describe('Offchain Async Order - Price tests', () => {
               -4,
               1000_0000,
               1,
-              startTime + 6
+              startTime + 6,
+              0
             );
-            updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
+            updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
           });
 
           before('settles the order', async () => {

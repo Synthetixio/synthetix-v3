@@ -34,9 +34,10 @@ export const settleOrder = async ({
     -pythPriceExpotential,
     pythPrice, // emaPrice
     1, // emaConfidence
-    settlementTime
+    settlementTime,
+    0
   );
-  const updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
+  const updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
 
   // settle
   const tx = await systems()

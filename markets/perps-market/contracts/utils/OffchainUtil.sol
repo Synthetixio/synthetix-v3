@@ -44,11 +44,11 @@ library OffchainUtil {
         updateData[0] = result;
 
         IPythVerifier verifier = IPythVerifier(settlementStrategy.priceVerificationContract);
-        uint256 msgValue = verifier.getUpdateFee(1);
+        uint256 msgValue = verifier.getUpdateFee(updateData);
 
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msgValue}(
+        ).parsePriceFeedUpdatesUnique{value: msgValue}(
             updateData,
             priceIds,
             asyncOrder.settlementTime.to64(),
