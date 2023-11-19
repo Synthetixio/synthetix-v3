@@ -54,6 +54,45 @@ contract LiquidationModule is ILiquidationModule {
         market.updateDebtCorrection(market.positions[accountId], newPosition);
     }
 
+    /**
+     * @dev Invoked post liquidation when liquidated poisition size is zero.
+     */
+    function updateMarketPostLiquidation(uint128 accountId, uint128 marketId, PerpMarket.Data storage market) private {
+        delete market.positions[accountId];
+        delete market.flaggedLiquidations[accountId];
+
+        // Zero out all sUSD that was collected after selling synth based collateral during the flag.
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        if (accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] > 0) {
+            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+        }
+
+        // For non-sUSD collateral, send to their respective reward distributor and distribute to each pool collateral.
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 available;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
+
+            if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
+                //     address synth = globalConfig.spotMarket.getSynth(synthMarketId);
+                //     globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
+                //     address rewardDistributor = globalMarginConfig.supported[synthMarketId].rewardDistributor;
+                //     ITokenModule(synth).transfer(rewardDistributor, available);
+                //     IRewardDistributor(rewardDistributor).distributeRewards();
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     // --- Mutative --- //
 
     /**
@@ -125,16 +164,14 @@ contract LiquidationModule is ILiquidationModule {
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Position.Data storage position = market.positions[accountId];
 
         // Cannot liquidate a position that does not exist.
-        if (position.size == 0) {
+        if (market.positions[accountId].size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        address flagger = market.flaggedLiquidations[accountId];
 
         (, Position.Data memory newPosition, uint256 liqKeeperFee) = updateMarketPreLiquidation(
             accountId,
@@ -146,34 +183,7 @@ contract LiquidationModule is ILiquidationModule {
 
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
-            delete market.positions[accountId];
-            delete market.flaggedLiquidations[accountId];
-
-            // Zero out all sUSD that was collected after selling synth based collateral during the flag.
-            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
-            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
-
-            // For any non-sUSD collateral, send them all to their respective reward distributor and
-            // distribute to each collateral in the pool.
-            Margin.GlobalData storage globalMarginConfig = Margin.load();
-
-            uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-            uint128 synthMarketId;
-            uint256 available;
-
-            for (uint256 i = 0; i < length; ++i) {
-                synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-                available = accountMargin.collaterals[synthMarketId];
-
-                // if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                //     address synth = globalConfig.spotMarket.getSynth(synthMarketId);
-                //     globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
-                //     address rewardDistributor = globalMarginConfig.supported[synthMarketId].rewardDistributor;
-                //     ITokenModule(synth).transfer(rewardDistributor, available);
-                //     IRewardDistributor(rewardDistributor).distributeRewards();
-                // }
-            }
+            updateMarketPostLiquidation(accountId, marketId, market);
         } else {
             market.positions[accountId].update(newPosition);
         }
@@ -181,7 +191,15 @@ contract LiquidationModule is ILiquidationModule {
         // Pay the keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
-        emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqKeeperFee, oraclePrice);
+        emit PositionLiquidated(
+            accountId,
+            marketId,
+            newPosition.size,
+            msg.sender,
+            market.flaggedLiquidations[accountId],
+            liqKeeperFee,
+            oraclePrice
+        );
     }
 
     // --- Views --- //
