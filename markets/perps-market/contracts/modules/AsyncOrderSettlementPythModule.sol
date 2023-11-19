@@ -19,7 +19,7 @@ import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
-import {SafeCastU256, SafeCastI256, SafeCastI64, SafeCastU64} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for settling async orders using pyth as price feed.
@@ -32,8 +32,6 @@ contract AsyncOrderSettlementPythModule is
 {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using SafeCastI64 for int64;
-    using SafeCastU64 for uint64;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -54,13 +52,13 @@ contract AsyncOrderSettlementPythModule is
             SettlementStrategy.Data storage settlementStrategy
         ) = AsyncOrder.loadValid(accountId);
 
-        int64 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
+        int256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
             .getBenchmarkPrice(
                 settlementStrategy.feedId,
                 (asyncOrder.settlementTime - settlementStrategy.settlementDelay).to64()
             );
 
-        _settleOrder(offchainPrice.toUint().to256(), asyncOrder, settlementStrategy);
+        _settleOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
     }
 
     /**

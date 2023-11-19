@@ -12,6 +12,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     using DecimalMath for int64;
     using SafeCastI256 for int256;
 
+    int256 private constant PRECISION = 18;
+
     error NotSupported(uint8 updateType);
 
     address public immutable pythAddress;
@@ -31,11 +33,11 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     function getBenchmarkPrice(
         bytes32 priceId,
         uint64 requestedTime
-    ) external view returns (int64) {
+    ) external view returns (int256) {
         PythStructs.Price memory priceData = Price.load(priceId).benchmarkPrices[requestedTime];
 
         if (priceData.price > 0) {
-            return priceData.price;
+            return _getScaledPrice(priceData.price, priceData.expo);
         }
 
         revert OracleDataRequired(
@@ -54,12 +56,12 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     function getLatestPrice(
         bytes32 priceId,
         uint256 stalenessTolerance
-    ) external view returns (int64) {
+    ) external view returns (int256) {
         IPyth pyth = IPyth(pythAddress);
         PythStructs.Price memory pythData = pyth.getPriceUnsafe(priceId);
 
         if (block.timestamp <= stalenessTolerance + pythData.publishTime) {
-            return pythData.price;
+            return _getScaledPrice(pythData.price, pythData.expo);
         }
 
         //price too stale
@@ -116,5 +118,13 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
                 }
             }
         }
+    }
+
+    /**
+     * @dev gets scaled price. Borrowed from PythNode.sol.
+     */
+    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
+        int256 factor = PRECISION + expo;
+        return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
     }
 }

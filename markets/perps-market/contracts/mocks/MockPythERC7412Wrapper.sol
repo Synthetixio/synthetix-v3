@@ -7,17 +7,17 @@ import {PythStructs} from "@synthetixio/oracle-manager/contracts/interfaces/exte
  * @title Mocked PythERC7412Wrapper used in tests.
  */
 contract MockPythERC7412Wrapper {
-    mapping(uint64 => int64) public benchmarkPrices;
+    mapping(uint64 => int256) public benchmarkPrices;
     uint64 public latestTime;
-    int64 public latestPrice;
+    int256 public latestPrice;
 
     error OracleDataRequired(address oracleContract, bytes oracleQuery);
 
-    function setBenchmarkPrice(uint64 requestedTime, int64 price) external {
+    function setBenchmarkPrice(uint64 requestedTime, int256 price) external {
         benchmarkPrices[requestedTime] = price;
     }
 
-    function setLatestPrice(uint64 time, int64 price) external {
+    function setLatestPrice(uint64 time, int256 price) external {
         latestTime = time;
         latestPrice = price;
     }
@@ -52,8 +52,8 @@ contract MockPythERC7412Wrapper {
     function getBenchmarkPrice(
         bytes32 priceId,
         uint64 requestedTime
-    ) external view returns (int64) {
-        int64 price = benchmarkPrices[requestedTime];
+    ) external view returns (int256) {
+        int256 price = benchmarkPrices[requestedTime];
 
         if (price > 0) {
             return price;
@@ -75,7 +75,7 @@ contract MockPythERC7412Wrapper {
     function getLatestPrice(
         bytes32 priceId,
         uint256 stalenessTolerance
-    ) external view returns (int64) {
+    ) external view returns (int256) {
         if (block.timestamp <= stalenessTolerance + latestTime) {
             return latestPrice;
         }

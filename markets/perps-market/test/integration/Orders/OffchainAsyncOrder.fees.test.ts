@@ -179,7 +179,7 @@ describe('Offchain Async Order test - fees', () => {
               keeper: keeper(),
               accountId: 2,
               commitmentTime: startTime,
-              offChainPrice: 1000,
+              offChainPrice: bn(1000),
             });
           });
 

@@ -298,7 +298,7 @@ describe('Commit Offchain Async Order test', () => {
             keeper: keeper(),
             accountId: 2,
             commitmentTime: startTime,
-            offChainPrice: 1000,
+            offChainPrice: bn(1000),
           });
         });
 
@@ -369,7 +369,7 @@ describe('Commit Offchain Async Order test', () => {
               keeper: keeper(),
               accountId: 2,
               commitmentTime: startTime,
-              offChainPrice: 1000,
+              offChainPrice: bn(1000),
             }),
             'SettlementWindowExpired'
           );

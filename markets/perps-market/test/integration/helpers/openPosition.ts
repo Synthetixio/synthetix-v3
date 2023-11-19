@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { Systems, toNum } from '../bootstrap';
+import { Systems } from '../bootstrap';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { settleOrder } from '.';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
@@ -59,7 +59,7 @@ export const openPosition = async (data: OpenPositionData) => {
     systems,
     keeper,
     accountId,
-    offChainPrice: toNum(price),
+    offChainPrice: price,
     commitmentTime,
   });
   const settleTime = await getTxTime(provider(), settleTx);

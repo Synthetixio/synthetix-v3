@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
 import { Systems } from '../bootstrap';
-import { wei } from '@synthetixio/wei';
 
 export type SettleOrderData = {
   systems: () => Systems;
@@ -17,12 +16,8 @@ export const settleOrder = async ({
   offChainPrice,
   commitmentTime,
 }: SettleOrderData): Promise<ethers.ContractTransaction> => {
-  const pythPriceExpotential = 8;
-
-  const pythPrice = wei(offChainPrice, pythPriceExpotential).toBN(); //ethers.BigNumber.from(offChainPrice).mul(10 ** pythPriceExpotential);
-
   // set Pyth setBenchmarkPrice
-  await systems().MockPythERC7412Wrapper.setBenchmarkPrice(commitmentTime, pythPrice);
+  await systems().MockPythERC7412Wrapper.setBenchmarkPrice(commitmentTime, offChainPrice);
 
   // settle
   const tx = await systems().PerpsMarket.connect(keeper).settleOrder(accountId);

@@ -109,7 +109,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
           keeper: keeper(),
           accountId: 2,
           commitmentTime: startTime,
-          offChainPrice: 1000,
+          offChainPrice: bn(1000),
         });
       });
 

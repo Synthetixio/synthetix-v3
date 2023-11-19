@@ -5,12 +5,15 @@ interface IPythERC7412Wrapper {
     error FeeRequired(uint amount);
     error OracleDataRequired(address oracleContract, bytes oracleQuery);
 
-    function getBenchmarkPrice(bytes32 priceId, uint64 requestedTime) external view returns (int64);
+    function getBenchmarkPrice(
+        bytes32 priceId,
+        uint64 requestedTime
+    ) external view returns (int256);
 
     function getLatestPrice(
         bytes32 priceId,
         uint256 stalenessTolerance
-    ) external view returns (int64);
+    ) external view returns (int256);
 
     function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
 }
