@@ -17,9 +17,9 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
           makerFee: bn(0.007),
           takerFee: bn(0.003),
         },
-        fundingParams: { skewScale: bn(10000), maxFundingVelocity: bn(0) },
+        fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
-          initialMarginFraction: bn(3),
+          initialMarginFraction: bn(1),
           minimumInitialMarginRatio: bn(0),
           maintenanceMarginScalar: bn(0.66),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
@@ -192,7 +192,7 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
         settlementStrategyId: perpsMarket.strategyId(),
         price: bn(10),
       });
-      const tx = await perpsMarket.aggregator().mockSetCurrentPrice(bn(0.05));
+      const tx = await perpsMarket.aggregator().mockSetCurrentPrice(bn(1));
       timeSetupCompletes = await getTxTime(provider(), tx);
     });
 
@@ -216,8 +216,6 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
 
   describe('liquidate second trader', () => {
     before('call liquidate', async () => {
-      console.log(await systems().PerpsMarket.getRequiredMargins(3));
-      console.log(await systems().PerpsMarket.getAvailableMargin(3));
       await systems().PerpsMarket.connect(keeper()).liquidate(3);
     });
 
