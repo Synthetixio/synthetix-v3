@@ -122,14 +122,14 @@ contract MarginModule is IMarginModule {
     function approveSynthCollateral(
         uint128 synthMarketId,
         uint256 amount,
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig
+        PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
         ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
-            ? ITokenModule(globalMarketConfig.usdToken)
-            : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
+            ? ITokenModule(globalConfig.usdToken)
+            : ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
 
-        synth.approve(address(globalMarketConfig.synthetix), amount);
-        synth.approve(address(globalMarketConfig.spotMarket), amount);
+        synth.approve(address(globalConfig.synthetix), amount);
+        synth.approve(address(globalConfig.spotMarket), amount);
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             synth.approve(address(this), amount);
         }

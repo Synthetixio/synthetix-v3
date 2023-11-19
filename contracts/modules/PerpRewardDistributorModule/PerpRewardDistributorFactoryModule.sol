@@ -43,7 +43,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
     function registerRewardDistributor(IPerpRewardDistributor distributor) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        address[] memory poolCollateralTypes = distributor.collateralTypes();
+        address[] memory poolCollateralTypes = distributor.getCollateralTypes();
         uint256 length = poolCollateralTypes.length;
 
         // TODO: Add a way to prevent registering non-IPerpRewardDistributors (i.e. distributors) that
@@ -51,7 +51,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
 
         for (uint256 i = 0; i < length; ) {
             globalConfig.synthetix.registerRewardsDistributor(
-                distributor.poolId(),
+                distributor.getPoolId(),
                 poolCollateralTypes[i],
                 address(distributor)
             );
