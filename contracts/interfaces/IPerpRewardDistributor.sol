@@ -8,9 +8,14 @@ interface IPerpRewardDistributor is IRewardDistributor {
     // --- Views --- //
 
     /**
-     * @notice Returns the initialized view this distributor is registered against.
+     * @notice Returns the id of the pool this was registered with.
      */
     function poolId() external view returns (uint128);
+
+    /**
+     * @notice Returns a list of pool collateral types this distributor was registered with.
+     */
+    function collateralTypes() external view returns (address[] memory);
 
     // --- Mutative --- //
 
@@ -21,6 +26,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
         address rewardManager,
         address perpMarket,
         uint128 poolId_,
+        address[] calldata collateralTypes,
         address token_,
         string memory name_
     ) external;

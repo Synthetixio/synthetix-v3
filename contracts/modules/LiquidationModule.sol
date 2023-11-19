@@ -3,22 +3,35 @@ pragma solidity 0.8.19;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
+import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract LiquidationModule is ILiquidationModule {
+    using DecimalMath for uint256;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+
+    // --- Runtime structs --- //
+
+    struct Runtime_updateMarketPostLiquidation {
+        uint256 availableSusd;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 availableAccountCollateral;
+        uint128 poolId;
+        uint256 poolCollateralTypesLength;
+    }
 
     // --- Helpers --- //
 
@@ -57,34 +70,86 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @dev Invoked post liquidation when liquidated poisition size is zero.
      */
-    function updateMarketPostLiquidation(uint128 accountId, uint128 marketId, PerpMarket.Data storage market) private {
+    function updateMarketPostLiquidation(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
         delete market.positions[accountId];
         delete market.flaggedLiquidations[accountId];
 
-        // Zero out all sUSD that was collected after selling synth based collateral during the flag.
+        Runtime_updateMarketPostLiquidation memory runtime;
+
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        if (accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] > 0) {
-            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+        runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+
+        // Clear out sUSD associated with the account of the liquidated position.
+        if (runtime.availableSusd > 0) {
+            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= runtime.availableSusd;
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
         }
 
-        // For non-sUSD collateral, send to their respective reward distributor and distribute to each pool collateral.
+        // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,
+        // and then wipe out all associated collateral on the account.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 synthMarketId;
-        uint256 available;
+        // Iterate over all supported margin collateral types to see if any should be distributed to LPs.
+        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
+            runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            runtime.availableAccountCollateral = accountMargin.collaterals[runtime.synthMarketId];
 
-        for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = accountMargin.collaterals[synthMarketId];
+            // Found a deposited collateral that must be distributed.
+            if (runtime.availableAccountCollateral > 0 && runtime.synthMarketId != SYNTHETIX_USD_MARKET_ID) {
+                address synth = globalConfig.spotMarket.getSynth(runtime.synthMarketId);
+                globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, runtime.availableAccountCollateral);
+                IPerpRewardDistributor distributor = IPerpRewardDistributor(
+                    globalMarginConfig.supported[runtime.synthMarketId].rewardDistributor
+                );
+                ITokenModule(synth).transfer(address(distributor), runtime.availableAccountCollateral);
 
-            if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                //     address synth = globalConfig.spotMarket.getSynth(synthMarketId);
-                //     globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
-                //     address rewardDistributor = globalMarginConfig.supported[synthMarketId].rewardDistributor;
-                //     ITokenModule(synth).transfer(rewardDistributor, available);
-                //     IRewardDistributor(rewardDistributor).distributeRewards();
+                runtime.poolId = distributor.poolId();
+                address[] memory poolCollateralTypes = distributor.collateralTypes();
+                runtime.poolCollateralTypesLength = poolCollateralTypes.length;
+
+                // Calculate the USD value of each collateral delegated to pool.
+                uint256[] memory collateralValuesUsd = new uint256[](runtime.poolCollateralTypesLength);
+                uint256 totalCollateralValueUsd;
+                for (uint256 j = 0; j < runtime.poolCollateralTypesLength; ) {
+                    (, uint256 collateralValueUsd) = globalConfig.synthetix.getVaultCollateral(
+                        runtime.poolId,
+                        poolCollateralTypes[j]
+                    );
+                    totalCollateralValueUsd += collateralValueUsd;
+                    collateralValuesUsd[j] = collateralValueUsd;
+
+                    unchecked {
+                        ++j;
+                    }
+                }
+
+                // Infer the ratio of size to distribute proportional to value of each delegated collateral.
+                uint256 remainingAmountToDistribute = runtime.availableAccountCollateral;
+                for (uint256 k = 0; k < runtime.poolCollateralTypesLength; ) {
+                    // To ensure all `availableAccountCollateral` amounts are delegated, the last collateral receives the remainder.
+                    if (k == runtime.poolCollateralTypesLength - 1) {
+                        distributor.distributeRewards(poolCollateralTypes[k], remainingAmountToDistribute);
+                    } else {
+                        uint256 amountToDistribute = runtime.availableAccountCollateral.mulDecimal(
+                            collateralValuesUsd[k].divDecimal(totalCollateralValueUsd)
+                        );
+                        remainingAmountToDistribute -= amountToDistribute;
+                        distributor.distributeRewards(poolCollateralTypes[k], amountToDistribute);
+                    }
+
+                    unchecked {
+                        ++k;
+                    }
+                }
+
+                // Clear out non-sUSD associated with the account of the liquidated position.
+                market.depositedCollateral[runtime.synthMarketId] -= runtime.availableAccountCollateral;
+                accountMargin.collaterals[runtime.synthMarketId] = 0;
             }
 
             unchecked {
@@ -183,7 +248,7 @@ contract LiquidationModule is ILiquidationModule {
 
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
-            updateMarketPostLiquidation(accountId, marketId, market);
+            updateMarketPostLiquidation(accountId, marketId, market, globalConfig);
         } else {
             market.positions[accountId].update(newPosition);
         }

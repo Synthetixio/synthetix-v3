@@ -12,8 +12,6 @@ import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol
 contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
     using Clones for address;
 
-    // --- Views --- //
-
     // TODO: More tasks
     // - Either update cannon or replace existing spot (possibly core) bootstrap to re-use and configure pools
     // - Update distribute function should perform all calculcations and does it make sense to pull here?
@@ -34,6 +32,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
             address(globalConfig.synthetix),
             address(this),
             data.poolId,
+            data.collateralTypes,
             data.token,
             data.name
         );
@@ -45,18 +44,20 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
     /**
      * @inheritdoc IPerpRewardDistributorFactoryModule
      */
-    function registerRewardDistributor(
-        IPerpRewardDistributorFactoryModule.RegisterPerpRewardDistributorParameters calldata data
-    ) external {
+    function registerRewardDistributor(IPerpRewardDistributor distributor) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        address[] memory poolCollateralTypes = distributor.collateralTypes();
+        uint256 length = poolCollateralTypes.length;
 
-        uint256 length = data.collateralTypes.length;
+        // TODO: Add a way to prevent registering non-IPerpRewardDistributors (i.e. distributors) that
+        // were not created via `createRewardDistributor`.
+
         for (uint256 i = 0; i < length; ) {
             globalConfig.synthetix.registerRewardsDistributor(
-                IPerpRewardDistributor(data.distributor).poolId(),
-                data.collateralTypes[i],
-                data.distributor
+                distributor.poolId(),
+                poolCollateralTypes[i],
+                address(distributor)
             );
 
             unchecked {

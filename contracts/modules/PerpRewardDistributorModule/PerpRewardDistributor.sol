@@ -17,6 +17,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     address private _token;
     string private _name;
     uint128 private _poolId;
+    address[] private _collateralTypes;
     bool public shouldFailPayout;
 
     constructor() {
@@ -48,12 +49,14 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         address rewardManager,
         address perpMarket,
         uint128 poolId_,
+        address[] calldata collateralTypes_,
         address token_,
         string memory name_
     ) external initializer {
         _rewardManager = rewardManager;
         _perpMarket = perpMarket;
         _poolId = poolId_;
+        _collateralTypes = collateralTypes_;
         _token = token_;
         _name = name_;
     }
@@ -77,6 +80,13 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
      */
     function poolId() external view returns (uint128) {
         return _poolId;
+    }
+
+    /**
+     * @inheritdoc IPerpRewardDistributor
+     */
+    function collateralTypes() external view returns (address[] memory) {
+        return _collateralTypes;
     }
 
     /**

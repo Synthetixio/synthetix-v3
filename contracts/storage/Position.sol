@@ -44,7 +44,7 @@ library Position {
         uint256 newMarginUsd;
     }
 
-    // --- Runtime Structs --- //
+    // --- Runtime structs --- //
 
     struct Runtime_validateLiquidation {
         address flagger;
