@@ -2,6 +2,8 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
@@ -13,6 +15,8 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 library GlobalPerpsMarketConfiguration {
     using DecimalMath for uint256;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using SetUtil for SetUtil.UintSet;
+    using SafeCastU128 for uint128;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarketConfiguration"));
@@ -64,6 +68,10 @@ library GlobalPerpsMarketConfiguration {
          * @dev used together with maxKeeperRewardUsd to get the maximum keeper reward for the sender who settles, or liquidates the account
          */
         uint maxKeeperScalingRatioD18;
+        /**
+         * @dev set of supported collateral types. By supported we mean collateral types that have a maxCollateralAmount > 0
+         */
+        SetUtil.UintSet supportedCollateralTypes;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -155,6 +163,21 @@ library GlobalPerpsMarketConfiguration {
         factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorQuote);
 
         return (referralFees, feeCollectorQuote);
+    }
+
+    function updateCollateral(
+        Data storage self,
+        uint128 synthMarketId,
+        uint maxCollateralAmount
+    ) internal {
+        self.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
+
+        bool isSupportedCollateral = self.supportedCollateralTypes.contains(synthMarketId);
+        if (maxCollateralAmount > 0 && !isSupportedCollateral) {
+            self.supportedCollateralTypes.add(synthMarketId.to256());
+        } else if (maxCollateralAmount == 0 && isSupportedCollateral) {
+            self.supportedCollateralTypes.remove(synthMarketId.to256());
+        }
     }
 
     function _collectReferrerFees(

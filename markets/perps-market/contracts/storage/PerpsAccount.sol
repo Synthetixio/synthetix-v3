@@ -312,7 +312,7 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin, ) = marketConfig
+            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin) = marketConfig
                 .calculateRequiredMargins(
                     position.size,
                     PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
@@ -352,12 +352,12 @@ library PerpsAccount {
                 MathUtil.abs(position.size)
             );
 
-            uint256 liquidationMargin = marketConfig.calculateLiquidationReward(
+            uint256 flagReward = marketConfig.calculateFlagReward(
                 MathUtil.abs(position.size).mulDecimal(
                     PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 )
             );
-            accumulatedLiquidationRewards += liquidationMargin;
+            accumulatedLiquidationRewards += flagReward;
 
             maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }
@@ -516,6 +516,7 @@ library PerpsAccount {
             uint128 amountToLiquidate,
             int128 newPositionSize,
             int128 sizeDelta,
+            uint128 oldPositionAbsSize,
             MarketUpdate.Data memory marketUpdateData
         )
     {
@@ -525,10 +526,11 @@ library PerpsAccount {
         perpsMarket.recomputeFunding(price);
 
         int128 oldPositionSize = position.size;
-        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs128(oldPositionSize));
+        oldPositionAbsSize = MathUtil.abs128(oldPositionSize);
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(oldPositionAbsSize);
 
         if (amountToLiquidate == 0) {
-            return (0, oldPositionSize, 0, marketUpdateData);
+            return (0, oldPositionSize, 0, oldPositionAbsSize, marketUpdateData);
         }
 
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
@@ -555,7 +557,13 @@ library PerpsAccount {
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
         sizeDelta = newPositionSize - oldPositionSize;
 
-        return (amountToLiquidate, newPositionSize, sizeDelta, marketUpdateData);
+        return (
+            amountToLiquidate,
+            newPositionSize,
+            sizeDelta,
+            oldPositionAbsSize,
+            marketUpdateData
+        );
     }
 
     function _deductAllSynth(
