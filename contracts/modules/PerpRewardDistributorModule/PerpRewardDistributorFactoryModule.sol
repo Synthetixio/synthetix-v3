@@ -12,10 +12,6 @@ import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol
 contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
     using Clones for address;
 
-    // TODO: More tasks
-    // - Either update cannon or replace existing spot (possibly core) bootstrap to re-use and configure pools
-    // - Update distribute function should perform all calculcations and does it make sense to pull here?
-
     // --- Mutative --- //
 
     /**
