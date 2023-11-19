@@ -81,7 +81,7 @@ describe('System suspend', async () => {
 
       it('created order', async () => {
         // add collateral
-        await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(1000));
+        await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(1200));
         const commitTxn = await systems()
           .PerpsMarket.connect(trader1())
           .commitOrder({
