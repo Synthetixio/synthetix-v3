@@ -104,14 +104,7 @@ describe('System suspend', async () => {
 
       it('fails on settle', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(2),
-          `FeatureUnavailable("${feature}")`
-        );
-
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(trader1())
-            .settlePythOrder(ethers.utils.randomBytes(32), ethers.utils.randomBytes(32)),
+          systems().PerpsMarket.connect(trader1()).settleOrder(2),
           `FeatureUnavailable("${feature}")`
         );
       });
