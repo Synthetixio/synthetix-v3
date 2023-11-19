@@ -60,8 +60,7 @@ export const openPosition = async (data: OpenPositionData) => {
     keeper,
     accountId,
     offChainPrice: toNum(price),
-    settlementTime,
-    feedId: strategy.feedId,
+    commitmentTime,
   });
   const settleTime = await getTxTime(provider(), settleTx);
 

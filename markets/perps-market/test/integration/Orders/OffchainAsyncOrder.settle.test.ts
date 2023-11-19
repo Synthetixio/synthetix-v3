@@ -47,51 +47,14 @@ describe('Settle Offchain Async Order test', () => {
     describe('using settle', () => {
       it('reverts if account id is incorrect (not valid order)', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(1337),
+          systems().PerpsMarket.connect(trader1()).settleOrder(1337),
           'OrderNotValid()'
         );
       });
 
       it('reverts if order was not settled before (not valid order)', async () => {
-        await assertRevert(systems().PerpsMarket.connect(trader1()).settle(2), 'OrderNotValid()');
-      });
-    });
-
-    describe('using settlePythOrder', () => {
-      let pythPriceData: string, extraData: string, updateFee: ethers.BigNumber;
-      before('get some pyth price data and fee', async () => {
-        const startTime = Math.floor(Date.now() / 1000);
-
-        // Get the latest price
-        pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-          DEFAULT_SETTLEMENT_STRATEGY.feedId,
-          1000_0000,
-          1,
-          -4,
-          1000_0000,
-          1,
-          startTime + 6,
-          0
-        );
-        updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
-      });
-
-      it('reverts if account id is incorrect (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [1337]);
         await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
-          'OrderNotValid()'
-        );
-      });
-
-      it('reverts if order was not settled before (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
+          systems().PerpsMarket.connect(trader1()).settleOrder(2),
           'OrderNotValid()'
         );
       });
@@ -194,7 +157,7 @@ describe('Settle Offchain Async Order test', () => {
 
         it('with settle', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(2),
+            systems().PerpsMarket.connect(trader1()).settleOrder(2),
             'SettlementWindowNotOpen'
           );
         });

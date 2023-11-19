@@ -1,7 +1,6 @@
 import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
 import { CollateralMock } from '@synthetixio/main/typechain-types';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
 import {
@@ -15,6 +14,7 @@ import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generate
 import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
+import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -26,7 +26,7 @@ type Proxies = {
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
   ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
-  ['MockPyth']: MockPyth;
+  ['MockPythERC7412Wrapper']: MockPythERC7412Wrapper;
   ['FeeCollectorMock']: FeeCollectorMock;
 };
 
@@ -35,7 +35,7 @@ export type Systems = {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
-  MockPyth: MockPyth;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
@@ -66,7 +66,7 @@ export function bootstrap() {
       ),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
-      MockPyth: getContract('MockPyth'),
+      MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };

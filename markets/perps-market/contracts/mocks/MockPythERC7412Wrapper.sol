@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {PythStructs} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
+
 /**
  * @title Mocked PythERC7412Wrapper used in tests.
  */
@@ -18,6 +20,33 @@ contract MockPythERC7412Wrapper {
     function setLatestPrice(uint64 time, int64 price) external {
         latestTime = time;
         latestPrice = price;
+    }
+
+    function createPriceFeedUpdateData(
+        bytes32 id,
+        int64 price,
+        uint64 conf,
+        int32 expo,
+        int64 emaPrice,
+        uint64 emaConf,
+        uint64 publishTime,
+        uint64 prevPublishTime
+    ) public pure returns (bytes memory priceFeedData) {
+        PythStructs.PriceFeed memory priceFeed;
+
+        priceFeed.id = id;
+
+        priceFeed.price.price = price;
+        priceFeed.price.conf = conf;
+        priceFeed.price.expo = expo;
+        priceFeed.price.publishTime = publishTime;
+
+        priceFeed.emaPrice.price = emaPrice;
+        priceFeed.emaPrice.conf = emaConf;
+        priceFeed.emaPrice.expo = expo;
+        priceFeed.emaPrice.publishTime = publishTime;
+
+        priceFeedData = abi.encode(priceFeed, prevPublishTime);
     }
 
     function getBenchmarkPrice(

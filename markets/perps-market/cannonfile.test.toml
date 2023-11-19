@@ -133,9 +133,8 @@ func = "setSynthDeductionPriority"
 from = "<%= settings.owner %>"
 args = [[0]]
 
-[contract.MockPyth]
-artifact = "contracts/mocks/MockPyth.sol:MockPyth"
-args = [100, 1]
+[contract.MockPythERC7412Wrapper]
+artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"

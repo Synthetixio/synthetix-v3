@@ -108,8 +108,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
           systems,
           keeper: keeper(),
           accountId: 2,
-          feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
-          settlementTime,
+          commitmentTime: startTime,
           offChainPrice: 1000,
         });
       });
