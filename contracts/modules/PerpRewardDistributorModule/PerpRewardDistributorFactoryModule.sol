@@ -46,8 +46,8 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         address[] memory poolCollateralTypes = distributor.getCollateralTypes();
         uint256 length = poolCollateralTypes.length;
 
-        // TODO: Add a way to prevent registering non-IPerpRewardDistributors (i.e. distributors) that
-        // were not created via `createRewardDistributor`.
+        // TODO: Add a way to prevent registering non-IPerpRewardDistributors (i.e. distributors that
+        // were not created via `createRewardDistributor`).
 
         for (uint256 i = 0; i < length; ) {
             globalConfig.synthetix.registerRewardsDistributor(
