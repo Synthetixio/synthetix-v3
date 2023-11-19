@@ -108,8 +108,8 @@ contract LiquidationModule is ILiquidationModule {
                 );
                 ITokenModule(synth).transfer(address(distributor), runtime.availableAccountCollateral);
 
-                runtime.poolId = distributor.poolId();
-                address[] memory poolCollateralTypes = distributor.collateralTypes();
+                runtime.poolId = distributor.getPoolId();
+                address[] memory poolCollateralTypes = distributor.getCollateralTypes();
                 runtime.poolCollateralTypesLength = poolCollateralTypes.length;
 
                 // Calculate the USD value of each collateral delegated to pool.
@@ -128,10 +128,10 @@ contract LiquidationModule is ILiquidationModule {
                     }
                 }
 
-                // Infer the ratio of size to distribute proportional to value of each delegated collateral.
+                // Infer the ratio of size to distribute, proportional to value of each delegated collateral.
                 uint256 remainingAmountToDistribute = runtime.availableAccountCollateral;
                 for (uint256 k = 0; k < runtime.poolCollateralTypesLength; ) {
-                    // To ensure all `availableAccountCollateral` amounts are delegated, the last collateral receives the remainder.
+                    // Ensure total amounts fully distributed, the last collateral receives the remainder.
                     if (k == runtime.poolCollateralTypesLength - 1) {
                         distributor.distributeRewards(poolCollateralTypes[k], remainingAmountToDistribute);
                     } else {

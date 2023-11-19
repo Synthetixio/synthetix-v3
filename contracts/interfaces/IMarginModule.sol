@@ -11,7 +11,7 @@ interface IMarginModule is IBasePerpMarket {
         uint128 synthMarketId;
         // Maximum allowable deposited amount.
         uint128 maxAllowable;
-        // Address of the associated rewards distributor.
+        // Address of the associated reward distributor.
         address rewardDistributor;
     }
 

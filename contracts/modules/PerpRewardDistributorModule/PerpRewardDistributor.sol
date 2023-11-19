@@ -78,14 +78,14 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     /**
      * @inheritdoc IPerpRewardDistributor
      */
-    function poolId() external view returns (uint128) {
+    function getPoolId() external view returns (uint128) {
         return _poolId;
     }
 
     /**
      * @inheritdoc IPerpRewardDistributor
      */
-    function collateralTypes() external view returns (address[] memory) {
+    function getCollateralTypes() external view returns (address[] memory) {
         return _collateralTypes;
     }
 
