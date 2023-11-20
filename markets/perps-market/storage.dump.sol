@@ -809,8 +809,6 @@ library PerpsMarketConfiguration {
         uint256 liquidationRewardRatioD18;
         uint256 minimumPositionMargin;
         uint256 minimumInitialMarginRatioD18;
-        uint256 maxLiquidationPd;
-        address endorsedLiquidator;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));

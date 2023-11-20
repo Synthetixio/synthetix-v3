@@ -10,6 +10,7 @@ import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { deepEqual } from 'assert';
 
 describe('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -312,6 +313,11 @@ describe('Cancel Offchain Async Order test', () => {
             const keeperBalanceAfter = await systems().USD.balanceOf(await keeper().getAddress());
             assertBn.equal(keeperBalanceAfter, keeperBalanceBefore.add(settlementReward));
             assertBn.equal(accountBalanceAfter, accountBalanceBefore.sub(settlementReward));
+          });
+
+          it('check account open position market ids', async () => {
+            const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
+            deepEqual(positions, []);
           });
         });
       });

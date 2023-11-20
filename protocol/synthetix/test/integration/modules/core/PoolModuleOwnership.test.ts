@@ -75,7 +75,7 @@ describe('PoolModule Create / Ownership', function () {
       });
     });
 
-    describe('when transfering to a new owner', async () => {
+    describe('when transferring to a new owner', async () => {
       describe('when attempting to accept before nominating', async () => {
         it('reverts', async () => {
           await assertRevert(
@@ -194,6 +194,26 @@ describe('PoolModule Create / Ownership', function () {
               systems().Core
             );
           });
+        });
+      });
+
+      describe('when owner renouncing his ownership', async () => {
+        it('fails when not the owner tries to renounce it', async () => {
+          await assertRevert(
+            systems().Core.connect(user2).renouncePoolOwnership(2),
+            `Unauthorized("${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
+        it('emits and event', async () => {
+          await assertEvent(
+            await systems().Core.connect(user1).renouncePoolOwnership(2),
+            `PoolOwnershipRenounced(2, "${await user1.getAddress()}")`,
+            systems().Core
+          );
+        });
+        it('pool has no owner', async () => {
+          assert.equal(await systems().Core.getPoolOwner(2), ethers.constants.AddressZero);
         });
       });
     });

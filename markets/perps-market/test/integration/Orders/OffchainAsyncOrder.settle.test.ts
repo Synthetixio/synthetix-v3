@@ -11,6 +11,7 @@ import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
+import { deepEqual } from 'assert/strict';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
