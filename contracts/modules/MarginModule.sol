@@ -246,8 +246,8 @@ contract MarginModule is IMarginModule {
         uint256 activeMarketIdsLength = activeMarketIds.length;
         // Accumulate collateral amounts for active markets
         for (uint256 i = 0; i < activeMarketIdsLength; ) {
-            uint128 marketId = activeMarketIds[i];
-            PerpMarket.Data storage market = PerpMarket.load(marketId);
+            PerpMarket.Data storage market = PerpMarket.load(activeMarketIds[i]);
+
             if (market.depositedCollateral[synthMarketId] > 0) {
                 return true;
             }
