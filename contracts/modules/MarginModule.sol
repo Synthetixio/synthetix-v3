@@ -327,17 +327,10 @@ contract MarginModule is IMarginModule {
         for (uint i = 0; i < previousSupportedSynthMarketIdsLength; i++) {
             uint128 synthMarketId = previousSupportedSynthMarketIds[i];
 
-            // If no collateral deposited we can skip the check
-            if (!isCollateralDeposited(synthMarketId)) {
-                unchecked {
-                    ++i;
-                }
-                continue;
-            }
-            // If the previous collateral had a balance, but is not in the new collateral list, revert.
+            // If collateral deposited have deposits, but is not in the new collateral list, revert.
             // We do this to ensure that approvals for collateral in the system still exists.
             // Worth noting that market owner can still set maxAllowable to 0 to disable deposits for the collateral.
-            if (!globalMarginConfig.supported[synthMarketId].exists) {
+            if (isCollateralDeposited(synthMarketId) && !globalMarginConfig.supported[synthMarketId].exists) {
                 revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
             }
 
