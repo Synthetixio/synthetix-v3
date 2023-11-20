@@ -1,0 +1,11 @@
+name = "spot-market-oracle"
+version = "<%= package.version %>"
+description = "Spot market quoting oracle"
+
+[setting.spotMarketAddress]
+defaultValue = "0x41A883a85b1AdE59F41d459Fa550b40fa56429DB" # for base goerli andromeda
+
+[contract.SpotMarketOracle]
+artifact = "contracts/SpotMarketOracle.sol:SpotMarketOracle"
+args = ["<%= settings.spotMarketAddress %>"]
+create2 = true

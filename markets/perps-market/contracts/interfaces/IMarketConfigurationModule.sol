@@ -23,8 +23,13 @@ interface IMarketConfigurationModule {
      * @notice Gets fired when feed id for perps market is updated.
      * @param marketId id of perps market
      * @param feedId oracle node id
+     * @param strictStalenessTolerance strict price tolerance in seconds (used for liquidations primarily)
      */
-    event MarketPriceDataUpdated(uint128 indexed marketId, bytes32 feedId);
+    event MarketPriceDataUpdated(
+        uint128 indexed marketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    );
 
     /**
      * @notice Gets fired when order fees are updated.
@@ -65,7 +70,7 @@ interface IMarketConfigurationModule {
      * @param marketId udpates funding parameters to this specific market.
      * @param initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
      * @param maintenanceMarginRatioD18 the maintenance margin ratio (as decimal with 18 digits precision).
-     * @param liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
+     * @param flagRewardRatioD18 the flag reward ratio (as decimal with 18 digits precision).
      * @param minimumPositionMargin the minimum position margin.
      */
     event LiquidationParametersSet(
@@ -73,7 +78,7 @@ interface IMarketConfigurationModule {
         uint256 initialMarginRatioD18,
         uint256 maintenanceMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
-        uint256 liquidationRewardRatioD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     );
 
@@ -127,8 +132,13 @@ interface IMarketConfigurationModule {
      * @notice Set node id for perps market
      * @param perpsMarketId id of the market to set price feed.
      * @param feedId the node feed id
+     * @param strictStalenessTolerance strict price tolerance in seconds (used for liquidations primarily)
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external;
 
     /**
      * @notice Set funding parameters for a market with this function.
@@ -164,7 +174,7 @@ interface IMarketConfigurationModule {
      * @param initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
      * @param minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
      * @param maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
-     * @param liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
+     * @param flagRewardRatioD18 the flag reward ratio (as decimal with 18 digits precision).
      * @param minimumPositionMargin the minimum position margin.
      */
     function setLiquidationParameters(
@@ -172,7 +182,7 @@ interface IMarketConfigurationModule {
         uint256 initialMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
         uint256 maintenanceMarginScalarD18,
-        uint256 liquidationRewardRatioD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     ) external;
 
@@ -240,7 +250,7 @@ interface IMarketConfigurationModule {
      * @return initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
      * @return minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
      * @return maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
-     * @return liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
+     * @return flagRewardRatioD18 the flag reward ratio (as decimal with 18 digits precision).
      * @return minimumPositionMargin the minimum position margin.
      */
     function getLiquidationParameters(
@@ -252,7 +262,7 @@ interface IMarketConfigurationModule {
             uint256 initialMarginRatioD18,
             uint256 minimumInitialMarginRatioD18,
             uint256 maintenanceMarginScalarD18,
-            uint256 liquidationRewardRatioD18,
+            uint256 flagRewardRatioD18,
             uint256 minimumPositionMargin
         );
 
@@ -289,4 +299,14 @@ interface IMarketConfigurationModule {
      * @return lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
     function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
+
+    /**
+     * @notice Set node id for perps market
+     * @param perpsMarketId id of the market to set price feed.
+     * @return feedId the node feed id to get price
+     * @param strictStalenessTolerance configured strict price tolerance in seconds
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance);
 }

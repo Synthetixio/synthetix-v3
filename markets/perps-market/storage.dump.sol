@@ -569,6 +569,7 @@ library GlobalPerpsMarketConfiguration {
         uint maxLiquidationRewardUsd;
         uint128 maxPositionsPerAccount;
         uint128 maxCollateralsPerAccount;
+        mapping(uint128 => uint) collateralStalenessTolerances;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -663,8 +664,6 @@ library PerpsMarketConfiguration {
         uint256 liquidationRewardRatioD18;
         uint256 minimumPositionMargin;
         uint256 minimumInitialMarginRatioD18;
-        uint256 maxLiquidationPd;
-        address endorsedLiquidator;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
@@ -697,6 +696,7 @@ library PerpsMarketFactory {
 library PerpsPrice {
     struct Data {
         bytes32 feedId;
+        uint256 strictStalenessTolerance;
     }
     function load(uint128 marketId) internal pure returns (Data storage price) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Price", marketId));

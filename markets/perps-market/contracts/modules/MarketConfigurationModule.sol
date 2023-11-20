@@ -70,12 +70,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external override {
         OwnableStorage.onlyOwner();
 
-        PerpsPrice.load(perpsMarketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId, strictStalenessTolerance);
 
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
+        emit MarketPriceDataUpdated(perpsMarketId, feedId, strictStalenessTolerance);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance) {
+        PerpsPrice.Data storage priceData = PerpsPrice.load(perpsMarketId);
+        feedId = priceData.feedId;
+        strictStalenessTolerance = priceData.strictStalenessTolerance;
     }
 
     /**
@@ -140,7 +155,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 initialMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
         uint256 maintenanceMarginScalarD18,
-        uint256 liquidationRewardRatioD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     ) external override {
         OwnableStorage.onlyOwner();
@@ -149,7 +164,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.initialMarginRatioD18 = initialMarginRatioD18;
         config.maintenanceMarginScalarD18 = maintenanceMarginScalarD18;
         config.minimumInitialMarginRatioD18 = minimumInitialMarginRatioD18;
-        config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
+        config.flagRewardRatioD18 = flagRewardRatioD18;
         config.minimumPositionMargin = minimumPositionMargin;
 
         emit LiquidationParametersSet(
@@ -157,7 +172,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             initialMarginRatioD18,
             maintenanceMarginScalarD18,
             minimumInitialMarginRatioD18,
-            liquidationRewardRatioD18,
+            flagRewardRatioD18,
             minimumPositionMargin
         );
     }
@@ -220,7 +235,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             uint256 initialMarginRatioD18,
             uint256 minimumInitialMarginRatioD18,
             uint256 maintenanceMarginScalarD18,
-            uint256 liquidationRewardRatioD18,
+            uint256 flagRewardRatioD18,
             uint256 minimumPositionMargin
         )
     {
@@ -229,7 +244,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         initialMarginRatioD18 = config.initialMarginRatioD18;
         minimumInitialMarginRatioD18 = config.minimumInitialMarginRatioD18;
         maintenanceMarginScalarD18 = config.maintenanceMarginScalarD18;
-        liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
+        flagRewardRatioD18 = config.flagRewardRatioD18;
         minimumPositionMargin = config.minimumPositionMargin;
     }
 

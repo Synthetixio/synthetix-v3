@@ -9,6 +9,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {Flags} from "../utils/Flags.sol";
 import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
@@ -33,8 +34,6 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using SetUtil for SetUtil.UintSet;
     using PerpsMarket for PerpsMarket.Data;
 
-    bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
-
     bytes32 private constant _ACCOUNT_TOKEN_SYSTEM = "accountNft";
 
     /**
@@ -45,7 +44,6 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         ISpotMarketSystem spotMarket,
         string memory marketName
     ) external override returns (uint128) {
-        FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
         OwnableStorage.onlyOwner();
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
@@ -78,6 +76,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         string memory marketName,
         string memory marketSymbol
     ) external override returns (uint128) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+        FeatureFlag.ensureAccessToFeature(Flags.CREATE_MARKET);
+
         OwnableStorage.onlyOwner();
         PerpsMarketFactory.load().onlyIfInitialized();
 
@@ -124,7 +125,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             for (uint i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
                 totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
-                    PerpsPrice.getCurrentPrice(marketId)
+                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 );
             }
 
@@ -152,7 +153,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 accumulatedMinimumCredit += PerpsMarket
                     .load(marketId)
                     .size
-                    .mulDecimal(PerpsPrice.getCurrentPrice(marketId))
+                    .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
                     .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
             }
 

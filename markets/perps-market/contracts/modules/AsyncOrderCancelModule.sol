@@ -1,10 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IAsyncOrderCancelModule} from "../interfaces/IAsyncOrderCancelModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {OffchainUtil} from "../utils/OffchainUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
@@ -26,6 +28,8 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
      * @inheritdoc IAsyncOrderCancelModule
      */
     function cancelOrder(uint128 accountId) external view {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
@@ -39,6 +43,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
      * @inheritdoc IAsyncOrderCancelModule
      */
     function cancelPythOrder(bytes calldata result, bytes calldata extraData) external payable {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         (
             uint256 offchainPrice,
             AsyncOrder.Data storage order,

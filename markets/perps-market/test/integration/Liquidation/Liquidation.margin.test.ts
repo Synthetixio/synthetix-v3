@@ -6,7 +6,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { ethers } from 'ethers';
 import assert from 'assert/strict';
 
-describe('Liquidation - margin', async () => {
+describe('Liquidation - margin', () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -149,7 +149,7 @@ describe('Liquidation - margin', async () => {
     }
   });
 
-  describe('account check after initial positions open', async () => {
+  describe('account check after initial positions open', () => {
     it('should have correct open interest', async () => {
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), bn(100_000));
     });

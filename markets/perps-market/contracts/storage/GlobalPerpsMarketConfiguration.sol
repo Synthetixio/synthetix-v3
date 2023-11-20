@@ -2,6 +2,8 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
@@ -13,6 +15,8 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 library GlobalPerpsMarketConfiguration {
     using DecimalMath for uint256;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using SetUtil for SetUtil.UintSet;
+    using SafeCastU128 for uint128;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarketConfiguration"));
@@ -37,13 +41,13 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128[] synthDeductionPriority;
         /**
-         * @dev minimum configured liquidation reward for the sender who liquidates the account
+         * @dev minimum configured keeper reward for the sender who liquidates the account
          */
-        uint minLiquidationRewardUsd;
+        uint minKeeperRewardUsd;
         /**
-         * @dev maximum configured liquidation reward for the sender who liquidates the account
+         * @dev maximum configured keeper reward for the sender who liquidates the account
          */
-        uint maxLiquidationRewardUsd;
+        uint maxKeeperRewardUsd;
         /**
          * @dev maximum configured number of concurrent positions per account.
          * @notice If set to zero it means no new positions can be opened, but existing positions can be increased or decreased.
@@ -56,6 +60,18 @@ library GlobalPerpsMarketConfiguration {
          * @notice If set to a larger number (larger than number of collaterals enabled) it means is unlimited.
          */
         uint128 maxCollateralsPerAccount;
+        /**
+         * @dev used together with minKeeperRewardUsd to get the minumum keeper reward for the sender who settles, or liquidates the account
+         */
+        uint minKeeperProfitRatioD18;
+        /**
+         * @dev used together with maxKeeperRewardUsd to get the maximum keeper reward for the sender who settles, or liquidates the account
+         */
+        uint maxKeeperScalingRatioD18;
+        /**
+         * @dev set of supported collateral types. By supported we mean collateral types that have a maxCollateralAmount > 0
+         */
+        SetUtil.UintSet supportedCollateralTypes;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -65,29 +81,45 @@ library GlobalPerpsMarketConfiguration {
         }
     }
 
-    /**
-     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against min/max
-     */
-    function liquidationReward(
+    function minimumKeeperRewardCap(
         Data storage self,
-        uint256 totalLiquidationRewards
+        uint256 costOfExecutionInUsd
     ) internal view returns (uint256) {
         return
+            MathUtil.max(
+                costOfExecutionInUsd + self.minKeeperRewardUsd,
+                costOfExecutionInUsd.mulDecimal(self.minKeeperProfitRatioD18 + DecimalMath.UNIT)
+            );
+    }
+
+    function maximumKeeperRewardCap(
+        Data storage self,
+        uint256 availableMarginInUsd
+    ) internal view returns (uint256) {
+        // Note: if availableMarginInUsd is zero, it means the account was flagged, so the maximumKeeperRewardCap will just be maxKeeperRewardUsd
+        if (availableMarginInUsd == 0) {
+            return self.maxKeeperRewardUsd;
+        }
+
+        return
             MathUtil.min(
-                MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),
-                self.maxLiquidationRewardUsd
+                availableMarginInUsd.mulDecimal(self.maxKeeperScalingRatioD18),
+                self.maxKeeperRewardUsd
             );
     }
 
     /**
-     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against only min
-     * @notice this is used when calculating the required margin for an account as there's no upper cap since the total liquidation rewards are dependent on available amount in liquidation window
+     * @dev returns the keeper reward based on total keeper rewards from all markets compared against min/max
      */
-    function minimumLiquidationReward(
+    function keeperReward(
         Data storage self,
-        uint256 totalLiquidationRewards
+        uint256 keeperRewards,
+        uint256 costOfExecutionInUsd,
+        uint256 availableMarginInUsd
     ) internal view returns (uint256) {
-        return MathUtil.max(self.minLiquidationRewardUsd, totalLiquidationRewards);
+        uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
+        uint maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
+        return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
     }
 
     function updateSynthDeductionPriority(
@@ -131,6 +163,21 @@ library GlobalPerpsMarketConfiguration {
         factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorQuote);
 
         return (referralFees, feeCollectorQuote);
+    }
+
+    function updateCollateral(
+        Data storage self,
+        uint128 synthMarketId,
+        uint maxCollateralAmount
+    ) internal {
+        self.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
+
+        bool isSupportedCollateral = self.supportedCollateralTypes.contains(synthMarketId);
+        if (maxCollateralAmount > 0 && !isSupportedCollateral) {
+            self.supportedCollateralTypes.add(synthMarketId.to256());
+        } else if (maxCollateralAmount == 0 && isSupportedCollateral) {
+            self.supportedCollateralTypes.remove(synthMarketId.to256());
+        }
     }
 
     function _collectReferrerFees(

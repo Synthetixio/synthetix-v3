@@ -6,6 +6,10 @@ node_modules/
 \*\*/typechain-types
 utils/core-contracts/contracts/utils/SafeCast
 
+# foundry lib
+\*\*/lib
+\*\*/out
+
 # files that we cannot change due to immutable proxies
 
 \*\*/contracts/Proxy.sol

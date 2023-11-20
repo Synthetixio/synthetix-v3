@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
-describe('MarketConfiguration', async () => {
+describe('MarketConfiguration', () => {
   const { systems, signers, owner } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [],
@@ -40,7 +40,7 @@ describe('MarketConfiguration', async () => {
     lockedOiPercentRatioD18: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     minimumPositionMargin: bn(50),
-    liquidationRewardRatioD18: bn(10e9),
+    flagRewardRatioD18: bn(10e9),
     maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
     maxLiquidationPd: bn(0),
   };
@@ -149,10 +149,10 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.minimumInitialMarginRatio,
           fixture.maintenanceMarginScalar,
-          fixture.liquidationRewardRatioD18,
+          fixture.flagRewardRatioD18,
           fixture.minimumPositionMargin
         ),
-      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.minimumPositionMargin.toString()})`,
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.flagRewardRatioD18.toString()}, ${fixture.minimumPositionMargin.toString()})`,
       systems().PerpsMarket
     );
   });
@@ -191,7 +191,7 @@ describe('MarketConfiguration', async () => {
     assertBn.equal(lockedOiRatio, fixture.lockedOiPercentRatioD18);
   });
 
-  it('should revert transaction when not market owner sets parameters', async () => {
+  it('should revert when a non-owner owner attempts to set parameters', async () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
@@ -226,7 +226,7 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.minimumInitialMarginRatio,
           fixture.maintenanceMarginScalar,
-          fixture.liquidationRewardRatioD18,
+          fixture.flagRewardRatioD18,
           fixture.minimumPositionMargin
         ),
       'Unauthorized'
@@ -294,12 +294,12 @@ describe('MarketConfiguration', async () => {
       initialMarginFraction,
       minimumInitialMarginRatio,
       maintenanceMarginScalar,
-      liquidationRewardRatioD18,
+      flagRewardRatioD18,
     ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
     assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
     assertBn.equal(minimumInitialMarginRatio, fixture.minimumInitialMarginRatio);
     assertBn.equal(maintenanceMarginScalar, fixture.maintenanceMarginScalar);
-    assertBn.equal(liquidationRewardRatioD18, fixture.liquidationRewardRatioD18);
+    assertBn.equal(flagRewardRatioD18, fixture.flagRewardRatioD18);
   });
 
   it('get maxLiquidationParameters', async () => {
