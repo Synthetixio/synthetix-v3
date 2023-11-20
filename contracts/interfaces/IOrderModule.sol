@@ -61,7 +61,7 @@ interface IOrderModule is IBasePerpMarket {
      * This can only happen after an order is stale, and not settled or canceled by a keeper.
      * It's added a conviennt method to clear stale orders without having to provide a price update
      */
-    function clearStaleOrder(uint128 accountId, uint128 marketId) external;
+    function cancelStaleOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 

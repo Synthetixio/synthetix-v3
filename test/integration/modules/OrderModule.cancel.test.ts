@@ -303,7 +303,7 @@ describe('OrderModule Cancelations', () => {
     it('assert all events'); // implement when new settlement keeper fees implemented
   });
 
-  describe('clearStaleOrder', () => {
+  describe('cancelStaleOrder', () => {
     it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -321,7 +321,7 @@ describe('OrderModule Cancelations', () => {
       const invalidMarketId = bn(42069);
 
       await assertRevert(
-        PerpMarketProxy.clearStaleOrder(trader.accountId, invalidMarketId),
+        PerpMarketProxy.cancelStaleOrder(trader.accountId, invalidMarketId),
         `MarketNotFound("${invalidMarketId}")`
       );
     });
@@ -342,7 +342,7 @@ describe('OrderModule Cancelations', () => {
 
       const invalidAccountId = bn(42069);
 
-      await assertRevert(PerpMarketProxy.clearStaleOrder(invalidAccountId, marketId), `OrderNotFound()`);
+      await assertRevert(PerpMarketProxy.cancelStaleOrder(invalidAccountId, marketId), `OrderNotFound()`);
     });
 
     it('should revert when order does not exists', async () => {
@@ -350,7 +350,7 @@ describe('OrderModule Cancelations', () => {
 
       const { trader, marketId } = await depositMargin(bs, genTrader(bs));
 
-      await assertRevert(PerpMarketProxy.clearStaleOrder(trader.accountId, marketId), `OrderNotFound()`);
+      await assertRevert(PerpMarketProxy.cancelStaleOrder(trader.accountId, marketId), `OrderNotFound()`);
     });
 
     it('should revert when order not ready', async () => {
@@ -367,7 +367,7 @@ describe('OrderModule Cancelations', () => {
         order.keeperFeeBufferUsd
       );
 
-      await assertRevert(PerpMarketProxy.clearStaleOrder(trader.accountId, marketId), `OrderNotStale()`);
+      await assertRevert(PerpMarketProxy.cancelStaleOrder(trader.accountId, marketId), `OrderNotStale()`);
     });
 
     it('should revert if order not stale', async () => {
@@ -391,7 +391,7 @@ describe('OrderModule Cancelations', () => {
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
-        PerpMarketProxy.connect(tradersGenerator.next().value.signer).clearStaleOrder(trader.accountId, marketId),
+        PerpMarketProxy.connect(tradersGenerator.next().value.signer).cancelStaleOrder(trader.accountId, marketId),
         `OrderNotStale()`
       );
     });
@@ -414,7 +414,7 @@ describe('OrderModule Cancelations', () => {
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(orderDigestBefore.sizeDelta, order.sizeDelta);
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(shuffle(traders())[0].signer).clearStaleOrder(trader.accountId, marketId),
+        () => PerpMarketProxy.connect(shuffle(traders())[0].signer).cancelStaleOrder(trader.accountId, marketId),
         provider()
       );
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);

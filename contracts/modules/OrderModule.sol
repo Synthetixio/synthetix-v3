@@ -274,7 +274,7 @@ contract OrderModule is IOrderModule {
         );
     }
 
-    function clearStaleOrder(uint128 accountId, uint128 marketId) external {
+    function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
