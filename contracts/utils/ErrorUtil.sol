@@ -3,10 +3,7 @@ pragma solidity 0.8.19;
 
 library ErrorUtil {
     // @notice Thrown when an order is too old (stale) and can no longer be executed.
-    error StaleOrder();
-
-    // @notice Thrown when using an off-chain oracle price is too old.
-    error StalePrice();
+    error OrderStale();
 
     // @notice Thrown when a price is not acceptable.
     error InvalidPrice();
@@ -20,8 +17,14 @@ library ErrorUtil {
     // @notice Thrown when order not ready for settlement.
     error OrderNotReady();
 
+    // @notice Thrown when owner trying to clear a fresh (not stale) order
+    error OrderNotStale();
+
     // @notice Thrown when an order cannot settle due to limitPrice tolerance not met.
     error PriceToleranceExceeded(int128 sizeDelta, uint256 price, uint256 limitPrice);
+
+    // @notice Thrown when an order cannot cancel due to limitPrice is met.
+    error PriceToleranceNotExceeded(int128 sizeDelta, uint256 price, uint256 limitPrice);
 
     // @notice Thrown during settlement when off-chain diverges too far from on-chain price.
     error PriceDivergenceExceeded(uint256 offchainPrice, uint256 onchainPrice);
@@ -82,4 +85,10 @@ library ErrorUtil {
 
     // @notice Thrown when msg.sender is not authorized.
     error Unauthorized(address sender);
+
+    // @notice Thrown when trying to remove a collateral with money inside
+    error MissingRequiredCollateral(uint128 synthMarketId);
+
+    // @notice Thrown when and action is only allowed by account owner
+    error OnlyAccountOwner();
 }

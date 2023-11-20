@@ -90,4 +90,9 @@ interface IPerpMarketFactoryModule is IMarket {
      * @notice Returns a digest of an existing market given the `marketId`.
      */
     function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
+
+    /**
+     * @notice Returns all market ids in the system
+     */
+    function getActiveMarketIds() external view returns (uint128[] memory);
 }

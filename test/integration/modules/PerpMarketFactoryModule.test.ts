@@ -126,6 +126,13 @@ describe('PerpMarketFactoryModule', () => {
       );
     });
   });
+  describe('getActiveMarketIds', () => {
+    it('should return market ids', async () => {
+      const { PerpMarketProxy } = systems();
+      const marketIds = await PerpMarketProxy.getActiveMarketIds();
+      assertBn.equal(marketIds.length, markets().length);
+    });
+  });
 
   describe('getMarketDigest', () => {
     describe('{fundingRate,fundingVelocity}', () => {

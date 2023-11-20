@@ -47,7 +47,21 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @notice Settles a previously committed order by `accountId` and `marketId`.
      */
-    function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
+    function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable;
+
+    /**
+     * @notice Cancel a previously committed order by `accountId` and `marketId`.
+     * This can only happen after an order is ready and a keeper can prove price tolerance has been exceeded.
+     * If the order is stale only the owner is allowed to cancel
+     */
+    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable;
+
+    /**
+     * @notice Clear a stale order
+     * This can only happen after an order is stale, and not settled or canceled by a keeper.
+     * It's added a conviennt method to clear stale orders without having to provide a price update
+     */
+    function cancelStaleOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 

@@ -60,6 +60,11 @@ interface IMarginModule is IBasePerpMarket {
         address[] calldata rewardDistributors
     ) external;
 
+    /**
+     * @notice Set max allowables for existing collateral
+     */
+    function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external;
+
     // --- Views --- //
 
     /**

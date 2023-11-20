@@ -32,6 +32,8 @@ library Margin {
         uint128 maxAllowable;
         // Address of the associated reward distributor.
         address rewardDistributor;
+        // Adding exists so we can differentiate maxAllowable from 0 and unset in the supported mapping below.
+        bool exists;
     }
 
     // --- Storage --- //

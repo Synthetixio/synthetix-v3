@@ -82,9 +82,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
         uint128 id = globalConfig.synthetix.registerMarket(address(this));
 
         PerpMarket.create(id, data.name);
+        PerpMarket.load().activeMarketIds.push(id);
         emit MarketCreated(id, data.name);
 
         return id;
@@ -140,6 +142,13 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     }
 
     // --- Views --- //
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
+    function getActiveMarketIds() external view returns (uint128[] memory) {
+        return PerpMarket.load().activeMarketIds;
+    }
 
     /**
      * @inheritdoc IPerpMarketFactoryModule
