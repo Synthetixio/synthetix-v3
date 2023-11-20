@@ -26,14 +26,9 @@ interface IPerpRewardDistributorFactoryModule {
     // --- Mutative --- //
 
     /**
-     * @notice Creates (but does not register) a new RewardDistributor with Synthetix and initializes storage.
+     * @notice Create and registers a new RewardDistributor with Synthetix and initializes storage.
      */
     function createRewardDistributor(
         IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParameters calldata data
     ) external returns (address);
-
-    /**
-     * @notice Registers a previously created reward distributor `distributor` with prev initialized vars.
-     */
-    function registerRewardDistributor(IPerpRewardDistributor distributor) external;
 }

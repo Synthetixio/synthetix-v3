@@ -23,8 +23,10 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        address distributor = globalConfig.rewardDistributorImplementation.clone();
-        IPerpRewardDistributor(distributor).initialize(
+        // Create a new distributor by cloning an existing implementation.
+        address distributorAddress = globalConfig.rewardDistributorImplementation.clone();
+        IPerpRewardDistributor distributor = IPerpRewardDistributor(distributorAddress);
+        distributor.initialize(
             address(globalConfig.synthetix),
             address(this),
             data.poolId,
@@ -33,26 +35,12 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
             data.name
         );
 
-        emit RewardDistributorCreated(distributor);
-        return distributor;
-    }
-
-    /**
-     * @inheritdoc IPerpRewardDistributorFactoryModule
-     */
-    function registerRewardDistributor(IPerpRewardDistributor distributor) external {
-        OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        address[] memory poolCollateralTypes = distributor.getCollateralTypes();
-        uint256 length = poolCollateralTypes.length;
-
-        // TODO: Add a way to prevent registering non-IPerpRewardDistributors (i.e. distributors that
-        // were not created via `createRewardDistributor`).
-
+        // Register the distributor with the specified pool collateralTypes.
+        uint256 length = data.collateralTypes.length;
         for (uint256 i = 0; i < length; ) {
             globalConfig.synthetix.registerRewardsDistributor(
                 distributor.getPoolId(),
-                poolCollateralTypes[i],
+                data.collateralTypes[i],
                 address(distributor)
             );
 
@@ -60,5 +48,8 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
                 ++i;
             }
         }
+
+        emit RewardDistributorCreated(distributorAddress);
+        return distributorAddress;
     }
 }
