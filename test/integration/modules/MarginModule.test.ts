@@ -30,6 +30,7 @@ import {
   getSusdCollateral,
   isSusdCollateral,
   SYNTHETIX_USD_MARKET_ID,
+  findOrThrow,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -1639,6 +1640,48 @@ describe('MarginModule', async () => {
     });
 
     it('should revoke/approve collateral with 0/maxUint');
+  });
+
+  describe('setCollateralMaxAllowable', () => {
+    it('should revert when non-owner', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const from = await traders()[0].signer.getAddress();
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralMaxAllowable(bn(0), bn(0)),
+        `Unauthorized("${from}")`
+      );
+    });
+
+    it('should revert when invalid collateralId', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const from = owner();
+
+      const invalidCollateralId = bn(42069);
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralMaxAllowable(invalidCollateralId, bn(0)),
+        `UnsupportedCollateral("${invalidCollateralId}")`
+      );
+    });
+
+    it('should update max allowable', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+      const { synthMarketId } = shuffle(collaterals())[0];
+      const { maxAllowable: maxAllowableBefore } = findOrThrow(await PerpMarketProxy.getConfiguredCollaterals(), (x) =>
+        x.synthMarketId.eq(synthMarketId())
+      );
+      assertBn.gt(maxAllowableBefore, bn(0));
+      await PerpMarketProxy.connect(from).setCollateralMaxAllowable(synthMarketId(), bn(0));
+      const configuredCollateral = await PerpMarketProxy.getConfiguredCollaterals();
+
+      const { maxAllowable: maxAllowableAfter } = findOrThrow(configuredCollateral, (x) =>
+        x.synthMarketId.eq(synthMarketId())
+      );
+      assertBn.equal(maxAllowableAfter, bn(0));
+    });
   });
 
   describe('getCollateralUsd', () => {
