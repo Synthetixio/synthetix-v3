@@ -375,6 +375,11 @@ describe('Settle Offchain Async Order test', () => {
             assertBn.equal(funding, bn(0));
             assertBn.equal(size, bn(1));
           });
+
+          it('check account open position market ids', async () => {
+            const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
+            deepEqual(positions, [ethMarketId]);
+          });
         });
       });
     });
