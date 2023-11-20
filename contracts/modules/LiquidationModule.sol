@@ -93,6 +93,7 @@ contract LiquidationModule is ILiquidationModule {
         // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,
         // and then wipe out all associated collateral on the account.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
+        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
 
         // Iterate over all supported margin collateral types to see if any should be distributed to LPs.
         for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
