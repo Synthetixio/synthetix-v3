@@ -11,6 +11,7 @@ import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
+import { deepEqual } from 'assert/strict';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -687,6 +688,11 @@ describe('Settle Offchain Async Order test', () => {
           assertBn.equal(pnl, bn(-0.000000000000005));
           assertBn.equal(funding, bn(0));
           assertBn.equal(size, bn(1));
+        });
+
+        it('check account open position market ids', async () => {
+          const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
+          deepEqual(positions, [ethMarketId]);
         });
       });
     });
