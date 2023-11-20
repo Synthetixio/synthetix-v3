@@ -271,7 +271,7 @@ library Margin {
         uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
         uint256 haircut = MathUtil.min(
             MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
-            globalConfig.minCollateralHaircut
+            globalConfig.maxCollateralHaircut
         );
 
         // Apply discount on price by the haircut.
