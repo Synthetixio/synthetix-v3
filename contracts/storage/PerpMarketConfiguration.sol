@@ -71,6 +71,8 @@ library PerpMarketConfiguration {
         uint128 minCollateralHaircut;
         // Maximum haircut applied on deposited margin collateral.
         uint128 maxCollateralHaircut;
+        // Maximum slippage on collateral sold for negative pnl position modifications.
+        uint128 sellExactInMaxSlippagePercent;
     }
 
     // @dev Perp market configuration specific to a market

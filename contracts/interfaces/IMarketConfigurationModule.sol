@@ -27,6 +27,7 @@ interface IMarketConfigurationModule {
         address keeperLiquidationEndorsed;
         uint128 minCollateralHaircut;
         uint128 maxCollateralHaircut;
+        uint128 sellExactInMaxSlippagePercent;
     }
 
     // @notice See PerpMarketConfiguration.Data for more details.

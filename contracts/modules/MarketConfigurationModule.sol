@@ -31,6 +31,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
         config.minCollateralHaircut = data.minCollateralHaircut;
         config.maxCollateralHaircut = data.maxCollateralHaircut;
+        config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
 
         emit ConfigurationUpdated(msg.sender);
     }

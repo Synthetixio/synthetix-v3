@@ -64,6 +64,30 @@ library Margin {
         }
     }
 
+    /**
+     * @dev Withdraw `amount` synths from deposits to sell for sUSD and burn for LPs.
+     */
+    function sellNonSusdCollateral(
+        uint128 marketId,
+        uint128 synthMarketId,
+        uint256 amount,
+        uint256 price,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal {
+        globalConfig.synthetix.withdrawMarketCollateral(
+            marketId,
+            globalConfig.spotMarket.getSynth(synthMarketId),
+            amount
+        );
+        (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
+            synthMarketId,
+            amount,
+            amount.mulDecimal(price).mulDecimal(DecimalMath.UNIT - globalConfig.sellExactInMaxSlippagePercent),
+            address(0)
+        );
+        globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
+    }
+
     // --- Mutative --- //
 
     /**
@@ -129,20 +153,7 @@ library Margin {
 
                     // If collateral isn't sUSD, withdraw, sell, deposit as USD then continue update accounting.
                     if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                        globalConfig.synthetix.withdrawMarketCollateral(
-                            market.id,
-                            globalConfig.spotMarket.getSynth(synthMarketId),
-                            deductionAmount
-                        );
-
-                        (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
-                            synthMarketId,
-                            deductionAmount,
-                            0,
-                            address(0)
-                        );
-
-                        globalConfig.synthetix.depositMarketUsd(market.id, address(this), amountUsd);
+                        sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, price, globalConfig);
                     }
 
                     // At this point we can just update the accounting.
