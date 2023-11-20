@@ -182,7 +182,7 @@ describe('Cancel Offchain Async Order test', () => {
 
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            'OracleDataRequired'
+            `OracleDataRequired(${DEFAULT_SETTLEMENT_STRATEGY.feedId}, ${startTime})`
           );
         });
 
@@ -249,14 +249,6 @@ describe('Cancel Offchain Async Order test', () => {
 
           before('cancelOrder', async () => {
             cancelTx = await systems().PerpsMarket.connect(keeper()).cancelOrder(2);
-          });
-
-          before('called wrapper with the right values', async () => {
-            await assertEvent(
-              cancelTx,
-              `GetBenchmarkPriceCalled("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`,
-              systems().MockPythERC7412Wrapper
-            );
           });
 
           it('emits cancelOrder event', async () => {

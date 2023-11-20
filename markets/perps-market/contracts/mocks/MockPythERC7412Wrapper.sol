@@ -5,8 +5,7 @@ contract MockPythERC7412Wrapper {
     bool public alwaysRevert;
     int256 public price;
 
-    error OracleDataRequired(address oracleContract, bytes oracleQuery);
-    event GetBenchmarkPriceCalled(bytes32 priceId, uint64 requestedTime);
+    error OracleDataRequired(bytes32 priceId, uint64 requestedTime);
 
     function setBenchmarkPrice(int256 _price) external {
         price = _price;
@@ -17,12 +16,13 @@ contract MockPythERC7412Wrapper {
         alwaysRevert = _alwaysRevert;
     }
 
-    function getBenchmarkPrice(bytes32 priceId, uint64 requestedTime) external returns (int256) {
+    function getBenchmarkPrice(
+        bytes32 priceId,
+        uint64 requestedTime
+    ) external view returns (int256) {
         if (alwaysRevert) {
-            revert OracleDataRequired(address(this), hex"00");
+            revert OracleDataRequired(priceId, requestedTime);
         }
-
-        emit GetBenchmarkPriceCalled(priceId, requestedTime);
 
         return price;
     }

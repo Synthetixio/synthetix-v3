@@ -76,17 +76,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        uint256 settlementDelay = AsyncOrderConfiguration
-            .load(marketId)
-            .settlementStrategies[settlementStrategyId]
-            .settlementDelay;
-
         asyncOrderClaim = AsyncOrderClaim.create(
             marketId,
             orderType,
             amountEscrowed,
             settlementStrategyId,
-            block.timestamp + settlementDelay,
             minimumSettlementAmount,
             ERC2771Context._msgSender(),
             referrer

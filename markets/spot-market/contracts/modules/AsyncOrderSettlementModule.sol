@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastI256, SafeCastU256, SafeCastI64, SafeCastU64} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
 import {AsyncOrderClaim} from "../storage/AsyncOrderClaim.sol";
 import {Price} from "../storage/Price.sol";
@@ -17,7 +18,6 @@ import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {SynthUtil} from "../utils/SynthUtil.sol";
-import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 
 /**
  * @title Module to settle asyncronous orders
@@ -37,8 +37,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
 
-    int256 public constant PRECISION = 18;
-
     /**
      * @inheritdoc IAsyncOrderSettlementModule
      */
@@ -51,56 +49,21 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             SettlementStrategy.Data storage settlementStrategy
         ) = _performClaimValidityChecks(marketId, asyncOrderId);
 
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.ONCHAIN) {
-            return
-                _settleOrder(
-                    marketId,
-                    asyncOrderId,
-                    Price.getCurrentPrice(
-                        marketId,
-                        asyncOrderClaim.orderType,
-                        Price.Tolerance.STRICT
-                    ),
-                    asyncOrderClaim,
-                    settlementStrategy
-                );
+        uint256 price;
+
+        if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
+            price = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
+                .getBenchmarkPrice(settlementStrategy.feedId, asyncOrderClaim.commitmentTime.to64())
+                .toUint();
         } else {
-            return _settleOffchain(marketId, asyncOrderId, asyncOrderClaim, settlementStrategy);
-        }
-    }
-
-    /**
-     * @inheritdoc IAsyncOrderSettlementModule
-     */
-    function settlePythOrder(
-        bytes calldata result,
-        bytes calldata extraData
-    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
-        //TODO remove this empty usage
-        result;
-        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
-        (
-            AsyncOrderClaim.Data storage asyncOrderClaim,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = _performClaimValidityChecks(marketId, asyncOrderId);
-
-        if (settlementStrategy.strategyType != SettlementStrategy.Type.PYTH) {
-            revert InvalidSettlementStrategy(settlementStrategy.strategyType);
-        }
-
-        uint256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
-            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrderClaim.settlementTime.to64())
-            .toUint()
-            .to256();
-
-        return
-            _settleOrder(
+            price = Price.getCurrentPrice(
                 marketId,
-                asyncOrderId,
-                offchainPrice,
-                asyncOrderClaim,
-                settlementStrategy
+                asyncOrderClaim.orderType,
+                Price.Tolerance.STRICT
             );
+        }
+
+        return _settleOrder(marketId, asyncOrderId, price, asyncOrderClaim, settlementStrategy);
     }
 
     /**
@@ -262,48 +225,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
     }
 
-    /**
-     * @dev logic for settling an offchain order
-     */
-    function _settleOffchain(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data storage asyncOrderClaim,
-        SettlementStrategy.Data storage settlementStrategy
-    )
-        private
-        view
-        returns (
-            /* settling offchain reverts with OffchainLookup */
-            // solc-ignore-next-line unused-param
-            uint256 finalOrderAmount,
-            // solc-ignore-next-line unused-param
-            OrderFees.Data memory fees
-        )
-    {
-        string[] memory urls = new string[](1);
-        urls[0] = settlementStrategy.url;
-
-        bytes4 selector;
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
-            selector = AsyncOrderSettlementModule.settlePythOrder.selector;
-        } else {
-            revert SettlementStrategyNotFound(settlementStrategy.strategyType);
-        }
-
-        // see EIP-3668: https://eips.ethereum.org/EIPS/eip-3668
-        revert OffchainLookup(
-            address(this),
-            urls,
-            abi.encodePacked(
-                settlementStrategy.feedId,
-                _getTimeInBytes(asyncOrderClaim.settlementTime)
-            ),
-            selector,
-            abi.encode(marketId, asyncOrderId) // extraData that gets sent to callback for validation
-        );
-    }
-
     function _performClaimValidityChecks(
         uint128 marketId,
         uint128 asyncOrderId
@@ -322,18 +243,5 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             asyncOrderClaim.settlementStrategyId
         ];
         asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
-    }
-
-    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8 time) {
-        bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
-
-        // get last 8 bytes
-        return bytes8(settlementTimeBytes << 192);
-    }
-
-    // borrowed from PythNode.sol
-    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256 scaledPrice) {
-        int256 factor = PRECISION + expo;
-        return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
     }
 }

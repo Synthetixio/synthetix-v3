@@ -197,7 +197,7 @@ describe('Settle Offchain Async Order test', () => {
 
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            'OracleDataRequired'
+            `OracleDataRequired("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`
           );
         });
       });
@@ -273,14 +273,6 @@ describe('Settle Offchain Async Order test', () => {
 
           before('settle', async () => {
             settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
-          });
-
-          before('called wrapper with the right values', async () => {
-            await assertEvent(
-              settleTx,
-              `GetBenchmarkPriceCalled("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`,
-              systems().MockPythERC7412Wrapper
-            );
           });
 
           it('emits settle event', async () => {
