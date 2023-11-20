@@ -53,6 +53,11 @@ interface IMarginModule is IBasePerpMarket {
      */
     function setCollateralConfiguration(uint128[] calldata synthMarketIds, uint128[] calldata maxAllowables) external;
 
+    /**
+     * @notice Set max allowables for existing collateral
+     */
+    function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external;
+
     // --- Views --- //
 
     /**

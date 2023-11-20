@@ -12,11 +12,12 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "../storage/Margin.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
@@ -192,10 +193,9 @@ contract MarginModule is IMarginModule {
         uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
 
         Margin.CollateralType storage collateral = globalMarginConfig.supported[synthMarketId];
-        uint256 maxAllowable = collateral.maxAllowable;
 
         // Prevent any operations if this synth isn't supported as collateral.
-        if (maxAllowable == 0) {
+        if (!collateral.exists) {
             revert ErrorUtil.UnsupportedCollateral(synthMarketId);
         }
 
@@ -209,6 +209,7 @@ contract MarginModule is IMarginModule {
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
+            uint256 maxAllowable = collateral.maxAllowable;
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (totalMarketAvailableAmount + absAmountDelta > maxAllowable) {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
@@ -236,6 +237,46 @@ contract MarginModule is IMarginModule {
 
             withdrawAndTransfer(marketId, absAmountDelta, synthMarketId, globalConfig);
         }
+    }
+
+    function isCollateralDeposited(uint128 synthMarketId) internal view returns (bool) {
+        PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
+
+        uint128[] memory activeMarketIds = globalPerpMarket.activeMarketIds;
+        uint256 activeMarketIdsLength = activeMarketIds.length;
+        // Accumulate collateral amounts for active markets
+        for (uint256 i = 0; i < activeMarketIdsLength; ) {
+            PerpMarket.Data storage market = PerpMarket.load(activeMarketIds[i]);
+
+            if (market.depositedCollateral[synthMarketId] > 0) {
+                return true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external {
+        OwnableStorage.onlyOwner();
+
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        for (uint256 i = 0; i < length; ) {
+            uint128 currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            if (currentSynthMarketId == synthMarketId) {
+                globalMarginConfig.supported[currentSynthMarketId].maxAllowable = maxAllowable;
+                return;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        revert ErrorUtil.UnsupportedCollateral(synthMarketId);
     }
 
     /**
@@ -274,6 +315,8 @@ contract MarginModule is IMarginModule {
                 ++i;
             }
         }
+
+        uint128[] memory previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
         delete globalMarginConfig.supportedSynthMarketIds;
 
         // Update with passed in configuration.
@@ -292,7 +335,7 @@ contract MarginModule is IMarginModule {
                 synth.approve(address(this), MAX_UINT256);
             }
 
-            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i]);
+            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i], true);
             newSupportedSynthMarketIds[i] = synthMarketId;
 
             unchecked {
@@ -300,6 +343,22 @@ contract MarginModule is IMarginModule {
             }
         }
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
+
+        uint256 previousSupportedSynthMarketIdsLength = previousSupportedSynthMarketIds.length;
+        for (uint i = 0; i < previousSupportedSynthMarketIdsLength; i++) {
+            uint128 synthMarketId = previousSupportedSynthMarketIds[i];
+
+            // If collateral deposited have deposits, but is not in the new collateral list, revert.
+            // We do this to ensure that approvals for collateral in the system still exists.
+            // Worth noting that market owner can still set maxAllowable to 0 to disable deposits for the collateral.
+            if (isCollateralDeposited(synthMarketId) && !globalMarginConfig.supported[synthMarketId].exists) {
+                revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
 
         emit CollateralConfigured(msg.sender, length1);
     }

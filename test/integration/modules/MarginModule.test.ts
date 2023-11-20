@@ -30,6 +30,7 @@ import {
   getSusdCollateral,
   isSusdCollateral,
   SYNTHETIX_USD_MARKET_ID,
+  findOrThrow,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -555,6 +556,42 @@ describe('MarginModule', async () => {
         await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
       });
 
+      it('should allow withdraw of collateral when collateral maxAllowable is 0', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+
+        await PerpMarketProxy.setCollateralConfiguration(
+          configuredCollaterals.map((x) => x.synthMarketId),
+          // Set maxAllowable to 0 for all collaterals
+          configuredCollaterals.map((_) => BigNumber.from(0))
+        );
+
+        // Perform the withdraw (full amount).
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarketId(),
+              collateralDepositAmount.mul(-1)
+            ),
+          provider()
+        );
+
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          collateralDepositAmount,
+          collateral.synthMarketId(),
+        ].join(', ');
+
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      });
+
       forEach([
         ['sUSD', () => getSusdCollateral(collaterals())],
         ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
@@ -983,6 +1020,35 @@ describe('MarginModule', async () => {
         );
       });
 
+      it('should allow withdrawal of collateral when collateral maxAllowable is 0', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+
+        await PerpMarketProxy.setCollateralConfiguration(
+          configuredCollaterals.map((x) => x.synthMarketId),
+          // Set maxAllowable to 0 for all collaterals
+          configuredCollaterals.map((_) => BigNumber.from(0))
+        );
+
+        // Perform the withdraw (full amount).
+        const { receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          provider()
+        );
+
+        const marginWithdrawEventProperties = [
+          `"${PerpMarketProxy.address}"`,
+          `"${traderAddress}"`,
+          collateralDepositAmount,
+          collateral.synthMarketId(),
+        ].join(', ');
+
+        await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      });
       it('should cancel order when withdrawing all if pending order exists and expired');
 
       it('should recompute funding', async () => {
@@ -1486,7 +1552,7 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should allow zero maxAllowables to temporarily disable deposits', async () => {
+    it('should allow zero maxAllowables to disable deposits', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
@@ -1494,21 +1560,45 @@ describe('MarginModule', async () => {
       const supportedCollaterals = collaterals();
       const synthMarketIds = [supportedCollaterals[0].synthMarketId(), supportedCollaterals[1].synthMarketId()];
       const maxAllowables = [bn(0), bn(0)];
+      // Ensure we can set maxAllowables to 0 even when there's collateral in the system.
+      await depositMargin(bs, genTrader(bs, { desiredCollateral: supportedCollaterals[0] }));
       await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables);
 
-      // Depositing should cause a failure.
-      const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, genTrader(bs));
+      const configuredCollaterals = await PerpMarketProxy.connect(from).getConfiguredCollaterals();
+      assertBn.isZero(configuredCollaterals[0].maxAllowable);
+      assertBn.isZero(configuredCollaterals[1].maxAllowable);
+    });
 
-      // Perform the deposit (maxAllowable = 0 and unsupported are indistinguishable without more information).
+    it('should revert when removal of collateral with amounts in the system', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      // Set zero allowable deposits.
+      const supportedCollaterals = collaterals();
+      await depositMargin(bs, genTrader(bs, { desiredCollateral: supportedCollaterals[0] }));
+      // Excluding supportedCollaterals[0].synthMarketId(), which has a deposit.
+      const synthMarketIds = [supportedCollaterals[1].synthMarketId()];
+      const maxAllowables = [bn(0)];
+
       await assertRevert(
-        PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          market.marketId(),
-          collateral.synthMarketId(),
-          collateralDepositAmount
-        ),
-        `UnsupportedCollateral("${collateral.synthMarketId()}")`
+        PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables),
+        `MissingRequiredCollateral("${supportedCollaterals[0].synthMarketId()}")`
       );
+    });
+
+    it('should allow removal of collateral with no amounts in the system', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      // Set zero allowable deposits.
+      const supportedCollaterals = collaterals();
+      // Excluding supportedCollaterals[0].synthMarketId(), which has a deposit.
+      const synthMarketIds = [supportedCollaterals[1].synthMarketId()];
+      const maxAllowables = [bn(0)];
+
+      await PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables);
+      const configuredCollaterals = await PerpMarketProxy.connect(from).getConfiguredCollaterals();
+      assert.equal(configuredCollaterals.length, 1);
     });
 
     it('should reset existing collaterals when new config is empty', async () => {
@@ -1550,6 +1640,48 @@ describe('MarginModule', async () => {
     });
 
     it('should revoke/approve collateral with 0/maxUint');
+  });
+
+  describe('setCollateralMaxAllowable', () => {
+    it('should revert when non-owner', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const from = await traders()[0].signer.getAddress();
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralMaxAllowable(bn(0), bn(0)),
+        `Unauthorized("${from}")`
+      );
+    });
+
+    it('should revert when invalid collateralId', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const from = owner();
+
+      const invalidCollateralId = bn(42069);
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralMaxAllowable(invalidCollateralId, bn(0)),
+        `UnsupportedCollateral("${invalidCollateralId}")`
+      );
+    });
+
+    it('should update max allowable', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+      const { synthMarketId } = shuffle(collaterals())[0];
+      const { maxAllowable: maxAllowableBefore } = findOrThrow(await PerpMarketProxy.getConfiguredCollaterals(), (x) =>
+        x.synthMarketId.eq(synthMarketId())
+      );
+      assertBn.gt(maxAllowableBefore, bn(0));
+      await PerpMarketProxy.connect(from).setCollateralMaxAllowable(synthMarketId(), bn(0));
+      const configuredCollateral = await PerpMarketProxy.getConfiguredCollaterals();
+
+      const { maxAllowable: maxAllowableAfter } = findOrThrow(configuredCollateral, (x) =>
+        x.synthMarketId.eq(synthMarketId())
+      );
+      assertBn.equal(maxAllowableAfter, bn(0));
+    });
   });
 
   describe('getCollateralUsd', () => {
