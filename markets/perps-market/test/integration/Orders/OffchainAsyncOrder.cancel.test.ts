@@ -11,8 +11,7 @@ import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
-// TODO review how cancel works now
-describe.skip('Cancel Offchain Async Order test', () => {
+describe('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
@@ -48,46 +47,6 @@ describe.skip('Cancel Offchain Async Order test', () => {
       it('reverts if account id is incorrect (not valid order)', async () => {
         await assertRevert(
           systems().PerpsMarket.connect(trader1()).cancelOrder(1337),
-          'OrderNotValid()'
-        );
-      });
-    });
-
-    describe('using cancelPythOrder', () => {
-      let pythPriceData: string, extraData: string, updateFee: ethers.BigNumber;
-      before('get some pyth price data and fee', async () => {
-        const startTime = Math.floor(Date.now() / 1000);
-
-        // Get the latest price
-        pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-          DEFAULT_SETTLEMENT_STRATEGY.feedId,
-          1000_0000,
-          1,
-          -4,
-          1000_0000,
-          1,
-          startTime + 6,
-          0
-        );
-        updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
-      });
-
-      it('reverts if account id is incorrect (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [1337]);
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .cancelPythOrder(pythPriceData, extraData, { value: updateFee }),
-          'OrderNotValid()'
-        );
-      });
-
-      it('reverts if order was not commited before (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .cancelPythOrder(pythPriceData, extraData, { value: updateFee }),
           'OrderNotValid()'
         );
       });
@@ -146,8 +105,6 @@ describe.skip('Cancel Offchain Async Order test', () => {
   for (let idx = 0; idx < testCases.length; idx++) {
     const testCase = testCases[idx];
     describe(`Using ${testCase.name} as collateral`, () => {
-      let pythCallData: string, extraData: string, updateFee: ethers.BigNumber;
-
       let tx: ethers.ContractTransaction;
       let startTime: number;
 
@@ -172,17 +129,6 @@ describe.skip('Cancel Offchain Async Order test', () => {
         startTime = await getTxTime(provider(), tx);
       });
 
-      before('setup bytes data', () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
-        pythCallData = ethers.utils.solidityPack(
-          ['bytes32', 'uint64'],
-          [
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay,
-          ]
-        );
-      });
-
       const restoreBeforeSettle = snapshotCheckpoint(provider);
 
       describe('attempts to cancel before settlement time', () => {
@@ -191,26 +137,6 @@ describe.skip('Cancel Offchain Async Order test', () => {
         it('with settle', async () => {
           await assertRevert(
             systems().PerpsMarket.connect(trader1()).cancelOrder(2),
-            'SettlementWindowNotOpen'
-          );
-        });
-
-        it('with cancelPythOrder', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1051_0000, // price outside tolarence
-            1,
-            -4,
-            1051_0000,
-            1,
-            startTime + 6,
-            0
-          );
-          updateFee = await await systems().MockPyth.getUpdateFee([validPythPriceData]);
-          await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .cancelPythOrder(validPythPriceData, extraData, { value: updateFee }),
             'SettlementWindowNotOpen'
           );
         });
@@ -236,26 +162,6 @@ describe.skip('Cancel Offchain Async Order test', () => {
             'SettlementWindowExpired'
           );
         });
-
-        it('with cancelPythOrder', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1051_0000,
-            1,
-            -4,
-            1051_0000,
-            1,
-            startTime + 6,
-            0
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
-          await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .cancelPythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'SettlementWindowExpired'
-          );
-        });
       });
 
       describe('attempts to cancel with issues in pyth price data', () => {
@@ -269,65 +175,21 @@ describe.skip('Cancel Offchain Async Order test', () => {
           );
         });
 
-        it('reverts with invalid pyth price timestamp (before time)', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1051_0000,
-            1,
-            -4,
-            1051_0000,
-            1,
-            startTime,
-            0
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
-          await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .cancelPythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'PriceFeedNotFoundWithinRange'
-          );
-        });
+        it('reverts when there is no benchmark price', async () => {
+          // set Pyth setBenchmarkPrice
+          await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(true);
 
-        it('reverts with invalid pyth price timestamp (after time)', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1051_0000,
-            1,
-            -4,
-            1051_0000,
-            1,
-            startTime +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
-              1,
-            0
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
           await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .cancelPythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'PriceFeedNotFoundWithinRange'
+            systems().PerpsMarket.connect(keeper()).settleOrder(2),
+            'OracleDataRequired'
           );
         });
 
         it('reverts with invalid pyth price (acceptable price)', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1000_0000,
-            1,
-            -4,
-            1000_0000,
-            1,
-            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
-            0
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await systems().MockPythERC7412Wrapper.setBenchmarkPrice(bn(1000));
+
           await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .cancelPythOrder(validPythPriceData, extraData, { value: updateFee }),
+            systems().PerpsMarket.connect(keeper()).cancelOrder(2),
             `PriceNotExceeded("${bn(1000.005)}", "${bn(1050)}")`
           );
         });
@@ -369,25 +231,8 @@ describe.skip('Cancel Offchain Async Order test', () => {
           });
         });
 
-        it('reverts with offchain info', async () => {
-          const functionSig = systems().PerpsMarket.interface.getSighash('cancelPythOrder');
-
-          // Coverage tests use hardhat provider, and hardhat provider stringifies array differently
-          // hre.network.name === 'hardhat'
-          //   ? `[${pythSettlementStrategy.url}]`
-          //   : pythSettlementStrategy.url;
-
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).cancelOrder(2),
-            `OffchainLookup("${systems().PerpsMarket.address}", "${
-              DEFAULT_SETTLEMENT_STRATEGY.url
-            }", "${pythCallData}", "${functionSig}", "${extraData}")`
-          );
-        });
-
         describe('cancel pyth order', () => {
-          let pythPriceData: string;
-          let settleTx: ethers.ContractTransaction;
+          let cancelTx: ethers.ContractTransaction;
           let accountBalanceBefore: ethers.BigNumber;
           let keeperBalanceBefore: ethers.BigNumber;
           const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
@@ -397,25 +242,20 @@ describe.skip('Cancel Offchain Async Order test', () => {
             keeperBalanceBefore = await systems().USD.balanceOf(await keeper().getAddress());
           });
 
-          before('prepare data', async () => {
-            // Get the latest price
-            pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-              DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              1051_0000,
-              1,
-              -4,
-              1051_0000,
-              1,
-              startTime + 6,
-              0
-            );
-            updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
+          before('set benchmark price', async () => {
+            await systems().MockPythERC7412Wrapper.setBenchmarkPrice(bn(1051));
           });
 
           before('cancelOrder', async () => {
-            settleTx = await systems()
-              .PerpsMarket.connect(keeper())
-              .cancelPythOrder(pythPriceData, extraData, { value: updateFee });
+            cancelTx = await systems().PerpsMarket.connect(keeper()).cancelOrder(2);
+          });
+
+          before('called wrapper with the right values', async () => {
+            await assertEvent(
+              cancelTx,
+              `GetBenchmarkPriceCalled("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`,
+              systems().MockPythERC7412Wrapper
+            );
           });
 
           it('emits cancelOrder event', async () => {
@@ -436,7 +276,7 @@ describe.skip('Cancel Offchain Async Order test', () => {
               msgSender,
             ];
             await assertEvent(
-              settleTx,
+              cancelTx,
               `OrderCancelled(${params.join(', ')})`,
               systems().PerpsMarket
             );
@@ -460,7 +300,7 @@ describe.skip('Cancel Offchain Async Order test', () => {
               pendingSettlementRewards = pendingSettlementRewards.sub(deductedCollateralAmount);
 
               await assertEvent(
-                settleTx,
+                cancelTx,
                 `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
                 systems().PerpsMarket
               );
