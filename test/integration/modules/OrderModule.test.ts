@@ -972,7 +972,7 @@ describe('OrderModule', () => {
         PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
-        `StaleOrder()`,
+        `OrderStale()`,
         PerpMarketProxy
       );
     });

@@ -3,10 +3,7 @@ pragma solidity 0.8.19;
 
 library ErrorUtil {
     // @notice Thrown when an order is too old (stale) and can no longer be executed.
-    error StaleOrder();
-
-    // @notice Thrown when using an off-chain oracle price is too old.
-    error StalePrice();
+    error OrderStale();
 
     // @notice Thrown when a price is not acceptable.
     error InvalidPrice();

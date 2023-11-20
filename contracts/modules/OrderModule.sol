@@ -97,7 +97,7 @@ contract OrderModule is IOrderModule {
         Position.TradeParams memory params
     ) private view {
         if (isOrderStale(commitmentTime, globalConfig.maxOrderAge)) {
-            revert ErrorUtil.StaleOrder();
+            revert ErrorUtil.OrderStale();
         }
         if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
             revert ErrorUtil.OrderNotReady();
@@ -315,7 +315,7 @@ contract OrderModule is IOrderModule {
         if (isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
             // Only allow owner to clear stale orders
             if (!isAccountOwner) {
-                revert ErrorUtil.StaleOrder();
+                revert ErrorUtil.OrderStale();
             }
         } else {
             // Order is within settlement window. Check if price tolerance has exceeded

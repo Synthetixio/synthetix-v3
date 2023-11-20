@@ -178,7 +178,7 @@ describe('OrderModule Cancelations', () => {
           marketId,
           updateData
         ),
-        `StaleOrder()`
+        `OrderStale()`
       );
     });
     it('should revert if price tolerance not exceeded', async () => {
