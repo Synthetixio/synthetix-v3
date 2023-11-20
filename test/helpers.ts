@@ -115,7 +115,8 @@ export const getPythPriceData = async (
     -priceExpo,
     pythPrice,
     priceConfidence,
-    publishTime ?? Math.floor(Date.now() / 1000)
+    publishTime ?? Math.floor(Date.now() / 1000),
+    0
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };
@@ -140,8 +141,8 @@ export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketI
   const settlementTime = Math.max(commitmentTime + minOrderAge, nowTime + 1);
 
   const publishTime = settlementTime - publishTimeDelta;
-
-  return { commitmentTime, settlementTime, publishTime };
+  const expireTime = commitmentTime + config.maxOrderAge.toNumber();
+  return { commitmentTime, settlementTime, publishTime, expireTime };
 };
 
 /** Commits a generated `order` for `trader` on `marketId` */
@@ -184,7 +185,7 @@ export const commitAndSettle = async (
 
   const { tx, receipt } = await withExplicitEvmMine(
     () =>
-      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
+      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
         value: updateFee,
       }),
     provider()

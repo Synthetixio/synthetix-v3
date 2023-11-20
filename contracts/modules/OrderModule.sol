@@ -8,6 +8,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {PythUtil} from "../utils/PythUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
@@ -31,7 +32,6 @@ contract OrderModule is IOrderModule {
 
     struct Runtime_settleOrder {
         uint256 pythPrice;
-        uint256 publishTime;
         int256 accruedFunding;
         int256 pnl;
         uint256 fillPrice;
@@ -42,26 +42,49 @@ contract OrderModule is IOrderModule {
     // --- Helpers --- //
 
     /**
-     * @dev Same implementation as `MarginModule.validateOrderAvailability`.
+     * @dev Ensure fillPrice does not exceed limitPrice.
+     * NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
      */
-    function validateOrderAvailability(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private {
-        Order.Data storage order = market.orders[accountId];
+    function isPriceToleranceExceeded(
+        int128 sizeDelta,
+        uint256 fillPrice,
+        uint256 limitPrice
+    ) private pure returns (bool) {
+        return (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
+    }
 
-        // A new order cannot be submitted if one is already pending.
-        if (order.sizeDelta != 0) {
-            // Check if this order can be cancelled. If so, cancel and then proceed.
-            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
-                delete market.orders[accountId];
-                emit OrderCanceled(accountId, marketId, order.commitmentTime);
-            } else {
-                revert ErrorUtil.OrderFound();
-            }
-        }
+    /**
+     * @dev A stale order is one where time passed is max age or older (>=).
+     */
+    function isOrderStale(uint256 commitmentTime, uint256 maxOrderAge) private view returns (bool) {
+        return block.timestamp - commitmentTime >= maxOrderAge;
+    }
+
+    /**
+     * @dev Amount of time that has passed must be at least the minimum order age (>=).
+     */
+    function isOrderReady(uint256 commitmentTime, uint256 minOrderAge) private view returns (bool) {
+        return block.timestamp - commitmentTime >= minOrderAge;
+    }
+
+    /**
+     * @dev Ensure Pyth price does not diverge too far from on-chain price from CL.
+     *  e.g. A maximum of 3% price divergence with the following prices:
+     * (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
+     * (1800, 1750) ~ 2.857143% divergence => Ok
+     * (1854, 1800) ~ 3%        divergence => Ok
+     * (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
+     */
+    function isPriceDivergenceExceeded(
+        uint256 onchainPrice,
+        uint256 oraclePrice,
+        uint256 priceDivergencePercent
+    ) private pure returns (bool) {
+        uint256 priceDelta = onchainPrice > oraclePrice
+            ? onchainPrice.divDecimal(oraclePrice) - DecimalMath.UNIT
+            : oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
+
+        return priceDelta > priceDivergencePercent;
     }
 
     /**
@@ -71,32 +94,13 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
-        uint256 publishTime,
         Position.TradeParams memory params
     ) private view {
-        // The publishTime is _before_ the commitmentTime
-        if (publishTime < commitmentTime) {
-            revert ErrorUtil.StalePrice();
+        if (isOrderStale(commitmentTime, globalConfig.maxOrderAge)) {
+            revert ErrorUtil.OrderStale();
         }
-        // A stale order is one where time passed is max age or older (>=).
-        if (block.timestamp - commitmentTime >= globalConfig.maxOrderAge) {
-            revert ErrorUtil.StaleOrder();
-        }
-        // Amount of time that has passed must be at least the minimum order age (>=).
-        if (block.timestamp - commitmentTime < globalConfig.minOrderAge) {
+        if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
             revert ErrorUtil.OrderNotReady();
-        }
-
-        // Time delta must be within pythPublishTimeMin and pythPublishTimeMax.
-        //
-        // If `minOrderAge` is 12s then publishTime must be between 8 and 12 (inclusive). When inferring
-        // this parameter off-chain and prior to configuration, it must look at `minOrderAge` to a relative value.
-        uint256 publishCommitmentTimeDelta = publishTime - commitmentTime;
-        if (
-            publishCommitmentTimeDelta < globalConfig.pythPublishTimeMin ||
-            publishCommitmentTimeDelta > globalConfig.pythPublishTimeMax
-        ) {
-            revert ErrorUtil.InvalidPrice();
         }
 
         uint256 onchainPrice = market.getOraclePrice();
@@ -105,29 +109,11 @@ contract OrderModule is IOrderModule {
         if (onchainPrice == 0 || params.oraclePrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
-
-        // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
-        //
-        // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
-        if (
-            (params.sizeDelta > 0 && params.fillPrice > params.limitPrice) ||
-            (params.sizeDelta < 0 && params.fillPrice < params.limitPrice)
-        ) {
+        if (isPriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice)) {
             revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
         }
 
-        // Ensure Pyth price does not diverge too far from on-chain price from CL.
-        //
-        // e.g. A maximum of 3% price divergence with the following prices:
-        //
-        // (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
-        // (1800, 1750) ~ 2.857143% divergence => Ok
-        // (1854, 1800) ~ 3%        divergence => Ok
-        // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
-        uint256 priceDelta = onchainPrice > params.oraclePrice
-            ? onchainPrice.divDecimal(params.oraclePrice) - DecimalMath.UNIT
-            : params.oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
-        if (priceDelta > globalConfig.priceDivergencePercent) {
+        if (isPriceDivergenceExceeded(onchainPrice, params.oraclePrice, globalConfig.priceDivergencePercent)) {
             revert ErrorUtil.PriceDivergenceExceeded(params.oraclePrice, onchainPrice);
         }
     }
@@ -186,9 +172,12 @@ contract OrderModule is IOrderModule {
     ) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        validateOrderAvailability(accountId, marketId, market, globalConfig);
+
+        if (market.orders[accountId].sizeDelta != 0) {
+            revert ErrorUtil.OrderFound();
+        }
+
         uint256 oraclePrice = market.getOraclePrice();
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
@@ -219,7 +208,7 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
+    function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
@@ -233,13 +222,7 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        // TODO: This can be optimized as not all settlements may need the Pyth priceUpdateData.
-        //
-        // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
-        // such that keepers can conditionally update prices only if necessary.
-        PerpMarket.updatePythPrice(priceUpdateData);
-
-        (runtime.pythPrice, runtime.publishTime) = market.getPythPrice(order.commitmentTime);
+        runtime.pythPrice = PythUtil.parsePythPrice(globalConfig, marketConfig, order.commitmentTime, priceUpdateData);
         runtime.fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, runtime.pythPrice);
         runtime.params = Position.TradeParams(
             order.sizeDelta,
@@ -251,7 +234,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
+        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.params);
 
         recomputeFunding(market, runtime.pythPrice);
 
@@ -289,6 +272,80 @@ contract OrderModule is IOrderModule {
             runtime.pnl,
             runtime.fillPrice
         );
+    }
+
+    function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta == 0) {
+            revert ErrorUtil.OrderNotFound();
+        }
+
+        if (!isOrderStale(order.commitmentTime, PerpMarketConfiguration.load().maxOrderAge)) {
+            revert ErrorUtil.OrderNotStale();
+        }
+
+        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        delete market.orders[accountId];
+    }
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Account.Data storage account = Account.exists(accountId);
+
+        Order.Data storage order = market.orders[accountId];
+
+        // No order available to settle.
+        if (order.sizeDelta == 0) {
+            revert ErrorUtil.OrderNotFound();
+        }
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        if (!isOrderReady(order.commitmentTime, globalConfig.minOrderAge)) {
+            revert ErrorUtil.OrderNotReady();
+        }
+        bool isAccountOwner = msg.sender == account.rbac.owner;
+
+        // If order is stale allow cancelation from owner regardless of price.
+        if (isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
+            // Only allow owner to clear stale orders
+            if (!isAccountOwner) {
+                revert ErrorUtil.OrderStale();
+            }
+        } else {
+            // Order is within settlement window. Check if price tolerance has exceeded
+
+            uint256 pythPrice = PythUtil.parsePythPrice(
+                globalConfig,
+                marketConfig,
+                order.commitmentTime,
+                priceUpdateData
+            );
+            uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
+            uint256 onchainPrice = market.getOraclePrice();
+
+            if (isPriceDivergenceExceeded(onchainPrice, pythPrice, globalConfig.priceDivergencePercent)) {
+                revert ErrorUtil.PriceDivergenceExceeded(pythPrice, onchainPrice);
+            }
+
+            if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
+                revert ErrorUtil.PriceToleranceNotExceeded(order.sizeDelta, fillPrice, order.limitPrice);
+            }
+        }
+
+        uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+        if (keeperFee > 0) {
+            Margin.updateAccountCollateral(accountId, market, keeperFee.toInt() * -1);
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+        }
+
+        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        delete market.orders[accountId];
     }
 
     /**
