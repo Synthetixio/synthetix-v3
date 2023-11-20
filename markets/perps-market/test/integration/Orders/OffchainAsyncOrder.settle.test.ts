@@ -43,6 +43,13 @@ describe('Settle Offchain Async Order test', () => {
     btcSynth = synthMarkets()[0];
   });
 
+  before('set Pyth Benchmark Price data', async () => {
+    const offChainPrice = bn(1000);
+
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
+  });
+
   describe('failures before commiting orders', () => {
     describe('using settle', () => {
       it('reverts if account id is incorrect (not valid order)', async () => {
@@ -142,19 +149,9 @@ describe('Settle Offchain Async Order test', () => {
       describe('attempts to settle before settlement time', () => {
         before(restoreBeforeSettle);
 
-        it('with settle', async () => {
+        it('with settleOrder', async () => {
           await assertRevert(
             systems().PerpsMarket.connect(trader1()).settleOrder(2),
-            'SettlementWindowNotOpen'
-          );
-        });
-
-        it('with settlePythOrder', async () => {
-          // set Pyth setBenchmarkPrice
-          await systems().MockPythERC7412Wrapper.setBenchmarkPrice(startTime, bn(1000));
-
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settleOrder(2),
             'SettlementWindowNotOpen'
           );
         });
@@ -175,9 +172,6 @@ describe('Settle Offchain Async Order test', () => {
         });
 
         it('with settleOrder', async () => {
-          // set Pyth setBenchmarkPrice
-          await systems().MockPythERC7412Wrapper.setBenchmarkPrice(startTime, bn(1000));
-
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
             'SettlementWindowExpired'
@@ -196,28 +190,13 @@ describe('Settle Offchain Async Order test', () => {
           );
         });
 
-        it('reverts with invalid pyth price timestamp (before time)', async () => {
+        it('reverts when there is no benchmark price', async () => {
           // set Pyth setBenchmarkPrice
-          await systems().MockPythERC7412Wrapper.setBenchmarkPrice(startTime, bn(1000));
+          await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(true);
 
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            'PriceFeedNotFoundWithinRange'
-          );
-        });
-
-        it('reverts with invalid pyth price timestamp (after time)', async () => {
-          // set Pyth setBenchmarkPrice
-          await systems().MockPythERC7412Wrapper.setBenchmarkPrice(
-            startTime +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
-              1,
-            1000_0000
-          );
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            'PriceFeedNotFoundWithinRange'
+            'OracleDataRequired'
           );
         });
       });
@@ -244,9 +223,6 @@ describe('Settle Offchain Async Order test', () => {
           }
 
           const availableCollateral = testCase.name === 'only snxBTC' ? bn(0.1) : bn(2.1);
-
-          // set Pyth setBenchmarkPrice
-          await systems().MockPythERC7412Wrapper.setBenchmarkPrice(startTime, bn(1000));
 
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
@@ -291,16 +267,19 @@ describe('Settle Offchain Async Order test', () => {
           });
         });
 
-        describe('settle pyth order', () => {
+        describe('settle order', () => {
           let settleTx: ethers.ContractTransaction;
-
-          before('prepare data', async () => {
-            // set Pyth setBenchmarkPrice
-            await systems().MockPythERC7412Wrapper.setBenchmarkPrice(startTime, bn(1000));
-          });
 
           before('settle', async () => {
             settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
+          });
+
+          before('called wrapper with the right values', async () => {
+            await assertEvent(
+              settleTx,
+              `GetBenchmarkPriceCalled("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`,
+              systems().MockPythERC7412Wrapper
+            );
           });
 
           it('emits settle event', async () => {

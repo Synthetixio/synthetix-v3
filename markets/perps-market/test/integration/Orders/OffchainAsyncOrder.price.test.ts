@@ -43,6 +43,13 @@ describe('Offchain Async Order - Price tests', () => {
     });
   });
 
+  before('set Pyth Benchmark Price data', async () => {
+    const offChainPrice = bn(1000);
+
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
+  });
+
   const restoreToSetCollateralTime = snapshotCheckpoint(provider);
 
   const testCases = [
@@ -94,13 +101,6 @@ describe('Offchain Async Order - Price tests', () => {
         describe('price at max limit', () => {
           before(restoreToSettleTime);
 
-          before('set Pyth Benchmark Price data', async () => {
-            const offChainPrice = 1000_0000;
-
-            // set Pyth setBenchmarkPrice
-            await systems().MockPythERC7412Wrapper.setBenchmarkPrice(commitmentTime, offChainPrice);
-          });
-
           before('settles the order', async () => {
             await systems().PerpsMarket.connect(keeper()).settleOrder(accountId);
           });
@@ -113,13 +113,6 @@ describe('Offchain Async Order - Price tests', () => {
 
         describe('price at min limit', () => {
           before(restoreToSettleTime);
-
-          before('set Pyth Benchmark Price data', async () => {
-            const offChainPrice = 1000_0000;
-
-            // set Pyth setBenchmarkPrice
-            await systems().MockPythERC7412Wrapper.setBenchmarkPrice(commitmentTime, offChainPrice);
-          });
 
           before('settles the order', async () => {
             await systems().PerpsMarket.connect(keeper()).settleOrder(accountId);
@@ -172,11 +165,6 @@ describe('Offchain Async Order - Price tests', () => {
               commitmentTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
               provider()
             );
-
-            const offChainPrice = 1000_0000;
-
-            // set Pyth setBenchmarkPrice
-            await systems().MockPythERC7412Wrapper.setBenchmarkPrice(commitmentTime, offChainPrice);
           });
 
           before('settles the order', async () => {

@@ -79,6 +79,13 @@ describe('Keeper Rewards - Settlement', () => {
     await depositCollateral(collateralsTestCase[0].collateralData);
   });
 
+  before('set Pyth Benchmark Price data', async () => {
+    const offChainPrice = bn(1000);
+
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
+  });
+
   before('commit the order', async () => {
     tx = await systems()
       .PerpsMarket.connect(trader1())
@@ -97,14 +104,6 @@ describe('Keeper Rewards - Settlement', () => {
   before('fast forward to settlement time', async () => {
     // fast forward to settlement
     await fastForwardTo(startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1, provider());
-  });
-
-  before('set Pyth Benchmark Price data', async () => {
-    const settlementTime = startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1;
-    const offChainPrice = 1000_0000;
-
-    // set Pyth setBenchmarkPrice
-    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(settlementTime, offChainPrice);
   });
 
   let initialKeeperBalance: ethers.BigNumber;

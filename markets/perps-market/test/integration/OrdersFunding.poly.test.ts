@@ -49,7 +49,7 @@ describe('Position - funding', () => {
       marketId: ethMarket.marketId(),
       sizeDelta: _TRADER_SIZE,
       settlementStrategyId: ethMarket.strategyId(),
-      price: bn(2000),
+      price: _ETH_PRICE,
     }));
   });
 
@@ -88,7 +88,7 @@ describe('Position - funding', () => {
         marketId: ethMarket.marketId(),
         sizeDelta: bn(10),
         settlementStrategyId: ethMarket.strategyId(),
-        price: bn(2100),
+        price: _ETH_PRICE,
       });
     });
 

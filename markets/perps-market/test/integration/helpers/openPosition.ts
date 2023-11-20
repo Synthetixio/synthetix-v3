@@ -14,6 +14,7 @@ export type OpenPositionData = {
   trackingCode?: string;
   keeper: ethers.Signer;
   referrer?: string;
+  skipSettingPrice?: boolean;
   systems: () => Systems;
   provider: () => ethers.providers.JsonRpcProvider;
 };
@@ -31,6 +32,7 @@ export const openPosition = async (data: OpenPositionData) => {
     referrer,
     trackingCode,
     keeper,
+    skipSettingPrice,
   } = data;
 
   const strategy = await systems().PerpsMarket.getSettlementStrategy(
@@ -60,7 +62,7 @@ export const openPosition = async (data: OpenPositionData) => {
     keeper,
     accountId,
     offChainPrice: price,
-    commitmentTime,
+    skipSettingPrice,
   });
   const settleTime = await getTxTime(provider(), settleTx);
 

@@ -6,7 +6,7 @@ export type SettleOrderData = {
   keeper: ethers.Signer;
   accountId: number;
   offChainPrice: ethers.BigNumberish;
-  commitmentTime: number;
+  skipSettingPrice?: boolean;
 };
 
 export const settleOrder = async ({
@@ -14,11 +14,12 @@ export const settleOrder = async ({
   keeper,
   accountId,
   offChainPrice,
-  commitmentTime,
+  skipSettingPrice,
 }: SettleOrderData): Promise<ethers.ContractTransaction> => {
   // set Pyth setBenchmarkPrice
-  await systems().MockPythERC7412Wrapper.setBenchmarkPrice(commitmentTime, offChainPrice);
-
+  if (!skipSettingPrice) {
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
+  }
   // settle
   const tx = await systems().PerpsMarket.connect(keeper).settleOrder(accountId);
   return tx;
