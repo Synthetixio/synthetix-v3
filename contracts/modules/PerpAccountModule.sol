@@ -32,15 +32,15 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         IPerpAccountModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
         uint128 synthMarketId;
-        uint256 available;
+        uint256 collateralAvailable;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = accountMargin.collaterals[synthMarketId];
+            collateralAvailable = accountMargin.collaterals[synthMarketId];
             depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
                 synthMarketId,
-                available,
-                Margin.getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
+                collateralAvailable,
+                Margin.getCollateralPrice(globalMarginConfig, synthMarketId, collateralAvailable, globalConfig)
             );
 
             unchecked {
