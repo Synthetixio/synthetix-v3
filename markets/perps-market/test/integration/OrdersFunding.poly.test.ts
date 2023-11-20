@@ -11,7 +11,9 @@ const _SKEW_SCALE = bn(10_000);
 const _TRADER_SIZE = bn(20);
 const _ETH_PRICE = bn(2000);
 
-describe('Position - funding', () => {
+// this test checks that the proper values are returned in the OrderSettled event after opening/closing positions
+// specifically the accrued funding and pnl
+describe('Orders events - funding', () => {
   const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
