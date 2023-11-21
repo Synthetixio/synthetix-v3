@@ -88,9 +88,9 @@ library AsyncOrder {
 
     struct Data {
         /**
-         * @dev Time at which the Settlement time is open.
+         * @dev Time at which the order was committed.
          */
-        uint256 settlementTime;
+        uint256 commitmentTime;
         /**
          * @dev Order request details.
          */
@@ -163,17 +163,13 @@ library AsyncOrder {
      * @dev Reverts if there's a pending order.
      * @dev Reverts if accont cannot open a new position (due to max allowed reached).
      */
-    function updateValid(
-        Data storage self,
-        OrderCommitmentRequest memory newRequest,
-        SettlementStrategy.Data storage strategy
-    ) internal {
+    function updateValid(Data storage self, OrderCommitmentRequest memory newRequest) internal {
         checkPendingOrder(newRequest.accountId);
 
         PerpsAccount.validateMaxPositions(newRequest.accountId, newRequest.marketId);
 
         // Replace previous (or empty) order with the commitment request
-        self.settlementTime = block.timestamp + strategy.settlementDelay;
+        self.commitmentTime = block.timestamp;
         self.request = newRequest;
     }
 
@@ -214,19 +210,15 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint256 settlementExpiration = self.settlementTime +
-            settlementStrategy.settlementWindowDuration;
+        uint settlementTime = self.commitmentTime + settlementStrategy.settlementDelay;
+        uint256 settlementExpiration = settlementTime + settlementStrategy.settlementWindowDuration;
 
-        if (block.timestamp < self.settlementTime) {
-            revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
+        if (block.timestamp < settlementTime) {
+            revert SettlementWindowNotOpen(block.timestamp, settlementTime);
         }
 
         if (block.timestamp > settlementExpiration) {
-            revert SettlementWindowExpired(
-                block.timestamp,
-                self.settlementTime,
-                settlementExpiration
-            );
+            revert SettlementWindowExpired(block.timestamp, settlementTime, settlementExpiration);
         }
     }
 
@@ -237,7 +229,8 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view returns (bool) {
-        uint256 settlementExpiration = self.settlementTime +
+        uint256 settlementExpiration = self.commitmentTime +
+            settlementStrategy.settlementDelay +
             settlementStrategy.settlementWindowDuration;
         return block.timestamp > settlementExpiration;
     }

@@ -5,7 +5,6 @@ import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFl
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IAsyncOrderCancelModule} from "../interfaces/IAsyncOrderCancelModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
-import {OffchainUtil} from "../utils/OffchainUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
@@ -40,10 +39,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         ) = AsyncOrder.loadValid(accountId);
 
         int256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
-            .getBenchmarkPrice(
-                settlementStrategy.feedId,
-                (asyncOrder.settlementTime - settlementStrategy.settlementDelay).to64()
-            );
+            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrder.commitmentTime.to64());
 
         _cancelOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
     }

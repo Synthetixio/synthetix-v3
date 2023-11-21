@@ -5,7 +5,6 @@ import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC277
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IAsyncOrderSettlementPythModule} from "../interfaces/IAsyncOrderSettlementPythModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
-import {OffchainUtil} from "../utils/OffchainUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
@@ -53,10 +52,7 @@ contract AsyncOrderSettlementPythModule is
         ) = AsyncOrder.loadValid(accountId);
 
         int256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
-            .getBenchmarkPrice(
-                settlementStrategy.feedId,
-                (asyncOrder.settlementTime - settlementStrategy.settlementDelay).to64()
-            );
+            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrder.commitmentTime.to64());
 
         _settleOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
     }

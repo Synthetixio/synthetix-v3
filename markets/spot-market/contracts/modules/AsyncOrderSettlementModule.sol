@@ -7,7 +7,6 @@ import {SafeCastI256, SafeCastU256, SafeCastI64, SafeCastU64} from "@synthetixio
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
-import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
 import {AsyncOrderClaim} from "../storage/AsyncOrderClaim.sol";
 import {Price} from "../storage/Price.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";

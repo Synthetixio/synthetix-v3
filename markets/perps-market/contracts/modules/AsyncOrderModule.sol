@@ -69,12 +69,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 order.request.accountId,
                 order.request.sizeDelta,
                 order.request.acceptablePrice,
-                order.settlementTime,
+                order.commitmentTime,
                 order.request.trackingCode
             );
         }
 
-        order.updateValid(commitment, strategy);
+        order.updateValid(commitment);
 
         (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
@@ -87,8 +87,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
             strategy.strategyType,
             commitment.sizeDelta,
             commitment.acceptablePrice,
-            order.settlementTime,
-            order.settlementTime + strategy.settlementWindowDuration,
+            order.commitmentTime,
+            order.commitmentTime + strategy.settlementDelay,
+            order.commitmentTime + strategy.settlementDelay + strategy.settlementWindowDuration,
             commitment.trackingCode,
             ERC2771Context._msgSender()
         );
