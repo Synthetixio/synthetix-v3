@@ -63,13 +63,14 @@ export function bootstrapTraders(data: Data) {
       .approve(systems().SpotMarket.address, ethers.constants.MaxUint256);
   });
 
-  accountIds.forEach((id, idx) => {
+  for (let idx = 0; idx < accountIds.length; idx++) {
+    const id = accountIds[idx];
     before(`create account ${id}`, async () => {
       await systems()
         .PerpsMarket.connect([trader1, trader2, trader3][idx])
         ['createAccount(uint128)'](id); // eslint-disable-line no-unexpected-multiline
     });
-  });
+  }
 
   return {
     trader1: () => trader1,

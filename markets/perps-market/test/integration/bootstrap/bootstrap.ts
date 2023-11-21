@@ -113,7 +113,6 @@ export function bootstrapMarkets(data: BootstrapArgs) {
   const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
     signers,
-    provider,
     owner,
     accountIds: data.traderAccountIds,
   });
