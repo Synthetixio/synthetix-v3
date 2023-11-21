@@ -25,12 +25,8 @@ library SettlementStrategy {
          */
         uint256 settlementWindowDuration;
         /**
-         * @dev the duration of the price window, after which price is not valid.
-         */
-        uint256 priceWindowDuration;
-        /**
-         * @dev the address of the contract that will verify the result data blob.
-         * @dev used for pyth and chainlink offchain strategies.
+         * @dev the address of the contract that returns the benchmark price at a given timestamp
+         * @dev generally this contract orchestrates the erc7412 logic to force push an offchain price for a given timestamp.
          */
         address priceVerificationContract; // For Chainlink and Pyth settlement strategies
         /**
