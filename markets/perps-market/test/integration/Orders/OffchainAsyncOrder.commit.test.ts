@@ -46,6 +46,10 @@ describe('Commit Offchain Async Order test', () => {
 
   const restoreToCommit = snapshotCheckpoint(provider);
 
+  it('separate concerns', async () => {
+    assert(true);
+  });
+
   describe('failures', () => {
     it('reverts if market id is incorrect', async () => {
       await assertRevert(
@@ -297,7 +301,6 @@ describe('Commit Offchain Async Order test', () => {
             systems,
             keeper: keeper(),
             accountId: 2,
-            commitmentTime: startTime,
             offChainPrice: bn(1000),
           });
         });
@@ -368,7 +371,6 @@ describe('Commit Offchain Async Order test', () => {
               systems,
               keeper: keeper(),
               accountId: 2,
-              commitmentTime: startTime,
               offChainPrice: bn(1000),
             }),
             'SettlementWindowExpired'

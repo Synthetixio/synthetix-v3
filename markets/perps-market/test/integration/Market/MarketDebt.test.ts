@@ -2,7 +2,6 @@ import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { Signer, ethers } from 'ethers';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Market Debt - single market', () => {
   const orderFees = {
@@ -39,7 +38,7 @@ describe('Market Debt - single market', () => {
 
   let perpsMarket: PerpsMarket;
 
-  before('identify actors', async () => {
+  before('identify actors', () => {
     perpsMarket = perpsMarkets()[0];
   });
 
@@ -272,7 +271,6 @@ describe('Market Debt - single market', () => {
       OpenPositionData,
       'systems' | 'provider' | 'keeper' | 'settlementStrategyId' | 'marketId'
     >;
-    const restoreActivities = snapshotCheckpoint(provider);
 
     before('identify common props', async () => {
       commonOpenPositionProps = {
@@ -284,7 +282,8 @@ describe('Market Debt - single market', () => {
       };
     });
 
-    marketActivities.forEach((marketActivity) => {
+    for (let i = 0; i < marketActivities.length; i++) {
+      const marketActivity = marketActivities[i];
       describe(`Market Activity Step: ${marketActivity.name}`, () => {
         before('set price', async () => {
           if (
@@ -334,7 +333,6 @@ describe('Market Debt - single market', () => {
           );
         });
       });
-    });
-    after(restoreActivities);
+    }
   });
 });
