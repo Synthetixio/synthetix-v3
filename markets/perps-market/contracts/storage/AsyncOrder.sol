@@ -326,12 +326,18 @@ library AsyncOrder {
             KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
             strategy.settlementReward;
 
+        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
+
+        // only account for negative pnl
+        runtime.currentAvailableMargin += MathUtil.min(
+            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize),
+            0
+        );
+
         if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
-
-        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
@@ -508,6 +514,17 @@ library AsyncOrder {
         uint maxNumberOfWindows;
         uint numberOfWindows;
         uint256 requiredRewardMargin;
+    }
+
+    /**
+     * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
+     */
+    function calculateStartingPnl(
+        uint fillPrice,
+        uint marketPrice,
+        int128 size
+    ) internal pure returns (int256) {
+        return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
     }
 
     /**

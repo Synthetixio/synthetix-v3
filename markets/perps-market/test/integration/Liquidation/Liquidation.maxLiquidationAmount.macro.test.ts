@@ -19,7 +19,7 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
         },
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
-          initialMarginFraction: bn(3),
+          initialMarginFraction: bn(1),
           minimumInitialMarginRatio: bn(0),
           maintenanceMarginScalar: bn(0.66),
           maxLiquidationLimitAccumulationMultiplier: bn(1),

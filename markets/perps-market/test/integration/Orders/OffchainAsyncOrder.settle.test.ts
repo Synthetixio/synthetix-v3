@@ -8,7 +8,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
-import { calculateFillPrice } from '../helpers/fillPrice';
+import { calculateFillPrice, calculatePricePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 import { deepEqual } from 'assert/strict';
@@ -223,11 +223,15 @@ describe('Settle Offchain Async Order test', () => {
             return;
           }
 
-          const availableCollateral = testCase.name === 'only snxBTC' ? bn(0.1) : bn(2.1);
+          const currentSkew = await systems().PerpsMarket.skew(ethMarketId);
+          const startingPnl = calculatePricePnl(wei(currentSkew), wei(100_000), wei(1), wei(1000));
+          const availableCollateral = (testCase.name === 'only snxBTC' ? wei(0.1) : wei(2.1)).add(
+            startingPnl
+          );
 
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            `InsufficientMargin("${availableCollateral.toString()}", "${bn(5).toString()}")`
+            `InsufficientMargin("${availableCollateral.bn}", "${bn(5).toString()}")`
           );
         });
       });

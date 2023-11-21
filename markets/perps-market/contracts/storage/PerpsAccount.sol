@@ -60,7 +60,7 @@ library PerpsAccount {
         uint withdrawAmount
     );
 
-    error InsufficientMarginError(uint leftover);
+    error InsufficientAccountMargin(uint leftover);
 
     error AccountLiquidatable(uint128 accountId);
 
@@ -502,7 +502,7 @@ library PerpsAccount {
         }
 
         if (leftoverAmount > 0) {
-            revert InsufficientMarginError(leftoverAmount);
+            revert InsufficientAccountMargin(leftoverAmount);
         }
     }
 
