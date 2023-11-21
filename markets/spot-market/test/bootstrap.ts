@@ -12,9 +12,10 @@ import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/ge
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
-import { AggregatorV3Mock, OracleVerifierMock } from '../typechain-types';
+import { MockPythERC7412Wrapper } from '../typechain-types';
 import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
 import { STRICT_PRICE_TOLERANCE } from './common';
+import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -25,7 +26,7 @@ type Proxies = {
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
-  OracleVerifierMock: OracleVerifierMock;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   ['synthetix.USDRouter']: USDRouter;
 };
 
@@ -36,7 +37,7 @@ export type Systems = {
   USDRouter: USDRouter;
   CollateralMock: CollateralMock;
   OracleManager: OracleManagerProxy;
-  OracleVerifierMock: OracleVerifierMock;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   FeeCollectorMock: FeeCollectorMock;
   Account: AccountProxy;
   Synth: (address: string) => SynthRouter;
@@ -72,7 +73,7 @@ export function bootstrap() {
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       CollateralMock: getContract('synthetix.CollateralMock'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
-      OracleVerifierMock: getContract('OracleVerifierMock'),
+      MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       Synth: (address: string) => getContract('SynthRouter', address),
     };
   });
@@ -113,7 +114,7 @@ export function bootstrapWithSynth(name: string, token: string) {
 
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
   let marketId: BigNumber;
-  let aggregator: AggregatorV3Mock;
+  let aggregator: MockPythExternalNode;
   let contracts: Systems;
 
   before('identify contracts', () => {

@@ -189,7 +189,7 @@ export const bootstrapPerpsMarkets = (
         const strategy = {
           ...DEFAULT_SETTLEMENT_STRATEGY,
           ...(settlementStrategy ?? {}),
-          priceVerificationContract: contracts.MockPyth.address,
+          priceVerificationContract: contracts.MockPythERC7412Wrapper.address,
         };
         // first call is static to get strategyId
         strategyId = await contracts.PerpsMarket.connect(

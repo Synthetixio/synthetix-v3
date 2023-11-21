@@ -2836,6 +2836,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio-auxiliary/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
   version: 0.0.0-use.local
   resolution: "@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"

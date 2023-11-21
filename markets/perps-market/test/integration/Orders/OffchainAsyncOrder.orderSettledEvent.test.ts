@@ -50,6 +50,12 @@ describe('Offchain Async Order - OrderSettled event with funding', () => {
   before('add collateral to margin', async () => {
     await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(1_000_000));
   });
+
+  before('set Pyth Benchmark Price data', async () => {
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
+  });
+
   let fillPriceOrder1: ethers.BigNumber;
   let fillPriceOrder2: ethers.BigNumber;
   let orderFees: ethers.BigNumber;
@@ -81,7 +87,8 @@ describe('Offchain Async Order - OrderSettled event with funding', () => {
       marketId: ethMarket.marketId(),
       sizeDelta: initialPositionSize,
       settlementStrategyId: ethMarket.strategyId(),
-      price: bn(2000),
+      price: _ETH_PRICE,
+      skipSettingPrice: true,
     }));
   });
 
@@ -142,6 +149,7 @@ describe('Offchain Async Order - OrderSettled event with funding', () => {
         sizeDelta: sizeDelta,
         settlementStrategyId: ethMarket.strategyId(),
         price: _ETH_PRICE,
+        skipSettingPrice: true,
       }));
     });
 

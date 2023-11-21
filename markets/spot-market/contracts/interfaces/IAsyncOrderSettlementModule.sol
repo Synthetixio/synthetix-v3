@@ -30,17 +30,6 @@ interface IAsyncOrderSettlementModule {
     );
 
     /**
-     * @notice Gets thrown when settle order is called as a signal to the client to perform offchain lookup.
-     */
-    error OffchainLookup(
-        address sender,
-        string[] urls,
-        bytes callData,
-        bytes4 callbackFunction,
-        bytes extraData
-    );
-
-    /**
      * @notice Gets thrown when offchain verification returns data not associated with the order.
      */
     error InvalidVerificationResponse();
@@ -75,21 +64,4 @@ interface IAsyncOrderSettlementModule {
         uint128 marketId,
         uint128 asyncOrderId
     ) external returns (uint finalOrderAmount, OrderFees.Data memory);
-
-    /**
-     * @notice Callback function for Pyth settlement strategy
-     * @dev This is the selector specified as callback when settlement strategy is pyth offchain.
-     * @dev The data returned from the offchain lookup should be sent as "result"
-     * @dev The extraData is the same as the one sent during the offchain lookup revert error. It is used to retrieve the commitment claim.
-     * @dev this function expects ETH that is passed through to the Pyth contract for the fee it's charging.
-     * @dev To determine the fee, the client should first call getUpdateFee() from Pyth's verifier contract.
-     * @param result result returned from the offchain lookup.
-     * @param extraData extra data sent during the offchain lookup revert error.
-     * @return finalOrderAmount amount returned to trader after fees.
-     * @return fees breakdown of all the fees incurred for the transaction.
-     */
-    function settlePythOrder(
-        bytes calldata result,
-        bytes calldata extraData
-    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees);
 }
