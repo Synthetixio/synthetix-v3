@@ -110,24 +110,25 @@ library Position {
     }
 
     /**
-     * @dev Validates whether the `newPosition` can be liquidated using their health factor.
+     * @dev Validates whether the `newPosition` can be liquidated.
+     * Liquidations are based on onchain price. To know if the new position is liquidateable we:
+     * 1. Calculate the PNL based on entry price and onchain price
+     * 2. Deduct that loss from the margin -> remaining margin
+     * 3. Get maintenance margin (mm)
+     * 4. Calculate health factor (margin / mm)
+     * 5. If health factor <= 1, then liquidateable
      */
     function validateNextPositionIsLiquidatable(
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
         uint256 marginUsd,
-        uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
-        (uint256 healthFactor, , , ) = getHealthData(
-            market,
-            newPosition.size,
-            newPosition.entryPrice,
-            newPosition.entryFundingAccrued,
-            marginUsd,
-            price,
-            marketConfig
-        );
+        uint256 onchainPrice = market.getOraclePrice();
+        int256 pnl = newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt());
+        uint256 remainingMarginUsd = MathUtil.max(marginUsd.toInt() + pnl, 0).toUint();
+        (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
+        uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
 
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
@@ -202,7 +203,7 @@ library Position {
         }
 
         // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(market, newPosition, newMarginUsd, params.fillPrice, marketConfig);
+        validateNextPositionIsLiquidatable(market, newPosition, newMarginUsd, marketConfig);
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
