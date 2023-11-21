@@ -12,6 +12,7 @@ import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 import { deepEqual } from 'assert/strict';
+import assert from 'assert';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -51,6 +52,10 @@ describe('Settle Offchain Async Order test', () => {
     await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
   });
 
+  it('separate concerns', () => {
+    assert(true);
+  });
+
   describe('failures before commiting orders', () => {
     describe('using settle', () => {
       it('reverts if account id is incorrect (not valid order)', async () => {
@@ -69,311 +74,315 @@ describe('Settle Offchain Async Order test', () => {
     });
   });
 
-  const restoreToCommit = snapshotCheckpoint(provider);
+  describe('commiting orders', () => {
+    const restoreToCommit = snapshotCheckpoint(provider);
 
-  const testCases: Array<{ name: string; collateralData: DepositCollateralData }> = [
-    {
-      name: 'only snxUSD',
-      collateralData: {
-        systems,
-        trader: trader1,
-        accountId: () => 2,
-        collaterals: [
-          {
-            snxUSDAmount: () => bn(10_000),
-          },
-        ],
+    const testCases: Array<{ name: string; collateralData: DepositCollateralData }> = [
+      {
+        name: 'only snxUSD',
+        collateralData: {
+          systems,
+          trader: trader1,
+          accountId: () => 2,
+          collaterals: [
+            {
+              snxUSDAmount: () => bn(10_000),
+            },
+          ],
+        },
       },
-    },
-    {
-      name: 'only snxBTC',
-      collateralData: {
-        systems,
-        trader: trader1,
-        accountId: () => 2,
-        collaterals: [
-          {
-            synthMarket: () => btcSynth,
-            snxUSDAmount: () => bn(10_000),
-          },
-        ],
+      {
+        name: 'only snxBTC',
+        collateralData: {
+          systems,
+          trader: trader1,
+          accountId: () => 2,
+          collaterals: [
+            {
+              synthMarket: () => btcSynth,
+              snxUSDAmount: () => bn(10_000),
+            },
+          ],
+        },
       },
-    },
-    {
-      name: 'snxUSD and snxBTC',
-      collateralData: {
-        systems,
-        trader: trader1,
-        accountId: () => 2,
-        collaterals: [
-          {
-            snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
-          },
-          {
-            synthMarket: () => btcSynth,
-            snxUSDAmount: () => bn(10_000),
-          },
-        ],
+      {
+        name: 'snxUSD and snxBTC',
+        collateralData: {
+          systems,
+          trader: trader1,
+          accountId: () => 2,
+          collaterals: [
+            {
+              snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
+            },
+            {
+              synthMarket: () => btcSynth,
+              snxUSDAmount: () => bn(10_000),
+            },
+          ],
+        },
       },
-    },
-  ];
+    ];
 
-  for (let idx = 0; idx < testCases.length; idx++) {
-    const testCase = testCases[idx];
-    describe(`Using ${testCase.name} as collateral`, () => {
-      let tx: ethers.ContractTransaction;
-      let startTime: number;
+    for (let idx = 0; idx < testCases.length; idx++) {
+      const testCase = testCases[idx];
+      describe(`Using ${testCase.name} as collateral`, () => {
+        let tx: ethers.ContractTransaction;
+        let startTime: number;
 
-      before(restoreToCommit);
+        before(restoreToCommit);
 
-      before('add collateral', async () => {
-        await depositCollateral(testCase.collateralData);
-      });
-
-      before('commit the order', async () => {
-        tx = await systems()
-          .PerpsMarket.connect(trader1())
-          .commitOrder({
-            marketId: ethMarketId,
-            accountId: 2,
-            sizeDelta: bn(1),
-            settlementStrategyId: 0,
-            acceptablePrice: bn(1050), // 5% slippage
-            referrer: ethers.constants.AddressZero,
-            trackingCode: ethers.constants.HashZero,
-          });
-        startTime = await getTxTime(provider(), tx);
-      });
-
-      const restoreBeforeSettle = snapshotCheckpoint(provider);
-
-      describe('attempts to settle before settlement time', () => {
-        before(restoreBeforeSettle);
-
-        it('with settleOrder', async () => {
-          await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settleOrder(2),
-            'SettlementWindowNotOpen'
-          );
-        });
-      });
-
-      describe('attempts to settle after settlement window', () => {
-        before(restoreBeforeSettle);
-
-        before('fast forward to past settlement window', async () => {
-          // fast forward to settlement
-          await fastForwardTo(
-            startTime +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
-              1,
-            provider()
-          );
+        before('add collateral', async () => {
+          await depositCollateral(testCase.collateralData);
         });
 
-        it('with settleOrder', async () => {
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            'SettlementWindowExpired'
-          );
-        });
-      });
-
-      describe('attempts to settle with invalid pyth price data', () => {
-        before(restoreBeforeSettle);
-
-        before('fast forward to settlement time', async () => {
-          // fast forward to settlement
-          await fastForwardTo(
-            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
-            provider()
-          );
+        before('commit the order', async () => {
+          tx = await systems()
+            .PerpsMarket.connect(trader1())
+            .commitOrder({
+              marketId: ethMarketId,
+              accountId: 2,
+              sizeDelta: bn(1),
+              settlementStrategyId: 0,
+              acceptablePrice: bn(1050), // 5% slippage
+              referrer: ethers.constants.AddressZero,
+              trackingCode: ethers.constants.HashZero,
+            });
+          startTime = await getTxTime(provider(), tx);
         });
 
-        it('reverts when there is no benchmark price', async () => {
-          // set Pyth setBenchmarkPrice
-          await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(true);
+        const restoreBeforeSettle = snapshotCheckpoint(provider);
 
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            `OracleDataRequired("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`
-          );
-        });
-      });
+        describe('attempts to settle before settlement time', () => {
+          before(restoreBeforeSettle);
 
-      describe('attempts to settle with not enough collateral', () => {
-        // Note: This tests is not valid for the "only snxUSD" case
-        before(restoreBeforeSettle);
-
-        before('fast forward to settlement time', async () => {
-          // fast forward to settlement
-          await fastForwardTo(
-            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
-            provider()
-          );
-        });
-
-        before('update collateral price', async () => {
-          await btcSynth.sellAggregator().mockSetCurrentPrice(bn(0.1));
-        });
-
-        it('reverts with invalid pyth price timestamp (after time)', async () => {
-          if (testCase.name === 'only snxUSD') {
-            return;
-          }
-
-          const availableCollateral = testCase.name === 'only snxBTC' ? bn(0.1) : bn(2.1);
-
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            `InsufficientMargin("${availableCollateral.toString()}", "${bn(5).toString()}")`
-          );
-        });
-      });
-
-      describe('settle order', () => {
-        before(restoreBeforeSettle);
-
-        before('fast forward to settlement time', async () => {
-          // fast forward to settlement
-          await fastForwardTo(
-            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
-            provider()
-          );
-        });
-
-        describe('disable settlement strategy', () => {
-          before(async () => {
-            await systems().PerpsMarket.setSettlementStrategyEnabled(
-              ethMarketId,
-              ethSettlementStrategyId,
-              false
-            );
-          });
-
-          it('reverts with invalid settlement strategy', async () => {
+          it('with settleOrder', async () => {
             await assertRevert(
               systems().PerpsMarket.connect(trader1()).settleOrder(2),
-              'InvalidSettlementStrategy'
+              'SettlementWindowNotOpen'
+            );
+          });
+        });
+
+        describe('attempts to settle after settlement window', () => {
+          before(restoreBeforeSettle);
+
+          before('fast forward to past settlement window', async () => {
+            // fast forward to settlement
+            await fastForwardTo(
+              startTime +
+                DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
+                DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
+                1,
+              provider()
             );
           });
 
-          after(async () => {
-            await systems().PerpsMarket.setSettlementStrategyEnabled(
-              ethMarketId,
-              ethSettlementStrategyId,
-              true
+          it('with settleOrder', async () => {
+            await assertRevert(
+              systems().PerpsMarket.connect(keeper()).settleOrder(2),
+              'SettlementWindowExpired'
+            );
+          });
+        });
+
+        describe('attempts to settle with invalid pyth price data', () => {
+          before(restoreBeforeSettle);
+
+          before('fast forward to settlement time', async () => {
+            // fast forward to settlement
+            await fastForwardTo(
+              startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+              provider()
+            );
+          });
+
+          it('reverts when there is no benchmark price', async () => {
+            // set Pyth setBenchmarkPrice
+            await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(true);
+
+            await assertRevert(
+              systems().PerpsMarket.connect(keeper()).settleOrder(2),
+              `OracleDataRequired("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime})`
+            );
+          });
+        });
+
+        describe('attempts to settle with not enough collateral', () => {
+          // Note: This tests is not valid for the "only snxUSD" case
+          before(restoreBeforeSettle);
+
+          before('fast forward to settlement time', async () => {
+            // fast forward to settlement
+            await fastForwardTo(
+              startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+              provider()
+            );
+          });
+
+          before('update collateral price', async () => {
+            await btcSynth.sellAggregator().mockSetCurrentPrice(bn(0.1));
+          });
+
+          it('reverts with invalid pyth price timestamp (after time)', async () => {
+            if (testCase.name === 'only snxUSD') {
+              return;
+            }
+
+            const availableCollateral = testCase.name === 'only snxBTC' ? bn(0.1) : bn(2.1);
+
+            await assertRevert(
+              systems().PerpsMarket.connect(keeper()).settleOrder(2),
+              `InsufficientMargin("${availableCollateral.toString()}", "${bn(5).toString()}")`
             );
           });
         });
 
         describe('settle order', () => {
-          let settleTx: ethers.ContractTransaction;
+          before(restoreBeforeSettle);
 
-          before('settle', async () => {
-            settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
-          });
-
-          it('emits settle event', async () => {
-            const accountId = 2;
-            const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
-            const sizeDelta = bn(1);
-            const newPositionSize = bn(1);
-            const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
-            const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
-            const trackingCode = `"${ethers.constants.HashZero}"`;
-            const msgSender = `"${await keeper().getAddress()}"`;
-            const params = [
-              ethMarketId,
-              accountId,
-              fillPrice,
-              0,
-              0,
-              sizeDelta,
-              newPositionSize,
-              totalFees,
-              0, // referral fees
-              0, // collected fees
-              settlementReward,
-              trackingCode,
-              msgSender,
-            ];
-            await assertEvent(
-              settleTx,
-              `OrderSettled(${params.join(', ')})`,
-              systems().PerpsMarket
+          before('fast forward to settlement time', async () => {
+            // fast forward to settlement
+            await fastForwardTo(
+              startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+              provider()
             );
           });
 
-          it('emits market updated event', async () => {
-            const price = bn(1000);
-            const marketSize = bn(1);
-            const marketSkew = bn(1);
-            const sizeDelta = bn(1);
-            const currentFundingRate = bn(0);
-            const currentFundingVelocity = calcCurrentFundingVelocity({
-              skew: wei(1),
-              skewScale: wei(100_000),
-              maxFundingVelocity: wei(10),
+          describe('disable settlement strategy', () => {
+            before(async () => {
+              await systems().PerpsMarket.setSettlementStrategyEnabled(
+                ethMarketId,
+                ethSettlementStrategyId,
+                false
+              );
             });
-            const params = [
-              ethMarketId,
-              price,
-              marketSkew,
-              marketSize,
-              sizeDelta,
-              currentFundingRate,
-              currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
-            ];
-            await assertEvent(
-              settleTx,
-              `MarketUpdated(${params.join(', ')})`,
-              systems().PerpsMarket
-            );
+
+            it('reverts with invalid settlement strategy', async () => {
+              await assertRevert(
+                systems().PerpsMarket.connect(trader1()).settleOrder(2),
+                'InvalidSettlementStrategy'
+              );
+            });
+
+            after(async () => {
+              await systems().PerpsMarket.setSettlementStrategyEnabled(
+                ethMarketId,
+                ethSettlementStrategyId,
+                true
+              );
+            });
           });
 
-          it('emits collateral deducted events', async () => {
-            let pendingTotalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
-            const accountId = 2;
+          describe('settle order', () => {
+            let settleTx: ethers.ContractTransaction;
 
-            for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
-              const collateral = testCase.collateralData.collaterals[i];
-              const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
-              let deductedCollateralAmount: ethers.BigNumber = bn(0);
-              if (synthMarket == 0) {
-                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingTotalFees)
-                  ? collateral.snxUSDAmount()
-                  : pendingTotalFees;
-              } else {
-                deductedCollateralAmount = pendingTotalFees.div(10_000);
-              }
-              pendingTotalFees = pendingTotalFees.sub(deductedCollateralAmount);
+            before('settle', async () => {
+              settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
+            });
 
+            it('emits settle event', async () => {
+              const accountId = 2;
+              const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
+              const sizeDelta = bn(1);
+              const newPositionSize = bn(1);
+              const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+              const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+              const trackingCode = `"${ethers.constants.HashZero}"`;
+              const msgSender = `"${await keeper().getAddress()}"`;
+              const params = [
+                ethMarketId,
+                accountId,
+                fillPrice,
+                0,
+                0,
+                sizeDelta,
+                newPositionSize,
+                totalFees,
+                0, // referral fees
+                0, // collected fees
+                settlementReward,
+                trackingCode,
+                msgSender,
+              ];
               await assertEvent(
                 settleTx,
-                `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
+                `OrderSettled(${params.join(', ')})`,
                 systems().PerpsMarket
               );
-            }
-          });
+            });
 
-          it('check position is live', async () => {
-            const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(
-              2,
-              ethMarketId
-            );
-            assertBn.equal(pnl, bn(-0.005));
-            assertBn.equal(funding, bn(0));
-            assertBn.equal(size, bn(1));
-          });
+            it('emits market updated event', async () => {
+              const price = bn(1000);
+              const marketSize = bn(1);
+              const marketSkew = bn(1);
+              const sizeDelta = bn(1);
+              const currentFundingRate = bn(0);
+              const currentFundingVelocity = calcCurrentFundingVelocity({
+                skew: wei(1),
+                skewScale: wei(100_000),
+                maxFundingVelocity: wei(10),
+              });
+              const params = [
+                ethMarketId,
+                price,
+                marketSkew,
+                marketSize,
+                sizeDelta,
+                currentFundingRate,
+                currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+              ];
+              await assertEvent(
+                settleTx,
+                `MarketUpdated(${params.join(', ')})`,
+                systems().PerpsMarket
+              );
+            });
 
-          it('check account open position market ids', async () => {
-            const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
-            deepEqual(positions, [ethMarketId]);
+            it('emits collateral deducted events', async () => {
+              let pendingTotalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+              const accountId = 2;
+
+              for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
+                const collateral = testCase.collateralData.collaterals[i];
+                const synthMarket = collateral.synthMarket
+                  ? collateral.synthMarket().marketId()
+                  : 0;
+                let deductedCollateralAmount: ethers.BigNumber = bn(0);
+                if (synthMarket == 0) {
+                  deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingTotalFees)
+                    ? collateral.snxUSDAmount()
+                    : pendingTotalFees;
+                } else {
+                  deductedCollateralAmount = pendingTotalFees.div(10_000);
+                }
+                pendingTotalFees = pendingTotalFees.sub(deductedCollateralAmount);
+
+                await assertEvent(
+                  settleTx,
+                  `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
+                  systems().PerpsMarket
+                );
+              }
+            });
+
+            it('check position is live', async () => {
+              const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(
+                2,
+                ethMarketId
+              );
+              assertBn.equal(pnl, bn(-0.005));
+              assertBn.equal(funding, bn(0));
+              assertBn.equal(size, bn(1));
+            });
+
+            it('check account open position market ids', async () => {
+              const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
+              deepEqual(positions, [ethMarketId]);
+            });
           });
         });
       });
-    });
-  }
+    }
+  });
 });
