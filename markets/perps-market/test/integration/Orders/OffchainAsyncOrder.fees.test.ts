@@ -178,9 +178,8 @@ describe('Offchain Async Order test - fees', () => {
               systems,
               keeper: keeper(),
               accountId: 2,
-              feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              settlementTime,
-              offChainPrice: 1000,
+              commitmentTime: startTime,
+              offChainPrice: bn(1000),
             });
           });
 

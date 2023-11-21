@@ -1,17 +1,20 @@
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
 import { CollateralMock } from '@synthetixio/main/typechain-types';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
-import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
+import {
+  SpotMarketProxy,
+  SynthRouter,
+  TrustedMulticallForwarder,
+} from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
 import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
+import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -22,7 +25,8 @@ type Proxies = {
   PerpsMarketProxy: PerpsMarketProxy;
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
-  ['MockPyth']: MockPyth;
+  ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
+  ['MockPythERC7412Wrapper']: MockPythERC7412Wrapper;
   ['FeeCollectorMock']: FeeCollectorMock;
 };
 
@@ -31,10 +35,11 @@ export type Systems = {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
-  MockPyth: MockPyth;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
+  TrustedMulticallForwarder: TrustedMulticallForwarder;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
@@ -56,9 +61,12 @@ export function bootstrap() {
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       CollateralMock: getContract('synthetix.CollateralMock'),
+      TrustedMulticallForwarder: getContract(
+        'synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder'
+      ),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
-      MockPyth: getContract('MockPyth'),
+      MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
@@ -175,13 +183,10 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     });
   }
 
-  const restore = snapshotCheckpoint(provider);
-
   return {
     systems,
     signers,
     provider,
-    restore,
     trader1,
     trader2,
     trader3,

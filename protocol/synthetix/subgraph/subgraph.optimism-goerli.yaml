@@ -16,7 +16,7 @@ dataSources:
       file: ./optimism-goerli/index.ts
       abis:
         - name: CoreProxy
-          file: ./optimism-goerli/deployments/CoreProxy.json
+          file: ./optimism-goerli/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule

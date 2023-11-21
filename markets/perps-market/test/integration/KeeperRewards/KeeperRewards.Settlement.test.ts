@@ -65,11 +65,8 @@ describe('Keeper Rewards - Settlement', () => {
     },
   ];
 
-  let extraData: string, updateFee: ethers.BigNumber;
-
   let tx: ethers.ContractTransaction;
   let startTime: number;
-  let pythPriceData: string;
   let settleTx: ethers.ContractTransaction;
 
   before('set keeper costs', async () => {
@@ -80,6 +77,13 @@ describe('Keeper Rewards - Settlement', () => {
 
   before('add collateral', async () => {
     await depositCollateral(collateralsTestCase[0].collateralData);
+  });
+
+  before('set Pyth Benchmark Price data', async () => {
+    const offChainPrice = bn(1000);
+
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
   });
 
   before('commit the order', async () => {
@@ -97,31 +101,9 @@ describe('Keeper Rewards - Settlement', () => {
     startTime = await getTxTime(provider(), tx);
   });
 
-  before('setup bytes data', () => {
-    extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
-    // pythCallData = ethers.utils.solidityPack(
-    //   ['bytes32', 'uint64'],
-    //   [DEFAULT_SETTLEMENT_STRATEGY.feedId, startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay]
-    // );
-  });
-
   before('fast forward to settlement time', async () => {
     // fast forward to settlement
     await fastForwardTo(startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1, provider());
-  });
-
-  before('prepare data', async () => {
-    // Get the latest price
-    pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-      DEFAULT_SETTLEMENT_STRATEGY.feedId,
-      1000_0000,
-      1,
-      -4,
-      1000_0000,
-      1,
-      startTime + 6
-    );
-    updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
   });
 
   let initialKeeperBalance: ethers.BigNumber;
@@ -130,9 +112,7 @@ describe('Keeper Rewards - Settlement', () => {
   });
 
   before('settle', async () => {
-    settleTx = await systems()
-      .PerpsMarket.connect(keeper())
-      .settlePythOrder(pythPriceData, extraData, { value: updateFee });
+    settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
   });
 
   it('keeper gets paid', async () => {

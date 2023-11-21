@@ -40,7 +40,8 @@ describe('PythNode', function () {
         -decimals,
         emaPrice,
         1,
-        timestamp
+        timestamp,
+        0
       );
       const fee = await PythMock['getUpdateFee(bytes[])']([resp]);
       await PythMock.updatePriceFeeds([resp], { value: fee });
@@ -89,7 +90,8 @@ describe('PythNode', function () {
         -decimals,
         emaPrice,
         1,
-        timestamp
+        timestamp,
+        0
       );
       updateFee = await PythMock['getUpdateFee(bytes[])']([priceFeedData]);
     });

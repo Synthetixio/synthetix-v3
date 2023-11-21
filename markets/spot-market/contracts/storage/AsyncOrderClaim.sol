@@ -36,9 +36,9 @@ library AsyncOrderClaim {
          */
         uint256 settlementStrategyId;
         /**
-         * @dev The time at which this order should be settleable. This is the sum of the commitment block time and the settlement delay. Settlement strategies should use the price at this time whenever possible.
+         * @dev The time at which this order was committed.
          */
-        uint256 settlementTime;
+        uint256 commitmentTime;
         /**
          * @dev The minimum amount trader is willing to accept on settlement. This is USD denominated for buy orders and synth denominated for sell orders.
          */
@@ -67,7 +67,6 @@ library AsyncOrderClaim {
         Transaction.Type orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
-        uint256 settlementTime,
         uint256 minimumSettlementAmount,
         address owner,
         address referrer
@@ -80,7 +79,7 @@ library AsyncOrderClaim {
         self.orderType = orderType;
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
-        self.settlementTime = settlementTime;
+        self.commitmentTime = block.timestamp;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.owner = owner;
         self.referrer = referrer;
@@ -108,7 +107,7 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint256 startTime = claim.settlementTime;
+        uint256 startTime = claim.commitmentTime + settlementStrategy.settlementDelay;
         uint256 expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < startTime || block.timestamp >= expirationTime) {
@@ -120,7 +119,9 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint256 expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
+        uint256 expirationTime = claim.commitmentTime +
+            settlementStrategy.settlementDelay +
+            settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {
             revert IneligibleForCancellation(block.timestamp, expirationTime);

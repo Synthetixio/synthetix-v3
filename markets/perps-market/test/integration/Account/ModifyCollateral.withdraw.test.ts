@@ -166,6 +166,7 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
   });
+
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {

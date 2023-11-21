@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { deepEqual } from 'assert/strict';
 
 describe('ModifyCollateral Deposit', () => {
   const accountIds = [10, 20];
@@ -27,9 +28,11 @@ describe('ModifyCollateral Deposit', () => {
     traderAccountIds: accountIds,
   });
   let synthBTCMarketId: ethers.BigNumber;
+  let synthETHMarketId: ethers.BigNumber;
 
   before('identify actors', () => {
-    synthBTCMarketId = synthMarkets()[0].marketId(); // 3
+    synthBTCMarketId = synthMarkets()[0].marketId(); // 2
+    synthETHMarketId = synthMarkets()[1].marketId(); // 3
   });
 
   describe('deposit by modifyCollateral()', () => {
@@ -48,6 +51,12 @@ describe('ModifyCollateral Deposit', () => {
         .buy(synthBTCMarketId, marginAmount, oneBTC, ethers.constants.AddressZero);
     });
 
+    before('trader1 buys 1 snxETH', async () => {
+      await systems()
+        .SpotMarket.connect(trader1())
+        .buy(synthETHMarketId, marginAmount, oneBTC, ethers.constants.AddressZero);
+    });
+
     before('record balances', async () => {
       spotBalanceBefore = await synthMarkets()[0]
         .synth()
@@ -57,6 +66,11 @@ describe('ModifyCollateral Deposit', () => {
 
     before('trader1 approves the perps market', async () => {
       await synthMarkets()[0]
+        .synth()
+        .connect(trader1())
+        .approve(systems().PerpsMarket.address, oneBTC);
+
+      await synthMarkets()[1]
         .synth()
         .connect(trader1())
         .approve(systems().PerpsMarket.address, oneBTC);
@@ -111,6 +125,24 @@ describe('ModifyCollateral Deposit', () => {
         synthBTCMarketId
       );
       assertBn.equal(collateralBalance, bn(1));
+    });
+
+    it('returns the correct list of active collaterals', async () => {
+      const activeCollaterals = await systems().PerpsMarket.getAccountCollateralIds(accountIds[0]);
+
+      deepEqual([synthBTCMarketId], activeCollaterals);
+    });
+
+    it('trader1 adds snxETH collateral', async () => {
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .modifyCollateral(accountIds[0], synthETHMarketId, oneBTC);
+    });
+
+    it('returns the correct list of active collaterals', async () => {
+      const activeCollaterals = await systems().PerpsMarket.getAccountCollateralIds(accountIds[0]);
+
+      deepEqual([synthBTCMarketId, synthETHMarketId], activeCollaterals);
     });
   });
 });

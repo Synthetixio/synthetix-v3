@@ -88,9 +88,9 @@ library AsyncOrder {
 
     struct Data {
         /**
-         * @dev Time at which the Settlement time is open.
+         * @dev Time at which the order was committed.
          */
-        uint256 settlementTime;
+        uint256 commitmentTime;
         /**
          * @dev Order request details.
          */
@@ -163,17 +163,13 @@ library AsyncOrder {
      * @dev Reverts if there's a pending order.
      * @dev Reverts if accont cannot open a new position (due to max allowed reached).
      */
-    function updateValid(
-        Data storage self,
-        OrderCommitmentRequest memory newRequest,
-        SettlementStrategy.Data storage strategy
-    ) internal {
+    function updateValid(Data storage self, OrderCommitmentRequest memory newRequest) internal {
         checkPendingOrder(newRequest.accountId);
 
         PerpsAccount.validateMaxPositions(newRequest.accountId, newRequest.marketId);
 
         // Replace previous (or empty) order with the commitment request
-        self.settlementTime = block.timestamp + strategy.settlementDelay;
+        self.commitmentTime = block.timestamp;
         self.request = newRequest;
     }
 
@@ -214,19 +210,15 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint256 settlementExpiration = self.settlementTime +
-            settlementStrategy.settlementWindowDuration;
+        uint settlementTime = self.commitmentTime + settlementStrategy.settlementDelay;
+        uint256 settlementExpiration = settlementTime + settlementStrategy.settlementWindowDuration;
 
-        if (block.timestamp < self.settlementTime) {
-            revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
+        if (block.timestamp < settlementTime) {
+            revert SettlementWindowNotOpen(block.timestamp, settlementTime);
         }
 
         if (block.timestamp > settlementExpiration) {
-            revert SettlementWindowExpired(
-                block.timestamp,
-                self.settlementTime,
-                settlementExpiration
-            );
+            revert SettlementWindowExpired(block.timestamp, settlementTime, settlementExpiration);
         }
     }
 
@@ -237,7 +229,8 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view returns (bool) {
-        uint256 settlementExpiration = self.settlementTime +
+        uint256 settlementExpiration = self.commitmentTime +
+            settlementStrategy.settlementDelay +
             settlementStrategy.settlementWindowDuration;
         return block.timestamp > settlementExpiration;
     }
@@ -258,7 +251,7 @@ library AsyncOrder {
         int128 newPositionSize;
         uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint256 requiredMaintenanceMargin;
+        uint256 requiredInitialMargin;
         uint256 initialRequiredMargin;
         uint256 totalRequiredMargin;
         Position.Data newPosition;
@@ -296,8 +289,8 @@ library AsyncOrder {
         (
             isEligible,
             runtime.currentAvailableMargin,
+            runtime.requiredInitialMargin,
             ,
-            runtime.requiredMaintenanceMargin,
             runtime.currentLiquidationReward
         ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
 
@@ -333,12 +326,18 @@ library AsyncOrder {
             KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
             strategy.settlementReward;
 
+        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
+
+        // only account for negative pnl
+        runtime.currentAvailableMargin += MathUtil.min(
+            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize),
+            0
+        );
+
         if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
-
-        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
@@ -355,7 +354,7 @@ library AsyncOrder {
                 oldPosition.size,
                 runtime.newPositionSize,
                 runtime.fillPrice,
-                runtime.requiredMaintenanceMargin
+                runtime.requiredInitialMargin
             ) +
             runtime.orderFees;
 
@@ -518,8 +517,19 @@ library AsyncOrder {
     }
 
     /**
+     * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
+     */
+    function calculateStartingPnl(
+        uint fillPrice,
+        uint marketPrice,
+        int128 size
+    ) internal pure returns (int256) {
+        return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
+    }
+
+    /**
      * @notice After the required margins are calculated with the old position, this function replaces the
-     * old position data with the new position margin requirements and returns them.
+     * old position initial margin with the new position initial margin requirements and returns them.
      */
     function getRequiredMarginWithNewPosition(
         PerpsAccount.Data storage account,
@@ -528,31 +538,31 @@ library AsyncOrder {
         int128 oldPositionSize,
         int128 newPositionSize,
         uint256 fillPrice,
-        uint256 currentTotalMaintenanceMargin
+        uint256 currentTotalInitialMargin
     ) internal view returns (uint256) {
         RequiredMarginWithNewPositionRuntime memory runtime;
         // get initial margin requirement for the new position
-        (, , runtime.newRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
+        (, , runtime.newRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             newPositionSize,
             fillPrice
         );
 
-        // get maintenance margin of old position
-        (, , , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
+        // get initial margin of old position
+        (, , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             oldPositionSize,
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
-        // remove the maintenance margin and add the initial margin requirement
+        // remove the old initial margin and add the new initial margin requirement
         // this gets us our total required margin for new position
         runtime.requiredMarginForNewPosition =
-            currentTotalMaintenanceMargin +
+            currentTotalInitialMargin +
             runtime.newRequiredMargin -
             runtime.oldRequiredMargin;
 
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
             .getKeeperRewardsAndCosts(marketId);
-        runtime.accumulatedLiquidationRewards += marketConfig.calculateLiquidationReward(
+        runtime.accumulatedLiquidationRewards += marketConfig.calculateFlagReward(
             MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
         );
         runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(

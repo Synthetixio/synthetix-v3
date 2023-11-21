@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
@@ -38,6 +40,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @inheritdoc ILiquidationModule
      */
     function liquidate(uint128 accountId) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -64,6 +68,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     function liquidateFlagged(
         uint256 maxNumberOfAccounts
     ) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts
@@ -86,6 +92,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     function liquidateFlaggedAccounts(
         uint128[] calldata accountIds
     ) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -135,10 +143,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
     struct LiquidateAccountRuntime {
         uint128 accountId;
-        uint256 totalLiquidationRewards;
+        uint256 totalFlaggingRewards;
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
+        uint256 price;
+        uint128 positionMarketId;
         uint256 loopIterator; // stack too deep to the extreme
     }
 
@@ -149,7 +159,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         PerpsAccount.Data storage account,
         uint costOfFlagExecution,
         uint totalCollateralValue,
-        bool includeFlaggingReward
+        bool positionFlagged
     ) internal returns (uint256 keeperLiquidationReward) {
         LiquidateAccountRuntime memory runtime;
         runtime.accountId = account.id;
@@ -160,9 +170,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             runtime.loopIterator < openPositionMarketIds.length;
             runtime.loopIterator++
         ) {
-            uint128 positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
-            uint256 price = PerpsPrice.getCurrentPrice(
-                positionMarketId,
+            runtime.positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
+            runtime.price = PerpsPrice.getCurrentPrice(
+                runtime.positionMarketId,
                 PerpsPrice.Tolerance.STRICT
             );
 
@@ -170,17 +180,30 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 uint256 amountLiquidated,
                 int128 newPositionSize,
                 int128 sizeDelta,
+                uint256 oldPositionAbsSize,
                 MarketUpdate.Data memory marketUpdateData
-            ) = account.liquidatePosition(positionMarketId, price);
+            ) = account.liquidatePosition(runtime.positionMarketId, runtime.price);
+
+            // endorsed liquidators do not get flag rewards
+            if (
+                ERC2771Context._msgSender() !=
+                PerpsMarketConfiguration.load(runtime.positionMarketId).endorsedLiquidator
+            ) {
+                // using oldPositionAbsSize to calculate flag reward
+                runtime.totalFlaggingRewards += PerpsMarketConfiguration
+                    .load(runtime.positionMarketId)
+                    .calculateFlagReward(oldPositionAbsSize.mulDecimal(runtime.price));
+            }
 
             if (amountLiquidated == 0) {
                 continue;
             }
+
             runtime.totalLiquidated += amountLiquidated;
 
             emit MarketUpdated(
-                positionMarketId,
-                price,
+                runtime.positionMarketId,
+                runtime.price,
                 marketUpdateData.skew,
                 marketUpdateData.size,
                 sizeDelta,
@@ -190,33 +213,18 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
             emit PositionLiquidated(
                 runtime.accountId,
-                positionMarketId,
+                runtime.positionMarketId,
                 amountLiquidated,
                 newPositionSize
             );
-
-            // using amountToLiquidate to calculate liquidation reward
-            uint256 liquidationReward = includeFlaggingReward
-                ? PerpsMarketConfiguration.load(positionMarketId).calculateLiquidationReward(
-                    amountLiquidated.mulDecimal(price)
-                )
-                : 0;
-
-            // endorsed liquidators do not get liquidation rewards
-            if (
-                ERC2771Context._msgSender() !=
-                PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator
-            ) {
-                runtime.totalLiquidationRewards += liquidationReward;
-            }
         }
 
         runtime.totalLiquidationCost =
             KeeperCosts.load().getLiquidateKeeperCosts() +
             costOfFlagExecution;
-        if (runtime.totalLiquidated > 0) {
+        if (positionFlagged || runtime.totalLiquidated > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
-                runtime.totalLiquidationRewards,
+                positionFlagged ? runtime.totalFlaggingRewards : 0,
                 runtime.totalLiquidationCost,
                 totalCollateralValue
             );

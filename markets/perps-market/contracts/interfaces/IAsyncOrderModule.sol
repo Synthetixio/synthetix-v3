@@ -15,7 +15,8 @@ interface IAsyncOrderModule {
      * @param orderType Should send 0 (at time of writing) that correlates to the transaction type enum defined in SettlementStrategy.Type.
      * @param sizeDelta requested change in size of the order sent by the user.
      * @param acceptablePrice maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
-     * @param settlementTime Time at which the order can be settled.
+     * @param commitmentTime Time at which the order was committed.
+     * @param settlementTime start time of the settlement window.
      * @param expirationTime Time at which the order expired.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param sender address of the sender of the order. Authorized to commit by account owner.
@@ -26,6 +27,7 @@ interface IAsyncOrderModule {
         SettlementStrategy.Type orderType,
         int128 sizeDelta,
         uint256 acceptablePrice,
+        uint256 commitmentTime,
         uint256 settlementTime,
         uint256 expirationTime,
         bytes32 indexed trackingCode,
@@ -38,7 +40,7 @@ interface IAsyncOrderModule {
      * @param accountId Id of the account used for the trade.
      * @param sizeDelta requested change in size of the order sent by the user.
      * @param acceptablePrice maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
-     * @param settlementTime Time at which the order can be settled.
+     * @param commitmentTime Time at which the order was committed.
      * @param trackingCode Optional code for integrator tracking purposes.
      */
     event PreviousOrderExpired(
@@ -46,7 +48,7 @@ interface IAsyncOrderModule {
         uint128 indexed accountId,
         int128 sizeDelta,
         uint256 acceptablePrice,
-        uint256 settlementTime,
+        uint256 commitmentTime,
         bytes32 indexed trackingCode
     );
 

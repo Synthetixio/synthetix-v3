@@ -18,9 +18,9 @@ import {KeeperCosts} from "../storage/KeeperCosts.sol";
  * @dev See IGlobalPerpsMarketModule.
  */
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
-    using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using SetUtil for SetUtil.UintSet;
     using KeeperCosts for KeeperCosts.Data;
 
     /**
@@ -31,8 +31,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint256 maxCollateralAmount
     ) external override {
         OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
+        GlobalPerpsMarketConfiguration.load().updateCollateral(synthMarketId, maxCollateralAmount);
 
         emit CollateralConfigurationSet(synthMarketId, maxCollateralAmount);
     }
@@ -45,6 +44,19 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     ) external view override returns (uint256 maxCollateralAmount) {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         maxCollateralAmount = store.maxCollateralAmounts[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getSupportedCollaterals()
+        external
+        view
+        override
+        returns (uint256[] memory supportedCollaterals)
+    {
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        supportedCollaterals = store.supportedCollateralTypes.values();
     }
 
     /**

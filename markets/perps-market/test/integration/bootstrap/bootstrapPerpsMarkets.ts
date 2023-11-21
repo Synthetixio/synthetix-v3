@@ -1,5 +1,4 @@
 import { createStakedPool } from '@synthetixio/main/test/common';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
@@ -190,7 +189,7 @@ export const bootstrapPerpsMarkets = (
         const strategy = {
           ...DEFAULT_SETTLEMENT_STRATEGY,
           ...(settlementStrategy ?? {}),
-          priceVerificationContract: contracts.MockPyth.address,
+          priceVerificationContract: contracts.MockPythERC7412Wrapper.address,
         };
         // first call is static to get strategyId
         strategyId = await contracts.PerpsMarket.connect(
@@ -208,11 +207,8 @@ export const bootstrapPerpsMarkets = (
     }
   );
 
-  const restore = snapshotCheckpoint(r.provider);
-
   return {
     ...r,
-    restore,
     superMarketId: () => superMarketId,
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,

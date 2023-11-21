@@ -35,13 +35,17 @@ library SettlementStrategy {
          */
         bytes32 feedId;
         /**
-         * @dev gateway url for pyth/chainlink to retrieve offchain prices
+         * @dev UNUSED (set to blank) - gateway url for pyth/chainlink to retrieve offchain prices
          */
         string url;
         /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */
         uint256 settlementReward;
+        /**
+         * @dev UNUSED (set to 0) - the % deviation from onchain price that is allowed for offchain settlement.
+         */
+        uint256 priceDeviationTolerance;
         /**
          * @dev minimum amount of USD to be eligible for trade.
          * @dev this is to prevent inflation attacks where a user commits to selling a very small amount

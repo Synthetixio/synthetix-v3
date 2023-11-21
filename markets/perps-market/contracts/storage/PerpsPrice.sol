@@ -22,7 +22,14 @@ library PerpsPrice {
     }
 
     struct Data {
+        /**
+         * @dev the price feed id for the market.  this node is processed using the oracle manager which returns the price.
+         * @dev the staleness tolerance is provided as a runtime argument to this feed for processing.
+         */
         bytes32 feedId;
+        /**
+         * @dev strict tolerance in seconds, mainly utilized for liquidations.
+         */
         uint256 strictStalenessTolerance;
     }
 

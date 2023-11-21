@@ -1,4 +1,4 @@
-import { Wei } from '@synthetixio/wei';
+import { wei, Wei } from '@synthetixio/wei';
 
 type Config = {
   initialMarginRatio: Wei;
@@ -45,4 +45,8 @@ export const getRequiredLiquidationRewardMargin = (
     liqParams.margin.mul(liqGuards.maxKeeperScalingRatioD18)
   );
   return Wei.min(Wei.max(reward, minCap), maxCap);
+};
+
+export const expectedStartingPnl = (marketPrice: Wei, fillPrice: Wei, positionSize: Wei) => {
+  return Wei.min(positionSize.mul(marketPrice.sub(fillPrice)), wei(0));
 };

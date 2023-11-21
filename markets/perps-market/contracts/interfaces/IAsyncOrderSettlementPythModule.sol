@@ -58,8 +58,7 @@ interface IAsyncOrderSettlementPythModule {
 
     /**
      * @notice Settles an offchain order using the offchain retrieved data from pyth.
-     * @param result the blob of data retrieved offchain.
-     * @param extraData Extra data from OffchainLookupData.
+     * @param accountId The account id to settle the order
      */
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable;
+    function settleOrder(uint128 accountId) external;
 }

@@ -99,6 +99,21 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
+    function renouncePoolOwnership(uint128 poolId) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
+        }
+
+        pool.owner = address(0);
+
+        emit PoolOwnershipRenounced(poolId, ERC2771Context._msgSender());
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
     function getPoolOwner(uint128 poolId) external view override returns (address) {
         return Pool.load(poolId).owner;
     }

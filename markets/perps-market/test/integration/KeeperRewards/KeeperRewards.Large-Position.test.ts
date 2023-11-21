@@ -70,7 +70,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
   const rewardGuards = {
     minKeeperRewardUsd: 1,
     minKeeperProfitRatioD18: bn(0),
-    maxKeeperRewardUsd: bn(10),
+    maxKeeperRewardUsd: bn(20),
     maxKeeperScalingRatioD18: bn(0.005),
   };
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {
@@ -156,8 +156,8 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
     );
 
     // emits account liquidated event.
-    // includes the flag reward + flag cost + 1 liquidation cost
-    const expected = bn(5).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost);
+    // includes notional * 0.05  + the flag reward + flag cost + 1 liquidation cost
+    const expected = bn(201 * 0.05).add(KeeperCosts.flagCost + KeeperCosts.liquidateCost);
 
     await assertEvent(
       liquidateTxn,
