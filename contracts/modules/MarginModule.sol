@@ -321,7 +321,7 @@ contract MarginModule is IMarginModule {
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
 
         uint256 previousSupportedSynthMarketIdsLength = previousSupportedSynthMarketIds.length;
-        for (uint i = 0; i < previousSupportedSynthMarketIdsLength; i++) {
+        for (uint i = 0; i < previousSupportedSynthMarketIdsLength; ) {
             uint128 synthMarketId = previousSupportedSynthMarketIds[i];
 
             // If collateral deposited have deposits, but is not in the new collateral list, revert.

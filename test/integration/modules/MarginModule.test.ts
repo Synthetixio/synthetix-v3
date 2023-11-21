@@ -1560,16 +1560,21 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
-      // Set zero allowable deposits.
-      const supportedCollaterals = collaterals();
-      await depositMargin(bs, genTrader(bs, { desiredCollateral: supportedCollaterals[0] }));
-      // Excluding supportedCollaterals[0].synthMarketId(), which has a deposit.
-      const synthMarketIds = [supportedCollaterals[1].synthMarketId()];
-      const maxAllowables = [bn(0)];
+      const supportedCollaterals = shuffle(collaterals());
 
+      const { collateral } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(supportedCollaterals) })
+      );
+      // Excluding "collateral" with deposit and expect revert.
+      const collateralsWithoutDeposit = supportedCollaterals.filter(
+        ({ synthMarketId }) => synthMarketId() !== collateral.synthMarketId()
+      );
+      const synthMarketIds = collateralsWithoutDeposit.map((x) => x.synthMarketId());
+      const maxAllowables = collateralsWithoutDeposit.map((_) => BigNumber.from(0));
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables),
-        `MissingRequiredCollateral("${supportedCollaterals[0].synthMarketId()}")`
+        `MissingRequiredCollateral("${collateral.synthMarketId()}")`
       );
     });
 
