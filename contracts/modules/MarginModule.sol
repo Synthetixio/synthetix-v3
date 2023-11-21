@@ -114,6 +114,30 @@ contract MarginModule is IMarginModule {
         }
     }
 
+    /**
+     * @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.
+     */
+    function isCollateralDeposited(uint128 synthMarketId) private view returns (bool) {
+        PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
+
+        uint128[] memory activeMarketIds = globalPerpMarket.activeMarketIds;
+        uint256 activeMarketIdsLength = activeMarketIds.length;
+
+        // In practice, we should only have one perp market but this has been designed to allow for many. So,
+        // we should consider that possibility and iterate over all active markets.
+        for (uint256 i = 0; i < activeMarketIdsLength; ) {
+            PerpMarket.Data storage market = PerpMarket.load(activeMarketIds[i]);
+
+            if (market.depositedCollateral[synthMarketId] > 0) {
+                return true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        return false;
+    }
+
     // --- Mutative --- //
 
     /**
@@ -243,25 +267,6 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    function isCollateralDeposited(uint128 synthMarketId) internal view returns (bool) {
-        PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
-
-        uint128[] memory activeMarketIds = globalPerpMarket.activeMarketIds;
-        uint256 activeMarketIdsLength = activeMarketIds.length;
-        // Accumulate collateral amounts for active markets
-        for (uint256 i = 0; i < activeMarketIdsLength; ) {
-            PerpMarket.Data storage market = PerpMarket.load(activeMarketIds[i]);
-
-            if (market.depositedCollateral[synthMarketId] > 0) {
-                return true;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        return false;
-    }
-
     /**
      * @inheritdoc IMarginModule
      */
@@ -294,13 +299,6 @@ contract MarginModule is IMarginModule {
     ) external {
         OwnableStorage.onlyOwner();
 
-        // Ensure all arrays have the same length.
-        //
-        // TODO: Add more length checks.
-        if (synthMarketIds.length != maxAllowables.length) {
-            revert ErrorUtil.ArrayLengthMismatch();
-        }
-
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
@@ -308,19 +306,28 @@ contract MarginModule is IMarginModule {
         runtime.lengthBefore = globalMarginConfig.supportedSynthMarketIds.length;
         runtime.lengthAfter = synthMarketIds.length;
         runtime.maxApproveAmount = type(uint256).max;
+        runtime.previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
+
+        // Ensure all supplied arrays have the same length.
+        if (
+            oracleNodeIds.length != runtime.lengthAfter ||
+            maxAllowables.length != runtime.lengthAfter ||
+            rewardDistributors.length != runtime.lengthAfter
+        ) {
+            revert ErrorUtil.ArrayLengthMismatch();
+        }
 
         // Clear existing collateral configuration to be replaced with new.
         for (uint256 i = 0; i < runtime.lengthBefore; ) {
             uint128 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             delete globalMarginConfig.supported[synthMarketId];
+
             approveSynthCollateral(synthMarketId, 0, globalMarketConfig);
 
             unchecked {
                 ++i;
             }
         }
-
-        runtime.previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
         delete globalMarginConfig.supportedSynthMarketIds;
 
         // Update with passed in configuration.
