@@ -67,8 +67,6 @@ describe('MarketConfiguration', () => {
         fixture.settlementStrategy.settlementDelay.toString() +
         ', ' +
         fixture.settlementStrategy.settlementWindowDuration.toString() +
-        ', ' +
-        fixture.settlementStrategy.priceWindowDuration.toString() +
         ', "' +
         fixture.settlementStrategy.priceVerificationContract.toString() +
         '", "' +

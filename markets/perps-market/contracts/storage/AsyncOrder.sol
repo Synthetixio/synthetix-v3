@@ -3,11 +3,9 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
-import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
@@ -19,14 +17,12 @@ import {KeeperCosts} from "./KeeperCosts.sol";
  * @title Async order top level data storage
  */
 library AsyncOrder {
-    using SetUtil for SetUtil.UintSet;
     using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
-    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
     using KeeperCosts for KeeperCosts.Data;
@@ -40,15 +36,6 @@ library AsyncOrder {
      * @notice Thrown when attempting to settle an expired order.
      */
     error SettlementWindowExpired(
-        uint256 timestamp,
-        uint256 settlementTime,
-        uint256 settlementExpiration
-    );
-
-    /**
-     * @notice Thrown when attempting to cancel an order that is not yet expired.
-     */
-    error SettlementWindowNotExpired(
         uint256 timestamp,
         uint256 settlementTime,
         uint256 settlementExpiration
@@ -580,18 +567,6 @@ library AsyncOrder {
 
         // this is the required margin for the new position (minus any order fees)
         return runtime.requiredMarginForNewPosition + runtime.requiredRewardMargin;
-    }
-
-    function getNewPositionsCount(
-        int128 oldPositionSize,
-        int128 newPositionSize
-    ) internal pure returns (bool openingNewPosition, bool closingPosition) {
-        // newPosition>0 and oldPosition >0 => nothing changes
-        // newPosition>0 and oldPosition ==0 => currentPositionsLenght+1
-        // newPosition==0 and oldPosition >0 => currentPositionsLenght-1
-        openingNewPosition = (newPositionSize > 0 && oldPositionSize == 0);
-
-        closingPosition = newPositionSize == 0 && oldPositionSize > 0;
     }
 
     /**
