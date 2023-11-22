@@ -126,6 +126,7 @@ describe('PerpMarketFactoryModule', () => {
       );
     });
   });
+
   describe('getActiveMarketIds', () => {
     it('should return market ids', async () => {
       const { PerpMarketProxy } = systems();
