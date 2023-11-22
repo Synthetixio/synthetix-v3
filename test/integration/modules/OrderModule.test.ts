@@ -7,7 +7,16 @@ import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genSide,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import {
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
@@ -23,6 +32,7 @@ import {
 import { BigNumber } from 'ethers';
 import { calcOrderFees, calcFillPrice } from '../../calculations';
 import { PerpMarketProxy } from '../../generated/typechain';
+import { shuffle } from 'lodash';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -407,7 +417,42 @@ describe('OrderModule', () => {
 
     it('should revert when placing an existing position into instant liquidation');
 
-    it('should revert when placing a new position into instant liquidation');
+    it('should revert when placing a new position into instant liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: 49250 })
+      );
+      await market.aggregator().mockSetCurrentPrice(wei(2.5).toBN());
+      await setMarketConfigurationById(bs, marketId, {
+        skewScale: bn(7500000),
+        incrementalMarginScalar: bn(1),
+        minMarginRatio: bn(0.03),
+        maintenanceMarginScalar: bn(0.75),
+        liquidationRewardPercent: bn(0.01),
+        maxMarketSize: bn(1000000),
+        makerFee: bn(0.0002),
+        takerFee: bn(0.0006),
+      });
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 14.2,
+        desiredSide: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        ),
+        'CanLiquidatePosition()'
+      );
+    });
   });
 
   describe('settleOrder', () => {
