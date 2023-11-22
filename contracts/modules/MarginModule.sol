@@ -292,8 +292,8 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function setCollateralConfiguration(
-        bytes32[] calldata oracleNodeIds,
         uint128[] calldata synthMarketIds,
+        bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables,
         address[] calldata rewardDistributors
     ) external {
