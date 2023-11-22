@@ -172,7 +172,7 @@ depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
 source = "pyth:1.4.0"
-args = [120, 1]       # 120s, 1wei
+args = [120, 1] # 120s, 1wei
 
 
 [contract.AggregatorV3Mock]
@@ -210,18 +210,6 @@ args = [
   "<%= contracts.PerpRewardDistributor.address %>",
 ]
 depends = ["invoke.upgradeProxy", "contract.PerpRewardDistributor"]
-
-# # --- Create and Register PerpRewardDistributor(s) --- #
-
-# [invoke.createRewardDistributor_swsteth]
-# target = ["PerpMarketProxy"]
-# fromCall.func = "owner"
-# func = "createRewardDistributor"
-# args = [
-#   { name = "swsteth Perp Reward Distributor", token = "0x0000000000000000000000000000000000000000" }
-# ]
-# extra.createRewardDistributor_swsteth.event = "RewardDistributorCreated"
-# extra.createRewardDistributor_swsteth.arg = 0
 
 # --- Feature Flags --- #
 
