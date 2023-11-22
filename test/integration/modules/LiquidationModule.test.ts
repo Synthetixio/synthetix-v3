@@ -29,14 +29,13 @@ import {
   SYNTHETIX_USD_MARKET_ID,
   fastForwardBySec,
   extendContractAbi,
-  BURN_ADDRESS,
+  ADDRESS0,
   getSusdCollateral,
   isSusdCollateral,
   findOrThrow,
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
-  logNumber,
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
@@ -348,7 +347,7 @@ describe('LiquidationModule', () => {
       const synthId = collateral.synthMarketId();
 
       let expectedEvents: string[] = [
-        `Transfer("${BURN_ADDRESS}", "${keeperAddress}", ${flagKeeperReward})`,
+        `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
         `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
       ];
@@ -364,17 +363,17 @@ describe('LiquidationModule', () => {
         // Some variables for readability.
         const spotMarketFees = `[0, 0, 0, 0]`;
         const collectedFee = 0;
-        const referrer = BURN_ADDRESS;
+        const referrer = ADDRESS0;
         const collateralAddress = collateral.synthAddress();
 
         expectedEvents = expectedEvents.concat([
           `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
           `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
-          `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${collateralDepositAmount})`,
-          `Transfer("${BURN_ADDRESS}", "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell})`,
+          `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${collateralDepositAmount})`,
+          `Transfer("${ADDRESS0}", "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell})`,
           `MarketUsdWithdrawn(${synthId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${SpotMarket.address}")`,
           `SynthSold(${synthId}, ${usdAmountAfterSpotSell}, ${spotMarketFees}, ${collectedFee}, "${referrer}", ${collateralPrice})`,
-          `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${usdAmountAfterSpotSell})`,
+          `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${usdAmountAfterSpotSell})`,
           `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${PerpMarketProxy.address}")`,
         ]);
       }

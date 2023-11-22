@@ -25,7 +25,7 @@ import {
   fastForwardBySec,
   findEventSafe,
   mintAndApprove,
-  BURN_ADDRESS,
+  ADDRESS0,
   withExplicitEvmMine,
   getSusdCollateral,
   isSusdCollateral,
@@ -281,7 +281,7 @@ describe('MarginModule', async () => {
             receipt,
             [
               /FundingRecomputed/,
-              `Transfer("${traderAddress}", "${BURN_ADDRESS}", ${collateralDepositAmount})`,
+              `Transfer("${traderAddress}", "${ADDRESS0}", ${collateralDepositAmount})`,
               `MarketUsdDeposited(${marketId}, "${traderAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
               `MarginDeposit(${marginDepositEventProperties})`,
             ],
@@ -613,7 +613,7 @@ describe('MarginModule', async () => {
         if (isSusdCollateral(collateral)) {
           // Both of these events are emitted by the core protocol.
           expectedEvents = expectedEvents.concat([
-            `Transfer("${BURN_ADDRESS}", "${traderAddress}", ${withdrawAmount})`,
+            `Transfer("${ADDRESS0}", "${traderAddress}", ${withdrawAmount})`,
             `MarketUsdWithdrawn(${marketId}, "${traderAddress}", ${withdrawAmount}, "${PerpMarketProxy.address}")`,
           ]);
         } else {
@@ -1291,13 +1291,13 @@ describe('MarginModule', async () => {
             /FundingRecomputed/, // funding recomputed, don't care about the exact values here
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${amount})`,
             `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${amount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
-            `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${amount})`, // withdraw collateral, to sell to pay back losing pos in sUSD
-            `Transfer("${BURN_ADDRESS}", "${PerpMarketProxy.address}", ${dollarAmount})`, // emitted from selling synths
+            `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${amount})`, // withdraw collateral, to sell to pay back losing pos in sUSD
+            `Transfer("${ADDRESS0}", "${PerpMarketProxy.address}", ${dollarAmount})`, // emitted from selling synths
             `MarketUsdWithdrawn(${collateralMarketId}, "${PerpMarketProxy.address}", ${dollarAmount}, "${SpotMarket.address}")`, // emitted from selling synthe
-            `SynthSold(${collateralMarketId}, ${dollarAmount}, [0, 0, 0, 0], 0, "${BURN_ADDRESS}", ${newCollateralPrice.toBN()})`, // Sell collateral to sUSD to pay back losing pos
-            `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${dollarAmount})`, // part of depositing sUSD to market manager
+            `SynthSold(${collateralMarketId}, ${dollarAmount}, [0, 0, 0, 0], 0, "${ADDRESS0}", ${newCollateralPrice.toBN()})`, // Sell collateral to sUSD to pay back losing pos
+            `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${dollarAmount})`, // part of depositing sUSD to market manager
             `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${dollarAmount}, "${PerpMarketProxy.address}")`, // deposit sUSD into market manager, this will let LPs of this market profit
-            `Transfer("${BURN_ADDRESS}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
+            `Transfer("${ADDRESS0}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
             `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}")`, // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited
             `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
           ],
