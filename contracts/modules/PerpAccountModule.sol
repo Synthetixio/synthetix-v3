@@ -14,6 +14,7 @@ contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using Margin for Margin.GlobalData;
 
     /**
      * @inheritdoc IPerpAccountModule
@@ -40,7 +41,7 @@ contract PerpAccountModule is IPerpAccountModule {
             depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
                 synthMarketId,
                 collateralAvailable,
-                Margin.getCollateralPrice(globalMarginConfig, synthMarketId, collateralAvailable, globalConfig)
+                globalMarginConfig.getCollateralPrice(synthMarketId, collateralAvailable, globalConfig)
             );
 
             unchecked {

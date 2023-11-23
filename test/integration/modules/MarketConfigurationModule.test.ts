@@ -5,7 +5,7 @@ import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genMarket, genOneOf } from '../../generators';
 
-describe.only('MarketConfigurationModule', async () => {
+describe('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, traders, owner, systems, restore } = bs;
 

@@ -32,6 +32,7 @@ library PerpMarket {
     using SafeCastU128 for uint128;
     using Position for Position.Data;
     using Order for Order.Data;
+    using Margin for Margin.GlobalData;
 
     // --- Constants --- //
 
@@ -361,18 +362,20 @@ library PerpMarket {
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
         uint256 totalValueUsd;
-        uint256 available;
+        uint256 collateralAvailable;
 
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = self.depositedCollateral[synthMarketId];
+            collateralAvailable = self.depositedCollateral[synthMarketId];
 
-            if (available == 0) {
-                continue;
+            if (collateralAvailable > 0) {
+                uint256 price = globalMarginConfig.getCollateralPrice(synthMarketId, collateralAvailable, globalConfig);
+                totalValueUsd += collateralAvailable.mulDecimal(price);
             }
 
-            uint256 price = Margin.getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig);
-            totalValueUsd += available.mulDecimal(price);
+            unchecked {
+                ++i;
+            }
         }
 
         return totalValueUsd;
