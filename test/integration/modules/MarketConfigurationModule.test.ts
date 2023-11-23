@@ -5,7 +5,7 @@ import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genMarket, genOneOf } from '../../generators';
 
-describe('MarketConfigurationModule', async () => {
+describe.only('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, traders, owner, systems, restore } = bs;
 
@@ -31,6 +31,9 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperSettlementGasUnits, global.keeperSettlementGasUnits);
       assert.equal(config.keeperLiquidationGasUnits, global.keeperLiquidationGasUnits);
       assertBn.equal(config.keeperLiquidationFeeUsd, global.keeperLiquidationFeeUsd);
+      assertBn.equal(config.minCollateralHaircut, global.minCollateralHaircut);
+      assertBn.equal(config.maxCollateralHaircut, global.maxCollateralHaircut);
+      assertBn.equal(config.sellExactInMaxSlippagePercent, global.sellExactInMaxSlippagePercent);
 
       await assertEvent(tx, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
     });

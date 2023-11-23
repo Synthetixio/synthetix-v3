@@ -35,20 +35,6 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
             data.name
         );
 
-        // Register the distributor with the specified pool collateralTypes.
-        uint256 length = data.collateralTypes.length;
-        for (uint256 i = 0; i < length; ) {
-            globalConfig.synthetix.registerRewardsDistributor(
-                distributor.getPoolId(),
-                data.collateralTypes[i],
-                address(distributor)
-            );
-
-            unchecked {
-                ++i;
-            }
-        }
-
         emit RewardDistributorCreated(distributorAddress);
         return distributorAddress;
     }

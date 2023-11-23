@@ -120,8 +120,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   // Create a pool which makes `args.markets.length` with all equal weighting.
   const stakedPool = createStakedPool(core, args.pool.stakedCollateralPrice, args.pool.stakedAmount);
 
-  // --- Configure spot market synths --- //
-
+  // Configure spot market synths
   const _COLLATERALS_TO_CONFIGURE = [
     {
       name: 'swstETH',
@@ -143,10 +142,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     })),
     stakedPool
   );
-  const getConfiguredSynths = () => {
-    const synthMarkets = spotMarket.synthMarkets();
-    return _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({ ...collateral, synth: synthMarkets[i] }));
-  };
+  const getConfiguredSynths = () =>
+    _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({ ...collateral, synth: spotMarket.synthMarkets()[i] }));
 
   before(
     'configure global market',
@@ -230,6 +227,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   let collaterals: PerpCollateral[];
   let collateralsWithoutSusd: PerpCollateral[];
   before('configure margin collaterals and their prices', async () => {
+    const { Core, PerpMarketProxy } = systems;
     const synths = getConfiguredSynths();
 
     // Collaterals we want to configure for the perp market - prepended with sUSD configuration.
@@ -241,24 +239,30 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     const rewardDistributors = [ADDRESS0];
 
     // Synth collaterals we previously created.
-    for (const collateral of synths) {
-      const { synth, max, name } = collateral;
+    for (const { synth, max, name } of synths) {
       synthMarketIds.push(synth.marketId());
       maxAllowances.push(max);
       oracleNodeIds.push(synth.sellNodeId());
 
       // Create one RewardDistributor per collateral for distribution.
-      // const x = await systems.PerpMarketProxy.connect(getOwner()).callStatic.createRewardDistributor({
-      //   poolId: stakedPool.poolId,
-      //   name: `${name} RewardDistributor`,
-      //   token: synth.synthAddress(),
-      //   collateralTypes: [stakedPool.collateralAddress()],
-      // });
-      // console.log(x);
+      const poolCollateralTypes = [stakedPool.collateralAddress()];
+      const createArgs = {
+        poolId: stakedPool.poolId,
+        name: `${name} RewardDistributor`,
+        token: synth.synthAddress(),
+        collateralTypes: [stakedPool.collateralAddress()],
+      };
 
-      rewardDistributors.push(ADDRESS0);
+      const distributor = await PerpMarketProxy.connect(getOwner()).callStatic.createRewardDistributor(createArgs);
+      await PerpMarketProxy.connect(getOwner()).createRewardDistributor(createArgs);
+
+      // After creation, register the RewardDistributor with each pool collateral.
+      for (const collateralType of poolCollateralTypes) {
+        await Core.connect(getOwner()).registerRewardsDistributor(createArgs.poolId, collateralType, distributor);
+      }
+      rewardDistributors.push(distributor);
     }
-    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
+    await PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
       synthMarketIds,
       oracleNodeIds,
       maxAllowances,
@@ -338,7 +342,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // always reserved as the owner but everything else is free game.
     //
     // Here we reserve the [1, 2, 3, 4, 5, 6] as traders and the rest can be for other purposes.
-    //
+    // a = owner
+    // b = staker (see stakedPool)
     // 1 = trader
     // 2 = trader
     // 3 = trader
@@ -346,7 +351,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // 5 = trader
     // 6 = keeper (no funds)
     const [trader1, trader2, trader3, trader4, trader5, _keeper, _keeper2, _keeper3, _endorsedKeeper] =
-      getSigners().slice(1);
+      getSigners().slice(2);
     keeper = _keeper;
     keeper2 = _keeper2;
     keeper3 = _keeper3;

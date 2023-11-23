@@ -26,7 +26,10 @@ interface IPerpRewardDistributorFactoryModule {
     // --- Mutative --- //
 
     /**
-     * @notice Create and registers a new RewardDistributor with Synthetix and initializes storage.
+     * @notice Create a new RewardDistributor with Synthetix and initializes storage.
+     *
+     * The pool owner must then make a subsequent `.registerRewardDistributor` invocation against `collateralTypes`
+     * specified in `PerpRewardDistributor.initialize`.
      */
     function createRewardDistributor(
         IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParameters calldata data
