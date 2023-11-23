@@ -25,7 +25,6 @@ import {
   commitAndSettle,
   depositMargin,
   fastForwardBySec,
-  getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
 } from '../../helpers';
@@ -33,9 +32,9 @@ import { Collateral, Market, Trader } from '../../typed';
 import { isSameSide } from '../../calculations';
 import { shuffle, times } from 'lodash';
 
-describe.only('PerpMarketFactoryModule', () => {
+describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { traders, signers, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
+  const { traders, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -123,6 +122,29 @@ describe.only('PerpMarketFactoryModule', () => {
       const nodeId = genBytes32();
       await assertRevert(
         PerpMarketProxy.connect(from).setEthOracleNodeId(nodeId),
+        `Unauthorized("${await from.getAddress()}")`
+      );
+    });
+  });
+
+  describe('setRewardDistributorImplementation', async () => {
+    it('should set successfully', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      const implementation = genAddress();
+      await PerpMarketProxy.connect(from).setRewardDistributorImplementation(implementation);
+      const config = await PerpMarketProxy.getMarketConfiguration();
+
+      assert(config.rewardDistributorImplementation, implementation);
+    });
+
+    it('should revert when not owner', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = traders()[0].signer;
+      const implementation = genAddress();
+      await assertRevert(
+        PerpMarketProxy.connect(from).setRewardDistributorImplementation(implementation),
         `Unauthorized("${await from.getAddress()}")`
       );
     });
