@@ -380,17 +380,17 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory) {
+    function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        MarginModule.AvailableCollateral[] memory collaterals = new AvailableCollateral[](length);
+        MarginModule.ConfiguredCollateral[] memory collaterals = new ConfiguredCollateral[](length);
         uint128 synthMarketId;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             Margin.CollateralType storage c = globalMarginConfig.supported[synthMarketId];
-            collaterals[i] = AvailableCollateral(synthMarketId, c.maxAllowable, c.rewardDistributor);
+            collaterals[i] = ConfiguredCollateral(synthMarketId, c.oracleNodeId, c.maxAllowable, c.rewardDistributor);
 
             unchecked {
                 ++i;

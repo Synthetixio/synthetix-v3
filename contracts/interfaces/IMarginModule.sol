@@ -6,9 +6,11 @@ import "./IBasePerpMarket.sol";
 interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
 
-    struct AvailableCollateral {
+    struct ConfiguredCollateral {
         // Id of the synth market.
         uint128 synthMarketId;
+        // The underlying spot market synth sell oracle node id.
+        bytes32 oracleNodeId;
         // Maximum allowable deposited amount.
         uint128 maxAllowable;
         // Address of the associated reward distributor.
@@ -70,7 +72,7 @@ interface IMarginModule is IBasePerpMarket {
     /**
      * @notice Returns the configured collaterals used as margin.
      */
-    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory);
+    function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory);
 
     /**
      * @notice Returns the total value of deposited collaterals in USD for `accountId` and `marketId`.
