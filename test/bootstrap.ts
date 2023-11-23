@@ -143,7 +143,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     stakedPool
   );
   const getConfiguredSynths = () =>
-    _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({ ...collateral, synth: spotMarket.synthMarkets()[i] }));
+    _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({ ...collateral, synthMarket: spotMarket.synthMarkets()[i] }));
 
   before(
     'configure global market',
@@ -239,17 +239,17 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     const rewardDistributors = [ADDRESS0];
 
     // Synth collaterals we previously created.
-    for (const { synth, max, name } of synths) {
-      synthMarketIds.push(synth.marketId());
+    for (const { synthMarket, max, name } of synths) {
+      synthMarketIds.push(synthMarket.marketId());
       maxAllowances.push(max);
-      oracleNodeIds.push(synth.sellNodeId());
+      oracleNodeIds.push(synthMarket.sellNodeId());
 
       // Create one RewardDistributor per collateral for distribution.
       const poolCollateralTypes = [stakedPool.collateralAddress()];
       const createArgs = {
         poolId: stakedPool.poolId,
         name: `${name} RewardDistributor`,
-        token: synth.synthAddress(),
+        token: synthMarket.synthAddress(),
         collateralTypes: [stakedPool.collateralAddress()],
       };
 
@@ -271,26 +271,26 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     // Collect non-sUSD collaterals along with their Synth Market.
     const nonSusdCollaterals = synths.map((collateral): PerpCollateral => {
-      const { synth } = collateral;
+      const { synthMarket } = collateral;
       return {
         ...collateral,
-        contract: synth,
-        synthMarketId: () => synth.marketId(),
-        synthAddress: () => synth.synthAddress(),
+        contract: synthMarket.synth(),
+        synthMarketId: () => synthMarket.marketId(),
+        synthAddress: () => synthMarket.synthAddress(),
         // Why `sellAggregator`? All of BFP only uses `quoteSellExactIn`, so we only need to mock the `sellAggregator`.
         // If we need to buy synths during tests and for whatever reason we cannot just mint with owner, then that can
         // still be referenced via `collateral.synthMarket.buyAggregator()`.
         //
         // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
-        getPrice: () => synth.sellAggregator().latestRoundData(),
+        getPrice: () => synthMarket.sellAggregator().latestRoundData(),
         // Why `setPrice`?
         //
         // If you only update the price of the sell aggregator, and try to close a losing position things might fail.
         // sellExactIn is called and will revert with Invalid prices, if they differ too much.
         // Adding a convenient method here to update the prices for both
         setPrice: async (price: BigNumber) => {
-          await synth.sellAggregator().mockSetCurrentPrice(price);
-          await synth.buyAggregator().mockSetCurrentPrice(price);
+          await synthMarket.sellAggregator().mockSetCurrentPrice(price);
+          await synthMarket.buyAggregator().mockSetCurrentPrice(price);
         },
       };
     });
