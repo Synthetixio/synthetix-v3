@@ -126,19 +126,22 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       name: 'swstETH',
       initialPrice: bn(genOneOf([1500, 1650, 1750, 1850, 4800])),
       max: bn(500_000),
+      skewScale: bn(1_000_000),
     },
     {
       name: 'srETH',
       initialPrice: bn(genOneOf([1550, 1800, 2000, 2500])),
       max: bn(100_000),
+      skewScale: bn(1_000_000),
     },
   ];
   const spotMarket = bootstrapSynthMarkets(
-    _COLLATERALS_TO_CONFIGURE.map(({ initialPrice, name }) => ({
+    _COLLATERALS_TO_CONFIGURE.map(({ initialPrice, name, skewScale }) => ({
       name,
       token: name,
       buyPrice: initialPrice,
       sellPrice: initialPrice,
+      skewScale,
     })),
     stakedPool
   );

@@ -26,21 +26,23 @@ export type SynthMarket = {
   synthAddress: () => string;
 };
 
-export type SynthArguments = {
+export type BootstrapSynthArgs = {
   name: string;
   token: string;
   buyPrice: ethers.BigNumber;
   sellPrice: ethers.BigNumber;
+  skewScale: ethers.BigNumber;
 }[];
 
-export function bootstrapSynthMarkets(data: SynthArguments, r: ReturnType<typeof createStakedPool>) {
+export function bootstrapSynthMarkets(data: BootstrapSynthArgs, r: ReturnType<typeof createStakedPool>) {
   let contracts: Systems, marketOwner: ethers.Signer;
+
   before('identify actors', () => {
     contracts = r.systems() as unknown as Systems;
     [, , marketOwner] = r.signers();
   });
 
-  const synthMarkets: SynthMarket[] = data.map(({ name, token, buyPrice, sellPrice }) => {
+  const synthMarkets: SynthMarket[] = data.map(({ name, token, buyPrice, sellPrice, skewScale }) => {
     let marketId: ethers.BigNumber,
       buyNodeId: string,
       buyAggregator: AggregatorV3Mock,
@@ -62,6 +64,8 @@ export function bootstrapSynthMarkets(data: SynthArguments, r: ReturnType<typeof
       marketId = await contracts.SpotMarket.callStatic.createSynth(name, token, await marketOwner.getAddress());
       await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
       await contracts.SpotMarket.connect(marketOwner).updatePriceData(marketId, buyNodeId, sellNodeId);
+      await contracts.SpotMarket.connect(marketOwner).setMarketSkewScale(marketId, skewScale);
+
       synthAddress = await contracts.SpotMarket.getSynth(marketId);
       synth = contracts.Synth(synthAddress);
     });
