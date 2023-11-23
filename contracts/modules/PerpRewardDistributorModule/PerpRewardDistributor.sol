@@ -6,9 +6,9 @@ import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRew
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
-import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 
 // @see: https://github.com/Synthetixio/rewards-distributors
 contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
@@ -29,7 +29,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
      */
     function onlyPerpMarket() private view {
         if (msg.sender != _perpMarket) {
-            revert ErrorUtil.Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
     }
 
@@ -38,7 +38,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
      */
     function onlyRewardManager() private view {
         if (msg.sender != _rewardManager) {
-            revert ErrorUtil.Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
     }
 
