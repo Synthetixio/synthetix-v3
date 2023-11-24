@@ -363,14 +363,19 @@ library PerpMarket {
         uint128 synthMarketId;
         uint256 totalValueUsd;
         uint256 collateralAvailable;
+        uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             collateralAvailable = self.depositedCollateral[synthMarketId];
 
             if (collateralAvailable > 0) {
-                uint256 price = globalMarginConfig.getCollateralPrice(synthMarketId, collateralAvailable, globalConfig);
-                totalValueUsd += collateralAvailable.mulDecimal(price);
+                (collateralPrice, ) = globalMarginConfig.getCollateralPrice(
+                    synthMarketId,
+                    collateralAvailable,
+                    globalConfig
+                );
+                totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);
             }
 
             unchecked {

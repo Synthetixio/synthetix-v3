@@ -122,8 +122,6 @@ library Margin {
         // - All position modifications involve 'touching' a position which realizes the profit/loss
         // - All profitable positions are given more sUSD as collateral
         // - All accounting can be performed within the market (i.e. no need to move tokens around)
-
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
         // >0 means to add sUSD to this account's margin (realized profit).
@@ -133,6 +131,8 @@ library Margin {
         } else {
             // <0 means a realized loss and we need to partially deduct from their collateral.
             Margin.GlobalData storage globalMarginConfig = Margin.load();
+            PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
             uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
             uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
 
@@ -140,6 +140,7 @@ library Margin {
             uint128 synthMarketId;
             uint256 available;
             uint256 price;
+            uint256 unadjustedPrice;
             uint256 deductionAmount;
             uint256 deductionAmountUsd;
 
@@ -149,16 +150,21 @@ library Margin {
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
                 if (available > 0) {
-                    price = getUnadjustedCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                    (price, unadjustedPrice) = getCollateralPrice(
+                        globalMarginConfig,
+                        synthMarketId,
+                        available,
+                        globalConfig
+                    );
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
 
                     // If collateral isn't sUSD, withdraw, sell, deposit as USD then continue update accounting.
                     //
                     // A separate `sellExactInMaxSlippagePercent` price adjustment is made for `minReceivedAmount` in
-                    // the `sellExactIn` hence the need for `getUnadjustedCollateralPrice`.
+                    // the `sellExactIn` hence the need for `unadjustedPrice`.
                     if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                        sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, price, globalConfig);
+                        sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, unadjustedPrice, globalConfig);
                     }
 
                     // At this point we can just update the accounting.
@@ -209,6 +215,7 @@ library Margin {
         uint128 synthMarketId;
         uint256 available;
         uint256 collateralUsd;
+        uint256 price;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
@@ -216,9 +223,8 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralUsd += available.mulDecimal(
-                    getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
-                );
+                (price, ) = getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig);
+                collateralUsd += available.mulDecimal(price);
             }
 
             unchecked {
@@ -271,40 +277,26 @@ library Margin {
         uint128 synthMarketId,
         uint256 available,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 price, uint256 unadjustedPrice) {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            return DecimalMath.UNIT;
+            unadjustedPrice = price = DecimalMath.UNIT;
+        } else {
+            // Fetch the raw oracle price.
+            unadjustedPrice = globalConfig
+                .oracleManager
+                .process(self.supported[synthMarketId].oracleNodeId)
+                .price
+                .toUint();
+
+            // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
+            uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
+            uint256 haircut = MathUtil.min(
+                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
+                globalConfig.maxCollateralHaircut
+            );
+
+            // Apply discount on price by the haircut.
+            price = unadjustedPrice.mulDecimal(DecimalMath.UNIT - haircut);
         }
-
-        // Fetch the raw oracle price.
-        uint256 oraclePrice = globalConfig
-            .oracleManager
-            .process(self.supported[synthMarketId].oracleNodeId)
-            .price
-            .toUint();
-
-        // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
-        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
-        uint256 haircut = MathUtil.min(
-            MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
-            globalConfig.maxCollateralHaircut
-        );
-
-        // Apply discount on price by the haircut.
-        return oraclePrice.mulDecimal(DecimalMath.UNIT - haircut);
-    }
-
-    /**
-     * @dev Returns an unadjusted collateral price (directly from oracle).
-     */
-    function getUnadjustedCollateralPrice(
-        Margin.GlobalData storage self,
-        uint128 synthMarketId,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            return DecimalMath.UNIT;
-        }
-        return globalConfig.oracleManager.process(self.supported[synthMarketId].oracleNodeId).price.toUint();
     }
 }
