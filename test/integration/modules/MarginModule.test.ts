@@ -598,11 +598,15 @@ describe('MarginModule', async () => {
         const withdrawAmount = wei(collateralDepositAmount).mul(0.5).toBN();
 
         // Perform the withdraw.
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.synthMarketId(),
-          withdrawAmount.mul(-1)
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarketId(),
+              withdrawAmount.mul(-1)
+            ),
+          provider()
         );
 
         // Create a contract that can parse all events emitted.
@@ -637,7 +641,7 @@ describe('MarginModule', async () => {
         ].join(', ');
         expectedEvents.push(`MarginWithdraw(${marginWithdrawEventProperties})`);
 
-        await assertEvents(tx, expectedEvents, contractsWithAllEvents);
+        await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
       });
 
       it('should allow partial withdraw of collateral to my account', async () => {

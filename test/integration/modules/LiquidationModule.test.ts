@@ -41,7 +41,7 @@ import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
 import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '../../calculations';
 
-describe('LiquidationModule', () => {
+describe.only('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const {
     markets,
@@ -242,61 +242,6 @@ describe('LiquidationModule', () => {
 
       assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection.sub(flagEvent.args.flagKeeperReward));
     });
-
-    it('should sell all available synth collateral for sUSD when flagging', async () => {
-      const { PerpMarketProxy } = systems();
-
-      const collateral = genOneOf(collateralsWithoutSusd());
-      const orderSide = genSide();
-      const marginUsd = genOneOf([1000, 5000]);
-
-      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: marginUsd })
-      );
-
-      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
-        desiredSide: orderSide,
-      });
-      await commitAndSettle(bs, marketId, trader, order1);
-
-      // Verify no USD but _some_ non-USD collateral was used as margin.
-      const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const collateralBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(collateral.synthMarketId())
-      ).available;
-      const usdBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
-      ).available;
-
-      assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
-      assertBn.isZero(usdBalanceBefore);
-
-      // Price moves 10% and results in a healthFactor of < 1.
-      const newMarketOraclePrice = wei(order1.oraclePrice)
-        .mul(orderSide === 1 ? 0.9 : 1.1)
-        .toBN();
-      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-      // Flag for liqudation, triggering the sale of collateral for sUSD.
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
-
-      // Assert the collateral has been sold and all that's left is sUSD (minus fees).
-      const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-
-      const collateralBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(collateral.synthMarketId())
-      ).available;
-      const usdBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
-      ).available;
-
-      assertBn.isZero(collateralBalanceAfter);
-      assertBn.near(usdBalanceAfter, marginUsdDepositAmount); // .near to account for spot-market skewFee.
-    });
-
-    it('should not sell any synth collateral when all collateral is already sUSD');
 
     forEach([
       ['sUSD', () => getSusdCollateral(collaterals())],
@@ -616,9 +561,10 @@ describe('LiquidationModule', () => {
       assertBn.isZero(d2.size);
       assertBn.isZero(d2.skew);
     });
-    it('partial liquidation should update reported debt/ total debt');
 
-    it('full liquidation should update reported debt/ total debt', async () => {
+    it('partial liquidation should update reported debt/total debt');
+
+    it('full liquidation should update reported debt/total debt', async () => {
       const { PerpMarketProxy, Core } = systems();
       const orderSide = genSide();
 

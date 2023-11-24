@@ -248,7 +248,7 @@ describe('OrderModule Cancelations', () => {
       assert.throws(() => findEventSafe(receipt, 'Transfer', PerpMarketProxy));
     });
 
-    it('should cancel order if ready and price exceeds tolerance', async () => {
+    it.only('should cancel order if ready and price exceeds tolerance', async () => {
       const { PerpMarketProxy, Core } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 

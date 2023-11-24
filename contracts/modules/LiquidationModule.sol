@@ -239,6 +239,7 @@ contract LiquidationModule is ILiquidationModule {
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
+        address flagger = market.flaggedLiquidations[accountId];
         (, Position.Data memory newPosition, uint256 liqKeeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
@@ -257,15 +258,7 @@ contract LiquidationModule is ILiquidationModule {
         // Pay the keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
-        emit PositionLiquidated(
-            accountId,
-            marketId,
-            newPosition.size,
-            msg.sender,
-            market.flaggedLiquidations[accountId],
-            liqKeeperFee,
-            oraclePrice
-        );
+        emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqKeeperFee, oraclePrice);
     }
 
     // --- Views --- //
