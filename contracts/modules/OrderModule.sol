@@ -42,8 +42,7 @@ contract OrderModule is IOrderModule {
     // --- Helpers --- //
 
     /**
-     * @dev Ensure fillPrice does not exceed limitPrice.
-     * NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
+     * @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
      */
     function isPriceToleranceExceeded(
         int128 sizeDelta,
@@ -68,7 +67,8 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Ensure Pyth price does not diverge too far from on-chain price from CL.
+     * @dev Ensures Pyth and CL prices do diverge too far.
+     *
      *  e.g. A maximum of 3% price divergence with the following prices:
      * (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
      * (1800, 1750) ~ 2.857143% divergence => Ok
@@ -321,8 +321,7 @@ contract OrderModule is IOrderModule {
                 revert ErrorUtil.OrderStale();
             }
         } else {
-            // Order is within settlement window. Check if price tolerance has exceeded
-
+            // Order is within settlement window. Check if price tolerance has exceeded.
             uint256 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
                 marketConfig,
@@ -351,6 +350,8 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
+    // --- Views --- //
+
     /**
      * @inheritdoc IOrderModule
      */
@@ -359,8 +360,6 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.orders[accountId];
     }
-
-    // --- Views --- //
 
     /**
      * @inheritdoc IOrderModule

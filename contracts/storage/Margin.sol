@@ -149,11 +149,14 @@ library Margin {
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
                 if (available > 0) {
-                    price = getCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig);
+                    price = getUnadjustedCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
 
                     // If collateral isn't sUSD, withdraw, sell, deposit as USD then continue update accounting.
+                    //
+                    // A separate `sellExactInMaxSlippagePercent` price adjustment is made for `minReceivedAmount` in
+                    // the `sellExactIn` hence the need for `getUnadjustedCollateralPrice`.
                     if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
                         sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, price, globalConfig);
                     }
@@ -289,5 +292,19 @@ library Margin {
 
         // Apply discount on price by the haircut.
         return oraclePrice.mulDecimal(DecimalMath.UNIT - haircut);
+    }
+
+    /**
+     * @dev Returns an unadjusted collateral price (directly from oracle).
+     */
+    function getUnadjustedCollateralPrice(
+        Margin.GlobalData storage self,
+        uint128 synthMarketId,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            return DecimalMath.UNIT;
+        }
+        return globalConfig.oracleManager.process(self.supported[synthMarketId].oracleNodeId).price.toUint();
     }
 }
