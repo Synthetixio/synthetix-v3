@@ -274,6 +274,9 @@ contract OrderModule is IOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IOrderModule
+     */
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
@@ -286,7 +289,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotStale();
         }
 
-        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
         delete market.orders[accountId];
     }
 
@@ -344,7 +347,7 @@ contract OrderModule is IOrderModule {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, keeperFee, order.commitmentTime);
         delete market.orders[accountId];
     }
 
