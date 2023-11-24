@@ -21,6 +21,7 @@ describe('OrderModule Cancelations', () => {
   const { systems, restore, provider, keeper, traders } = bs;
 
   beforeEach(restore);
+
   describe('cancelOrder', () => {
     it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
@@ -149,6 +150,7 @@ describe('OrderModule Cancelations', () => {
         PerpMarketProxy
       );
     });
+
     it('should revert when price update from pyth is invalid');
 
     it('should revert if stale order is cancelled by non owner', async () => {
@@ -181,6 +183,7 @@ describe('OrderModule Cancelations', () => {
         `OrderStale()`
       );
     });
+
     it('should revert if price tolerance not exceeded', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -203,6 +206,7 @@ describe('OrderModule Cancelations', () => {
         `PriceToleranceNotExceeded("${order.sizeDelta}", "${fillPrice}", "${order.limitPrice}")`
       );
     });
+
     it('should cancel order if order is stale and caller is trader', async () => {
       const { PerpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
@@ -243,6 +247,7 @@ describe('OrderModule Cancelations', () => {
       // We expect no transfer event because the order was cancelled by caller
       assert.throws(() => findEventSafe(receipt, 'Transfer', PerpMarketProxy));
     });
+
     it('should cancel order if ready and price exceeds tolerance', async () => {
       const { PerpMarketProxy, Core } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
@@ -296,11 +301,12 @@ describe('OrderModule Cancelations', () => {
       const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
       assertBn.gt(keeperFee, bn(0)); // assert real value when new settlement keeper fees implemented
+
       // Make sure accounting for trader reflect the keeper fee
       assertBn.equal(accountDigestBefore.collateralUsd.sub(keeperFee), accountDigestAfter.collateralUsd);
     });
 
-    it('assert all events'); // implement when new settlement keeper fees implemented
+    it('should emit all events in correct order');
   });
 
   describe('cancelStaleOrder', () => {

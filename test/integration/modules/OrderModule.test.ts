@@ -26,8 +26,7 @@ import { PerpMarketProxy } from '../../generated/typechain';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, ethOracleNode, collaterals, collateralsWithoutSusd, markets, traders } =
-    bs;
+  const { systems, restore, provider, keeper, ethOracleNode, collateralsWithoutSusd, markets, traders } = bs;
 
   beforeEach(restore);
 
@@ -723,7 +722,6 @@ describe('OrderModule', () => {
 
             const position = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
             assertBn.isZero(position.size);
-
             break;
           }
           default:
