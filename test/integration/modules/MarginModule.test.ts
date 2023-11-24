@@ -815,6 +815,10 @@ describe('MarginModule', async () => {
           desiredLeverage: 5,
         });
 
+        // `collateralPrice` does not include haircut so to make it easier, do the same here. If not, a higher price
+        // would mean fewer units to withdraw and hence will stay above im.
+        await setMarketConfiguration(bs, { minCollateralHaircut: bn(0), maxCollateralHaircut: bn(0) });
+
         // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
 
