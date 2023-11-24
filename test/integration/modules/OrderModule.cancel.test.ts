@@ -7,12 +7,22 @@ import assert from 'assert';
 import { shuffle } from 'lodash';
 import { assertEvents } from '../../assert';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader, toRoundRobinGenerators } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genSide,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import {
   depositMargin,
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
+  setMarketConfiguration,
   withExplicitEvmMine,
 } from '../../helpers';
 
@@ -153,7 +163,7 @@ describe('OrderModule Cancelations', () => {
 
     it('should revert when price update from pyth is invalid');
 
-    it('should revert if stale order is cancelled by non owner', async () => {
+    it('should revert if stale order is canceled by non owner', async () => {
       const { PerpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
@@ -239,24 +249,31 @@ describe('OrderModule Cancelations', () => {
       );
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.isZero(orderDigestAfter.sizeDelta);
+
       await assertEvents(
         receipt,
-        [`OrderCanceled(${trader.accountId}, ${marketId}, ${orderDigestBefore.commitmentTime})`],
+        [`OrderCanceled(${trader.accountId}, ${marketId}, 0, ${orderDigestBefore.commitmentTime})`],
         PerpMarketProxy
       );
-      // We expect no transfer event because the order was cancelled by caller
+
+      // We expect no transfer event because the order was canceled by caller
       assert.throws(() => findEventSafe(receipt, 'Transfer', PerpMarketProxy));
     });
 
-    it.only('should cancel order if ready and price exceeds tolerance', async () => {
-      const { PerpMarketProxy, Core } = systems();
+    it('should cancel order when within settlement window but price exceeds tolerance', async () => {
+      const { PerpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
         bs,
         genTrader(bs, { desiredTrader: tradersGenerator.next().value })
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      const orderSide = genSide();
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: orderSide,
+        desiredKeeperFeeBufferUsd: 0,
+      });
 
       await PerpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
@@ -266,10 +283,13 @@ describe('OrderModule Cancelations', () => {
         order.keeperFeeBufferUsd
       );
 
-      // Update market price to be outside of tolerance
+      // Update market price to be outside of tolerance.
       await market
         .aggregator()
-        .mockSetCurrentPrice(order.sizeDelta.gt(0) ? order.limitPrice.add(1) : order.limitPrice.sub(1));
+        .mockSetCurrentPrice(orderSide === 1 ? order.limitPrice.add(1) : order.limitPrice.sub(1));
+
+      // Fees are calculated against the discounted collateral value. Do not discount the collateral.
+      await setMarketConfiguration(bs, { minCollateralHaircut: bn(0), maxCollateralHaircut: bn(0) });
 
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
@@ -289,20 +309,19 @@ describe('OrderModule Cancelations', () => {
 
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.isZero(orderDigestAfter.sizeDelta);
+      const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      const canceledEvent = findEventSafe(receipt, 'OrderCanceled', PerpMarketProxy);
+      const keeperFee = canceledEvent!.args.keeperFee;
+      assertBn.gt(keeperFee, bn(0)); // TODO: assert real value when new settlement keeper fees implemented
 
       await assertEvent(
         receipt,
-        `OrderCanceled(${trader.accountId}, ${marketId}, ${orderDigestBefore.commitmentTime})`,
+        `OrderCanceled(${trader.accountId}, ${marketId}, ${keeperFee}, ${orderDigestBefore.commitmentTime})`,
         PerpMarketProxy
       );
 
-      const coreUsdWithdrawEvent = findEventSafe(receipt, 'MarketUsdWithdrawn', Core);
-      const keeperFee = coreUsdWithdrawEvent!.args.amount;
-      const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-
-      assertBn.gt(keeperFee, bn(0)); // assert real value when new settlement keeper fees implemented
-
-      // Make sure accounting for trader reflect the keeper fee
+      // Make sure accounting for trader reflect the keeper fee.
       assertBn.equal(accountDigestBefore.collateralUsd.sub(keeperFee), accountDigestAfter.collateralUsd);
     });
 
@@ -427,7 +446,7 @@ describe('OrderModule Cancelations', () => {
       assertBn.isZero(orderDigestAfter.sizeDelta);
       await assertEvents(
         receipt,
-        [`OrderCanceled(${trader.accountId}, ${marketId}, ${orderDigestBefore.commitmentTime})`],
+        [`OrderCanceled(${trader.accountId}, ${marketId}, 0, ${orderDigestBefore.commitmentTime})`],
         PerpMarketProxy
       );
     });

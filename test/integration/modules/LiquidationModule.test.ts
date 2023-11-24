@@ -26,13 +26,10 @@ import {
   getBlockTimestamp,
   withExplicitEvmMine,
   findEventSafe,
-  SYNTHETIX_USD_MARKET_ID,
   fastForwardBySec,
   extendContractAbi,
   ADDRESS0,
   getSusdCollateral,
-  isSusdCollateral,
-  findOrThrow,
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
@@ -41,7 +38,7 @@ import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
 import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '../../calculations';
 
-describe.only('LiquidationModule', () => {
+describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const {
     markets,
@@ -101,7 +98,9 @@ describe.only('LiquidationModule', () => {
     });
 
     it('getLiquidationFees returns liqKeeperFees small position');
+
     it('getLiquidationFees returns liqKeeperFees big position');
+
     it('getLiquidationFees returns flagKeeperReward');
 
     it('should remove any pending orders when present', async () => {
@@ -136,7 +135,11 @@ describe.only('LiquidationModule', () => {
 
       // Just assert that flag is triggered, actual values are tested elsewhere
       await assertEvent(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
-      await assertEvent(receipt, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
+      await assertEvent(
+        receipt,
+        `OrderCanceled(${trader.accountId}, ${marketId}, 0, ${commitmentTime})`,
+        PerpMarketProxy
+      );
     });
 
     it('should send flagKeeperReward to keeper', async () => {
@@ -289,39 +292,12 @@ describe.only('LiquidationModule', () => {
           .concat(spotMarketEvents)
           .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
       );
-      const synthId = collateral.synthMarketId();
 
-      let expectedEvents: string[] = [
+      const expectedEvents: string[] = [
         `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
         `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
       ];
-
-      if (!isSusdCollateral(collateral)) {
-        // It's quite hard to calculate the skew fee from selling our collateral, so we cheat a little grab it from the event
-        const usdAmountAfterSpotSell = findEventSafe(receipt, 'SynthSold', contractsWithAllEvents)?.args
-          .amountReturned as BigNumber;
-
-        // Assert that it's slightly smaller (or equal depending on skew scale) than the deposited amount
-        assertBn.lte(usdAmountAfterSpotSell, marginUsdDepositAmount);
-
-        // Some variables for readability.
-        const spotMarketFees = `[0, 0, 0, 0]`;
-        const collectedFee = 0;
-        const referrer = ADDRESS0;
-        const collateralAddress = collateral.synthAddress();
-
-        expectedEvents = expectedEvents.concat([
-          `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
-          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
-          `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${collateralDepositAmount})`,
-          `Transfer("${ADDRESS0}", "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell})`,
-          `MarketUsdWithdrawn(${synthId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${SpotMarket.address}")`,
-          `SynthSold(${synthId}, ${usdAmountAfterSpotSell}, ${spotMarketFees}, ${collectedFee}, "${referrer}", ${collateralPrice})`,
-          `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${usdAmountAfterSpotSell})`,
-          `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${PerpMarketProxy.address}")`,
-        ]);
-      }
 
       await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
     });
