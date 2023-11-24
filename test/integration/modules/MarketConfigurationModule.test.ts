@@ -4,10 +4,11 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genMarket, genOneOf } from '../../generators';
+import { withExplicitEvmMine } from '../../helpers';
 
 describe('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, owner, systems, restore } = bs;
+  const { markets, traders, owner, systems, restore, provider } = bs;
 
   beforeEach(restore);
 
@@ -17,7 +18,10 @@ describe('MarketConfigurationModule', async () => {
       const from = owner();
 
       const { global } = genBootstrap();
-      const tx = await PerpMarketProxy.connect(from).setMarketConfiguration(global);
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(from).setMarketConfiguration(global),
+        provider()
+      );
       const config = await PerpMarketProxy.getMarketConfiguration();
 
       assertBn.equal(config.priceDivergencePercent, global.priceDivergencePercent);
@@ -35,7 +39,7 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(config.maxCollateralHaircut, global.maxCollateralHaircut);
       assertBn.equal(config.sellExactInMaxSlippagePercent, global.sellExactInMaxSlippagePercent);
 
-      await assertEvent(tx, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
+      await assertEvent(receipt, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
     });
 
     it('should revert with non-owner', async () => {
@@ -59,7 +63,11 @@ describe('MarketConfigurationModule', async () => {
       const marketId = genOneOf(markets()).marketId();
       const { specific } = genMarket();
 
-      const tx = await PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific);
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        provider()
+      );
+
       const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
 
       assert.equal(specific.oracleNodeId, config.oracleNodeId);
@@ -79,7 +87,11 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.liquidationLimitScalar, config.liquidationLimitScalar);
       assertBn.equal(specific.liquidationWindowDuration, config.liquidationWindowDuration);
 
-      await assertEvent(tx, `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`, PerpMarketProxy);
+      await assertEvent(
+        receipt,
+        `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`,
+        PerpMarketProxy
+      );
     });
 
     it('should revert with non-owner', async () => {
