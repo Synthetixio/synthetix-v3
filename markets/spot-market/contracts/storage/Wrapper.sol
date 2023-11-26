@@ -8,7 +8,7 @@ import {SpotMarketFactory} from "./SpotMarketFactory.sol";
  * @title Wrapper library servicing the wrapper module
  */
 library Wrapper {
-    error InvalidCollateralType(bytes32 message);
+    error InvalidCollateralType(address configuredCollateralType);
     /**
      * @notice Thrown when user tries to wrap more than the set supply cap for the market.
      */
@@ -70,8 +70,8 @@ library Wrapper {
             .getMarketCollateralAmount(marketId, configuredCollateralType);
         // you are only allowed to update the collateral type if the collateral amount deposited
         // into the market manager is 0.
-        if (currentMarketCollateralAmount != 0) {
-            revert InvalidCollateralType("Already set");
+        if (wrapCollateralType != configuredCollateralType && currentMarketCollateralAmount != 0) {
+            revert InvalidCollateralType(configuredCollateralType);
         }
 
         self.wrapCollateralType = wrapCollateralType;
@@ -80,7 +80,7 @@ library Wrapper {
 
     function validateWrapper(Data storage self) internal view {
         if (self.wrapCollateralType == address(0)) {
-            revert InvalidCollateralType("Not set");
+            revert InvalidCollateralType(address(0));
         }
     }
 }
