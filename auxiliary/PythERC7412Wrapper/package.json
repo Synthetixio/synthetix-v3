@@ -20,7 +20,7 @@
     "docgen": "hardhat docgen"
   },
   "keywords": [],
-  "author": "",
+  "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
     "@synthetixio/common-config": "workspace:*",
