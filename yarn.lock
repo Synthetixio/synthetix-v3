@@ -3816,9 +3816,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.10.0, @usecannon/builder@npm:^2.9.11":
-  version: 2.10.0
-  resolution: "@usecannon/builder@npm:2.10.0"
+"@usecannon/builder@npm:^2.9.11":
+  version: 2.9.11
+  resolution: "@usecannon/builder@npm:2.9.11"
   dependencies:
     "@synthetixio/router": "npm:^3.3.0"
     axios: "npm:^1.2.2"
@@ -3833,17 +3833,17 @@ __metadata:
     zod: "npm:^3.21.4"
   peerDependencies:
     ethers: ">=5.6.0 < 6.0.0"
-  checksum: 465648e140b45573dd635ba93b70b0d584f2dd9a446dfe6042580109551273e69bf25ff678515277021d2f44be3b617db29286fdae07b2c097bd3cc2b69abe15
+  checksum: d7ad71f886e0952d2a61ce24c35dda4ddae01a89d242080143ef0cfff7e1b39a819714bba8392b716323730529fba7a034033c5fd56ed4f9b82fa29f7a71ffc0
   languageName: node
   linkType: hard
 
 "@usecannon/cli@npm:^2.9.11":
-  version: 2.10.0
-  resolution: "@usecannon/cli@npm:2.10.0"
+  version: 2.9.11
+  resolution: "@usecannon/cli@npm:2.9.11"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
     "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:^2.10.0"
+    "@usecannon/builder": "npm:^2.9.11"
     chalk: "npm:^4.1.2"
     commander: "npm:^9.5.0"
     debug: "npm:^4.3.4"
@@ -3860,7 +3860,7 @@ __metadata:
     untildify: "npm:^4.0.0"
   bin:
     cannon: bin/cannon.js
-  checksum: df5414286a3a7e2d1873f749ca791e2d0aa6a0053188cba53fb9f88dd26ded3c92fdb463e7b657bf9390ce8fe9ac4acda38098304240ad242d22e01b43015c47
+  checksum: f66eb99f9137e00101ccddce426c33f1cf6fc9ed65669c8b6b99c532df7abce6c8173ebe6bc992d32dfe30dc966372a82fea9612eed09555e8f2a222c85cdd2c
   languageName: node
   linkType: hard
 
