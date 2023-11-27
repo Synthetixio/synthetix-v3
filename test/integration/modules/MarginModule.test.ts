@@ -1476,7 +1476,7 @@ describe('MarginModule', async () => {
   });
 
   describe('setCollateralConfiguration', () => {
-    it('should revert when array has mismatched length', async () => {
+    it('should revert when config arrays has mismatched lengths', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
@@ -1725,6 +1725,18 @@ describe('MarginModule', async () => {
   });
 
   describe('setCollateralMaxAllowable', () => {
+    it('should revert when max allowable is negative', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const from = owner();
+      const { synthMarketId } = genOneOf(collaterals());
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralMaxAllowable(synthMarketId(), bn(-1)),
+        'Error: value out-of-bounds'
+      );
+    });
+
     it('should revert when non-owner', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -1747,22 +1759,30 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should update max allowable', async () => {
-      const { PerpMarketProxy } = systems();
-      const from = owner();
-      const { synthMarketId } = shuffle(collaterals())[0];
-      const { maxAllowable: maxAllowableBefore } = findOrThrow(await PerpMarketProxy.getConfiguredCollaterals(), (x) =>
-        x.synthMarketId.eq(synthMarketId())
-      );
-      assertBn.gt(maxAllowableBefore, bn(0));
-      await PerpMarketProxy.connect(from).setCollateralMaxAllowable(synthMarketId(), bn(0));
-      const configuredCollateral = await PerpMarketProxy.getConfiguredCollaterals();
+    forEach([bn(0), bn(genNumber(20_000, 30_000)), bn(genNumber(30_001, 50_000))]).it(
+      `should update max allowable for '%s'`,
+      async (newMaxAllowable) => {
+        const { PerpMarketProxy } = systems();
+        const from = owner();
 
-      const { maxAllowable: maxAllowableAfter } = findOrThrow(configuredCollateral, (x) =>
-        x.synthMarketId.eq(synthMarketId())
-      );
-      assertBn.equal(maxAllowableAfter, bn(0));
-    });
+        const collateral = genOneOf(collaterals());
+
+        const { maxAllowable: maxAllowableBefore } = findOrThrow(
+          await PerpMarketProxy.getConfiguredCollaterals(),
+          ({ synthMarketId }) => synthMarketId.eq(collateral.synthMarketId())
+        );
+
+        assertBn.gt(maxAllowableBefore, bn(0));
+
+        await PerpMarketProxy.connect(from).setCollateralMaxAllowable(collateral.synthMarketId(), newMaxAllowable);
+        const configuredCollateral = await PerpMarketProxy.getConfiguredCollaterals();
+
+        const { maxAllowable: maxAllowableAfter } = findOrThrow(configuredCollateral, ({ synthMarketId }) =>
+          synthMarketId.eq(collateral.synthMarketId())
+        );
+        assertBn.equal(maxAllowableAfter, newMaxAllowable);
+      }
+    );
   });
 
   describe('getCollateralUsd', () => {

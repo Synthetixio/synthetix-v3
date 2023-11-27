@@ -246,6 +246,8 @@ describe('LiquidationModule', () => {
       assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection.sub(flagEvent.args.flagKeeperReward));
     });
 
+    it('should not modify any existing collateral as margin');
+
     forEach([
       ['sUSD', () => getSusdCollateral(collaterals())],
       ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
