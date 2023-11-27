@@ -2821,51 +2821,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.0"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.1"
-    typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
-"@synthetixio-auxiliary/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio-auxiliary/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.0"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.1"
-    typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
-"@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.0"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.1"
-    typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
 "@synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
   version: 0.0.0-use.local
   resolution: "@synthetixio/common-config@workspace:utils/common-config"
@@ -3051,6 +3006,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/oracle-manager@workspace:*, @synthetixio/oracle-manager@workspace:protocol/oracle-manager":
   version: 0.0.0-use.local
   resolution: "@synthetixio/oracle-manager@workspace:protocol/oracle-manager"
@@ -3107,6 +3077,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/router@npm:^3.3.0":
   version: 3.3.0
   resolution: "@synthetixio/router@npm:3.3.0"
@@ -3137,6 +3122,21 @@ __metadata:
     hardhat: "npm:^2.19.0"
     hardhat-cannon: "npm:^2.9.11"
     solidity-coverage: "npm:^0.8.5"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
   languageName: unknown
   linkType: soft
 
