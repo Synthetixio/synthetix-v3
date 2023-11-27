@@ -47,7 +47,7 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         AsyncOrderConfiguration.Data storage config = AsyncOrderConfiguration.load(marketId);
-        config.validateStrategyIndex(strategyId);
+        config.validateStrategyExists(strategyId);
 
         if (strategy.settlementWindowDuration == 0) {
             revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
@@ -69,7 +69,7 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         AsyncOrderConfiguration.Data storage config = AsyncOrderConfiguration.load(marketId);
-        config.validateStrategyIndex(strategyId);
+        config.validateStrategyExists(strategyId);
 
         SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
         strategy.disabled = !enabled;

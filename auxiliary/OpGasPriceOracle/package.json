@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "name": "@synthetixio/op-gas-price-oracle",
   "version": "3.3.5",
+=======
+  "name": "@synthetixio-auxiliary/op-gas-price-oracle",
+  "version": "3.3.4",
+>>>>>>> 37b34f2e (add test for spot)
   "description": "Optimism Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"

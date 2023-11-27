@@ -141,7 +141,7 @@ library PerpsMarketConfiguration {
         uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
         Data storage self = load(marketId);
-        validateStrategyIndex(self, settlementStrategyId);
+        validateStrategyExists(self, settlementStrategyId);
 
         strategy = self.settlementStrategies[settlementStrategyId];
         if (strategy.disabled) {
@@ -149,7 +149,7 @@ library PerpsMarketConfiguration {
         }
     }
 
-    function validateStrategyIndex(
+    function validateStrategyExists(
         Data storage config,
         uint256 settlementStrategyId
     ) internal view {

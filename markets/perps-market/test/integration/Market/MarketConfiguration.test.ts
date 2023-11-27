@@ -126,17 +126,15 @@ describe('MarketConfiguration', () => {
       describe('when strategy doesnt exist', () => {
         it('reverts', async () => {
           await assertRevert(
-            systems()
-              .PerpsMarket.connect(randomUser)
-              .setSettlementStrategyEnabled(marketId, 1, true),
-            `Unauthorized`
+            systems().PerpsMarket.connect(owner()).setSettlementStrategyEnabled(marketId, 1, true),
+            `InvalidSettlementStrategy`
           );
 
           await assertRevert(
             systems()
-              .PerpsMarket.connect(randomUser)
+              .PerpsMarket.connect(owner())
               .setSettlementStrategy(marketId, 1, fixture.settlementStrategy),
-            `Unauthorized`
+            `InvalidSettlementStrategy`
           );
         });
       });

@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "name": "@synthetixio/pyth-erc7412-wrapper",
   "version": "3.3.5",
+=======
+  "name": "@synthetixio-auxiliary/pyth-erc7412-wrapper",
+  "version": "3.3.4",
+>>>>>>> 37b34f2e (add test for spot)
   "description": "Benchmark prices oracle",
   "publishConfig": {
     "access": "public"

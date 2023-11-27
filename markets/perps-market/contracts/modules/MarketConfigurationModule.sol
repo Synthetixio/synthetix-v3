@@ -48,7 +48,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         OwnableStorage.onlyOwner();
 
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.validateStrategyIndex(strategyId);
+        config.validateStrategyExists(strategyId);
 
         if (strategy.settlementWindowDuration == 0) {
             revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
@@ -71,7 +71,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         OwnableStorage.onlyOwner();
 
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.validateStrategyIndex(strategyId);
+        config.validateStrategyExists(strategyId);
 
         SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
         strategy.disabled = !enabled;

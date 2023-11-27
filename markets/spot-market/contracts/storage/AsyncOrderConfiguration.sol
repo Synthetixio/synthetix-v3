@@ -32,7 +32,7 @@ library AsyncOrderConfiguration {
         Data storage self,
         uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
-        validateStrategyIndex(self, settlementStrategyId);
+        validateStrategyExists(self, settlementStrategyId);
 
         strategy = self.settlementStrategies[settlementStrategyId];
         if (strategy.disabled) {
@@ -40,7 +40,7 @@ library AsyncOrderConfiguration {
         }
     }
 
-    function validateStrategyIndex(
+    function validateStrategyExists(
         Data storage config,
         uint256 settlementStrategyId
     ) internal view {
