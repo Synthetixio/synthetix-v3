@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json",
-  "version": "3.3.4",
+  "version": "3.3.5",
   "exact": true,
   "changelog": false,
   "ignoreChanges": [
@@ -14,7 +14,7 @@
     "version": {
       "allowBranch": [
         "main",
-        "feat/setSettlementStrategy",
+        "feat/setSettlementStrategy"
       ]
     }
   }
