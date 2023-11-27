@@ -20,6 +20,18 @@ interface IMarketConfigurationModule {
     );
 
     /**
+     * @notice Gets fired when new settlement strategy is updated.
+     * @param marketId adds settlement strategy to this specific market.
+     * @param strategy the strategy configuration.
+     * @param strategyId the newly created settlement strategy id.
+     */
+    event SettlementStrategySet(
+        uint128 indexed marketId,
+        SettlementStrategy.Data strategy,
+        uint256 indexed strategyId
+    );
+
+    /**
      * @notice Gets fired when feed id for perps market is updated.
      * @param marketId id of perps market
      * @param feedId oracle node id
@@ -108,6 +120,11 @@ interface IMarketConfigurationModule {
      * @notice Thrown when the settlement window duration is set to zero
      */
     error InvalidSettlementWindowDuration(uint256 duration);
+
+    /**
+     * @notice Thrown when the settlement id is not valid
+     */
+    error InvalidSettlementStrategyId(uint128 settlementStrategyId);
 
     /**
      * @notice Add a new settlement strategy with this function.
@@ -200,6 +217,18 @@ interface IMarketConfigurationModule {
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
     function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external;
+
+    /**
+     * @notice updates a settlement strategy for a market with this function.
+     * @param marketId id of the market.
+     * @param strategyId the specific strategy id.
+     * @param strategy strategy details (see SettlementStrategy.Data struct).
+     */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external;
 
     /**
      * @notice Enable or disable a settlement strategy for a market with this function.

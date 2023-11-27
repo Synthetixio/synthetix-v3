@@ -39,6 +39,31 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        if (strategyId >= PerpsMarketConfiguration.load(marketId).settlementStrategies.length) {
+            revert InvalidSettlementStrategy(strategyId);
+        }
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
+        strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
+
+        PerpsMarketConfiguration.load(marketId).settlementStrategies[strategyId] = strategy;
+
+        emit SettlementStrategySet(marketId, strategy, strategyId);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
