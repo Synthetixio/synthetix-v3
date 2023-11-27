@@ -348,7 +348,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
     // always reserved as the owner but everything else is free game.
     //
-    // Here we reserve the [1, 2, 3, 4, 5, 6] as traders and the rest can be for other purposes.
+    // Here we reserve the signers [2, 3, 4, 5, 6] as traders and the rest can be for other purposes.
     // a = owner
     // b = staker (see stakedPool)
     // 1 = trader
