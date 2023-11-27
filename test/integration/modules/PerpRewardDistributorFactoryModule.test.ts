@@ -18,4 +18,8 @@ describe('PerpRewardDistributorFactoryModule', () => {
   describe('Core.RewardsManagerModule.registerRewardsDistributor', () => {
     it('should be able to register a PerpRewardDistributor');
   });
+
+  describe('Core.RewardsManagerModule.claimReward', () => {
+    it('should be able to claim a distributed reward');
+  });
 });

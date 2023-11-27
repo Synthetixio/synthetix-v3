@@ -546,14 +546,13 @@ describe('LiquidationModule', () => {
       const { PerpMarketProxy, Core } = systems();
       const orderSide = genSide();
 
-      const { trader, collateral, collateralDepositAmount, marginUsdDepositAmount, market, marketId } =
-        await depositMargin(
-          bs,
-          genTrader(bs, {
-            desiredCollateral: getSusdCollateral(collaterals()),
-            desiredMarginUsdDepositAmount: 10000, // small enough to not be partial liq
-          })
-        );
+      const { trader, collateral, collateralDepositAmount, market, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredCollateral: getSusdCollateral(collaterals()),
+          desiredMarginUsdDepositAmount: 10000, // small enough to not be partial liq
+        })
+      );
       await setMarketConfigurationById(bs, marketId, {
         maxFundingVelocity: bn(0), // disable funding to avoid minor funding losses
       });
@@ -874,6 +873,16 @@ describe('LiquidationModule', () => {
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
       );
+    });
+
+    describe('distributeRewards', () => {
+      it('should not distribute any rewards when only sUSD collateral');
+
+      it('should only distribute non-sUSD collateral when both available');
+
+      it('should deduct market deposited collateral by distributed amount');
+
+      it('should distribute proportionally across pool collaterals');
     });
 
     describe('getRemainingLiquidatableSizeCapacity', () => {

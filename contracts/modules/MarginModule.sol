@@ -21,6 +21,7 @@ contract MarginModule is IMarginModule {
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using Margin for Margin.GlobalData;
 
     // --- Runtime structs --- //
 
@@ -416,5 +417,18 @@ contract MarginModule is IMarginModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function getCollateralPrice(uint128 marketId, int256 size) external view returns (uint256) {
+        PerpMarket.exists(marketId);
+
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
+        (uint256 price, ) = globalMarginConfig.getCollateralPrice(marketId, MathUtil.abs(size), globalMarketConfig);
+
+        return price;
     }
 }

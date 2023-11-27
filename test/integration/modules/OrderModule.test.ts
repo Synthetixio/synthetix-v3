@@ -831,6 +831,8 @@ describe('OrderModule', () => {
     });
 
     describe('SpotMarket.sellExactIn', () => {
+      it('should revert when sale exceeds sellExactInMaxSlippagePercent');
+
       describe('open', () => {
         it('should not sell any margin when opening a new position');
       });

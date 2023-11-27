@@ -2023,4 +2023,20 @@ describe('MarginModule', async () => {
       );
     });
   });
+
+  describe('getConfiguredCollaterals', () => {
+    it('should return empty when there are no configured collaterals');
+
+    it('should return configured collaterals');
+  });
+
+  describe('getCollateralPrice', () => {
+    it('should return oracle price when size is 0');
+
+    it('should max bound the haircut on large skew shift');
+
+    it('should min bound the haircut on small skew shift');
+
+    it('should return same adjusted price on pos/neg size');
+  });
 });
