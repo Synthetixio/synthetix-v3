@@ -20,6 +20,18 @@ interface IMarketConfigurationModule {
     );
 
     /**
+     * @notice Gets fired when new settlement strategy is updated.
+     * @param marketId adds settlement strategy to this specific market.
+     * @param strategyId the newly created settlement strategy id.
+     * @param strategy the strategy configuration.
+     */
+    event SettlementStrategySet(
+        uint128 indexed marketId,
+        uint256 indexed strategyId,
+        SettlementStrategy.Data strategy
+    );
+
+    /**
      * @notice Gets fired when feed id for perps market is updated.
      * @param marketId id of perps market
      * @param feedId oracle node id
@@ -97,15 +109,7 @@ interface IMarketConfigurationModule {
     event LockedOiRatioSet(uint128 indexed marketId, uint256 lockedOiRatioD18);
 
     /**
-     * @notice Gets fired when a settlement strategy is enabled or disabled.
-     * @param marketId udpates funding parameters to this specific market.
-     * @param strategyId the specific strategy.
-     * @param enabled whether the strategy is enabled or disabled.
-     */
-    event SettlementStrategyEnabled(uint128 indexed marketId, uint256 strategyId, bool enabled);
-
-    /**
-     * @notice Thrown when the settlement window duration is set to zero
+     * @notice Thrown when attempting to set settlement strategy with window duration as 0
      */
     error InvalidSettlementWindowDuration(uint256 duration);
 
@@ -119,6 +123,18 @@ interface IMarketConfigurationModule {
         uint128 marketId,
         SettlementStrategy.Data memory strategy
     ) external returns (uint256 strategyId);
+
+    /**
+     * @notice updates a settlement strategy for a market with this function.
+     * @param marketId id of the market.
+     * @param strategyId the specific strategy id.
+     * @param strategy strategy details (see SettlementStrategy.Data struct).
+     */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external;
 
     /**
      * @notice Set order fees for a market with this function.
