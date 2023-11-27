@@ -62,7 +62,7 @@ async function run() {
     signerOrProvider: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
     address: DEFAULT_REGISTRY_ADDRESS,
   });
-  const loader = new IPFSLoader('https://synthetix-ipfs.dbeal.dev/QDqzp4gqdtxZdafq8dMT');
+  const loader = new IPFSLoader('https://ipfs.synthetix.io');
 
   const ipfs = await registry.getUrl(`synthetix-omnibus:latest`, `${chainId}-${preset}`);
   const deployments = await loader.read(ipfs);
