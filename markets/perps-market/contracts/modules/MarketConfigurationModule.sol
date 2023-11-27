@@ -13,6 +13,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsPrice for PerpsPrice.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
@@ -46,17 +47,15 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external override {
         OwnableStorage.onlyOwner();
 
-        if (strategyId >= PerpsMarketConfiguration.load(marketId).settlementStrategies.length) {
-            revert InvalidSettlementStrategyId(strategyId);
-        }
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyIndex(strategyId);
 
         if (strategy.settlementWindowDuration == 0) {
             revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
         }
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
-
-        PerpsMarketConfiguration.load(marketId).settlementStrategies[strategyId] = strategy;
+        config.settlementStrategies[strategyId] = strategy;
 
         emit SettlementStrategySet(marketId, strategy, strategyId);
     }

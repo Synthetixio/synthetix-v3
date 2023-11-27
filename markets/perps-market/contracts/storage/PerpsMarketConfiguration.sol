@@ -14,7 +14,7 @@ library PerpsMarketConfiguration {
 
     error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int newSideSize);
 
-    error InvalidSettlementStrategy(uint128 settlementStrategyId);
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
     struct Data {
         OrderFee.Data orderFees;
@@ -138,15 +138,22 @@ library PerpsMarketConfiguration {
      */
     function loadValidSettlementStrategy(
         uint128 marketId,
-        uint128 settlementStrategyId
+        uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
         Data storage self = load(marketId);
-        if (settlementStrategyId >= self.settlementStrategies.length) {
-            revert InvalidSettlementStrategy(settlementStrategyId);
-        }
+        validateStrategyIndex(self, settlementStrategyId);
 
         strategy = self.settlementStrategies[settlementStrategyId];
         if (strategy.disabled) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+    }
+
+    function validateStrategyIndex(
+        Data storage config,
+        uint256 settlementStrategyId
+    ) internal view {
+        if (settlementStrategyId >= config.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
     }

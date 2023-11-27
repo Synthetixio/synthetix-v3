@@ -122,11 +122,6 @@ interface IMarketConfigurationModule {
     error InvalidSettlementWindowDuration(uint256 duration);
 
     /**
-     * @notice Thrown when the settlement id is not valid
-     */
-    error InvalidSettlementStrategyId(uint256 strategyId);
-
-    /**
      * @notice Add a new settlement strategy with this function.
      * @param marketId id of the market to add the settlement strategy.
      * @param strategy strategy details (see SettlementStrategy.Data struct).
