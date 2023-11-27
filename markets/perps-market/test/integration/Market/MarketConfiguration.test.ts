@@ -30,6 +30,17 @@ describe('MarketConfiguration', () => {
       settlementReward: 100,
       disabled: true,
     },
+    newSettlementStrategy: {
+      strategyType: 0,
+      settlementDelay: 1000,
+      settlementWindowDuration: 200,
+      priceWindowDuration: 100,
+      priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96046',
+      feedId: utils.formatBytes32String('feedId'),
+      url: 'url',
+      settlementReward: 200,
+      disabled: true,
+    },
 
     maxMarketValue: bn(10_000),
     maxFundingVelocity: bn(0.3),
@@ -93,6 +104,34 @@ describe('MarketConfiguration', () => {
         ', ' +
         String(fixture.settlementStrategy.disabled) +
         ')',
+      systems().PerpsMarket
+    );
+  });
+
+  it('owner can update settlement strategy and events are emitted', async () => {
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setSettlementStrategy(marketId, 0, fixture.newSettlementStrategy),
+      'SettlementStrategySet(' +
+        marketId.toString() +
+        ', [' +
+        fixture.newSettlementStrategy.strategyType.toString() +
+        ', ' +
+        fixture.newSettlementStrategy.settlementDelay.toString() +
+        ', ' +
+        fixture.newSettlementStrategy.settlementWindowDuration.toString() +
+        ', "' +
+        fixture.newSettlementStrategy.priceVerificationContract.toString() +
+        '", "' +
+        fixture.newSettlementStrategy.feedId.toString() +
+        '", "' +
+        fixture.newSettlementStrategy.url.toString() +
+        '", ' +
+        fixture.newSettlementStrategy.settlementReward.toString() +
+        ', ' +
+        fixture.newSettlementStrategy.disabled.toString() +
+        '], 0)',
       systems().PerpsMarket
     );
   });
@@ -194,6 +233,12 @@ describe('MarketConfiguration', () => {
       systems()
         .PerpsMarket.connect(randomUser)
         .addSettlementStrategy(marketId, fixture.settlementStrategy),
+      'Unauthorized'
+    );
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setSettlementStrategy(marketId, 0, fixture.settlementStrategy),
       'Unauthorized'
     );
     await assertRevert(

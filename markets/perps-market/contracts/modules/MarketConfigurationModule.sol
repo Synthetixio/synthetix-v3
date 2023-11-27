@@ -47,7 +47,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         OwnableStorage.onlyOwner();
 
         if (strategyId >= PerpsMarketConfiguration.load(marketId).settlementStrategies.length) {
-            revert InvalidSettlementStrategy(strategyId);
+            revert InvalidSettlementStrategyId(strategyId);
         }
 
         if (strategy.settlementWindowDuration == 0) {

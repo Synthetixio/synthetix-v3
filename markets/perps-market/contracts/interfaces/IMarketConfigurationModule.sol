@@ -124,7 +124,7 @@ interface IMarketConfigurationModule {
     /**
      * @notice Thrown when the settlement id is not valid
      */
-    error InvalidSettlementStrategyId(uint128 settlementStrategyId);
+    error InvalidSettlementStrategyId(uint256 strategyId);
 
     /**
      * @notice Add a new settlement strategy with this function.
@@ -136,6 +136,18 @@ interface IMarketConfigurationModule {
         uint128 marketId,
         SettlementStrategy.Data memory strategy
     ) external returns (uint256 strategyId);
+
+    /**
+     * @notice updates a settlement strategy for a market with this function.
+     * @param marketId id of the market.
+     * @param strategyId the specific strategy id.
+     * @param strategy strategy details (see SettlementStrategy.Data struct).
+     */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external;
 
     /**
      * @notice Set order fees for a market with this function.
@@ -217,18 +229,6 @@ interface IMarketConfigurationModule {
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
     function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external;
-
-    /**
-     * @notice updates a settlement strategy for a market with this function.
-     * @param marketId id of the market.
-     * @param strategyId the specific strategy id.
-     * @param strategy strategy details (see SettlementStrategy.Data struct).
-     */
-    function setSettlementStrategy(
-        uint128 marketId,
-        uint256 strategyId,
-        SettlementStrategy.Data memory strategy
-    ) external;
 
     /**
      * @notice Enable or disable a settlement strategy for a market with this function.
