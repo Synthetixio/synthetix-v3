@@ -15,6 +15,7 @@ import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { AggregatorV3Mock } from '@synthetixio/spot-market/typechain-types';
 import { SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { Systems } from '@synthetixio/spot-market/test/bootstrap';
+import { bn } from '../generators';
 
 export type SynthMarket = {
   marketId: () => ethers.BigNumber;
@@ -74,23 +75,26 @@ export function bootstrapSynthMarkets(data: BootstrapSynthArgs, r: ReturnType<ty
       await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
         {
           marketId,
-          weightD18: ethers.utils.parseEther('1'),
-          maxDebtShareValueD18: ethers.utils.parseEther('1'),
+          weightD18: bn(1),
+          maxDebtShareValueD18: bn(1),
         },
       ]);
     });
 
     before('allow synth as collateral in system', async () => {
       const tokenAddress = await contracts.SpotMarket.getSynth(marketId);
-      await r.systems().Core.connect(r.owner()).configureCollateral({
-        tokenAddress,
-        oracleNodeId: buyNodeId,
-        issuanceRatioD18: '5000000000000000000',
-        liquidationRatioD18: '1500000000000000000',
-        liquidationRewardD18: '20000000000000000000',
-        minDelegationD18: '20000000000000000000',
-        depositingEnabled: false,
-      });
+      await r
+        .systems()
+        .Core.connect(r.owner())
+        .configureCollateral({
+          tokenAddress,
+          oracleNodeId: buyNodeId,
+          issuanceRatioD18: bn(5).toString(),
+          liquidationRatioD18: bn(1.5).toString(),
+          liquidationRewardD18: bn(20).toString(),
+          minDelegationD18: bn(20).toString(),
+          depositingEnabled: false,
+        });
     });
 
     return {
