@@ -1,6 +1,5 @@
 {
   "$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json",
-  "useWorkspaces": true,
   "version": "3.3.4",
   "exact": true,
   "changelog": false,
@@ -8,12 +7,14 @@
     "**/test/**",
     "**/*.md"
   ],
+  "npmClient": "npm",
   "private": false,
   "push": true,
   "command": {
     "version": {
       "allowBranch": [
-        "main"
+        "main",
+        "feat/setSettlementStrategy",
       ]
     }
   }
