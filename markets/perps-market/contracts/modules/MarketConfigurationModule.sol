@@ -57,7 +57,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
         config.settlementStrategies[strategyId] = strategy;
 
-        emit SettlementStrategySet(marketId, strategy, strategyId);
+        emit SettlementStrategySet(marketId, strategyId, strategy);
     }
 
     /**
@@ -69,11 +69,14 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
-        PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[strategyId]
-            .disabled = !enabled;
-        emit SettlementStrategyEnabled(marketId, strategyId, enabled);
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyIndex(strategyId);
+
+        SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
+        strategy.disabled = !enabled;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
     }
 
     /**

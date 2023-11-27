@@ -22,13 +22,13 @@ interface IMarketConfigurationModule {
     /**
      * @notice Gets fired when new settlement strategy is updated.
      * @param marketId adds settlement strategy to this specific market.
-     * @param strategy the strategy configuration.
      * @param strategyId the newly created settlement strategy id.
+     * @param strategy the strategy configuration.
      */
     event SettlementStrategySet(
         uint128 indexed marketId,
-        SettlementStrategy.Data strategy,
-        uint256 indexed strategyId
+        uint256 indexed strategyId,
+        SettlementStrategy.Data strategy
     );
 
     /**
@@ -109,15 +109,7 @@ interface IMarketConfigurationModule {
     event LockedOiRatioSet(uint128 indexed marketId, uint256 lockedOiRatioD18);
 
     /**
-     * @notice Gets fired when a settlement strategy is enabled or disabled.
-     * @param marketId udpates funding parameters to this specific market.
-     * @param strategyId the specific strategy.
-     * @param enabled whether the strategy is enabled or disabled.
-     */
-    event SettlementStrategyEnabled(uint128 indexed marketId, uint256 strategyId, bool enabled);
-
-    /**
-     * @notice Thrown when the settlement window duration is set to zero
+     * @notice Thrown when attempting to set settlement strategy with window duration as 0
      */
     error InvalidSettlementWindowDuration(uint256 duration);
 
