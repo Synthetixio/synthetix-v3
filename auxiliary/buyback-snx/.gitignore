@@ -1,4 +1,5 @@
 cannon
+test/generated
 contracts/generated
 contracts/modules/test
 contracts/Router.sol
