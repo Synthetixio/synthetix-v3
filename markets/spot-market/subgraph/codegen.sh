@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-export CANNON_IPFS_URL="https://ipfs.synthetix.io"
+export CANNON_IPFS_URL="https://synthetix-ipfs.dbeal.dev/QDqzp4gqdtxZdafq8dMT"
 
 codegen() {
   namespace=$1

@@ -2821,6 +2821,51 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio-auxiliary/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
   version: 0.0.0-use.local
   resolution: "@synthetixio/common-config@workspace:utils/common-config"
@@ -3006,21 +3051,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.0"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.1"
-    typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
 "@synthetixio/oracle-manager@workspace:*, @synthetixio/oracle-manager@workspace:protocol/oracle-manager":
   version: 0.0.0-use.local
   resolution: "@synthetixio/oracle-manager@workspace:protocol/oracle-manager"
@@ -3077,21 +3107,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.0"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.1"
-    typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
 "@synthetixio/router@npm:^3.3.0":
   version: 3.3.0
   resolution: "@synthetixio/router@npm:3.3.0"
@@ -3122,21 +3137,6 @@ __metadata:
     hardhat: "npm:^2.19.0"
     hardhat-cannon: "npm:^2.9.11"
     solidity-coverage: "npm:^0.8.5"
-  languageName: unknown
-  linkType: soft
-
-"@synthetixio/spot-market-oracle@workspace:auxiliary/SpotMarketOracle":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.0"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.1"
-    typescript: "npm:^5.2.2"
   languageName: unknown
   linkType: soft
 
@@ -3816,7 +3816,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.10.0":
+"@usecannon/builder@npm:^2.10.0, @usecannon/builder@npm:^2.9.11":
   version: 2.10.0
   resolution: "@usecannon/builder@npm:2.10.0"
   dependencies:
@@ -3837,28 +3837,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.9.11":
-  version: 2.9.11
-  resolution: "@usecannon/builder@npm:2.9.11"
-  dependencies:
-    "@synthetixio/router": "npm:^3.3.0"
-    axios: "npm:^1.2.2"
-    buffer: "npm:^6.0.3"
-    debug: "npm:^4.3.4"
-    form-data: "npm:^4.0.0"
-    lodash: "npm:^4.17.21"
-    pako: "npm:^2.1.0"
-    promise-events: "npm:^0.2.4"
-    typedoc-plugin-markdown: "npm:^3.15.4"
-    typestub-ipfs-only-hash: "npm:^4.0.0"
-    zod: "npm:^3.21.4"
-  peerDependencies:
-    ethers: ">=5.6.0 < 6.0.0"
-  checksum: d7ad71f886e0952d2a61ce24c35dda4ddae01a89d242080143ef0cfff7e1b39a819714bba8392b716323730529fba7a034033c5fd56ed4f9b82fa29f7a71ffc0
-  languageName: node
-  linkType: hard
-
-"@usecannon/cli@npm:^2.10.0":
+"@usecannon/cli@npm:^2.10.0, @usecannon/cli@npm:^2.9.11":
   version: 2.10.0
   resolution: "@usecannon/cli@npm:2.10.0"
   dependencies:
@@ -3882,33 +3861,6 @@ __metadata:
   bin:
     cannon: bin/cannon.js
   checksum: df5414286a3a7e2d1873f749ca791e2d0aa6a0053188cba53fb9f88dd26ded3c92fdb463e7b657bf9390ce8fe9ac4acda38098304240ad242d22e01b43015c47
-  languageName: node
-  linkType: hard
-
-"@usecannon/cli@npm:^2.9.11":
-  version: 2.9.11
-  resolution: "@usecannon/cli@npm:2.9.11"
-  dependencies:
-    "@iarna/toml": "npm:^3.0.0"
-    "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:^2.9.11"
-    chalk: "npm:^4.1.2"
-    commander: "npm:^9.5.0"
-    debug: "npm:^4.3.4"
-    eth-provider: "npm:^0.13.6"
-    ethers: "npm:^5.7.1"
-    fastq: "npm:^1.15.0"
-    fs-extra: "npm:^10.1.0"
-    lodash: "npm:^4.17.21"
-    promise-timeout: "npm:^1.3.0"
-    prompts: "npm:^2.4.2"
-    semver: "npm:^7.3.7"
-    table: "npm:^6.8.0"
-    tildify: "npm:2.0.0"
-    untildify: "npm:^4.0.0"
-  bin:
-    cannon: bin/cannon.js
-  checksum: f66eb99f9137e00101ccddce426c33f1cf6fc9ed65669c8b6b99c532df7abce6c8173ebe6bc992d32dfe30dc966372a82fea9612eed09555e8f2a222c85cdd2c
   languageName: node
   linkType: hard
 
