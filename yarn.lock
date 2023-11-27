@@ -2878,7 +2878,7 @@ __metadata:
     dotenv: "npm:^16.3.1"
     hardhat: "npm:^2.19.0"
     hardhat-cannon: "npm:^2.9.11"
-    hardhat-contract-sizer: "npm:^2.9.11"
+    hardhat-contract-sizer: "npm:^2.10.0"
     hardhat-gas-reporter: "npm:^1.0.9"
     hardhat-ignore-warnings: "npm:^0.2.9"
     solidity-coverage: "npm:^0.8.5"
@@ -8731,7 +8731,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-contract-sizer@npm:^2.9.11":
+"hardhat-contract-sizer@npm:^2.10.0":
   version: 2.10.0
   resolution: "hardhat-contract-sizer@npm:2.10.0"
   dependencies:
