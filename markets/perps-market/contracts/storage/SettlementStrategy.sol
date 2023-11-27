@@ -36,7 +36,7 @@ library SettlementStrategy {
         /**
          * @dev gateway url for pyth/chainlink to retrieve offchain prices
          */
-        string url;
+        string url__depricated;
         /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */

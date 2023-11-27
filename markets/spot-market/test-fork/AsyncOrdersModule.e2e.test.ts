@@ -15,7 +15,6 @@ const pythSettlementStrategy = {
   settlementWindowDuration: 1200,
   priceVerificationContract: feedAddress,
   feedId,
-  url: 'https://xc-testnet.pyth.network/api/get_vaa_ccip?data={data}',
   settlementReward: bn(5),
   disabled: false,
   minimumUsdExchangeAmount: bn(0.000001),

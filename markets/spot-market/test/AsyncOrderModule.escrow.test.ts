@@ -12,7 +12,6 @@ const settlementStrategyWithNoMin = {
   settlementWindowDuration: 120,
   priceVerificationContract: Ethers.constants.AddressZero,
   feedId: Ethers.constants.HashZero,
-  url: '',
   settlementReward: 0,
   minimumUsdExchangeAmount: 0,
   maxRoundingLoss: bn(0.000001),

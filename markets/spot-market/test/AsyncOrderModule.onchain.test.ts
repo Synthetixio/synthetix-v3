@@ -12,7 +12,6 @@ const settlementStrategy = {
   settlementWindowDuration: 120,
   priceVerificationContract: ethers.constants.AddressZero,
   feedId: ethers.constants.HashZero,
-  url: '',
   settlementReward: bn(5),
   disabled: false,
   priceDeviationTolerance: bn(0.01),
