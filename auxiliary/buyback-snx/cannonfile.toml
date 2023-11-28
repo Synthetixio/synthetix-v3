@@ -1,12 +1,11 @@
 name = "buyback-snx"
 version = "<%= package.version %>"
-description = "Market buys and burns SNX"
+description = "Buys SNX at market price plus premium"
 
 [setting.owner]
-description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [contract.BuybackSnx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = []
+args = ["<%= settings.owner %>"]
 create2 = true
