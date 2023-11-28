@@ -6,4 +6,6 @@ export default {
   MEDIAN: 4,
   MUL: 5,
   DIV: 6,
+  MULDECIMAL: 7,
+  DIVDECIMAL: 8,
 };
