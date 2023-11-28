@@ -79,6 +79,7 @@ export interface PerpCollateral {
   synthMarketId: () => BigNumber;
   synthAddress: () => string;
   oracleNodeId: () => string;
+  rewardDistributorAddress: () => string;
   getPrice: () => ReturnType<AggregatorV3Mock['latestRoundData']>;
   setPrice: (price: BigNumber) => Promise<void>;
 }
@@ -275,7 +276,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     );
 
     // Collect non-sUSD collaterals along with their Synth Market.
-    const nonSusdCollaterals = synths.map((collateral): PerpCollateral => {
+    const nonSusdCollaterals = synths.map((collateral, i): PerpCollateral => {
       const { synthMarket } = collateral;
       return {
         ...collateral,
@@ -283,6 +284,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         synthMarketId: () => synthMarket.marketId(),
         synthAddress: () => synthMarket.synthAddress(),
         oracleNodeId: () => synthMarket.sellNodeId(),
+        rewardDistributorAddress: () => rewardDistributors[i + 1],
         // Why `sellAggregator`? All of BFP only uses `quoteSellExactIn`, so we only need to mock the `sellAggregator`.
         // If we need to buy synths during tests and for whatever reason we cannot just mint with owner, then that can
         // still be referenced via `collateral.synthMarket.buyAggregator()`.
@@ -314,6 +316,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       synthMarketId: () => SYNTHETIX_USD_MARKET_ID,
       synthAddress: () => systems.USD.address,
       oracleNodeId: () => formatBytes32String(''),
+      rewardDistributorAddress: () => rewardDistributors[0],
       getPrice: () => sUsdAggregator.latestRoundData(),
       setPrice: async (price: BigNumber) => {
         await sUsdAggregator.mockSetCurrentPrice(price);

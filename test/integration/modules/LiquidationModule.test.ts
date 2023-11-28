@@ -33,14 +33,16 @@ import {
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
+  isSusdCollateral,
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
 import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '../../calculations';
 
-describe('LiquidationModule', () => {
+describe.only('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const {
+    pool,
     markets,
     collaterals,
     collateralsWithoutSusd,
@@ -255,8 +257,10 @@ describe('LiquidationModule', () => {
       const { PerpMarketProxy, Core, SpotMarket } = systems();
 
       const orderSide = genSide();
-      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount, collateral, collateralPrice } =
-        await depositMargin(bs, genTrader(bs, { desiredCollateral: getCollateral() }));
+      const { trader, market, marketId, collateralDepositAmount, collateral } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: getCollateral() })
+      );
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -272,6 +276,7 @@ describe('LiquidationModule', () => {
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       assertBn.lte(healthFactor, bn(1));
+
       // Set base fee to 0 gwei to avoid rounding errors
       await setBaseFeePerGas(0, provider());
 
@@ -281,7 +286,34 @@ describe('LiquidationModule', () => {
         provider()
       );
 
+      const blockTime = (await provider().getBlock(receipt.blockNumber)).timestamp;
       const keeperAddress = await keeper().getAddress();
+      const distributorAddress = collateral.rewardDistributorAddress();
+      const collateralAddress = collateral.synthAddress();
+      const poolCollateralAddress = pool().collateral().address;
+      const poolId = pool().id;
+
+      let expectedEvents: string[];
+      if (isSusdCollateral(collateral)) {
+        expectedEvents = [
+          `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
+          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
+        ];
+      } else {
+        expectedEvents = [
+          // Withdraw and transfer from Core -> PerpMarket.
+          `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
+          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
+          // Transfer from PerpMarket -> RewardDistributor.
+          `Transfer("${PerpMarketProxy.address}", "${distributorAddress}", ${collateralDepositAmount})`,
+          `RewardsDistributed(${poolId}, "${poolCollateralAddress}", "${distributorAddress}", ${collateralDepositAmount}, ${blockTime}, 0)`,
+          // Transfer flag reward from PerpMarket -> Keeper.
+          `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
+          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
+        ];
+      }
 
       // Create a contract that can parse all events emitted.
       //
@@ -294,13 +326,6 @@ describe('LiquidationModule', () => {
           .concat(spotMarketEvents)
           .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
       );
-
-      const expectedEvents: string[] = [
-        `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
-        `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
-        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
-      ];
-
       await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
     });
 
@@ -389,6 +414,16 @@ describe('LiquidationModule', () => {
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
       );
+    });
+
+    describe('distributeRewards', () => {
+      it('should not distribute any rewards when only sUSD collateral');
+
+      it('should only distribute non-sUSD collateral when both available');
+
+      it('should deduct market deposited collateral by distributed amount');
+
+      it('should distribute proportionally across pool collaterals on flag');
     });
   });
 
@@ -482,7 +517,7 @@ describe('LiquidationModule', () => {
       // Price moves back and they're no longer in liquidation but already flagged.
       await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
       const { healthFactor: hf2 } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.gt(hf2, bn(1));
+      assertBn.isZero(hf2);
 
       // Attempt the liquidate. This should complete successfully.
       const { tx, receipt } = await withExplicitEvmMine(
@@ -873,16 +908,6 @@ describe('LiquidationModule', () => {
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
       );
-    });
-
-    describe('distributeRewards', () => {
-      it('should not distribute any rewards when only sUSD collateral');
-
-      it('should only distribute non-sUSD collateral when both available');
-
-      it('should deduct market deposited collateral by distributed amount');
-
-      it('should distribute proportionally across pool collaterals');
     });
 
     describe('getRemainingLiquidatableSizeCapacity', () => {

@@ -68,17 +68,14 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Invoked post liquidation when liquidated poisition size is zero.
+     * @dev Invoked post flag when position is dead and set to liquidate.
      */
-    function updateMarketPostLiquidation(
+    function updateMarketPostFlag(
         uint128 accountId,
         uint128 marketId,
         PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
-        delete market.positions[accountId];
-        delete market.flaggedLiquidations[accountId];
-
         Runtime_updateMarketPostLiquidation memory runtime;
 
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -101,7 +98,7 @@ contract LiquidationModule is ILiquidationModule {
             runtime.availableAccountCollateral = accountMargin.collaterals[runtime.synthMarketId];
 
             // Found a deposited collateral that must be distributed.
-            if (runtime.availableAccountCollateral > 0 && runtime.synthMarketId != SYNTHETIX_USD_MARKET_ID) {
+            if (runtime.availableAccountCollateral > 0) {
                 address synth = globalConfig.spotMarket.getSynth(runtime.synthMarketId);
                 globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, runtime.availableAccountCollateral);
                 IPerpRewardDistributor distributor = IPerpRewardDistributor(
@@ -213,14 +210,16 @@ contract LiquidationModule is ILiquidationModule {
         );
         market.updateDebtCorrection(position, newPosition);
 
-        // Update position accounting
+        // Update position and market accounting.
         position.update(newPosition);
-
-        // Pay keeper
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+        updateMarketPostFlag(accountId, marketId, market, globalConfig);
 
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
+
+        // Pay flagger.
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);
     }
 
@@ -248,9 +247,9 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
-        // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
-            updateMarketPostLiquidation(accountId, marketId, market, globalConfig);
+            delete market.positions[accountId];
+            delete market.flaggedLiquidations[accountId];
         } else {
             market.positions[accountId].update(newPosition);
         }
