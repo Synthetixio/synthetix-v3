@@ -80,7 +80,7 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     function fulfillOracleQuery(bytes memory signedOffchainData) external payable {
         IPyth pyth = IPyth(pythAddress);
 
-        (uint8 updateType) = abi.decode(signedOffchainData, (uint8));
+        uint8 updateType = abi.decode(signedOffchainData, (uint8));
 
         if (updateType == 1) {
             (
@@ -90,12 +90,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
                 bytes[] memory updateData
             ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
 
-            if (updateType != 1) {
-                revert NotSupported(updateType);
-            }
-
-            uint64 minAcceptedPublishTime = uint64(block.timestamp) -
-                stalenessTolerance;
+            // solhint-disable-next-line numcast/safe-cast
+            uint64 minAcceptedPublishTime = uint64(block.timestamp) - stalenessTolerance;
 
             uint64[] memory publishTimes = new uint64[](priceIds.length);
 
@@ -148,15 +144,18 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
                     }
                 }
             }
-           
         } else {
             revert NotSupported(updateType);
         }
-
     }
 
     function _isFeeRequired(bytes memory reason) private pure returns (bool) {
-        return reason.length == 4 && reason[0] == 0x02 && reason[1] == 0x5d && reason[2] == 0xbd && reason[3] == 0xd4;
+        return
+            reason.length == 4 &&
+            reason[0] == 0x02 &&
+            reason[1] == 0x5d &&
+            reason[2] == 0xbd &&
+            reason[3] == 0xd4;
     }
 
     /**
