@@ -80,44 +80,83 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     function fulfillOracleQuery(bytes memory signedOffchainData) external payable {
         IPyth pyth = IPyth(pythAddress);
 
-        (
-            uint8 updateType,
-            uint64 timestamp,
-            bytes32[] memory priceIds,
-            bytes[] memory updateData
-        ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
+        (uint8 updateType) = abi.decode(signedOffchainData, (uint8));
 
-        if (updateType != 2) {
+        if (updateType == 1) {
+            (
+                uint8 _updateType,
+                uint64 stalenessTolerance,
+                bytes32[] memory priceIds,
+                bytes[] memory updateData
+            ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
+
+            if (updateType != 1) {
+                revert NotSupported(updateType);
+            }
+
+            uint64 minAcceptedPublishTime = uint64(block.timestamp) -
+                stalenessTolerance;
+
+            uint64[] memory publishTimes = new uint64[](priceIds.length);
+
+            for (uint i = 0; i < priceIds.length; i++) {
+                publishTimes[i] = minAcceptedPublishTime;
+            }
+
+            try
+                pyth.updatePriceFeedsIfNecessary{value: msg.value}(
+                    updateData,
+                    priceIds,
+                    publishTimes
+                )
+            {} catch (bytes memory reason) {
+                if (_isFeeRequired(reason)) {
+                    revert FeeRequired(pyth.getUpdateFee(updateData));
+                } else {
+                    uint256 len = reason.length;
+                    assembly {
+                        revert(add(reason, 0x20), len)
+                    }
+                }
+            }
+        } else if (updateType == 2) {
+            (
+                uint8 _updateType,
+                uint64 timestamp,
+                bytes32[] memory priceIds,
+                bytes[] memory updateData
+            ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
+
+            try
+                pyth.parsePriceFeedUpdatesUnique{value: msg.value}(
+                    updateData,
+                    priceIds,
+                    timestamp,
+                    type(uint64).max
+                )
+            returns (PythStructs.PriceFeed[] memory priceFeeds) {
+                for (uint i = 0; i < priceFeeds.length; i++) {
+                    Price.load(priceIds[i]).benchmarkPrices[timestamp] = priceFeeds[i].price;
+                }
+            } catch (bytes memory reason) {
+                if (_isFeeRequired(reason)) {
+                    revert FeeRequired(pyth.getUpdateFee(updateData));
+                } else {
+                    uint256 len = reason.length;
+                    assembly {
+                        revert(add(reason, 0x20), len)
+                    }
+                }
+            }
+           
+        } else {
             revert NotSupported(updateType);
         }
 
-        try
-            pyth.parsePriceFeedUpdatesUnique{value: msg.value}(
-                updateData,
-                priceIds,
-                timestamp,
-                type(uint64).max
-            )
-        returns (PythStructs.PriceFeed[] memory priceFeeds) {
-            for (uint i = 0; i < priceFeeds.length; i++) {
-                Price.load(priceIds[i]).benchmarkPrices[timestamp] = priceFeeds[i].price;
-            }
-        } catch (bytes memory reason) {
-            if (
-                reason.length == 4 &&
-                reason[0] == 0x02 &&
-                reason[1] == 0x5d &&
-                reason[2] == 0xbd &&
-                reason[3] == 0xd4
-            ) {
-                revert FeeRequired(pyth.getUpdateFee(updateData));
-            } else {
-                uint256 len = reason.length;
-                assembly {
-                    revert(add(reason, 0x20), len)
-                }
-            }
-        }
+    }
+
+    function _isFeeRequired(bytes memory reason) private pure returns (bool) {
+        return reason.length == 4 && reason[0] == 0x02 && reason[1] == 0x5d && reason[2] == 0xbd && reason[3] == 0xd4;
     }
 
     /**
