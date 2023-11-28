@@ -17,7 +17,7 @@ import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/Param
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
@@ -26,10 +26,8 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
-    using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
-    using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using SetUtil for SetUtil.UintSet;
     using PerpsMarket for PerpsMarket.Data;

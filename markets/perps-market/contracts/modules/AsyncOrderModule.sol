@@ -3,8 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
@@ -23,18 +21,13 @@ import {Flags} from "../utils/Flags.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
-    using DecimalMath for int256;
-    using DecimalMath for uint256;
-    using DecimalMath for int64;
-    using PerpsPrice for PerpsPrice.Data;
-    using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
-    using SettlementStrategy for SettlementStrategy.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
-    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
+
+    // using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
+    // using SafeCastU256 for uint256;
+    // using SafeCastI256 for int256;
 
     /**
      * @inheritdoc IAsyncOrderModule

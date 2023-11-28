@@ -3,18 +3,14 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 
 /**
  * @title Price storage for a specific synth market.
  */
 library PerpsPrice {
-    using DecimalMath for int256;
-    using DecimalMath for uint256;
     using SafeCastI256 for int256;
-    using SafeCastU256 for uint256;
 
     enum Tolerance {
         DEFAULT,

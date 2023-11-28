@@ -6,7 +6,6 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
-import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 
 /**
  * @title Module for getting perps market information.
@@ -14,7 +13,6 @@ import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.so
  */
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
-    using AsyncOrder for AsyncOrder.Data;
 
     /**
      * @inheritdoc IPerpsMarketModule

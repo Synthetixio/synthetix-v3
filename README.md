@@ -70,11 +70,27 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 ### Preparing a Release
 
-- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
-- After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
-- Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
-- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
-  - If you aren't using [Frame](https://frame.sh/), prepend `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the commands above.
-  - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
+#### Setup Cannon
+
+- Run `yarn upgrade-interactive` and make sure that `@usecannon/cli` and `hardhat-cannon` and updated to the latest versions.
+- After installing for the first time, run `yarn cannon:setup` to configure a reliable IPFS URL for publishing packages and any other preferred settings.
+
+#### Setup npm
+
+- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file or prepend `NPM_TOKEN=_` to the command used for publishing below.
+
+#### Publish Dev Release
+
+- Confirm you are on the development branch you’d like to release and that there are no git changes `git diff --exit-code .`
+- If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
+- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)
 - In all the package.json files, revert dependencies' version changes back to `"workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+
+#### Publish Official Release
+
+- Confirm you are on the `main` branch and that there are no git changes `git diff --exit-code .`
+- If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
+- Publish the release with `yarn publish:release`
+- In all the package.json files, revert dependencies' version changes back to `"workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+
+_In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately._

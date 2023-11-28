@@ -27,7 +27,6 @@ contract PerpsAccountModule is IPerpsAccountModule {
     using SetUtil for SetUtil.UintSet;
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
-    using AsyncOrder for AsyncOrder.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;

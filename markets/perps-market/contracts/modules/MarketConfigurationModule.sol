@@ -13,6 +13,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsPrice for PerpsPrice.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
@@ -39,17 +40,43 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
+        strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
+        config.settlementStrategies[strategyId] = strategy;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
         bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
-        PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[strategyId]
-            .disabled = !enabled;
-        emit SettlementStrategyEnabled(marketId, strategyId, enabled);
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
+        strategy.disabled = !enabled;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
     }
 
     /**
