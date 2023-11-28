@@ -26,7 +26,7 @@ import { PerpMarketProxy } from '../../generated/typechain';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, ethOracleNode, collateralsWithoutSusd, markets, traders } = bs;
+  const { systems, restore, provider, keeper, ethOracleNode, collateralsWithoutSusd, markets, traders, signers } = bs;
 
   beforeEach(restore);
 
@@ -831,7 +831,55 @@ describe('OrderModule', () => {
     });
 
     describe('SpotMarket.sellExactIn', () => {
-      it('should revert when sale exceeds sellExactInMaxSlippagePercent');
+      it.skip('should revert when sale exceeds sellExactInMaxSlippagePercent', async () => {
+        const { PerpMarketProxy, SpotMarket } = systems();
+
+        const collateral = genOneOf(collateralsWithoutSusd());
+        const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: 100_000 })
+        );
+
+        const orderSide = genSide();
+        const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: orderSide,
+          desiredLeverage: 1,
+          desiredKeeperFeeBufferUsd: 1,
+        });
+        await commitAndSettle(bs, marketId, trader, order1);
+
+        // A low slippage tolerance results in a revert on the position modify.
+        await setMarketConfiguration(bs, {
+          sellExactInMaxSlippagePercent: bn(0),
+          maxCollateralHaircut: bn(0),
+          minCollateralHaircut: bn(0),
+        });
+        await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
+
+        // Price moves by 20% and they incur a loss.
+        const newMarketOraclePrice = wei(order1.oraclePrice)
+          .mul(orderSide === 1 ? 0.8 : 1.2)
+          .toBN();
+        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        // Add 1% more size to the position.
+        const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: wei(order1.sizeDelta).mul(0.011).toBN(),
+        });
+        await commitOrder(bs, marketId, trader, order2);
+
+        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+        const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+        await fastForwardTo(settlementTime, provider());
+
+        await assertRevert(
+          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
+          'InsufficientAmountReceived',
+          PerpMarketProxy
+        );
+      });
 
       describe('open', () => {
         it('should not sell any margin when opening a new position');

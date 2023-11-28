@@ -81,10 +81,13 @@ library Margin {
             globalConfig.spotMarket.getSynth(synthMarketId),
             amount
         );
+        uint256 minAmountReceivedUsd = amount.mulDecimal(price).mulDecimal(
+            DecimalMath.UNIT - globalConfig.sellExactInMaxSlippagePercent
+        );
         (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
             synthMarketId,
             amount,
-            amount.mulDecimal(price).mulDecimal(DecimalMath.UNIT - globalConfig.sellExactInMaxSlippagePercent),
+            minAmountReceivedUsd,
             address(0)
         );
         globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
@@ -133,10 +136,10 @@ library Margin {
             Margin.GlobalData storage globalMarginConfig = Margin.load();
             PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
+            // Variable declaration outside of loop to be more gas efficient.
             uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
             uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
 
-            // Variable declaration outside of loop to be more gas efficient.
             uint128 synthMarketId;
             uint256 available;
             uint256 price;

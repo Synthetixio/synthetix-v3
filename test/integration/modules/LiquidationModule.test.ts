@@ -39,7 +39,7 @@ import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
 import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '../../calculations';
 
-describe.only('LiquidationModule', () => {
+describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const {
     pool,
@@ -57,6 +57,7 @@ describe.only('LiquidationModule', () => {
   } = bs;
 
   beforeEach(restore);
+
   afterEach(() => setBaseFeePerGas(1, provider()));
 
   describe('flagPosition', () => {
