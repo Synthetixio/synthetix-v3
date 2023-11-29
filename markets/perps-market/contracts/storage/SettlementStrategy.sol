@@ -34,10 +34,6 @@ library SettlementStrategy {
          */
         bytes32 feedId;
         /**
-         * @dev gateway url for pyth/chainlink to retrieve offchain prices
-         */
-        string url;
-        /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */
         uint256 settlementReward;
