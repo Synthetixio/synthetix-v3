@@ -24,4 +24,6 @@ interface IBuybackSnx is IFeeCollector {
     function setTreasury(address newTreasury) external;
     function setPremium(uint256 newPremium) external;
     function setNodeId(bytes32 newNodeId) external;
+    function setSnxToken(address newSnxToken) external;
+    function setUsdcToken(address newUsdcToken) external;
 }

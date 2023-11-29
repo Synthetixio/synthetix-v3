@@ -17,14 +17,15 @@ contract BuybackSnx is IBuybackSnx, Ownable {
     address public treasury;
     uint256 public premium;
     bytes32 public snxNodeId;
-
-    address public constant SNX = 0x22e6966B799c4D5B13BE962E1D117b56327FDa66;
-    address public constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
+    address public snxToken;
+    address public usdcToken;
 
     event Buyback(address indexed buyer, uint256 snx, uint256 usdc);
     event UpdateTreasury(address indexed newTreasury);
     event UpdatePremium(uint256 indexed newPremium);
     event UpdateNodeId(bytes32 indexed newNodeId);
+    event UpdateSnxToken(address indexed newSnxToken);
+    event UpdateUsdcToken(address indexed newUsdcToken);
 
     constructor(address initialOwner) Ownable(initialOwner) {
         treasury = initialOwner;
@@ -35,8 +36,8 @@ contract BuybackSnx is IBuybackSnx, Ownable {
         NodeOutput.Data memory output = INodeModule(OracleManager.load().oracleManagerAddress).process(snxNodeId);
         uint256 usdAmount = ((uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + premium)) / 1e6;
 
-        require(IERC20(SNX).transferFrom(msg.sender, treasury, snxAmount), "No allowance");
-        require(IERC20(USDC).transfer(msg.sender, usdAmount), "Not enough USDC");
+        require(IERC20(snxToken).transferFrom(msg.sender, treasury, snxAmount), "No allowance");
+        require(IERC20(usdcToken).transfer(msg.sender, usdAmount), "Not enough USDC");
 
         emit Buyback(msg.sender, snxAmount, usdAmount);
     }
@@ -63,6 +64,16 @@ contract BuybackSnx is IBuybackSnx, Ownable {
     function setNodeId(bytes32 newNodeId) external onlyOwner {
         snxNodeId = newNodeId;
         emit UpdateNodeId(newNodeId);
+    }
+
+    function setSnxToken(address newSnxToken) external onlyOwner {
+        snxToken = newSnxToken;
+        emit UpdateSnxToken(newSnxToken);
+    }
+
+    function setUsdcToken(address newUsdcToken) external onlyOwner {
+        usdcToken = newUsdcToken;
+        emit UpdateUsdcToken(newUsdcToken);
     }
 
     // Implement FeeCollector interface

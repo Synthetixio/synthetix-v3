@@ -119,6 +119,50 @@ describe('BuybackSnx', function () {
         assert.equal(event.args.newNodeId, newNodeId);
       });
     });
+
+    describe('set snxToken', function () {
+      it('reverts if not owner', async () => {
+        await assertRevert(
+          BuybackSnx.connect(user()).setSnxToken(ethers.constants.AddressZero),
+          'Unauthorized',
+          BuybackSnx
+        );
+      });
+
+      it('updates snxToken', async () => {
+        const tx = await BuybackSnx.setSnxToken(ethers.constants.AddressZero);
+        const receipt = await tx.wait();
+
+        const event = findSingleEvent({
+          receipt,
+          eventName: 'UpdateSnxToken',
+        });
+
+        assert.equal(event.args.newSnxToken, ethers.constants.AddressZero);
+      });
+    });
+
+    describe('set usdcToken', function () {
+      it('reverts if not owner', async () => {
+        await assertRevert(
+          BuybackSnx.connect(user()).setUsdcToken(ethers.constants.AddressZero),
+          'Unauthorized',
+          BuybackSnx
+        );
+      });
+
+      it('updates usdcToken', async () => {
+        const tx = await BuybackSnx.setUsdcToken(ethers.constants.AddressZero);
+        const receipt = await tx.wait();
+
+        const event = findSingleEvent({
+          receipt,
+          eventName: 'UpdateUsdcToken',
+        });
+
+        assert.equal(event.args.newUsdcToken, ethers.constants.AddressZero);
+      });
+    });
   });
 
   describe('buyback', function () {

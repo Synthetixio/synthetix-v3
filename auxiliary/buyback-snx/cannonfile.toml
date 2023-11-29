@@ -9,3 +9,14 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
 args = ["<%= settings.owner %>"]
 create2 = true
+
+
+# set treasury
+
+# set premium
+
+# set snx node id
+
+# set snx token
+
+# set usdc token
