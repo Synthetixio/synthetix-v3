@@ -1,7 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { BigNumberish, ethers, Signer } from 'ethers';
 
-import { bootstrap } from '../bootstrap';
+import { bn, bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 import NodeOperations from '../mixins/Node.operations';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -18,6 +18,10 @@ describe('ReducerNode', function () {
   let Node100: string;
   let Node10: string;
   let Node1: string;
+  let Node10000D18: string;
+  let Node100D18: string;
+  let Node10D18: string;
+  let Node1D18: string;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
@@ -27,6 +31,10 @@ describe('ReducerNode', function () {
     Node100 = await deployAndRegisterExternalNode(100, 10);
     Node10 = await deployAndRegisterExternalNode(10, 100);
     Node1 = await deployAndRegisterExternalNode(1, 10000);
+    Node10000D18 = await deployAndRegisterExternalNode(bn(10000), 1);
+    Node100D18 = await deployAndRegisterExternalNode(bn(100), 10);
+    Node10D18 = await deployAndRegisterExternalNode(bn(10), 100);
+    Node1D18 = await deployAndRegisterExternalNode(bn(1), 10000);
   });
 
   it('successfully reduces with the RECENT operation', async () => {
@@ -186,6 +194,46 @@ describe('ReducerNode', function () {
     const nodeOutput = await NodeModule.process(nodeId);
 
     assertBn.equal(nodeOutput.price, 10);
+    assertBn.equal(nodeOutput.timestamp, 2527);
+  });
+
+  it('successfully reduces with the MULDECIMAL operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MULDECIMAL]);
+    await NodeModule.registerNode(NodeTypes.REDUCER, NodeParameters, [
+      Node10000D18,
+      Node100D18,
+      Node10D18,
+      Node1D18,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, NodeParameters, [
+      Node10000D18,
+      Node100D18,
+      Node10D18,
+      Node1D18,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
+
+    assertBn.equal(nodeOutput.price, bn(10000000));
+    assertBn.equal(nodeOutput.timestamp, 2527);
+  });
+
+  it('successfully reduces with the DIVDECIMAL operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.DIVDECIMAL]);
+    await NodeModule.registerNode(NodeTypes.REDUCER, NodeParameters, [
+      Node10000D18,
+      Node100D18,
+      Node10D18,
+      Node1D18,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, NodeParameters, [
+      Node10000D18,
+      Node100D18,
+      Node10D18,
+      Node1D18,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
+
+    assertBn.equal(nodeOutput.price, bn(10));
     assertBn.equal(nodeOutput.timestamp, 2527);
   });
 
