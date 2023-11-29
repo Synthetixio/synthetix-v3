@@ -95,7 +95,7 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
             (result.success, result.returnData) = call.target.call(
                 abi.encodePacked(call.callData, msg.sender)
             );
-            if (!requireSuccess && !result.success) {
+            if (requireSuccess && !result.success) {
                 bytes memory revertData = result.returnData;
                 uint256 len = revertData.length;
                 assembly {
