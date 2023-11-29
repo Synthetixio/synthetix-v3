@@ -131,9 +131,9 @@ contract OrderModule is IOrderModule {
      */
     function stateUpdatePostSettlement(
         uint128 accountId,
+        uint128 marketId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
-        uint256 collateralUsd,
         uint256 newMarginUsd
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
@@ -145,6 +145,12 @@ contract OrderModule is IOrderModule {
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
+            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+            uint256 collateralUsd = Margin.getCollateralUsd(
+                accountId,
+                marketId,
+                false /* usehaircutCollateralPrice=false */
+            );
             Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - collateralUsd.toInt());
         }
 
@@ -248,15 +254,14 @@ contract OrderModule is IOrderModule {
         );
         stateUpdatePostSettlement(
             accountId,
+            marketId,
             market,
             runtime.trade.newPosition,
-            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            Margin.getCollateralUsd(accountId, marketId),
             // @dev This is (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
             runtime.trade.newMarginUsd
         );
 
-        // If maxKeeperFee configured to zero then we want to rpevent withdraws of 0.
+        // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
         }

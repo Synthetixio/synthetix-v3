@@ -2031,14 +2031,14 @@ describe('MarginModule', async () => {
     it('should return configured collaterals');
   });
 
-  describe('getCollateralPrice', () => {
+  describe('getHaircutCollateralPrice', () => {
     forEach([bn(0), bn(genNumber(1, 10_000))]).it(
       'should return 1 when sUSD is the oracle price regardless of size (%s)',
       async (size: BigNumber) => {
         const { PerpMarketProxy } = systems();
 
         const sUsdCollateral = getSusdCollateral(collaterals());
-        const collateralPrice = await PerpMarketProxy.getCollateralPrice(sUsdCollateral.synthMarketId(), size);
+        const collateralPrice = await PerpMarketProxy.getHaircutCollateralPrice(sUsdCollateral.synthMarketId(), size);
         assertBn.equal(collateralPrice, bn(1));
       }
     );
@@ -2051,7 +2051,7 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collateralsWithoutSusd());
 
       const { answer: collateralPrice } = await collateral.getPrice();
-      const priceWithHaircut = await PerpMarketProxy.getCollateralPrice(collateral.synthMarketId(), bn(0));
+      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
 
       assertBn.equal(collateralPrice, priceWithHaircut);
     });
@@ -2073,7 +2073,7 @@ describe('MarginModule', async () => {
       const size = bn(30_000);
 
       const expectedPrice = wei(collateralPrice).mul(bn(1).sub(maxCollateralHaircut)).toBN();
-      const priceWithHaircut = await PerpMarketProxy.getCollateralPrice(collateral.synthMarketId(), size);
+      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);
 
       assertBn.equal(priceWithHaircut, expectedPrice);
     });
@@ -2095,7 +2095,7 @@ describe('MarginModule', async () => {
       const size = bn(5000);
 
       const expectedPrice = wei(collateralPrice).mul(bn(1).sub(minCollateralHaircut)).toBN();
-      const priceWithHaircut = await PerpMarketProxy.getCollateralPrice(collateral.synthMarketId(), size);
+      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);
 
       assertBn.equal(priceWithHaircut, expectedPrice);
     });
@@ -2106,8 +2106,11 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collateralsWithoutSusd());
       const size = bn(genNumber(1, 10_000));
 
-      const collateralPricePos = await PerpMarketProxy.getCollateralPrice(collateral.synthMarketId(), size);
-      const collateralPriceNeg = await PerpMarketProxy.getCollateralPrice(collateral.synthMarketId(), size.mul(-1));
+      const collateralPricePos = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);
+      const collateralPriceNeg = await PerpMarketProxy.getHaircutCollateralPrice(
+        collateral.synthMarketId(),
+        size.mul(-1)
+      );
 
       assertBn.equal(collateralPricePos, collateralPriceNeg);
     });

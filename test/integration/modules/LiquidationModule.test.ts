@@ -58,7 +58,7 @@ describe('LiquidationModule', () => {
 
   beforeEach(restore);
 
-  afterEach(() => setBaseFeePerGas(1, provider()));
+  afterEach(async () => await setBaseFeePerGas(1, provider()));
 
   describe('flagPosition', () => {
     it('should flag a position with a health factor <= 1', async () => {

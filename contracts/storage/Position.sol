@@ -57,13 +57,13 @@ library Position {
     // --- Storage --- //
 
     struct Data {
-        // Size (in native units e.g. wstETH)
+        // Size (in native units e.g. swstETH)
         int128 size;
-        // The market's accumulated accrued funding at position open.
+        // The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
-        // The fill price at which this position was opened with.
+        // The fill price at which this position was settled with.
         uint256 entryPrice;
-        // Accured static fees incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
+        // Accured static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
         uint256 accruedFeesUsd;
     }
 
@@ -149,7 +149,14 @@ library Position {
 
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, params.fillPrice);
+
+        // Margin is used in liquidation checks so we must use the haircut collateral price.
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            params.fillPrice,
+            true /* useHaircutCollateralPrice=true */
+        );
 
         // --- Existing position validation --- //
 
@@ -392,6 +399,9 @@ library Position {
 
     /**
      * @dev Returns the health data given the marketId, config, and position{...} details.
+     *
+     * NOTE: marginUsd _must_ be calculated with `useHaircutCollateralPrice=true` in order to correctly calculate a position's
+     * health related data and factor.
      */
     function getHealthData(
         PerpMarket.Data storage market,

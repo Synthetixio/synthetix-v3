@@ -52,7 +52,7 @@ contract PerpAccountModule is IPerpAccountModule {
         return
             IPerpAccountModule.AccountDigest(
                 depositedCollaterals,
-                Margin.getCollateralUsd(accountId, marketId),
+                Margin.getCollateralUsd(accountId, marketId, false /* useHaicutCollateralPrice=false */),
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)
             );
@@ -74,7 +74,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position.getHealthData(
             market,
-            Margin.getMarginUsd(accountId, market, oraclePrice),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice=true */),
             oraclePrice,
             marketConfig
         );

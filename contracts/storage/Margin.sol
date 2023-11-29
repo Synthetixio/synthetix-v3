@@ -199,7 +199,11 @@ library Margin {
     /**
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256) {
+    function getCollateralUsd(
+        uint128 accountId,
+        uint128 marketId,
+        bool useHaircutCollateralPrice
+    ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -217,7 +221,9 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                collateralPrice = useHaircutCollateralPrice
+                    ? getHaircutCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
+                    : getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
                 collateralUsd += available.mulDecimal(collateralPrice);
             }
 
@@ -240,9 +246,10 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 marketPrice
+        uint256 marketPrice,
+        bool useHaircutCollateralPrice
     ) internal view returns (uint256) {
-        uint256 collateralUsd = getCollateralUsd(accountId, market.id);
+        uint256 collateralUsd = getCollateralUsd(accountId, market.id, useHaircutCollateralPrice);
         Position.Data storage position = market.positions[accountId];
 
         // Zero position means that marginUsd eq collateralUsd.
@@ -263,18 +270,26 @@ library Margin {
 
     // --- Member (views) --- //
 
+    function getOracleCollateralPrice(
+        Margin.GlobalData storage self,
+        uint128 synthMarketId,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        return globalConfig.oracleManager.process(self.supported[synthMarketId].oracleNodeId).price.toUint();
+    }
+
     /**
-     * @dev Returns haircut adjusted collateral price. Discount proportional to `available`, scaled by a spot skew scale.
+     * @dev Returns the unadjusted raw oracle collateral price.
      */
     function getCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            return DecimalMath.UNIT;
-        }
-        return globalConfig.oracleManager.process(self.supported[synthMarketId].oracleNodeId).price.toUint();
+        return
+            synthMarketId == SYNTHETIX_USD_MARKET_ID
+                ? DecimalMath.UNIT
+                : getOracleCollateralPrice(self, synthMarketId, globalConfig);
     }
 
     /**
@@ -286,9 +301,12 @@ library Margin {
         uint256 available,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        uint256 price = getCollateralPrice(self, synthMarketId, globalConfig);
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            return DecimalMath.UNIT;
+        }
 
         // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
+        uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
         uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
         uint256 haircut = MathUtil.min(
             MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),

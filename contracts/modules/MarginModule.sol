@@ -43,7 +43,12 @@ contract MarginModule is IMarginModule {
         PerpMarket.Data storage market
     ) private view {
         uint256 oraclePrice = market.getOraclePrice();
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice,
+            true /* useHaircutCollateralPrice=true */
+        );
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
@@ -404,19 +409,27 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+    function getCollateralUsd(
+        uint128 accountId,
+        uint128 marketId,
+        bool useHaircutCollateralPrice
+    ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.exists(marketId);
-        return Margin.getCollateralUsd(accountId, marketId);
+        return Margin.getCollateralUsd(accountId, marketId, useHaircutCollateralPrice);
     }
 
     /**
      * @inheritdoc IMarginModule
      */
-    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+    function getMarginUsd(
+        uint128 accountId,
+        uint128 marketId,
+        bool useHaircutCollateralPrice
+    ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice(), useHaircutCollateralPrice);
     }
 
     /**
