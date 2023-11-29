@@ -4,16 +4,16 @@ pragma solidity 0.8.19;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {Margin} from "../storage/Margin.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
-import {PythUtil} from "../utils/PythUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {PythUtil} from "../utils/PythUtil.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;

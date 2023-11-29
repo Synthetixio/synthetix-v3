@@ -151,11 +151,17 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Margin is used in liquidation checks so we must use the haircut collateral price.
-        uint256 marginUsd = Margin.getMarginUsd(
+        uint256 haircutAdjustedMarginUsd = Margin.getMarginUsd(
             accountId,
             market,
             params.fillPrice,
             true /* useHaircutCollateralPrice */
+        );
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            params.fillPrice,
+            false /* useHaircutCollateralPrice */
         );
 
         // --- Existing position validation --- //
@@ -168,7 +174,7 @@ library Position {
             }
 
             // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, market, marginUsd, params.fillPrice, marketConfig)) {
+            if (isLiquidatable(currentPosition, market, haircutAdjustedMarginUsd, params.fillPrice, marketConfig)) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         }
@@ -202,18 +208,27 @@ library Position {
         // this trader were to be settled successfully.
         //
         // This is important as it helps avoid instant liquidation on successful settlement.
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
+        uint256 newHaircutAdjustedMarginUsd = MathUtil
+            .max(haircutAdjustedMarginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0)
+            .toUint();
 
-        if (!positionDecreasing && newMarginUsd < im) {
+        if (!positionDecreasing && newHaircutAdjustedMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
 
         // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(market, newPosition, newMarginUsd, params.fillPrice, marketConfig);
+        validateNextPositionIsLiquidatable(
+            market,
+            newPosition,
+            newHaircutAdjustedMarginUsd,
+            params.fillPrice,
+            marketConfig
+        );
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
 
+        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
         return Position.ValidatedTrade(newPosition, orderFee, keeperFee, newMarginUsd);
     }
 

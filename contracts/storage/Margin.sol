@@ -156,7 +156,7 @@ library Margin {
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(collateralPrice));
                     deductionAmount = deductionAmountUsd.divDecimal(collateralPrice);
 
-                    // If collateral isn't sUSD, withdraw, sell, deposit as USD then continue update accounting.
+                    // If collateral is _not_ sUSD, withdraw, sell, and deposit as USD then continue update accounting.
                     if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
                         sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, collateralPrice, globalConfig);
                     }
@@ -308,10 +308,14 @@ library Margin {
         // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
         uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
         uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
-        uint256 haircut = MathUtil.min(
-            MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
-            globalConfig.maxCollateralHaircut
-        );
+
+        // skewScale _may_ be zero. In this event, do _not_ apply a haircut.
+        uint256 haircut = skewScale == 0
+            ? 0
+            : MathUtil.min(
+                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
+                globalConfig.maxCollateralHaircut
+            );
 
         // Apply discount on price by the haircut.
         return price.mulDecimal(DecimalMath.UNIT - haircut);

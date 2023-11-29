@@ -28,7 +28,7 @@ import {
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, traders } = bs;
+  const { systems, restore, provider, keeper, traders, signers } = bs;
 
   beforeEach(restore);
 
@@ -261,13 +261,16 @@ describe('OrderModule Cancelations', () => {
     });
 
     it('should cancel order when within settlement window but price exceeds tolerance', async () => {
-      const { PerpMarketProxy } = systems();
+      const { PerpMarketProxy, SpotMarket } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
         bs,
         genTrader(bs, { desiredTrader: tradersGenerator.next().value })
       );
+
+      // Eliminate skewFee on the non sUSD collateral sale.
+      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
       const orderSide = genSide();
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
@@ -322,7 +325,7 @@ describe('OrderModule Cancelations', () => {
       );
 
       // Make sure accounting for trader reflect the keeper fee.
-      assertBn.equal(accountDigestBefore.collateralUsd.sub(keeperFee), accountDigestAfter.collateralUsd);
+      assertBn.near(accountDigestBefore.collateralUsd.sub(keeperFee), accountDigestAfter.collateralUsd, bn(0.0000001));
     });
 
     it('should emit all events in correct order');

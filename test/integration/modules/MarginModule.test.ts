@@ -1110,13 +1110,7 @@ describe('MarginModule', async () => {
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
         assertBn.lt(expectedChange.toBN(), bn(0));
-
-        // TODO: Think about this test a bit more. It opens us up to an edge case in collateral haircut calculcation.
-        //
-        // In short, collateral is deducted as USD denominated. However, we apply a discount on the USD denomination so,
-        // when calculating fees to pay, should we take a % of fees before or after the haircut?
-
-        assertBn.equal(actualBalance, startingCollateralBalance.add(expectedChange).toBN());
+        assertBn.equal(startingCollateralBalance.add(expectedChange).toBN(), actualBalance);
       });
 
       forEach([
@@ -1146,8 +1140,8 @@ describe('MarginModule', async () => {
           const isLong = openOrder.sizeDelta.gt(0);
 
           // Increase or decrease market price 20%.
-          const newPrice = wei(openOrder.oraclePrice).mul(isLong ? 1.2 : 0.8);
-          await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+          const newMarketPrice = wei(openOrder.oraclePrice).mul(isLong ? 1.2 : 0.8);
+          await market.aggregator().mockSetCurrentPrice(newMarketPrice.toBN());
 
           // Close the order.
           const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
@@ -1231,13 +1225,17 @@ describe('MarginModule', async () => {
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
       });
 
-      it.skip('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {
+      it('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {
         const { PerpMarketProxy, SpotMarket, Core } = systems();
 
         await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
 
         const { trader, traderAddress, marketId, collateralDepositAmount, market, collateral, collateralPrice } =
           await depositMargin(bs, genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) }));
+
+        // NOTE: Spot market skewScale _must_ be set to zero here as its too difficult to calculcate exact values from
+        // an implicit skewFee applied on the collateral sale.
+        await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
         // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
         // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
@@ -1299,7 +1297,7 @@ describe('MarginModule', async () => {
 
         // Assert close position call. We want to make sure we've interacted with v3 Core correctly.
         //
-        // usdDiffAmount will have some rounding errors so make sure our calculated is "near".
+        // `usdDiffAmount` will have some rounding errors so make sure our calculated is "near".
         assertBn.near(marketUsdDepositedArgs?.amount, usdDiffAmount.abs().toBN(), bn(0.000001));
 
         const usdDepositAmount = marketUsdDepositedArgs?.amount;
@@ -2042,6 +2040,18 @@ describe('MarginModule', async () => {
         assertBn.equal(collateralPrice, bn(1));
       }
     );
+
+    it('should not apply a haircut on collateral price when spot market skew is 0', async () => {
+      const { PerpMarketProxy, SpotMarket } = systems();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
+
+      const { answer: collateralPrice } = await collateral.getPrice();
+      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
+
+      assertBn.equal(collateralPrice, priceWithHaircut);
+    });
 
     it('should return oracle price when size and minHaircut is 0', async () => {
       const { PerpMarketProxy } = systems();
