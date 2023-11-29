@@ -26,7 +26,6 @@ describe('MarketConfiguration', () => {
       priceWindowDuration: 90,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
-      url: 'url',
       settlementReward: 100,
       disabled: true,
     },
@@ -37,7 +36,6 @@ describe('MarketConfiguration', () => {
       priceWindowDuration: 100,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
-      url: 'url',
       settlementReward: 200,
       disabled: true,
     },
@@ -92,8 +90,6 @@ describe('MarketConfiguration', () => {
             fixture.settlementStrategy.priceVerificationContract.toString() +
             '", "' +
             fixture.settlementStrategy.feedId.toString() +
-            '", "' +
-            fixture.settlementStrategy.url.toString() +
             '", ' +
             fixture.settlementStrategy.settlementReward.toString() +
             ', ' +
@@ -168,8 +164,6 @@ describe('MarketConfiguration', () => {
             fixture.newSettlementStrategy.priceVerificationContract.toString() +
             '", "' +
             fixture.newSettlementStrategy.feedId.toString() +
-            '", "' +
-            fixture.newSettlementStrategy.url.toString() +
             '", ' +
             fixture.newSettlementStrategy.settlementReward.toString() +
             ', ' +
@@ -196,7 +190,6 @@ describe('MarketConfiguration', () => {
           fixture.newSettlementStrategy.settlementReward
         );
         assert.equal(settlementStrategy.disabled, fixture.newSettlementStrategy.disabled);
-        assert.equal(settlementStrategy.url, fixture.newSettlementStrategy.url);
         assert.equal(settlementStrategy.feedId, fixture.newSettlementStrategy.feedId);
         assert.equal(
           settlementStrategy.priceVerificationContract,
@@ -228,8 +221,6 @@ describe('MarketConfiguration', () => {
             settlementStrategy.priceVerificationContract.toString() +
             '", "' +
             settlementStrategy.feedId.toString() +
-            '", "' +
-            settlementStrategy.url.toString() +
             '", ' +
             settlementStrategy.settlementReward.toString() +
             ', ' +
