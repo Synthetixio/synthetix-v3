@@ -110,22 +110,50 @@ library Position {
     }
 
     /**
-     * @dev Validates whether the `newPosition` can be liquidated using their health factor.
+     * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
+     *
+     * NOTE: The previous margin (which may include a haircut on the collteral; used for liquidation checks) includes the
+     * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
+     * This is important as it helps avoid instant liquidations immediately after settlement.
      */
-    function validateNextPositionIsLiquidatable(
+    function getNextMarginUsd(uint256 marginUsd, uint256 orderFee, uint256 keeperFee) internal pure returns (uint256) {
+        return MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
+    }
+
+    /**
+     * @dev Validates whether the `newPosition` can be liquidated or below margin req.
+     *
+     * NOTE: We expect marginUsd here to be the haircut adjusted margin due to liquidation checks as margin checks
+     * for liquidations are expected to discount the collateral.
+     */
+    function validateNextPositionEnoughMargin(
         PerpMarket.Data storage market,
+        Position.Data storage currentPosition,
         Position.Data memory newPosition,
         uint256 marginUsd,
-        uint256 price,
+        uint256 fillPrice,
+        uint256 orderFee,
+        uint256 keeperFee,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
+        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
+        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, fillPrice, marketConfig);
+        uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
+
+        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
+        // avoid this completely due to positions at min margin would never be allowed to lower size.
+        if (!positionDecreasing && nextMarginUsd < im) {
+            revert ErrorUtil.InsufficientMargin();
+        }
+
         (uint256 healthFactor, , , ) = getHealthData(
             market,
             newPosition.size,
             newPosition.entryPrice,
             newPosition.entryFundingAccrued,
             marginUsd,
-            price,
+            fillPrice,
             marketConfig
         );
         if (healthFactor <= DecimalMath.UNIT) {
@@ -155,12 +183,6 @@ library Position {
             market,
             params.fillPrice,
             true /* useHaircutCollateralPrice */
-        );
-        uint256 marginUsd = Margin.getMarginUsd(
-            accountId,
-            market,
-            params.fillPrice,
-            false /* useHaircutCollateralPrice */
         );
 
         // --- Existing position validation --- //
@@ -196,39 +218,31 @@ library Position {
             orderFee + keeperFee
         );
 
-        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
-        // avoid this completely due to positions at min margin would never be allowed to lower size.
-        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
-            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
-
-        // `marginUsd` is the previous position margin (which includes accruedFeesUsd deducted with open
-        // position). We `-fee and -keeperFee` here because the new position would have incurred additional fees if
-        // this trader were to be settled successfully.
-        //
-        // This is important as it helps avoid instant liquidation on successful settlement.
-        uint256 newHaircutAdjustedMarginUsd = MathUtil
-            .max(haircutAdjustedMarginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0)
-            .toUint();
-
-        if (!positionDecreasing && newHaircutAdjustedMarginUsd < im) {
-            revert ErrorUtil.InsufficientMargin();
-        }
-
-        // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(
+        // Check new position margin validations.
+        validateNextPositionEnoughMargin(
             market,
+            currentPosition,
             newPosition,
-            newHaircutAdjustedMarginUsd,
+            haircutAdjustedMarginUsd,
             params.fillPrice,
+            orderFee,
+            keeperFee,
             marketConfig
         );
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
 
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
-        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, newMarginUsd);
+        // For everything else, we actually need to use the unadjusted marginUsd as the collateral haircut is only
+        // applicable for liquidation related checks.
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            params.fillPrice,
+            false /* useHaircutCollateralPrice */
+        );
+        uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
+        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, nextMarginUsd);
     }
 
     /**
@@ -352,13 +366,11 @@ library Position {
 
         uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(marketConfig.incrementalMarginScalar) +
             marketConfig.minMarginRatio;
-
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
         liqFlagReward = getLiquidationFlagReward(absSize, price, marketConfig, globalConfig);
 
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
-
         mm =
             notional.mulDecimal(mmr) +
             marketConfig.minMarginUsd +

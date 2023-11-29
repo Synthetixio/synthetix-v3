@@ -43,6 +43,8 @@ contract MarginModule is IMarginModule {
         PerpMarket.Data storage market
     ) private view {
         uint256 oraclePrice = market.getOraclePrice();
+
+        // We use the haircut adjusted price here due to the explicit liquidation check.
         uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
