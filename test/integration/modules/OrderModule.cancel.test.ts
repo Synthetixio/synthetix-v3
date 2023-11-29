@@ -28,7 +28,7 @@ import {
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, traders, signers } = bs;
+  const { systems, restore, provider, keeper, traders, spotMarket } = bs;
 
   beforeEach(restore);
 
@@ -270,7 +270,7 @@ describe('OrderModule Cancelations', () => {
       );
 
       // Eliminate skewFee on the non sUSD collateral sale.
-      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
       const orderSide = genSide();
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
@@ -442,7 +442,7 @@ describe('OrderModule Cancelations', () => {
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(orderDigestBefore.sizeDelta, order.sizeDelta);
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(shuffle(traders())[0].signer).cancelStaleOrder(trader.accountId, marketId),
+        () => PerpMarketProxy.connect(genOneOf(traders()).signer).cancelStaleOrder(trader.accountId, marketId),
         provider()
       );
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);

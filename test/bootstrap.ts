@@ -351,9 +351,10 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
     // always reserved as the owner but everything else is free game.
     //
-    // Here we reserve the signers [2, 3, 4, 5, 6] as traders and the rest can be for other purposes.
+    // Here we reserve the signers [x, x, x, 3, 4, 5, 6, 7] as traders and the rest can be for other purposes.
     // a = owner
     // b = staker (see stakedPool)
+    // c = spotMarktOwner (see bootstrapSynthMarkets)
     // 1 = trader
     // 2 = trader
     // 3 = trader
@@ -361,7 +362,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // 5 = trader
     // 6 = keeper (no funds)
     const [trader1, trader2, trader3, trader4, trader5, _keeper, _keeper2, _keeper3, _endorsedKeeper] =
-      getSigners().slice(2);
+      getSigners().slice(3);
     keeper = _keeper;
     keeper2 = _keeper2;
     keeper3 = _keeper3;
@@ -415,6 +416,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       oracleNodeId: stakedPool.oracleNodeId,
       aggregator: stakedPool.aggregator,
     }),
+    spotMarket,
     ethOracleNode: () => ({ nodeId: ethOracleNodeId, agg: ethOracleAgg }),
   };
 };

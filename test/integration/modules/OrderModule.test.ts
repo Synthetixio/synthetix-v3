@@ -26,7 +26,8 @@ import { PerpMarketProxy } from '../../generated/typechain';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, ethOracleNode, collateralsWithoutSusd, markets, traders, signers } = bs;
+  const { systems, restore, provider, keeper, spotMarket, ethOracleNode, collateralsWithoutSusd, markets, traders } =
+    bs;
 
   beforeEach(restore);
 
@@ -854,7 +855,7 @@ describe('OrderModule', () => {
           maxCollateralHaircut: bn(0),
           minCollateralHaircut: bn(0),
         });
-        await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
+        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
         // Price moves by 20% and they incur a loss.
         const newMarketOraclePrice = wei(order1.oraclePrice)

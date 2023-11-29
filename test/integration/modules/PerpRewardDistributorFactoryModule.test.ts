@@ -3,7 +3,7 @@ import { genBootstrap } from '../../generators';
 
 describe('PerpRewardDistributorFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { traders, signers, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
+  const { traders, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
 
   beforeEach(restore);
 

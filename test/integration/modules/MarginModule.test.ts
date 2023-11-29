@@ -42,7 +42,7 @@ import { assertEvents } from '../../assert';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, collateralsWithoutSusd, signers, traders, owner, systems, provider, restore } = bs;
+  const { markets, collaterals, collateralsWithoutSusd, spotMarket, traders, owner, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -1235,7 +1235,7 @@ describe('MarginModule', async () => {
 
         // NOTE: Spot market skewScale _must_ be set to zero here as its too difficult to calculcate exact values from
         // an implicit skewFee applied on the collateral sale.
-        await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
+        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
         // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
         // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
@@ -2045,7 +2045,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
-      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
       const { answer: collateralPrice } = await collateral.getPrice();
       const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
@@ -2069,13 +2069,12 @@ describe('MarginModule', async () => {
     it('should max bound the haircut on large skew shift', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
-      const spotMarketOwner = signers()[2];
       const collateral = genOneOf(collateralsWithoutSusd());
       const { answer: collateralPrice } = await collateral.getPrice();
 
       const maxCollateralHaircut = bn(0.02);
       await setMarketConfiguration(bs, { minCollateralHaircut: bn(0.01), maxCollateralHaircut });
-      await SpotMarket.connect(spotMarketOwner).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
 
       // price = oraclePrice * (1 - min(max(size / skewScale, minHaicut), maxHaircut))
       //
@@ -2091,13 +2090,12 @@ describe('MarginModule', async () => {
     it('should min bound the haircut on small skew shift', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
-      const spotMarketOwner = signers()[2];
       const collateral = genOneOf(collateralsWithoutSusd());
       const { answer: collateralPrice } = await collateral.getPrice();
 
       const minCollateralHaircut = bn(0.01);
       await setMarketConfiguration(bs, { minCollateralHaircut, maxCollateralHaircut: bn(0.02) });
-      await SpotMarket.connect(spotMarketOwner).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
 
       // price = oraclePrice * (1 - min(max(size / skewScale, minHaicut), maxHaircut))
       //
