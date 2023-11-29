@@ -4,16 +4,16 @@ pragma solidity 0.8.19;
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
-import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {IMarginModule} from "../interfaces/IMarginModule.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
-import {Order} from "../storage/Order.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IMarginModule} from "../interfaces/IMarginModule.sol";
+import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "../storage/Margin.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -422,15 +422,9 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getCollateralPrice(uint128 synthMarketId, int256 size) external view returns (uint256) {
+    function getHaircutCollateralPrice(uint128 synthMarketId, int256 size) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        (uint256 price, ) = globalMarginConfig.getCollateralPrice(
-            synthMarketId,
-            MathUtil.abs(size),
-            globalMarketConfig
-        );
-
-        return price;
+        return globalMarginConfig.getHaircutCollateralPrice(synthMarketId, MathUtil.abs(size), globalMarketConfig);
     }
 }

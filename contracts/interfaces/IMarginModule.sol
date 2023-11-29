@@ -87,5 +87,5 @@ interface IMarginModule is IBasePerpMarket {
     /**
      * @notice Returns a haircut adjusted oracle price based on a given size.
      */
-    function getCollateralPrice(uint128 marketId, int256 size) external view returns (uint256);
+    function getHaircutCollateralPrice(uint128 marketId, int256 size) external view returns (uint256);
 }

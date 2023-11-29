@@ -370,11 +370,7 @@ library PerpMarket {
             collateralAvailable = self.depositedCollateral[synthMarketId];
 
             if (collateralAvailable > 0) {
-                (collateralPrice, ) = globalMarginConfig.getCollateralPrice(
-                    synthMarketId,
-                    collateralAvailable,
-                    globalConfig
-                );
+                collateralPrice = globalMarginConfig.getCollateralPrice(synthMarketId, globalConfig);
                 totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);
             }
 

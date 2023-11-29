@@ -346,15 +346,14 @@ library Position {
     }
 
     /**
-     * @dev Returns the number of partial liquidations are required given liquidation size and max liquidation size.
-     *
-     * The logic is Divide and Ceil
+     * @dev Returns the number of partial liquidations required given liquidation size and mac liquidation capacity.
      */
     function getLiquidationIterations(uint256 liqSize, uint256 maxLiqCapacity) internal pure returns (uint256) {
         if (maxLiqCapacity == 0) {
             return 0;
         }
 
+        // ceil(liqSize / maxLiqCapacity).
         uint256 quotient = liqSize / maxLiqCapacity;
         uint256 remainder = liqSize % maxLiqCapacity;
         return remainder == 0 ? quotient : quotient + 1;
@@ -362,6 +361,7 @@ library Position {
 
     /**
      * @dev Returns the fee in USD paid to keeper for performing the liquidation (not flagging).
+     *
      * The size here is either liqSize or position.size.abs()
      */
     function getLiquidationKeeperFee(
@@ -478,7 +478,7 @@ library Position {
     }
 
     /**
-     * @dev Returns the absolute profit or loss based on current price and entry price.
+     * @dev Returns the notional profit or loss based on current price and entry price.
      */
     function getPnl(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {
