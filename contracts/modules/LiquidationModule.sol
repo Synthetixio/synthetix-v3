@@ -174,7 +174,7 @@ contract LiquidationModule is ILiquidationModule {
         uint256 oraclePrice = market.getOraclePrice();
         bool isLiquidatable = position.isLiquidatable(
             market,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice=true */),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
             oraclePrice,
             PerpMarketConfiguration.load(marketId)
         );
@@ -310,7 +310,7 @@ contract LiquidationModule is ILiquidationModule {
         return
             market.positions[accountId].isLiquidatable(
                 market,
-                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice=true */),
+                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
@@ -342,7 +342,7 @@ contract LiquidationModule is ILiquidationModule {
         return
             market.positions[accountId].getHealthFactor(
                 market,
-                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice=true */),
+                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );

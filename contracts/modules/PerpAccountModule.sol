@@ -74,7 +74,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position.getHealthData(
             market,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice=true */),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
             oraclePrice,
             marketConfig
         );

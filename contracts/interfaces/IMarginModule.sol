@@ -75,22 +75,14 @@ interface IMarginModule is IBasePerpMarket {
     function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory);
 
     /**
-     * @notice Returns the total value of deposited collaterals in USD for `accountId` and `marketId`.
+     * @notice Returns the USD value of deposited collaterals (unadjusted collteral price) for `accountId` and `marketId`.
      */
-    function getCollateralUsd(
-        uint128 accountId,
-        uint128 marketId,
-        bool useHaircutCollateralPrice
-    ) external view returns (uint256);
+    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 
     /**
-     * @notice Returns the total value of deposited collaterals -fees and +PnL in USD.
+     * @notice Returns the USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, +PnL.
      */
-    function getMarginUsd(
-        uint128 accountId,
-        uint128 marketId,
-        bool useHaircutCollateralPrice
-    ) external view returns (uint256);
+    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Returns a haircut adjusted oracle price based on a given size.

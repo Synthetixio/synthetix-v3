@@ -155,7 +155,7 @@ library Position {
             accountId,
             market,
             params.fillPrice,
-            true /* useHaircutCollateralPrice=true */
+            true /* useHaircutCollateralPrice */
         );
 
         // --- Existing position validation --- //
