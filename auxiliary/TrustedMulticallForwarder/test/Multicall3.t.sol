@@ -2,10 +2,7 @@
 pragma solidity 0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {
-    ERC2771Forwarder,
-    Address
-} from "../lib/openzeppelin-contracts/contracts/metatx/ERC2771Forwarder.sol";
+import {ERC2771Forwarder, Address} from "../lib/openzeppelin-contracts/contracts/metatx/ERC2771Forwarder.sol";
 import {TrustedMulticallForwarder} from "../src/TrustedMulticallForwarder.sol";
 import {MockCallee} from "./mocks/MockCallee.sol";
 import {EtherSink} from "./mocks/EtherSink.sol";
@@ -26,31 +23,26 @@ contract TrustedMulticallForwarderTest is Test {
 
     function testAggregation() public {
         // Test successful call
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](1);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](1);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
-        (uint256 blockNumber, bytes[] memory returnData) =
-            multicall.aggregate(calls);
+        (uint256 blockNumber, bytes[] memory returnData) = multicall.aggregate(calls);
         assertEq(blockNumber, block.number);
-        assertEq(
-            keccak256(returnData[0]),
-            keccak256(abi.encodePacked(blockhash(block.number)))
-        );
+        assertEq(keccak256(returnData[0]), keccak256(abi.encodePacked(blockhash(block.number))));
     }
 
     function testUnsuccessfulAggregation() public {
         // Test unexpected revert
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](2);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](2);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
         calls[1] = TrustedMulticallForwarder.Call(
-            address(callee), abi.encodeWithSignature("thisMethodReverts()")
+            address(callee),
+            abi.encodeWithSignature("thisMethodReverts()")
         );
         vm.expectRevert(bytes(hex"81775cc3"));
         multicall.aggregate(calls);
@@ -59,17 +51,16 @@ contract TrustedMulticallForwarderTest is Test {
     /// >>>>>>>>>>>>>>>>>>>  TRY AGGREGATE TESTS  <<<<<<<<<<<<<<<<<<< ///
 
     function testTryAggregate() public {
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](2);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](2);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
         calls[1] = TrustedMulticallForwarder.Call(
-            address(callee), abi.encodeWithSignature("thisMethodReverts()")
+            address(callee),
+            abi.encodeWithSignature("thisMethodReverts()")
         );
-        (TrustedMulticallForwarder.Result[] memory returnData) =
-            multicall.tryAggregate(false, calls);
+        TrustedMulticallForwarder.Result[] memory returnData = multicall.tryAggregate(false, calls);
         assertTrue(returnData[0].success);
         assertEq(
             keccak256(returnData[0].returnData),
@@ -79,14 +70,14 @@ contract TrustedMulticallForwarderTest is Test {
     }
 
     function testTryAggregateUnsuccessful() public {
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](2);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](2);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
         calls[1] = TrustedMulticallForwarder.Call(
-            address(callee), abi.encodeWithSignature("thisMethodReverts()")
+            address(callee),
+            abi.encodeWithSignature("thisMethodReverts()")
         );
         vm.expectRevert(bytes(hex"81775cc3"));
         multicall.tryAggregate(true, calls);
@@ -95,14 +86,14 @@ contract TrustedMulticallForwarderTest is Test {
     /// >>>>>>>>>>>>>>  TRY BLOCK AND AGGREGATE TESTS  <<<<<<<<<<<<<< ///
 
     function testTryBlockAndAggregate() public {
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](2);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](2);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
         calls[1] = TrustedMulticallForwarder.Call(
-            address(callee), abi.encodeWithSignature("thisMethodReverts()")
+            address(callee),
+            abi.encodeWithSignature("thisMethodReverts()")
         );
         (
             uint256 blockNumber,
@@ -120,28 +111,28 @@ contract TrustedMulticallForwarderTest is Test {
     }
 
     function testTryBlockAndAggregateUnsuccessful() public {
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](2);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](2);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
         calls[1] = TrustedMulticallForwarder.Call(
-            address(callee), abi.encodeWithSignature("thisMethodReverts()")
+            address(callee),
+            abi.encodeWithSignature("thisMethodReverts()")
         );
         vm.expectRevert(bytes(hex"81775cc3"));
         multicall.tryBlockAndAggregate(true, calls);
     }
 
     function testBlockAndAggregateUnsuccessful() public {
-        TrustedMulticallForwarder.Call[] memory calls =
-            new TrustedMulticallForwarder.Call[](2);
+        TrustedMulticallForwarder.Call[] memory calls = new TrustedMulticallForwarder.Call[](2);
         calls[0] = TrustedMulticallForwarder.Call(
             address(callee),
             abi.encodeWithSignature("getBlockHash(uint256)", block.number)
         );
         calls[1] = TrustedMulticallForwarder.Call(
-            address(callee), abi.encodeWithSignature("thisMethodReverts()")
+            address(callee),
+            abi.encodeWithSignature("thisMethodReverts()")
         );
         vm.expectRevert(bytes(hex"81775cc3"));
         multicall.blockAndAggregate(calls);
@@ -150,8 +141,7 @@ contract TrustedMulticallForwarderTest is Test {
     /// >>>>>>>>>>>>>>>>>>>  AGGREGATE3 TESTS  <<<<<<<<<<<<<<<<<<<<<< ///
 
     function testAggregate3() public {
-        TrustedMulticallForwarder.Call3[] memory calls =
-            new TrustedMulticallForwarder.Call3[](3);
+        TrustedMulticallForwarder.Call3[] memory calls = new TrustedMulticallForwarder.Call3[](3);
         calls[0] = TrustedMulticallForwarder.Call3(
             address(callee),
             true,
@@ -167,15 +157,11 @@ contract TrustedMulticallForwarderTest is Test {
             false,
             abi.encodeWithSignature("getCurrentBlockTimestamp()")
         );
-        (TrustedMulticallForwarder.Result[] memory returnData) =
-            multicall.aggregate3(calls);
+        TrustedMulticallForwarder.Result[] memory returnData = multicall.aggregate3(calls);
 
         // Call 1.
         assertTrue(returnData[0].success);
-        assertEq(
-            blockhash(block.number),
-            abi.decode(returnData[0].returnData, (bytes32))
-        );
+        assertEq(blockhash(block.number), abi.decode(returnData[0].returnData, (bytes32)));
         assertEq(
             keccak256(returnData[0].returnData),
             keccak256(abi.encodePacked(blockhash(block.number)))
@@ -184,21 +170,15 @@ contract TrustedMulticallForwarderTest is Test {
         // Call 2.
         assertTrue(!returnData[1].success);
         assertEq(returnData[1].returnData.length, 4);
-        assertEq(
-            bytes4(returnData[1].returnData),
-            bytes4(keccak256("Unsuccessful()"))
-        );
+        assertEq(bytes4(returnData[1].returnData), bytes4(keccak256("Unsuccessful()")));
 
         // Call 3.
         assertTrue(returnData[2].success);
-        assertEq(
-            abi.decode(returnData[2].returnData, (uint256)), block.timestamp
-        );
+        assertEq(abi.decode(returnData[2].returnData, (uint256)), block.timestamp);
     }
 
     function testAggregate3Unsuccessful() public {
-        TrustedMulticallForwarder.Call3[] memory calls =
-            new TrustedMulticallForwarder.Call3[](2);
+        TrustedMulticallForwarder.Call3[] memory calls = new TrustedMulticallForwarder.Call3[](2);
         calls[0] = TrustedMulticallForwarder.Call3(
             address(callee),
             true,
@@ -216,8 +196,8 @@ contract TrustedMulticallForwarderTest is Test {
     /// >>>>>>>>>>>>>>>>>  AGGREGATE3VALUE TESTS  <<<<<<<<<<<<<<<<<<< ///
 
     function testAggregate3Value() public {
-        TrustedMulticallForwarder.Call3Value[] memory calls =
-            new TrustedMulticallForwarder.Call3Value[](3);
+        TrustedMulticallForwarder.Call3Value[]
+            memory calls = new TrustedMulticallForwarder.Call3Value[](3);
         calls[0] = TrustedMulticallForwarder.Call3Value(
             address(callee),
             true,
@@ -234,12 +214,11 @@ contract TrustedMulticallForwarderTest is Test {
             address(callee),
             false,
             1,
-            abi.encodeWithSignature(
-                "sendBackValue(address)", address(etherSink)
-            )
+            abi.encodeWithSignature("sendBackValue(address)", address(etherSink))
         );
-        (TrustedMulticallForwarder.Result[] memory returnData) =
-            multicall.aggregate3Value{value: 1}(calls);
+        TrustedMulticallForwarder.Result[] memory returnData = multicall.aggregate3Value{value: 1}(
+            calls
+        );
         assertTrue(returnData[0].success);
         assertEq(
             keccak256(returnData[0].returnData),
@@ -250,8 +229,8 @@ contract TrustedMulticallForwarderTest is Test {
     }
 
     function testAggregate3ValueUnsuccessful() public {
-        TrustedMulticallForwarder.Call3Value[] memory calls =
-            new TrustedMulticallForwarder.Call3Value[](3);
+        TrustedMulticallForwarder.Call3Value[]
+            memory calls = new TrustedMulticallForwarder.Call3Value[](3);
         calls[0] = TrustedMulticallForwarder.Call3Value(
             address(callee),
             true,
@@ -268,23 +247,19 @@ contract TrustedMulticallForwarderTest is Test {
             address(callee),
             true,
             1,
-            abi.encodeWithSignature(
-                "sendBackValue(address)", address(etherSink)
-            )
+            abi.encodeWithSignature("sendBackValue(address)", address(etherSink))
         );
         vm.expectRevert(bytes(hex"81775cc3"));
         multicall.aggregate3Value{value: 1}(calls);
 
         // Should fail if we don't provide enough value
-        TrustedMulticallForwarder.Call3Value[] memory calls2 =
-            new TrustedMulticallForwarder.Call3Value[](1);
+        TrustedMulticallForwarder.Call3Value[]
+            memory calls2 = new TrustedMulticallForwarder.Call3Value[](1);
         calls2[0] = TrustedMulticallForwarder.Call3Value(
             address(callee),
             false,
             1,
-            abi.encodeWithSignature(
-                "sendBackValue(address)", address(etherSink)
-            )
+            abi.encodeWithSignature("sendBackValue(address)", address(etherSink))
         );
         // trying to figure out how to check the actual error here but its hard
         //vm.expectRevert(ERC2771Forwarder.ERC2771ForwarderMismatchedValue.selector);
@@ -292,8 +267,8 @@ contract TrustedMulticallForwarderTest is Test {
         multicall.aggregate3Value(calls2);
 
         // Works if we provide enough value
-        TrustedMulticallForwarder.Call3Value[] memory calls3 =
-            new TrustedMulticallForwarder.Call3Value[](3);
+        TrustedMulticallForwarder.Call3Value[]
+            memory calls3 = new TrustedMulticallForwarder.Call3Value[](3);
         calls3[0] = TrustedMulticallForwarder.Call3Value(
             address(callee),
             true,
@@ -310,9 +285,7 @@ contract TrustedMulticallForwarderTest is Test {
             address(callee),
             true,
             1,
-            abi.encodeWithSignature(
-                "sendBackValue(address)", address(etherSink)
-            )
+            abi.encodeWithSignature("sendBackValue(address)", address(etherSink))
         );
         multicall.aggregate3Value{value: 1}(calls3);
     }

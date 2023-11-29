@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {
-    ERC2771Forwarder,
-    Address
-} from "../lib/openzeppelin-contracts/contracts/metatx/ERC2771Forwarder.sol";
+import {ERC2771Forwarder, Address} from "../lib/openzeppelin-contracts/contracts/metatx/ERC2771Forwarder.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
 
@@ -53,19 +50,19 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     /// @param calls An array of Call structs
     /// @return blockNumber The block number where the calls were executed
     /// @return returnData An array of bytes containing the responses
-    function aggregate(Call[] calldata calls)
-        public
-        returns (uint256 blockNumber, bytes[] memory returnData)
-    {
+    function aggregate(
+        Call[] calldata calls
+    ) public returns (uint256 blockNumber, bytes[] memory returnData) {
         blockNumber = block.number;
         uint256 length = calls.length;
         returnData = new bytes[](length);
         Call calldata call;
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             bool success;
             call = calls[i];
-            (success, returnData[i]) =
-                call.target.call(abi.encodePacked(call.callData, msg.sender));
+            (success, returnData[i]) = call.target.call(
+                abi.encodePacked(call.callData, msg.sender)
+            );
             if (!success) {
                 bytes memory revertData = returnData[i];
                 uint256 len = revertData.length;
@@ -85,18 +82,19 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     /// @param requireSuccess If true, require all calls to succeed
     /// @param calls An array of Call structs
     /// @return returnData An array of Result structs
-    function tryAggregate(bool requireSuccess, Call[] calldata calls)
-        public
-        returns (Result[] memory returnData)
-    {
+    function tryAggregate(
+        bool requireSuccess,
+        Call[] calldata calls
+    ) public returns (Result[] memory returnData) {
         uint256 length = calls.length;
         returnData = new Result[](length);
         Call calldata call;
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             Result memory result = returnData[i];
             call = calls[i];
-            (result.success, result.returnData) =
-                call.target.call(abi.encodePacked(call.callData, msg.sender));
+            (result.success, result.returnData) = call.target.call(
+                abi.encodePacked(call.callData, msg.sender)
+            );
             if (requireSuccess && !result.success) {
                 bytes memory revertData = result.returnData;
                 uint256 len = revertData.length;
@@ -116,15 +114,10 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     /// @return blockNumber The block number where the calls were executed
     /// @return blockHash The hash of the block where the calls were executed
     /// @return returnData An array of Result structs
-    function tryBlockAndAggregate(bool requireSuccess, Call[] calldata calls)
-        public
-        payable
-        returns (
-            uint256 blockNumber,
-            bytes32 blockHash,
-            Result[] memory returnData
-        )
-    {
+    function tryBlockAndAggregate(
+        bool requireSuccess,
+        Call[] calldata calls
+    ) public payable returns (uint256 blockNumber, bytes32 blockHash, Result[] memory returnData) {
         blockNumber = block.number;
         blockHash = blockhash(block.number);
         returnData = tryAggregate(requireSuccess, calls);
@@ -136,34 +129,27 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     /// @return blockNumber The block number where the calls were executed
     /// @return blockHash The hash of the block where the calls were executed
     /// @return returnData An array of Result structs
-    function blockAndAggregate(Call[] calldata calls)
-        public
-        payable
-        returns (
-            uint256 blockNumber,
-            bytes32 blockHash,
-            Result[] memory returnData
-        )
-    {
+    function blockAndAggregate(
+        Call[] calldata calls
+    ) public payable returns (uint256 blockNumber, bytes32 blockHash, Result[] memory returnData) {
         (blockNumber, blockHash, returnData) = tryBlockAndAggregate(true, calls);
     }
 
     /// @notice Aggregate calls, ensuring each returns success if required
     /// @param calls An array of Call3 structs
     /// @return returnData An array of Result structs
-    function aggregate3(Call3[] calldata calls)
-        public
-        payable
-        returns (Result[] memory returnData)
-    {
+    function aggregate3(
+        Call3[] calldata calls
+    ) public payable returns (Result[] memory returnData) {
         uint256 length = calls.length;
         returnData = new Result[](length);
         Call3 calldata calli;
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             Result memory result = returnData[i];
             calli = calls[i];
-            (result.success, result.returnData) =
-                calli.target.call(abi.encodePacked(calli.callData, msg.sender));
+            (result.success, result.returnData) = calli.target.call(
+                abi.encodePacked(calli.callData, msg.sender)
+            );
             if (calli.requireSuccess && !result.success) {
                 bytes memory revertData = result.returnData;
                 uint256 len = revertData.length;
@@ -181,16 +167,14 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     /// @notice Reverts if msg.value is less than the sum of the call values
     /// @param calls An array of Call3Value structs
     /// @return returnData An array of Result structs
-    function aggregate3Value(Call3Value[] calldata calls)
-        public
-        payable
-        returns (Result[] memory returnData)
-    {
+    function aggregate3Value(
+        Call3Value[] calldata calls
+    ) public payable returns (Result[] memory returnData) {
         uint256 valAccumulator;
         uint256 length = calls.length;
         returnData = new Result[](length);
         Call3Value calldata calli;
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             Result memory result = returnData[i];
             calli = calls[i];
             uint256 val = calli.value;
@@ -224,11 +208,9 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     /// @notice Reverts if the msg.sender is the zero address
     /// @param requests An array of ForwardRequestData structs
     /// @return returnData An array of Result structs
-    function executeBatch(ForwardRequestData[] calldata requests)
-        public
-        payable
-        returns (Result[] memory returnData)
-    {
+    function executeBatch(
+        ForwardRequestData[] calldata requests
+    ) public payable returns (Result[] memory returnData) {
         uint256 length = requests.length;
         returnData = new Result[](length);
 
@@ -237,27 +219,23 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
         uint256 requestsValue;
         uint256 refundValue;
 
-        for (uint256 i; i < length;) {
+        for (uint256 i; i < length; ) {
             Result memory result = returnData[i];
 
             req = requests[i];
             requestsValue += requests[i].value;
 
-            (
-                bool isTrustedForwarder,
-                bool active,
-                bool signerMatch,
-                address signer
-            ) = _validate(req);
+            (bool isTrustedForwarder, bool active, bool signerMatch, address signer) = _validate(
+                req
+            );
 
             if (isTrustedForwarder && signerMatch && active) {
                 // Nonce should be used before the call to prevent reusing by reentrancy
                 uint256 currentNonce = _useNonce(signer);
 
-                (result.success, result.returnData) = req.to.call{
-                    value: req.value,
-                    gas: req.gas
-                }(abi.encodePacked(req.data, req.from));
+                (result.success, result.returnData) = req.to.call{value: req.value, gas: req.gas}(
+                    abi.encodePacked(req.data, req.from)
+                );
 
                 /// @dev see ERC2771Forwarder._checkForwardedGas() for further details
                 if (gasleft() < req.gas / 63) {
@@ -266,9 +244,7 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
                     }
                 }
 
-                emit ExecutedForwardRequest(
-                    signer, currentNonce, result.success
-                );
+                emit ExecutedForwardRequest(signer, currentNonce, result.success);
             }
 
             /// @notice If the call was not successful, we refund the value to the msg.sender
@@ -300,11 +276,7 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
 
     /// @notice Returns the block hash for the given block number
     /// @param blockNumber The block number
-    function getBlockHash(uint256 blockNumber)
-        public
-        view
-        returns (bytes32 blockHash)
-    {
+    function getBlockHash(uint256 blockNumber) public view returns (bytes32 blockHash) {
         blockHash = blockhash(blockNumber);
     }
 
@@ -329,20 +301,12 @@ contract TrustedMulticallForwarder is ERC2771Forwarder {
     }
 
     /// @notice Returns the block timestamp
-    function getCurrentBlockTimestamp()
-        public
-        view
-        returns (uint256 timestamp)
-    {
+    function getCurrentBlockTimestamp() public view returns (uint256 timestamp) {
         timestamp = block.timestamp;
     }
 
     /// @notice Returns the (ETH) balance of a given address
-    function getEthBalance(address addr)
-        public
-        view
-        returns (uint256 balance)
-    {
+    function getEthBalance(address addr) public view returns (uint256 balance) {
         balance = addr.balance;
     }
 

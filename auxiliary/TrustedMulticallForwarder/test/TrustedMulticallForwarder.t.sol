@@ -4,11 +4,7 @@ pragma solidity 0.8.20;
 import {Test} from "../lib/forge-std/src/Test.sol";
 import {Vm} from "../lib/forge-std/src/Vm.sol";
 
-import {
-    TrustedMulticallForwarder,
-    ERC2771Forwarder,
-    Address
-} from "../src/TrustedMulticallForwarder.sol";
+import {TrustedMulticallForwarder, ERC2771Forwarder, Address} from "../src/TrustedMulticallForwarder.sol";
 
 contract ERC2771Example {
     function isTrustedForwarder(address forwarder) public view returns (bool) {
@@ -43,13 +39,15 @@ contract TrustedMulticallForwarderTest is Test {
 }
 
 contract ExecuteBatch is TrustedMulticallForwarderTest {
-    bytes32 private constant _TYPE_HASH = keccak256(
-        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-    );
+    bytes32 private constant _TYPE_HASH =
+        keccak256(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        );
 
-    bytes32 internal constant _FORWARD_REQUEST_TYPEHASH = keccak256(
-        "ForwardRequest(address from,address to,uint256 value,uint256 gas,uint256 nonce,uint48 deadline,bytes data)"
-    );
+    bytes32 internal constant _FORWARD_REQUEST_TYPEHASH =
+        keccak256(
+            "ForwardRequest(address from,address to,uint256 value,uint256 gas,uint256 nonce,uint48 deadline,bytes data)"
+        );
 
     function getForwardRequestDataSignatureRaw(
         ERC2771Forwarder.ForwardRequestData memory request,
@@ -86,7 +84,10 @@ contract ExecuteBatch is TrustedMulticallForwarderTest {
         bytes32 domainSeparator
     ) internal pure returns (bytes memory sig) {
         (uint8 v, bytes32 r, bytes32 s) = getForwardRequestDataSignatureRaw(
-            request, nonce, privateKey, domainSeparator
+            request,
+            nonce,
+            privateKey,
+            domainSeparator
         );
         return bytes.concat(r, s, bytes1(v));
     }
@@ -97,8 +98,7 @@ contract ExecuteBatch is TrustedMulticallForwarderTest {
         uint256 gas = 1 ether;
 
         // prepare forward request data (with empty signature)
-        ERC2771Forwarder.ForwardRequestData memory request = ERC2771Forwarder
-            .ForwardRequestData({
+        ERC2771Forwarder.ForwardRequestData memory request = ERC2771Forwarder.ForwardRequestData({
             from: address(signer),
             to: address(erc2771Example),
             value: value,
@@ -131,15 +131,15 @@ contract ExecuteBatch is TrustedMulticallForwarderTest {
         request.signature = signature;
 
         // define batch of forward requests
-        ERC2771Forwarder.ForwardRequestData[] memory batch =
-            new ERC2771Forwarder.ForwardRequestData[](1);
+        ERC2771Forwarder.ForwardRequestData[]
+            memory batch = new ERC2771Forwarder.ForwardRequestData[](1);
         batch[0] = request;
 
         // execute batch
-        TrustedMulticallForwarder.Result[] memory results =
-        trustedMulticallForwarder.executeBatch{value: value, gas: gas}({
-            requests: batch
-        });
+        TrustedMulticallForwarder.Result[] memory results = trustedMulticallForwarder.executeBatch{
+            value: value,
+            gas: gas
+        }({requests: batch});
 
         // check results
         assertEq(results.length, 1);
@@ -153,8 +153,7 @@ contract ExecuteBatch is TrustedMulticallForwarderTest {
         uint256 gas = 1 ether;
 
         // prepare forward request data (with empty signature)
-        ERC2771Forwarder.ForwardRequestData memory request = ERC2771Forwarder
-            .ForwardRequestData({
+        ERC2771Forwarder.ForwardRequestData memory request = ERC2771Forwarder.ForwardRequestData({
             from: address(signer),
             to: address(erc2771Example),
             value: value,
@@ -187,15 +186,15 @@ contract ExecuteBatch is TrustedMulticallForwarderTest {
         request.signature = invalidSignature;
 
         // define batch of forward requests
-        ERC2771Forwarder.ForwardRequestData[] memory batch =
-            new ERC2771Forwarder.ForwardRequestData[](1);
+        ERC2771Forwarder.ForwardRequestData[]
+            memory batch = new ERC2771Forwarder.ForwardRequestData[](1);
         batch[0] = request;
 
         // execute batch
         vm.expectRevert(Address.FailedInnerCall.selector);
-        TrustedMulticallForwarder.Result[] memory results =
-        trustedMulticallForwarder.executeBatch{value: value, gas: gas}({
-            requests: batch
-        });
+        TrustedMulticallForwarder.Result[] memory results = trustedMulticallForwarder.executeBatch{
+            value: value,
+            gas: gas
+        }({requests: batch});
     }
 }
