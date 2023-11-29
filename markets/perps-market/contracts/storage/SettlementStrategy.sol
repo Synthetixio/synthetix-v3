@@ -16,7 +16,7 @@ library SettlementStrategy {
          */
         Type strategyType;
         /**
-         * @dev the delay added to commitment time for determining valid price window.
+         * @dev the delay added to commitment time after which committed orders can be settled.
          * @dev this ensures settlements aren't on the same block as commitment.
          */
         uint256 settlementDelay;
@@ -45,6 +45,11 @@ library SettlementStrategy {
          * @dev whether the strategy is disabled or not.
          */
         bool disabled;
+        /**
+         * @dev the delay added to commitment time for determining valid price. Defines the expected price timestamp.
+         * @dev this ensures price aren't on the same block as commitment in case of blockchain drift in timestamp or bad actors timestamp manipulation.
+         */
+        uint256 commitmentPriceDelay;
     }
 
     enum Type {

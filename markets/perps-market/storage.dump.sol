@@ -45,7 +45,7 @@ library DecimalMath {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
 library ERC2771Context {
-    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+    address private constant TRUSTED_FORWARDER = 0xcbc8bDF9358BB3F5005B893a32b477e6B2F9f688;
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
@@ -585,29 +585,16 @@ interface IPerpsMarketModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
-interface IPythVerifier {
-    struct Price {
-        int64 price;
-        uint64 conf;
-        int32 expo;
-        uint publishTime;
-    }
-    struct PriceFeed {
-        bytes32 id;
-        Price price;
-        Price emaPrice;
-    }
-}
-
 // @custom:artifact contracts/modules/LiquidationModule.sol:LiquidationModule
 contract LiquidationModule {
     struct LiquidateAccountRuntime {
         uint128 accountId;
-        uint256 totalLiquidationRewards;
+        uint256 totalFlaggingRewards;
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
+        uint256 price;
+        uint128 positionMarketId;
         uint256 loopIterator;
     }
 }
@@ -620,7 +607,7 @@ contract PerpsMarketFactoryModule {
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
 library AsyncOrder {
     struct Data {
-        uint256 settlementTime;
+        uint256 commitmentTime;
         OrderCommitmentRequest request;
     }
     struct OrderCommitmentRequest {
@@ -699,6 +686,7 @@ library GlobalPerpsMarketConfiguration {
         uint128 maxCollateralsPerAccount;
         uint minKeeperProfitRatioD18;
         uint maxKeeperScalingRatioD18;
+        SetUtil.UintSet supportedCollateralTypes;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -806,9 +794,11 @@ library PerpsMarketConfiguration {
         uint256 lockedOiRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
         uint256 maxSecondsInLiquidationWindow;
-        uint256 liquidationRewardRatioD18;
+        uint256 flagRewardRatioD18;
         uint256 minimumPositionMargin;
         uint256 minimumInitialMarginRatioD18;
+        uint256 maxLiquidationPd;
+        address endorsedLiquidator;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
@@ -874,12 +864,12 @@ library SettlementStrategy {
         Type strategyType;
         uint256 settlementDelay;
         uint256 settlementWindowDuration;
-        uint256 priceWindowDuration;
         address priceVerificationContract;
         bytes32 feedId;
         string url;
         uint256 settlementReward;
         bool disabled;
+        uint256 commitmentPriceDelay;
     }
 }
 
@@ -887,9 +877,4 @@ library SettlementStrategy {
 library Flags {
     bytes32 public constant PERPS_SYSTEM = "perpsSystem";
     bytes32 public constant CREATE_MARKET = "createMarket";
-}
-
-// @custom:artifact contracts/utils/OffchainUtil.sol:OffchainUtil
-library OffchainUtil {
-    int256 private constant PRECISION = 18;
 }

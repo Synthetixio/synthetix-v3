@@ -21,9 +21,9 @@ describe('MarketConfiguration', () => {
     orderFees: { makerFee: 0, takerFee: 1 },
     settlementStrategy: {
       strategyType: 0,
+      commitmentPriceDelay: 0,
       settlementDelay: 500,
-      settlementWindowDuration: 100,
-      priceWindowDuration: 90,
+      settlementWindowDuration: 5000,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
       url: 'url',
@@ -32,9 +32,9 @@ describe('MarketConfiguration', () => {
     },
     newSettlementStrategy: {
       strategyType: 0,
+      commitmentPriceDelay: 10,
       settlementDelay: 1000,
-      settlementWindowDuration: 200,
-      priceWindowDuration: 100,
+      settlementWindowDuration: 10000,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
       url: 'url',
@@ -98,6 +98,8 @@ describe('MarketConfiguration', () => {
             fixture.settlementStrategy.settlementReward.toString() +
             ', ' +
             fixture.settlementStrategy.disabled.toString() +
+            ', ' +
+            fixture.settlementStrategy.commitmentPriceDelay.toString() +
             '], 0)',
           systems().PerpsMarket
         );
@@ -174,6 +176,8 @@ describe('MarketConfiguration', () => {
             fixture.newSettlementStrategy.settlementReward.toString() +
             ', ' +
             fixture.newSettlementStrategy.disabled.toString() +
+            ', ' +
+            fixture.newSettlementStrategy.commitmentPriceDelay.toString() +
             '])',
           systems().PerpsMarket
         );
@@ -222,8 +226,6 @@ describe('MarketConfiguration', () => {
             settlementStrategy.settlementDelay.toString() +
             ', ' +
             bn(1).toString() +
-            ', ' +
-            settlementStrategy.priceWindowDuration.toString() +
             ', "' +
             settlementStrategy.priceVerificationContract.toString() +
             '", "' +

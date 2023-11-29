@@ -81,6 +81,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.sizeDelta,
             commitment.acceptablePrice,
             order.commitmentTime,
+            order.commitmentTime + strategy.commitmentPriceDelay,
             order.commitmentTime + strategy.settlementDelay,
             order.commitmentTime + strategy.settlementDelay + strategy.settlementWindowDuration,
             commitment.trackingCode,

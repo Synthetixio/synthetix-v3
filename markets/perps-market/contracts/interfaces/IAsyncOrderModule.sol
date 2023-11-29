@@ -28,6 +28,7 @@ interface IAsyncOrderModule {
         int128 sizeDelta,
         uint256 acceptablePrice,
         uint256 commitmentTime,
+        uint256 expectedPriceTime,
         uint256 settlementTime,
         uint256 expirationTime,
         bytes32 indexed trackingCode,
