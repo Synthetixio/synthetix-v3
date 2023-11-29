@@ -253,7 +253,7 @@ describe('Commit Offchain Async Order test', () => {
           tx,
           `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
             1
-          )}, ${bn(1050)}, ${startTime}, ${startTime + 0}, ${startTime + 5}, ${
+          )}, ${bn(1050)}, ${startTime}, ${startTime + 2}, ${startTime + 5}, ${
             startTime + 5 + 120
           }, "${ethers.constants.HashZero}", "${await trader1().getAddress()}")`,
           systems().PerpsMarket
@@ -329,7 +329,7 @@ describe('Commit Offchain Async Order test', () => {
               tx,
               `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
                 1
-              )}, ${bn(1050)}, ${startTime}, ${startTime + 0}, ${startTime + 5}, ${
+              )}, ${bn(1050)}, ${startTime}, ${startTime + 2}, ${startTime + 5}, ${
                 startTime + 5 + 120
               }, "${ethers.constants.HashZero}", "${await trader1().getAddress()}")`,
               systems().PerpsMarket
@@ -396,7 +396,7 @@ describe('Commit Offchain Async Order test', () => {
               tx,
               `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
                 1
-              )}, ${bn(1050)}, ${secondOrderStartTime}, ${secondOrderStartTime + 0}, ${
+              )}, ${bn(1050)}, ${secondOrderStartTime}, ${secondOrderStartTime + 2}, ${
                 secondOrderStartTime + 5
               }, ${secondOrderStartTime + 5 + 120}, "${
                 ethers.constants.HashZero
