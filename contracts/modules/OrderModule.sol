@@ -37,6 +37,8 @@ contract OrderModule is IOrderModule {
         uint256 fillPrice;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
+        Position.Data position;
+        Order.Data order;
     }
 
     // --- Helpers --- //
@@ -214,6 +216,7 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
+        Position.Data storage position = market.positions[accountId];
         Runtime_settleOrder memory runtime;
 
         // No order available to settle.
@@ -242,12 +245,16 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        (, runtime.accruedFunding, runtime.pnl, ) = market.positions[accountId].getHealthData(
+        (, runtime.accruedFunding, runtime.pnl, ) = Position.getHealthData(
             market,
+            position.size,
+            position.entryPrice,
+            position.entryFundingAccrued,
             runtime.trade.newMarginUsd,
             runtime.pythPrice,
             marketConfig
         );
+
         stateUpdatePostSettlement(
             accountId,
             marketId,

@@ -128,7 +128,6 @@ library Position {
             price,
             marketConfig
         );
-
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
         }
@@ -448,42 +447,6 @@ library Position {
     // --- Member (views) --- //
 
     /**
-     * @dev An overloaded function over `getHealthData` using the a Position storage struct.
-     */
-    function getHealthData(
-        Position.Data storage self,
-        PerpMarket.Data storage market,
-        uint256 marginUsd,
-        uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
-        return
-            getHealthData(market, self.size, self.entryPrice, self.entryFundingAccrued, marginUsd, price, marketConfig);
-    }
-
-    /**
-     * @dev Returns the health factor associated with this position.
-     */
-    function getHealthFactor(
-        Position.Data storage self,
-        PerpMarket.Data storage market,
-        uint256 marginUsd,
-        uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256) {
-        (uint256 healthFactor, , , ) = getHealthData(
-            market,
-            self.size,
-            self.entryPrice,
-            self.entryFundingAccrued,
-            marginUsd,
-            price,
-            marketConfig
-        );
-        return healthFactor;
-    }
-
-    /**
      * @dev Returns whether the current position can be liquidated.
      */
     function isLiquidatable(
@@ -496,9 +459,15 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-
-        (uint256 healthFactor, , , ) = getHealthData(self, market, marginUsd, price, marketConfig);
-
+        (uint256 healthFactor, , , ) = Position.getHealthData(
+            market,
+            self.size,
+            self.entryPrice,
+            self.entryFundingAccrued,
+            marginUsd,
+            price,
+            marketConfig
+        );
         return healthFactor <= DecimalMath.UNIT;
     }
 

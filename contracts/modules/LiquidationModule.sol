@@ -337,14 +337,20 @@ contract LiquidationModule is ILiquidationModule {
      */
     function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
+
         uint256 oraclePrice = market.getOraclePrice();
-        return
-            market.positions[accountId].getHealthFactor(
-                market,
-                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
-                oraclePrice,
-                PerpMarketConfiguration.load(marketId)
-            );
+        (uint256 healthFactor, , , ) = Position.getHealthData(
+            market,
+            position.size,
+            position.entryPrice,
+            position.entryFundingAccrued,
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+            oraclePrice,
+            PerpMarketConfiguration.load(marketId)
+        );
+        return healthFactor;
     }
 }
