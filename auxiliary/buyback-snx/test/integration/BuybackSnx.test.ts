@@ -4,17 +4,20 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { bn, bootstrapWithNodes } from './bootstrap';
+import { bn, bootstrapBuyback } from './bootstrap';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 describe('BuybackSnx', function () {
-  const { getContract, owner, user } = bootstrapWithNodes();
+  const { owner, user } = bootstrapBuyback();
 
   let ERC20: ethers.Contract;
   let BuybackSnx: ethers.Contract;
 
   before('prepare environment', async () => {
-    BuybackSnx = getContract('BuybackSnx');
+    before('deploy buyback contract', async () => {
+      const factory = await hre.ethers.getContractFactory('BuybackSnx');
+      BuybackSnx = await factory.connect(owner()).deploy(await owner().getAddress());
+    });
   });
 
   before('deploy mock token', async () => {
