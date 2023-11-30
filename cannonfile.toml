@@ -32,7 +32,7 @@ preset = "<%= settings.synthetixPreset %>"
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
 
-# --- Market Contracts --- #
+# --- Module Contracts --- #
 
 [contract.OrderModule]
 artifact = "OrderModule"
@@ -58,12 +58,22 @@ args = []
 artifact = "MarginModule"
 args = []
 
+[contract.PerpRewardDistributorFactoryModule]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
+args = []
+
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 args = []
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
+args = []
+
+# --- Distributor --- #
+
+[contract.PerpRewardDistributor]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
 args = []
 
 # --- Market Proxy Contract --- #
@@ -89,6 +99,7 @@ contracts = [
   "MarginModule",
   "OrderModule",
   "LiquidationModule",
+  "PerpRewardDistributorFactoryModule"
 ]
 depends = [
   "import.synthetix",
@@ -100,6 +111,7 @@ depends = [
   "contract.MarginModule",
   "contract.OrderModule",
   "contract.LiquidationModule",
+  "contract.PerpRewardDistributorFactoryModule"
 ]
 
 # --- Proxy Post Deployment --- #
@@ -160,7 +172,7 @@ depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
 source = "pyth:1.4.0"
-args = [120, 1]       # 120s, 1wei
+args = [120, 1] # 120s, 1wei
 
 
 [contract.AggregatorV3Mock]
@@ -190,6 +202,15 @@ func = "setPyth"
 args = ["<%= imports.pyth.contracts.Pyth.address %>"]
 depends = ["invoke.upgradeProxy", "import.pyth"]
 
+[invoke.setRewardDistributorImplementation]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = [
+  "<%= contracts.PerpRewardDistributor.address %>",
+]
+depends = ["invoke.upgradeProxy", "contract.PerpRewardDistributor"]
+
 # --- Feature Flags --- #
 
 [invoke.addToFeatureFlagAllowlist_registerMarket]
@@ -198,6 +219,16 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = [
   "<%= formatBytes32String('registerMarket') %>",
+  "<%= contracts.PerpMarketProxy.address %>",
+]
+depends = ['invoke.upgradeProxy']
+
+[invoke.addToFeatureFlagAllowlist_claimRewards]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.owner %>"
+args = [
+  "<%= formatBytes32String('claimRewards') %>",
   "<%= contracts.PerpMarketProxy.address %>",
 ]
 depends = ['invoke.upgradeProxy']

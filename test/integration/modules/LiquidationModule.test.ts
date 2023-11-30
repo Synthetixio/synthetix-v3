@@ -26,17 +26,14 @@ import {
   getBlockTimestamp,
   withExplicitEvmMine,
   findEventSafe,
-  SYNTHETIX_USD_MARKET_ID,
   fastForwardBySec,
   extendContractAbi,
-  BURN_ADDRESS,
+  ADDRESS0,
   getSusdCollateral,
-  isSusdCollateral,
-  findOrThrow,
   sleep,
   setMarketConfiguration,
   setBaseFeePerGas,
-  logNumber,
+  isSusdCollateral,
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
@@ -45,6 +42,7 @@ import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '..
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const {
+    pool,
     markets,
     collaterals,
     collateralsWithoutSusd,
@@ -59,7 +57,8 @@ describe('LiquidationModule', () => {
   } = bs;
 
   beforeEach(restore);
-  afterEach(() => setBaseFeePerGas(1, provider()));
+
+  afterEach(async () => await setBaseFeePerGas(1, provider()));
 
   describe('flagPosition', () => {
     it('should flag a position with a health factor <= 1', async () => {
@@ -102,7 +101,9 @@ describe('LiquidationModule', () => {
     });
 
     it('getLiquidationFees returns liqKeeperFees small position');
+
     it('getLiquidationFees returns liqKeeperFees big position');
+
     it('getLiquidationFees returns flagKeeperReward');
 
     it('should remove any pending orders when present', async () => {
@@ -137,7 +138,11 @@ describe('LiquidationModule', () => {
 
       // Just assert that flag is triggered, actual values are tested elsewhere
       await assertEvent(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
-      await assertEvent(receipt, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
+      await assertEvent(
+        receipt,
+        `OrderCanceled(${trader.accountId}, ${marketId}, 0, ${commitmentTime})`,
+        PerpMarketProxy
+      );
     });
 
     it('should send flagKeeperReward to keeper', async () => {
@@ -244,60 +249,7 @@ describe('LiquidationModule', () => {
       assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection.sub(flagEvent.args.flagKeeperReward));
     });
 
-    it('should sell all available synth collateral for sUSD when flagging', async () => {
-      const { PerpMarketProxy } = systems();
-
-      const collateral = genOneOf(collateralsWithoutSusd());
-      const orderSide = genSide();
-      const marginUsd = genOneOf([1000, 5000]);
-
-      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: marginUsd })
-      );
-
-      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
-        desiredSide: orderSide,
-      });
-      await commitAndSettle(bs, marketId, trader, order1);
-
-      // Verify no USD but _some_ non-USD collateral was used as margin.
-      const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const collateralBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(collateral.synthMarketId())
-      ).available;
-      const usdBalanceBefore = findOrThrow(d1.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
-      ).available;
-
-      assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
-      assertBn.isZero(usdBalanceBefore);
-
-      // Price moves 10% and results in a healthFactor of < 1.
-      const newMarketOraclePrice = wei(order1.oraclePrice)
-        .mul(orderSide === 1 ? 0.9 : 1.1)
-        .toBN();
-      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-      // Flag for liqudation, triggering the sale of collateral for sUSD.
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
-
-      // Assert the collateral has been sold and all that's left is sUSD (minus fees).
-      const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-
-      const collateralBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(collateral.synthMarketId())
-      ).available;
-      const usdBalanceAfter = findOrThrow(d2.depositedCollaterals, (c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
-      ).available;
-
-      assertBn.isZero(collateralBalanceAfter);
-      assertBn.near(usdBalanceAfter, marginUsdDepositAmount); // .near to account for spot-market skewFee.
-    });
-
-    it('should not sell any synth collateral when all collateral is already sUSD');
+    it('should not modify any existing collateral as margin');
 
     forEach([
       ['sUSD', () => getSusdCollateral(collaterals())],
@@ -306,8 +258,10 @@ describe('LiquidationModule', () => {
       const { PerpMarketProxy, Core, SpotMarket } = systems();
 
       const orderSide = genSide();
-      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount, collateral, collateralPrice } =
-        await depositMargin(bs, genTrader(bs, { desiredCollateral: getCollateral() }));
+      const { trader, market, marketId, collateralDepositAmount, collateral } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: getCollateral() })
+      );
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -323,6 +277,7 @@ describe('LiquidationModule', () => {
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       assertBn.lte(healthFactor, bn(1));
+
       // Set base fee to 0 gwei to avoid rounding errors
       await setBaseFeePerGas(0, provider());
 
@@ -332,7 +287,34 @@ describe('LiquidationModule', () => {
         provider()
       );
 
+      const blockTime = (await provider().getBlock(receipt.blockNumber)).timestamp;
       const keeperAddress = await keeper().getAddress();
+      const distributorAddress = collateral.rewardDistributorAddress();
+      const collateralAddress = collateral.synthAddress();
+      const poolCollateralAddress = pool().collateral().address;
+      const poolId = pool().id;
+
+      let expectedEvents: string[];
+      if (isSusdCollateral(collateral)) {
+        expectedEvents = [
+          `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
+          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
+        ];
+      } else {
+        expectedEvents = [
+          // Withdraw and transfer from Core -> PerpMarket.
+          `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
+          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
+          // Transfer from PerpMarket -> RewardDistributor.
+          `Transfer("${PerpMarketProxy.address}", "${distributorAddress}", ${collateralDepositAmount})`,
+          `RewardsDistributed(${poolId}, "${poolCollateralAddress}", "${distributorAddress}", ${collateralDepositAmount}, ${blockTime}, 0)`,
+          // Transfer flag reward from PerpMarket -> Keeper.
+          `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
+          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
+        ];
+      }
 
       // Create a contract that can parse all events emitted.
       //
@@ -345,40 +327,6 @@ describe('LiquidationModule', () => {
           .concat(spotMarketEvents)
           .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
       );
-      const synthId = collateral.synthMarketId();
-
-      let expectedEvents: string[] = [
-        `Transfer("${BURN_ADDRESS}", "${keeperAddress}", ${flagKeeperReward})`,
-        `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
-        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
-      ];
-
-      if (!isSusdCollateral(collateral)) {
-        // It's quite hard to calculate the skew fee from selling our collateral, so we cheat a little grab it from the event
-        const usdAmountAfterSpotSell = findEventSafe(receipt, 'SynthSold', contractsWithAllEvents)?.args
-          .amountReturned as BigNumber;
-
-        // Assert that it's slightly smaller (or equal depending on skew scale) than the deposited amount
-        assertBn.lte(usdAmountAfterSpotSell, marginUsdDepositAmount);
-
-        // Some variables for readability.
-        const spotMarketFees = `[0, 0, 0, 0]`;
-        const collectedFee = 0;
-        const referrer = BURN_ADDRESS;
-        const collateralAddress = collateral.synthAddress();
-
-        expectedEvents = expectedEvents.concat([
-          `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
-          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
-          `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${collateralDepositAmount})`,
-          `Transfer("${BURN_ADDRESS}", "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell})`,
-          `MarketUsdWithdrawn(${synthId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${SpotMarket.address}")`,
-          `SynthSold(${synthId}, ${usdAmountAfterSpotSell}, ${spotMarketFees}, ${collectedFee}, "${referrer}", ${collateralPrice})`,
-          `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${usdAmountAfterSpotSell})`,
-          `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdAmountAfterSpotSell}, "${PerpMarketProxy.address}")`,
-        ]);
-      }
-
       await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
     });
 
@@ -467,6 +415,16 @@ describe('LiquidationModule', () => {
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
       );
+    });
+
+    describe('distributeRewards', () => {
+      it('should not distribute any rewards when only sUSD collateral');
+
+      it('should only distribute non-sUSD collateral when both available');
+
+      it('should deduct market deposited collateral by distributed amount');
+
+      it('should distribute proportionally across pool collaterals on flag');
     });
   });
 
@@ -560,7 +518,7 @@ describe('LiquidationModule', () => {
       // Price moves back and they're no longer in liquidation but already flagged.
       await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
       const { healthFactor: hf2 } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.gt(hf2, bn(1));
+      assertBn.isZero(hf2);
 
       // Attempt the liquidate. This should complete successfully.
       const { tx, receipt } = await withExplicitEvmMine(
@@ -617,20 +575,20 @@ describe('LiquidationModule', () => {
       assertBn.isZero(d2.size);
       assertBn.isZero(d2.skew);
     });
-    it('partial liquidation should update reported debt/ total debt');
 
-    it('full liquidation should update reported debt/ total debt', async () => {
+    it('partial liquidation should update reported debt/total debt');
+
+    it('full liquidation should update reported debt/total debt', async () => {
       const { PerpMarketProxy, Core } = systems();
       const orderSide = genSide();
 
-      const { trader, collateral, collateralDepositAmount, marginUsdDepositAmount, market, marketId } =
-        await depositMargin(
-          bs,
-          genTrader(bs, {
-            desiredCollateral: getSusdCollateral(collaterals()),
-            desiredMarginUsdDepositAmount: 10000, // small enough to not be partial liq
-          })
-        );
+      const { trader, collateral, collateralDepositAmount, market, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredCollateral: getSusdCollateral(collaterals()),
+          desiredMarginUsdDepositAmount: 10000, // small enough to not be partial liq
+        })
+      );
       await setMarketConfigurationById(bs, marketId, {
         maxFundingVelocity: bn(0), // disable funding to avoid minor funding losses
       });

@@ -4,16 +4,16 @@ pragma solidity 0.8.19;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {Margin} from "../storage/Margin.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
-import {PythUtil} from "../utils/PythUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {PythUtil} from "../utils/PythUtil.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -42,8 +42,7 @@ contract OrderModule is IOrderModule {
     // --- Helpers --- //
 
     /**
-     * @dev Ensure fillPrice does not exceed limitPrice.
-     * NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
+     * @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
      */
     function isPriceToleranceExceeded(
         int128 sizeDelta,
@@ -68,7 +67,8 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Ensure Pyth price does not diverge too far from on-chain price from CL.
+     * @dev Ensures Pyth and CL prices do diverge too far.
+     *
      *  e.g. A maximum of 3% price divergence with the following prices:
      * (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
      * (1800, 1750) ~ 2.857143% divergence => Ok
@@ -131,9 +131,9 @@ contract OrderModule is IOrderModule {
      */
     function stateUpdatePostSettlement(
         uint128 accountId,
+        uint128 marketId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
-        uint256 collateralUsd,
         uint256 newMarginUsd
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
@@ -145,6 +145,8 @@ contract OrderModule is IOrderModule {
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
+            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+            uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId, false /* usehaircutCollateralPrice */);
             Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - collateralUsd.toInt());
         }
 
@@ -212,6 +214,7 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
+        Position.Data storage position = market.positions[accountId];
         Runtime_settleOrder memory runtime;
 
         // No order available to settle.
@@ -240,23 +243,26 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        (, runtime.accruedFunding, runtime.pnl, ) = market.positions[accountId].getHealthData(
+        (, runtime.accruedFunding, runtime.pnl, ) = Position.getHealthData(
             market,
+            position.size,
+            position.entryPrice,
+            position.entryFundingAccrued,
             runtime.trade.newMarginUsd,
             runtime.pythPrice,
             marketConfig
         );
+
         stateUpdatePostSettlement(
             accountId,
+            marketId,
             market,
             runtime.trade.newPosition,
-            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            Margin.getCollateralUsd(accountId, marketId),
             // @dev This is (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
             runtime.trade.newMarginUsd
         );
 
-        // If maxKeeperFee configured to zero then we want to rpevent withdraws of 0.
+        // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
         }
@@ -274,6 +280,9 @@ contract OrderModule is IOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IOrderModule
+     */
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
@@ -286,7 +295,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotStale();
         }
 
-        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
         delete market.orders[accountId];
     }
 
@@ -318,8 +327,7 @@ contract OrderModule is IOrderModule {
                 revert ErrorUtil.OrderStale();
             }
         } else {
-            // Order is within settlement window. Check if price tolerance has exceeded
-
+            // Order is within settlement window. Check if price tolerance has exceeded.
             uint256 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
                 marketConfig,
@@ -344,9 +352,11 @@ contract OrderModule is IOrderModule {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit OrderCanceled(accountId, marketId, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, keeperFee, order.commitmentTime);
         delete market.orders[accountId];
     }
+
+    // --- Views --- //
 
     /**
      * @inheritdoc IOrderModule
@@ -356,8 +366,6 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.orders[accountId];
     }
-
-    // --- Views --- //
 
     /**
      * @inheritdoc IOrderModule

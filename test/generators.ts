@@ -77,7 +77,10 @@ export const genBootstrap = () => ({
     keeperFlagGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
-    keeperLiquidationEndorsed: genAddress(), // Dummy address to be replaced later.
+    keeperLiquidationEndorsed: genAddress(), // Temporary dummy address to be reconfigurd later.
+    minCollateralHaircut: bn(0.01),
+    maxCollateralHaircut: bn(0.05),
+    sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
   },
   markets: MARKETS,
 });

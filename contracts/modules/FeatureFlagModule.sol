@@ -5,5 +5,5 @@ import {FeatureFlagModule as BaseFeatureFlagModule} from "@synthetixio/core-modu
 
 // solhint-disable-next-line no-empty-blocks
 contract FeatureFlagModule is BaseFeatureFlagModule {
-    // NOTE: Needed for AccountModule.
+    // NOTE: Needed for AccountModule and RewardManagerModule.
 }

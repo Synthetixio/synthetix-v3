@@ -34,7 +34,7 @@ import { shuffle, times } from 'lodash';
 
 describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { traders, signers, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
+  const { traders, owner, markets, collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -126,6 +126,30 @@ describe('PerpMarketFactoryModule', () => {
       );
     });
   });
+
+  describe('setRewardDistributorImplementation', async () => {
+    it('should set successfully', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      const implementation = genAddress();
+      await PerpMarketProxy.connect(from).setRewardDistributorImplementation(implementation);
+      const config = await PerpMarketProxy.getMarketConfiguration();
+
+      assert(config.rewardDistributorImplementation, implementation);
+    });
+
+    it('should revert when not owner', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = traders()[0].signer;
+      const implementation = genAddress();
+      await assertRevert(
+        PerpMarketProxy.connect(from).setRewardDistributorImplementation(implementation),
+        `Unauthorized("${await from.getAddress()}")`
+      );
+    });
+  });
+
   describe('getActiveMarketIds', () => {
     it('should return market ids', async () => {
       const { PerpMarketProxy } = systems();
@@ -436,6 +460,12 @@ describe('PerpMarketFactoryModule', () => {
     it('should report usd value of margin as report when depositing into system', async () => {
       const { PerpMarketProxy } = systems();
 
+      // Remove any collateral haircut to minimise subtle differences in deposit values.
+      await setMarketConfiguration(bs, {
+        minCollateralHaircut: bn(0),
+        maxCollateralHaircut: bn(0),
+      });
+
       const { market, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
       const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
 
@@ -502,7 +532,7 @@ describe('PerpMarketFactoryModule', () => {
     it('should expect reportedDebt/totalDebt to be updated appropriately sUSD (concrete)');
 
     it('should expect reportedDebt/totalDebt to be updated appropriately non-sUSD (concrete)', async () => {
-      const { PerpMarketProxy, Core, SpotMarket } = systems();
+      const { PerpMarketProxy, Core } = systems();
 
       const collateral = collateralsWithoutSusd()[0];
       const market = markets()[1]; // ETHPERP.
@@ -519,8 +549,9 @@ describe('PerpMarketFactoryModule', () => {
       await setMarketConfiguration(bs, {
         keeperProfitMarginPercent: bn(0),
         maxKeeperFeeUsd: bn(0),
+        minCollateralHaircut: bn(0),
+        maxCollateralHaircut: bn(0),
       });
-      await SpotMarket.connect(signers()[2]).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
       await market.aggregator().mockSetCurrentPrice(bn(2000));
       await collateral.setPrice(bn(1));
