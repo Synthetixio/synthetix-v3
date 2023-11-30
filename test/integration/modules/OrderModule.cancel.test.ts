@@ -22,6 +22,7 @@ import {
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
+  isSusdCollateral,
   setMarketConfiguration,
   withExplicitEvmMine,
 } from '../../helpers';
@@ -269,8 +270,10 @@ describe('OrderModule Cancelations', () => {
         genTrader(bs, { desiredTrader: tradersGenerator.next().value })
       );
 
-      // Eliminate skewFee on the non sUSD collateral sale.
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
+      // Eliminate skewFee on the non-sUSD collateral sale.
+      if (!isSusdCollateral(collateral)) {
+        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
+      }
 
       const orderSide = genSide();
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
