@@ -1,2 +1,72 @@
+name = "buyback-snx"
 version = "<%= package.version %>-testable"
-include = ["cannonfile.toml"]
+
+[setting.premium]
+defaultValue = "10000000000000000"
+
+[provision.snx]
+source="mintable-token"
+targetPreset="permissionless-mint"
+
+[provision.usdc]
+source="mintable-token"
+targetPreset="permissionless-mint"
+
+[setting.staleness_tolerance]
+defaultValue = "60"
+
+[setting.pyth_snx_feed_id]
+defaultValue = "0x39d020f60982ed892abbcd4a06a276a9f9b7bfbce003204c110b6e488f502da3"
+
+[provision.oracle_manager]
+source = "oracle-manager:3.3.3-dev.249e185f"
+
+[import.pyth]
+source="pyth"
+
+[provision.pyth_erc7412_wrapper]
+source = "pyth-erc7412-wrapper:3.3.3-dev.249e185f"
+options.pythAddress = "<%= imports.pyth.contracts.Pyth.address %>"
+
+# This registers a staleness node that looks to Pyth for a fresh enough price, or otherwise reverts with an ERC-7412 compatible error
+# Latest Pyth Price
+[invoke.registerPythSnxOracleNode]
+target = ["oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    5, # 5 = pyth aggregator type
+    "<%= defaultAbiCoder.encode(['address', 'bytes32', 'bool'], [imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address, settings.pyth_snx_feed_id, false]) %>",
+    []
+]
+extra.snx_pyth_oracle_id.event = "NodeRegistered"
+extra.snx_pyth_oracle_id.arg = 0
+
+# Pyth Off-chain Lookup
+[invoke.registerLookupSnxOracleNode]
+target = ["oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    9, # 9 = PythOffchainLookupNode
+    "<%= defaultAbiCoder.encode(['address', 'bytes32', 'uint256'], [imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address, settings.pyth_snx_feed_id, settings.staleness_tolerance]) %>",
+    []
+]
+extra.snx_lookup_oracle_id.event = "NodeRegistered"
+extra.snx_lookup_oracle_id.arg = 0
+
+# Staleness Node
+[invoke.registerSnxOracleNode]
+target = ["oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    7, # 7 = staleness circuit breaker
+    "<%= defaultAbiCoder.encode(['uint256'], [settings.staleness_tolerance]) %>",
+    ["<%= extras.snx_pyth_oracle_id %>", "<%= extras.snx_lookup_oracle_id %>"]
+]
+extra.snx_oracle_id.event = "NodeRegistered"
+extra.snx_oracle_id.arg = 0
+
+[contract.buyback_snx]
+artifact = "contracts/BuybackSnx.sol:BuybackSnx"
+args = ["<%= settings.premium %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= imports.snx.contracts.MintableToken.address %>", "<%= imports.usdc.contracts.MintableToken.address %>"]
+create2 = true
+
