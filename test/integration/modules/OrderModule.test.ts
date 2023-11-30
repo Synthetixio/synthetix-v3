@@ -835,6 +835,8 @@ describe('OrderModule', () => {
       it.skip('should revert when sale exceeds sellExactInMaxSlippagePercent', async () => {
         const { PerpMarketProxy, SpotMarket } = systems();
 
+        // TODO: Mint Token X, set as wrapper, wrap token X to push skew.
+
         const collateral = genOneOf(collateralsWithoutSusd());
         const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
           bs,
@@ -851,21 +853,24 @@ describe('OrderModule', () => {
 
         // A low slippage tolerance results in a revert on the position modify.
         await setMarketConfiguration(bs, {
-          sellExactInMaxSlippagePercent: bn(0),
+          sellExactInMaxSlippagePercent: bn(0.00001),
           maxCollateralHaircut: bn(0),
           minCollateralHaircut: bn(0),
         });
-        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
+        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
+          collateral.synthMarketId(),
+          bn(1_000_000)
+        );
 
-        // Price moves by 20% and they incur a loss.
+        // Price moves by 50% and they incur a loss.
         const newMarketOraclePrice = wei(order1.oraclePrice)
-          .mul(orderSide === 1 ? 0.8 : 1.2)
+          .mul(orderSide === 1 ? 0.5 : 1.5)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
-        // Add 1% more size to the position.
+        // Add 0.1% more size to the position.
         const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredSize: wei(order1.sizeDelta).mul(0.011).toBN(),
+          desiredSize: wei(order1.sizeDelta).mul(0.001).toBN(),
         });
         await commitOrder(bs, marketId, trader, order2);
 

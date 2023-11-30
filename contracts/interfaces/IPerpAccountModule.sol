@@ -12,8 +12,8 @@ interface IPerpAccountModule {
         uint128 synthMarketId;
         // Amount of available collateral deposited (unrelated to position).
         uint256 available;
-        // Haircut adjusted oracle price of collateral.
-        uint256 price;
+        // Unadjusted oracle price of collateral.
+        uint256 oraclePrice;
     }
 
     struct AccountDigest {

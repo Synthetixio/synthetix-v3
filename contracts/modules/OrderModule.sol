@@ -37,8 +37,6 @@ contract OrderModule is IOrderModule {
         uint256 fillPrice;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
-        Position.Data position;
-        Order.Data order;
     }
 
     // --- Helpers --- //

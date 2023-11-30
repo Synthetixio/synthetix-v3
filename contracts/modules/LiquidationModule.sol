@@ -24,7 +24,7 @@ contract LiquidationModule is ILiquidationModule {
 
     // --- Runtime structs --- //
 
-    struct Runtime_updateMarketPostLiquidation {
+    struct Runtime_updateMarketPostFlag {
         uint256 availableSusd;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
@@ -76,7 +76,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
-        Runtime_updateMarketPostLiquidation memory runtime;
+        Runtime_updateMarketPostFlag memory runtime;
 
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];

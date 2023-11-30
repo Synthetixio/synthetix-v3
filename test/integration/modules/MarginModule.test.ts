@@ -2111,7 +2111,7 @@ describe('MarginModule', async () => {
     it('should return same adjusted price on pos/neg size', async () => {
       const { PerpMarketProxy } = systems();
 
-      const collateral = genOneOf(collateralsWithoutSusd());
+      const collateral = genOneOf(collaterals());
       const size = bn(genNumber(1, 10_000));
 
       const collateralPricePos = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);

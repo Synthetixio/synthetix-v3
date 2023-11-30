@@ -16,7 +16,7 @@ contract PerpAccountModule is IPerpAccountModule {
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
 
-    // --- Runtime structs ---
+    // --- Runtime structs --- //
     struct Runtime_getPositionDigest {
         uint256 oraclePrice;
         uint256 healthFactor;
