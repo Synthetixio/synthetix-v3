@@ -222,3 +222,13 @@ args = [
   "<%= contracts.PerpMarketProxy.address %>",
 ]
 depends = ['invoke.upgradeProxy']
+
+[invoke.addToFeatureFlagAllowlist_claimRewards]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.owner %>"
+args = [
+  "<%= formatBytes32String('claimRewards') %>",
+  "<%= contracts.PerpMarketProxy.address %>",
+]
+depends = ['invoke.upgradeProxy']

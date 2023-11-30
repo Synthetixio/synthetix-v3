@@ -412,6 +412,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       id: stakedPool.poolId,
       stakerAccountId: stakedPool.accountId,
       stakedAmount: stakedPool.depositAmount,
+      staker: stakedPool.staker,
       collateral: stakedPool.collateralContract,
       oracleNodeId: stakedPool.oracleNodeId,
       aggregator: stakedPool.aggregator,
