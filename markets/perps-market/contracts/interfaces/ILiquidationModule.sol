@@ -16,12 +16,14 @@ interface ILiquidationModule {
      * @param accountId Id of the account liquidated.
      * @param amountLiquidated amount liquidated.
      * @param currentPositionSize position size after liquidation.
+     * @param liquidator address of the liquidator.
      */
     event PositionLiquidated(
         uint128 indexed accountId,
         uint128 indexed marketId,
         uint256 amountLiquidated,
-        int128 currentPositionSize
+        int128 currentPositionSize,
+        address liquidator
     );
 
     /**
@@ -30,11 +32,13 @@ interface ILiquidationModule {
      * @param accountId Id of the account liquidated.
      * @param reward total reward sent to liquidator.
      * @param fullLiquidation flag indicating if it was a partial or full liquidation.
+     * @param liquidator address of the liquidator.
      */
-    event AccountLiquidationAttempt(
+    event AccountLiquidated(
         uint128 indexed accountId,
         uint256 reward,
-        bool fullLiquidation
+        bool fullLiquidation,
+        address liquidator
     );
 
     /**

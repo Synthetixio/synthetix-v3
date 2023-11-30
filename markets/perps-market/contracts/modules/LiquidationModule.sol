@@ -214,7 +214,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 runtime.accountId,
                 runtime.positionMarketId,
                 amountLiquidated,
-                newPositionSize
+                newPositionSize,
+                ERC2771Context._msgSender()
             );
         }
 
@@ -236,7 +237,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         emit AccountLiquidationAttempt(
             runtime.accountId,
             keeperLiquidationReward,
-            runtime.accountFullyLiquidated
+            runtime.accountFullyLiquidated,
+            ERC2771Context._msgSender()
         );
     }
 
