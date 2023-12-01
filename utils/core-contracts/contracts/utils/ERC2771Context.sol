@@ -6,7 +6,7 @@ pragma solidity ^0.8.4;
 
 library ERC2771Context {
     // This is the trusted-multicall-forwarder. The address is constant due to CREATE2.
-    address private constant TRUSTED_FORWARDER = 0xcbc8bDF9358BB3F5005B893a32b477e6B2F9f688;
+    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
 
     function _msgSender() internal view returns (address sender) {
         if (isTrustedForwarder(msg.sender) && msg.data.length >= 20) {
