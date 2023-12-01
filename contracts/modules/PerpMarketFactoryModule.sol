@@ -69,6 +69,15 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */
+    function setRewardDistributorImplementation(address implementation) external {
+        OwnableStorage.onlyOwner();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        globalConfig.rewardDistributorImplementation = implementation;
+    }
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128) {
         OwnableStorage.onlyOwner();
 

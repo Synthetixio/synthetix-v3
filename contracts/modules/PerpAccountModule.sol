@@ -14,6 +14,16 @@ contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using Margin for Margin.GlobalData;
+
+    // --- Runtime structs --- //
+    struct Runtime_getPositionDigest {
+        uint256 oraclePrice;
+        uint256 healthFactor;
+        int256 accruedFunding;
+        int256 pnl;
+        uint256 remainingMarginUsd;
+    }
 
     /**
      * @inheritdoc IPerpAccountModule
@@ -32,15 +42,15 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         IPerpAccountModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
         uint128 synthMarketId;
-        uint256 collateralAvailable;
+        uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            collateralAvailable = accountMargin.collaterals[synthMarketId];
+            collateralPrice = globalMarginConfig.getCollateralPrice(synthMarketId, globalConfig);
             depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
                 synthMarketId,
-                collateralAvailable,
-                Margin.getCollateralPrice(synthMarketId, collateralAvailable, globalConfig)
+                accountMargin.collaterals[synthMarketId],
+                collateralPrice
             );
 
             unchecked {
@@ -51,7 +61,7 @@ contract PerpAccountModule is IPerpAccountModule {
         return
             IPerpAccountModule.AccountDigest(
                 depositedCollaterals,
-                Margin.getCollateralUsd(accountId, marketId),
+                Margin.getCollateralUsd(accountId, marketId, false /* useHaircutCollateralPrice */),
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)
             );
@@ -68,30 +78,35 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
-        uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position.getHealthData(
-            market,
-            Margin.getMarginUsd(accountId, market, oraclePrice),
-            oraclePrice,
-            marketConfig
-        );
-        uint256 notionalValueUsd = MathUtil.abs(position.size).mulDecimal(oraclePrice);
-        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
+        Runtime_getPositionDigest memory runtime;
+        runtime.oraclePrice = market.getOraclePrice();
+
+        (runtime.healthFactor, runtime.accruedFunding, runtime.pnl, runtime.remainingMarginUsd) = Position
+            .getHealthData(
+                market,
+                position.size,
+                position.entryPrice,
+                position.entryFundingAccrued,
+                Margin.getMarginUsd(accountId, market, runtime.oraclePrice, true /* useHaircutCollateralPrice */),
+                runtime.oraclePrice,
+                marketConfig
+            );
+        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, runtime.oraclePrice, marketConfig);
 
         return
             IPerpAccountModule.PositionDigest(
                 accountId,
                 marketId,
-                remainingMarginUsd,
-                healthFactor,
-                notionalValueUsd,
-                pnl,
+                runtime.remainingMarginUsd,
+                runtime.healthFactor,
+                MathUtil.abs(position.size).mulDecimal(runtime.oraclePrice), // notionalValueUsd
+                runtime.pnl,
                 position.accruedFeesUsd,
-                accruedFunding,
+                runtime.accruedFunding,
                 position.entryPrice,
-                oraclePrice,
+                runtime.oraclePrice,
                 position.size,
                 im,
                 mm

@@ -44,7 +44,7 @@ library Position {
         uint256 newMarginUsd;
     }
 
-    // --- Runtime Structs --- //
+    // --- Runtime structs --- //
 
     struct Runtime_validateLiquidation {
         address flagger;
@@ -57,13 +57,13 @@ library Position {
     // --- Storage --- //
 
     struct Data {
-        // Size (in native units e.g. wstETH)
+        // Size (in native units e.g. swstETH)
         int128 size;
-        // The market's accumulated accrued funding at position open.
+        // The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
-        // The fill price at which this position was opened with.
+        // The fill price at which this position was settled with.
         uint256 entryPrice;
-        // Accured static fees incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
+        // Accured static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
         uint256 accruedFeesUsd;
     }
 
@@ -110,26 +110,48 @@ library Position {
     }
 
     /**
-     * @dev Validates whether the `newPosition` can be liquidated.
-     * Liquidations are based on onchain price. To know if the new position is liquidateable we:
-     * 1. Calculate the PNL based on entry price and onchain price
-     * 2. Deduct that loss from the margin -> remaining margin
-     * 3. Get maintenance margin (mm)
-     * 4. Calculate health factor (margin / mm)
-     * 5. If health factor <= 1, then liquidateable
+     * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
+     *
+     * NOTE: The previous margin (which may include a haircut on the collteral; used for liquidation checks) includes the
+     * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
+     * This is important as it helps avoid instant liquidations immediately after settlement.
      */
-    function validateNextPositionIsLiquidatable(
+    function getNextMarginUsd(uint256 marginUsd, uint256 orderFee, uint256 keeperFee) internal pure returns (uint256) {
+        return MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
+    }
+
+    /**
+     * @dev Validates whether the `newPosition` can be liquidated or below margin req.
+     *
+     * NOTE: We expect marginUsd here to be the haircut adjusted margin due to liquidation checks as margin checks
+     * for liquidations are expected to discount the collateral.
+     */
+    function validateNextPositionEnoughMargin(
         PerpMarket.Data storage market,
+        Position.Data storage currentPosition,
         Position.Data memory newPosition,
         uint256 marginUsd,
+        uint256 fillPrice,
+        uint256 orderFee,
+        uint256 keeperFee,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
+        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
+        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, fillPrice, marketConfig);
+        uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
+
+        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
+        // avoid this completely due to positions at min margin would never be allowed to lower size.
+        if (!positionDecreasing && nextMarginUsd < im) {
+            revert ErrorUtil.InsufficientMargin();
+        }
+
         uint256 onchainPrice = market.getOraclePrice();
         int256 pnl = newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt());
-        uint256 remainingMarginUsd = MathUtil.max(marginUsd.toInt() + pnl, 0).toUint();
+        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + pnl, 0).toUint();
         (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
-
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
         }
@@ -150,7 +172,14 @@ library Position {
 
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, params.fillPrice);
+
+        // Margin is used in liquidation checks so we must use the haircut collateral price.
+        uint256 haircutAdjustedMarginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            params.fillPrice,
+            true /* useHaircutCollateralPrice */
+        );
 
         // --- Existing position validation --- //
 
@@ -162,7 +191,7 @@ library Position {
             }
 
             // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, market, marginUsd, params.fillPrice, marketConfig)) {
+            if (isLiquidatable(currentPosition, market, haircutAdjustedMarginUsd, params.fillPrice, marketConfig)) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         }
@@ -185,30 +214,31 @@ library Position {
             orderFee + keeperFee
         );
 
-        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
-        // avoid this completely due to positions at min margin would never be allowed to lower size.
-        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
-            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
-
-        // `marginUsd` is the previous position margin (which includes accruedFeesUsd deducted with open
-        // position). We `-fee and -keeperFee` here because the new position would have incurred additional fees if
-        // this trader were to be settled successfully.
-        //
-        // This is important as it helps avoid instant liquidation on successful settlement.
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
-
-        if (!positionDecreasing && newMarginUsd < im) {
-            revert ErrorUtil.InsufficientMargin();
-        }
-
-        // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(market, newPosition, newMarginUsd, marketConfig);
+        // Check new position margin validations.
+        validateNextPositionEnoughMargin(
+            market,
+            currentPosition,
+            newPosition,
+            haircutAdjustedMarginUsd,
+            params.fillPrice,
+            orderFee,
+            keeperFee,
+            marketConfig
+        );
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
 
-        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, newMarginUsd);
+        // For everything else, we actually need to use the unadjusted marginUsd as the collateral haircut is only
+        // applicable for liquidation related checks.
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            params.fillPrice,
+            false /* useHaircutCollateralPrice */
+        );
+        uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
+        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, nextMarginUsd);
     }
 
     /**
@@ -332,13 +362,11 @@ library Position {
 
         uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(marketConfig.incrementalMarginScalar) +
             marketConfig.minMarginRatio;
-
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
         liqFlagReward = getLiquidationFlagReward(absSize, price, marketConfig, globalConfig);
 
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
-
         mm =
             notional.mulDecimal(mmr) +
             marketConfig.minMarginUsd +
@@ -347,15 +375,14 @@ library Position {
     }
 
     /**
-     * @dev Returns the number of partial liquidations are required given liquidation size and max liquidation size.
-     *
-     * The logic is Divide and Ceil
+     * @dev Returns the number of partial liquidations required given liquidation size and mac liquidation capacity.
      */
     function getLiquidationIterations(uint256 liqSize, uint256 maxLiqCapacity) internal pure returns (uint256) {
         if (maxLiqCapacity == 0) {
             return 0;
         }
 
+        // ceil(liqSize / maxLiqCapacity).
         uint256 quotient = liqSize / maxLiqCapacity;
         uint256 remainder = liqSize % maxLiqCapacity;
         return remainder == 0 ? quotient : quotient + 1;
@@ -363,6 +390,7 @@ library Position {
 
     /**
      * @dev Returns the fee in USD paid to keeper for performing the liquidation (not flagging).
+     *
      * The size here is either liqSize or position.size.abs()
      */
     function getLiquidationKeeperFee(
@@ -393,6 +421,9 @@ library Position {
 
     /**
      * @dev Returns the health data given the marketId, config, and position{...} details.
+     *
+     * NOTE: marginUsd _must_ be calculated with `useHaircutCollateralPrice=true` in order to correctly calculate a position's
+     * health related data and factor.
      */
     function getHealthData(
         PerpMarket.Data storage market,
@@ -424,42 +455,6 @@ library Position {
     // --- Member (views) --- //
 
     /**
-     * @dev An overloaded function over `getHealthData` using the a Position storage struct.
-     */
-    function getHealthData(
-        Position.Data storage self,
-        PerpMarket.Data storage market,
-        uint256 marginUsd,
-        uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
-        return
-            getHealthData(market, self.size, self.entryPrice, self.entryFundingAccrued, marginUsd, price, marketConfig);
-    }
-
-    /**
-     * @dev Returns the health factor associated with this position.
-     */
-    function getHealthFactor(
-        Position.Data storage self,
-        PerpMarket.Data storage market,
-        uint256 marginUsd,
-        uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256) {
-        (uint256 healthFactor, , , ) = getHealthData(
-            market,
-            self.size,
-            self.entryPrice,
-            self.entryFundingAccrued,
-            marginUsd,
-            price,
-            marketConfig
-        );
-        return healthFactor;
-    }
-
-    /**
      * @dev Returns whether the current position can be liquidated.
      */
     function isLiquidatable(
@@ -472,14 +467,20 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-
-        (uint256 healthFactor, , , ) = getHealthData(self, market, marginUsd, price, marketConfig);
-
+        (uint256 healthFactor, , , ) = Position.getHealthData(
+            market,
+            self.size,
+            self.entryPrice,
+            self.entryFundingAccrued,
+            marginUsd,
+            price,
+            marketConfig
+        );
         return healthFactor <= DecimalMath.UNIT;
     }
 
     /**
-     * @dev Returns the absolute profit or loss based on current price and entry price.
+     * @dev Returns the notional profit or loss based on current price and entry price.
      */
     function getPnl(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {

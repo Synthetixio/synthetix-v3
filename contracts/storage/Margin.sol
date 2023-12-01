@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
@@ -12,6 +13,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 library Margin {
     using DecimalMath for uint256;
+    using DecimalMath for int256;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
@@ -24,8 +26,12 @@ library Margin {
     // --- Structs --- //
 
     struct CollateralType {
+        // Underlying sell oracle used by this spot collateral bytes32(0) if sUSD.
+        bytes32 oracleNodeId;
         // Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
+        // Address of the associated reward distributor.
+        address rewardDistributor;
         // Adding exists so we can differentiate maxAllowable from 0 and unset in the supported mapping below.
         bool exists;
     }
@@ -60,6 +66,33 @@ library Margin {
         }
     }
 
+    /**
+     * @dev Withdraw `amount` synths from deposits to sell for sUSD and burn for LPs.
+     */
+    function sellNonSusdCollateral(
+        uint128 marketId,
+        uint128 synthMarketId,
+        uint256 amount,
+        uint256 price,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal {
+        globalConfig.synthetix.withdrawMarketCollateral(
+            marketId,
+            globalConfig.spotMarket.getSynth(synthMarketId),
+            amount
+        );
+        uint256 minAmountReceivedUsd = amount.mulDecimal(price).mulDecimal(
+            DecimalMath.UNIT - globalConfig.sellExactInMaxSlippagePercent
+        );
+        (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
+            synthMarketId,
+            amount,
+            minAmountReceivedUsd,
+            address(0)
+        );
+        globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
+    }
+
     // --- Mutative --- //
 
     /**
@@ -92,8 +125,6 @@ library Margin {
         // - All position modifications involve 'touching' a position which realizes the profit/loss
         // - All profitable positions are given more sUSD as collateral
         // - All accounting can be performed within the market (i.e. no need to move tokens around)
-
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
         // >0 means to add sUSD to this account's margin (realized profit).
@@ -103,13 +134,15 @@ library Margin {
         } else {
             // <0 means a realized loss and we need to partially deduct from their collateral.
             Margin.GlobalData storage globalMarginConfig = Margin.load();
+            PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+            // Variable declaration outside of loop to be more gas efficient.
             uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
             uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
 
-            // Variable declaration outside of loop to be more gas efficient.
             uint128 synthMarketId;
             uint256 available;
-            uint256 price;
+            uint256 collateralPrice;
             uint256 deductionAmount;
             uint256 deductionAmountUsd;
 
@@ -119,26 +152,13 @@ library Margin {
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
                 if (available > 0) {
-                    price = getCollateralPrice(synthMarketId, available, globalConfig);
-                    deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
-                    deductionAmount = deductionAmountUsd.divDecimal(price);
+                    collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                    deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(collateralPrice));
+                    deductionAmount = deductionAmountUsd.divDecimal(collateralPrice);
 
-                    // If collateral isn't sUSD, withdraw, sell, deposit as USD then continue update accounting.
+                    // If collateral is _not_ sUSD, withdraw, sell, and deposit as USD then continue update accounting.
                     if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                        globalConfig.synthetix.withdrawMarketCollateral(
-                            market.id,
-                            globalConfig.spotMarket.getSynth(synthMarketId),
-                            deductionAmount
-                        );
-
-                        (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
-                            synthMarketId,
-                            deductionAmount,
-                            0,
-                            address(0)
-                        );
-
-                        globalConfig.synthetix.depositMarketUsd(market.id, address(this), amountUsd);
+                        sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, collateralPrice, globalConfig);
                     }
 
                     // At this point we can just update the accounting.
@@ -174,80 +194,16 @@ library Margin {
         }
     }
 
-    /**
-     * @dev Sell all deposited synth collateral for sUSD.
-     */
-    function sellAllSynthCollateralForUsd(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market
-    ) internal {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-
-        // Variable declaration outside of loop to be more gas efficient.
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 synthMarketId;
-        uint256 available;
-
-        for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = accountMargin.collaterals[synthMarketId];
-
-            // Skip this collateral if there is no collateral available to swap. Also avoid swapping sUSD for sUSD.
-            if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                address synth = globalConfig.spotMarket.getSynth(synthMarketId);
-
-                // Reduce amount withdrawn from internal accounting then withdrawl collateral.
-                accountMargin.collaterals[synthMarketId] = 0;
-                market.depositedCollateral[synthMarketId] -= available;
-                globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
-
-                // Sell collateral for sUSD, update accounting, then deposit as sUSD into core.
-                //
-                // - No requirement on minAmountReceived (hence 0)
-                // - No referrer
-                (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(synthMarketId, available, 0, address(0));
-
-                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += amountUsd;
-                market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] += amountUsd;
-
-                globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
     // --- Views --- //
-
-    /**
-     * @dev Returns the collateral price based on the quote price from the spot market. This is necessary to discount
-     * the collateral value relative fees incurred on the sale during liquidation. Fees might be either the skew fee
-     * incurred if skewed is expanded on spot and/or a flat fee on the market to spot market LPs.
-     */
-    function getCollateralPrice(
-        uint128 synthMarketId,
-        uint256 available,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
-        if (available == 0) {
-            return 0;
-        }
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            return DecimalMath.UNIT;
-        }
-        (uint256 usdAmount, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
-        return usdAmount.divDecimal(available);
-    }
 
     /**
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256) {
+    function getCollateralUsd(
+        uint128 accountId,
+        uint128 marketId,
+        bool useHaircutCollateralPrice
+    ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -257,6 +213,7 @@ library Margin {
         uint128 synthMarketId;
         uint256 available;
         uint256 collateralUsd;
+        uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
@@ -264,7 +221,10 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralUsd += available.mulDecimal(getCollateralPrice(synthMarketId, available, globalConfig));
+                collateralPrice = useHaircutCollateralPrice
+                    ? getHaircutCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
+                    : getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                collateralUsd += available.mulDecimal(collateralPrice);
             }
 
             unchecked {
@@ -286,9 +246,10 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 marketPrice,
+        bool useHaircutCollateralPrice
     ) internal view returns (uint256) {
-        uint256 collateralUsd = getCollateralUsd(accountId, market.id);
+        uint256 collateralUsd = getCollateralUsd(accountId, market.id, useHaircutCollateralPrice);
         Position.Data storage position = market.positions[accountId];
 
         // Zero position means that marginUsd eq collateralUsd.
@@ -299,11 +260,64 @@ library Margin {
             MathUtil
                 .max(
                     collateralUsd.toInt() +
-                        position.getPnl(price) +
-                        position.getAccruedFunding(market, price) -
+                        position.getPnl(marketPrice) +
+                        position.getAccruedFunding(market, marketPrice) -
                         position.accruedFeesUsd.toInt(),
                     0
                 )
                 .toUint();
+    }
+
+    // --- Member (views) --- //
+
+    function getOracleCollateralPrice(
+        Margin.GlobalData storage self,
+        uint128 synthMarketId,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        return globalConfig.oracleManager.process(self.supported[synthMarketId].oracleNodeId).price.toUint();
+    }
+
+    /**
+     * @dev Returns the unadjusted raw oracle collateral price.
+     */
+    function getCollateralPrice(
+        Margin.GlobalData storage self,
+        uint128 synthMarketId,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        return
+            synthMarketId == SYNTHETIX_USD_MARKET_ID
+                ? DecimalMath.UNIT
+                : getOracleCollateralPrice(self, synthMarketId, globalConfig);
+    }
+
+    /**
+     * @dev Returns the haircut adjusted collateral price discounted proportional to `available`, scaled spot market skewScale.
+     */
+    function getHaircutCollateralPrice(
+        Margin.GlobalData storage self,
+        uint128 synthMarketId,
+        uint256 available,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            return DecimalMath.UNIT;
+        }
+
+        // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
+        uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
+        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
+
+        // skewScale _may_ be zero. In this event, do _not_ apply a haircut.
+        uint256 haircut = skewScale == 0
+            ? 0
+            : MathUtil.min(
+                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
+                globalConfig.maxCollateralHaircut
+            );
+
+        // Apply discount on price by the haircut.
+        return price.mulDecimal(DecimalMath.UNIT - haircut);
     }
 }

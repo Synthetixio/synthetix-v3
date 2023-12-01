@@ -2,21 +2,36 @@
 pragma solidity 0.8.19;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
-import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
+import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 contract LiquidationModule is ILiquidationModule {
+    using DecimalMath for uint256;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+
+    // --- Runtime structs --- //
+
+    struct Runtime_updateMarketPostFlag {
+        uint256 availableSusd;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 availableAccountCollateral;
+        uint128 poolId;
+        uint256 poolCollateralTypesLength;
+    }
 
     // --- Helpers --- //
 
@@ -52,6 +67,95 @@ contract LiquidationModule is ILiquidationModule {
         market.updateDebtCorrection(market.positions[accountId], newPosition);
     }
 
+    /**
+     * @dev Invoked post flag when position is dead and set to liquidate.
+     */
+    function updateMarketPostFlag(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        Runtime_updateMarketPostFlag memory runtime;
+
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+
+        // Clear out sUSD associated with the account of the liquidated position.
+        if (runtime.availableSusd > 0) {
+            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= runtime.availableSusd;
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+        }
+
+        // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,
+        // and then wipe out all associated collateral on the account.
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
+
+        // Iterate over all supported margin collateral types to see if any should be distributed to LPs.
+        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
+            runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            runtime.availableAccountCollateral = accountMargin.collaterals[runtime.synthMarketId];
+
+            // Found a deposited collateral that must be distributed.
+            if (runtime.availableAccountCollateral > 0) {
+                address synth = globalConfig.spotMarket.getSynth(runtime.synthMarketId);
+                globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, runtime.availableAccountCollateral);
+                IPerpRewardDistributor distributor = IPerpRewardDistributor(
+                    globalMarginConfig.supported[runtime.synthMarketId].rewardDistributor
+                );
+                ITokenModule(synth).transfer(address(distributor), runtime.availableAccountCollateral);
+
+                runtime.poolId = distributor.getPoolId();
+                address[] memory poolCollateralTypes = distributor.getCollateralTypes();
+                runtime.poolCollateralTypesLength = poolCollateralTypes.length;
+
+                // Calculate the USD value of each collateral delegated to pool.
+                uint256[] memory collateralValuesUsd = new uint256[](runtime.poolCollateralTypesLength);
+                uint256 totalCollateralValueUsd;
+                for (uint256 j = 0; j < runtime.poolCollateralTypesLength; ) {
+                    (, uint256 collateralValueUsd) = globalConfig.synthetix.getVaultCollateral(
+                        runtime.poolId,
+                        poolCollateralTypes[j]
+                    );
+                    totalCollateralValueUsd += collateralValueUsd;
+                    collateralValuesUsd[j] = collateralValueUsd;
+
+                    unchecked {
+                        ++j;
+                    }
+                }
+
+                // Infer the ratio of size to distribute, proportional to value of each delegated collateral.
+                uint256 remainingAmountToDistribute = runtime.availableAccountCollateral;
+                for (uint256 k = 0; k < runtime.poolCollateralTypesLength; ) {
+                    // Ensure total amounts fully distributed, the last collateral receives the remainder.
+                    if (k == runtime.poolCollateralTypesLength - 1) {
+                        distributor.distributeRewards(poolCollateralTypes[k], remainingAmountToDistribute);
+                    } else {
+                        uint256 amountToDistribute = runtime.availableAccountCollateral.mulDecimal(
+                            collateralValuesUsd[k].divDecimal(totalCollateralValueUsd)
+                        );
+                        remainingAmountToDistribute -= amountToDistribute;
+                        distributor.distributeRewards(poolCollateralTypes[k], amountToDistribute);
+                    }
+
+                    unchecked {
+                        ++k;
+                    }
+                }
+
+                // Clear out non-sUSD associated with the account of the liquidated position.
+                market.depositedCollateral[runtime.synthMarketId] -= runtime.availableAccountCollateral;
+                accountMargin.collaterals[runtime.synthMarketId] = 0;
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     // --- Mutative --- //
 
     /**
@@ -70,7 +174,7 @@ contract LiquidationModule is ILiquidationModule {
         uint256 oraclePrice = market.getOraclePrice();
         bool isLiquidatable = position.isLiquidatable(
             market,
-            Margin.getMarginUsd(accountId, market, oraclePrice),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
             oraclePrice,
             PerpMarketConfiguration.load(marketId)
         );
@@ -86,7 +190,7 @@ contract LiquidationModule is ILiquidationModule {
         // Remove any pending orders that may exist.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
-            emit OrderCanceled(accountId, marketId, order.commitmentTime);
+            emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
             delete market.orders[accountId];
         }
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -105,20 +209,18 @@ contract LiquidationModule is ILiquidationModule {
             position.accruedFeesUsd + flagReward
         );
         market.updateDebtCorrection(position, newPosition);
-        // Update position accounting
+
+        // Update position and market accounting.
         position.update(newPosition);
-        // Pay keeper
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+        updateMarketPostFlag(accountId, marketId, market, globalConfig);
+
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
-        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);
 
-        // Sell any non sUSD collateral for sUSD post flag. Non sUSD margin value is already discounted in the quote
-        // price on the synth by spot market. This simply realizes that discount.
-        //
-        // We sell the synth collateral here to ensure there's enough sUSD at this point in time to pay down any debt
-        // incurred on this position and to also credit LPs with sUSD.
-        Margin.sellAllSynthCollateralForUsd(accountId, marketId, market);
+        // Pay flagger.
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+
+        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);
     }
 
     /**
@@ -127,17 +229,16 @@ contract LiquidationModule is ILiquidationModule {
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Position.Data storage position = market.positions[accountId];
 
         // Cannot liquidate a position that does not exist.
-        if (position.size == 0) {
+        if (market.positions[accountId].size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        address flagger = market.flaggedLiquidations[accountId];
 
+        address flagger = market.flaggedLiquidations[accountId];
         (, Position.Data memory newPosition, uint256 liqKeeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
@@ -146,18 +247,13 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
-        // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
             delete market.positions[accountId];
             delete market.flaggedLiquidations[accountId];
-
-            // Zero out all sUSD that was collected after selling synth based collateral during the flag.
-            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
-            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
         } else {
             market.positions[accountId].update(newPosition);
         }
+
         // Pay the keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
@@ -214,7 +310,7 @@ contract LiquidationModule is ILiquidationModule {
         return
             market.positions[accountId].isLiquidatable(
                 market,
-                Margin.getMarginUsd(accountId, market, oraclePrice),
+                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
@@ -241,14 +337,20 @@ contract LiquidationModule is ILiquidationModule {
      */
     function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
+
         uint256 oraclePrice = market.getOraclePrice();
-        return
-            market.positions[accountId].getHealthFactor(
-                market,
-                Margin.getMarginUsd(accountId, market, oraclePrice),
-                oraclePrice,
-                PerpMarketConfiguration.load(marketId)
-            );
+        (uint256 healthFactor, , , ) = Position.getHealthData(
+            market,
+            position.size,
+            position.entryPrice,
+            position.entryFundingAccrued,
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+            oraclePrice,
+            PerpMarketConfiguration.load(marketId)
+        );
+        return healthFactor;
     }
 }

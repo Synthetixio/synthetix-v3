@@ -56,6 +56,12 @@ library ErrorUtil {
     // @notice Thrown when we expect amount to be non zero.
     error ZeroAmount();
 
+    // @notice Thrown when a non-zero address is expected.
+    error ZeroAddress();
+
+    // @notice Thrown when a non-zero length (array or otherwise) is expected.
+    error ZeroLength();
+
     // @notice Thrown when an order pushes past a market's max allowable market size.
     error MaxMarketSizeExceeded();
 
@@ -68,7 +74,7 @@ library ErrorUtil {
     // @notice Thrown when an account has insufficient collateral to transfer.
     error InsufficientCollateral(uint128 synthMarketId, uint256 available, uint256 value);
 
-    // @notice Thrown when an account tries to withdrawAll without having any collateral
+    // @notice Thrown when an account tries to withdrawAll without having any collateral.
     error NilCollateral();
 
     // @notice Thrown when attempting to deposit a collateral that has reached a max deportable amount.
@@ -82,6 +88,7 @@ library ErrorUtil {
 
     // @notice Thrown when trying to remove a collateral with money inside
     error MissingRequiredCollateral(uint128 synthMarketId);
+
     // @notice Thrown when and action is only allowed by account owner
     error OnlyAccountOwner();
 }

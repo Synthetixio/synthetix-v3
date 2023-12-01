@@ -6,11 +6,15 @@ import "./IBasePerpMarket.sol";
 interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
 
-    struct AvailableCollateral {
+    struct ConfiguredCollateral {
         // Id of the synth market.
         uint128 synthMarketId;
+        // The underlying spot market synth sell oracle node id.
+        bytes32 oracleNodeId;
         // Maximum allowable deposited amount.
         uint128 maxAllowable;
+        // Address of the associated reward distributor.
+        address rewardDistributor;
     }
 
     // --- Events --- //
@@ -51,10 +55,15 @@ interface IMarginModule is IBasePerpMarket {
      * The order in which `synthMarketIds` is defined is also used as the deduction priority. It is recommended to use
      * sUSD as the first `synthMarketId` so that negative PnL/fees are deducted from sUSD before other collateral types.
      */
-    function setCollateralConfiguration(uint128[] calldata synthMarketIds, uint128[] calldata maxAllowables) external;
+    function setCollateralConfiguration(
+        uint128[] calldata synthMarketIds,
+        bytes32[] calldata oracleNodeIds,
+        uint128[] calldata maxAllowables,
+        address[] calldata rewardDistributors
+    ) external;
 
     /**
-     * @notice Set max allowables for existing collateral
+     * @notice Set the max allowable for existing collateral by `synthMarketId`.
      */
     function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external;
 
@@ -63,15 +72,20 @@ interface IMarginModule is IBasePerpMarket {
     /**
      * @notice Returns the configured collaterals used as margin.
      */
-    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory);
+    function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory);
 
     /**
-     * @notice Returns the total value of deposited collaterals in USD for `accountId` and `marketId`.
+     * @notice Returns the USD value of deposited collaterals (unadjusted collteral price) for `accountId` and `marketId`.
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 
     /**
-     * @notice Returns the total value of deposited collaterals -fees and +PnL in USD.
+     * @notice Returns the USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, +PnL.
      */
     function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
+
+    /**
+     * @notice Returns a haircut adjusted oracle price based on a given size.
+     */
+    function getHaircutCollateralPrice(uint128 marketId, int256 size) external view returns (uint256);
 }

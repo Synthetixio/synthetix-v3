@@ -12,7 +12,7 @@ interface IPerpAccountModule {
         uint128 synthMarketId;
         // Amount of available collateral deposited (unrelated to position).
         uint256 available;
-        // Oracle price of collateral.
+        // Unadjusted oracle price of collateral.
         uint256 oraclePrice;
     }
 

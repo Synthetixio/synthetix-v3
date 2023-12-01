@@ -23,8 +23,6 @@ library PerpMarketConfiguration {
 
     // --- Storage --- //
 
-    // TODO: Slot pack the hell out of GlobalData and Data.
-
     // @dev Perp market configuration shared across all markets
     struct GlobalData {
         // A reference to the core Synthetix v3 system.
@@ -39,6 +37,8 @@ library PerpMarketConfiguration {
         IPyth pyth;
         // Oracle node id for for eth/usd.
         bytes32 ethOracleNodeId;
+        // Address of generic PerpRewardDistributor contract.
+        address rewardDistributorImplementation;
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
         uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
@@ -67,6 +67,12 @@ library PerpMarketConfiguration {
         uint256 keeperLiquidationFeeUsd;
         // Address of endorsed liquidation keeper to exceed liq caps.
         address keeperLiquidationEndorsed;
+        // Minimum haircut applied on deposited margin collateral.
+        uint128 minCollateralHaircut;
+        // Maximum haircut applied on deposited margin collateral.
+        uint128 maxCollateralHaircut;
+        // Maximum slippage on collateral sold for negative pnl position modifications.
+        uint128 sellExactInMaxSlippagePercent;
     }
 
     // @dev Perp market configuration specific to a market

@@ -48,12 +48,13 @@
     "typescript": "^5.1.3"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "4.9.3",
     "@synthetixio/common-config": "3.3.2",
     "@synthetixio/core-contracts": "^3.3.2",
     "@synthetixio/core-modules": "^3.3.2",
     "@synthetixio/main": "^3.3.2",
     "@synthetixio/oracle-manager": "^3.3.2",
-    "@synthetixio/spot-market": "^3.3.2"
+    "@synthetixio/spot-market": "3.3.3-dev.a31b56e8"
   },
   "packageManager": "yarn@3.6.1"
 }

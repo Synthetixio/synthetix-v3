@@ -11,7 +11,7 @@ interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
-        // Name of the market to be created e.g, swstETHsUSDPERP.
+        // Name of the market to be created e.g, ETHPERP
         bytes32 name;
     }
 
@@ -73,6 +73,11 @@ interface IPerpMarketFactoryModule is IMarket {
      * @notice Stores a reference to the ETH/USD oracle node.
      */
     function setEthOracleNodeId(bytes32 nodeId) external;
+
+    /**
+     * @notice Stores the address of a base perp reward distributor contract.
+     */
+    function setRewardDistributorImplementation(address implementation) external;
 
     /**
      * @notice Registers a new PerpMarket with Synthetix and initializes storage.
