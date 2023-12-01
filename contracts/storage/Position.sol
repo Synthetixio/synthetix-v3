@@ -149,7 +149,6 @@ library Position {
         uint256 onchainPrice = market.getOraclePrice();
         int256 pnl = newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt());
         uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + MathUtil.min(pnl, 0), 0).toUint();
-
         (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
         if (healthFactor <= DecimalMath.UNIT) {
@@ -177,7 +176,7 @@ library Position {
         uint256 haircutAdjustedMarginUsd = Margin.getMarginUsd(
             accountId,
             market,
-            params.fillPrice,
+            params.oraclePrice,
             true /* useHaircutCollateralPrice */
         );
 
@@ -191,7 +190,7 @@ library Position {
             }
 
             // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, market, haircutAdjustedMarginUsd, params.fillPrice, marketConfig)) {
+            if (isLiquidatable(currentPosition, market, haircutAdjustedMarginUsd, params.oraclePrice, marketConfig)) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         }
