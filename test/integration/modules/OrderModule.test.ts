@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -7,16 +6,7 @@ import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import {
-  bn,
-  genBootstrap,
-  genNumber,
-  genOneOf,
-  genOrder,
-  genSide,
-  genTrader,
-  toRoundRobinGenerators,
-} from '../../generators';
+import { bn, genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
 import {
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
@@ -29,10 +19,9 @@ import {
   setMarketConfigurationById,
   withExplicitEvmMine,
 } from '../../helpers';
-import { BigNumber } from 'ethers';
-import { calcOrderFees, calcFillPrice } from '../../calculations';
+import { BigNumber, ethers } from 'ethers';
+import { calcFillPrice, calcOrderFees } from '../../calculations';
 import { PerpMarketProxy } from '../../generated/typechain';
-import { shuffle } from 'lodash';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
