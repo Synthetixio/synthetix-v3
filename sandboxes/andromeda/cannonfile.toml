@@ -1,6 +1,6 @@
 name = "andromeda-sandbox"
 preset = "main"
-version = "1"
+version = "2"
 description = "Andromeda Perps Sandbox"
 
 [setting.owner]
