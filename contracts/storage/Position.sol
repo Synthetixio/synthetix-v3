@@ -148,7 +148,8 @@ library Position {
 
         uint256 onchainPrice = market.getOraclePrice();
         int256 pnl = newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt());
-        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + pnl, 0).toUint();
+        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + MathUtil.min(pnl, 0), 0).toUint();
+
         (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
         if (healthFactor <= DecimalMath.UNIT) {
