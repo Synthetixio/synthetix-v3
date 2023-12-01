@@ -131,14 +131,13 @@ library Position {
         Position.Data storage currentPosition,
         Position.Data memory newPosition,
         uint256 marginUsd,
-        uint256 fillPrice,
         uint256 orderFee,
         uint256 keeperFee,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, fillPrice, marketConfig);
+        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, newPosition.entryPrice, marketConfig);
         uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
@@ -220,7 +219,6 @@ library Position {
             currentPosition,
             newPosition,
             haircutAdjustedMarginUsd,
-            params.fillPrice,
             orderFee,
             keeperFee,
             marketConfig
