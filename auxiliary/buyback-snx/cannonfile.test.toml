@@ -4,6 +4,9 @@ version = "<%= package.version %>-testable"
 [setting.premium]
 defaultValue = "10000000000000000"
 
+[setting.snx_fee_share]
+defaultValue = "500000000000000000"
+
 [provision.snx]
 source="mintable-token"
 targetPreset="permissionless-mint"
@@ -67,6 +70,6 @@ extra.snx_oracle_id.arg = 0
 
 [contract.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = ["<%= settings.premium %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= imports.snx.contracts.MintableToken.address %>", "<%= imports.usdc.contracts.MintableToken.address %>"]
+args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= imports.snx.contracts.MintableToken.address %>", "<%= imports.usdc.contracts.MintableToken.address %>"]
 create2 = true
 

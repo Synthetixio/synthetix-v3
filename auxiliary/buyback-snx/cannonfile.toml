@@ -5,6 +5,9 @@ description = "Buys SNX at market price plus premium"
 [setting.premium]
 defaultValue = "10000000000000000"
 
+[setting.snx_fee_share]
+defaultValue = "500000000000000000"
+
 [setting.oracle_manager]
 
 [setting.snx_node_id]
@@ -15,5 +18,5 @@ defaultValue = "10000000000000000"
 
 [contract.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = ["<%= settings.premium %>", "<%= settings.oracle_manager %>", "<%= settings.snx_node_id %>", "<%= settings.snx_token %>", "<%= settings.usdc_token %>"]
+args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= settings.oracle_manager %>", "<%= settings.snx_node_id %>", "<%= settings.snx_token %>", "<%= settings.usdc_token %>"]
 create2 = true

@@ -13,41 +13,47 @@ contract BuybackSnx is IBuybackSnx {
     using DecimalMath for uint256;
 
     uint256 public premium;
+    uint256 public snxFeeShare;
     address public oracleManager;
     bytes32 public snxNodeId;
     address public snxToken;
-    address public usdcToken;
+    address public susdToken;
 
-    event Buyback(address indexed buyer, uint256 snx, uint256 usdc);
+    event Buyback(address indexed buyer, uint256 snx, uint256 susd);
 
-    constructor(uint256 _premium, address _oracleManager, bytes32 _snxNodeId, address _snxToken, address _usdcToken) {
+    constructor(
+        uint256 _premium,
+        uint256 _snxFeeShare,
+        address _oracleManager,
+        bytes32 _snxNodeId,
+        address _snxToken,
+        address _susdToken
+    ) {
         premium = _premium;
+        snxFeeShare = _snxFeeShare;
         oracleManager = _oracleManager;
         snxNodeId = _snxNodeId;
         snxToken = _snxToken;
-        usdcToken = _usdcToken;
+        susdToken = _susdToken;
     }
 
     function buyback(uint256 snxAmount) external {
         NodeOutput.Data memory output = INodeModule(oracleManager).process(snxNodeId);
-        uint256 usdcAmount =
-            ((uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + premium)) / 1e6;
+        uint256 susdAmount = (uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + premium);
 
         require(IERC20(snxToken).transferFrom(msg.sender, address(this), snxAmount), "No allowance");
-        require(IERC20(usdcToken).transfer(msg.sender, usdcAmount), "Not enough USDC");
+        require(IERC20(susdToken).transfer(msg.sender, susdAmount), "Not enough sUSD");
 
-        emit Buyback(msg.sender, snxAmount, usdcAmount);
+        emit Buyback(msg.sender, snxAmount, susdAmount);
     }
 
     // Implement FeeCollector interface
-    // swap sUSD to sUSDC and unwrap
-
     function quoteFees(uint128 marketId, uint256 feeAmount, address sender) external override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;
 
-        return (feeAmount) / 1e18;
+        return (feeAmount * snxFeeShare) / 1e18;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
