@@ -182,7 +182,7 @@ describe('Cancel Offchain Async Order test', () => {
 
           await assertRevert(
             systems().PerpsMarket.connect(keeper()).settleOrder(2),
-            `OracleDataRequired(${DEFAULT_SETTLEMENT_STRATEGY.feedId}, ${startTime})`
+            `OracleDataRequired(${DEFAULT_SETTLEMENT_STRATEGY.feedId}, ${startTime + 2})`
           );
         });
 
