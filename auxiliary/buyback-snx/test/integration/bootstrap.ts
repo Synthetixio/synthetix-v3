@@ -9,7 +9,7 @@ interface Contracts {
   'pyth.Pyth': ethers.Contract;
   'pyth_erc7412_wrapper.PythERC7412Wrapper': ethers.Contract;
   'snx.MintableToken': ethers.Contract;
-  'susd.MintableToken': ethers.Contract;
+  'usd.MintableToken': ethers.Contract;
 }
 
 const params = { cannonfile: 'cannonfile.test.toml' };
