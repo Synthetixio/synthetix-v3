@@ -52,7 +52,10 @@ contract AsyncOrderSettlementPythModule is
         ) = AsyncOrder.loadValid(accountId);
 
         int256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
-            .getBenchmarkPrice(settlementStrategy.feedId, asyncOrder.commitmentTime.to64());
+            .getBenchmarkPrice(
+                settlementStrategy.feedId,
+                (asyncOrder.commitmentTime + settlementStrategy.commitmentPriceDelay).to64()
+            );
 
         _settleOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
     }

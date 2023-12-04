@@ -1,11 +1,10 @@
 import { ethers, BigNumber } from 'ethers';
-import { STRICT_PRICE_TOLERANCE, bn, bootstrapMarkets } from '../bootstrap';
+import { STRICT_PRICE_TOLERANCE, bn, bootstrapMarkets, createKeeperCostNode } from '../bootstrap';
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import { createKeeperCostNode } from '../bootstrap/createKeeperCostNode';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Create Market test', () => {
@@ -93,7 +92,7 @@ describe('Create Market test', () => {
               strategyType: 0,
               settlementDelay: 5,
               settlementWindowDuration: 0,
-              priceWindowDuration: 120,
+              commitmentPriceDelay: 0,
               priceVerificationContract: ethers.constants.AddressZero,
               feedId: ethers.constants.HashZero,
               url: '',
@@ -208,7 +207,7 @@ describe('Create Market test', () => {
               strategyType: 0,
               settlementDelay: 5,
               settlementWindowDuration: 120,
-              priceWindowDuration: 120,
+              commitmentPriceDelay: 0,
               priceVerificationContract: ethers.constants.AddressZero,
               feedId: ethers.constants.HashZero,
               url: '',

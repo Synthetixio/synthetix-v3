@@ -16,6 +16,7 @@ import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -37,6 +38,7 @@ library PerpsAccount {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using KeeperCosts for KeeperCosts.Data;
+    using AsyncOrder for AsyncOrder.Data;
 
     struct Data {
         // @dev synth marketId => amount
@@ -147,6 +149,7 @@ library PerpsAccount {
             flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
             marginCollected = convertAllCollateralToUsd(self);
+            AsyncOrder.load(self.id).reset();
         }
     }
 

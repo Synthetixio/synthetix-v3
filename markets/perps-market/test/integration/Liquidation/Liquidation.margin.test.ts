@@ -242,6 +242,7 @@ describe('Liquidation - margin', () => {
       assert.equal(await systems().PerpsMarket.canLiquidate(2), false);
     });
   });
+
   describe('price change - available margin 0 ', () => {
     [
       bn(31000), // btc

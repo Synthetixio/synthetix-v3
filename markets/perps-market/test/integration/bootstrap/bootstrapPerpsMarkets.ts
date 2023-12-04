@@ -41,9 +41,9 @@ export type PerpsMarketData = Array<{
   lockedOiRatioD18?: ethers.BigNumber;
   settlementStrategy?: Partial<{
     strategyType: ethers.BigNumber;
+    commitmentPriceDelay: ethers.BigNumber;
     settlementDelay: ethers.BigNumber;
     settlementWindowDuration: ethers.BigNumber;
-    priceWindowDuration: ethers.BigNumber;
     feedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
@@ -58,8 +58,8 @@ type IncomingChainState =
 export const DEFAULT_SETTLEMENT_STRATEGY = {
   strategyType: 0, // OFFCHAIN
   settlementDelay: 5,
+  commitmentPriceDelay: 2,
   settlementWindowDuration: 120,
-  priceWindowDuration: 110,
   settlementReward: bn(5),
   disabled: false,
   url: 'https://fakeapi.pyth.synthetix.io/',
