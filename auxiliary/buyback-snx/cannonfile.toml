@@ -14,9 +14,9 @@ defaultValue = "500000000000000000"
 
 [setting.snx_token]
 
-[setting.usdc_token]
+[setting.susd_token]
 
 [contract.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= settings.oracle_manager %>", "<%= settings.snx_node_id %>", "<%= settings.snx_token %>", "<%= settings.usdc_token %>"]
+args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= settings.oracle_manager %>", "<%= settings.snx_node_id %>", "<%= settings.snx_token %>", "<%= settings.susd_token %>"]
 create2 = true

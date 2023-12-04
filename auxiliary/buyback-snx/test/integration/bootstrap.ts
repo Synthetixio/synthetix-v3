@@ -2,10 +2,14 @@ import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
-import { Buyback_snx } from '../generated/typechain';
+import { BuybackSnx } from '../generated/typechain';
 
 interface Contracts {
-  BuybackSnx: Buyback_snx;
+  buyback_snx: BuybackSnx;
+  'pyth.Pyth': ethers.Contract;
+  'pyth_erc7412_wrapper.PythERC7412Wrapper': ethers.Contract;
+  'snx.MintableToken': ethers.Contract;
+  'susd.MintableToken': ethers.Contract;
 }
 
 const params = { cannonfile: 'cannonfile.test.toml' };

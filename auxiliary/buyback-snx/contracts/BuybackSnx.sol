@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./interfaces/IBuybackSnx.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -41,10 +42,10 @@ contract BuybackSnx is IBuybackSnx {
         NodeOutput.Data memory output = INodeModule(oracleManager).process(snxNodeId);
         uint256 susdAmount = (uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + premium);
 
-        require(IERC20(snxToken).transferFrom(msg.sender, address(this), snxAmount), "No allowance");
-        require(IERC20(susdToken).transfer(msg.sender, susdAmount), "Not enough sUSD");
+        require(IERC20(snxToken).transferFrom(ERC2771Context._msgSender(), address(this), snxAmount), "No allowance");
+        require(IERC20(susdToken).transfer(ERC2771Context._msgSender(), susdAmount), "Not enough sUSD");
 
-        emit Buyback(msg.sender, snxAmount, susdAmount);
+        emit Buyback(ERC2771Context._msgSender(), snxAmount, susdAmount);
     }
 
     // Implement FeeCollector interface

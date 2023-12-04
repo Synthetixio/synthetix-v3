@@ -10,10 +10,16 @@ defaultValue = "500000000000000000"
 [provision.snx]
 source="mintable-token"
 targetPreset="permissionless-mint"
+options.symbol = "SNX"
+options.name = "Mintable SNX"
+options.salt = "0xdeadbeef"
 
-[provision.usdc]
+[provision.susd]
 source="mintable-token"
 targetPreset="permissionless-mint"
+options.symbol = "sUSD"
+options.name = "Mintable sUSD"
+options.salt = "testing"
 
 [setting.staleness_tolerance]
 defaultValue = "60"
@@ -70,6 +76,6 @@ extra.snx_oracle_id.arg = 0
 
 [contract.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= imports.snx.contracts.MintableToken.address %>", "<%= imports.usdc.contracts.MintableToken.address %>"]
+args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= imports.snx.contracts.MintableToken.address %>", "<%= imports.susd.contracts.MintableToken.address %>"]
 create2 = true
 

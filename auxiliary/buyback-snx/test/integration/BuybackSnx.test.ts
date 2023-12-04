@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
@@ -17,10 +18,10 @@ describe('BuybackSnx', function () {
   let SnxToken: ethers.Contract;
   let sUSDToken: ethers.Contract;
 
-  let snxNodeId: any;
+  let snxNodeId: string;
 
   const snxAmount = bn(100);
-  const sUSDAmount = bn(100000);
+  const sUSDAmount = bn(5000);
 
   const decimals = 8;
   const price = parseUnits('10', decimals).toString();
@@ -31,7 +32,10 @@ describe('BuybackSnx', function () {
     const timestamp = (await hre.ethers.provider.getBlock(blockNumber)).timestamp;
 
     SnxToken = getContract('snx.MintableToken');
-    sUSDToken = getContract('usdc.MintableToken');
+    sUSDToken = getContract('susd.MintableToken');
+    console.log('snx token address', SnxToken.address);
+    console.log('sUSD token address', sUSDToken.address);
+
     Pyth = getContract('pyth.Pyth');
     PythERC7412Wrapper = getContract('pyth_erc7412_wrapper.PythERC7412Wrapper');
     BuybackSnx = getContract('buyback_snx');
@@ -54,11 +58,11 @@ describe('BuybackSnx', function () {
     const fee = await Pyth['getUpdateFee(bytes[])']([resp]);
     await Pyth.updatePriceFeeds([resp], { value: fee });
 
-    const x = await Pyth.getPriceUnsafe(snxNodeId);
-    console.log('Pyth.getPriceUnsafe(snxNodeId)', x.toString());
+    const priceUnsafe = await Pyth.getPriceUnsafe(snxNodeId);
+    console.log('Pyth.getPriceUnsafe(snxNodeId)', priceUnsafe.toString());
   });
 
-  before('set balances', async () => {
+  before('set up token balances', async () => {
     await SnxToken.connect(owner()).mint(snxAmount, await user().getAddress());
     await sUSDToken.connect(owner()).mint(sUSDAmount, BuybackSnx.address);
   });
@@ -93,14 +97,23 @@ describe('BuybackSnx', function () {
   describe('buyback', function () {
     let userAddress: string;
     let userSnxBalanceBefore: any;
+    let usersUSDBalanceBefore: any;
+    let buybackSnxBalanceBefore: any;
     let buybacksUSDBalanceBefore: any;
 
     before('record balances and approve', async () => {
       // record balances
       userAddress = await user().getAddress();
       userSnxBalanceBefore = await SnxToken.balanceOf(userAddress);
+      usersUSDBalanceBefore = await sUSDToken.balanceOf(userAddress);
+      buybackSnxBalanceBefore = await SnxToken.balanceOf(BuybackSnx.address);
       buybacksUSDBalanceBefore = await sUSDToken.balanceOf(BuybackSnx.address);
+      console.log('userSnxBalanceBefore', userSnxBalanceBefore.toString());
+      console.log('usersUSDBalanceBefore', usersUSDBalanceBefore.toString());
+      console.log('buybackSnxBalanceBefore', buybackSnxBalanceBefore.toString());
+      console.log('buybacksUSDBalanceBefore', buybacksUSDBalanceBefore.toString());
 
+      // approve buyback contract to spend SNX
       await SnxToken.connect(user()).approve(BuybackSnx.address, snxAmount);
     });
 
@@ -138,9 +151,15 @@ describe('BuybackSnx', function () {
       assertBn.equal(event.args.susd, expectedAmountUSD);
 
       // verify balances are correct
-      assertBn.equal(await SnxToken.balanceOf(BuybackSnx.address), snxAmount);
-      assertBn.equal(await sUSDToken.balanceOf(userAddress), expectedAmountUSD);
       assertBn.equal(await SnxToken.balanceOf(userAddress), userSnxBalanceBefore.sub(snxAmount));
+      assertBn.equal(
+        await SnxToken.balanceOf(BuybackSnx.address),
+        buybackSnxBalanceBefore.add(snxAmount)
+      );
+      assertBn.equal(
+        await sUSDToken.balanceOf(userAddress),
+        usersUSDBalanceBefore.add(expectedAmountUSD)
+      );
       assertBn.equal(
         await sUSDToken.balanceOf(BuybackSnx.address),
         buybacksUSDBalanceBefore.sub(expectedAmountUSD)
