@@ -11,7 +11,8 @@ library NodeDefinition {
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
         STALENESS_CIRCUIT_BREAKER,
-        CONSTANT
+        CONSTANT,
+        SCRY
     }
 
     struct Data {
