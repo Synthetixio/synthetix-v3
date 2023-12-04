@@ -182,6 +182,7 @@ export const genOrder = async (
     desiredSide?: 1 | -1;
     desiredKeeperFeeBufferUsd?: number;
     desiredSize?: BigNumber; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
+    desiredPriceImpactPercentage?: number;
   }
 ) => {
   const { PerpMarketProxy } = systems();
@@ -208,7 +209,9 @@ export const genOrder = async (
     sizeDelta = sizeDelta.mul(genSide());
   }
 
-  const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice);
+  const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice, {
+    desiredPriceImpactPercentage: options?.desiredPriceImpactPercentage,
+  });
   const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
   const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
 

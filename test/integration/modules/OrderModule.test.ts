@@ -6,7 +6,16 @@ import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genSide,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import {
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
@@ -22,6 +31,7 @@ import {
 import { BigNumber, ethers } from 'ethers';
 import { calcFillPrice, calcOrderFees } from '../../calculations';
 import { PerpMarketProxy } from '../../generated/typechain';
+import { shuffle } from 'lodash';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -406,7 +416,71 @@ describe('OrderModule', () => {
 
     it('should revert when placing an existing position into instant liquidation');
 
-    it('should revert when placing a new position into instant liquidation', async () => {
+    it('should revert when placing a position into instant liquidation due to oracle vs fill price', async () => {
+      const { PerpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      await market.aggregator().mockSetCurrentPrice(wei(1).toBN());
+      await setMarketConfigurationById(bs, market.marketId(), {
+        skewScale: bn(7_500_000),
+        maxMarketSize: bn(1_000_000),
+        incrementalMarginScalar: bn(1),
+        minMarginRatio: bn(0.03),
+        maintenanceMarginScalar: bn(0.75),
+        liquidationRewardPercent: bn(0.01),
+        makerFee: bn(0),
+        takerFee: bn(0),
+      });
+      // One "otherTrader creates a big skew.
+      const {
+        trader: otherTrader,
+        collateral,
+        collateralDepositAmount: otherCollateralDepositAmount,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: tradersGenerator.next().value,
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: 800_000,
+        })
+      );
+      const otherOrder = await genOrder(bs, market, collateral, otherCollateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+        desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
+      });
+
+      await commitAndSettle(bs, marketId, otherTrader, otherOrder);
+      // Main  trader creates an initial position, quite highly leveraged.
+      const { trader, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: tradersGenerator.next().value,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: 10_000,
+        })
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 5,
+        desiredKeeperFeeBufferUsd: 0,
+        desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+      // If checking liquidation on fill price instead of oracle price this would not revert.
+      // But since liquidations ARE checked in oracle price this correctly reverts.
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(trader.accountId, marketId, bn(1), order.limitPrice, 0),
+        'CanLiquidatePosition()'
+      );
+    });
+
+    it('should revert when placing a new position into instant liquidation due to post settlement pnl', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -415,12 +489,12 @@ describe('OrderModule', () => {
       );
       await market.aggregator().mockSetCurrentPrice(wei(2.5).toBN());
       await setMarketConfigurationById(bs, marketId, {
-        skewScale: bn(7500000),
+        skewScale: bn(7_500_000),
         incrementalMarginScalar: bn(1),
         minMarginRatio: bn(0.03),
         maintenanceMarginScalar: bn(0.75),
         liquidationRewardPercent: bn(0.01),
-        maxMarketSize: bn(1000000),
+        maxMarketSize: bn(1_000_000),
         makerFee: bn(0.0002),
         takerFee: bn(0.0006),
       });
