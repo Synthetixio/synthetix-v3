@@ -401,10 +401,10 @@ jobs:
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
       - restore_cache:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
@@ -442,7 +442,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "https://ipfs.synthetix.io"
+      #- CANNON_IPFS_URL: "https://ipfs.synthetix.io"
       - GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
@@ -497,7 +497,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "https://ipfs.synthetix.io"
+      #- CANNON_IPFS_URL: "https://ipfs.synthetix.io"
       - GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
@@ -538,7 +538,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "https://ipfs.synthetix.io"
+      #- CANNON_IPFS_URL: "https://ipfs.synthetix.io"
       - GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:

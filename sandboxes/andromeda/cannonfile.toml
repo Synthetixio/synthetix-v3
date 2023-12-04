@@ -1,5 +1,6 @@
 name = "andromeda-sandbox"
-version = "1"
+preset = "main"
+version = "2"
 description = "Andromeda Perps Sandbox"
 
 [setting.owner]
@@ -9,6 +10,9 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # PK 0xac0974bec39a1
 #defaultValue = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" # PK 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 description = "Hardhat/Anvil first test account"
 
+[setting.version]
+defaultValue = "3.3.3-dev.249e185f"
+
 #
 #
 # TODO: We will need to use Pyth Mock, so these settings will change.
@@ -17,20 +21,15 @@ description = "Hardhat/Anvil first test account"
 [setting.pyth_price_verification_address]
 defaultValue = "0x5955C1478F0dAD753C7E2B4dD1b4bC530C64749f"
 
-[setting.pyth_feed_url]
-defaultValue = "https://api.synthetix.io/pyth-testnet/api/get_vaa_ccip?data={data}"
-
 [setting.pyth_eth_feed_id]
-defaultValue = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6"
+defaultValue = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
 
 [setting.pyth_btc_feed_id]
-defaultValue = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b"
+defaultValue = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
 
-[setting.pyth_ltc_feed_id]
-defaultValue = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b"
-
-[setting.pyth_xrp_feed_id]
-defaultValue = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b"
+[import.pyth_erc7412_wrapper]
+# options.pythAddress = "0xEbe57e8045F2F230872523bbff7374986E45C486"
+source = "pyth-erc7412-wrapper:<%= settings.version %>"
 
 #
 #
@@ -38,7 +37,7 @@ defaultValue = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea3
 #
 #
 [import.synthetix]
-source = "synthetix:dev"
+source = "synthetix:<%= settings.version %>"
 
 [invoke.configure_minimum_liquidity_ratio]
 target = ["synthetix.CoreProxy"]
@@ -107,7 +106,7 @@ args = [
 #
 #
 [import.spot_factory]
-source = "synthetix-spot-market:dev"
+source = "synthetix-spot-market:<%= settings.version %>"
 
 #
 #
@@ -115,8 +114,7 @@ source = "synthetix-spot-market:dev"
 #
 #
 [provision.usdc_token]
-source = "mintable-token"
-sourcePreset = "permissionless-mint"
+source = "mintable-token:latest@permissionless-mint"
 options.symbol = "USDC"
 options.name = "Mintable USD Coin"
 
@@ -154,7 +152,9 @@ func = "updatePriceData"
 args = [
     "<%= extras.synth_usdc_market_id %>",
     "<%= extras.usdc_oracle_id %>",
-    "<%= extras.usdc_oracle_id %>"
+    "<%= extras.usdc_oracle_id %>",
+    # staleness tolerance
+    "3600"
 ]
 
 [setting.max_market_collateral_for_synth_usdc]
@@ -211,11 +211,27 @@ depositingEnabled = true
 
 #
 #
+# Provision Perps keeper oracle
+#
+#
+[invoke.register_perps_keeper_oracle_node_with_constant_price]
+target = ["synthetix.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    8, # 8 = constant
+    "<%= defaultAbiCoder.encode(['int256'], [parseEther('0.1')]) %>", # 1 parameter: price, always 10c
+    []
+]
+extra.perps_keeper_cost_usd_oracle_id.event = "NodeRegistered"
+extra.perps_keeper_cost_usd_oracle_id.arg = 0
+
+#
+#
 # Provision Perps factory
 #
 #
 [import.perps_factory]
-source = "synthetix-perps-market:dev"
+source = "synthetix-perps-market:<%= settings.version %>"
 depends = ["import.spot_factory"]
 
 [invoke.permit_owner_to_register_markets]
@@ -223,6 +239,12 @@ target = ["synthetix.CoreProxy"]
 fromCall.func = "owner"
 func = "addToFeatureFlagAllowlist"
 args = ["<%= formatBytes32String('registerMarket') %>", "<%= settings.owner %>"]
+
+[invoke.permit_everyone_to_use_perps]
+target = ["perps_factory.PerpsMarketProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('perpsSystem') %>", true]
 
 #
 #
@@ -232,18 +254,22 @@ args = ["<%= formatBytes32String('registerMarket') %>", "<%= settings.owner %>"]
 [invoke.configure_perps_liquidation_reward_limits]
 target = ["perps_factory.PerpsMarketProxy"]
 fromCall.func = "owner"
-func = "setLiquidationRewardGuards"
+func = "setKeeperRewardGuards"
 args = [
-    # uint256 minLiquidationRewardUsd,
+    # uint256 minKeeperRewardUsd
     "<%= parseEther('1') %>",
-    # uint256 maxLiquidationRewardUsd
-    "<%= parseEther('500') %>"
+    # uint256 minKeeperProfitRatioD18
+    "<%= parseEther('1') %>",
+    # uint256 maxKeeperRewardUsd
+    "<%= parseEther('500') %>",
+    # uint256 maxKeeperScalingRatioD18
+    "<%= parseEther('1') %>"
 ]
 
 [invoke.configure_perps_max_collateral_for_susd]
 target = ["perps_factory.PerpsMarketProxy"]
 fromCall.func = "owner"
-func = "setMaxCollateralAmount"
+func = "setCollateralConfiguration"
 args = [
     # 0 - sUSD
     "0",
@@ -271,6 +297,12 @@ args = [
     # uint128 maxCollateralsPerAccount
     "3"
 ]
+
+[invoke.configure_perps_market_keeper_cost_node_id]
+target = ["perps_factory.PerpsMarketProxy"]
+fromCall.func = "owner"
+func = "updateKeeperCostNodeId"
+args = ["<%= extras.perps_keeper_cost_usd_oracle_id %>"]
 
 #
 #
@@ -311,7 +343,10 @@ func = "createMarket"
 args = ["100", "Ethereum", "ETH"]
 extra.perps_eth_market_id.event = "MarketCreated"
 extra.perps_eth_market_id.arg = 0
-depends = ['invoke.permit_owner_to_register_markets']
+depends = [
+    'invoke.permit_owner_to_register_markets',
+    'invoke.permit_everyone_to_use_perps'
+]
 
 [invoke.register_eth_oracle_node_with_constant_price]
 target = ["synthetix.oracle_manager.Proxy"]
@@ -328,7 +363,12 @@ extra.eth_oracle_id.arg = 0
 target = ["perps_factory.PerpsMarketProxy"]
 fromCall.func = "owner"
 func = "updatePriceData"
-args = ["<%= extras.perps_eth_market_id %>", "<%= extras.eth_oracle_id %>"]
+args = [
+    "<%= extras.perps_eth_market_id %>",
+    "<%= extras.eth_oracle_id %>",
+    # big_cap_strict_staleness_tolerance
+    "3600"
+]
 
 [invoke.configure_settlement_strategy_for_perps_eth]
 target = ["perps_factory.PerpsMarketProxy"]
@@ -337,8 +377,10 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_eth_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_eth_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_eth_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false }
 ]
+extra.synth_eth_settlement_strategy.event = "SettlementStrategyAdded"
+extra.synth_eth_settlement_strategy.arg = 1
 
 [invoke.configure_funding_parameters_for_perps_eth]
 target = ["perps_factory.PerpsMarketProxy"]
@@ -463,7 +505,10 @@ func = "createMarket"
 args = ["200", "Bitcoin", "BTC"]
 extra.perps_btc_market_id.event = "MarketCreated"
 extra.perps_btc_market_id.arg = 0
-depends = ['invoke.permit_owner_to_register_markets']
+depends = [
+    'invoke.permit_owner_to_register_markets',
+    'invoke.permit_everyone_to_use_perps'
+]
 
 [invoke.register_btc_oracle_node_with_constant_price]
 target = ["synthetix.oracle_manager.Proxy"]
@@ -480,7 +525,12 @@ extra.btc_oracle_id.arg = 0
 target = ["perps_factory.PerpsMarketProxy"]
 fromCall.func = "owner"
 func = "updatePriceData"
-args = ["<%= extras.perps_btc_market_id %>", "<%= extras.btc_oracle_id %>"]
+args = [
+    "<%= extras.perps_btc_market_id %>",
+    "<%= extras.btc_oracle_id %>",
+    # big_cap_strict_staleness_tolerance
+    "3600"
+]
 
 [invoke.configure_settlement_strategy_for_perps_btc]
 target = ["perps_factory.PerpsMarketProxy"]
@@ -489,8 +539,10 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_btc_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_btc_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_btc_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false }
 ]
+extra.btc_pyth_settlement_strategy.event = "SettlementStrategyAdded"
+extra.btc_pyth_settlement_strategy.arg = 2
 
 [invoke.configure_funding_parameters_for_perps_btc]
 target = ["perps_factory.PerpsMarketProxy"]
@@ -572,294 +624,6 @@ func = "setLockedOiRatio"
 args = [
     # uint128 marketId
     "<%= extras.perps_btc_market_id %>",
-    # uint256 lockedOiRatioD18
-    "<%= parseEther('0.5') %>"
-]
-
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# LTC stuff
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-[invoke.create_ltc_perps_market]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "createMarket"
-args = ["300", "Litecoin", "LTC"]
-extra.perps_ltc_market_id.event = "MarketCreated"
-extra.perps_ltc_market_id.arg = 0
-depends = ['invoke.permit_owner_to_register_markets']
-
-[invoke.register_ltc_oracle_node_with_constant_price]
-target = ["synthetix.oracle_manager.Proxy"]
-func = "registerNode"
-args = [
-    8, # 8 = constant
-    "<%= defaultAbiCoder.encode(['int256'], [parseEther(String(70))]) %>", # 1 parameter: price
-    []
-]
-extra.ltc_oracle_id.event = "NodeRegistered"
-extra.ltc_oracle_id.arg = 0
-
-[invoke.configure_price_data_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "updatePriceData"
-args = ["<%= extras.perps_ltc_market_id %>", "<%= extras.ltc_oracle_id %>"]
-
-[invoke.configure_settlement_strategy_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "addSettlementStrategy"
-args = [
-    "<%= extras.perps_ltc_market_id %>",
-    # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_ltc_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
-]
-
-[invoke.configure_funding_parameters_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setFundingParameters"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_ltc_market_id %>",
-    # uint256 skewScale
-    "<%= parseEther('1000000') %>",
-    # uint256 maxFundingVelocity
-    "<%= parseEther('9') %>"
-]
-
-[invoke.configure_order_fees_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setOrderFees"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_ltc_market_id %>",
-    # uint256 makerFeeRatio
-    "<%= parseEther('0.0007') %>",
-    # uint256 takerFeeRatio
-    "<%= parseEther('0.0003') %>"
-]
-
-[invoke.configure_max_market_size_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setMaxMarketSize"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_ltc_market_id %>",
-    # uint256 maxMarketSize
-    "<%= parseEther(String(30)) %>"
-]
-
-[invoke.configure_max_liquidation_parameters_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setMaxLiquidationParameters"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_ltc_market_id %>",
-    # uint256 maxLiquidationLimitAccumulationMultiplier
-    "<%= parseEther('1') %>",
-    # uint256 maxSecondsInLiquidationWindow
-    "30",
-    # uint256 maxLiquidationPd
-    "<%= parseEther('0.0016') %>",
-    # address endorsedLiquidator
-    "0x0000000000000000000000000000000000000000"
-]
-
-[invoke.configure_liquidation_parameters_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setLiquidationParameters"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_ltc_market_id %>",
-    # uint256 initialMarginRatioD18
-    "<%= parseEther('1') %>",
-    # uint256 minimumInitialMarginRatioD18
-    "<%= parseEther('0.02') %>",
-    # uint256 maintenanceMarginScalarD18
-    "<%= parseEther('0.5') %>",
-    # uint256 liquidationRewardRatioD18
-    "<%= parseEther('0.01') %>",
-    # uint256 minimumPositionMargin
-    "<%= parseEther('0') %>"
-]
-
-[invoke.configure_locked_oi_ratio_for_perps_ltc]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setLockedOiRatio"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_ltc_market_id %>",
-    # uint256 lockedOiRatioD18
-    "<%= parseEther('0.5') %>"
-]
-
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# XRP stuff
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-[invoke.create_xrp_perps_market]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "createMarket"
-args = ["400", "Ripple Token", "XRP"]
-extra.perps_xrp_market_id.event = "MarketCreated"
-extra.perps_xrp_market_id.arg = 0
-depends = ['invoke.permit_owner_to_register_markets']
-
-[invoke.register_xrp_oracle_node_with_constant_price]
-target = ["synthetix.oracle_manager.Proxy"]
-func = "registerNode"
-args = [
-    8, # 8 = constant
-    "<%= defaultAbiCoder.encode(['int256'], [parseEther(String(0.7))]) %>", # 1 parameter: price
-    []
-]
-extra.xrp_oracle_id.event = "NodeRegistered"
-extra.xrp_oracle_id.arg = 0
-
-[invoke.configure_price_data_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "updatePriceData"
-args = ["<%= extras.perps_xrp_market_id %>", "<%= extras.xrp_oracle_id %>"]
-
-[invoke.configure_settlement_strategy_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "addSettlementStrategy"
-args = [
-    "<%= extras.perps_xrp_market_id %>",
-    # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceWindowDuration = "600", priceVerificationContract = "<%= settings.pyth_price_verification_address %>", feedId = "<%= settings.pyth_xrp_feed_id %>", url = "<%= settings.pyth_feed_url %>", settlementReward = 0, priceDeviationTolerance = "<%= parseEther('1') %>", disabled = false }
-]
-
-[invoke.configure_funding_parameters_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setFundingParameters"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_xrp_market_id %>",
-    # uint256 skewScale
-    "<%= parseEther('1000000') %>",
-    # uint256 maxFundingVelocity
-    "<%= parseEther('9') %>"
-]
-
-[invoke.configure_order_fees_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setOrderFees"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_xrp_market_id %>",
-    # uint256 makerFeeRatio
-    "<%= parseEther('0.0007') %>",
-    # uint256 takerFeeRatio
-    "<%= parseEther('0.0003') %>"
-]
-
-[invoke.configure_max_market_size_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setMaxMarketSize"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_xrp_market_id %>",
-    # uint256 maxMarketSize
-    "<%= parseEther(String(30)) %>"
-]
-
-[invoke.configure_max_liquidation_parameters_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setMaxLiquidationParameters"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_xrp_market_id %>",
-    # uint256 maxLiquidationLimitAccumulationMultiplier
-    "<%= parseEther('1') %>",
-    # uint256 maxSecondsInLiquidationWindow
-    "30",
-    # uint256 maxLiquidationPd
-    "<%= parseEther('0.0016') %>",
-    # address endorsedLiquidator
-    "0x0000000000000000000000000000000000000000"
-]
-
-[invoke.configure_liquidation_parameters_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setLiquidationParameters"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_xrp_market_id %>",
-    # uint256 initialMarginRatioD18
-    "<%= parseEther('1') %>",
-    # uint256 minimumInitialMarginRatioD18
-    "<%= parseEther('0.02') %>",
-    # uint256 maintenanceMarginScalarD18
-    "<%= parseEther('0.5') %>",
-    # uint256 liquidationRewardRatioD18
-    "<%= parseEther('0.01') %>",
-    # uint256 minimumPositionMargin
-    "<%= parseEther('0') %>"
-]
-
-[invoke.configure_locked_oi_ratio_for_perps_xrp]
-target = ["perps_factory.PerpsMarketProxy"]
-fromCall.func = "owner"
-func = "setLockedOiRatio"
-args = [
-    # uint128 marketId
-    "<%= extras.perps_xrp_market_id %>",
     # uint256 lockedOiRatioD18
     "<%= parseEther('0.5') %>"
 ]

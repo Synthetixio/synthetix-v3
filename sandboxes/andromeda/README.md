@@ -5,7 +5,7 @@
 Building custom code on sandbox requires `andromeda-sandbox` package to be published to Cannon registry: https://usecannon.com/packages/andromeda-sandbox/latest/13370-main
 
 ```sh
-cannon build cannonfile.consumer.toml
+cannon build consumer.cannonfile.toml
 ```
 
 This should result in a successful local build that runs a few transactions as a test user
