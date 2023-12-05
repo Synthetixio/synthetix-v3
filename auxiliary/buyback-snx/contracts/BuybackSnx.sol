@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IFeeCollector} from "@synthetixio/perps-market/contracts/interfaces/external/IFeeCollector.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
@@ -13,9 +13,10 @@ import {Buyback} from "./storage/Buyback.sol";
 
 contract BuybackSnx is IFeeCollector {
     using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
     using DecimalMath for uint256;
 
-    address public immutable dead = 0x000000000000000000000000000000000000dEaD;
+    address public immutable DEAD = 0x000000000000000000000000000000000000dEaD;
 
     event BuybackProcessed(address indexed buyer, uint256 snx, uint256 usd);
 
@@ -40,9 +41,11 @@ contract BuybackSnx is IFeeCollector {
         Buyback.Data storage b = Buyback.load();
 
         NodeOutput.Data memory output = INodeModule(b.oracleManager).process(b.snxNodeId);
-        uint256 usdAmount = (uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + b.premium);
+        uint256 usdAmount = (output.price.toUint().mulDecimal(snxAmount)).mulDecimal(
+            DecimalMath.UNIT + b.premium
+        );
 
-        IERC20(b.snxToken).transferFrom(ERC2771Context._msgSender(), dead, snxAmount);
+        IERC20(b.snxToken).transferFrom(ERC2771Context._msgSender(), DEAD, snxAmount);
         IERC20(b.usdToken).transfer(ERC2771Context._msgSender(), usdAmount);
 
         emit BuybackProcessed(ERC2771Context._msgSender(), snxAmount, usdAmount);
@@ -61,7 +64,11 @@ contract BuybackSnx is IFeeCollector {
     }
 
     // Implement FeeCollector interface
-    function quoteFees(uint128 marketId, uint256 feeAmount, address sender) external view override returns (uint256) {
+    function quoteFees(
+        uint128 marketId,
+        uint256 feeAmount,
+        address sender
+    ) external view override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;
@@ -69,7 +76,11 @@ contract BuybackSnx is IFeeCollector {
         return (feeAmount.mulDecimal(Buyback.load().snxFeeShare));
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IFeeCollector).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IFeeCollector).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }
