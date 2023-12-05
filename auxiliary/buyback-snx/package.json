@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/buyback-snx",
+  "name": "@synthetixio-auxiliary/buyback-snx",
   "version": "3.3.4",
   "description": "Market buys and burns SNX",
   "publishConfig": {

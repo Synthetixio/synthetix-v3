@@ -2811,6 +2811,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio-auxiliary/buyback-snx@workspace:auxiliary/buyback-snx":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio-auxiliary/buyback-snx@workspace:auxiliary/buyback-snx"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/router": "npm:3.3.0"
+    "@synthetixio/wei": "npm:2.74.4"
+    ethers: "npm:5.7.2"
+    hardhat: "npm:2.19.0"
+    solidity-docgen: "npm:0.6.0-beta.36"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle":
   version: 0.0.0-use.local
   resolution: "@synthetixio-auxiliary/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
@@ -2853,21 +2868,6 @@ __metadata:
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.1"
     typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
-"@synthetixio/buyback-snx@workspace:auxiliary/buyback-snx":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio/buyback-snx@workspace:auxiliary/buyback-snx"
-  dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:3.3.0"
-    "@synthetixio/wei": "npm:2.74.4"
-    ethers: "npm:5.7.2"
-    hardhat: "npm:2.19.0"
-    solidity-docgen: "npm:0.6.0-beta.36"
   languageName: unknown
   linkType: soft
 
