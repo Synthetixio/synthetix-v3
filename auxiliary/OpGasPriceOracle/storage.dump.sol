@@ -42,7 +42,9 @@ library ReducerNode {
         MEAN,
         MEDIAN,
         MUL,
-        DIV
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
     }
 }
 

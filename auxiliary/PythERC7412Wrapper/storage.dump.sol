@@ -28,6 +28,11 @@ contract PythStructs {
     }
 }
 
+// @custom:artifact contracts/PythERC7412Wrapper.sol:PythERC7412Wrapper
+contract PythERC7412Wrapper {
+    int256 private constant PRECISION = 18;
+}
+
 // @custom:artifact contracts/storage/Price.sol:Price
 library Price {
     struct Data {
