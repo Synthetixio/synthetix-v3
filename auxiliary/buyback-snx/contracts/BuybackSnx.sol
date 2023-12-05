@@ -15,6 +15,8 @@ contract BuybackSnx is IFeeCollector {
     using SafeCastU256 for uint256;
     using DecimalMath for uint256;
 
+    address public immutable dead = 0x000000000000000000000000000000000000dEaD;
+
     event BuybackProcessed(address indexed buyer, uint256 snx, uint256 usd);
 
     constructor(
@@ -40,7 +42,7 @@ contract BuybackSnx is IFeeCollector {
         NodeOutput.Data memory output = INodeModule(b.oracleManager).process(b.snxNodeId);
         uint256 usdAmount = (uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + b.premium);
 
-        require(IERC20(b.snxToken).transferFrom(ERC2771Context._msgSender(), address(this), snxAmount), "No allowance");
+        require(IERC20(b.snxToken).transferFrom(ERC2771Context._msgSender(), dead, snxAmount), "No allowance");
         require(IERC20(b.usdToken).transfer(ERC2771Context._msgSender(), usdAmount), "Not enough usd");
 
         emit BuybackProcessed(ERC2771Context._msgSender(), snxAmount, usdAmount);

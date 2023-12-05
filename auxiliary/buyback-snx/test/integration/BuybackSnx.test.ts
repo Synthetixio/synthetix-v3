@@ -18,7 +18,7 @@ describe('BuybackSnx', function () {
   let SnxToken: ethers.Contract;
   let UsdToken: ethers.Contract;
 
-  let snxNodeId: string;
+  let priceFeedId: string;
 
   const snxAmount = bn(100);
   const usdAmount = bn(5000);
@@ -42,25 +42,26 @@ describe('BuybackSnx', function () {
     PythERC7412Wrapper = getContract('pyth_erc7412_wrapper.PythERC7412Wrapper');
     BuybackSnx = getContract('buyback_snx');
 
-    snxNodeId = await BuybackSnx.getSnxNodeId();
-    console.log('snxNodeId', snxNodeId.toString());
+    priceFeedId = '0x39d020f60982ed892abbcd4a06a276a9f9b7bfbce003204c110b6e488f502da3';
+    console.log('priceFeedId', priceFeedId.toString());
 
     const resp = await Pyth.createPriceFeedUpdateData(
-      snxNodeId,
+      priceFeedId,
       price,
       1,
       -decimals,
       emaPrice,
       1,
-      timestamp,
+      timestamp - 1,
       0
     );
     console.log('Pyth.createPriceFeedUpdateData response', resp);
+    console.log('timestamp -1 ', timestamp - 1);
 
     const fee = await Pyth['getUpdateFee(bytes[])']([resp]);
     await Pyth.updatePriceFeeds([resp], { value: fee });
 
-    const priceUnsafe = await Pyth.getPriceUnsafe(snxNodeId);
+    const priceUnsafe = await Pyth.getPriceUnsafe(priceFeedId);
     console.log('Pyth.getPriceUnsafe(snxNodeId)', priceUnsafe.toString());
   });
 
@@ -108,7 +109,7 @@ describe('BuybackSnx', function () {
     });
 
     it('buys snx for usd', async () => {
-      const snxPrice = await PythERC7412Wrapper.getLatestPrice(snxNodeId, 60);
+      const snxPrice = await PythERC7412Wrapper.getLatestPrice(priceFeedId, 60);
       console.log('PythERC7412Wrapper.getLatestPrice(snxNodeId, 60)', snxPrice.toString());
 
       const premium = await BuybackSnx.getPremium();
@@ -143,8 +144,8 @@ describe('BuybackSnx', function () {
       // verify balances are correct
       assertBn.equal(await SnxToken.balanceOf(userAddress), userSnxBalanceBefore.sub(snxAmount));
       assertBn.equal(
-        await SnxToken.balanceOf(BuybackSnx.address),
-        buybackSnxBalanceBefore.add(snxAmount)
+        await SnxToken.balanceOf('0x000000000000000000000000000000000000dEaD'),
+        snxAmount
       );
       assertBn.equal(
         await UsdToken.balanceOf(userAddress),
