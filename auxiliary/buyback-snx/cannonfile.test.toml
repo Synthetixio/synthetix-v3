@@ -34,7 +34,7 @@ source = "oracle-manager:3.3.3-dev.249e185f"
 source = "pyth"
 
 [provision.pyth_erc7412_wrapper]
-source = "pyth-erc7412-wrapper:3.3.4"
+source = "pyth-erc7412-wrapper:3.3.3-dev.249e185f"
 options.pythAddress = "<%= imports.pyth.contracts.Pyth.address %>"
 
 # This registers a staleness node that looks to Pyth for a fresh enough price, or otherwise reverts with an ERC-7412 compatible error
