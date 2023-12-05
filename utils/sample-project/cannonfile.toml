@@ -52,3 +52,4 @@ args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
+factory.Proxy.highlight = true

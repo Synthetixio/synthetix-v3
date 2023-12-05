@@ -124,6 +124,7 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
+factory.CoreProxy.highlight = true
 
 # Account
 [router.AccountRouter]
@@ -149,6 +150,7 @@ depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
+factory.AccountProxy.highlight = true
 
 [invoke.init_usd]
 target = ["CoreProxy"]
@@ -165,6 +167,7 @@ depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
+factory.USDProxy.highlight = true
 
 [invoke.set_oracle_manager]
 target = ["CoreProxy"]

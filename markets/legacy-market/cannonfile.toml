@@ -55,6 +55,7 @@ args = ["<%= contracts.Market.address %>"]
 factory.Proxy.abiOf = ["Market"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
+factory.Proxy.highlight = true
 
 [invoke.setSystemAddresses]
 target = ["Proxy"]

@@ -98,6 +98,7 @@ args = ["<%= contracts.PerpsMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
+factory.PerpsMarketProxy.highlight = true
 
 [invoke.init_account]
 target = ["PerpsMarketProxy"]
@@ -114,6 +115,7 @@ depends = ["invoke.upgrade_proxy"]
 factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
 factory.PerpsAccountProxy.event = "AssociatedSystemSet"
 factory.PerpsAccountProxy.arg = 2
+factory.PerpsAccountProxy.highlight = true
 
 # add pool owner to feature flag allow list
 [invoke.addPerpsMarketToFeatureFlag]
