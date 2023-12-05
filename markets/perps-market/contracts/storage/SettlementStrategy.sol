@@ -16,7 +16,7 @@ library SettlementStrategy {
          */
         Type strategyType;
         /**
-         * @dev the delay added to commitment time for determining valid price window.
+         * @dev the delay added to commitment time after which committed orders can be settled.
          * @dev this ensures settlements aren't on the same block as commitment.
          */
         uint256 settlementDelay;
@@ -25,22 +25,14 @@ library SettlementStrategy {
          */
         uint256 settlementWindowDuration;
         /**
-         * @dev the duration of the price window, after which price is not valid.
-         */
-        uint256 priceWindowDuration;
-        /**
-         * @dev the address of the contract that will verify the result data blob.
-         * @dev used for pyth and chainlink offchain strategies.
+         * @dev the address of the contract that returns the benchmark price at a given timestamp
+         * @dev generally this contract orchestrates the erc7412 logic to force push an offchain price for a given timestamp.
          */
         address priceVerificationContract; // For Chainlink and Pyth settlement strategies
         /**
          * @dev configurable feed id for chainlink and pyth
          */
         bytes32 feedId;
-        /**
-         * @dev gateway url for pyth/chainlink to retrieve offchain prices
-         */
-        string url;
         /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */
@@ -49,6 +41,11 @@ library SettlementStrategy {
          * @dev whether the strategy is disabled or not.
          */
         bool disabled;
+        /**
+         * @dev the delay added to commitment time for determining valid price. Defines the expected price timestamp.
+         * @dev this ensures price aren't on the same block as commitment in case of blockchain drift in timestamp or bad actors timestamp manipulation.
+         */
+        uint256 commitmentPriceDelay;
     }
 
     enum Type {

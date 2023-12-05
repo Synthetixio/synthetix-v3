@@ -7,27 +7,43 @@ import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('GlobalPerpsMarket', () => {
-  const { systems, perpsMarkets, signers, trader1, superMarketId, owner } = bootstrapMarkets({
-    synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
-    perpsMarkets: [
-      { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
-      { requestedMarketId: 50, name: 'Btc', token: 'snxBTC', price: bn(10000) },
-    ],
-    traderAccountIds: [],
-  });
+  const { systems, perpsMarkets, synthMarkets, signers, trader1, superMarketId, owner } =
+    bootstrapMarkets({
+      synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
+      perpsMarkets: [
+        { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
+        { requestedMarketId: 50, name: 'Btc', token: 'snxBTC', price: bn(10000) },
+      ],
+      traderAccountIds: [],
+    });
 
   before(
     'set maxCollateralAmounts, synthDeductionPriority, minLiquidationRewardUsd, maxLiquidationRewardUsd',
     async () => {
-      await systems().PerpsMarket.setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000));
+      await systems().PerpsMarket.setCollateralConfiguration(
+        perpsMarkets()[0].marketId(),
+        bn(10000)
+      );
       await systems().PerpsMarket.setSynthDeductionPriority([1, 2]);
-      await systems().PerpsMarket.setLiquidationRewardGuards(100, 500);
+      await systems().PerpsMarket.setKeeperRewardGuards(100, bn(0.001), 500, bn(0.005));
     }
   );
 
   it('returns the supermarket name', async () => {
     assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
     assert.equal(await systems().PerpsMarket.name(0), '');
+  });
+
+  it('returns the list of supported collaterals', async () => {
+    const supportedCollaterals = await systems().PerpsMarket.getSupportedCollaterals();
+    // Note bootstrapMarkets will add snxUSD as the first collateral and then all the synthMarkets
+    assert.equal(supportedCollaterals.length, 3);
+    // index 0 is the snxUSD
+    assertBn.equal(supportedCollaterals[0], bn(0));
+    // index 1 is the synthMarket for snxETH
+    assertBn.equal(supportedCollaterals[1], synthMarkets()[0].marketId());
+    // index 2 is perps market for snxETH (added in the before)
+    assertBn.equal(supportedCollaterals[2], perpsMarkets()[0].marketId());
   });
 
   it('can call initialize again but will not change the config', async () => {
@@ -46,11 +62,11 @@ describe('GlobalPerpsMarket', () => {
     assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
   });
 
-  it('returns maxCollateralAmounts for synth market id', async () => {
-    assertBn.equal(
-      await systems().PerpsMarket.getMaxCollateralAmount(perpsMarkets()[0].marketId()),
-      bn(10000)
+  it('returns maxCollateralAmount and strictStalenessTolerance for synth market id', async () => {
+    const maxCollateralAmount = await systems().PerpsMarket.getCollateralConfiguration(
+      perpsMarkets()[0].marketId()
     );
+    assertBn.equal(maxCollateralAmount, bn(10000));
   });
 
   it('returns the correct synthDeductionPriority ', async () => {
@@ -60,21 +76,25 @@ describe('GlobalPerpsMarket', () => {
     });
   });
 
-  it('returns the correct minLiquidationRewardUsd ', async () => {
-    const liquidationGuards = await systems().PerpsMarket.getLiquidationRewardGuards();
-    assertBn.equal(liquidationGuards.minLiquidationRewardUsd, 100);
-    assertBn.equal(liquidationGuards.maxLiquidationRewardUsd, 500);
+  it('returns the correct minKeeperRewardUsd ', async () => {
+    const liquidationGuards = await systems().PerpsMarket.getKeeperRewardGuards();
+    assertBn.equal(liquidationGuards.minKeeperRewardUsd, 100);
+    assertBn.equal(liquidationGuards.minKeeperProfitRatioD18, bn(0.001));
+    assertBn.equal(liquidationGuards.maxKeeperRewardUsd, 500);
+    assertBn.equal(liquidationGuards.maxKeeperScalingRatioD18, bn(0.005));
   });
 
   it('transaction should fail if setter function are called by external user', async () => {
     await assertRevert(
-      systems().PerpsMarket.connect(trader1()).setLiquidationRewardGuards(100, 500),
+      systems()
+        .PerpsMarket.connect(trader1())
+        .setKeeperRewardGuards(100, bn(0.001), 500, bn(0.005)),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(trader1())
-        .setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000)),
+        .setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(10000)),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
@@ -85,8 +105,8 @@ describe('GlobalPerpsMarket', () => {
 
   it('transaction should fail if min and max are inverted', async () => {
     await assertRevert(
-      systems().PerpsMarket.connect(owner()).setLiquidationRewardGuards(500, 100),
-      'InvalidParameter("min/maxLiquidationRewardUSD", "min > max")'
+      systems().PerpsMarket.connect(owner()).setKeeperRewardGuards(500, bn(0.001), 100, bn(0.005)),
+      'InvalidParameter("min/maxKeeperRewardUSD", "min > max")'
     );
   });
 
@@ -146,6 +166,19 @@ describe('GlobalPerpsMarket', () => {
       // check defaults set in bootstrap
       assertBn.equal(maxPositionsPerAccount, 100_000);
       assertBn.equal(maxCollateralsPerAccount, 100_000);
+    });
+  });
+
+  describe('remove a supported collaterals', () => {
+    before('remove a supported collateral by setting its max to zero', async () => {
+      await systems().PerpsMarket.setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(0));
+    });
+
+    it('the removed market was gone from supportedCollaterals', async () => {
+      const supportedCollaterals = await systems().PerpsMarket.getSupportedCollaterals();
+      assert.equal(supportedCollaterals.length, 2);
+      assertBn.equal(supportedCollaterals[0], bn(0));
+      assertBn.equal(supportedCollaterals[1], synthMarkets()[0].marketId());
     });
   });
 });

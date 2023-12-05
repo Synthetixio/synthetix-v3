@@ -101,14 +101,13 @@ describe('AsyncOrdersModule.e2e.test', function () {
         });
       }
 
-      const fee = await verifier.getUpdateFee(1);
       const parsedURL = url.replace('{data}', data);
 
       //There is a delay on pyth service
       await new Promise((resolve) => setTimeout(resolve, 30000));
 
       const response = await fetch(parsedURL).then((res) => res.json());
-
+      const fee = await verifier.getUpdateFee([response]);
       await systems()
         .SpotMarket.connect(keeper)
         .settlePythOrder(response.data as BytesLike, extraData, {

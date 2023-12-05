@@ -13,6 +13,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsPrice for PerpsPrice.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
@@ -39,17 +40,43 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
+        strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
+        config.settlementStrategies[strategyId] = strategy;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
         bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
-        PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[strategyId]
-            .disabled = !enabled;
-        emit SettlementStrategyEnabled(marketId, strategyId, enabled);
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
+        strategy.disabled = !enabled;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
     }
 
     /**
@@ -70,12 +97,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external override {
         OwnableStorage.onlyOwner();
 
-        PerpsPrice.load(perpsMarketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId, strictStalenessTolerance);
 
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
+        emit MarketPriceDataUpdated(perpsMarketId, feedId, strictStalenessTolerance);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance) {
+        PerpsPrice.Data storage priceData = PerpsPrice.load(perpsMarketId);
+        feedId = priceData.feedId;
+        strictStalenessTolerance = priceData.strictStalenessTolerance;
     }
 
     /**
@@ -140,7 +182,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 initialMarginRatioD18,
         uint256 minimumInitialMarginRatioD18,
         uint256 maintenanceMarginScalarD18,
-        uint256 liquidationRewardRatioD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     ) external override {
         OwnableStorage.onlyOwner();
@@ -149,7 +191,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.initialMarginRatioD18 = initialMarginRatioD18;
         config.maintenanceMarginScalarD18 = maintenanceMarginScalarD18;
         config.minimumInitialMarginRatioD18 = minimumInitialMarginRatioD18;
-        config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
+        config.flagRewardRatioD18 = flagRewardRatioD18;
         config.minimumPositionMargin = minimumPositionMargin;
 
         emit LiquidationParametersSet(
@@ -157,7 +199,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             initialMarginRatioD18,
             maintenanceMarginScalarD18,
             minimumInitialMarginRatioD18,
-            liquidationRewardRatioD18,
+            flagRewardRatioD18,
             minimumPositionMargin
         );
     }
@@ -220,7 +262,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             uint256 initialMarginRatioD18,
             uint256 minimumInitialMarginRatioD18,
             uint256 maintenanceMarginScalarD18,
-            uint256 liquidationRewardRatioD18,
+            uint256 flagRewardRatioD18,
             uint256 minimumPositionMargin
         )
     {
@@ -229,7 +271,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         initialMarginRatioD18 = config.initialMarginRatioD18;
         minimumInitialMarginRatioD18 = config.minimumInitialMarginRatioD18;
         maintenanceMarginScalarD18 = config.maintenanceMarginScalarD18;
-        liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
+        flagRewardRatioD18 = config.flagRewardRatioD18;
         minimumPositionMargin = config.minimumPositionMargin;
     }
 

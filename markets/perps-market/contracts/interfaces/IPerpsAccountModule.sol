@@ -44,6 +44,18 @@ interface IPerpsAccountModule {
     ) external view returns (uint256);
 
     /**
+     * @notice Gets the account's collaterals ids
+     * @param accountId Id of the account.
+     */
+    function getAccountCollateralIds(uint128 accountId) external view returns (uint256[] memory);
+
+    /**
+     * @notice Gets all markets that a given account id has a position in
+     * @param accountId Id of the account.
+     */
+    function getAccountOpenPositions(uint128 accountId) external view returns (uint256[] memory);
+
+    /**
      * @notice Gets the account's total collateral value.
      * @param accountId Id of the account.
      * @return collateralValue total collateral value of the account. USD denominated.
@@ -92,7 +104,6 @@ interface IPerpsAccountModule {
      * @param accountId Id of the account.
      * @return requiredInitialMargin initial margin req (used when withdrawing collateral).
      * @return requiredMaintenanceMargin maintenance margin req (used to determine liquidation threshold).
-     * @return totalAccumulatedLiquidationRewards sum of all liquidation rewards of if all account open positions were to be liquidated fully.
      * @return maxLiquidationReward max liquidation reward the keeper would receive if account was fully liquidated. Note here that the accumulated rewards are checked against the global max/min configured liquidation rewards.
      */
     function getRequiredMargins(
@@ -103,7 +114,6 @@ interface IPerpsAccountModule {
         returns (
             uint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
-            uint256 totalAccumulatedLiquidationRewards,
             uint256 maxLiquidationReward
         );
 }

@@ -39,15 +39,8 @@ interface IAsyncOrderCancelModule {
     }
 
     /**
-     * @notice Cancels an offchain order when price exceeds the acceptable price in the settlement window. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
+     * @notice Cancels an order when price exceeds the acceptable price. Uses the onchain benchmark price at commitment time.
      * @param accountId Id of the account used for the trade.
      */
-    function cancelOrder(uint128 accountId) external view;
-
-    /**
-     * @notice Cancels an offchain order when price exceeds the acceptable price in the settlement window using the offchain retrieved data from pyth.
-     * @param result the blob of data retrieved offchain.
-     * @param extraData Extra data from OffchainLookupData.
-     */
-    function cancelPythOrder(bytes calldata result, bytes calldata extraData) external payable;
+    function cancelOrder(uint128 accountId) external;
 }

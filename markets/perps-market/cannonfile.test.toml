@@ -28,9 +28,6 @@ artifact = "PerpsMarketFactoryModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AsyncOrderSettlementEIP3668Module]
-artifact = "AsyncOrderSettlementEIP3668Module"
-
 [contract.AsyncOrderSettlementPythModule]
 artifact = "AsyncOrderSettlementPythModule"
 
@@ -74,7 +71,6 @@ contracts = [
     "PerpsAccountModule",
     "PerpsMarketModule",
     "AsyncOrderModule",
-    "AsyncOrderSettlementEIP3668Module",
     "AsyncOrderSettlementPythModule",
     "AsyncOrderCancelModule",
     "FeatureFlagModule",
@@ -124,6 +120,12 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 
+[invoke.addPerpsSystemToFeatureFlag]
+target = ["PerpsMarketProxy"]
+func = "setFeatureFlagAllowAll"
+from = "<%= settings.owner %>"
+args = ["<%= formatBytes32String('perpsSystem') %>", 1]
+
 # add snxUSD as the only priority to deduct from on a given account, as default
 [invoke.setSynthDeductionPriority]
 target = ["PerpsMarketProxy"]
@@ -131,9 +133,8 @@ func = "setSynthDeductionPriority"
 from = "<%= settings.owner %>"
 args = [[0]]
 
-[contract.MockPyth]
-artifact = "contracts/mocks/MockPyth.sol:MockPyth"
-args = [100, 1]
+[contract.MockPythERC7412Wrapper]
+artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"

@@ -3,7 +3,7 @@ import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
-describe('Liquidation - max pd', async () => {
+describe('Liquidation - max pd', () => {
   const { systems, provider, owner, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [

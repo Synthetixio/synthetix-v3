@@ -2,9 +2,10 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Market - size test', () => {
-  const { systems, perpsMarkets, provider, trader1, trader2, keeper, restore } = bootstrapMarkets({
+  const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
       {
@@ -17,6 +18,8 @@ describe('Market - size test', () => {
     ],
     traderAccountIds: [2, 3],
   });
+
+  const restore = snapshotCheckpoint(provider);
 
   let ethMarket: PerpsMarket;
   before('identify actors', async () => {

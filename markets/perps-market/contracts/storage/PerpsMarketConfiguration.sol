@@ -14,7 +14,7 @@ library PerpsMarketConfiguration {
 
     error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int newSideSize);
 
-    error InvalidSettlementStrategy(uint128 settlementStrategyId);
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
     struct Data {
         OrderFee.Data orderFees;
@@ -47,9 +47,9 @@ library PerpsMarketConfiguration {
          */
         uint256 maxSecondsInLiquidationWindow;
         /**
-         * @dev This value is multiplied by the notional value of a position to determine liquidation reward
+         * @dev This value is multiplied by the notional value of a position to determine flag reward
          */
-        uint256 liquidationRewardRatioD18;
+        uint256 flagRewardRatioD18;
         /**
          * @dev minimum position value in USD, this is a constant value added to position margin requirements (initial/maintenance)
          */
@@ -86,11 +86,18 @@ library PerpsMarketConfiguration {
             ) * self.maxSecondsInLiquidationWindow;
     }
 
-    function calculateLiquidationReward(
+    function numberOfLiquidationWindows(
+        Data storage self,
+        uint positionSize
+    ) internal view returns (uint256) {
+        return MathUtil.ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
+    }
+
+    function calculateFlagReward(
         Data storage self,
         uint256 notionalValue
     ) internal view returns (uint256) {
-        return notionalValue.mulDecimal(self.liquidationRewardRatioD18);
+        return notionalValue.mulDecimal(self.flagRewardRatioD18);
     }
 
     function calculateRequiredMargins(
@@ -104,12 +111,11 @@ library PerpsMarketConfiguration {
             uint256 initialMarginRatio,
             uint256 maintenanceMarginRatio,
             uint256 initialMargin,
-            uint256 maintenanceMargin,
-            uint256 liquidationMargin
+            uint256 maintenanceMargin
         )
     {
         if (size == 0) {
-            return (0, 0, 0, 0, 0);
+            return (0, 0, 0, 0);
         }
         uint256 sizeAbs = MathUtil.abs(size.to256());
         uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
@@ -125,8 +131,6 @@ library PerpsMarketConfiguration {
         maintenanceMargin =
             notional.mulDecimal(maintenanceMarginRatio) +
             self.minimumPositionMargin;
-
-        liquidationMargin = calculateLiquidationReward(self, notional);
     }
 
     /**
@@ -134,15 +138,22 @@ library PerpsMarketConfiguration {
      */
     function loadValidSettlementStrategy(
         uint128 marketId,
-        uint128 settlementStrategyId
+        uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
         Data storage self = load(marketId);
-        if (settlementStrategyId >= self.settlementStrategies.length) {
-            revert InvalidSettlementStrategy(settlementStrategyId);
-        }
+        validateStrategyExists(self, settlementStrategyId);
 
         strategy = self.settlementStrategies[settlementStrategyId];
         if (strategy.disabled) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+    }
+
+    function validateStrategyExists(
+        Data storage config,
+        uint256 settlementStrategyId
+    ) internal view {
+        if (settlementStrategyId >= config.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
     }

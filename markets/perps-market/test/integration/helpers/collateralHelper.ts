@@ -63,7 +63,7 @@ export const depositCollateral: (
       // collateral find out how much synth we'll get
       const { synthAmount, fees } = await systems()
         .SpotMarket.connect(trader())
-        .quoteBuyExactIn(marketId, collateral.snxUSDAmount());
+        .quoteBuyExactIn(marketId, collateral.snxUSDAmount(), 0);
 
       totalFees = fees.fixedFees.add(fees.utilizationFees).add(fees.skewFees).add(fees.wrapperFees);
 

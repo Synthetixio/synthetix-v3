@@ -33,6 +33,7 @@ describe('AsyncOrderModule', () => {
         url: '',
         settlementReward: bn(5),
         disabled: false,
+        priceDeviationTolerance: bn(0.01),
         minimumUsdExchangeAmount: bn(0.000001),
         maxRoundingLoss: bn(0.000001),
       });

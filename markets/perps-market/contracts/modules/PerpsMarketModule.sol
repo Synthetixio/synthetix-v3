@@ -13,7 +13,6 @@ import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
  */
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
-    using AsyncOrder for AsyncOrder.Data;
 
     /**
      * @inheritdoc IPerpsMarketModule
@@ -64,7 +63,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
      * @inheritdoc IPerpsMarketModule
      */
     function indexPrice(uint128 marketId) external view override returns (uint) {
-        return PerpsPrice.getCurrentPrice(marketId);
+        return PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**

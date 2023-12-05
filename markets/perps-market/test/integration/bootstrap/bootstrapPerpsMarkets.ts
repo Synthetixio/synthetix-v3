@@ -1,14 +1,13 @@
 import { createStakedPool } from '@synthetixio/main/test/common';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
-import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
+import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
-  aggregator: () => AggregatorV3Mock;
+  aggregator: () => MockPythExternalNode;
   strategyId: () => ethers.BigNumber;
 };
 
@@ -42,9 +41,9 @@ export type PerpsMarketData = Array<{
   lockedOiRatioD18?: ethers.BigNumber;
   settlementStrategy?: Partial<{
     strategyType: ethers.BigNumber;
+    commitmentPriceDelay: ethers.BigNumber;
     settlementDelay: ethers.BigNumber;
     settlementWindowDuration: ethers.BigNumber;
-    priceWindowDuration: ethers.BigNumber;
     feedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
@@ -59,13 +58,15 @@ type IncomingChainState =
 export const DEFAULT_SETTLEMENT_STRATEGY = {
   strategyType: 0, // OFFCHAIN
   settlementDelay: 5,
+  commitmentPriceDelay: 2,
   settlementWindowDuration: 120,
-  priceWindowDuration: 110,
   settlementReward: bn(5),
   disabled: false,
   url: 'https://fakeapi.pyth.synthetix.io/',
   feedId: ethers.utils.formatBytes32String('ETH/USD'),
 };
+
+export const STRICT_PRICE_TOLERANCE = ethers.BigNumber.from(60);
 
 export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
@@ -111,16 +112,20 @@ export const bootstrapPerpsMarkets = (
       lockedOiRatioD18,
       settlementStrategy,
     }) => {
-      let oracleNodeId: string, aggregator: AggregatorV3Mock;
+      let oracleNodeId: string, aggregator: MockPythExternalNode;
       before('create perps price nodes', async () => {
-        const results = await createOracleNode(r.owner(), price, contracts.OracleManager);
+        const results = await createPythNode(r.owner(), price, contracts.OracleManager);
         oracleNodeId = results.oracleNodeId;
         aggregator = results.aggregator;
       });
 
       before(`create perps market ${name}`, async () => {
         await contracts.PerpsMarket.createMarket(marketId, name, token);
-        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
+        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(
+          marketId,
+          oracleNodeId,
+          STRICT_PRICE_TOLERANCE
+        );
       });
 
       before('set funding parameters', async () => {
@@ -184,7 +189,7 @@ export const bootstrapPerpsMarkets = (
         const strategy = {
           ...DEFAULT_SETTLEMENT_STRATEGY,
           ...(settlementStrategy ?? {}),
-          priceVerificationContract: contracts.MockPyth.address,
+          priceVerificationContract: contracts.MockPythERC7412Wrapper.address,
         };
         // first call is static to get strategyId
         strategyId = await contracts.PerpsMarket.connect(
@@ -202,11 +207,8 @@ export const bootstrapPerpsMarkets = (
     }
   );
 
-  const restore = snapshotCheckpoint(r.provider);
-
   return {
     ...r,
-    restore,
     superMarketId: () => superMarketId,
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,
