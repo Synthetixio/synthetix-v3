@@ -15,7 +15,7 @@
     "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "publish-contracts": "cannon publish spot-market-oracle:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "publish-contracts": "cannon publish buyback-snx:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
     "postpack": "yarn build && yarn publish-contracts",
     "docgen": "hardhat docgen"
   },
@@ -23,11 +23,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-contracts": "workspace:*",
-    "@synthetixio/core-modules": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/common-config": "3.3.5",
+    "@synthetixio/core-contracts": "3.3.5",
+    "@synthetixio/core-modules": "3.3.5",
+    "@synthetixio/core-utils": "3.3.5",
+    "@synthetixio/docgen": "1.0.0",
     "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
@@ -36,5 +36,5 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "a804bef9d5b05f80df1275f676ceacd682aab721"
 }
