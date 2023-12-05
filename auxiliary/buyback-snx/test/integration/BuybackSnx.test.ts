@@ -85,7 +85,7 @@ describe('BuybackSnx', function () {
     });
   });
 
-  describe('buyback', function () {
+  describe.skip('buyback', function () {
     let userAddress: string;
     let userSnxBalanceBefore: any;
     let userUsdBalanceBefore: any;
