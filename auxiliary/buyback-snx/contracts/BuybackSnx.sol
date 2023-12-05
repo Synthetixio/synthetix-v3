@@ -42,21 +42,21 @@ contract BuybackSnx is IFeeCollector {
         NodeOutput.Data memory output = INodeModule(b.oracleManager).process(b.snxNodeId);
         uint256 usdAmount = (uint256(output.price).mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + b.premium);
 
-        require(IERC20(b.snxToken).transferFrom(ERC2771Context._msgSender(), dead, snxAmount), "No allowance");
-        require(IERC20(b.usdToken).transfer(ERC2771Context._msgSender(), usdAmount), "Not enough usd");
+        IERC20(b.snxToken).transferFrom(ERC2771Context._msgSender(), dead, snxAmount);
+        IERC20(b.usdToken).transfer(ERC2771Context._msgSender(), usdAmount);
 
         emit BuybackProcessed(ERC2771Context._msgSender(), snxAmount, usdAmount);
     }
 
-    function getSnxFeeShare() public view returns (uint256) {
+    function getSnxFeeShare() external view returns (uint256) {
         return Buyback.load().snxFeeShare;
     }
 
-    function getSnxNodeId() public view returns (bytes32) {
+    function getSnxNodeId() external view returns (bytes32) {
         return Buyback.load().snxNodeId;
     }
 
-    function getPremium() public view returns (uint256) {
+    function getPremium() external view returns (uint256) {
         return Buyback.load().premium;
     }
 
@@ -66,7 +66,7 @@ contract BuybackSnx is IFeeCollector {
         marketId;
         sender;
 
-        return (feeAmount * Buyback.load().snxFeeShare) / 1e18;
+        return (feeAmount.mulDecimal(Buyback.load().snxFeeShare));
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {

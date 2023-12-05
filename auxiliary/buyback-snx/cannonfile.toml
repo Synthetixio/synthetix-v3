@@ -24,7 +24,7 @@ defaultValue = "0x39d020f60982ed892abbcd4a06a276a9f9b7bfbce003204c110b6e488f502d
 source = "oracle-manager:3.3.3-dev.249e185f"
 
 [import.pyth]
-source="pyth"
+source = "pyth"
 
 [provision.pyth_erc7412_wrapper]
 source = "pyth-erc7412-wrapper:3.3.3-dev.249e185f"
@@ -69,5 +69,12 @@ extra.snx_oracle_id.arg = 0
 
 [contract.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= settings.snx_token %>", "<%= settings.usd_token %>"]
+args = [
+    "<%= settings.premium %>",
+    "<%= settings.snx_fee_share %>",
+    "<%= imports.oracle_manager.contracts.Proxy.address %>",
+    "<%= extras.snx_oracle_id %>",
+    "<%= settings.snx_token %>",
+    "<%= settings.usd_token %>"
+]
 create2 = true

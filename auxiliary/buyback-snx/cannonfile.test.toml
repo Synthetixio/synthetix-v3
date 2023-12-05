@@ -8,15 +8,15 @@ defaultValue = "10000000000000000"
 defaultValue = "500000000000000000"
 
 [provision.snx]
-source="mintable-token"
-targetPreset="permissionless-mint"
+source = "mintable-token"
+targetPreset = "permissionless-mint"
 options.symbol = "SNX"
 options.name = "Mintable SNX"
 options.salt = "0xdeadbeef"
 
 [provision.usd]
-source="mintable-token"
-targetPreset="permissionless-mint"
+source = "mintable-token"
+targetPreset = "permissionless-mint"
 options.symbol = "USD"
 options.name = "Mintable USD"
 options.salt = "testing"
@@ -31,10 +31,10 @@ defaultValue = "0x39d020f60982ed892abbcd4a06a276a9f9b7bfbce003204c110b6e488f502d
 source = "oracle-manager:3.3.3-dev.249e185f"
 
 [import.pyth]
-source="pyth"
+source = "pyth"
 
 [provision.pyth_erc7412_wrapper]
-source = "pyth-erc7412-wrapper:3.3.3-dev.249e185f"
+source = "pyth-erc7412-wrapper:3.3.4"
 options.pythAddress = "<%= imports.pyth.contracts.Pyth.address %>"
 
 # This registers a staleness node that looks to Pyth for a fresh enough price, or otherwise reverts with an ERC-7412 compatible error
@@ -76,5 +76,12 @@ extra.snx_oracle_id.arg = 0
 
 [contract.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
-args = ["<%= settings.premium %>", "<%= settings.snx_fee_share %>", "<%= imports.oracle_manager.contracts.Proxy.address %>", "<%= extras.snx_oracle_id %>", "<%= imports.snx.contracts.MintableToken.address %>", "<%= imports.usd.contracts.MintableToken.address %>"]
+args = [
+    "<%= settings.premium %>",
+    "<%= settings.snx_fee_share %>",
+    "<%= imports.oracle_manager.contracts.Proxy.address %>",
+    "<%= extras.snx_oracle_id %>",
+    "<%= imports.snx.contracts.MintableToken.address %>",
+    "<%= imports.usd.contracts.MintableToken.address %>"
+]
 create2 = true
