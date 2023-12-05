@@ -2859,6 +2859,15 @@ __metadata:
 "@synthetixio/buyback-snx@workspace:auxiliary/buyback-snx":
   version: 0.0.0-use.local
   resolution: "@synthetixio/buyback-snx@workspace:auxiliary/buyback-snx"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/router": "npm:3.3.0"
+    "@synthetixio/wei": "npm:2.74.4"
+    ethers: "npm:5.7.2"
+    hardhat: "npm:2.19.0"
+    solidity-docgen: "npm:0.6.0-beta.36"
   languageName: unknown
   linkType: soft
 
@@ -3103,7 +3112,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@npm:^3.3.0":
+"@synthetixio/router@npm:3.3.0, @synthetixio/router@npm:^3.3.0":
   version: 3.3.0
   resolution: "@synthetixio/router@npm:3.3.0"
   dependencies:
@@ -3173,7 +3182,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/wei@npm:^2.74.1, @synthetixio/wei@npm:^2.74.4":
+"@synthetixio/wei@npm:2.74.4, @synthetixio/wei@npm:^2.74.1, @synthetixio/wei@npm:^2.74.4":
   version: 2.74.4
   resolution: "@synthetixio/wei@npm:2.74.4"
   dependencies:
@@ -7207,24 +7216,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^4.0.40":
-  version: 4.0.49
-  resolution: "ethers@npm:4.0.49"
-  dependencies:
-    aes-js: "npm:3.0.0"
-    bn.js: "npm:^4.11.9"
-    elliptic: "npm:6.5.4"
-    hash.js: "npm:1.1.3"
-    js-sha3: "npm:0.5.7"
-    scrypt-js: "npm:2.0.4"
-    setimmediate: "npm:1.0.4"
-    uuid: "npm:2.0.1"
-    xmlhttprequest: "npm:1.8.0"
-  checksum: a4cec0254f940a0fb118317d23676faa46eb5540fc0a3b9177b8aef71318f509ed19b8264f102b1a2a32d0256274ecc526fd926bd22a4a4ac25cd8e0e6560f12
-  languageName: node
-  linkType: hard
-
-"ethers@npm:^5.7.1, ethers@npm:^5.7.2":
+"ethers@npm:5.7.2, ethers@npm:^5.7.1, ethers@npm:^5.7.2":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -7259,6 +7251,23 @@ __metadata:
     "@ethersproject/web": "npm:5.7.1"
     "@ethersproject/wordlists": "npm:5.7.0"
   checksum: 227dfa88a2547c799c0c3c9e92e5e246dd11342f4b495198b3ae7c942d5bf81d3970fcef3fbac974a9125d62939b2d94f3c0458464e702209b839a8e6e615028
+  languageName: node
+  linkType: hard
+
+"ethers@npm:^4.0.40":
+  version: 4.0.49
+  resolution: "ethers@npm:4.0.49"
+  dependencies:
+    aes-js: "npm:3.0.0"
+    bn.js: "npm:^4.11.9"
+    elliptic: "npm:6.5.4"
+    hash.js: "npm:1.1.3"
+    js-sha3: "npm:0.5.7"
+    scrypt-js: "npm:2.0.4"
+    setimmediate: "npm:1.0.4"
+    uuid: "npm:2.0.1"
+    xmlhttprequest: "npm:1.8.0"
+  checksum: a4cec0254f940a0fb118317d23676faa46eb5540fc0a3b9177b8aef71318f509ed19b8264f102b1a2a32d0256274ecc526fd926bd22a4a4ac25cd8e0e6560f12
   languageName: node
   linkType: hard
 
@@ -8656,7 +8665,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat@npm:^2.19.0":
+"hardhat@npm:2.19.0, hardhat@npm:^2.19.0":
   version: 2.19.0
   resolution: "hardhat@npm:2.19.0"
   dependencies:
@@ -14918,7 +14927,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solidity-docgen@npm:^0.6.0-beta.36":
+"solidity-docgen@npm:0.6.0-beta.36, solidity-docgen@npm:^0.6.0-beta.36":
   version: 0.6.0-beta.36
   resolution: "solidity-docgen@npm:0.6.0-beta.36"
   dependencies:
