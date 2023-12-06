@@ -380,7 +380,7 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_eth_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_eth_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false },
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_eth_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false, commitmentPriceDelay = "0" },
 ]
 extra.synth_eth_settlement_strategy.event = "SettlementStrategyAdded"
 extra.synth_eth_settlement_strategy.arg = 1
@@ -543,10 +543,8 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_btc_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_btc_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false },
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_btc_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false, commitmentPriceDelay = "0" },
 ]
-extra.btc_pyth_settlement_strategy.event = "SettlementStrategyAdded"
-extra.btc_pyth_settlement_strategy.arg = 2
 
 [invoke.configure_funding_parameters_for_perps_btc]
 target = ["perps_factory.PerpsMarketProxy"]
