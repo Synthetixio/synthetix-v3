@@ -11,7 +11,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # PK 0xac0974bec39a1
 description = "Hardhat/Anvil first test account"
 
 [setting.version]
-defaultValue = "3.3.3-dev.249e185f"
+defaultValue = "3.3.6"
 
 #
 #
