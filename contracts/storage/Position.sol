@@ -130,7 +130,7 @@ library Position {
         PerpMarket.Data storage market,
         Position.Data storage currentPosition,
         Position.Data memory newPosition,
-        uint256 marginUsd,
+        uint128 accountId,
         uint256 orderFee,
         uint256 keeperFee,
         PerpMarketConfiguration.Data storage marketConfig
@@ -138,6 +138,16 @@ library Position {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, newPosition.entryPrice, marketConfig);
+
+        // Get the margin with the new position's entry price (fillPrice) and haircut applied.
+        // This represent the new margin after the order is settled (-fees).
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            newPosition.entryPrice,
+            true /* useHaircutCollateralPrice */
+        );
+        // We want to deduct the fees.
         uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
@@ -147,8 +157,15 @@ library Position {
         }
 
         uint256 onchainPrice = market.getOraclePrice();
-        int256 pnl = newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt());
-        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + MathUtil.min(pnl, 0), 0).toUint();
+        // The order will settle at the entry price, this might have a big premium to the oracle price
+        // Calculate onchain fill price delta.
+        int256 onchainFillPriceDelta = newPosition.size.mulDecimal(
+            onchainPrice.toInt() - newPosition.entryPrice.toInt()
+        );
+        // Calculate the remaining margin after the order is settled.
+        uint256 remainingMarginUsd = MathUtil
+            .max(nextMarginUsd.toInt() + MathUtil.min(onchainFillPriceDelta, 0), 0)
+            .toUint();
         (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
         if (healthFactor <= DecimalMath.UNIT) {
@@ -172,14 +189,6 @@ library Position {
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
-        // Margin is used in liquidation checks so we must use the haircut collateral price.
-        uint256 haircutAdjustedMarginUsd = Margin.getMarginUsd(
-            accountId,
-            market,
-            params.oraclePrice,
-            true /* useHaircutCollateralPrice */
-        );
-
         // --- Existing position validation --- //
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
@@ -189,8 +198,16 @@ library Position {
                 revert ErrorUtil.PositionFlagged();
             }
 
-            // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, market, haircutAdjustedMarginUsd, params.oraclePrice, marketConfig)) {
+            // Detearmine if the current (previous) position can be immediately liquidated.
+            if (
+                isLiquidatable(
+                    currentPosition,
+                    market,
+                    Margin.getMarginUsd(accountId, market, params.oraclePrice, true /* useHaircutCollateralPrice */),
+                    params.oraclePrice,
+                    marketConfig
+                )
+            ) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         }
@@ -218,7 +235,7 @@ library Position {
             market,
             currentPosition,
             newPosition,
-            haircutAdjustedMarginUsd,
+            accountId,
             orderFee,
             keeperFee,
             marketConfig
