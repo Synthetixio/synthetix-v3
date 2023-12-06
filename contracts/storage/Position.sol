@@ -164,7 +164,7 @@ library Position {
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
         //
-        // NOTE: The `min(delta, 0)` as we only want to _redeuce_ their remaining margin, not increase it in the case where
+        // NOTE: The `min(delta, 0)` as we only want to _reduce_ their remaining margin, not increase it in the case where
         // a discount is applied for reducing skew.
         int256 fillPremium = MathUtil.min(
             newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt()),
