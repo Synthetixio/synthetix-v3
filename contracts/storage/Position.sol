@@ -139,15 +139,17 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, newPosition.entryPrice, marketConfig);
 
-        // Get the margin with the new position's entry price (fillPrice) and haircut applied.
-        // This represent the new margin after the order is settled (-fees).
+        // Calc position margin using the fillPrice (pos.entryPrice) with the haircut adjustment applied. We
+        // care about haircut as as we're verifying for liquidation.
+        //
+        // NOTE: getMarginUsd looks at the current position's overall PnL but it does consider the post settled
+        // incurred fees hence get `nextMarginUsd` with fees deducted.
         uint256 marginUsd = Margin.getMarginUsd(
             accountId,
             market,
             newPosition.entryPrice,
             true /* useHaircutCollateralPrice */
         );
-        // We want to deduct the fees.
         uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
@@ -157,17 +159,21 @@ library Position {
         }
 
         uint256 onchainPrice = market.getOraclePrice();
-        // The order will settle at the entry price, this might have a big premium to the oracle price
-        // Calculate onchain fill price delta.
-        int256 onchainFillPriceDelta = newPosition.size.mulDecimal(
-            onchainPrice.toInt() - newPosition.entryPrice.toInt()
+
+        // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
+        // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
+        // the margin before verifying the health factor to account for the premium.
+        //
+        // NOTE: The `min(delta, 0)` as we only want to _redeuce_ their remaining margin, not increase it in the case where
+        // a discount is applied for reducing skew.
+        int256 fillPremium = MathUtil.min(
+            newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt()),
+            0
         );
-        // Calculate the remaining margin after the order is settled.
-        uint256 remainingMarginUsd = MathUtil
-            .max(nextMarginUsd.toInt() + MathUtil.min(onchainFillPriceDelta, 0), 0)
-            .toUint();
+        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
         (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
+
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
         }

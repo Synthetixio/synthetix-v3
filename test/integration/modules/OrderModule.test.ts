@@ -414,7 +414,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when placing a position into instant liquidation due to post settlement position', async () => {
+    it('should revert when placing a position into instant liquidation due to post settlement position (concrete)', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -434,7 +434,10 @@ describe('OrderModule', () => {
       });
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        // The idea of this very specific number is that it would pass the initial margin requirement but still be liquidatable, the really bad skew/fill price
+        // NOTE: A very specific leverage!
+        //
+        // The idea of this very specific number is that it would pass the initial margin requirement but still be
+        // liquidatable, the really bad skew/fill price.
         desiredLeverage: 14.2,
         desiredSide: 1,
         desiredKeeperFeeBufferUsd: 0,
@@ -1211,8 +1214,7 @@ describe('OrderModule', () => {
         provider()
       );
 
-      // Skew has now changed significantly,
-      // we now expect the "main" trader's order to revert,
+      // Skew has now changed significantly, we now expect the "main" trader's order to revert,
       // because the skew has changed, leading to an entry price that would be immediately eligible for liquidation.
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, mainTrader);
       await fastForwardTo(settlementTime, provider());
