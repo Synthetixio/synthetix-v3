@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -7,7 +6,16 @@ import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genSide,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import {
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
@@ -20,9 +28,10 @@ import {
   setMarketConfigurationById,
   withExplicitEvmMine,
 } from '../../helpers';
-import { BigNumber } from 'ethers';
-import { calcOrderFees, calcFillPrice } from '../../calculations';
+import { BigNumber, ethers } from 'ethers';
+import { calcFillPrice, calcOrderFees } from '../../calculations';
 import { PerpMarketProxy } from '../../generated/typechain';
+import { shuffle } from 'lodash';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -405,9 +414,46 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when placing an existing position into instant liquidation');
+    it('should revert when placing a position into instant liquidation due to post settlement position (concrete)', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when placing a new position into instant liquidation');
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: 49250 })
+      );
+      await market.aggregator().mockSetCurrentPrice(wei(2.5).toBN());
+      await setMarketConfigurationById(bs, marketId, {
+        skewScale: bn(7_500_000),
+        incrementalMarginScalar: bn(1),
+        minMarginRatio: bn(0.03),
+        maintenanceMarginScalar: bn(0.75),
+        liquidationRewardPercent: bn(0.01),
+        maxMarketSize: bn(1_000_000),
+        makerFee: bn(0.0002),
+        takerFee: bn(0.0006),
+      });
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        // NOTE: A very specific leverage!
+        //
+        // The idea of this very specific number is that it would pass the initial margin requirement but still be
+        // liquidatable, the really bad skew/fill price.
+        desiredLeverage: 14.2,
+        desiredSide: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        ),
+        'CanLiquidatePosition()'
+      );
+    });
   });
 
   describe('settleOrder', () => {
@@ -1084,7 +1130,103 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert if collateral price slips into insufficient margin on between commit and settle');
+    it('should revert when a second trader causes a extreme skew leading to a bad fill price', async () => {
+      const { PerpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+
+      await market.aggregator().mockSetCurrentPrice(wei(1).toBN());
+
+      // Configure a static realistic market configuration.
+      await setMarketConfigurationById(bs, market.marketId(), {
+        skewScale: bn(7_500_000),
+        maxMarketSize: bn(1_000_000),
+        incrementalMarginScalar: bn(1),
+        minMarginRatio: bn(0.03),
+        maintenanceMarginScalar: bn(0.75),
+        liquidationRewardPercent: bn(0.01),
+        makerFee: bn(0),
+        takerFee: bn(0),
+      });
+
+      // One "other" trader creates an order which will create a big skew, the idea here is that the main trader commits before this settles,
+      // and we should then expect settle to revert
+      const {
+        trader: otherTrader,
+        collateralDepositAmount: otherCollateralDepositAmount,
+        collateral: otherCollateral,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: tradersGenerator.next().value,
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: 800_000,
+        })
+      );
+      const otherOrder = await genOrder(bs, market, otherCollateral, otherCollateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+        desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
+      });
+
+      // Commit the "other" trader's order, but don't settle it yet.
+      await commitOrder(bs, marketId, otherTrader, otherOrder);
+
+      // Now also commit the main trader's order. This order using quite high leverage => which means a bad fill price can put it into liquidation.
+      const {
+        trader: mainTrader,
+        collateralDepositAmount,
+        collateral,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: tradersGenerator.next().value,
+          desiredMarket: market,
+        })
+      );
+      const mainOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 9,
+        desiredSide: 1,
+        desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
+      });
+
+      await commitOrder(bs, marketId, mainTrader, mainOrder);
+
+      // Now fast forward and settle the "other" trader's order, which will create a big skew.
+      const { settlementTime: otherSettlementTime, publishTime: otherPublishTime } = await getFastForwardTimestamp(
+        bs,
+        marketId,
+        otherTrader
+      );
+      await fastForwardTo(otherSettlementTime, provider());
+      const { updateData: otherUpdateData, updateFee: otherUpdateFee } = await getPythPriceData(
+        bs,
+        marketId,
+        otherPublishTime
+      );
+      await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(keeper()).settleOrder(otherTrader.accountId, marketId, otherUpdateData, {
+            value: otherUpdateFee,
+          }),
+        provider()
+      );
+
+      // Skew has now changed significantly, we now expect the "main" trader's order to revert,
+      // because the skew has changed, leading to an entry price that would be immediately eligible for liquidation.
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, mainTrader);
+      await fastForwardTo(settlementTime, provider());
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).settleOrder(mainTrader.accountId, marketId, updateData, {
+          value: updateFee,
+        }),
+        'CanLiquidatePosition()'
+      );
+    });
 
     it('should revert if collateral price slips into maxMarketSize between commit and settle');
 

@@ -130,15 +130,26 @@ library Position {
         PerpMarket.Data storage market,
         Position.Data storage currentPosition,
         Position.Data memory newPosition,
-        uint256 marginUsd,
-        uint256 fillPrice,
+        uint128 accountId,
         uint256 orderFee,
         uint256 keeperFee,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, fillPrice, marketConfig);
+        (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, newPosition.entryPrice, marketConfig);
+
+        // Calc position margin using the fillPrice (pos.entryPrice) with the haircut adjustment applied. We
+        // care about haircut as as we're verifying for liquidation.
+        //
+        // NOTE: getMarginUsd looks at the current position's overall PnL but it does consider the post settled
+        // incurred fees hence get `nextMarginUsd` with fees deducted.
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            newPosition.entryPrice,
+            true /* useHaircutCollateralPrice */
+        );
         uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
@@ -147,15 +158,22 @@ library Position {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        (uint256 healthFactor, , , ) = getHealthData(
-            market,
-            newPosition.size,
-            newPosition.entryPrice,
-            newPosition.entryFundingAccrued,
-            marginUsd,
-            fillPrice,
-            marketConfig
+        uint256 onchainPrice = market.getOraclePrice();
+
+        // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
+        // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
+        // the margin before verifying the health factor to account for the premium.
+        //
+        // NOTE: The `min(delta, 0)` as we only want to _reduce_ their remaining margin, not increase it in the case where
+        // a discount is applied for reducing skew.
+        int256 fillPremium = MathUtil.min(
+            newPosition.size.mulDecimal(onchainPrice.toInt() - newPosition.entryPrice.toInt()),
+            0
         );
+        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
+        (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, marketConfig);
+        uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
+
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
         }
@@ -177,14 +195,6 @@ library Position {
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
-        // Margin is used in liquidation checks so we must use the haircut collateral price.
-        uint256 haircutAdjustedMarginUsd = Margin.getMarginUsd(
-            accountId,
-            market,
-            params.fillPrice,
-            true /* useHaircutCollateralPrice */
-        );
-
         // --- Existing position validation --- //
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
@@ -194,8 +204,16 @@ library Position {
                 revert ErrorUtil.PositionFlagged();
             }
 
-            // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, market, haircutAdjustedMarginUsd, params.fillPrice, marketConfig)) {
+            // Detearmine if the current (previous) position can be immediately liquidated.
+            if (
+                isLiquidatable(
+                    currentPosition,
+                    market,
+                    Margin.getMarginUsd(accountId, market, params.oraclePrice, true /* useHaircutCollateralPrice */),
+                    params.oraclePrice,
+                    marketConfig
+                )
+            ) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         }
@@ -223,8 +241,7 @@ library Position {
             market,
             currentPosition,
             newPosition,
-            haircutAdjustedMarginUsd,
-            params.fillPrice,
+            accountId,
             orderFee,
             keeperFee,
             marketConfig
