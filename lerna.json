@@ -14,7 +14,7 @@
     "version": {
       "allowBranch": [
         "main",
-        "release-3.3.5"
+        "release"
       ]
     }
   }
