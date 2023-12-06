@@ -24,6 +24,7 @@ defaultValue = "60"
 
 [provision.oracle_manager]
 source = "oracle-manager:3.3.5"
+sourcePreset = "main"
 
 # Latest Price
 [invoke.registerConstantNode]
