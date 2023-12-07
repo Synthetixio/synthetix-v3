@@ -133,8 +133,8 @@ describe('Account margins test', () => {
       btcInitialMargin = notionalBtcValue.mul(btcInitialMarginRatio);
       ethInitialMargin = notionalEthValue.mul(ethInitialMarginRatio);
 
-      ethLiqMargin = notionalBtcValue.mul(0.05);
-      btcLiqMargin = notionalEthValue.mul(0.05);
+      btcLiqMargin = notionalBtcValue.mul(0.05);
+      ethLiqMargin = notionalEthValue.mul(0.05);
 
       // maintenance margin ratio == 1
       btcMaintenanceMargin = btcInitialMargin.mul(wei(0.5));
