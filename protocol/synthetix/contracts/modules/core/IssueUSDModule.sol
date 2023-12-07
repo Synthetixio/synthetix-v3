@@ -128,7 +128,7 @@ contract IssueUSDModule is IIssueUSDModule {
         uint128 poolId,
         address collateralType,
         uint256 amount
-    ) external override {
+    ) public override {
         FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
 
         Account.Data storage account = Account.loadAccountAndValidatePermission(
@@ -179,5 +179,24 @@ contract IssueUSDModule is IIssueUSDModule {
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, ERC2771Context._msgSender());
+    }
+
+    /**
+     * @inheritdoc IIssueUSDModule
+     */
+    function clearDebt(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        int256 debt = pool.updateAccountDebt(collateralType, accountId);
+        pool.rebalanceMarketsInPool();
+
+        if (debt <= 0) {
+            revert InsufficientDebt(debt);
+        }
+
+        burnUsd(accountId, poolId, collateralType, debt.toUint());
     }
 }

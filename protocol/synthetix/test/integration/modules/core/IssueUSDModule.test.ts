@@ -553,6 +553,84 @@ describe('IssueUSDModule', function () {
         await assertEvent(tx, `IssuanceFeePaid`, systems().Core, true);
       });
     });
+
+    describe('successful max burn with clearDebt', async () => {
+      before(restoreBurn);
+
+      before('acquire additional balance to pay off fee', async () => {
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, 0, collateralAddress(), depositAmount.div(1000));
+      });
+
+      before('set fee', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeRatio'),
+            ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
+          ); // 1% fee levy
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeAddress'),
+            ethers.utils.hexZeroPad(feeAddress, 32)
+          );
+      });
+
+      let tx: ethers.providers.TransactionResponse;
+
+      before('account partial burn debt', async () => {
+        // in order to burn all with the fee we need a bit more
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(1000));
+
+        await systems()
+          .USD.connect(user1)
+          .approve(systems().Core.address, constants.MaxUint256.toString());
+
+        await systems()
+          .Core.connect(user1)
+          .deposit(
+            accountId,
+            await systems().Core.getUsdToken(),
+            await systems().USD.balanceOf(await user1.getAddress())
+          );
+
+        tx = await systems().Core.connect(user1).clearDebt(accountId, poolId, collateralAddress()); // pay off everything
+      });
+
+      it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
+
+      it('took away from user1', async () => {
+        assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), 0);
+      });
+
+      it('sent money to the fee address', async () => {
+        assertBn.equal(await systems().USD.balanceOf(feeAddress), depositAmount.div(1000));
+      });
+
+      it('emitted event', async () => {
+        await assertEvent(
+          tx,
+          `IssuanceFeePaid(${accountId}, ${poolId}, "${collateralAddress()}", ${depositAmount.div(
+            1000
+          )})`,
+          systems().Core
+        );
+      });
+
+      it('no event emitted when fee address is 0', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeAddress'),
+            ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+          );
+        await assertEvent(tx, `IssuanceFeePaid`, systems().Core, true);
+      });
+    });
   });
 
   describe('edge case: verify debt is excluded from available mint', async () => {
