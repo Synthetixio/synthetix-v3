@@ -6,8 +6,6 @@ import { BuybackSnx } from '../generated/typechain';
 
 interface Contracts {
   buyback_snx: BuybackSnx;
-  'pyth.Pyth': ethers.Contract;
-  'pyth_erc7412_wrapper.PythERC7412Wrapper': ethers.Contract;
   'snx.MintableToken': ethers.Contract;
   'usd.MintableToken': ethers.Contract;
 }
