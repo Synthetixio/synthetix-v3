@@ -84,13 +84,33 @@ To prepare for system upgrades, this repository is used to release new versions 
 - Confirm you are on the development branch you’d like to release and that there are no git changes `git diff --exit-code .`
 - If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
 - Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)
-- In all the package.json files, revert dependencies' version changes back to `"workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+- For each publishable package cannon will ask if you want to publish given package with version and tag. The question may not appear on screen, and you will observe npm just hanging and waiting for something. Press `y` and lerna publishing will continue. This situation will repeat for EACH package (13 times for now).
+- When packages are built and published to cannon, lerna will ask for the OTP code to publish npm packages. Supply it with your OTP (make sure your account has access to publish `@synthetixio` packages)
+- After successful publish, there should be no diff in git. But if there is a diff - make sure you reset any changes, fix publishing issues and re-publish again. Double-check all the package.json files, revert dependencies' version changes back to `"workspaces:*"`.
 
 #### Publish Official Release
 
-- Confirm you are on the `main` branch and that there are no git changes `git diff --exit-code .`
+**Each step is necessary, do not skip any steps.**
+
+- Confirm you are on the `release` branch and that there are no git changes `git diff --exit-code .`
+  ```sh
+  git fetch --all
+  git checkout release
+  git pull
+  git diff --exit-code .
+  ```
+- Merge any changes from `main` to the `release` branch. It is essential that `release` branch has merge commits from `main` and not squashed updates or anything. Please do **NOT** use GitHub UI for this to avoid squashing.
+  ```sh
+  git merge origin/main
+  ```
+- In case of any conflicts - resolve them and push to upstream. It is essential that `release` branch is pushed to the upstream
+  ```sh
+  git push
+  ```
 - If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
 - Publish the release with `yarn publish:release`
-- In all the package.json files, revert dependencies' version changes back to `"workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+- For each publishable package cannon will ask if you want to publish given package with version and tag. The question may not appear on screen, and you will observe npm just hanging and waiting for something. Press `y` and lerna publishing will continue. This situation will repeat for EACH package (13 times for now).
+- When packages are built and published to cannon, lerna will ask for the OTP code to publish npm packages. Supply it with your OTP (make sure your account has access to publish `@synthetixio` packages)
+- After successful publish, there should be no diff in git. But if there is a diff - make sure you reset any changes, fix publishing issues and re-publish again. Double-check all the package.json files, revert dependencies' version changes back to `"workspaces:*"`.
 
 _In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately._
