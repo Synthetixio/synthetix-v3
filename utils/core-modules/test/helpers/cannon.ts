@@ -14,6 +14,7 @@ interface BuildOptions {
   getArtifact: (name: string) => Promise<ContractArtifact>;
   pkgInfo: object;
   projectDirectory: string;
+  port?: number;
   impersonate?: string;
   wipe?: boolean;
 }
@@ -38,7 +39,7 @@ export async function launchNode(options: NodeOptions = {}) {
 }
 
 export async function cannonBuild(options: BuildOptions) {
-  const node = await launchNode({ chainId: options.chainId });
+  const node = await launchNode({ chainId: options.chainId, port: options.port });
 
   const provider = new CannonWrapperGenericProvider(
     {},

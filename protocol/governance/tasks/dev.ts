@@ -32,14 +32,25 @@ const chains = [
 
 task('dev', 'spins up locally 3 nodes ready for test purposes')
   .addOptionalParam(
-    'ownerAddress',
+    'owner',
     'Wallet address to use as signer',
     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
   )
-  .setAction(async ({ ownerAddress }, hre) => {
+  .addOptionalParam(
+    'port',
+    'custom port for chains to run on, increments for satellite chains by 1',
+    '19000'
+  )
+  .setAction(async ({ owner, port }, hre) => {
     const nodes = await Promise.all(
-      chains.map(({ networkName, cannonfile }) =>
-        _spinChain({ hre, networkName, cannonfile, ownerAddress })
+      chains.map(({ networkName, cannonfile }, index) =>
+        _spinChain({
+          hre,
+          networkName,
+          cannonfile,
+          ownerAddress: owner,
+          port: Number(port) + index,
+        })
       )
     );
 
@@ -55,6 +66,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
       console.log(`  network: ${chain.networkName}`);
       console.log(`  chainId: ${node.options.chainId}`);
       console.log(`  rpc: ${rpcUrl}`);
+      console.log(`  CoreProxy: ${node.outputs.contracts?.CoreProxy.address}`);
 
       // Listen for cross chain message send events, and pass it on to the target network
       CcipRouter.connect(node.provider)
@@ -69,7 +81,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
             const targetNode = nodes[targetChainIndex]!;
 
             const rx = await node.provider.getTransactionReceipt(evt.transactionHash);
-            const targetSigner = await targetNode.provider.getSigner(ownerAddress);
+            const targetSigner = targetNode.provider.getSigner(owner);
 
             await ccipReceive({
               rx,
@@ -89,11 +101,13 @@ async function _spinChain({
   networkName,
   cannonfile,
   ownerAddress,
+  port,
 }: {
   hre: HardhatRuntimeEnvironment;
   networkName: string;
   cannonfile: string;
   ownerAddress: string;
+  port: number;
 }) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
@@ -116,6 +130,7 @@ async function _spinChain({
       await hre.run('cannon:get-artifact', { name: contractName }),
     pkgInfo: require(path.join(hre.config.paths.root, 'package.json')),
     projectDirectory: hre.config.paths.root,
+    port,
   });
 }
 

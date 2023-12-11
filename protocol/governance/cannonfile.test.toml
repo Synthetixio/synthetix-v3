@@ -21,6 +21,9 @@ artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:Testabl
 [contract.TestableElectionStorage]
 artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
 
+[contract.TestableEpochStorage]
+artifact = "contracts/generated/test/TestableEpochStorage.sol:TestableEpochStorage"
+
 # Core Router + Testable modules
 [router.TestRouter]
 contracts = [
@@ -32,6 +35,7 @@ contracts = [
     "TestableSnapshotVotePowerStorage",
     "TestableElectionSettingsStorage",
     "TestableElectionStorage",
+    "TestableEpochStorage"
 ]
 
 [invoke.upgrade_core_proxy]
