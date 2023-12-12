@@ -314,7 +314,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             election.ballotPtrs.add(ballotPtr);
         }
 
-        emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
+        emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower, candidates);
     }
 
     error Test(bool);

@@ -26,7 +26,8 @@ interface IElectionModule is IElectionModuleSatellite {
         address indexed voter,
         uint256 indexed chainId,
         uint256 indexed epochId,
-        uint256 votingPower
+        uint256 votingPower,
+        address[] candidates
     );
     event ElectionBatchEvaluated(
         uint256 indexed epochId,
