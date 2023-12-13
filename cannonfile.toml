@@ -13,6 +13,9 @@ defaultValue = "main"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
+[setting.oracleManagerPackage]
+defaultValue = "synthetix:<%= package.dependencies['@synthetixio/oracle-manager'].replace('^', '') %>"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
 
@@ -31,6 +34,9 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
+
+[import.oracleManager]
+source = "<%= settings.oracleManagerPackage %>"
 
 # --- Module Contracts --- #
 
