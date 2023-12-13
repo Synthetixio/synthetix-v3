@@ -43,7 +43,9 @@ contract BuybackSnx is IFeeCollector {
 
     function processBuyback(uint256 snxAmount) external {
         NodeOutput.Data memory output = INodeModule(oracleManager).process(snxNodeId);
-        uint256 usdAmount = (output.price.toUint().mulDecimal(snxAmount)).mulDecimal(DecimalMath.UNIT + premium);
+        uint256 usdAmount = (output.price.toUint().mulDecimal(snxAmount)).mulDecimal(
+            DecimalMath.UNIT + premium
+        );
 
         IERC20(snxToken).transferFrom(ERC2771Context._msgSender(), DEAD, snxAmount);
         IERC20(usdToken).transfer(ERC2771Context._msgSender(), usdAmount);
@@ -52,7 +54,11 @@ contract BuybackSnx is IFeeCollector {
     }
 
     // Implement FeeCollector interface
-    function quoteFees(uint128 marketId, uint256 feeAmount, address sender) external view override returns (uint256) {
+    function quoteFees(
+        uint128 marketId,
+        uint256 feeAmount,
+        address sender
+    ) external view override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;
@@ -60,7 +66,11 @@ contract BuybackSnx is IFeeCollector {
         return (feeAmount.mulDecimal(snxFeeShare));
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IFeeCollector).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IFeeCollector).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }
