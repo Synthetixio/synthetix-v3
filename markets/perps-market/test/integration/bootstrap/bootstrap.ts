@@ -136,7 +136,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
     await systems().PerpsMarket.connect(owner()).updateKeeperCostNodeId(keeperCostNodeId);
   });
-  
+
   before('set pool config', async () => {
     const synthMarketConfigs = synthMarkets().map((s) => ({
       marketId: s.marketId(),
@@ -218,8 +218,6 @@ export function bootstrapMarkets(data: BootstrapArgs) {
         );
     });
   }
-
-  const restore = snapshotCheckpoint(provider);
 
   return {
     systems,
