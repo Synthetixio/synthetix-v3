@@ -49,10 +49,10 @@ echo "" >> $OUT
 cat ./docs/420-dev.md >> $OUT
 echo "" >> $OUT
 
-node ./abis.js 80001 main
-echo "## Polygon Mumbai" >> $OUT
+node ./abis.js 8453 andromeda
+echo "## Andromeda on Base" >> $OUT
 echo "" >> $OUT
-cat ./docs/80001-main.md >> $OUT
+cat ./docs/8453-andromeda.md >> $OUT
 echo "" >> $OUT
 
 node ./abis.js 84531 main
@@ -71,6 +71,12 @@ node ./abis.js 84531 andromeda
 echo "## Andromeda on Base Goerli" >> $OUT
 echo "" >> $OUT
 cat ./docs/84531-andromeda.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 80001 main
+echo "## Polygon Mumbai" >> $OUT
+echo "" >> $OUT
+cat ./docs/80001-main.md >> $OUT
 echo "" >> $OUT
 
 cp -r ./abis $ROOT/docs/abis

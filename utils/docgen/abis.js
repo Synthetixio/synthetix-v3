@@ -29,6 +29,8 @@ function etherscanLink(chain, address) {
       return `https://goerli-optimism.etherscan.io/address/${address}`;
     case 80001:
       return `https://mumbai.polygonscan.com/address/${address}`;
+    case 8453:
+      return `https://basescan.org/address/${address}`;
     case 84531:
       return `https://goerli.basescan.org/address/${address}`;
   }
@@ -64,7 +66,7 @@ async function run() {
   });
   const loader = new IPFSLoader('https://ipfs.synthetix.io');
 
-  const ipfs = await registry.getUrl(`synthetix-omnibus:latest`, `${chainId}-${preset}`);
+  const ipfs = await registry.getUrl(`synthetix-omnibus:latest@${preset}`, chainId);
   const deployments = await loader.read(ipfs);
   await fs.writeFile(
     `./deployments/${chainId}-${preset}.json`,
