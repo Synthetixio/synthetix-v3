@@ -3,14 +3,16 @@ pragma solidity 0.8.19;
 
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import {IPythChainlinkLidoExternalNode} from "../interfaces/oracles/IPythChainlinkLidoExternalNode.sol";
+import {IPythChainlinkLidoWstEthExternalNode} from "../interfaces/oracles/IPythChainlinkLidoWstEthExternalNode.sol";
 import {IAggregatorV3Interface} from "../external/IAggregatorV3Interface.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {IWstETH} from "../external/lido/IWstETH.sol";
 
-contract PythChainlinkLidoExternalNode is IPythChainlinkLidoExternalNode {
+contract PythChainlinkLidoWstEthExternalNode is IPythChainlinkLidoWstEthExternalNode {
+    /**
+     * @inheritdoc IPythChainlinkLidoWstEthExternalNode
+     */
     function process(
-        NodeOutput.Data[] memory prices,
         bytes memory parameters,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
@@ -18,6 +20,9 @@ contract PythChainlinkLidoExternalNode is IPythChainlinkLidoExternalNode {
         return NodeOutput.Data(0, block.timestamp, 0, 0);
     }
 
+    /**
+     * @inheritdoc IPythChainlinkLidoWstEthExternalNode
+     */
     function isValid(NodeDefinition.Data memory nodeDefinition) external view returns (bool valid) {
         // Must have no parents.
         if (nodeDefinition.parents.length > 0) {
@@ -46,7 +51,7 @@ contract PythChainlinkLidoExternalNode is IPythChainlinkLidoExternalNode {
         return true;
     }
 
-    function supportsInterface(bytes4 interfaceID) external view returns (bool) {
+    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
         return true;
     }
 }

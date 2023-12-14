@@ -76,10 +76,16 @@ args = []
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
 
-# --- Distributor --- #
+# --- Distributor Contract --- #
 
 [contract.PerpRewardDistributor]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
+args = []
+
+# --- Oracle Contract --- #
+
+[contract.PythChainlinkLidoWstEthExternalNode]
+artifact = "PythChainlinkLidoWstEthExternalNode"
 args = []
 
 # --- Market Proxy Contract --- #
@@ -180,12 +186,14 @@ depends = ["contract.Collateral2Mock"]
 source = "pyth:1.4.0"
 args = [120, 1] # 120s, 1wei
 
-
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
 
-# --- Market Post Deployment Configuration --- #
+[contract.WstEthMock]
+artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
+
+# --- Market Post BFP Deployment Configuration --- #
 
 [invoke.setSynthetix]
 target = ["PerpMarketProxy"]
