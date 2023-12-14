@@ -23,6 +23,9 @@ interface IElectionModuleSatellite {
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
     function cast(address[] calldata candidates, uint256[] calldata amounts) external payable;
 
+    /// @notice Allows to withdraw a casted vote on the current network.
+    function withdrawVote() external payable;
+
     /// @dev Burn the council tokens from the given members; receiving end of CCIP members dismissal
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;
 

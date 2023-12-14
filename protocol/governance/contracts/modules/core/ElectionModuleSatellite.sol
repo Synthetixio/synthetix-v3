@@ -97,6 +97,10 @@ contract ElectionModuleSatellite is
         );
     }
 
+    function withdrawVote() public payable override {
+        // TODO: implent vote withdraw
+    }
+
     function _recvDismissMembers(
         address[] calldata membersToDismiss,
         uint256 epochIndex
