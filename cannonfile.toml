@@ -82,12 +82,6 @@ args = []
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
 args = []
 
-# --- Oracle Contract --- #
-
-[contract.PythChainlinkLidoWstEthExternalNode]
-artifact = "PythChainlinkLidoWstEthExternalNode"
-args = []
-
 # --- Market Proxy Contract --- #
 
 [contract.InitialPerpMarketProxy]
@@ -190,8 +184,28 @@ args = [120, 1] # 120s, 1wei
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
 
+# --- wstETH Oracle --- #
+
 [contract.WstEthMock]
 artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
+
+[contract.LidoStEthPerWstEthRatioNode]
+artifact = "contracts/oracles/LidoStEthPerWstEthRatioNode.sol:LidoStEthPerWstEthRatioNode"
+args = ["<%= contracts.WstEthMock.address %>"]
+
+[invoke.registerNode_LidoStEthPerWstEthRatioNode]
+target = ["oracleManager.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # 2 = external node
+    2,
+    # 1 parameter: 1 is the external node contract address
+    "<%= defaultAbiCoder.encode(['address'], [contracts.LidoStEthPerWstEthRatioNode.address]) %>",
+    []
+]
+extra.lidoStEthPerWstEthRatioNode.event = "NodeRegistered"
+extra.lidoStEthPerWstEthRatioNode.arg = 0
+depends = ["contract.WstEthMock", "contract.LidoStEthPerWstEthRatioNode"]
 
 # --- Market Post BFP Deployment Configuration --- #
 
