@@ -19,6 +19,10 @@ defaultValue = "synthetix:<%= package.dependencies['@synthetixio/oracle-manager'
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
 
+# NOTE: This is the same pythETHFeedId defined in markets.fixture.ts
+[setting.pythEthFeedId]
+defaultValue = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+
 # What is salt?
 #
 # salt - The salt is a string which, when changed, will result in a new contract deployment.
@@ -184,7 +188,7 @@ args = [120, 1] # 120s, 1wei
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
 
-# --- wstETH Oracle --- #
+# --- Lido wstETH <> stETH Ratio Oracle --- #
 
 [contract.WstEthMock]
 artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
@@ -197,15 +201,61 @@ args = ["<%= contracts.WstEthMock.address %>"]
 target = ["oracleManager.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
-    # 2 = external node
+    # external node
     2,
-    # 1 parameter: 1 is the external node contract address
+    # contract
     "<%= defaultAbiCoder.encode(['address'], [contracts.LidoStEthPerWstEthRatioNode.address]) %>",
     []
 ]
-extra.lidoStEthPerWstEthRatioNode.event = "NodeRegistered"
-extra.lidoStEthPerWstEthRatioNode.arg = 0
+extra.lidoStEthPerWstEthRatioNodeId.event = "NodeRegistered"
+extra.lidoStEthPerWstEthRatioNodeId.arg = 0
 depends = ["contract.WstEthMock", "contract.LidoStEthPerWstEthRatioNode"]
+
+# --- Chainlink ETH<>stETH Ratio Oracle --- #
+
+[contract.ChainlinkStEthToEthNode]
+artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
+args = []
+extra.chainlinkStEthToEthNode.event = "NodeRegistered"
+extra.chainlinkStEthToEthNode.arg = 0
+
+[invoke.registerChainlinkStEthToEthNode]
+target = ["oracleManager.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # chainlink aggregator type
+    3,
+    # contract, twap, decimals
+    "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [contracts.ChainlinkStEthToEthNode.address, 0, 18]) %>",
+    [],
+]
+extra.chainlinkStEthToEthNodeId.event = "NodeRegistered"
+extra.chainlinkStEthToEthNodeId.arg = 0
+depends = ["contract.ChainlinkStEthToEthNode"]
+
+# --- Pyth ETH Oracle --- #
+
+[invoke.registerPythEthOracleNode]
+target = ["oracleManager.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # pyth aggregator type
+    5,
+    # pyth verifier, price feedId, useEma
+    "<%= defaultAbiCoder.encode(['address', 'bytes32', 'bool'], [imports.pyth.contracts.Pyth.address, settings.pythEthFeedId, false]) %>",
+    [],
+]
+extra.pythEthNodeId.event = "NodeRegistered"
+extra.pythEthNodeId.arg = 0
+depends = ["import.pyth"]
+
+# --- stEth Oracle `reduce(pythEth, stEthToEth)` --- #
+
+# TODO
+
+# --- wtstETH Oracle `reduce(stEth, stEThToWstEth)` --- #
+
+# TODO
 
 # --- Market Post BFP Deployment Configuration --- #
 
