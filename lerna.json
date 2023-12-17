@@ -13,7 +13,6 @@
   "command": {
     "version": {
       "allowBranch": [
-        "main",
         "release"
       ]
     }
