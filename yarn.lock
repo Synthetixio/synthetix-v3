@@ -1200,21 +1200,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/common-config@npm:3.3.4":
-  version: 3.3.4
-  resolution: "@synthetixio/common-config@npm:3.3.4"
-  checksum: 79915cd4ec0944d909d637aee7cc68400f1f5f5dde92aea3726f940f4be1d0715d6beae5501520d096075422c53ce3b02ace7f2e2af3015eaa5b90b94f07ff7a
-  languageName: node
-  linkType: hard
-
-"@synthetixio/core-contracts@npm:^3.3.4":
+"@synthetixio/core-contracts@npm:^3.3.6":
   version: 3.3.6
   resolution: "@synthetixio/core-contracts@npm:3.3.6"
   checksum: fa34c2dd673810e78713556e2ed9edb4bb88344058b9fc21868c56c3d8f049c6ff316348e9ebb7a2c702de457cedcf453cecf954dc885e584d31714c9cb93caf
   languageName: node
   linkType: hard
 
-"@synthetixio/core-modules@npm:^3.3.4":
+"@synthetixio/core-modules@npm:^3.3.6":
   version: 3.3.6
   resolution: "@synthetixio/core-modules@npm:3.3.6"
   checksum: af16d8d2fa904642c63812e84aa37549d4522d07bd1343a5e9ba468ba298de2eff37b4151e4d29dfa653750c514d446685cd66d9340e5d598f03da105fb71098
@@ -1246,14 +1239,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/main@npm:^3.3.4":
+"@synthetixio/main@npm:^3.3.6":
   version: 3.3.6
   resolution: "@synthetixio/main@npm:3.3.6"
   checksum: 432d89554007ee48ba68f8afe02af5687036d44a33fd1948cc66c51b1c615a287fee64010ee0a45695429031cb40709e564b4d0eed7273c197c81c96f542e335
   languageName: node
   linkType: hard
 
-"@synthetixio/oracle-manager@npm:^3.3.4":
+"@synthetixio/oracle-manager@npm:^3.3.6":
   version: 3.3.6
   resolution: "@synthetixio/oracle-manager@npm:3.3.6"
   checksum: 354c5bf54ac2c0973a90d761f8d98698b9a7396fe31afebdd5047964157c4dea5d1758dbc764bb07d9c9a992030dd6788fa96e302c8d4525869475d2a8f7ee8c
@@ -1299,10 +1292,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/spot-market@npm:3.3.3-dev.a31b56e8":
-  version: 3.3.3-dev.a31b56e8
-  resolution: "@synthetixio/spot-market@npm:3.3.3-dev.a31b56e8"
-  checksum: 6061756a906b096eab87da3454332e98441efb0510338a2523a1f493be7d2779f48e769739a349f70e797a68bc95accfd1bd8c8e7e455a7b040834e13b395175
+"@synthetixio/spot-market@npm:^3.3.6":
+  version: 3.3.6
+  resolution: "@synthetixio/spot-market@npm:3.3.6"
+  checksum: e8a7fd3fee54556f5a96010b18194d055130d2e5e6f42c953fdc4a0df6101cdf34982820ffbdbdda2f1c5510e6451b497a8b4c9b953009ed956d456ae3ca834e
   languageName: node
   linkType: hard
 
@@ -2062,13 +2055,12 @@ __metadata:
   dependencies:
     "@nomiclabs/hardhat-ethers": ^2.2.3
     "@openzeppelin/contracts": 4.9.3
-    "@synthetixio/common-config": 3.3.4
-    "@synthetixio/core-contracts": ^3.3.4
-    "@synthetixio/core-modules": ^3.3.4
+    "@synthetixio/core-contracts": ^3.3.6
+    "@synthetixio/core-modules": ^3.3.6
     "@synthetixio/core-utils": ^3.3.4
-    "@synthetixio/main": ^3.3.4
-    "@synthetixio/oracle-manager": ^3.3.4
-    "@synthetixio/spot-market": 3.3.3-dev.a31b56e8
+    "@synthetixio/main": ^3.3.6
+    "@synthetixio/oracle-manager": ^3.3.6
+    "@synthetixio/spot-market": ^3.3.6
     "@synthetixio/v3-contracts": ^3.1.0
     "@synthetixio/wei": ^2.74.4
     "@typechain/ethers-v5": ^10.2.1

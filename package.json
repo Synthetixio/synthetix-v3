@@ -49,12 +49,11 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.3",
-    "@synthetixio/common-config": "3.3.4",
-    "@synthetixio/core-contracts": "^3.3.4",
-    "@synthetixio/core-modules": "^3.3.4",
-    "@synthetixio/main": "^3.3.4",
-    "@synthetixio/oracle-manager": "^3.3.4",
-    "@synthetixio/spot-market": "3.3.3-dev.a31b56e8"
+    "@synthetixio/core-contracts": "^3.3.6",
+    "@synthetixio/core-modules": "^3.3.6",
+    "@synthetixio/main": "^3.3.6",
+    "@synthetixio/oracle-manager": "^3.3.6",
+    "@synthetixio/spot-market": "^3.3.6"
   },
   "packageManager": "yarn@3.6.1"
 }
