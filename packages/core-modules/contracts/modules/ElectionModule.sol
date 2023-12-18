@@ -99,7 +99,7 @@ contract ElectionModule is
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Administration) {
+    ) external override onlyOwner onlyInPeriods(ElectionPeriod.Administration, ElectionPeriod.Nomination) {
         _adjustEpochSchedule(
             _getCurrentEpoch(),
             newNominationPeriodStartDate,
@@ -115,7 +115,7 @@ contract ElectionModule is
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Administration) {
+    ) external override onlyOwner onlyInPeriods(ElectionPeriod.Administration, ElectionPeriod.Nomination) {
         _adjustEpochSchedule(
             _getCurrentEpoch(),
             newNominationPeriodStartDate,

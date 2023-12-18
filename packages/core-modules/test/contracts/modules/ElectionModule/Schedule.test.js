@@ -129,7 +129,7 @@ describe('ElectionModule (schedule)', () => {
   };
 
   // ----------------------------------
-  // Evaluation behaviors
+  // Adjustments behaviors
   // ----------------------------------
 
   const itRejectsAdjustments = () => {
@@ -155,17 +155,13 @@ describe('ElectionModule (schedule)', () => {
   const itAcceptsAdjustments = () => {
     describe('when trying to adjust the epoch schedule', function () {
       before('fast forward', async function () {
-        await fastForwardTo(
-          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
-          ethers.provider
-        );
-      });
+        const currentPeriod = (await ElectionModule.getCurrentPeriod()).toNumber();
+        const targetTimestamp =
+          currentPeriod === ElectionPeriod.Administration
+            ? await ElectionModule.getNominationPeriodStartDate()
+            : await ElectionModule.getVotingPeriodStartDate();
 
-      before('fast forward', async function () {
-        await fastForwardTo(
-          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
-          ethers.provider
-        );
+        await fastForwardTo(targetTimestamp.toNumber() - daysToSeconds(1), ethers.provider);
       });
 
       before('take snapshot', async function () {
@@ -230,7 +226,7 @@ describe('ElectionModule (schedule)', () => {
                 ElectionModule.tweakEpochSchedule(
                   (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
                     daysToSeconds(2),
-                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5),
+                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() - daysToSeconds(2),
                   (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4)
                 ),
                 'ChangesCurrentPeriod'
@@ -240,13 +236,16 @@ describe('ElectionModule (schedule)', () => {
 
           describe('which dont change the current period type', function () {
             before('adjust', async function () {
-              newEpochEndDate =
-                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
-              newNominationPeriodStartDate =
-                (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
-                daysToSeconds(0.5);
+              const currentPeriod = await ElectionModule.getCurrentPeriod();
+
+              newNominationPeriodStartDate = currentPeriod.eq(ElectionPeriod.Administration)
+                ? (await ElectionModule.getNominationPeriodStartDate()).toNumber() +
+                  daysToSeconds(0.5)
+                : (await ElectionModule.getNominationPeriodStartDate()).toNumber();
               newVotingPeriodStartDate =
                 (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
+              newEpochEndDate =
+                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
 
               const tx = await ElectionModule.tweakEpochSchedule(
                 newNominationPeriodStartDate,
@@ -288,7 +287,7 @@ describe('ElectionModule (schedule)', () => {
                 ElectionModule.modifyEpochSchedule(
                   (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
                     daysToSeconds(2),
-                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100),
+                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() - daysToSeconds(2),
                   (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100)
                 ),
                 'ChangesCurrentPeriod'
@@ -298,13 +297,15 @@ describe('ElectionModule (schedule)', () => {
 
           describe('which dont change the current period type', function () {
             before('adjust', async function () {
-              newEpochEndDate =
-                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100);
+              const currentPeriod = await ElectionModule.getCurrentPeriod();
+
               newNominationPeriodStartDate =
                 (await ElectionModule.getNominationPeriodStartDate()).toNumber() +
-                daysToSeconds(100);
+                (currentPeriod.eq(ElectionPeriod.Administration) ? daysToSeconds(100) : 0);
               newVotingPeriodStartDate =
                 (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
+              newEpochEndDate =
+                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100);
 
               const tx = await ElectionModule.modifyEpochSchedule(
                 newNominationPeriodStartDate,
@@ -416,7 +417,7 @@ describe('ElectionModule (schedule)', () => {
       itAcceptsWithdrawals();
       itRejectsVotes();
       itRejectsEvaluations();
-      itRejectsAdjustments();
+      itAcceptsAdjustments();
     });
 
     // ----------------------------------
