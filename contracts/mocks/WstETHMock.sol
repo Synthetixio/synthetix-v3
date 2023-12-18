@@ -4,13 +4,13 @@ pragma solidity 0.8.19;
 import {IWstETH} from "../external/lido/IWstETH.sol";
 
 contract WstETHMock is IWstETH {
-    uint256 stETHToWstETHRatio;
+    uint256 wstEthToStEthRatio;
 
     function getStETHByWstETH(uint256) external view returns (uint256) {
-        return stETHToWstETHRatio;
+        return wstEthToStEthRatio;
     }
 
-    function mockSetstETHToWstETHRatio(uint256 _stETHToWstETHRatio) external {
-        stETHToWstETHRatio = _stETHToWstETHRatio;
+    function mockSetWstEthToStEthRatio(uint256 _wstEthToStEthRatio) external {
+        wstEthToStEthRatio = _wstEthToStEthRatio;
     }
 }
