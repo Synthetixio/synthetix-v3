@@ -1200,24 +1200,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/common-config@npm:3.3.2":
-  version: 3.3.2
-  resolution: "@synthetixio/common-config@npm:3.3.2"
-  checksum: a8faccc4eb0338af9fd0d745f9d666dc058c6c68e049189acff35fbedc13b9a3a9832c8697493060555c3ac4f8b3efb1c2fee5776c7dbd7a7604b53eb66225b2
+"@synthetixio/common-config@npm:3.3.4":
+  version: 3.3.4
+  resolution: "@synthetixio/common-config@npm:3.3.4"
+  checksum: 79915cd4ec0944d909d637aee7cc68400f1f5f5dde92aea3726f940f4be1d0715d6beae5501520d096075422c53ce3b02ace7f2e2af3015eaa5b90b94f07ff7a
   languageName: node
   linkType: hard
 
-"@synthetixio/core-contracts@npm:^3.3.2":
-  version: 3.3.2
-  resolution: "@synthetixio/core-contracts@npm:3.3.2"
-  checksum: e2b09e6a207262a25cd067c2f40cb639c0879e75a63abf7f3da6528991890f3417c8f6069fa4eceaa0a5fe2cba6ad699ddb930fbe2a516b7eeef9cac592184aa
+"@synthetixio/core-contracts@npm:^3.3.4":
+  version: 3.3.6
+  resolution: "@synthetixio/core-contracts@npm:3.3.6"
+  checksum: fa34c2dd673810e78713556e2ed9edb4bb88344058b9fc21868c56c3d8f049c6ff316348e9ebb7a2c702de457cedcf453cecf954dc885e584d31714c9cb93caf
   languageName: node
   linkType: hard
 
-"@synthetixio/core-modules@npm:^3.3.2":
-  version: 3.3.2
-  resolution: "@synthetixio/core-modules@npm:3.3.2"
-  checksum: 4ac1a59d86f913a5c8d0e9e0aeb9af113d3d23cf66dc31e21687eee40f8f094c9524dbb72b3fcbdab2a6bf450654d9636a3592a0c52f7f46a1affa4806e4d598
+"@synthetixio/core-modules@npm:^3.3.4":
+  version: 3.3.6
+  resolution: "@synthetixio/core-modules@npm:3.3.6"
+  checksum: af16d8d2fa904642c63812e84aa37549d4522d07bd1343a5e9ba468ba298de2eff37b4151e4d29dfa653750c514d446685cd66d9340e5d598f03da105fb71098
   languageName: node
   linkType: hard
 
@@ -1246,17 +1246,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/main@npm:^3.3.2":
-  version: 3.3.2
-  resolution: "@synthetixio/main@npm:3.3.2"
-  checksum: 8a126bf75ae03a70787a0f64185628023f3d8af3de1fa8b98aec1173cd5c1a30824c39151947f2bff2fcc9dfdd54d4d021c279b424ebca2f436939e54054c0af
+"@synthetixio/main@npm:^3.3.4":
+  version: 3.3.6
+  resolution: "@synthetixio/main@npm:3.3.6"
+  checksum: 432d89554007ee48ba68f8afe02af5687036d44a33fd1948cc66c51b1c615a287fee64010ee0a45695429031cb40709e564b4d0eed7273c197c81c96f542e335
   languageName: node
   linkType: hard
 
-"@synthetixio/oracle-manager@npm:^3.3.2":
-  version: 3.3.2
-  resolution: "@synthetixio/oracle-manager@npm:3.3.2"
-  checksum: f71a045986d847fead503c8342acd55f35cab8dd96f88dbf2167c8ae6c24bf019e8e025f164b705f3e73ed22e9605db2b1288c6a37a01084fdde3c375445b9bf
+"@synthetixio/oracle-manager@npm:^3.3.4":
+  version: 3.3.6
+  resolution: "@synthetixio/oracle-manager@npm:3.3.6"
+  checksum: 354c5bf54ac2c0973a90d761f8d98698b9a7396fe31afebdd5047964157c4dea5d1758dbc764bb07d9c9a992030dd6788fa96e302c8d4525869475d2a8f7ee8c
   languageName: node
   linkType: hard
 
@@ -2062,12 +2062,12 @@ __metadata:
   dependencies:
     "@nomiclabs/hardhat-ethers": ^2.2.3
     "@openzeppelin/contracts": 4.9.3
-    "@synthetixio/common-config": 3.3.2
-    "@synthetixio/core-contracts": ^3.3.2
-    "@synthetixio/core-modules": ^3.3.2
+    "@synthetixio/common-config": 3.3.4
+    "@synthetixio/core-contracts": ^3.3.4
+    "@synthetixio/core-modules": ^3.3.4
     "@synthetixio/core-utils": ^3.3.4
-    "@synthetixio/main": ^3.3.2
-    "@synthetixio/oracle-manager": ^3.3.2
+    "@synthetixio/main": ^3.3.4
+    "@synthetixio/oracle-manager": ^3.3.4
     "@synthetixio/spot-market": 3.3.3-dev.a31b56e8
     "@synthetixio/v3-contracts": ^3.1.0
     "@synthetixio/wei": ^2.74.4
