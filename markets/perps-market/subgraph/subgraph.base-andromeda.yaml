@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./base-goerli-competition/schema.graphql
+  file: ./base/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-testnet
+    network: base
     name: PerpsMarketProxy
     source:
       abi: PerpsMarketProxy
-      address: "0x9863Dae3f4b5F4Ffe3A841a21565d57F2BA10E87"
-      startBlock: 9243743
+      address: "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce"
+      startBlock: 12708889
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./base-goerli-competition/index.ts
+      file: ./base/index.ts
       abis:
         - name: PerpsMarketProxy
-          file: ./base-goerli-competition/deployments/perpsFactory/PerpsMarketProxy.json
+          file: ./base/deployments/perpsFactory/PerpsMarketProxy.json
       entities:
         - Account
         - Market

@@ -22,7 +22,7 @@ async function findAll() {
     //    getStartBlock({ namespace: 'optimism-mainnet', networkName: 'optimism-mainnet' }),
     getStartBlock({ namespace: 'optimism-goerli', networkName: 'optimism-goerli' }),
     //    getStartBlock({ namespace: 'base-goerli', networkName: 'base-goerli' }),
-    getStartBlock({ namespace: 'base-goerli-competition', networkName: 'base-goerli' }),
+    getStartBlock({ namespace: 'base-andromeda', networkName: 'base-andromeda' }),
     getStartBlock({ namespace: 'base-goerli-andromeda', networkName: 'base-goerli' }),
   ]);
 

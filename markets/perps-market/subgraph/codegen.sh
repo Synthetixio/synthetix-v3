@@ -39,5 +39,6 @@ releaseVersion="latest"
 #codegen optimism-mainnet 10 "synthetix-omnibus:$releaseVersion" main
 codegen optimism-goerli 420 "synthetix-omnibus:$releaseVersion" main
 #codegen base-goerli 84531 "synthetix-omnibus:$releaseVersion" main
-codegen base-goerli-competition 84531 "synthetix-omnibus:$releaseVersion" competition
 codegen base-goerli-andromeda 84531 "synthetix-omnibus:$releaseVersion" andromeda
+codegen base-andromeda 8453 "synthetix-omnibus:$releaseVersion" andromeda
+
