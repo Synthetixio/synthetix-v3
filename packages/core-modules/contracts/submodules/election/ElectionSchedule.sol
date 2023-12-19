@@ -114,6 +114,7 @@ contract ElectionSchedule is ElectionBase {
         bool ensureChangesAreSmall
     ) internal {
         uint64 maxDateAdjustmentTolerance = _electionSettings().maxDateAdjustmentTolerance;
+        ElectionPeriod initialPeriod = _getCurrentPeriod();
 
         if (ensureChangesAreSmall) {
             if (
@@ -134,7 +135,7 @@ contract ElectionSchedule is ElectionBase {
             newEpochEndDate
         );
 
-        if (_getCurrentPeriod() != ElectionPeriod.Administration) {
+        if (_getCurrentPeriod() != initialPeriod) {
             revert ChangesCurrentPeriod();
         }
     }
