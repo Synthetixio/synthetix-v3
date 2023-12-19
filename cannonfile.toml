@@ -235,7 +235,7 @@ depends = ["import.oracleManager", "contract.ChainlinkStEthToEthNode"]
 
 # --- Pyth ETH Oracle --- #
 
-[invoke.registerNode_pythEthOracleNode]
+[invoke.registerNode_pythEthNode]
 target = ["oracleManager.Proxy"]
 func = "registerNode"
 args = [
@@ -256,7 +256,7 @@ depends = ["import.oracleManager", "import.pyth"]
 target = ["oracleManager.Proxy"]
 func = "registerNode"
 args = [
-    # 1 = reducer node
+    # reducer node
     1,
     # mulDecimal
     "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
@@ -274,7 +274,24 @@ depends = [
 # --- wstETH Oracle `reduce(pythEthPrice, wstEthToEth)` --- #
 # @see: # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/oracle-manager/contracts/nodes/ReducerNode.sol
 
-# TODO
+[invoke.registerNode_pythWstEthNode]
+target = ["oracleManager.Proxy"]
+func = "registerNode"
+args = [
+    # reducer node
+    1,
+    # mulDecimal
+    "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
+    # pythEthPrice,
+    ["<%= extras.pythEthNodeId %>", "<%= extras.wstEthToEthNodeId %>"],
+]
+extra.pythWstEthNodeId.event = "NodeRegistered"
+extra.pythWstEthNodeId.arg = 0
+depends = [
+    "import.oracleManager",
+    "invoke.registerNode_pythEthNode",
+    "invoke.registerNode_wstEthToEthNode",
+]
 
 # --- Market Post BFP Deployment Configuration --- #
 
