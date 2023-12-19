@@ -112,21 +112,3 @@ library TickMath {
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
-
-// @custom:artifact contracts/storage/Buyback.sol:Buyback
-library Buyback {
-    struct Data {
-        uint256 premium;
-        uint256 snxFeeShare;
-        address oracleManager;
-        bytes32 snxNodeId;
-        address snxToken;
-        address usdToken;
-    }
-    function load() internal pure returns (Data storage buyback) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.auxiliary.buyback-snx.Buyback"));
-        assembly {
-            buyback.slot := s
-        }
-    }
-}
