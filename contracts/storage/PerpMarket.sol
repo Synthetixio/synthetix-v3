@@ -144,7 +144,7 @@ library PerpMarket {
     }
 
     /**
-     * @dev Updates the `pastLiquidations` array by either appending a new timestamp or
+     * @dev Updates the `pastLiquidations` array by either appending a new timestamp or update an existing accumulation.
      */
     function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
         uint128 currentTime = block.timestamp.to128();

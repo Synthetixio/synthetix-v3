@@ -61,7 +61,7 @@ contract MarginModule is IMarginModule {
     }
 
     /**
-     * @dev Performs an collateral withdraw from Synthetix, ERC20 transfer, and emits event.
+     * @dev Performs a collateral withdraw from Synthetix, ERC20 transfer, and emits event.
      */
     function withdrawAndTransfer(
         uint128 marketId,
@@ -166,6 +166,7 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
@@ -186,7 +187,10 @@ contract MarginModule is IMarginModule {
             }
 
             total += available;
-            accountMargin.collaterals[synthMarketId] -= available;
+
+            // All collateral withdrawn from `accountMargin`, can be set directly to zero.
+            accountMargin.collaterals[synthMarketId] = 0;
+
             market.depositedCollateral[synthMarketId] -= available;
 
             // Withdraw all available collateral for this `synthMarketId`.
@@ -251,7 +255,11 @@ contract MarginModule is IMarginModule {
         } else {
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
-                revert ErrorUtil.InsufficientCollateral(synthMarketId, totalMarketAvailableAmount, absAmountDelta);
+                revert ErrorUtil.InsufficientCollateral(
+                    synthMarketId,
+                    accountMargin.collaterals[synthMarketId],
+                    absAmountDelta
+                );
             }
 
             accountMargin.collaterals[synthMarketId] -= absAmountDelta;
