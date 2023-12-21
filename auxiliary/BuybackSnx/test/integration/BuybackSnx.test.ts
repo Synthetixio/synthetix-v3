@@ -3,66 +3,28 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import { bn, bootstrapBuyback } from './bootstrap';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
-
-const parseUnits = ethers.utils.parseUnits;
 
 describe('BuybackSnx', function () {
   const { getContract, user, owner } = bootstrapBuyback();
 
-  let Pyth: ethers.Contract;
-  let PythERC7412Wrapper: ethers.Contract;
   let BuybackSnx: ethers.Contract;
   let SnxToken: ethers.Contract;
   let UsdToken: ethers.Contract;
 
-  let priceFeedId: string;
-
+  const snxPrice = bn(10);
   const snxAmount = bn(100);
   const usdAmount = bn(5000);
   const premiumValue = bn(0.01);
   const snxFeeShareRatio = bn(0.5);
 
-  const decimals = 8;
-  const price = parseUnits('10', decimals).toString();
-  const emaPrice = parseUnits('2', decimals).toString();
-
   before('prepare environment', async () => {
-    const blockNumber = await hre.ethers.provider.getBlockNumber();
-    const timestamp = (await hre.ethers.provider.getBlock(blockNumber)).timestamp;
-
+    BuybackSnx = getContract('buyback_snx');
     SnxToken = getContract('snx.MintableToken');
     UsdToken = getContract('usd.MintableToken');
     console.log('snx token address', SnxToken.address);
     console.log('usd token address', UsdToken.address);
-
-    Pyth = getContract('pyth.Pyth');
-    PythERC7412Wrapper = getContract('pyth_erc7412_wrapper.PythERC7412Wrapper');
-    BuybackSnx = getContract('buyback_snx');
-
-    priceFeedId = '0x39d020f60982ed892abbcd4a06a276a9f9b7bfbce003204c110b6e488f502da3';
-    console.log('priceFeedId', priceFeedId.toString());
-
-    const resp = await Pyth.createPriceFeedUpdateData(
-      priceFeedId,
-      price,
-      1,
-      -decimals,
-      emaPrice,
-      1,
-      timestamp - 1,
-      0
-    );
-    console.log('Pyth.createPriceFeedUpdateData response', resp);
-    console.log('timestamp -1 ', timestamp - 1);
-
-    const fee = await Pyth['getUpdateFee(bytes[])']([resp]);
-    await Pyth.updatePriceFeeds([resp], { value: fee });
-
-    const priceUnsafe = await Pyth.getPriceUnsafe(priceFeedId);
-    console.log('Pyth.getPriceUnsafe(snxNodeId)', priceUnsafe.toString());
   });
 
   before('set up token balances', async () => {
@@ -85,7 +47,7 @@ describe('BuybackSnx', function () {
     });
   });
 
-  describe.skip('buyback', function () {
+  describe('buyback', function () {
     let userAddress: string;
     let userSnxBalanceBefore: any;
     let userUsdBalanceBefore: any;
@@ -109,9 +71,6 @@ describe('BuybackSnx', function () {
     });
 
     it('buys snx for usd', async () => {
-      const snxPrice = await PythERC7412Wrapper.getLatestPrice(priceFeedId, 60);
-      console.log('PythERC7412Wrapper.getLatestPrice(snxNodeId, 60)', snxPrice.toString());
-
       const premium = await BuybackSnx.getPremium();
       console.log('premium', premium.toString());
 

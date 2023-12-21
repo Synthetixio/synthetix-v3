@@ -2811,9 +2811,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/buyback-snx@workspace:auxiliary/buyback-snx":
+"@synthetixio/buyback-snx@workspace:auxiliary/BuybackSnx":
   version: 0.0.0-use.local
-  resolution: "@synthetixio/buyback-snx@workspace:auxiliary/buyback-snx"
+  resolution: "@synthetixio/buyback-snx@workspace:auxiliary/BuybackSnx"
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
