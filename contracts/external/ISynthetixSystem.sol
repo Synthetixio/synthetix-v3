@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-import "@synthetixio/main/contracts/interfaces/IUtilsModule.sol";
-import "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
-import "@synthetixio/main/contracts/interfaces/IVaultModule.sol";
+import {IAssociatedSystemsModule} from "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol";
+import {IMarketManagerModule} from "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
+import {IMarketCollateralModule} from "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
+import {IUtilsModule} from "@synthetixio/main/contracts/interfaces/IUtilsModule.sol";
+import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
+import {IVaultModule} from "@synthetixio/main/contracts/interfaces/IVaultModule.sol";
 
 interface ISynthetixSystem is
     IAssociatedSystemsModule,

@@ -61,7 +61,7 @@ contract MarginModule is IMarginModule {
     }
 
     /**
-     * @dev Performs an collateral withdraw from Synthetix, ERC20 transfer, and emits event.
+     * @dev Performs a collateral withdraw from Synthetix, ERC20 transfer, and emits event.
      */
     function withdrawAndTransfer(
         uint128 marketId,
@@ -161,11 +161,12 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.PositionFlagged();
         }
 
-        // Prevent collateral transfers when there's an open position.
+        // Prevent withdraw all transfers when there's an open position.
         Position.Data storage position = market.positions[accountId];
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
@@ -186,7 +187,10 @@ contract MarginModule is IMarginModule {
             }
 
             total += available;
-            accountMargin.collaterals[synthMarketId] -= available;
+
+            // All collateral withdrawn from `accountMargin`, can be set directly to zero.
+            accountMargin.collaterals[synthMarketId] = 0;
+
             market.depositedCollateral[synthMarketId] -= available;
 
             // Withdraw all available collateral for this `synthMarketId`.
@@ -203,9 +207,22 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function modifyCollateral(uint128 accountId, uint128 marketId, uint128 synthMarketId, int256 amountDelta) external {
+        // Revert on zero amount operations rather than no-op.
+        if (amountDelta == 0) {
+            revert ErrorUtil.ZeroAmount();
+        }
+
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.CollateralType storage collateral = globalMarginConfig.supported[synthMarketId];
+
+        // Prevent any operations if this synth isn't supported as collateral.
+        if (!collateral.exists) {
+            revert ErrorUtil.UnsupportedCollateral(synthMarketId);
+        }
 
         // Prevent collateral transfers when there's a pending order.
         if (market.orders[accountId].sizeDelta != 0) {
@@ -217,23 +234,8 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.PositionFlagged();
         }
 
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
-        uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
-
-        Margin.CollateralType storage collateral = globalMarginConfig.supported[synthMarketId];
-
-        // Prevent any operations if this synth isn't supported as collateral.
-        if (!collateral.exists) {
-            revert ErrorUtil.UnsupportedCollateral(synthMarketId);
-        }
-
-        // Revert on zero amount operations rather than no-op.
-        if (amountDelta == 0) {
-            revert ErrorUtil.ZeroAmount();
-        }
 
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
@@ -241,6 +243,8 @@ contract MarginModule is IMarginModule {
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             uint256 maxAllowable = collateral.maxAllowable;
+            uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
+
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (totalMarketAvailableAmount + absAmountDelta > maxAllowable) {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
@@ -251,7 +255,11 @@ contract MarginModule is IMarginModule {
         } else {
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
-                revert ErrorUtil.InsufficientCollateral(synthMarketId, totalMarketAvailableAmount, absAmountDelta);
+                revert ErrorUtil.InsufficientCollateral(
+                    synthMarketId,
+                    accountMargin.collaterals[synthMarketId],
+                    absAmountDelta
+                );
             }
 
             accountMargin.collaterals[synthMarketId] -= absAmountDelta;
