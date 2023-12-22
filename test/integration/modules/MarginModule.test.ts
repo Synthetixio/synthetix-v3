@@ -287,7 +287,9 @@ describe('MarginModule', async () => {
             [
               /FundingRecomputed/,
               `Transfer("${traderAddress}", "${ADDRESS0}", ${collateralDepositAmount})`,
-              `MarketUsdDeposited(${marketId}, "${traderAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
+              new RegExp(
+                `MarketUsdDeposited\\(${marketId}, "${traderAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}",`
+              ), // + tail properties omitted
               `MarginDeposit(${marginDepositEventProperties})`,
             ],
             contractsWithAllEvents
@@ -305,7 +307,7 @@ describe('MarginModule', async () => {
               /FundingRecomputed/,
               `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`, // From collateral ERC20 contract
               `Transfer("${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount})`, // From collateral ERC20 contract
-              `MarketCollateralDeposited(${marketCollateralDepositedEventProperties})`, // From core.
+              new RegExp(`MarketCollateralDeposited\\(${marketCollateralDepositedEventProperties},`), // From core (+ tail properties omitted)
               `MarginDeposit(${marginDepositEventProperties})`,
             ],
             contractsWithAllEvents
@@ -624,12 +626,16 @@ describe('MarginModule', async () => {
           // Both of these events are emitted by the core protocol.
           expectedEvents = expectedEvents.concat([
             `Transfer("${ADDRESS0}", "${traderAddress}", ${withdrawAmount})`,
-            `MarketUsdWithdrawn(${marketId}, "${traderAddress}", ${withdrawAmount}, "${PerpMarketProxy.address}")`,
+            new RegExp(
+              `MarketUsdWithdrawn\\(${marketId}, "${traderAddress}", ${withdrawAmount}, "${PerpMarketProxy.address}",`
+            ), // + tail properties omitted.
           ]);
         } else {
           expectedEvents = expectedEvents.concat([
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount})`, // From collateral ERC20 contract
-            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}")`, // From core
+            new RegExp(
+              `MarketCollateralWithdrawn\\(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}",`
+            ), // From core (+ tail properties omitted)
             `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount})`, // From collateral ERC20 contract
           ]);
         }
@@ -1315,15 +1321,23 @@ describe('MarginModule', async () => {
           [
             /FundingRecomputed/, // funding recomputed, don't care about the exact values here
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralAmount})`,
-            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${collateralAmount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
+            new RegExp(
+              `MarketCollateralWithdrawn\\(${marketId}, "${collateral.contract.address}", ${collateralAmount}, "${PerpMarketProxy.address}",`
+            ), // withdraw collateral, to sell to pay back losing pos in sUSD (+ tail properties omitted)
             `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${collateralAmount})`, // withdraw collateral, to sell to pay back losing pos in sUSD
             `Transfer("${ADDRESS0}", "${PerpMarketProxy.address}", ${usdDepositAmount})`, // emitted from selling synths
-            `MarketUsdWithdrawn(${synthMarketId}, "${PerpMarketProxy.address}", ${usdDepositAmount}, "${SpotMarket.address}")`, // emitted from selling synthe
-            `SynthSold(${synthMarketId}, ${usdDepositAmount}, [0, 0, 0, 0], 0, "${ADDRESS0}", ${newCollateralPrice.toBN()})`, // Sell collateral to sUSD to pay back losing pos
+            new RegExp(
+              `MarketUsdWithdrawn\\(${synthMarketId}, "${PerpMarketProxy.address}", ${usdDepositAmount}, "${SpotMarket.address}",`
+            ), // emitted from selling synth (+ tail properties omitted)
+            `SynthSold(${synthMarketId}, ${usdDepositAmount}, [0, 0, 0, 0], 0, "${ADDRESS0}", ${newCollateralPrice.toBN()})`, // sell collateral to sUSD to pay back losing pos
             `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${usdDepositAmount})`, // part of depositing sUSD to market manager
-            `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdDepositAmount}, "${PerpMarketProxy.address}")`, // deposit sUSD into market manager, this will let LPs of this market profit
+            new RegExp(
+              `MarketUsdDeposited\\(${marketId}, "${PerpMarketProxy.address}", ${usdDepositAmount}, "${PerpMarketProxy.address}",`
+            ), // deposit sUSD into market manager, this will let LPs of this market profit (+ tail properties omitted)
             `Transfer("${ADDRESS0}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
-            `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}")`, // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited
+            new RegExp(
+              `MarketUsdWithdrawn\\(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}",`
+            ), // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited (+ tail properties omitted)
             `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
           ],
           // PerpsMarket abi gets events from Core, SpotMarket, Pyth and ERC20 added
