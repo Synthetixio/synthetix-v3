@@ -111,6 +111,17 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
+    function computeOrderFeesWithPrice(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 price
+    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta, price);
+    }
+
     function requiredMarginForOrder(
         uint128 accountId,
         uint128 marketId,
