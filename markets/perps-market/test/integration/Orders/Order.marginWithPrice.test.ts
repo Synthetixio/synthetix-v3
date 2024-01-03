@@ -18,7 +18,7 @@ const BTC_SKEW_SCALE = 1000;
 const ETH_SKEW_SCALE = 10_000;
 const TRADER_ID = 2;
 
-describe('Orders - margin with price calculation', () => {
+describe('Orders - margin withPrice calculation', () => {
   const liqParams = {
     btc: {
       imRatio: wei(0.02),
@@ -125,12 +125,13 @@ describe('Orders - margin with price calculation', () => {
   }) {
     const step = steps[index];
 
-    let orderFees, fillPrice, ethPrice, btcPrice;
+    let orderFees, orderFillPrice, fillPrice, ethPrice, btcPrice;
 
     if (updatedMarket === 'eth') {
-      [orderFees] = await systems().PerpsMarket.computeOrderFees(
+      [orderFees, orderFillPrice] = await systems().PerpsMarket.computeOrderFeesWithPrice(
         ETH_MARKET_ID,
-        step.delta.eth.size
+        wei(step.delta.eth.size).bn,
+        wei(price).bn
       );
 
       fillPrice = calculateFillPrice(
@@ -140,12 +141,15 @@ describe('Orders - margin with price calculation', () => {
         wei(price)
       );
 
+      assertBn.equal(orderFillPrice, fillPrice.bn);
+
       ethPrice = fillPrice;
       btcPrice = wei(BTC_MARKET_PRICE);
     } else {
-      [orderFees] = await systems().PerpsMarket.computeOrderFees(
+      [orderFees, orderFillPrice] = await systems().PerpsMarket.computeOrderFeesWithPrice(
         BTC_MARKET_ID,
-        step.delta.btc.size
+        wei(step.delta.btc.size).bn,
+        wei(price).bn
       );
 
       fillPrice = calculateFillPrice(
@@ -154,6 +158,8 @@ describe('Orders - margin with price calculation', () => {
         wei(step.delta.btc.size),
         wei(price)
       );
+
+      assertBn.equal(orderFillPrice, fillPrice.bn);
 
       ethPrice = wei(ETH_MARKET_PRICE);
       btcPrice = fillPrice;
