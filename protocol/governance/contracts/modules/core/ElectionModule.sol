@@ -342,19 +342,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
 
-        address[] memory newCandidates = new address[](ballot.votedCandidates.length - 1);
-        uint counter = 0;
-        for (uint i = 0; i < ballot.votedCandidates.length; i++) {
-            for (uint j = 0; j < candidates.length; j++) {
-                if (ballot.votedCandidates[i] != candidates[j]) {
-                    newCandidates[counter] = ballot.votedCandidates[i];
-                    counter++;
-                }
-            }
-        }
-
         ballot.amounts = new uint256[](0);
-        ballot.votedCandidates = newCandidates;
+        ballot.votedCandidates = new address[](0);
 
         ballot.validate();
 
