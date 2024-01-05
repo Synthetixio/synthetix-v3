@@ -29,6 +29,14 @@ interface IElectionModule is IElectionModuleSatellite {
         uint256 votingPower,
         address[] candidates
     );
+
+    event VoteWithdrawn(
+        address indexed voter,
+        uint256 indexed chainId,
+        uint256 indexed epochId,
+        address[] candidates
+    );
+
     event ElectionBatchEvaluated(
         uint256 indexed epochId,
         uint256 numEvaluatedBallots,
@@ -92,6 +100,13 @@ interface IElectionModule is IElectionModuleSatellite {
         uint256 chainId,
         address[] calldata candidates,
         uint256[] calldata amounts
+    ) external;
+
+    function _recvWithdrawVote(
+        uint256 epochIndex,
+        address voter,
+        uint256 chainId,
+        address[] calldata candidates
     ) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)

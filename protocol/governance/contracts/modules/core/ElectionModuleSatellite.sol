@@ -97,8 +97,25 @@ contract ElectionModuleSatellite is
         );
     }
 
-    function withdrawVote() public payable override {
-        // TODO: implent vote withdraw
+    function withdrawVote(address[] calldata candidates) public payable override {
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
+
+        address sender = ERC2771Context._msgSender();
+
+        uint256 currentEpoch = Council.load().currentElectionId;
+
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.transmit(
+            cc.getChainIdAt(0),
+            abi.encodeWithSelector(
+                IElectionModule._recvWithdrawVote.selector,
+                currentEpoch,
+                sender,
+                block.chainid,
+                candidates
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
     }
 
     function _recvDismissMembers(

@@ -317,7 +317,58 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower, candidates);
     }
 
-    error Test(bool);
+    function _recvWithdrawVote(
+        uint256 epochIndex,
+        address voter,
+        uint256 chainId,
+        address[] calldata candidates
+    ) external override {
+        CrossChain.onlyCrossChain();
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
+
+        if (candidates.length > _MAX_BALLOT_SIZE) {
+            revert ParameterError.InvalidParameter("candidates", "too many candidates");
+        }
+
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        uint256 currentElectionId = council.currentElectionId;
+
+        if (epochIndex != currentElectionId) {
+            revert ParameterError.InvalidParameter("epochIndex", "invalid epoch index");
+        }
+
+        _validateCandidates(candidates);
+
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
+
+        address[] memory newCandidates = new address[](ballot.votedCandidates.length - 1);
+        uint counter = 0;
+        for (uint i = 0; i < ballot.votedCandidates.length; i++) {
+            for (uint j = 0; j < candidates.length; j++) {
+                if (ballot.votedCandidates[i] != candidates[j]) {
+                    newCandidates[counter] = ballot.votedCandidates[i];
+                    counter++;
+                }
+            }
+        }
+
+        ballot.amounts = new uint256[](0);
+        ballot.votedCandidates = newCandidates;
+
+        ballot.validate();
+
+        bytes32 ballotPtr;
+        assembly {
+            ballotPtr := ballot.slot
+        }
+
+        if (!election.ballotPtrs.contains(ballotPtr)) {
+            election.ballotPtrs.add(ballotPtr);
+        }
+
+        emit VoteWithdrawn(voter, chainId, currentElectionId, candidates);
+    }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint256 numBallots) external override {

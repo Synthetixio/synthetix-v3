@@ -2,6 +2,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
+import assert from 'assert';
 
 describe('ElectionModule - voting', function () {
   const { c, getSigners, getProvider } = bootstrap();
@@ -74,6 +75,17 @@ describe('ElectionModule - voting', function () {
 
         it('succeeds if ballot voting power matches', async function () {
           await c.CoreProxy.connect(user).cast([await user.getAddress()], [100]);
+        });
+
+        it('succeeds if user withdraws his own vote', async () => {
+          await c.CoreProxy.connect(user).withdrawVote([await user.getAddress()]);
+          assert.equal(
+            await c.CoreProxy.connect(user).hasVoted(
+              await user.getAddress(),
+              (await user.provider!.getNetwork()).chainId
+            ),
+            false
+          );
         });
       });
     });
