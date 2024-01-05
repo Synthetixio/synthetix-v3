@@ -34,6 +34,10 @@ library SettlementStrategy {
          */
         bytes32 feedId;
         /**
+         * @dev configurable feed id for quanto asset chainlink and pyth
+         */
+        bytes32 quantoFeedId;
+        /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */
         uint256 settlementReward;
