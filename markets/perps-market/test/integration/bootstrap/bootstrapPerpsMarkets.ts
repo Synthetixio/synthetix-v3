@@ -45,6 +45,7 @@ export type PerpsMarketData = Array<{
     settlementDelay: ethers.BigNumber;
     settlementWindowDuration: ethers.BigNumber;
     feedId: string;
+    quantoFeedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
     disabled: boolean;
@@ -64,6 +65,7 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   disabled: false,
   url: 'https://fakeapi.pyth.synthetix.io/',
   feedId: ethers.utils.formatBytes32String('ETH/USD'),
+  quantoFeedId: ethers.utils.formatBytes32String('ETH/USD'),
 };
 
 export const STRICT_PRICE_TOLERANCE = ethers.BigNumber.from(60);
