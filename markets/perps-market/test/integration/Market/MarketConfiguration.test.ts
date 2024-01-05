@@ -26,6 +26,7 @@ describe('MarketConfiguration', () => {
       settlementWindowDuration: 5000,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
+      quantoFeedId: utils.formatBytes32String('quantoFeedId'),
       settlementReward: 100,
       disabled: true,
     },
@@ -36,6 +37,7 @@ describe('MarketConfiguration', () => {
       settlementWindowDuration: 10000,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
+      quantoFeedId: utils.formatBytes32String('quantoFeedId'),
       settlementReward: 200,
       disabled: true,
     },
@@ -90,6 +92,8 @@ describe('MarketConfiguration', () => {
             fixture.settlementStrategy.priceVerificationContract.toString() +
             '", "' +
             fixture.settlementStrategy.feedId.toString() +
+            '", "' +
+            fixture.settlementStrategy.quantoFeedId.toString() +
             '", ' +
             fixture.settlementStrategy.settlementReward.toString() +
             ', ' +
@@ -166,6 +170,8 @@ describe('MarketConfiguration', () => {
             fixture.newSettlementStrategy.priceVerificationContract.toString() +
             '", "' +
             fixture.newSettlementStrategy.feedId.toString() +
+            '", "' +
+            fixture.newSettlementStrategy.quantoFeedId.toString() +
             '", ' +
             fixture.newSettlementStrategy.settlementReward.toString() +
             ', ' +
@@ -195,6 +201,7 @@ describe('MarketConfiguration', () => {
         );
         assert.equal(settlementStrategy.disabled, fixture.newSettlementStrategy.disabled);
         assert.equal(settlementStrategy.feedId, fixture.newSettlementStrategy.feedId);
+        assert.equal(settlementStrategy.quantoFeedId, fixture.newSettlementStrategy.quantoFeedId);
         assert.equal(
           settlementStrategy.priceVerificationContract,
           fixture.newSettlementStrategy.priceVerificationContract
@@ -223,6 +230,8 @@ describe('MarketConfiguration', () => {
             settlementStrategy.priceVerificationContract.toString() +
             '", "' +
             settlementStrategy.feedId.toString() +
+            '", "' +
+            settlementStrategy.quantoFeedId.toString() +
             '", ' +
             settlementStrategy.settlementReward.toString() +
             ', ' +
