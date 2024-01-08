@@ -167,11 +167,11 @@ library PerpMarket {
     function recomputeFunding(
         PerpMarket.Data storage self,
         uint256 price
-    ) internal returns (int256 fundingRate, int256 fundingAccrued) {
-        (fundingRate, fundingAccrued) = getUnrecordedFundingWithRate(self, price);
+    ) internal returns (int256 fundingRate, int256 unrecordingFunding) {
+        (fundingRate, unrecordingFunding) = getUnrecordedFundingWithRate(self, price);
 
         self.currentFundingRateComputed = fundingRate;
-        self.currentFundingAccruedComputed = fundingAccrued;
+        self.currentFundingAccruedComputed += unrecordingFunding;
         self.lastFundingTime = block.timestamp;
     }
 
