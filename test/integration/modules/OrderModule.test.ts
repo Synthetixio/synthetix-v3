@@ -17,6 +17,7 @@ import {
   toRoundRobinGenerators,
 } from '../../generators';
 import {
+  SECONDS_ONE_DAY,
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
   commitOrder,
@@ -24,6 +25,7 @@ import {
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
+  getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
@@ -35,8 +37,18 @@ import { shuffle } from 'lodash';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, spotMarket, ethOracleNode, collateralsWithoutSusd, markets, traders } =
-    bs;
+  const {
+    systems,
+    restore,
+    provider,
+    keeper,
+    spotMarket,
+    ethOracleNode,
+    collateralsWithoutSusd,
+    markets,
+    traders,
+    collaterals,
+  } = bs;
 
   beforeEach(restore);
 
@@ -789,6 +801,64 @@ describe('OrderModule', () => {
       const { receipt } = await commitAndSettle(bs, marketId, trader, order);
 
       assertEvent(receipt, 'FundingRecomputed', PerpMarketProxy);
+    });
+
+    it('should accurately account for funding when holding for a long time', async () => {
+      const { PerpMarketProxy } = systems();
+      // Create a static market to make funding assertion easier.
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      await setMarketConfigurationById(bs, marketId, {
+        maxFundingVelocity: bn(9),
+        skewScale: bn(500_000),
+        makerFee: bn(0.0002),
+        takerFee: bn(0.0006),
+      });
+      await market.aggregator().mockSetCurrentPrice(wei(100).toBN());
+      const { collateral, collateralDepositAmount, trader } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: 100_000,
+          // Use USD collateral to make funding assertion easier.
+          desiredCollateral: getSusdCollateral(collaterals()),
+        })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(1000).toBN(),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+      const nowS = Math.floor(Date.now() / 1000);
+      await fastForwardTo(nowS + SECONDS_ONE_DAY, provider());
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order.sizeDelta.mul(-1),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      const { receipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+      const { accruedFunding } = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args;
+      // Funding should not be zero.
+      assertBn.lt(accruedFunding, bn(0));
+      // Assert that we paid a lot of funding, due to holding our position open for a day.
+      assertBn.gt(accruedFunding.mul(-1), bn(800));
+
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(1000).toBN(),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order2);
+      const closeOrder2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order2.sizeDelta.mul(-1),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      const { receipt: receipt2 } = await commitAndSettle(bs, marketId, trader, closeOrder2);
+
+      const { accruedFunding: accruedFunding2 } = findEventSafe(receipt2, 'OrderSettled', PerpMarketProxy)?.args;
+
+      assertBn.lt(accruedFunding2, bn(0));
+      // Assert that we paid tiny amount of funding, since we closed instantly
+      assertBn.lt(accruedFunding2.mul(-1), bn(1));
     });
 
     it('should realize non-zero sUSD to trader when closing a profitable trade', async () => {
