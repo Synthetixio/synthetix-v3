@@ -28,6 +28,9 @@ interface IMarketConfigurationModule {
         uint128 minCollateralHaircut;
         uint128 maxCollateralHaircut;
         uint128 sellExactInMaxSlippagePercent;
+        uint128 utilizationBreakpointPercent;
+        uint128 lowUtilizationSlopePercent;
+        uint128 highUtilizationSlopePercent;
     }
 
     // @notice See PerpMarketConfiguration.Data for more details.

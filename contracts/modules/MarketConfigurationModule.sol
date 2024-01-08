@@ -32,6 +32,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.minCollateralHaircut = data.minCollateralHaircut;
         config.maxCollateralHaircut = data.maxCollateralHaircut;
         config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
+        config.utilizationBreakpointPercent = data.utilizationBreakpointPercent;
+        config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
+        config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
 
         emit ConfigurationUpdated(msg.sender);
     }
