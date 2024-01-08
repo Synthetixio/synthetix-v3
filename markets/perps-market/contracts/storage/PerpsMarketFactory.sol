@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
@@ -19,7 +18,6 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 library PerpsMarketFactory {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using DecimalMath for uint256;
     using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarket for PerpsMarket.Data;
@@ -83,6 +81,11 @@ library PerpsMarketFactory {
         self.perpsMarketId = perpsMarketId;
     }
 
+    function totalWithdrawableUsd() internal view returns (uint256) {
+        Data storage self = load();
+        return self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
+    }
+
     function depositMarketCollateral(
         Data storage self,
         ITokenModule collateral,
@@ -99,29 +102,5 @@ library PerpsMarketFactory {
 
     function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
         self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
-    }
-
-    function calculateMinimumCredit() internal view returns (uint256 accumulatedMinimumCredit) {
-        SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
-        uint256 activeMarketsLength = activeMarkets.length();
-        for (uint i = 1; i <= activeMarketsLength; i++) {
-            uint128 marketId = activeMarkets.valueAt(i).to128();
-
-            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId);
-        }
-    }
-
-    function utilizationRate(Data storage self) internal view returns (uint128) {
-        uint256 withdrawableUsd = self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
-        uint256 totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
-
-        uint256 delegatedCollateralValue = withdrawableUsd - totalCollateralValue;
-        uint256 minimumCredit = calculateMinimumCredit();
-
-        if (delegatedCollateralValue == 0) {
-            return 0;
-        }
-
-        return minimumCredit.divDecimal(delegatedCollateralValue).to128();
     }
 }

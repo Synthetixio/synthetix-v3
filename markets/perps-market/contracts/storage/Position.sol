@@ -103,12 +103,18 @@ library Position {
         uint nextInterestAccrued = InterestRate.load().calculateNextInterest();
         uint netInterestPerDollar = nextInterestAccrued - self.latestInterestAccrued;
 
-        uint lockedNotional = getNotionalValue(self, price).mulDecimal(
-            PerpsMarketConfiguration.load(self.marketId).lockedOiRatioD18
-        );
-
         // The interest is charged pro-rata on this position's contribution to the locked OI requirement
-        chargedInterest = lockedNotional.mulDecimal(netInterestPerDollar);
+        chargedInterest = getLockedNotionalValue(self, price).mulDecimal(netInterestPerDollar);
+    }
+
+    function getLockedNotionalValue(
+        Data storage self,
+        uint256 price
+    ) internal view returns (uint256) {
+        return
+            getNotionalValue(self, price).mulDecimal(
+                PerpsMarketConfiguration.load(self.marketId).lockedOiRatioD18
+            );
     }
 
     function getNotionalValue(Data storage self, uint256 price) internal view returns (uint256) {

@@ -74,6 +74,26 @@ describe('Market Debt - with funding', () => {
     await systems().PerpsMarket.connect(trader3()).modifyCollateral(4, 0, bn(100_000));
   });
 
+  const calculateExpectedPnls = async () => {
+    const [trader1Pnl, trader1Interest] = await systems().PerpsMarket.getOpenPosition(
+      2,
+      perpsMarket.marketId()
+    );
+    const [trader2Pnl, trader2Interest] = await systems().PerpsMarket.getOpenPosition(
+      3,
+      perpsMarket.marketId()
+    );
+    const [trader3Pnl, trader3Interest] = await systems().PerpsMarket.getOpenPosition(
+      4,
+      perpsMarket.marketId()
+    );
+    const interestCharges = trader1Interest.add(trader2Interest).add(trader3Interest);
+    return {
+      totalUnrealizedPnl: trader1Pnl.add(trader2Pnl).add(trader3Pnl).add(interestCharges),
+      marketCollateralValue: await systems().PerpsMarket.totalGlobalCollateralValue(),
+    };
+  };
+
   describe('with no positions', () => {
     it('should report total collateral value as debt', async () => {
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
@@ -84,7 +104,6 @@ describe('Market Debt - with funding', () => {
   let openPositionTime: number;
   describe('open positions', () => {
     before(async () => {
-      console.log(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       await openPosition({
         systems,
         provider,
@@ -120,18 +139,11 @@ describe('Market Debt - with funding', () => {
       }));
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.near(debt, totalCollateralValue.add(unrealizedTraderPnl), bn(0.0001));
+      assertBn.near(debt, marketCollateralValue.add(totalUnrealizedPnl), bn(0.0001));
     });
   });
 
@@ -140,22 +152,11 @@ describe('Market Debt - with funding', () => {
       await fastForwardTo(openPositionTime + _SECONDS_IN_DAY, provider());
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const { totalPnl: trader1Pnl, chargedInterest: i1 } =
-        await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const { totalPnl: trader2Pnl, chargedInterest: i2 } =
-        await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const { totalPnl: trader3Pnl, chargedInterest: i3 } =
-        await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      console.log(i1, i2, i3);
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.near(debt, totalCollateralValue.add(unrealizedTraderPnl), bn(0.0001));
+      assertBn.near(debt, marketCollateralValue.add(totalUnrealizedPnl), bn(0.0001));
     });
   });
 
@@ -164,18 +165,11 @@ describe('Market Debt - with funding', () => {
       await perpsMarket.aggregator().mockSetCurrentPrice(bn(1050));
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.near(debt, totalCollateralValue.add(unrealizedTraderPnl), bn(0.0001));
+      assertBn.near(debt, marketCollateralValue.add(totalUnrealizedPnl), bn(0.00001));
     });
   });
 
@@ -194,18 +188,11 @@ describe('Market Debt - with funding', () => {
       });
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.equal(debt, totalCollateralValue.add(unrealizedTraderPnl));
+      assertBn.equal(debt, marketCollateralValue.add(totalUnrealizedPnl));
     });
   });
 
@@ -224,18 +211,11 @@ describe('Market Debt - with funding', () => {
       });
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.equal(debt, totalCollateralValue.add(unrealizedTraderPnl));
+      assertBn.equal(debt, marketCollateralValue.add(totalUnrealizedPnl));
     });
   });
 
@@ -245,18 +225,11 @@ describe('Market Debt - with funding', () => {
       await systems().PerpsMarket.connect(keeper()).liquidate(3);
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.equal(debt, totalCollateralValue.add(unrealizedTraderPnl));
+      assertBn.equal(debt, marketCollateralValue.add(totalUnrealizedPnl));
     });
   });
 
@@ -268,18 +241,11 @@ describe('Market Debt - with funding', () => {
       partialLiquidationTime = await getTxTime(provider(), liquidateTxn);
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.near(debt, totalCollateralValue.add(unrealizedTraderPnl), bn(0.000001));
+      assertBn.near(debt, marketCollateralValue.add(totalUnrealizedPnl), bn(0.000001));
     });
   });
 
@@ -296,18 +262,11 @@ describe('Market Debt - with funding', () => {
       await systems().PerpsMarket.connect(keeper()).liquidate(2);
     });
 
-    let unrealizedTraderPnl: ethers.BigNumber, totalCollateralValue: ethers.BigNumber;
-    before('get unrealized trader pnl', async () => {
-      const [trader1Pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      const [trader2Pnl] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      const [trader3Pnl] = await systems().PerpsMarket.getOpenPosition(4, perpsMarket.marketId());
-      totalCollateralValue = await systems().PerpsMarket.totalGlobalCollateralValue();
-      unrealizedTraderPnl = trader1Pnl.add(trader2Pnl).add(trader3Pnl);
-    });
-
     it('reports correct debt', async () => {
+      const { totalUnrealizedPnl, marketCollateralValue } = await calculateExpectedPnls();
+
       const debt = await systems().PerpsMarket.reportedDebt(superMarketId());
-      assertBn.near(debt, totalCollateralValue.add(unrealizedTraderPnl), bn(0.000001));
+      assertBn.near(debt, marketCollateralValue.add(totalUnrealizedPnl), bn(0.000001));
     });
 
     it('fully liquidated trader 1', async () => {

@@ -239,7 +239,7 @@ library PerpsMarket {
         self.skew += newPositionSize - oldPositionSize;
 
         uint currentPrice = newPosition.latestInteractionPrice;
-        (int totalPositionPnl, , , , , ) = oldPosition.getPnl(currentPrice);
+        (, int pricePnl, , int fundingPnl, , ) = oldPosition.getPnl(currentPrice);
 
         int sizeDelta = newPositionSize - oldPositionSize;
         int fundingDelta = calculateNextFunding(self, currentPrice).mulDecimal(sizeDelta);
@@ -247,8 +247,11 @@ library PerpsMarket {
 
         // update the market debt correction accumulator before losing oldPosition details
         // by adding the new updated notional (old - new size) plus old position pnl
-        self.debtCorrectionAccumulator += fundingDelta + notionalDelta + totalPositionPnl;
+        self.debtCorrectionAccumulator += fundingDelta + notionalDelta + pricePnl + fundingPnl;
 
+        // update position to new position
+        // Note: once market interest rate is updated, the current accrued interest is saved
+        // to figure out the unrealized interest for the position
         oldPosition.update(newPosition, InterestRate.update());
 
         return
@@ -384,10 +387,10 @@ library PerpsMarket {
     function marketDebt(Data storage self, uint price) internal view returns (int) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt());
-        int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
+        int positionPnl = self.skew.mulDecimal(price.toInt());
+        int fundingPnl = self.skew.mulDecimal(calculateNextFunding(self, price));
 
-        return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
+        return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
     }
 
     function requiredCredit(uint128 marketId) internal view returns (uint) {

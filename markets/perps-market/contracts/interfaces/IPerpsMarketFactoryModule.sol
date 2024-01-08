@@ -62,9 +62,14 @@ interface IPerpsMarketFactoryModule is IMarket {
     /**
      * @notice Returns the super market utilization rate
      * @dev The rate is the minimumCredit / delegatedCollateral available.
-     * @dev Minimum credit is the sum of all markets open interest * configured lockedOiRatio
+     * @dev Locked credit is the sum of all markets open interest * configured lockedOiRatio
      * @dev delegatedCollateral is the avaialble collateral value for markets to withdraw, delegated by LPs
      * @return rate
+     * @return delegatedCollateral
+     * @return lockedCredit credit locked based on OI & lockedOiRatio
      */
-    function utilizationRate() external view returns (uint256 rate);
+    function utilizationRate()
+        external
+        view
+        returns (uint256 rate, uint256 delegatedCollateral, uint256 lockedCredit);
 }
