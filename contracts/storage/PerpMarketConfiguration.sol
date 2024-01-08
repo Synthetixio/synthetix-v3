@@ -73,11 +73,11 @@ library PerpMarketConfiguration {
         uint128 maxCollateralHaircut;
         // Maximum slippage on collateral sold for negative pnl position modifications.
         uint128 sellExactInMaxSlippagePercent;
-        // Dictates wheter or not the utilisation rate should use high or low slope
+        // Dictates wheter or not the utilization rate should use high or low slope
         uint128 utilizationBreakpointPercent;
-        // Used for utilisation interest when below utilisation breakpoint
+        // Used for utilization interest when below utilization breakpoint
         uint128 lowUtilizationSlopePercent;
-        // Used for utilisation interest when above utilisation breakpoint
+        // Used for utilization interest when above utilization breakpoint
         uint128 highUtilizationSlopePercent;
     }
 

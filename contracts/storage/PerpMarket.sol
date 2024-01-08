@@ -11,6 +11,7 @@ import {IPyth} from "../external/pyth/IPyth.sol";
 import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {Margin} from "../storage/Margin.sol";
 
 /**
  * @dev A single perp market denoted by marketId within bfp-market.
@@ -55,6 +56,12 @@ library PerpMarket {
         int256 currentFundingAccruedComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
+        // The value of the utilization rate last time this was computed.
+        uint256 currentUtilizationRateComputed;
+        // The value (in native units) of total market utilization accumulated.
+        uint256 currentUtilizationAccruedComputed;
+        // block.timestamp of when utilization was last computed.
+        uint256 lastUtilizationTime;
         // This is needed to perform a fast constant time op for overall market debt.
         //
         // debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
@@ -161,6 +168,76 @@ library PerpMarket {
         }
     }
 
+    function getUtilization(
+        PerpMarket.Data storage self,
+        uint256 price,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal returns (uint256 utilization) {
+        /** Get total collateral value */
+        uint128[] storage supportedSynthMarketIds = Margin.load().supportedSynthMarketIds;
+        uint256 length = supportedSynthMarketIds.length;
+        uint256 delegatedCollateralValueUsd;
+        for (uint256 i = 0; i < length; ) {
+            uint128 synthMarketId = supportedSynthMarketIds[i];
+            delegatedCollateralValueUsd += globalConfig.synthetix.getMarketCollateral(synthMarketId);
+            unchecked {
+                ++i;
+            }
+        }
+        /** Get lockedCollateralUsd */
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+
+        uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent);
+        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd);
+    }
+
+    function getCurrentUtilizationRate(
+        uint256 utilization,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal returns (uint256) {
+        uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
+        uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
+        if (utilization < utilizationBreakpointPercent) {
+            // If utilization is below the breakpoint, use the low utilization slope
+            return utilization * lowUtilizationSlopePercent;
+        } else {
+            // If utilization is above the breakpoint, calculate interest for both low and high utilization parts
+            return
+                utilizationBreakpointPercent *
+                lowUtilizationSlopePercent +
+                (utilization - utilizationBreakpointPercent) *
+                globalConfig.highUtilizationSlopePercent;
+        }
+    }
+
+    function getUnrecordedUtilizationWithRate(
+        PerpMarket.Data storage self,
+        uint256 price
+    ) internal returns (uint256 currentUtilizationRate, uint256 unrecordedUtilization) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        currentUtilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
+
+        uint256 avgUtilizationRate = (self.currentUtilizationRateComputed + currentUtilizationRate).divDecimal(
+            (DecimalMath.UNIT * 2)
+        );
+        // Calculate the additive accrued utilization delta for the next utilisaction accrued value.
+        unrecordedUtilization = avgUtilizationRate.mulDecimal(getProportionalUtilizationElapsed(self)).mulDecimal(
+            price
+        );
+    }
+
+    function recomputeUtilization(
+        PerpMarket.Data storage self,
+        uint256 price
+    ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
+        (utilizationRate, unrecordedUtilization) = getUnrecordedUtilizationWithRate(self, price);
+
+        self.currentUtilizationRateComputed = utilizationRate;
+        self.currentUtilizationAccruedComputed += unrecordedUtilization;
+        self.lastUtilizationTime = block.timestamp;
+    }
+
     /**
      * @dev Recompute and store funding related values given the current market conditions.
      */
@@ -211,8 +288,15 @@ library PerpMarket {
     /**
      * @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
      */
-    function getProportionalElapsed(PerpMarket.Data storage self) internal view returns (int256) {
+    function getProportionalFundingElapsed(PerpMarket.Data storage self) internal view returns (int256) {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+    }
+
+    /**
+     * @dev Returns the proportional time elapsed since last utilization.
+     */
+    function getProportionalUtilizationElapsed(PerpMarket.Data storage self) internal view returns (uint256) {
+        return (block.timestamp - self.lastUtilizationTime);
     }
 
     /**
@@ -237,7 +321,7 @@ library PerpMarket {
         //                    = 0.00083912
         return
             self.currentFundingRateComputed +
-            (getCurrentFundingVelocity(self).mulDecimal(getProportionalElapsed(self)));
+            (getCurrentFundingVelocity(self).mulDecimal(getProportionalFundingElapsed(self)));
     }
 
     /**
@@ -253,7 +337,7 @@ library PerpMarket {
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
-        unrecordedFunding = avgFundingRate.mulDecimal(getProportionalElapsed(self)).mulDecimal(price.toInt());
+        unrecordedFunding = avgFundingRate.mulDecimal(getProportionalFundingElapsed(self)).mulDecimal(price.toInt());
     }
 
     function getMaxLiquidatableCapacity(
