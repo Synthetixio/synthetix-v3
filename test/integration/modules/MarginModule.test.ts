@@ -1207,7 +1207,7 @@ describe('MarginModule', async () => {
 
         // Add some random wait time to loose some to funding as well
         const now = (await provider().getBlock('latest')).timestamp;
-        await fastForwardTo(now + genNumber(SECONDS_ONE_DAY, SECONDS_ONE_DAY), provider());
+        await fastForwardTo(now + genNumber(1000, SECONDS_ONE_DAY), provider());
         // Close the order with a loss
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
