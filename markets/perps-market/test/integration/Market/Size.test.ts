@@ -222,7 +222,7 @@ describe('Market - size test', () => {
         });
       });
 
-      it('if max market value is reached', async () => {
+      it('if max market size is reached', async () => {
         await assertRevert(
           openPosition({
             systems,
@@ -241,7 +241,7 @@ describe('Market - size test', () => {
         );
       });
 
-      it('if exceeds max market value with short', async () => {
+      it('if exceeds max market size with short', async () => {
         await assertRevert(
           openPosition({
             systems,
@@ -257,6 +257,60 @@ describe('Market - size test', () => {
           `MaxOpenInterestReached(${ethMarket.marketId()}, ${bn(10_000).toString()}, ${bn(
             20_000
           ).toString()})`
+        );
+      });
+
+      it('if max market value is reached', async () => {
+        // reduce position size to 5000
+        await openPosition({
+          systems,
+          provider,
+          trader: trader1(),
+          accountId: 2,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(-5_000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+
+        // 40_000_000 is max market value
+        // 5000 * 8000 = 40_000_000
+        await ethMarket.aggregator().mockSetCurrentPrice(bn(8000));
+        await assertRevert(
+          openPosition({
+            systems,
+            provider,
+            trader: trader1(),
+            accountId: 2,
+            keeper: keeper(),
+            marketId: ethMarket.marketId(),
+            sizeDelta: bn(1),
+            settlementStrategyId: ethMarket.strategyId(),
+            price: bn(8000),
+          }),
+          `MaxUSDOpenInterestReached(${ethMarket.marketId()}, ${bn(40_000_000).toString()}, ${bn(
+            5_001
+          ).toString()}, ${bn(8000).toString()})`
+        );
+      });
+
+      it('if exceeds max market value with short', async () => {
+        await assertRevert(
+          openPosition({
+            systems,
+            provider,
+            trader: trader2(),
+            accountId: 3,
+            keeper: keeper(),
+            marketId: ethMarket.marketId(),
+            sizeDelta: bn(-10_000),
+            settlementStrategyId: ethMarket.strategyId(),
+            price: bn(8000),
+          }),
+          `MaxUSDOpenInterestReached(${ethMarket.marketId()}, ${bn(40_000_000).toString()}, ${bn(
+            10_000
+          ).toString()}, ${bn(8000).toString()})`
         );
       });
     });
