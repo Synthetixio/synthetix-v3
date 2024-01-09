@@ -296,7 +296,9 @@ library PerpMarket {
      * @dev Returns the proportional time elapsed since last utilization.
      */
     function getProportionalUtilizationElapsed(PerpMarket.Data storage self) internal view returns (uint256) {
-        return (block.timestamp - self.lastUtilizationTime);
+        // 4 years which includes leap
+        uint256 AVERAGE_SECONDS_PER_YEAR = 31556952;
+        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
     }
 
     /**
