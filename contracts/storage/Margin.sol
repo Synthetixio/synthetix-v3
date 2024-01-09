@@ -151,6 +151,11 @@ library Margin {
                 available = accountMargin.collaterals[synthMarketId];
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
+                //
+                // NOTE: The invocation to fetch market price relies on a upstream operation to update and store a Pyth
+                // price. This is entirely due the atomic spot sale of non sUSD collateral. As such, any call to `updateAccountCollateral`
+                // must be preceeded with a `parsePythPrice` invocation (assuming the account has zero sUSD or not enough sUSD to
+                // cover costs to pay back negative pnl either via fees, losses, or both).
                 if (available > 0) {
                     collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(collateralPrice));

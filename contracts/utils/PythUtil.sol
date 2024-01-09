@@ -13,8 +13,8 @@ library PythUtil {
     using SafeCastI256 for int256;
 
     /**
-     * @dev parses the result from the offchain lookup data and returns the offchain price plus order and settlementStrategy.
-     * @notice parsePriceFeedUpdates will revert if the price timestamp is outside the acceptable window.
+     * @dev Parse Pyth price for the market pass in through `priceUpdateData`.
+     * @notice This function will revert if the price timestamp is outside the acceptable window (pythPublicTime{Min,Max}).
      */
     function parsePythPrice(
         PerpMarketConfiguration.GlobalData storage globalConfig,
@@ -28,14 +28,22 @@ library PythUtil {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = priceUpdateData;
 
-        PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdatesUnique{
-            value: msg.value
-        }(
+        IPyth pyth = IPyth(globalConfig.pyth);
+
+        // NOTE: `unique` fn suffix is important here as it ensure the prevPublishTime in `priceUpdateData` is also
+        // gt (not gte) `now + minTime`.
+        PythStructs.PriceFeed[] memory priceFeeds = pyth.parsePriceFeedUpdatesUnique{value: msg.value / 2}(
             updateData,
             priceIds,
             commitmentTime.to64() + globalConfig.pythPublishTimeMin,
             commitmentTime.to64() + globalConfig.pythPublishTimeMax
         );
+
+        // NOTE: Adding this temporarily until Pyth add supports for updates to be stored as part of the `parsePriceFeedUpdatesUnique`.
+        //
+        // However, since this is two separate calls which both require an updateFee, keepers must send 2x. One for the
+        // `update` and another for `parse`.
+        pyth.updatePriceFeeds{value: msg.value / 2}(updateData);
 
         PythStructs.PriceFeed memory pythData = priceFeeds[0];
         price = getScaledPrice(pythData.price.price, pythData.price.expo);
