@@ -1319,7 +1319,11 @@ describe('MarginModule', async () => {
         await assertEvents(
           closeReceipt,
           [
-            /FundingRecomputed/, // funding recomputed, don't care about the exact values here
+            // Pyth price updates in Pyth contracts, don't care about exact values here.
+            /PriceFeedUpdate/,
+            /BatchPriceFeedUpdate/,
+            // Funding recomputed, don't care about the exact values here.
+            /FundingRecomputed/,
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralAmount})`,
             new RegExp(
               `MarketCollateralWithdrawn\\(${marketId}, "${collateral.contract.address}", ${collateralAmount}, "${PerpMarketProxy.address}",`
