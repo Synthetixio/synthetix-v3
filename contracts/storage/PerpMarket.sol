@@ -189,14 +189,12 @@ library PerpMarket {
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         if (utilization < utilizationBreakpointPercent) {
             // If utilization is below the breakpoint, use the low utilization slope
-            return utilization * lowUtilizationSlopePercent;
+            return utilization.mulDecimal(lowUtilizationSlopePercent);
         } else {
             // If utilization is above the breakpoint, calculate interest for both low and high utilization parts
             return
-                utilizationBreakpointPercent *
-                lowUtilizationSlopePercent +
-                (utilization - utilizationBreakpointPercent) *
-                globalConfig.highUtilizationSlopePercent;
+                lowUtilizationSlopePercent.mulDecimal(utilizationBreakpointPercent) +
+                globalConfig.highUtilizationSlopePercent.mulDecimal(utilization - utilizationBreakpointPercent);
         }
     }
 
