@@ -61,6 +61,8 @@ library Position {
         int128 size;
         // The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
+        // The market's accumulated accrued utilisation at position settlement.
+        uint256 entryUtilisationAccrued;
         // The fill price at which this position was settled with.
         uint256 entryPrice;
         // Accured static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
@@ -232,6 +234,7 @@ library Position {
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
+            market.currentUtilizationAccruedComputed,
             params.fillPrice,
             orderFee + keeperFee
         );
@@ -331,6 +334,7 @@ library Position {
         newPosition = Position.Data(
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
+            oldPosition.entryUtilisationAccrued,
             oldPosition.entryPrice,
             // An accumulation of fees paid on liquidation paid out to the liquidator.
             oldPosition.accruedFeesUsd + liqKeeperFee
@@ -451,10 +455,21 @@ library Position {
         int128 positionSize,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
+        uint256 positionEntryUtilizationAccrued,
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+    )
+        internal
+        view
+        returns (
+            uint256 healthFactor,
+            int256 accruedFunding,
+            uint256 accruedUtilisation,
+            int256 pnl,
+            uint256 remainingMarginUsd
+        )
+    {
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
         int256 netFundingPerUnit = unrecordedFunding +
@@ -462,6 +477,14 @@ library Position {
             positionEntryFundingAccrued;
 
         accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
+
+        (, int256 unrecordedUtilization) = market.getUnrecordedUtilizationWithRate(price);
+
+        int256 netUtilisationPerUnit = unrecordedUtilization +
+            market.currentUtilizationAccruedComputed -
+            positionEntryUtilizationAccrued;
+
+        accruedUtilization = positionSize.mulDecimal(netUtilisationPerUnit);
 
         // Calculate this position's PnL
         pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
@@ -530,6 +553,26 @@ library Position {
 
         return
             self.size.mulDecimal(unrecordedFunding + market.currentFundingAccruedComputed - self.entryFundingAccrued);
+    }
+
+    /**
+     * @dev Returns the utilization accrued from when the position was opened to now.
+     */
+    function getAccruedUtilization(
+        Position.Data storage self,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (int256) {
+        if (self.size == 0) {
+            return 0;
+        }
+
+        (, int256 unrecordedUtilization) = market.getUnrecordedUtilizationWithRate(price);
+
+        return
+            MathUtil.abs(self.size).mulDecimal(
+                unrecordedUtilization + market.currentUtilizationAccruedComputed - self.entryUtilizationAccrued
+            );
     }
 
     // --- Member (mutative) --- //

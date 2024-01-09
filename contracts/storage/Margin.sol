@@ -262,6 +262,7 @@ library Margin {
                     collateralUsd.toInt() +
                         position.getPnl(marketPrice) +
                         position.getAccruedFunding(market, marketPrice) -
+                        position.getAccruedUtilization(market, marketPrice) -
                         position.accruedFeesUsd.toInt(),
                     0
                 )
