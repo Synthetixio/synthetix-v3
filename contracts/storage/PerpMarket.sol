@@ -146,7 +146,7 @@ library PerpMarket {
         int256 totalPositionPnl = oldPosition.getPnl(newPosition.entryPrice) +
             oldPosition.getAccruedFunding(self, newPosition.entryPrice) +
             newPosition.accruedFeesUsd.toInt() +
-            newPosition.getAccruedUtilisation.toInt();
+            oldPosition.getAccruedUtilization(self, newPosition.entryPrice).toInt();
 
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
@@ -173,19 +173,18 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 price,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal returns (uint256 utilization) {
+    ) internal view returns (uint256 utilization) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-        uint256 delegatedCollateralValueUsd = globalConfig.synthetix.getMarketCollateral(synthMarketId);
-        uint256 lockedCollateralUsd = MathUtil.abs(self.size).mulDecimal(price).mulDecimal(
-            marketConfig.minCreditPercent
-        );
+        uint256 delegatedCollateralValueUsd = globalConfig.synthetix.getMarketCollateral(self.id);
+
+        uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent.to256());
         return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd);
     }
 
     function getCurrentUtilizationRate(
         uint256 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         if (utilization < utilizationBreakpointPercent) {
@@ -204,7 +203,7 @@ library PerpMarket {
     function getUnrecordedUtilizationWithRate(
         PerpMarket.Data storage self,
         uint256 price
-    ) internal returns (uint256 currentUtilizationRate, uint256 unrecordedUtilization) {
+    ) internal view returns (uint256 currentUtilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         currentUtilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
@@ -216,6 +215,11 @@ library PerpMarket {
         unrecordedUtilization = avgUtilizationRate.mulDecimal(getProportionalUtilizationElapsed(self)).mulDecimal(
             price
         );
+    }
+
+    function getUnrecordedUtilization(PerpMarket.Data storage self, uint256 price) internal view returns (uint256) {
+        (, uint256 unrecordedUtilization) = getUnrecordedUtilizationWithRate(self, price);
+        return unrecordedUtilization;
     }
 
     function recomputeUtilization(
@@ -331,6 +335,11 @@ library PerpMarket {
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
         unrecordedFunding = avgFundingRate.mulDecimal(getProportionalFundingElapsed(self)).mulDecimal(price.toInt());
+    }
+
+    function getUnrecordedFunding(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
+        (, int256 unrecordedFunding) = getUnrecordedFundingWithRate(self, price);
+        return unrecordedFunding;
     }
 
     function getMaxLiquidatableCapacity(

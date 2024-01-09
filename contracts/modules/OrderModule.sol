@@ -243,11 +243,12 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        (, runtime.accruedFunding, runtime.pnl, ) = Position.getHealthData(
+        Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
             position.entryPrice,
             position.entryFundingAccrued,
+            position.entryUtilizationAccrued,
             runtime.trade.newMarginUsd,
             runtime.pythPrice,
             marketConfig
@@ -274,8 +275,8 @@ contract OrderModule is IOrderModule {
             runtime.params.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
-            runtime.accruedFunding,
-            runtime.pnl,
+            healthData.accruedFunding,
+            healthData.pnl,
             runtime.fillPrice
         );
     }

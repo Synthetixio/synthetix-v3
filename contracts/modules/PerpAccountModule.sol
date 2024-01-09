@@ -16,15 +16,6 @@ contract PerpAccountModule is IPerpAccountModule {
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
 
-    // --- Runtime structs --- //
-    struct Runtime_getPositionDigest {
-        uint256 oraclePrice;
-        uint256 healthFactor;
-        int256 accruedFunding;
-        int256 pnl;
-        uint256 remainingMarginUsd;
-    }
-
     /**
      * @inheritdoc IPerpAccountModule
      */
@@ -79,34 +70,32 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage position = market.positions[accountId];
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        uint256 oraclePrice = market.getOraclePrice();
 
-        Runtime_getPositionDigest memory runtime;
-        runtime.oraclePrice = market.getOraclePrice();
-
-        (runtime.healthFactor, runtime.accruedFunding, runtime.pnl, runtime.remainingMarginUsd) = Position
-            .getHealthData(
-                market,
-                position.size,
-                position.entryPrice,
-                position.entryFundingAccrued,
-                Margin.getMarginUsd(accountId, market, runtime.oraclePrice, true /* useHaircutCollateralPrice */),
-                runtime.oraclePrice,
-                marketConfig
-            );
-        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, runtime.oraclePrice, marketConfig);
+        Position.HealthData memory healthData = Position.getHealthData(
+            market,
+            position.size,
+            position.entryPrice,
+            position.entryFundingAccrued,
+            position.entryUtilizationAccrued,
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+            oraclePrice,
+            marketConfig
+        );
+        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
 
         return
             IPerpAccountModule.PositionDigest(
                 accountId,
                 marketId,
-                runtime.remainingMarginUsd,
-                runtime.healthFactor,
-                MathUtil.abs(position.size).mulDecimal(runtime.oraclePrice), // notionalValueUsd
-                runtime.pnl,
+                healthData.remainingMarginUsd,
+                healthData.healthFactor,
+                MathUtil.abs(position.size).mulDecimal(oraclePrice), // notionalValueUsd
+                healthData.pnl,
                 position.accruedFeesUsd,
-                runtime.accruedFunding,
+                healthData.accruedFunding,
                 position.entryPrice,
-                runtime.oraclePrice,
+                oraclePrice,
                 position.size,
                 im,
                 mm
