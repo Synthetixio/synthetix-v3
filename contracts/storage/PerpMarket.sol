@@ -173,20 +173,8 @@ library PerpMarket {
         uint256 price,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal returns (uint256 utilization) {
-        /** Get total collateral value */
-        uint128[] storage supportedSynthMarketIds = Margin.load().supportedSynthMarketIds;
-        uint256 length = supportedSynthMarketIds.length;
-        uint256 delegatedCollateralValueUsd;
-        for (uint256 i = 0; i < length; ) {
-            uint128 synthMarketId = supportedSynthMarketIds[i];
-            delegatedCollateralValueUsd += globalConfig.synthetix.getMarketCollateral(synthMarketId);
-            unchecked {
-                ++i;
-            }
-        }
-        /** Get lockedCollateralUsd */
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-
+        uint256 delegatedCollateralValueUsd = globalConfig.synthetix.getMarketCollateral(synthMarketId);
         uint256 lockedCollateralUsd = MathUtil.abs(self.size).mulDecimal(price).mulDecimal(
             marketConfig.minCreditPercent
         );
