@@ -14,12 +14,19 @@ library PerpsMarketConfiguration {
 
     error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int newSideSize);
 
+    error MaxUSDOpenInterestReached(
+        uint128 marketId,
+        uint256 maxMarketValue,
+        int newSideSize,
+        uint price
+    );
+
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketSize; // oi cap
+        uint256 maxMarketSize; // oi cap in units of asset
         uint256 maxFundingVelocity;
         uint256 skewScale;
         /**
@@ -67,6 +74,7 @@ library PerpsMarketConfiguration {
          * @dev this address is allowed to fully liquidate any account eligible for liquidation.
          */
         address endorsedLiquidator;
+        uint256 maxMarketValue; // oi cap USD denominated
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {

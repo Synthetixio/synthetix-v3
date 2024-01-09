@@ -339,6 +339,8 @@ library PerpsMarket {
     function validatePositionSize(
         Data storage self,
         uint maxSize,
+        uint maxValue,
+        uint price,
         int oldSize,
         int newSize
     ) internal view {
@@ -371,6 +373,15 @@ library PerpsMarket {
                     self.id,
                     maxSize,
                     newSideSize / 2
+                );
+            }
+            // same check but with value (size * price)
+            if (maxValue < MathUtil.abs(newSideSize / 2).mulDecimal(price)) {
+                revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
+                    self.id,
+                    maxValue,
+                    newSideSize / 2,
+                    price
                 );
             }
         }
