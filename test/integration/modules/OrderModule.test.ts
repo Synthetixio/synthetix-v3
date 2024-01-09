@@ -814,7 +814,7 @@ describe('OrderModule', () => {
         makerFee: bn(0.0002),
         takerFee: bn(0.0006),
       });
-      await market.aggregator().mockSetCurrentPrice(wei(100).toBN());
+      await market.aggregator().mockSetCurrentPrice(bn(100));
       const { collateral, collateralDepositAmount, trader } = await depositMargin(
         bs,
         genTrader(bs, {
@@ -825,7 +825,7 @@ describe('OrderModule', () => {
         })
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredSize: wei(1000).toBN(),
+        desiredSize: bn(1000),
         desiredKeeperFeeBufferUsd: 0,
       });
       await commitAndSettle(bs, marketId, trader, order);
@@ -844,7 +844,7 @@ describe('OrderModule', () => {
       assertBn.gt(accruedFunding.mul(-1), bn(800));
 
       const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredSize: wei(1000).toBN(),
+        desiredSize: bn(1000),
         desiredKeeperFeeBufferUsd: 0,
       });
       await commitAndSettle(bs, marketId, trader, order2);
