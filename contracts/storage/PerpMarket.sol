@@ -187,7 +187,9 @@ library PerpMarket {
         /** Get lockedCollateralUsd */
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
-        uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent);
+        uint256 lockedCollateralUsd = MathUtil.abs(self.size).mulDecimal(price).mulDecimal(
+            marketConfig.minCreditPercent
+        );
         return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd);
     }
 
