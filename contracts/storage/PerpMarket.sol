@@ -145,7 +145,8 @@ library PerpMarket {
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
         int256 totalPositionPnl = oldPosition.getPnl(newPosition.entryPrice) +
             oldPosition.getAccruedFunding(self, newPosition.entryPrice) +
-            newPosition.accruedFeesUsd.toInt();
+            newPosition.accruedFeesUsd.toInt() +
+            newPosition.getAccruedUtilisation.toInt();
 
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
