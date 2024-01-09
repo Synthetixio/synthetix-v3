@@ -21,18 +21,21 @@ export function parseBalanceMap(balances: Balance[] | { [addr: string]: BigNumbe
       }));
   /* eslint-enable indent */
 
-  const dataByAddress = balancesInNewFormat.reduce((memo, { address: account, balance }) => {
-    if (!isAddress(account)) {
-      throw new Error(`Found invalid address: ${account}`);
-    }
-    const parsed = getAddress(account);
-    if (memo[parsed]) throw new Error(`Duplicate address: ${parsed}`);
-    const parsedNum = BigNumber.from(balance);
-    if (parsedNum.lte(0)) throw new Error(`Invalid amount for account: ${account}`);
+  const dataByAddress = balancesInNewFormat.reduce(
+    (memo, { address: account, balance }) => {
+      if (!isAddress(account)) {
+        throw new Error(`Found invalid address: ${account}`);
+      }
+      const parsed = getAddress(account);
+      if (memo[parsed]) throw new Error(`Duplicate address: ${parsed}`);
+      const parsedNum = BigNumber.from(balance);
+      if (parsedNum.lte(0)) throw new Error(`Invalid amount for account: ${account}`);
 
-    memo[parsed] = { amount: parsedNum };
-    return memo;
-  }, {} as { [key: string]: { amount: BigNumber } });
+      memo[parsed] = { amount: parsedNum };
+      return memo;
+    },
+    {} as { [key: string]: { amount: BigNumber } }
+  );
 
   const sortedAddresses = Object.keys(dataByAddress).sort();
 
@@ -45,14 +48,17 @@ export function parseBalanceMap(balances: Balance[] | { [addr: string]: BigNumbe
   );
 
   // generate claims
-  const claims = sortedAddresses.reduce((memo, address) => {
-    const { amount } = dataByAddress[address];
-    memo[address] = {
-      amount: amount.toHexString(),
-      proof: tree.getProof(address, amount),
-    };
-    return memo;
-  }, {} as { [key: string]: { amount: string; proof: string[] } });
+  const claims = sortedAddresses.reduce(
+    (memo, address) => {
+      const { amount } = dataByAddress[address];
+      memo[address] = {
+        amount: amount.toHexString(),
+        proof: tree.getProof(address, amount),
+      };
+      return memo;
+    },
+    {} as { [key: string]: { amount: string; proof: string[] } }
+  );
 
   return {
     merkleRoot: tree.getHexRoot(),

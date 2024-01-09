@@ -19,13 +19,18 @@ interface IAsyncOrderConfigurationModule {
      * @dev currently only enabled/disabled flag can be updated.
      * @param synthMarketId adds settlement strategy to this specific market.
      * @param strategyId id of the strategy.
-     * @param enabled true/false.
+     * @param strategy updated strategy
      */
-    event SettlementStrategyUpdated(
+    event SettlementStrategySet(
         uint128 indexed synthMarketId,
         uint256 indexed strategyId,
-        bool enabled
+        SettlementStrategy.Data strategy
     );
+
+    /**
+     * @notice Thrown when attempting to set settlement strategy with window duration as 0
+     */
+    error InvalidSettlementWindowDuration(uint256 duration);
 
     /**
      * @notice Adds new settlement strategy to the specified market id.
@@ -49,6 +54,19 @@ interface IAsyncOrderConfigurationModule {
         uint128 synthMarketId,
         uint256 strategyId,
         bool enabled
+    ) external;
+
+    /**
+     * @notice updates the strategy with the new strategy passed in.
+     * @dev THIS WILL OVERRIDE ANY SETTINGS FOR EXISTING ORDERS
+     * @param synthMarketId Id of the market associated with the strategy.
+     * @param strategyId id of the strategy.
+     * @param strategy new strategy config
+     */
+    function setSettlementStrategy(
+        uint128 synthMarketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
     ) external;
 
     /**

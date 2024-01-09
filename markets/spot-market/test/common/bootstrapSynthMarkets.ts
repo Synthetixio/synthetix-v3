@@ -2,15 +2,16 @@ import { ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems } from '../bootstrap';
 import { createStakedPool } from '@synthetixio/main/test/common';
-import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
+import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { SynthRouter } from '../generated/typechain';
 
 export type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;
-  buyAggregator: () => AggregatorV3Mock;
-  sellAggregator: () => AggregatorV3Mock;
+  buyAggregator: () => MockPythExternalNode;
+  sellAggregator: () => MockPythExternalNode;
   synth: () => SynthRouter;
+  synthAddress: () => string;
 }>;
 
 export type SynthArguments = Array<{
@@ -19,6 +20,8 @@ export type SynthArguments = Array<{
   buyPrice: ethers.BigNumber;
   sellPrice: ethers.BigNumber;
 }>;
+
+export const STRICT_PRICE_TOLERANCE = 60;
 
 export function bootstrapSynthMarkets(
   data: SynthArguments,
@@ -33,18 +36,19 @@ export function bootstrapSynthMarkets(
   const synthMarkets: SynthMarkets = data.map(({ name, token, buyPrice, sellPrice }) => {
     let marketId: ethers.BigNumber,
       buyNodeId: string,
-      buyAggregator: AggregatorV3Mock,
+      buyAggregator: MockPythExternalNode,
       sellNodeId: string,
-      sellAggregator: AggregatorV3Mock,
+      sellAggregator: MockPythExternalNode,
+      synthAddress: string,
       synth: SynthRouter;
 
     before('create price nodes', async () => {
-      const buyPriceNodeResult = await createOracleNode(
+      const buyPriceNodeResult = await createPythNode(
         r.signers()[0],
         buyPrice,
         contracts.OracleManager
       );
-      const sellPriceNodeResult = await createOracleNode(
+      const sellPriceNodeResult = await createPythNode(
         r.signers()[0],
         sellPrice,
         contracts.OracleManager
@@ -65,9 +69,11 @@ export function bootstrapSynthMarkets(
       await contracts.SpotMarket.connect(marketOwner).updatePriceData(
         marketId,
         buyNodeId,
-        sellNodeId
+        sellNodeId,
+        STRICT_PRICE_TOLERANCE
       );
-      synth = contracts.Synth(await contracts.SpotMarket.getSynth(marketId));
+      synthAddress = await contracts.SpotMarket.getSynth(marketId);
+      synth = contracts.Synth(synthAddress);
     });
 
     before('delegate collateral to market from pool', async () => {
@@ -80,11 +86,25 @@ export function bootstrapSynthMarkets(
       ]);
     });
 
+    before('allow synth as collateral in system', async () => {
+      const tokenAddress = await contracts.SpotMarket.getSynth(marketId);
+      await r.systems().Core.connect(r.owner()).configureCollateral({
+        tokenAddress,
+        oracleNodeId: sellNodeId,
+        issuanceRatioD18: '5000000000000000000',
+        liquidationRatioD18: '1500000000000000000',
+        liquidationRewardD18: '20000000000000000000',
+        minDelegationD18: '20000000000000000000',
+        depositingEnabled: false,
+      });
+    });
+
     return {
       marketId: () => marketId,
       buyAggregator: () => buyAggregator,
       sellAggregator: () => sellAggregator,
       synth: () => synth,
+      synthAddress: () => synthAddress,
     };
   });
 

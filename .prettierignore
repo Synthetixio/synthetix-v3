@@ -1,3 +1,5 @@
+.yarn/
+node_mudules/
 *.dump.sol
 **/coverage*
 build/
@@ -6,7 +8,7 @@ node_modules/
 **/contracts/routers
 **/dist/
 **/node_modules/
-**/typechain-types
+**/typechain-types/
 utils/*/utils
 utils/*/test/generated
 protocol/*/test/generated
@@ -14,3 +16,17 @@ markets/*/test/generated
 *Router.sol
 .yarnrc.yml
 lerna.json
+*.hbs
+**/subgraph/**/deployments
+**/subgraph/build
+**/subgraph/.bin
+**/artifacts/
+**/cache/
+**/docs/
+**/tests/.latest.json
+**/lib
+**/out
+
+utils/docgen/deployments/
+utils/docgen/abis/
+utils/docgen/docs/

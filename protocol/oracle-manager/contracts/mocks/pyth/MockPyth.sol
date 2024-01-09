@@ -33,7 +33,7 @@ contract MockPyth is AbstractPyth {
     }
 
     // Takes an array of encoded price feeds and stores them.
-    // You can create this data either by calling createPriceFeedData or
+    // You can create this data either by calling createPriceFeedUpdateData or
     // by using web3.js or ethers abi utilities.
     function updatePriceFeeds(bytes[] calldata updateData) public payable override {
         uint requiredFee = getUpdateFee(updateData);
@@ -77,12 +77,13 @@ contract MockPyth is AbstractPyth {
         return singleUpdateFeeInWei * updateData.length;
     }
 
-    function parsePriceFeedUpdates(
+    function parsePriceFeedUpdatesInternal(
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
         uint64 minPublishTime,
-        uint64 maxPublishTime
-    ) external payable override returns (PythStructs.PriceFeed[] memory feeds) {
+        uint64 maxPublishTime,
+        bool unique
+    ) internal returns (PythStructs.PriceFeed[] memory feeds) {
         uint requiredFee = getUpdateFee(updateData);
         if (msg.value < requiredFee) revert PythErrors.InsufficientFee();
 
@@ -90,11 +91,19 @@ contract MockPyth is AbstractPyth {
 
         for (uint i = 0; i < priceIds.length; i++) {
             for (uint j = 0; j < updateData.length; j++) {
-                feeds[i] = abi.decode(updateData[j], (PythStructs.PriceFeed));
+                uint64 prevPublishTime;
+                (feeds[i], prevPublishTime) = abi.decode(
+                    updateData[j],
+                    (PythStructs.PriceFeed, uint64)
+                );
 
                 if (feeds[i].id == priceIds[i]) {
                     uint publishTime = feeds[i].price.publishTime;
-                    if (minPublishTime <= publishTime && publishTime <= maxPublishTime) {
+                    if (
+                        minPublishTime <= publishTime &&
+                        publishTime <= maxPublishTime &&
+                        (!unique || prevPublishTime < minPublishTime)
+                    ) {
                         break;
                     } else {
                         feeds[i].id = 0;
@@ -106,6 +115,38 @@ contract MockPyth is AbstractPyth {
         }
     }
 
+    function parsePriceFeedUpdates(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable override returns (PythStructs.PriceFeed[] memory feeds) {
+        return
+            parsePriceFeedUpdatesInternal(
+                updateData,
+                priceIds,
+                minPublishTime,
+                maxPublishTime,
+                false
+            );
+    }
+
+    function parsePriceFeedUpdatesUnique(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable override returns (PythStructs.PriceFeed[] memory feeds) {
+        return
+            parsePriceFeedUpdatesInternal(
+                updateData,
+                priceIds,
+                minPublishTime,
+                maxPublishTime,
+                true
+            );
+    }
+
     function createPriceFeedUpdateData(
         bytes32 id,
         int64 price,
@@ -113,7 +154,8 @@ contract MockPyth is AbstractPyth {
         int32 expo,
         int64 emaPrice,
         uint64 emaConf,
-        uint64 publishTime
+        uint64 publishTime,
+        uint64 prevPublishTime
     ) public pure returns (bytes memory priceFeedData) {
         PythStructs.PriceFeed memory priceFeed;
 
@@ -129,6 +171,6 @@ contract MockPyth is AbstractPyth {
         priceFeed.emaPrice.expo = expo;
         priceFeed.emaPrice.publishTime = publishTime;
 
-        priceFeedData = abi.encode(priceFeed);
+        priceFeedData = abi.encode(priceFeed, prevPublishTime);
     }
 }

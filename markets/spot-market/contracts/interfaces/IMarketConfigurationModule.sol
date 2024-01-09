@@ -74,7 +74,7 @@ interface IMarketConfigurationModule {
     event WrapperFeesSet(uint256 indexed synthMarketId, int256 wrapFee, int256 unwrapFee);
 
     /**
-     * @notice Emitted when the owner of the market has changed.
+     * @notice Emitted when the share percentage for a referrer address has been updated.
      * @param marketId Id of the market
      * @param referrer The address of the referrer
      * @param sharePercentage The new share percentage for the referrer
@@ -129,7 +129,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the skew scale applies to.
      * @return skewScale max amount of synth which makes the skew 100%. the fee is derived as a % of the max value.  100% premium means outstanding synth == skewScale.
      */
-    function getMarketSkewScale(uint128 synthMarketId) external returns (uint256 skewScale);
+    function getMarketSkewScale(uint128 synthMarketId) external view returns (uint256 skewScale);
 
     /**
      * @notice sets the market utilization fee for a given market
@@ -148,7 +148,7 @@ interface IMarketConfigurationModule {
      */
     function getMarketUtilizationFees(
         uint128 synthMarketId
-    ) external returns (uint256 utilizationFeeRate);
+    ) external view returns (uint256 utilizationFeeRate);
 
     /**
      * @notice sets the collateral leverage for a given market
@@ -167,7 +167,7 @@ interface IMarketConfigurationModule {
      */
     function getCollateralLeverage(
         uint128 synthMarketId
-    ) external returns (uint256 collateralLeverage);
+    ) external view returns (uint256 collateralLeverage);
 
     /**
      * @notice sets the fixed fee for a given market and transactor
@@ -195,7 +195,7 @@ interface IMarketConfigurationModule {
     function getCustomTransactorFees(
         uint128 synthMarketId,
         address transactor
-    ) external returns (uint256 fixedFeeAmount);
+    ) external view returns (uint256 fixedFeeAmount);
 
     /**
      * @notice sets a custom fee collector for a given market
@@ -212,7 +212,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the fee collector applies to.
      * @return feeCollector address of the fee collector inheriting the IFeeCollector interface.
      */
-    function getFeeCollector(uint128 synthMarketId) external returns (address feeCollector);
+    function getFeeCollector(uint128 synthMarketId) external view returns (address feeCollector);
 
     /**
      * @notice sets wrapper related fees.
@@ -245,5 +245,5 @@ interface IMarketConfigurationModule {
     function getReferrerShare(
         uint128 marketId,
         address referrer
-    ) external returns (uint256 sharePercentage);
+    ) external view returns (uint256 sharePercentage);
 }

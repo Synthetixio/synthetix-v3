@@ -1,10 +1,7 @@
-const { registerAction } = require('@usecannon/builder');
-
 require('@nomiclabs/hardhat-ethers');
 require('hardhat-cannon');
 require('@synthetixio/hardhat-storage');
-
-registerAction(require('cannon-plugin-router'));
+require('solidity-coverage');
 
 module.exports = {
   solidity: {

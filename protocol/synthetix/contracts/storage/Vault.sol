@@ -51,7 +51,8 @@ library Vault {
         /**
          * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
-        int128 prevTotalDebtD18;
+        // solhint-disable-next-line var-name-mixedcase
+        int128 _unused_prevTotalDebtD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -84,16 +85,14 @@ library Vault {
     function updateCreditCapacity(
         Data storage self,
         uint256 collateralPriceD18
-    ) internal returns (uint256 usdWeightD18, int256 totalDebtD18, int256 deltaDebtD18) {
+    ) internal view returns (uint256 usdWeightD18, int256 totalDebtD18) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         usdWeightD18 = (epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
 
-        deltaDebtD18 = totalDebtD18 - self.prevTotalDebtD18;
-
-        self.prevTotalDebtD18 = totalDebtD18.to128();
+        //self.prevTotalDebtD18 = totalDebtD18.to128();
     }
 
     /**
@@ -143,6 +142,38 @@ library Vault {
                 self.rewardIds.valueAt(i + 1)
             );
         }
+    }
+
+    /**
+     * @dev Traverses available rewards for this vault and the reward id, and returns an accounts
+     * pending claim on them according to the amount of debt shares they have.
+     */
+    function getReward(
+        Data storage self,
+        uint128 accountId,
+        bytes32 rewardId
+    ) internal view returns (uint256) {
+        uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
+
+        RewardDistribution.Data storage dist = self.rewards[rewardId];
+
+        if (address(dist.distributor) == address(0)) {
+            revert RewardDistributorNotFound();
+        }
+
+        uint256 currentRewardPerShare = dist.rewardPerShareD18;
+
+        currentRewardPerShare += dist.getEntry(totalSharesD18).toUint().to128();
+
+        uint256 currentPending = dist.claimStatus[accountId].pendingSendD18 +
+            actorSharesD18.mulDecimal(
+                currentRewardPerShare - dist.claimStatus[accountId].lastRewardPerShareD18
+            );
+
+        return currentPending;
     }
 
     /**

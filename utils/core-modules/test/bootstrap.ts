@@ -13,13 +13,13 @@ import {
   UpgradeModule,
 } from '../typechain-types';
 import {
-  TokenModuleRouter,
-  SampleRouter,
-  NftModuleRouter,
-  FeatureFlagModuleRouter,
-  DecayTokenModuleRouter,
-  CoreRouter,
   AssociatedSystemsModuleRouter,
+  CoreRouter,
+  DecayTokenModuleRouter,
+  FeatureFlagModuleRouter,
+  NftModuleRouter,
+  SampleRouter,
+  TokenModuleRouter,
 } from './generated/typechain';
 
 interface Contracts {

@@ -227,7 +227,10 @@ library Market {
                 continue;
             }
 
-            uint256 priceD18 = CollateralConfiguration.getCollateralPrice(collateralConfiguration);
+            uint256 priceD18 = CollateralConfiguration.getCollateralPrice(
+                collateralConfiguration,
+                entry.amountD18
+            );
 
             totalDepositedCollateralValueD18 += priceD18.mulDecimal(entry.amountD18);
         }
@@ -318,6 +321,22 @@ library Market {
     }
 
     /**
+     * @dev Determine the amount of debt the pool would assume if its lastValue was updated
+     * Needed for optimization.
+     *
+     * Called by a pool when it distributes its debt.
+     *
+     */
+    function accumulateDebtChange(
+        Data storage self,
+        uint128 poolId
+    ) internal returns (int256 debtChangeD18) {
+        int256 changedValueD18 = self.poolsDebtDistribution.accumulateActor(poolId.toBytes32());
+        debtChangeD18 = self.pools[poolId].pendingDebtD18.toInt() + changedValueD18;
+        self.pools[poolId].pendingDebtD18 = 0;
+    }
+
+    /**
      * @dev Wrapper that adjusts a pool's shares in the market's credit capacity, making sure that the market's outstanding debt is first passed on to its connected pools.
      *
      * Called by a pool when it distributes its debt.
@@ -334,9 +353,6 @@ library Market {
         if (self.marketAddress == address(0)) {
             revert MarketNotFound(marketId);
         }
-
-        // Iter avoids griefing - MarketManager can call this with user specified iters and thus clean up a grieved market.
-        distributeDebtToPools(self, 9999999999);
 
         return adjustPoolShares(self, poolId, newCreditCapacityD18, maxDebtShareValueD18);
     }

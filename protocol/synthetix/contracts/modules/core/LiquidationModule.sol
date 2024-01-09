@@ -10,6 +10,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -119,7 +120,7 @@ contract LiquidationModule is ILiquidationModule {
             collateralType,
             liquidationData,
             liquidateAsAccountId,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
@@ -168,7 +169,10 @@ contract LiquidationModule is ILiquidationModule {
             liquidationData.debtLiquidated = vaultDebt;
 
             // Burn all of the stablecoins necessary to clear the debt of this vault
-            AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, vaultDebt);
+            AssociatedSystem.load(_USD_TOKEN).asToken().burn(
+                ERC2771Context._msgSender(),
+                vaultDebt
+            );
 
             // Provide all of the collateral to the liquidator
             liquidationData.collateralLiquidated = vault
@@ -183,7 +187,7 @@ contract LiquidationModule is ILiquidationModule {
             liquidationData.debtLiquidated = maxUsd;
 
             // Burn all of the stablecoins provided by the liquidator
-            AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, maxUsd);
+            AssociatedSystem.load(_USD_TOKEN).asToken().burn(ERC2771Context._msgSender(), maxUsd);
 
             VaultEpoch.Data storage epoch = vault.currentEpoch();
 
@@ -210,7 +214,7 @@ contract LiquidationModule is ILiquidationModule {
             collateralType,
             liquidationData,
             liquidateAsAccountId,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 

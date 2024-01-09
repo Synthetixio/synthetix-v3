@@ -3,7 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers, Contract, Signer } from 'ethers';
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import Permissions from '../../../mixins/AccountRBACMixin.permissions';
-import { bootstrap } from '../../../bootstrap';
+import { bn, bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
@@ -30,8 +30,8 @@ describe('CollateralModule', function () {
         ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
-          400,
-          200,
+          bn(4),
+          bn(2),
           owner,
           systems().Core,
           systems().OracleManager
@@ -39,7 +39,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, bn(4), bn(2), true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {

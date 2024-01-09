@@ -5,7 +5,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
-import { bootstrap } from '../../../bootstrap';
+import { bn, bootstrap } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 
@@ -28,13 +28,13 @@ describe('CollateralModule', function () {
       await (await systems().Core.connect(user2)['createAccount(uint128)'](2)).wait();
     });
 
-    describe('when a collateral is addded', function () {
+    describe('when a collateral is added', function () {
       before('add collateral type', async () => {
         ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
-          400,
-          200,
+          bn(4),
+          bn(2),
           owner,
           systems().Core,
           systems().OracleManager
@@ -42,7 +42,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, bn(4), bn(2), true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {

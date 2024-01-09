@@ -1,0 +1,11 @@
+{
+  "extends": "@graphprotocol/graph-ts/types/tsconfig.base.json",
+  "include": [
+    "mainnet",
+    "goerli",
+    "optimism-mainnet",
+    "optimism-goerli",
+    "base",
+    "base-goerli"
+  ]
+}

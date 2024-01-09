@@ -13,23 +13,35 @@ import 'hardhat-cannon';
 import 'hardhat-ignore-warnings';
 import '@synthetixio/hardhat-storage';
 
-// Router generation cannon plugin
-import { registerAction } from '@usecannon/builder';
-import pluginRouter from 'cannon-plugin-router';
-
-registerAction(pluginRouter);
-
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
+const lockedConfig = {
+  version: '0.8.17',
+  settings: {
+    optimizer: {
+      enabled: false,
+      runs: 200,
+    },
+  },
+};
+
 const config = {
   solidity: {
-    version: '0.8.17',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: '0.8.22',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
+    ],
+    overrides: {
+      'contracts/Proxy.sol': lockedConfig,
+      'contracts/modules/CoreModule.sol': lockedConfig,
     },
   },
   defaultNetwork: 'cannon',
@@ -59,7 +71,7 @@ const config = {
     ['optimistic-mainnet']: {
       url:
         process.env.NETWORK_ENDPOINT ||
-        `https://optimism.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 10,
     },
@@ -99,6 +111,9 @@ const config = {
   },
   cannon: {
     publicSourceCode: true,
+  },
+  typechain: {
+    target: 'ethers-v5',
   },
 };
 

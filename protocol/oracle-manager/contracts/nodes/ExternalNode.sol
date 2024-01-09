@@ -10,10 +10,12 @@ import "../interfaces/external/IExternalNode.sol";
 library ExternalNode {
     function process(
         NodeOutput.Data[] memory prices,
-        bytes memory parameters
+        bytes memory parameters,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
     ) internal view returns (NodeOutput.Data memory nodeOutput) {
         IExternalNode externalNode = IExternalNode(abi.decode(parameters, (address)));
-        return externalNode.process(prices, parameters);
+        return externalNode.process(prices, parameters, runtimeKeys, runtimeValues);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal returns (bool valid) {

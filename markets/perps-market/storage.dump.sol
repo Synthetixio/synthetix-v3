@@ -43,6 +43,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
     uint private constant _ROOT_INDEX = 1;
@@ -132,6 +137,8 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -287,12 +294,23 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
     }
 }
 
@@ -349,7 +367,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-        int128 prevTotalDebtD18;
+        int128 _unused_prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
@@ -368,6 +386,56 @@ library VaultEpoch {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol:PythStructs
+contract PythStructs {
+    struct Price {
+        int64 price;
+        uint64 conf;
+        int32 expo;
+        uint publishTime;
+    }
+    struct PriceFeed {
+        bytes32 id;
+        Price price;
+        Price emaPrice;
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ChainlinkNode.sol:ChainlinkNode
+library ChainlinkNode {
+    uint256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ReducerNode.sol:ReducerNode
+library ReducerNode {
+    enum Operations {
+        RECENT,
+        MIN,
+        MAX,
+        MEAN,
+        MEDIAN,
+        MUL,
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/UniswapNode.sol:UniswapNode
+library UniswapNode {
+    uint8 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythNode.sol:PythNode
+library PythNode {
+    int256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythOffchainLookupNode.sol:PythOffchainLookupNode
+library PythOffchainLookupNode {
+    int256 public constant PRECISION = 18;
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -379,7 +447,8 @@ library NodeDefinition {
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
         STALENESS_CIRCUIT_BREAKER,
-        CONSTANT
+        CONSTANT,
+        PYTH_OFFCHAIN_LOOKUP
     }
     struct Data {
         NodeType nodeType;
@@ -404,6 +473,14 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
+library TickMath {
+    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MAX_TICK = -MIN_TICK;
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
+}
+
 // @custom:artifact @synthetixio/spot-market/contracts/storage/OrderFees.sol:OrderFees
 library OrderFees {
     struct Data {
@@ -411,6 +488,90 @@ library OrderFees {
         uint256 utilizationFees;
         int256 skewFees;
         int256 wrapperFees;
+    }
+}
+
+// @custom:artifact @synthetixio/spot-market/contracts/storage/Price.sol:Price
+library Price {
+    enum Tolerance {
+        DEFAULT,
+        STRICT
+    }
+    struct Data {
+        bytes32 buyFeedId;
+        bytes32 sellFeedId;
+        uint256 strictStalenessTolerance;
+    }
+    function load(uint128 marketId) internal pure returns (Data storage price) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
+        assembly {
+            price.slot := s
+        }
+    }
+}
+
+// @custom:artifact @synthetixio/spot-market/contracts/storage/SpotMarketFactory.sol:SpotMarketFactory
+library SpotMarketFactory {
+    bytes32 private constant _SLOT_SPOT_MARKET_FACTORY = keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
+    struct Data {
+        address usdToken;
+        address oracle;
+        address synthetix;
+        address synthImplementation;
+        mapping(uint128 => address) marketOwners;
+        mapping(uint128 => address) nominatedMarketOwners;
+    }
+    function load() internal pure returns (Data storage spotMarketFactory) {
+        bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
+        assembly {
+            spotMarketFactory.slot := s
+        }
+    }
+}
+
+// @custom:artifact @synthetixio/spot-market/contracts/utils/TransactionUtil.sol:Transaction
+library Transaction {
+    enum Type {
+        NULL,
+        BUY,
+        SELL,
+        ASYNC_BUY,
+        ASYNC_SELL,
+        WRAP,
+        UNWRAP
+    }
+}
+
+// @custom:artifact contracts/interfaces/IAsyncOrderCancelModule.sol:IAsyncOrderCancelModule
+interface IAsyncOrderCancelModule {
+    struct CancelOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 sizeDelta;
+        uint256 settlementReward;
+        uint256 fillPrice;
+        uint256 acceptablePrice;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IAsyncOrderSettlementPythModule.sol:IAsyncOrderSettlementPythModule
+interface IAsyncOrderSettlementPythModule {
+    struct SettleOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 newPositionSize;
+        int128 sizeDelta;
+        int256 pnl;
+        int256 accruedFunding;
+        uint256 pnlUint;
+        uint256 amountToDeduct;
+        uint256 settlementReward;
+        uint256 fillPrice;
+        uint256 totalFees;
+        uint256 referralFees;
+        uint256 feeCollectorFees;
+        Position.Data newPosition;
+        MarketUpdate.Data updateData;
     }
 }
 
@@ -423,67 +584,76 @@ interface IPerpsMarketModule {
         int currentFundingRate;
         int currentFundingVelocity;
         uint indexPrice;
-        uint fillPrice;
     }
 }
 
-// @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
-interface IPythVerifier {
-    struct Price {
-        int64 price;
-        uint64 conf;
-        int32 expo;
-        uint publishTime;
+// @custom:artifact contracts/modules/LiquidationModule.sol:LiquidationModule
+contract LiquidationModule {
+    struct LiquidateAccountRuntime {
+        uint128 accountId;
+        uint256 totalFlaggingRewards;
+        uint256 totalLiquidated;
+        bool accountFullyLiquidated;
+        uint256 totalLiquidationCost;
+        uint256 price;
+        uint128 positionMarketId;
+        uint256 loopIterator;
     }
-    struct PriceFeed {
-        bytes32 id;
-        Price price;
-        Price emaPrice;
-    }
-}
-
-// @custom:artifact contracts/modules/AsyncOrderModule.sol:AsyncOrderModule
-contract AsyncOrderModule {
-    int256 public constant PRECISION = 18;
 }
 
 // @custom:artifact contracts/modules/PerpsMarketFactoryModule.sol:PerpsMarketFactoryModule
 contract PerpsMarketFactoryModule {
-    bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
     bytes32 private constant _ACCOUNT_TOKEN_SYSTEM = "accountNft";
 }
 
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
 library AsyncOrder {
     struct Data {
-        uint128 accountId;
-        uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
-        uint256 settlementTime;
-        uint256 acceptablePrice;
-        bytes32 trackingCode;
+        uint256 commitmentTime;
+        OrderCommitmentRequest request;
     }
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
+        address referrer;
     }
     struct SimulateDataRuntime {
-        uint fillPrice;
-        uint orderFees;
-        uint availableMargin;
-        uint currentLiquidationMargin;
+        int128 sizeDelta;
+        uint128 accountId;
+        uint128 marketId;
+        uint256 fillPrice;
+        uint256 orderFees;
+        uint256 availableMargin;
+        uint256 currentLiquidationMargin;
+        uint256 accumulatedLiquidationRewards;
+        uint256 currentLiquidationReward;
         int128 newPositionSize;
-        uint newNotionalValue;
+        uint256 newNotionalValue;
         int currentAvailableMargin;
-        uint requiredMaintenanceMargin;
-        uint initialRequiredMargin;
-        uint totalRequiredMargin;
+        uint256 requiredInitialMargin;
+        uint256 initialRequiredMargin;
+        uint256 totalRequiredMargin;
         Position.Data newPosition;
+        bytes32 trackingCode;
+    }
+    struct RequiredMarginWithNewPositionRuntime {
+        uint256 newRequiredMargin;
+        uint256 oldRequiredMargin;
+        uint256 requiredMarginForNewPosition;
+        uint accumulatedLiquidationRewards;
+        uint maxNumberOfWindows;
+        uint numberOfWindows;
+        uint256 requiredRewardMargin;
+    }
+    function load(uint128 accountId) internal pure returns (Data storage order) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.AsyncOrder", accountId));
+        assembly {
+            order.slot := s
+        }
     }
 }
 
@@ -493,6 +663,8 @@ library GlobalPerpsMarket {
     struct Data {
         SetUtil.UintSet liquidatableAccounts;
         mapping(uint128 => uint) collateralAmounts;
+        SetUtil.UintSet activeCollateralTypes;
+        SetUtil.UintSet activeMarkets;
     }
     function load() internal pure returns (Data storage marketData) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
@@ -506,16 +678,58 @@ library GlobalPerpsMarket {
 library GlobalPerpsMarketConfiguration {
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION = keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarketConfiguration"));
     struct Data {
+        address feeCollector;
+        mapping(address => uint256) referrerShare;
         mapping(uint128 => uint) maxCollateralAmounts;
         uint128[] synthDeductionPriority;
-        uint minLiquidationRewardUsd;
-        uint maxLiquidationRewardUsd;
+        uint minKeeperRewardUsd;
+        uint maxKeeperRewardUsd;
+        uint128 maxPositionsPerAccount;
+        uint128 maxCollateralsPerAccount;
+        uint minKeeperProfitRatioD18;
+        uint maxKeeperScalingRatioD18;
+        SetUtil.UintSet supportedCollateralTypes;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
         assembly {
             globalMarketConfig.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/KeeperCosts.sol:KeeperCosts
+library KeeperCosts {
+    uint256 private constant KIND_SETTLEMENT = 0;
+    uint256 private constant KIND_FLAG = 1;
+    uint256 private constant KIND_LIQUIDATE = 2;
+    struct Data {
+        bytes32 keeperCostNodeId;
+    }
+    function load() internal pure returns (Data storage price) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.KeeperCosts"));
+        assembly {
+            price.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/Liquidation.sol:Liquidation
+library Liquidation {
+    struct Data {
+        uint128 amount;
+        uint256 timestamp;
+    }
+}
+
+// @custom:artifact contracts/storage/MarketUpdate.sol:MarketUpdate
+library MarketUpdate {
+    struct Data {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
     }
 }
 
@@ -531,21 +745,9 @@ library OrderFee {
 library PerpsAccount {
     struct Data {
         mapping(uint128 => uint256) collateralAmounts;
+        uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
-    }
-    struct RuntimeLiquidationData {
-        uint totalLosingPnl;
-        uint accumulatedLiquidationRewards;
-        uint liquidationReward;
-        uint losingMarketsLength;
-        uint profitableMarketsLength;
-        uint128[] profitableMarkets;
-        uint128[] losingMarkets;
-        uint amountToDeposit;
-        uint amountToLiquidatePercentage;
-        uint percentageOfTotalLosingPnl;
-        uint totalAvailableForDeposit;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
@@ -558,20 +760,20 @@ library PerpsAccount {
 // @custom:artifact contracts/storage/PerpsMarket.sol:PerpsMarket
 library PerpsMarket {
     struct Data {
-        address owner;
-        address nominatedOwner;
         string name;
         string symbol;
         uint128 id;
         int256 skew;
         uint256 size;
-        int lastFundingRate;
-        int lastFundingValue;
+        int256 lastFundingRate;
+        int256 lastFundingValue;
         uint256 lastFundingTime;
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        uint128 __unused_1;
+        uint128 __unused_2;
+        int256 debtCorrectionAccumulator;
         mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
+        Liquidation.Data[] liquidationData;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
@@ -586,14 +788,19 @@ library PerpsMarketConfiguration {
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketValue;
+        uint256 maxMarketSize;
         uint256 maxFundingVelocity;
         uint256 skewScale;
-        uint256 initialMarginFraction;
-        uint256 maintenanceMarginFraction;
-        uint256 lockedOiPercent;
+        uint256 initialMarginRatioD18;
+        uint256 maintenanceMarginScalarD18;
+        uint256 lockedOiRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
-        uint256 liquidationRewardRatioD18;
+        uint256 maxSecondsInLiquidationWindow;
+        uint256 flagRewardRatioD18;
+        uint256 minimumPositionMargin;
+        uint256 minimumInitialMarginRatioD18;
+        uint256 maxLiquidationPd;
+        address endorsedLiquidator;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
@@ -611,6 +818,8 @@ library PerpsMarketFactory {
         address usdToken;
         address synthetix;
         address spotMarket;
+        uint128 perpsMarketId;
+        string name;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
@@ -622,8 +831,13 @@ library PerpsMarketFactory {
 
 // @custom:artifact contracts/storage/PerpsPrice.sol:PerpsPrice
 library PerpsPrice {
+    enum Tolerance {
+        DEFAULT,
+        STRICT
+    }
     struct Data {
         bytes32 feedId;
+        uint256 strictStalenessTolerance;
     }
     function load(uint128 marketId) internal pure returns (Data storage price) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Price", marketId));
@@ -654,9 +868,14 @@ library SettlementStrategy {
         uint256 settlementWindowDuration;
         address priceVerificationContract;
         bytes32 feedId;
-        string url;
         uint256 settlementReward;
-        uint256 priceDeviationTolerance;
         bool disabled;
+        uint256 commitmentPriceDelay;
     }
+}
+
+// @custom:artifact contracts/utils/Flags.sol:Flags
+library Flags {
+    bytes32 public constant PERPS_SYSTEM = "perpsSystem";
+    bytes32 public constant CREATE_MARKET = "createMarket";
 }

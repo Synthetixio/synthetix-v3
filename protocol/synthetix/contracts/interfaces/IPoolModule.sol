@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/MarketConfiguration.sol";
+import "../storage/PoolCollateralConfiguration.sol";
 
 /**
  * @title Module for the creation and management of pools.
@@ -55,6 +56,12 @@ interface IPoolModule {
     event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
 
     /**
+     * @notice Gets fired when pool owner renounces his own ownership.
+     * @param poolId The id of the pool for which the owner nomination was renounced.
+     */
+    event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
+
+    /**
      * @notice Gets fired when pool name changes.
      * @param poolId The id of the pool whose name was updated.
      * @param name The new name of the pool.
@@ -74,11 +81,24 @@ interface IPoolModule {
         address indexed sender
     );
 
+    event PoolCollateralConfigurationUpdated(
+        uint128 indexed poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data config
+    );
+
     /**
      * @notice Emitted when a system-wide minimum liquidity ratio is set
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio
      */
     event SetMinLiquidityRatio(uint256 minLiquidityRatio);
+
+    /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled Shows if new collateral's will be dsiabled by default for the pool
+     */
+    event PoolCollateralDisabledByDefaultSet(uint128 poolId, bool disabled);
 
     /**
      * @notice Creates a pool with the requested pool id.
@@ -98,6 +118,36 @@ interface IPoolModule {
         uint128 poolId,
         MarketConfiguration.Data[] memory marketDistribution
     ) external;
+
+    /**
+     * @notice Allows the pool owner to set the configuration of a specific collateral type for their pool.
+     * @param poolId The id of the pool whose configuration is being set.
+     * @param collateralType The collate
+     * @param newConfig The config to set
+     */
+    function setPoolCollateralConfiguration(
+        uint128 poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data memory newConfig
+    ) external;
+
+    /**
+     * @notice Retrieves the pool configuration of a specific collateral type.
+     * @param poolId The id of the pool whose configuration is being returned.
+     * @param collateralType The address of the collateral.
+     * @return config The PoolCollateralConfiguration object that describes the requested collateral configuration of the pool.
+     */
+    function getPoolCollateralConfiguration(
+        uint128 poolId,
+        address collateralType
+    ) external view returns (PoolCollateralConfiguration.Data memory config);
+
+    /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled If set to true new collaterals will be disabled for the pool.
+     */
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
@@ -148,6 +198,12 @@ interface IPoolModule {
     function renouncePoolNomination(uint128 poolId) external;
 
     /**
+     * @notice Allows the current owner to renounce his ownership.
+     * @param poolId The id of the pool for which the caller is renouncing ownership nomination.
+     */
+    function renouncePoolOwnership(uint128 poolId) external;
+
+    /**
      * @notice Returns the current pool owner.
      * @param poolId The id of the pool whose ownership is being queried.
      * @return owner The current owner of the pool.
@@ -168,6 +224,16 @@ interface IPoolModule {
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
 
     /**
+     @notice returns a pool minimum issuance ratio
+     * @param poolId The id of the pool for to check the collateral for.
+     * @param collateral The address of the collateral.
+     */
+    function getPoolCollateralIssuanceRatio(
+        uint128 poolId,
+        address collateral
+    ) external view returns (uint256 issuanceRatioD18);
+
+    /**
      * @notice Retrieves the system-wide minimum liquidity ratio.
      * @return minRatioD18 The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
@@ -175,6 +241,8 @@ interface IPoolModule {
 
     /**
      * @notice Distributes cached debt in a pool to its vaults and updates market credit capacities.
+     * @param poolId the pool to rebalance
+     * @param optionalCollateralType in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
      */
-    function rebalancePool(uint128 poolId) external;
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external;
 }

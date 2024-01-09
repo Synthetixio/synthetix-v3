@@ -2,12 +2,13 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, constants, ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithStakedPool } from '../../bootstrap';
+import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { wei } from '@synthetixio/wei';
 
 describe('VaultModule', function () {
   const {
@@ -19,6 +20,7 @@ describe('VaultModule', function () {
     depositAmount,
     collateralContract,
     collateralAddress,
+    oracleNodeId,
   } = bootstrapWithStakedPool();
 
   const MAX_UINT = ethers.constants.MaxUint256;
@@ -67,6 +69,33 @@ describe('VaultModule', function () {
       ]);
   });
 
+  before('add second collateral type', async () => {
+    // add collateral
+    await (
+      await systems().Core.connect(owner).configureCollateral({
+        tokenAddress: systems().Collateral2Mock.address,
+        oracleNodeId: oracleNodeId(),
+        issuanceRatioD18: '5000000000000000000',
+        liquidationRatioD18: '1500000000000000000',
+        liquidationRewardD18: '20000000000000000000',
+        minDelegationD18: '20000000000000000000',
+        depositingEnabled: true,
+      })
+    ).wait();
+
+    await systems()
+      .Core.connect(owner)
+      .configureCollateral({
+        tokenAddress: await systems().Core.getUsdToken(),
+        oracleNodeId: ethers.utils.formatBytes32String(''),
+        issuanceRatioD18: bn(1.5),
+        liquidationRatioD18: bn(1.1),
+        liquidationRewardD18: 0,
+        minDelegationD18: 0,
+        depositingEnabled: true,
+      });
+  });
+
   const restore = snapshotCheckpoint(provider);
 
   function getExpectedCollateralizationRatio(
@@ -93,9 +122,10 @@ describe('VaultModule', function () {
   ) {
     return async () => {
       assertBn.equal(
-        (await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress())).amount,
+        await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress()),
         collateralAmount
       );
+
       assertBn.equal(
         await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
         debt
@@ -260,7 +290,7 @@ describe('VaultModule', function () {
           )
     );
 
-    describe('when collateral is disabled', async () => {
+    describe('when collateral is disabled by system', async () => {
       const restore = snapshotCheckpoint(provider);
       after(restore);
 
@@ -292,6 +322,106 @@ describe('VaultModule', function () {
               ethers.utils.parseEther('1')
             ),
           `CollateralDepositDisabled("${collateralAddress()}")`,
+          systems().Core
+        );
+      });
+    });
+
+    describe('when collateral is disabled by pool owner', async () => {
+      const restore = snapshotCheckpoint(provider);
+      after(restore);
+
+      const fakeVaultId = 93729021;
+
+      before('create empty vault', async () => {
+        await systems().Core.createPool(fakeVaultId, await user1.getAddress());
+      });
+
+      before('enable collateral for the system', async () => {
+        const beforeConfiguration = await systems().Core.getCollateralConfiguration(
+          collateralAddress()
+        );
+
+        await systems()
+          .Core.connect(owner)
+          .configureCollateral({ ...beforeConfiguration, depositingEnabled: true });
+      });
+
+      // fails when collateral is disabled for the pool by pool owner
+      before('disable collateral for the pool by the pool owner', async () => {
+        await systems()
+          .Core.connect(user1)
+          .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
+            collateralLimitD18: bn(10),
+            issuanceRatioD18: bn(0),
+          });
+      });
+
+      // fails when collateral is disabled for the pool by pool owner
+      it('fails when trying to open delegation position with disabled collateral', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .delegateCollateral(
+              accountId,
+              fakeVaultId,
+              collateralAddress(),
+              depositAmount.div(50),
+              ethers.utils.parseEther('1')
+            ),
+          `PoolCollateralLimitExceeded("${fakeVaultId}", "${collateralAddress()}", "${depositAmount
+            .div(50)
+            .toString()}", "${bn(10).toString()}")`,
+          systems().Core
+        );
+      });
+
+      it('collateral is enabled by the pool owner', async () => {
+        await systems()
+          .Core.connect(user1)
+          .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
+            collateralLimitD18: bn(1000000),
+            issuanceRatioD18: bn(0),
+          });
+      });
+
+      it('the delegation works as expected with the enabled collateral', async () => {
+        await systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            fakeVaultId,
+            collateralAddress(),
+            depositAmount.div(50),
+            ethers.utils.parseEther('1')
+          );
+      });
+    });
+
+    describe('when pool has limited collateral deposit', async () => {
+      before('set pool limit', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setPoolCollateralConfiguration(poolId, collateralAddress(), {
+            collateralLimitD18: depositAmount.div(2),
+            issuanceRatioD18: bn(0),
+          });
+      });
+
+      it('fails when pool does not allow sufficient deposit amount', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .delegateCollateral(
+              accountId,
+              poolId,
+              collateralAddress(),
+              depositAmount.mul(2),
+              ethers.utils.parseEther('1')
+            ),
+          `PoolCollateralLimitExceeded("${poolId}", "${collateralAddress()}", "${depositAmount
+            .mul(2)
+            .toString()}", "${depositAmount.div(2).toString()}")`,
           systems().Core
         );
       });
@@ -331,6 +461,15 @@ describe('VaultModule', function () {
       describe('second user delegates', async () => {
         const user2AccountId = 283847;
 
+        before('set pool limit', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setPoolCollateralConfiguration(poolId, collateralAddress(), {
+              collateralLimitD18: depositAmount.mul(10),
+              issuanceRatioD18: bn(0),
+            });
+        });
+
         before('second user delegates and mints', async () => {
           // user1 has extra collateral available
           await collateralContract()
@@ -361,6 +500,10 @@ describe('VaultModule', function () {
             collateralAddress(),
             depositAmount.div(100) // should be enough collateral to mint this
           );
+
+          await systems()
+            .Core.connect(user2)
+            .withdraw(user2AccountId, await systems().Core.getUsdToken(), depositAmount.div(100));
         });
 
         // lock enough collateral that the market will *become* capacity locked when the user
@@ -684,6 +827,14 @@ describe('VaultModule', function () {
         describe('remove collateral', async () => {
           before('repay debt', async () => {
             await systems()
+              .USD.connect(user2)
+              .approve(systems().Core.address, constants.MaxUint256.toString());
+
+            await systems()
+              .Core.connect(user2)
+              .deposit(user2AccountId, await systems().Core.getUsdToken(), depositAmount.div(100));
+
+            await systems()
               .Core.connect(user2)
               .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
           });
@@ -750,6 +901,64 @@ describe('VaultModule', function () {
           0
         );
       });
+    });
+  });
+
+  describe('distribution chain edge cases', async () => {
+    beforeEach(restore);
+    it('edge case: double USD printing on market by not fully flushing with 2 collaterals', async () => {
+      const startingWithdrawable = await systems().Core.getWithdrawableMarketUsd(marketId);
+
+      assertBn.gt(startingWithdrawable, 0);
+
+      // first, mint max debt
+      await MockMarket.withdrawUsd(startingWithdrawable);
+
+      // sanity
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+
+      // next flush and rebalance (these methods are both write despite appearance)
+      await systems().Core.getVaultDebt(poolId, systems().Collateral2Mock.address);
+      await systems().Core.getVaultDebt(poolId, systems().Collateral2Mock.address);
+
+      // finally, we shouldn't be able to mint
+      await assertRevert(
+        MockMarket.withdrawUsd(wei(1).toBN()),
+        'NotEnoughLiquidity(',
+        systems().Core
+      );
+
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+    });
+
+    it('edge case: double USD printing on market by not fully flushing with `rebalancePool`', async () => {
+      const startingWithdrawable = await systems().Core.getWithdrawableMarketUsd(marketId);
+
+      assertBn.gt(startingWithdrawable, 0);
+
+      // first, mint max debt
+      await MockMarket.withdrawUsd(startingWithdrawable);
+
+      // sanity
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+
+      // next flush and rebalance
+      // two rebalancePool() required because the debt is accumulated on first call, but not actually assumed by market
+      // further rebalancePool() calls have no effect, but another call to `withdrawUsd()` can be made and then this repeated.
+      // NOTE: this attack could also be executed in a pool which has 2 vaults. Just sync only one of the vaults, and the debt from
+      // the other unsynced vault will not have its debt updated. so the security issue is not exclusive to being
+      // caused by the addition of this function, just more convenient
+      await systems().Core.rebalancePool(poolId, ethers.constants.AddressZero);
+      await systems().Core.rebalancePool(poolId, ethers.constants.AddressZero);
+
+      // finally, we shouldn't be able to mint
+      await assertRevert(
+        MockMarket.withdrawUsd(wei(1).toBN()),
+        'NotEnoughLiquidity(',
+        systems().Core
+      );
+
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
     });
   });
 });

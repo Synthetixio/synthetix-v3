@@ -2,9 +2,9 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
-import "synthetix/contracts/interfaces/IIssuer.sol";
-import "synthetix/contracts/interfaces/ISynthetixDebtShare.sol";
+import "./interfaces/external/ILiquidatorRewards.sol";
+import "./interfaces/external/IIssuer.sol";
+import "./interfaces/external/ISynthetixDebtShare.sol";
 
 import {UUPSImplementation} from "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 
@@ -13,6 +13,7 @@ import "./interfaces/ILegacyMarket.sol";
 import "./interfaces/external/ISynthetix.sol";
 import "./interfaces/external/IRewardEscrowV2.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
@@ -28,15 +29,25 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     bool public pauseMigration;
 
     // used by _migrate to temporarily set reportedDebt to another value before
-    uint256 tmpLockedDebt;
+    uint256 internal tmpLockedDebt;
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
+
+    // redefine event so it can be catched by ethers
+    event MarketRegistered(
+        address indexed marketAddress,
+        uint128 indexed marketId,
+        address indexed sender
+    );
 
     error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
+
+    // solhint-disable-next-line no-empty-blocks
+    constructor() Ownable(ERC2771Context._msgSender()) {}
 
     /**
      * @inheritdoc ILegacyMarket
@@ -127,7 +138,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
         // retrieve the sUSD from the user so we can burn it
-        oldUSD.transferFrom(msg.sender, address(this), amount);
+        oldUSD.transferFrom(ERC2771Context._msgSender(), address(this), amount);
 
         // now burn it
         uint beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
@@ -137,9 +148,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         }
 
         // now mint same amount of snxUSD (called a "withdraw" in v3 land)
-        v3System.withdrawMarketUsd(marketId, msg.sender, amount);
+        v3System.withdrawMarketUsd(marketId, ERC2771Context._msgSender(), amount);
 
-        emit ConvertedUSD(msg.sender, amount);
+        emit ConvertedUSD(ERC2771Context._msgSender(), amount);
     }
 
     /**
@@ -150,7 +161,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
             revert Paused();
         }
 
-        _migrate(msg.sender, accountId);
+        _migrate(ERC2771Context._msgSender(), accountId);
     }
 
     /**
@@ -279,7 +290,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     function setPauseStablecoinConversion(bool paused) external onlyOwner {
         pauseStablecoinConversion = paused;
 
-        emit PauseStablecoinConversionSet(msg.sender, paused);
+        emit PauseStablecoinConversionSet(ERC2771Context._msgSender(), paused);
     }
 
     /**
@@ -288,7 +299,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     function setPauseMigration(bool paused) external onlyOwner {
         pauseMigration = paused;
 
-        emit PauseMigrationSet(msg.sender, paused);
+        emit PauseMigrationSet(ERC2771Context._msgSender(), paused);
     }
 
     /**

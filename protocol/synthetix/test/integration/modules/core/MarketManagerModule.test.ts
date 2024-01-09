@@ -9,6 +9,7 @@ import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { MockMarket__factory } from '../../../../typechain-types/index';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { bn } from '../../../common';
 
 describe('MarketManagerModule', function () {
   const {
@@ -43,7 +44,7 @@ describe('MarketManagerModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'registerMarket',
-      () => systems().Core.connect(user2).registerMarket(user1.getAddress())
+      () => systems().Core.connect(user2).registerMarket(MockMarket().address)
     );
 
     it('reverts when trying to register a market that does not support the IMarket interface', async function () {
@@ -92,6 +93,9 @@ describe('MarketManagerModule', function () {
 
     before('acquire USD', async () => {
       await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
+      await systems()
+        .Core.connect(user1)
+        .withdraw(accountId, await systems().Core.getUsdToken(), One);
     });
 
     it('should not work if user has not approved', async () => {
@@ -141,6 +145,30 @@ describe('MarketManagerModule', function () {
           assertBn.equal(
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             0
+          );
+        });
+
+        it('emits event', async () => {
+          const target = `"${await user1.getAddress()}"`;
+          const amount = bn(1).toString();
+          const market = `"${MockMarket().address}"`;
+          const creditCapacity = bn(1001).toString();
+          const netIssuance = bn(-1).toString();
+          const depositedCollateralValue = bn(0).toString();
+          const reportedDebt = bn(1).toString();
+          await assertEvent(
+            txn,
+            `MarketUsdDeposited(${[
+              marketId(),
+              target,
+              amount,
+              market,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+              reportedDebt,
+            ].join(', ')})`,
+            systems().Core
           );
         });
       });
@@ -213,6 +241,16 @@ describe('MarketManagerModule', function () {
             systems().Core
           );
         });
+
+        it('no event emitted when fee address is 0', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('depositMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+            );
+          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
+        });
       });
     });
   });
@@ -223,6 +261,9 @@ describe('MarketManagerModule', function () {
     describe('deposit into the pool', async () => {
       before('mint USD to use market', async () => {
         await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
       });
@@ -267,6 +308,30 @@ describe('MarketManagerModule', function () {
           assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One.div(2));
         });
 
+        it('emits event', async () => {
+          const target = `"${await user1.getAddress()}"`;
+          const amount = bn(0.5).toString();
+          const market = `"${MockMarket().address}"`;
+          const creditCapacity = bn(1000.5).toString();
+          const netIssuance = bn(-0.5).toString();
+          const depositedCollateralValue = bn(0).toString();
+          const reportedDebt = bn(0.5).toString();
+          await assertEvent(
+            txn,
+            `MarketUsdWithdrawn(${[
+              marketId(),
+              target,
+              amount,
+              market,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+              reportedDebt,
+            ].join(', ')})`,
+            systems().Core
+          );
+        });
+
         describe('withdraw the rest', async () => {
           before('mint USD to use market', async () => {
             txn = await MockMarket().connect(user1).sellSynth(One.div(2));
@@ -283,6 +348,30 @@ describe('MarketManagerModule', function () {
 
           it('makes USD', async () => {
             assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One);
+          });
+
+          it('emits event', async () => {
+            const target = `"${await user1.getAddress()}"`;
+            const amount = bn(0.5).toString();
+            const market = `"${MockMarket().address}"`;
+            const creditCapacity = bn(1000).toString();
+            const netIssuance = bn(0).toString();
+            const depositedCollateralValue = bn(0).toString();
+            const reportedDebt = bn(0).toString();
+            await assertEvent(
+              txn,
+              `MarketUsdWithdrawn(${[
+                marketId(),
+                target,
+                amount,
+                market,
+                creditCapacity,
+                netIssuance,
+                depositedCollateralValue,
+                reportedDebt,
+              ].join(', ')})`,
+              systems().Core
+            );
           });
         });
       });
@@ -345,6 +434,16 @@ describe('MarketManagerModule', function () {
             `MarketSystemFeePaid(${marketId()}, ${One.div(200)})`,
             systems().Core
           );
+        });
+
+        it('no event emitted when fee address is 0', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('withdrawMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+            );
+          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
         });
       });
     });
@@ -570,6 +669,118 @@ describe('MarketManagerModule', function () {
 
         assertBn.gt(withdrawableAmount2, withdrawableAmount1);
       });
+    });
+  });
+
+  describe('getMarketPools()', () => {
+    before(restore);
+
+    before('add more staked pools', async () => {
+      // want a total of 3 staked pools
+      // create
+      await systems()
+        .Core.connect(owner)
+        .createPool(poolId + 1, await owner.getAddress());
+      await systems()
+        .Core.connect(owner)
+        .createPool(poolId + 2, await owner.getAddress());
+
+      // configure
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('0.1'),
+          },
+        ]);
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId + 1, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('0.2'),
+          },
+        ]);
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId + 2, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('0.3'),
+          },
+        ]);
+
+      // delegate
+      await systems()
+        .Core.connect(user1)
+        .delegateCollateral(
+          accountId,
+          poolId + 1,
+          collateralAddress(),
+          depositAmount,
+          ethers.utils.parseEther('1')
+        );
+
+      await systems()
+        .Core.connect(user1)
+        .delegateCollateral(
+          accountId,
+          poolId + 2,
+          collateralAddress(),
+          depositAmount,
+          ethers.utils.parseEther('1')
+        );
+    });
+
+    it('inRangePools and outRangePools are returned correctly', async () => {
+      const result = await systems().Core.callStatic.getMarketPools(marketId());
+
+      assert.equal(result.inRangePoolIds.length, 3);
+      assert.equal(result.outRangePoolIds.length, 0);
+    });
+
+    it('distribute massive debt', async () => {
+      await MockMarket().connect(owner).setReportedDebt(bn(10000000000000));
+    });
+
+    it('inRangePools and outRangePools are returned correctly', async () => {
+      const result = await systems().Core.callStatic.getMarketPools(marketId());
+      assert.equal(result.inRangePoolIds.length, 0);
+      assert.equal(result.outRangePoolIds.length, 3);
+    });
+  });
+
+  describe('getMarketPoolDebtDistribution()', () => {
+    before(restore);
+
+    it('getMarketPoolDebtDistribution returns expected result', async () => {
+      const result = await systems().Core.callStatic.getMarketPoolDebtDistribution(
+        marketId(),
+        poolId
+      );
+
+      assertBn.equal(result.sharesD18, bn(1000));
+      assertBn.equal(result.totalSharesD18, bn(1000));
+      assertBn.equal(result.valuePerShareD27, bn(0));
+    });
+
+    it('distribute massive debt', async () => {
+      await MockMarket().connect(owner).setReportedDebt(bn(10000000000000));
+    });
+
+    it('getMarketPoolDebtDistribution returns expected result', async () => {
+      const result = await systems().Core.callStatic.getMarketPoolDebtDistribution(
+        marketId(),
+        poolId
+      );
+
+      assertBn.equal(result.sharesD18, bn(0));
+      assertBn.equal(result.totalSharesD18, bn(0));
+      assertBn.equal(result.valuePerShareD27, bn(1000000000));
     });
   });
 });

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "synthetix/contracts/interfaces/IAddressResolver.sol";
+import "./external/IAddressResolver.sol";
 import "./external/IV3CoreProxy.sol";
 
 /**
@@ -61,7 +61,7 @@ interface ILegacyMarket {
      * 1. collect all their SNX collateral and debt from v2x
      * 2. create a new staking account on v3 with the supplied {accountId}
      * 3. put the collateral and debt into this newly created staking account
-     * 4. send the created staking account to the msg.sender.
+     * 4. send the created staking account to the ERC2771Context._msgSender().
      * @param accountId the new account id that the user wants to have. can be any non-zero integer that is not already occupied.
      */
     function migrate(uint128 accountId) external;

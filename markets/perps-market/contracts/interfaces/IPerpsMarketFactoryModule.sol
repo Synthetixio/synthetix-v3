@@ -5,36 +5,51 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "./external/ISpotMarketSystem.sol";
 
+/**
+ * @title Perps Market Factory module
+ */
 interface IPerpsMarketFactoryModule is IMarket {
-    event MarketRegistered(
-        uint128 indexed perpsMarketId,
-        address indexed marketOwner,
-        string marketName,
-        string marketSymbol
-    );
-    event MarketOwnerNominated(uint128 indexed perpsMarketId, address newNominatedOwner);
-    event MarketOwnerChanged(uint128 indexed perpsMarketId, address oldOwner, address newOwner);
-    event MarketPriceDataUpdated(uint128 indexed perpsMarketId, bytes32 feedId);
+    /**
+     * @notice Gets fired when the factory is initialized.
+     * @param globalPerpsMarketId the new global perps market id.
+     */
+    event FactoryInitialized(uint128 globalPerpsMarketId);
 
-    error NotNominated(address notNominatedAddress);
+    /**
+     * @notice Gets fired when a market is created.
+     * @param perpsMarketId the newly created perps market id.
+     * @param marketName the newly created perps market name.
+     * @param marketSymbol the newly created perps market symbol.
+     */
+    event MarketCreated(uint128 indexed perpsMarketId, string marketName, string marketSymbol);
 
-    function setSynthetix(ISynthetixSystem synthetix) external;
-
-    function setSpotMarket(ISpotMarketSystem spotMarket) external;
-
-    function createMarket(
-        string memory marketName,
-        string memory marketSymbol,
-        address marketOwner
+    /**
+     * @notice Initializes the factory.
+     * @dev this function should be called only once.
+     * @return globalPerpsMarketId Id of the global perps market id.
+     */
+    function initializeFactory(
+        ISynthetixSystem synthetix,
+        ISpotMarketSystem spotMarket,
+        string memory marketName
     ) external returns (uint128);
 
-    function symbol(uint128 marketId) external view returns (string memory);
+    /**
+     * @notice Sets the perps market name.
+     * @param marketName the new perps market name.
+     */
+    function setPerpsMarketName(string memory marketName) external;
 
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
-
-    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external;
-
-    function acceptMarketOwnership(uint128 perpsMarketId) external;
-
-    function getMarketOwner(uint128 perpsMarketId) external view returns (address);
+    /**
+     * @notice Creates a new market.
+     * @param requestedMarketId id of the market to create.
+     * @param marketName name of the market to create.
+     * @param marketSymbol symbol of the market to create.
+     * @return perpsMarketId Id of the created perps market.
+     */
+    function createMarket(
+        uint128 requestedMarketId,
+        string memory marketName,
+        string memory marketSymbol
+    ) external returns (uint128);
 }

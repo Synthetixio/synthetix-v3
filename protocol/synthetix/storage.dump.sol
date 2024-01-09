@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -99,6 +99,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
     uint private constant _ROOT_INDEX = 1;
@@ -180,6 +185,56 @@ library Initialized {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol:PythStructs
+contract PythStructs {
+    struct Price {
+        int64 price;
+        uint64 conf;
+        int32 expo;
+        uint publishTime;
+    }
+    struct PriceFeed {
+        bytes32 id;
+        Price price;
+        Price emaPrice;
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ChainlinkNode.sol:ChainlinkNode
+library ChainlinkNode {
+    uint256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ReducerNode.sol:ReducerNode
+library ReducerNode {
+    enum Operations {
+        RECENT,
+        MIN,
+        MAX,
+        MEAN,
+        MEDIAN,
+        MUL,
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/UniswapNode.sol:UniswapNode
+library UniswapNode {
+    uint8 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythNode.sol:PythNode
+library PythNode {
+    int256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythOffchainLookupNode.sol:PythOffchainLookupNode
+library PythOffchainLookupNode {
+    int256 public constant PRECISION = 18;
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -191,7 +246,8 @@ library NodeDefinition {
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
         STALENESS_CIRCUIT_BREAKER,
-        CONSTANT
+        CONSTANT,
+        PYTH_OFFCHAIN_LOOKUP
     }
     struct Data {
         NodeType nodeType;
@@ -216,6 +272,14 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
+library TickMath {
+    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MAX_TICK = -MIN_TICK;
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
+}
+
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
 interface IAccountModule {
     struct AccountPermissions {
@@ -230,28 +294,6 @@ interface ILiquidationModule {
         uint256 debtLiquidated;
         uint256 collateralLiquidated;
         uint256 amountRewarded;
-    }
-}
-
-// @custom:artifact contracts/interfaces/external/IAny2EVMMessageReceiverInterface.sol:IAny2EVMMessageReceiverInterface
-interface IAny2EVMMessageReceiverInterface {
-    struct Any2EVMMessage {
-        uint256 srcChainId;
-        bytes sender;
-        bytes data;
-        address[] destTokens;
-        uint256[] amounts;
-    }
-}
-
-// @custom:artifact contracts/interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol:IEVM2AnySubscriptionOnRampRouterInterface
-interface IEVM2AnySubscriptionOnRampRouterInterface {
-    struct EVM2AnySubscriptionMessage {
-        bytes receiver;
-        bytes data;
-        address[] tokens;
-        uint256[] amounts;
-        uint256 gasLimit;
     }
 }
 
@@ -272,6 +314,13 @@ contract CollateralModule {
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
     bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
+contract CrossChainUSDModule {
+    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 }
 
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
@@ -311,11 +360,6 @@ contract MarketManagerModule {
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
 }
 
-// @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
-contract MulticallModule {
-    bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
-}
-
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
 contract PoolModule {
     bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
@@ -342,9 +386,6 @@ contract VaultModule {
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
 contract USDTokenModule {
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 }
 
@@ -374,6 +415,8 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -428,6 +471,23 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
+    }
+}
+
+// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
     }
 }
 
@@ -544,12 +604,23 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
     }
 }
 
@@ -620,7 +691,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-        int128 prevTotalDebtD18;
+        int128 _unused_prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
@@ -636,5 +707,32 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+    }
+}
+
+// @custom:artifact contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainSelector;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }

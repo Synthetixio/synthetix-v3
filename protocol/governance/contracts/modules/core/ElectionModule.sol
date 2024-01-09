@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../interfaces/ISynthetixElectionModule.sol";
@@ -27,7 +28,7 @@ contract ElectionModule is
         uint64,
         uint64,
         uint64
-    ) external view override(BaseElectionModule, IElectionModule) {
+    ) external override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
         revert WrongInitializer();
     }
@@ -149,7 +150,7 @@ contract ElectionModule is
         bytes32[] calldata merkleProof,
         address[] calldata candidates
     ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
+        declareCrossChainDebtShare(ERC2771Context._msgSender(), debtShare, merkleProof);
 
         cast(candidates);
     }

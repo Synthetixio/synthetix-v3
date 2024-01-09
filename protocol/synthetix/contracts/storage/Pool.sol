@@ -6,10 +6,13 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
+import "./PoolCollateralConfiguration.sol";
 import "./SystemPoolConfiguration.sol";
+import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
@@ -22,6 +25,7 @@ library Pool {
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Market for Market.Data;
     using Vault for Vault.Data;
+    using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
     using DecimalMath for int256;
@@ -46,6 +50,16 @@ library Pool {
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
+    /**
+     * @dev Thrown when pool has surpassed max collateral deposit
+     */
+    error PoolCollateralLimitExceeded(
+        uint128 poolId,
+        address collateralType,
+        uint256 currentCollateral,
+        uint256 maxCollateral
+    );
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -112,6 +126,15 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        /**
+         * @dev A switch to make the pool opt-in for new collateral
+         *
+         * By default it's set to false, which means any new collateral accepeted by the system will be accpeted by the pool.
+         *
+         * If the pool owner sets this value to true, then new collaterals will be disabled for the pool unless a maxDeposit is set for a that collateral.
+         */
+        bool collateralDisabledByDefault;
     }
 
     /**
@@ -142,12 +165,13 @@ library Pool {
 
     /**
      * @dev Ticker function that updates the debt distribution chain downwards, from markets into the pool, according to each market's weight.
+     * IMPORTANT: debt must be distributed downstream before invoking this function.
      *
      * It updates the chain by performing these actions:
      * - Splits the pool's total liquidity of the pool into each market, pro-rata. The amount of shares that the pool has on each market depends on how much liquidity the pool provides to the market.
      * - Accumulates the change in debt value from each market into the pools own vault debt distribution's value per share.
      */
-    function distributeDebtToVaults(Data storage self) internal {
+    function rebalanceMarketsInPool(Data storage self) internal {
         uint256 totalWeightsD18 = self.totalWeightsD18;
 
         if (totalWeightsD18 == 0) {
@@ -160,8 +184,6 @@ library Pool {
         int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
             ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
             : int128(0);
-
-        int256 cumulativeDebtChangeD18 = 0;
 
         uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
@@ -200,16 +222,13 @@ library Pool {
 
             // Update each market's corresponding credit capacity.
             // The returned value represents how much the market's debt changed after changing the shares of this pool actor, which is aggregated to later be passed on the pools debt distribution.
-            cumulativeDebtChangeD18 += Market.rebalancePools(
+            Market.rebalancePools(
                 marketConfiguration.marketId,
                 self.id,
                 effectiveMaxShareValueD18,
                 marketCreditCapacityD18
             );
         }
-
-        // Passes on the accumulated debt changes from the markets, into the pool, so that vaults can later access this debt.
-        self.vaultsDebtDistribution.distributeValue(cumulativeDebtChangeD18);
     }
 
     /**
@@ -264,7 +283,53 @@ library Pool {
     }
 
     /**
+     * IMPORTANT: after this function, you should accumulateVaultDebt
+     */
+    function distributeDebtToVaults(
+        Data storage self,
+        address optionalCollateralType
+    ) internal returns (int256 cumulativeDebtChange) {
+        // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
+        uint128 myPoolId = self.id;
+        for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
+            Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
+
+            market.distributeDebtToPools(9999999999);
+            cumulativeDebtChange += market.accumulateDebtChange(myPoolId);
+        }
+
+        assignDebt(self, cumulativeDebtChange);
+
+        // Transfer the debt change from the pool into the vault.
+        if (optionalCollateralType != address(0)) {
+            bytes32 actorId = optionalCollateralType.toBytes32();
+            self.vaults[optionalCollateralType].distributeDebtToAccounts(
+                self.vaultsDebtDistribution.accumulateActor(actorId)
+            );
+        }
+    }
+
+    function assignDebt(Data storage self, int256 debtAmountD18) internal {
+        // Accumulate the change in total liquidity, from the vault, into the pool.
+        self.totalVaultDebtsD18 = self.totalVaultDebtsD18 + debtAmountD18.to128();
+
+        self.vaultsDebtDistribution.distributeValue(debtAmountD18);
+    }
+
+    function assignDebtToAccount(
+        Data storage self,
+        address collateralType,
+        uint128 accountId,
+        int256 debtAmountD18
+    ) internal {
+        self.totalVaultDebtsD18 = self.totalVaultDebtsD18 + debtAmountD18.to128();
+
+        self.vaults[collateralType].currentEpoch().assignDebtToAccount(accountId, debtAmountD18);
+    }
+
+    /**
      * @dev Ticker function that updates the debt distribution chain for a specific collateral type downwards, from the pool into the corresponding the vault, according to changes in the collateral's price.
+     * IMPORTANT: *should* call distributeDebtToVaults() to ensure that deltaDebtD18 is referencing the latest
      *
      * It updates the chain by performing these actions:
      * - Collects the latest price of the corresponding collateral and updates the vault's liquidity.
@@ -275,31 +340,21 @@ library Pool {
         Data storage self,
         address collateralType
     ) internal returns (uint256 collateralPriceD18) {
-        // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
-        distributeDebtToVaults(self);
-
-        // Transfer the debt change from the pool into the vault.
-        bytes32 actorId = collateralType.toBytes32();
-        self.vaults[collateralType].distributeDebtToAccounts(
-            self.vaultsDebtDistribution.accumulateActor(actorId)
+        // Get the latest collateral price.
+        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice(
+            DecimalMath.UNIT
         );
 
-        // Get the latest collateral price.
-        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
-
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint256 usdWeightD18, , int256 deltaDebtD18) = self
-            .vaults[collateralType]
-            .updateCreditCapacity(collateralPriceD18);
+        (uint256 usdWeightD18, ) = self.vaults[collateralType].updateCreditCapacity(
+            collateralPriceD18
+        );
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
-        self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
+        self.vaultsDebtDistribution.setActorShares(collateralType.toBytes32(), usdWeightD18);
 
-        // Accumulate the change in total liquidity, from the vault, into the pool.
-        self.totalVaultDebtsD18 = self.totalVaultDebtsD18 + deltaDebtD18.to128();
-
-        // Distribute debt again because the market credit capacity may have changed, so we should ensure the vaults have the most up to date capacities
-        distributeDebtToVaults(self);
+        // now that available vault collateral has been recalculated, we should also rebalance the pool markets
+        rebalanceMarketsInPool(self);
     }
 
     /**
@@ -310,8 +365,7 @@ library Pool {
         address collateralType,
         uint128 accountId
     ) internal returns (int256 debtD18) {
-        recalculateVaultCollateral(self, collateralType);
-
+        distributeDebtToVaults(self, collateralType);
         return self.vaults[collateralType].consolidateAccountDebt(accountId);
     }
 
@@ -394,8 +448,9 @@ library Pool {
      * Note: This is not a view function. It updates the debt distribution chain before performing any calculations.
      */
     function currentVaultDebt(Data storage self, address collateralType) internal returns (int256) {
-        recalculateVaultCollateral(self, collateralType);
-
+        // TODO: assert that all debts have been paid, otherwise vault cant be reset (its so critical here)
+        distributeDebtToVaults(self, collateralType);
+        rebalanceMarketsInPool(self);
         return self.vaults[collateralType].currentDebt();
     }
 
@@ -408,7 +463,7 @@ library Pool {
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice();
+            .getCollateralPrice(collateralAmountD18);
 
         collateralAmountD18 = self.vaults[collateralType].currentCollateral();
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
@@ -422,11 +477,10 @@ library Pool {
         address collateralType,
         uint128 accountId
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
+        collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice();
-
-        collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
+            .getCollateralPrice(collateralAmountD18);
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
     }
 
@@ -440,6 +494,7 @@ library Pool {
         uint128 accountId
     ) internal returns (uint256) {
         int256 positionDebtD18 = updateAccountDebt(self, collateralType, accountId);
+        rebalanceMarketsInPool(self);
         if (positionDebtD18 <= 0) {
             return type(uint256).max;
         }
@@ -472,6 +527,29 @@ library Pool {
                 self.id,
                 // solhint-disable-next-line numcast/safe-cast
                 uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
+            );
+        }
+    }
+
+    function checkPoolCollateralLimit(
+        Data storage self,
+        address collateralType,
+        uint256 collateralAmountD18
+    ) internal view {
+        uint256 collateralLimitD18 = self
+            .collateralConfigurations[collateralType]
+            .collateralLimitD18;
+        uint256 currentCollateral = self.vaults[collateralType].currentCollateral();
+
+        if (
+            (self.collateralDisabledByDefault && collateralLimitD18 == 0) ||
+            (collateralLimitD18 > 0 && currentCollateral + collateralAmountD18 > collateralLimitD18)
+        ) {
+            revert PoolCollateralLimitExceeded(
+                self.id,
+                collateralType,
+                currentCollateral + collateralAmountD18,
+                collateralLimitD18
             );
         }
     }

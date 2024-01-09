@@ -1,6 +1,7 @@
 import commonConfig from '@synthetixio/common-config/hardhat.config';
 
 import 'solidity-docgen';
+import { templates } from '@synthetixio/docgen';
 
 const config = {
   ...commonConfig,
@@ -18,6 +19,8 @@ const config = {
       './interfaces/external',
       './interfaces/IUtilsModule.sol',
       './errors',
+      './generated',
+      './routers',
       './routers',
       './modules',
       './mixins',
@@ -27,12 +30,16 @@ const config = {
       './utils',
       './Proxy.sol',
     ],
-    templates: './docs/theme',
+    templates,
   },
   warnings: {
     'contracts/generated/**/*': {
       default: 'off',
     },
+  },
+
+  mocha: {
+    timeout: 120000,
   },
 };
 

@@ -150,11 +150,28 @@ describe('MarketCollateralModule', function () {
         });
 
         it('emits event', async () => {
+          const tokenAmount = configuredMaxAmount.toString();
+          const sender = MockMarket().address;
+          const creditCapacity = ethers.utils.parseEther('1000');
+          const netIssuance = 0;
+          const depositedCollateralValue = (
+            await systems()
+              .Core.connect(user1)
+              .getMarketCollateralAmount(marketId(), collateralAddress())
+          ).toString();
+          const reportedDebt = 0;
           await assertEvent(
             tx,
-            `MarketCollateralDeposited(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount.toString()}, "${
-              MockMarket().address
-            }")`,
+            `MarketCollateralDeposited(${[
+              marketId(),
+              `"${collateralAddress()}"`,
+              tokenAmount,
+              `"${sender}"`,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+              reportedDebt,
+            ].join(', ')})`,
             systems().Core
           );
         });
@@ -267,12 +284,28 @@ describe('MarketCollateralModule', function () {
         });
 
         it('emits event', async () => {
+          const tokenAmount = configuredMaxAmount.div(2).div(4).toString();
+          const sender = MockMarket().address;
+          const creditCapacity = ethers.utils.parseEther('1000');
+          const netIssuance = 0;
+          const depositedCollateralValue = (
+            await systems()
+              .Core.connect(user1)
+              .getMarketCollateralAmount(marketId(), collateralAddress())
+          ).toString();
+          const reportedDebt = 0;
           await assertEvent(
             tx,
-            `MarketCollateralWithdrawn(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount
-              .div(2)
-              .div(4)
-              .toString()}, "${MockMarket().address}")`,
+            `MarketCollateralWithdrawn(${[
+              marketId(),
+              `"${collateralAddress()}"`,
+              tokenAmount,
+              `"${sender}"`,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+              reportedDebt,
+            ].join(', ')})`,
             systems().Core
           );
         });

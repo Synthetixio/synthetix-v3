@@ -1,19 +1,21 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { bootstrapStakers, createStakedPool } from '@synthetixio/main/test/common';
+import {
+  AccountProxy,
+  CollateralMock,
+  CoreProxy,
+  USDProxy,
+  USDRouter,
+} from '@synthetixio/main/test/generated/typechain';
+import { createPythNode } from '@synthetixio/oracle-manager/test/common';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { MockPythERC7412Wrapper } from '../typechain-types';
 import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
-import {
-  USDProxy,
-  CollateralMock,
-  USDRouter,
-  CoreProxy,
-  AccountProxy,
-} from '@synthetixio/main/test/generated/typechain';
-import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { AggregatorV3Mock, OracleVerifierMock } from '../typechain-types';
+import { STRICT_PRICE_TOLERANCE } from './common';
+import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -24,7 +26,7 @@ type Proxies = {
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
-  OracleVerifierMock: OracleVerifierMock;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   ['synthetix.USDRouter']: USDRouter;
 };
 
@@ -35,7 +37,7 @@ export type Systems = {
   USDRouter: USDRouter;
   CollateralMock: CollateralMock;
   OracleManager: OracleManagerProxy;
-  OracleVerifierMock: OracleVerifierMock;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   FeeCollectorMock: FeeCollectorMock;
   Account: AccountProxy;
   Synth: (address: string) => SynthRouter;
@@ -71,7 +73,7 @@ export function bootstrap() {
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       CollateralMock: getContract('synthetix.CollateralMock'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
-      OracleVerifierMock: getContract('OracleVerifierMock'),
+      MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       Synth: (address: string) => getContract('SynthRouter', address),
     };
   });
@@ -112,7 +114,7 @@ export function bootstrapWithSynth(name: string, token: string) {
 
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
   let marketId: BigNumber;
-  let aggregator: AggregatorV3Mock;
+  let aggregator: MockPythExternalNode;
   let contracts: Systems;
 
   before('identify contracts', () => {
@@ -141,7 +143,7 @@ export function bootstrapWithSynth(name: string, token: string) {
   });
 
   before('setup buy and sell feeds', async () => {
-    const result = await createOracleNode(
+    const result = await createPythNode(
       r.signers()[0],
       ethers.utils.parseEther('900'),
       contracts.OracleManager
@@ -150,7 +152,8 @@ export function bootstrapWithSynth(name: string, token: string) {
     await contracts.SpotMarket.connect(marketOwner).updatePriceData(
       marketId,
       r.oracleNodeId(),
-      result.oracleNodeId
+      result.oracleNodeId,
+      STRICT_PRICE_TOLERANCE
     );
   });
 

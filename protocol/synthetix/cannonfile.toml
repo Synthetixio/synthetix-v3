@@ -40,11 +40,17 @@ artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
+[contract.CcipReceiverModule]
+artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
+
 [contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
 [contract.CollateralConfigurationModule]
 artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralConfigurationModule"
+
+[contract.CrossChainUSDModule]
+artifact = "contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule"
 
 [contract.IssueUSDModule]
 artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
@@ -57,9 +63,6 @@ artifact = "contracts/modules/core/MarketCollateralModule.sol:MarketCollateralMo
 
 [contract.MarketManagerModule]
 artifact = "contracts/modules/core/MarketManagerModule.sol:MarketManagerModule"
-
-[contract.MulticallModule]
-artifact = "contracts/modules/core/MulticallModule.sol:MulticallModule"
 
 [contract.PoolConfigurationModule]
 artifact = "contracts/modules/core/PoolConfigurationModule.sol:PoolConfigurationModule"
@@ -90,38 +93,19 @@ contracts = [
     "AccountModule",
     "AssociateDebtModule",
     "AssociatedSystemsModule",
+    "CcipReceiverModule",
     "CollateralModule",
     "CollateralConfigurationModule",
+    "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",
     "MarketCollateralModule",
     "MarketManagerModule",
-    "MulticallModule",
     "PoolConfigurationModule",
     "PoolModule",
     "RewardsManagerModule",
     "UtilsModule",
     "VaultModule",
-]
-
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.FeatureFlagModule",
-  "contract.AccountModule",
-  "contract.AssociateDebtModule",
-  "contract.AssociatedSystemsModule",
-  "contract.CollateralModule",
-  "contract.CollateralConfigurationModule",
-  "contract.IssueUSDModule",
-  "contract.LiquidationModule",
-  "contract.MarketCollateralModule",
-  "contract.MarketManagerModule",
-  "contract.MulticallModule",
-  "contract.PoolConfigurationModule",
-  "contract.PoolModule",
-  "contract.RewardsManagerModule",
-  "contract.UtilsModule",
-  "contract.VaultModule"
 ]
 
 [contract.InitialCoreProxy]
@@ -130,7 +114,6 @@ args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 salt = "<%= settings.salt %>"
 create2 = true
-depends = ["contract.InitialModuleBundle"]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
@@ -138,108 +121,158 @@ abi = "UpgradeModule"
 fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
-
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-
-depends = [
-  "contract.InitialCoreProxy",
-  "router.CoreRouter"
-]
+factory.CoreProxy.highlight = true
 
 # Account
 [router.AccountRouter]
-contracts = [
-    "InitialModuleBundle",
-    "AccountTokenModule",
-]
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.AccountTokenModule"
-]
+contracts = ["InitialModuleBundle", "AccountTokenModule"]
 
 # USD
 [router.USDRouter]
-contracts = [
-    "InitialModuleBundle",
-    "AssociatedSystemsModule",
-    "USDTokenModule",
-]
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.AssociatedSystemsModule",
-  "contract.USDTokenModule"
-]
+contracts = ["InitialModuleBundle", "AssociatedSystemsModule", "USDTokenModule"]
 
 # Post stuff
-
 [invoke.init_account]
 target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "initOrUpgradeNft"
 args = [
-  "0x6163636f756e744e667400000000000000000000000000000000000000000000",
-  "Synthetix Account",
-  "SACCT",
-  "https://synthetix.io",
-  "<%= contracts.AccountRouter.address %>"
+    "0x6163636f756e744e667400000000000000000000000000000000000000000000",
+    "Synthetix Account",
+    "SACCT",
+    "https://synthetix.io",
+    "<%= contracts.AccountRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.AccountRouter"
-]
+depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
+factory.AccountProxy.highlight = true
 
 [invoke.init_usd]
 target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "initOrUpgradeToken"
 args = [
-  "0x555344546f6b656e000000000000000000000000000000000000000000000000",
-  "Synthetic USD Token v3",
-  "snxUSD",
-  18,
-  "<%= contracts.USDRouter.address %>"
+    "0x555344546f6b656e000000000000000000000000000000000000000000000000",
+    "Synthetic USD Token v3",
+    "snxUSD",
+    18,
+    "<%= contracts.USDRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.USDRouter"
-]
+depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
+factory.USDProxy.highlight = true
 
 [invoke.set_oracle_manager]
 target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "configureOracleManager"
-args = [
-  "<%= imports.oracle_manager.contracts.Proxy.address %>",
-]
-depends = ["invoke.upgrade_core_proxy", "provision.oracle_manager"]
+args = ["<%= imports.oracle_manager.contracts.Proxy.address %>"]
 
-[invoke.enable_basic_features]
+[invoke.enable_feature_createAccount]
 target = ["CoreProxy"]
 fromCall.func = "owner"
-func = "multicall"
-args = [[
-  # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createAccount'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('deposit'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('withdraw'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('mintUsd'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('burnUsd'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('liquidate'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('liquidateVault'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('depositMarketCollateral'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('withdrawMarketCollateral'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('depositMarketUsd'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('withdrawMarketUsd'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('claimRewards'), true]).slice(2) %>",
-  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('delegateCollateral'), true]).slice(2) %>",
-]]
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('createAccount') %>", true]
 
-depends = ["invoke.upgrade_core_proxy"]
+[invoke.enable_feature_deposit]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('deposit') %>", true]
+
+[invoke.enable_feature_withdraw]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdraw') %>", true]
+
+[invoke.enable_feature_mintUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('mintUsd') %>", true]
+
+[invoke.enable_feature_burnUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('burnUsd') %>", true]
+
+[invoke.enable_feature_liquidate]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidate') %>", true]
+
+[invoke.enable_feature_liquidateVault]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidateVault') %>", true]
+
+[invoke.enable_feature_depositMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketCollateral') %>", true]
+
+[invoke.enable_feature_withdrawMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketCollateral') %>", true]
+
+[invoke.enable_feature_depositMarketUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketUsd') %>", true]
+
+[invoke.enable_feature_withdrawMarketUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketUsd') %>", true]
+
+[invoke.enable_feature_claimRewards]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('claimRewards') %>", true]
+
+[invoke.enable_feature_delegateCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('delegateCollateral') %>", true]
+
+[invoke.register_const_one_oracle]
+target = ["oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # 8 = "constant" oracle
+    8,
+    "<%= defaultAbiCoder.encode(['uint256'], [parseEther('1')]) %>",
+    []
+]
+extra.const_one_oracle_id.event = "NodeRegistered"
+extra.const_one_oracle_id.arg = 0
+
+# we register USD as a collateral type because it is useful to treat it the same way as any other collateral
+[invoke.configure_usd_collateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "configureCollateral"
+args = [
+    { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true }
+]
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"

@@ -1,0 +1,11 @@
+name = "pyth-erc7412-wrapper"
+version = "<%= package.version %>"
+description = "Benchmark prices oracle"
+
+[setting.pythAddress]
+defaultValue = "0x420000000000000000000000000000000000000F"
+
+[contract.PythERC7412Wrapper]
+artifact = "contracts/PythERC7412Wrapper.sol:PythERC7412Wrapper"
+args = ["<%= settings.pythAddress %>"]
+create2 = true

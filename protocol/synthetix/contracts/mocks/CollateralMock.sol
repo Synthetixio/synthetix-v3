@@ -13,7 +13,7 @@ contract CollateralMock is ERC20 {
     }
 
     function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
+        _burn(ERC2771Context._msgSender(), amount);
     }
 
     function mint(address recipient, uint256 amount) external {

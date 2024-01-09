@@ -7,44 +7,85 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
+/**
+ * @title Module for getting perps market information.
+ * @dev See IPerpsMarketModule.
+ */
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
-    using AsyncOrder for AsyncOrder.Data;
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
+    function metadata(
+        uint128 marketId
+    ) external view override returns (string memory name, string memory symbol) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return (market.name, market.symbol);
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function size(uint128 marketId) external view override returns (uint256) {
         return PerpsMarket.load(marketId).size;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
+        return PerpsMarketConfiguration.load(marketId).maxMarketSize;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function currentFundingRate(uint128 marketId) external view override returns (int) {
         return PerpsMarket.load(marketId).currentFundingRate();
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function currentFundingVelocity(uint128 marketId) external view override returns (int) {
         return PerpsMarket.load(marketId).currentFundingVelocity();
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function indexPrice(uint128 marketId) external view override returns (uint) {
-        return PerpsPrice.getCurrentPrice(marketId);
+        return PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
     }
 
-    function fillPrice(uint128 marketId) external view override returns (uint) {
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
+    function fillPrice(
+        uint128 marketId,
+        int128 orderSize,
+        uint price
+    ) external view override returns (uint) {
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
                 PerpsMarketConfiguration.load(marketId).skewScale,
-                0,
-                PerpsPrice.getCurrentPrice(marketId)
+                orderSize,
+                price
             );
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function getMarketSummary(
         uint128 marketId
     ) external view override returns (MarketSummary memory summary) {
@@ -56,8 +97,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
                 maxOpenInterest: this.maxOpenInterest(marketId),
                 currentFundingRate: market.currentFundingRate(),
                 currentFundingVelocity: market.currentFundingVelocity(),
-                indexPrice: this.indexPrice(marketId),
-                fillPrice: this.fillPrice(marketId)
+                indexPrice: this.indexPrice(marketId)
             });
     }
 }

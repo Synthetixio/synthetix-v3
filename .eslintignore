@@ -6,3 +6,6 @@ utils/*/utils
 **/contracts/generated
 **/test/generated
 **/artifacts
+**/subgraph/**/deployments
+**/subgraph/build
+**/subgraph/.bin

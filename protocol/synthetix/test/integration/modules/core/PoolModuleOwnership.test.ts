@@ -75,7 +75,7 @@ describe('PoolModule Create / Ownership', function () {
       });
     });
 
-    describe('when transfering to a new owner', async () => {
+    describe('when transferring to a new owner', async () => {
       describe('when attempting to accept before nominating', async () => {
         it('reverts', async () => {
           await assertRevert(
@@ -196,6 +196,26 @@ describe('PoolModule Create / Ownership', function () {
           });
         });
       });
+
+      describe('when owner renouncing his ownership', async () => {
+        it('fails when not the owner tries to renounce it', async () => {
+          await assertRevert(
+            systems().Core.connect(user2).renouncePoolOwnership(2),
+            `Unauthorized("${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
+        it('emits and event', async () => {
+          await assertEvent(
+            await systems().Core.connect(user1).renouncePoolOwnership(2),
+            `PoolOwnershipRenounced(2, "${await user1.getAddress()}")`,
+            systems().Core
+          );
+        });
+        it('pool has no owner', async () => {
+          assert.equal(await systems().Core.getPoolOwner(2), ethers.constants.AddressZero);
+        });
+      });
     });
   });
 
@@ -208,7 +228,7 @@ describe('PoolModule Create / Ownership', function () {
       before('increase market debt and rebalances the markets inside of pool', async () => {
         await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
 
-        await systems().Core.connect(owner).rebalancePool(poolId);
+        await systems().Core.connect(owner).Market_distributeDebtToPools(poolId, 999999999);
       });
 
       it('the ultimate capacity of the market ends up to be the same', async () => {

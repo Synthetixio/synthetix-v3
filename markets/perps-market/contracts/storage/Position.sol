@@ -1,23 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
-import {PerpsPrice} from "./PerpsPrice.sol";
-import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
 library Position {
-    using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using SafeCastI128 for int128;
     using SafeCastU128 for uint128;
-    using DecimalMath for int256;
     using DecimalMath for uint256;
     using DecimalMath for int128;
     using PerpsMarket for PerpsMarket.Data;
-    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     struct Data {
         uint128 marketId;
@@ -26,7 +20,7 @@ library Position {
         int128 latestInteractionFunding;
     }
 
-    function updatePosition(Data storage self, Data memory newPosition) internal {
+    function update(Data storage self, Data memory newPosition) internal {
         self.size = newPosition.size;
         self.marketId = newPosition.marketId;
         self.latestInteractionPrice = newPosition.latestInteractionPrice;
@@ -47,23 +41,38 @@ library Position {
         view
         returns (
             uint256 notionalValue,
-            int pnl,
+            int totalPnl,
+            int pricePnl,
             int accruedFunding,
             int netFundingPerUnit,
             int nextFunding
         )
     {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(self.marketId);
+        (totalPnl, pricePnl, accruedFunding, netFundingPerUnit, nextFunding) = getPnl(self, price);
+        notionalValue = getNotionalValue(self, price);
+    }
 
-        nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
+    function getPnl(
+        Data storage self,
+        uint price
+    )
+        internal
+        view
+        returns (
+            int totalPnl,
+            int pricePnl,
+            int accruedFunding,
+            int netFundingPerUnit,
+            int nextFunding
+        )
+    {
+        nextFunding = PerpsMarket.load(self.marketId).calculateNextFunding(price);
         netFundingPerUnit = nextFunding - self.latestInteractionFunding;
-
         accruedFunding = self.size.mulDecimal(netFundingPerUnit);
 
         int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
-        pnl = self.size.mulDecimal(priceShift) + accruedFunding;
-
-        notionalValue = getNotionalValue(self, price);
+        pricePnl = self.size.mulDecimal(priceShift);
+        totalPnl = pricePnl + accruedFunding;
     }
 
     function getNotionalValue(Data storage self, uint256 price) internal view returns (uint256) {

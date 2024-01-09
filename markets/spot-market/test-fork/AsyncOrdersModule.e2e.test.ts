@@ -17,7 +17,6 @@ const pythSettlementStrategy = {
   feedId,
   url: 'https://xc-testnet.pyth.network/api/get_vaa_ccip?data={data}',
   settlementReward: bn(5),
-  priceDeviationTolerance: bn(1000),
   disabled: false,
   minimumUsdExchangeAmount: bn(0.000001),
   maxRoundingLoss: bn(0.000001),
@@ -102,14 +101,13 @@ describe('AsyncOrdersModule.e2e.test', function () {
         });
       }
 
-      const fee = await verifier.getUpdateFee(1);
       const parsedURL = url.replace('{data}', data);
 
       //There is a delay on pyth service
       await new Promise((resolve) => setTimeout(resolve, 30000));
 
       const response = await fetch(parsedURL).then((res) => res.json());
-
+      const fee = await verifier.getUpdateFee([response]);
       await systems()
         .SpotMarket.connect(keeper)
         .settlePythOrder(response.data as BytesLike, extraData, {

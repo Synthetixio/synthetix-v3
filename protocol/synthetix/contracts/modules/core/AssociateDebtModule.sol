@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../storage/Account.sol";
@@ -51,8 +51,8 @@ contract AssociateDebtModule is IAssociateDebtModule {
         VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
         Market.Data storage marketData = Market.load(marketId);
 
-        if (msg.sender != marketData.marketAddress) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (ERC2771Context._msgSender() != marketData.marketAddress) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         // The market must appear in pool configuration of the specified position
@@ -62,6 +62,9 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // Refresh latest account debt
         poolData.updateAccountDebt(collateralType, accountId);
+
+        // rebalance here because this is a good opporitunity to do so, and because its required for correct debt accounting after account debt update
+        poolData.rebalanceMarketsInPool();
 
         // Remove the debt we're about to assign to a specific position, pro-rata
         epochData.distributeDebtToAccounts(-amount.toInt());

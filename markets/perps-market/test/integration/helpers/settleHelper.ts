@@ -4,47 +4,23 @@ import { Systems } from '../bootstrap';
 export type SettleOrderData = {
   systems: () => Systems;
   keeper: ethers.Signer;
-  marketId: ethers.BigNumber;
   accountId: number;
   offChainPrice: ethers.BigNumberish;
-  settlementTime: number;
-  feedId: string;
+  skipSettingPrice?: boolean;
 };
 
 export const settleOrder = async ({
   systems,
   keeper,
-  marketId,
   accountId,
   offChainPrice,
-  settlementTime,
-  feedId,
+  skipSettingPrice,
 }: SettleOrderData): Promise<ethers.ContractTransaction> => {
-  // create extraData based on market/account id
-  const extraData = ethers.utils.defaultAbiCoder.encode(
-    ['uint128', 'uint128'],
-    [marketId, accountId]
-  );
-
-  // build pyth data
-  const pythPriceExpotential = 6;
-  const pythPrice = ethers.BigNumber.from(offChainPrice).mul(10 ** pythPriceExpotential);
-  // Get the latest price
-  const pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-    feedId,
-    pythPrice, // price
-    1, // confidence
-    -pythPriceExpotential,
-    pythPrice, // emaPrice
-    1, // emaConfidence
-    settlementTime
-  );
-  const updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
-
+  // set Pyth setBenchmarkPrice
+  if (!skipSettingPrice) {
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
+  }
   // settle
-  const tx = await systems()
-    .PerpsMarket.connect(keeper)
-    .settlePythOrder(pythPriceData, extraData, { value: updateFee });
-
+  const tx = await systems().PerpsMarket.connect(keeper).settleOrder(accountId);
   return tx;
 };
