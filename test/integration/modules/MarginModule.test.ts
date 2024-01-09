@@ -1205,7 +1205,7 @@ describe('MarginModule', async () => {
         // Price change causing 50% loss.
         await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(0.5).toBN());
 
-        // Add some random wait time to loose some to funding as well
+        // Add some random wait time to lose some to funding as well
         const now = (await provider().getBlock('latest')).timestamp;
         await fastForwardTo(now + genNumber(1000, SECONDS_ONE_DAY), provider());
         // Close the order with a loss

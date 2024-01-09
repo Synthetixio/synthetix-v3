@@ -203,7 +203,7 @@ export const genOrder = async (
   // `desiredSide` is specified, just use that.
   if (options?.desiredSize) {
     sizeDelta = options.desiredSize;
-    // If size if set, make sure we return the correct leverage.
+    // If size is set, make sure we return the correct leverage.
     leverage = wei(sizeDelta).mul(oraclePrice).div(marginUsd).toNumber();
   } else if (options?.desiredSide) {
     sizeDelta = sizeDelta.mul(options.desiredSide);
