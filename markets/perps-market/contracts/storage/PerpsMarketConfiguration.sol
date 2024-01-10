@@ -74,7 +74,11 @@ library PerpsMarketConfiguration {
          * @dev this address is allowed to fully liquidate any account eligible for liquidation.
          */
         address endorsedLiquidator;
-        uint256 maxMarketValue; // oi cap USD denominated
+        /**
+         * @dev OI cap in USD denominated.
+         * @dev If set to zero then there is no cap with value, just units
+         */
+        uint256 maxMarketValue;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
