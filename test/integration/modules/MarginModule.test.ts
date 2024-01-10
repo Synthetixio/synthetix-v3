@@ -1103,7 +1103,10 @@ describe('MarginModule', async () => {
 
         // Pnl expected to be close to 0 since not oracle price change
         const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
-        const expectedChangeUsd = wei(pnl).sub(fees).add(closeOrderEvent?.args.accruedFunding);
+        const expectedChangeUsd = wei(pnl)
+          .sub(fees)
+          .add(closeOrderEvent?.args.accruedFunding)
+          .sub(closeOrderEvent?.args.accruedUtilization);
         const expectedChange = expectedChangeUsd.div(collateralPrice);
 
         // Perform the withdrawal.
@@ -1111,7 +1114,8 @@ describe('MarginModule', async () => {
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
         assertBn.lt(expectedChange.toBN(), bn(0));
-        assertBn.equal(startingCollateralBalance.add(expectedChange).toBN(), actualBalance);
+        const expectedBalance = startingCollateralBalance.add(expectedChange).toBN();
+        assertBn.equal(expectedBalance, actualBalance);
       });
 
       forEach([
@@ -1159,7 +1163,10 @@ describe('MarginModule', async () => {
           const orderFees = wei(openOrderEvent?.args.orderFee).add(closeOrderEvent?.args.orderFee);
           const keeperFees = wei(openOrderEvent?.args.keeperFee).add(closeOrderEvent?.args.keeperFee);
           const fees = orderFees.add(keeperFees);
-          const expectedProfit = wei(pnl).sub(fees).add(closeOrderEvent?.args.accruedFunding);
+          const expectedProfit = wei(pnl)
+            .sub(fees)
+            .add(closeOrderEvent?.args.accruedFunding)
+            .sub(closeOrderEvent?.args.accruedUtilization);
 
           // Perform the withdrawal.
           await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
@@ -1220,7 +1227,11 @@ describe('MarginModule', async () => {
         const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
         const openOrderFees = wei(openOrder.orderFee).add(openEventArgs?.keeperFee);
         const closeOrderFees = wei(closeOrder.orderFee).add(closeEventArgs?.keeperFee);
-        const totalPnl = wei(pnl).sub(openOrderFees).sub(closeOrderFees).add(closeEventArgs?.accruedFunding);
+        const totalPnl = wei(pnl)
+          .sub(openOrderFees)
+          .sub(closeOrderFees)
+          .add(closeEventArgs?.accruedFunding)
+          .sub(closeEventArgs.accruedUtilization);
 
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
 
@@ -1298,7 +1309,11 @@ describe('MarginModule', async () => {
         ]);
 
         // Calculate diff amount.
-        const usdDiffAmount = wei(pnl).sub(openOrderFees).sub(closeOrderFees).add(closeEventArgs?.accruedFunding);
+        const usdDiffAmount = wei(pnl)
+          .sub(openOrderFees)
+          .sub(closeOrderFees)
+          .add(closeEventArgs?.accruedFunding)
+          .sub(closeEventArgs?.accruedUtilization);
         const collateralDiffAmount = usdDiffAmount.div(newCollateralPrice);
 
         // Assert close position call. We want to make sure we've interacted with v3 Core correctly.
@@ -1313,6 +1328,7 @@ describe('MarginModule', async () => {
         await assertEvents(
           closeReceipt,
           [
+            /UtilizationRecomputed/,
             /FundingRecomputed/, // funding recomputed, don't care about the exact values here
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralAmount})`,
             `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${collateralAmount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
@@ -1324,7 +1340,7 @@ describe('MarginModule', async () => {
             `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdDepositAmount}, "${PerpMarketProxy.address}")`, // deposit sUSD into market manager, this will let LPs of this market profit
             `Transfer("${ADDRESS0}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
             `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}")`, // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited
-            `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
+            `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.accruedUtilization}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
           ],
           // PerpsMarket abi gets events from Core, SpotMarket, Pyth and ERC20 added
           extendContractAbi(
@@ -1899,7 +1915,10 @@ describe('MarginModule', async () => {
       await market.aggregator().mockSetCurrentPrice(newPrice);
 
       // Collect some data for expected margin calculation
-      const { accruedFunding } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      const { accruedFunding, accruedUtilization } = await PerpMarketProxy.getPositionDigest(
+        trader.accountId,
+        marketId
+      );
       const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
 
       const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
@@ -1910,7 +1929,8 @@ describe('MarginModule', async () => {
         .sub(keeperFee)
         .add(order.keeperFeeBufferUsd)
         .add(newPnl)
-        .add(accruedFunding);
+        .add(accruedFunding)
+        .sub(accruedUtilization);
 
       // Assert marginUSD after price update.
       assertBn.near(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN(), bn(0.000001));

@@ -510,6 +510,7 @@ describe('OrderModule', () => {
         orderFee,
         orderSettledArgs?.keeperFee ?? 0,
         0, // accruedFunding (zero because no existing open position).
+        0, // accruedUtilization (zero because no existing open position).
         0, // pnl.
         order.fillPrice,
       ].join(', ');
