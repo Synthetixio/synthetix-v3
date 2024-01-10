@@ -84,6 +84,21 @@ interface IAsyncOrderModule {
     ) external view returns (uint256 orderFees, uint256 fillPrice);
 
     /**
+     * @notice Simulates what the order fee would be for the given market with the specified size.
+     * @dev    Note that this does not include the settlement reward fee, which is based on the strategy type used
+     * @param marketId id of the market.
+     * @param sizeDelta size of position.
+     * @param price price of the market.
+     * @return orderFees incurred fees.
+     * @return fillPrice price at which the order would be filled.
+     */
+    function computeOrderFeesWithPrice(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 price
+    ) external view returns (uint256 orderFees, uint256 fillPrice);
+
+    /**
      * @notice For a given market, account id, and a position size, returns the required total account margin for this order to succeed
      * @dev    Useful for integrators to determine if an order will succeed or fail
      * @param marketId id of the market.
@@ -95,5 +110,21 @@ interface IAsyncOrderModule {
         uint128 marketId,
         uint128 accountId,
         int128 sizeDelta
+    ) external view returns (uint256 requiredMargin);
+
+    /**
+     * @notice For a given market, account id, and a position size, and expected price returns the required total account margin for this order to succeed
+     * @dev    Useful for integrators to determine if an order will succeed or fail faking different price scenarios
+     * @param marketId id of the market.
+     * @param accountId id of the trader account.
+     * @param sizeDelta size of position.
+     * @param price price of the market.
+     * @return requiredMargin margin required for the order to succeed.
+     */
+    function requiredMarginForOrderWithPrice(
+        uint128 marketId,
+        uint128 accountId,
+        int128 sizeDelta,
+        uint256 price
     ) external view returns (uint256 requiredMargin);
 }

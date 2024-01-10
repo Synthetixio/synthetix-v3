@@ -127,9 +127,7 @@ library PerpsAccount {
         )
     {
         availableMargin = getAvailableMargin(self, stalenessTolerance);
-        if (self.openPositionMarketIds.length() == 0) {
-            return (false, availableMargin, 0, 0, 0);
-        }
+
         (
             requiredInitialMargin,
             requiredMaintenanceMargin,
@@ -203,7 +201,7 @@ library PerpsAccount {
             uint256 initialRequiredMargin,
             ,
             uint256 liquidationReward
-        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.DEFAULT);
+        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.STRICT);
 
         if (isEligible) {
             revert AccountLiquidatable(self.id);
@@ -308,8 +306,13 @@ library PerpsAccount {
         view
         returns (uint initialMargin, uint maintenanceMargin, uint possibleLiquidationReward)
     {
+        uint256 openPositionMarketIdsLength = self.openPositionMarketIds.length();
+        if (openPositionMarketIdsLength == 0) {
+            return (0, 0, 0);
+        }
+
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
-        for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
+        for (uint i = 1; i <= openPositionMarketIdsLength; i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
