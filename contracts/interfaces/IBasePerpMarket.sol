@@ -8,7 +8,7 @@ interface IBasePerpMarket {
     event FundingRecomputed(uint128 marketId, int256 skew, int256 fundingRate, int256 fundingVelocity);
 
     // @notice Emitted when utilization is computed.
-    event UtilizationRecomputed(uint128 marketId, int256 skew, int256 utilizationRate);
+    event UtilizationRecomputed(uint128 marketId, int256 skew, uint256 utilizationRate);
 
     // @notice Emitted when an order is canceled.
     event OrderCanceled(uint128 accountId, uint128 marketId, uint256 keeperFee, uint256 commitmentTime);

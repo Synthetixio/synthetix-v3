@@ -122,8 +122,8 @@ contract OrderModule is IOrderModule {
      * @dev Generic helper for funding recomputation during order management.
      */
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (int256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
-        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+        (uint256 utilizationRate, ) = market.recomputeUtilization(price);
+        emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
     }
 
     /**

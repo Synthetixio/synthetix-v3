@@ -169,7 +169,7 @@ contract MarginModule is IMarginModule {
         uint oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
-        (int256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
