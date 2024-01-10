@@ -44,6 +44,8 @@ interface IPerpAccountModule {
         uint256 accruedFeesUsd;
         // Funding accrued in USD.
         int256 accruedFunding;
+        // Utilization accrued in USD.
+        uint256 accruedUtilization;
         // Entry price of the position (either at open or on modification).
         uint256 entryPrice;
         // Current oracle price of market this position.
