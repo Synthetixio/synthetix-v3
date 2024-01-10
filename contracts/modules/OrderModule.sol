@@ -285,6 +285,7 @@ contract OrderModule is IOrderModule {
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
             healthData.accruedFunding,
+            healthData.accruedUtilization,
             healthData.pnl,
             runtime.fillPrice
         );
