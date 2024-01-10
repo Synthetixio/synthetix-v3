@@ -53,7 +53,10 @@ interface IGlobalPerpsMarketModule {
     event ReferrerShareUpdated(address referrer, uint256 shareRatioD18);
 
     /**
-     * @notice TODO
+     * @notice Emitted when interest rate parameters are set
+     * @param lowUtilizationInterestRateGradient interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+     * @param interestRateGradientBreakpoint breakpoint at which the interest rate gradient changes from low to high
+     * @param highUtilizationInterestRateGradient interest rate gradient applied to utilization after hitting the gradient breakpoint
      */
     event InterestRateParametersSet(
         uint256 lowUtilizationInterestRateGradient,
@@ -226,9 +229,9 @@ interface IGlobalPerpsMarketModule {
 
     /**
      * @notice Sets the interest rate parameters
-     * @param lowUtilizationInterestRateGradient TODO
-     * @param interestRateGradientBreakpoint TODO
-     * @param highUtilizationInterestRateGradient TODO
+     * @param lowUtilizationInterestRateGradient interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+     * @param interestRateGradientBreakpoint breakpoint at which the interest rate gradient changes from low to high
+     * @param highUtilizationInterestRateGradient interest rate gradient applied to utilization after hitting the gradient breakpoint
      */
     function setInterestRateParameters(
         uint128 lowUtilizationInterestRateGradient,
@@ -238,9 +241,9 @@ interface IGlobalPerpsMarketModule {
 
     /**
      * @notice Gets the interest rate parameters
-     * @return lowUtilizationInterestRateGradient TODO
-     * @return interestRateGradientBreakpoint TODO
-     * @return highUtilizationInterestRateGradient TODO
+     * @return lowUtilizationInterestRateGradient
+     * @return interestRateGradientBreakpoint
+     * @return highUtilizationInterestRateGradient
      */
     function getInterestRateParameters()
         external

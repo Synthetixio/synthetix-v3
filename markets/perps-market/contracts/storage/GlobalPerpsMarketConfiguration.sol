@@ -73,15 +73,15 @@ library GlobalPerpsMarketConfiguration {
          */
         SetUtil.UintSet supportedCollateralTypes;
         /**
-         * @dev TODO
+         * @dev interest rate gradient applied to utilization prior to hitting the gradient breakpoint
          */
         uint128 lowUtilizationInterestRateGradient;
         /**
-         * @dev TODO
+         * @dev breakpoint at which the interest rate gradient changes from low to high
          */
         uint128 interestRateGradientBreakpoint;
         /**
-         * @dev TODO
+         * @dev interest rate gradient applied to utilization after hitting the gradient breakpoint
          */
         uint128 highUtilizationInterestRateGradient;
     }
