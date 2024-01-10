@@ -36,12 +36,6 @@ library Position {
         self.latestInterestAccrued = latestInterestAccrued;
     }
 
-    function clear(Data storage self) internal {
-        self.size = 0;
-        self.latestInteractionPrice = 0;
-        self.latestInteractionFunding = 0;
-    }
-
     function getPositionData(
         Data storage self,
         uint price

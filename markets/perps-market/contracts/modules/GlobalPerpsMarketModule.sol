@@ -7,6 +7,8 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {InterestRate} from "../storage/InterestRate.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
@@ -285,5 +287,14 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         lowUtilizationInterestRateGradient = store.lowUtilizationInterestRateGradient;
         interestRateGradientBreakpoint = store.interestRateGradientBreakpoint;
         highUtilizationInterestRateGradient = store.highUtilizationInterestRateGradient;
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function updateInterestRate() external override {
+        (uint128 interestRate, ) = InterestRate.update();
+
+        emit InterestRateUpdated(PerpsMarketFactory.load().perpsMarketId, interestRate);
     }
 }

@@ -1,8 +1,10 @@
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { openPosition } from '../helpers';
+import { calculateInterestRate, openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
+import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 const _SECONDS_IN_YEAR = 31557600;
@@ -21,31 +23,10 @@ const interestRateParams = {
   highUtilGradient: wei(0.01),
 };
 
-const calculateInterestRate = (
-  utilRate: Wei,
-  {
-    lowUtilGradient,
-    gradientBreakpoint,
-    highUtilGradient,
-  }: {
-    lowUtilGradient: Wei;
-    gradientBreakpoint: Wei;
-    highUtilGradient: Wei;
-  }
-) => {
-  return (
-    utilRate.lt(gradientBreakpoint)
-      ? utilRate.mul(lowUtilGradient)
-      : lowUtilGradient
-          .mul(gradientBreakpoint)
-          .add(utilRate.sub(gradientBreakpoint).mul(highUtilGradient))
-  ).mul(100);
-};
-
 const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR);
 
 describe('Position - interest rates', () => {
-  const { systems, perpsMarkets, superMarketId, provider, trader1, trader2, keeper } =
+  const { systems, perpsMarkets, superMarketId, provider, trader1, trader2, keeper, staker } =
     bootstrapMarkets({
       interestRateParams: {
         lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
@@ -85,6 +66,7 @@ describe('Position - interest rates', () => {
   });
 
   const checkMarketInterestRate = () => {
+    let currentInterestRate: Wei;
     it('has correct interest rate', async () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
@@ -92,14 +74,19 @@ describe('Position - interest rates', () => {
       const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId()));
 
       const utilRate = minCredit.div(delegatedCollateral);
-      const currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
+      currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
       assertBn.near(
         await systems().PerpsMarket.interestRate(),
         currentInterestRate.toBN(),
         bn(0.0001)
       );
-      assertBn.near(await systems().PerpsMarket.utilizationRate(), utilRate.toBN(), bn(0.0001));
+      const { rate: expectedUtilizationRate } = await systems().PerpsMarket.utilizationRate();
+      assertBn.near(expectedUtilizationRate, utilRate.toBN(), bn(0.0001));
     });
+
+    return {
+      currentInterestRate: () => currentInterestRate,
+    };
   };
 
   let trader1OpenPositionTime: number, trader2OpenPositionTime: number;
@@ -130,16 +117,16 @@ describe('Position - interest rates', () => {
 
     describe('check trader 1 interest', () => {
       it('has correct interest rate', async () => {
-        const { chargedInterest } = await systems().PerpsMarket.getOpenPosition(
+        const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
           2,
           ethMarket.marketId()
         );
         const expectedInterest = _TRADER1_LOCKED_OI
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(proportionalTime(_SECONDS_IN_DAY));
-        trader1InterestAccumulated = trader1InterestAccumulated.add(chargedInterest);
+        trader1InterestAccumulated = trader1InterestAccumulated.add(owedInterest);
         lastTimeInterestAccrued = trader1OpenPositionTime + _SECONDS_IN_DAY;
-        assertBn.near(chargedInterest, expectedInterest.toBN(), bn(0.0001));
+        assertBn.near(owedInterest, expectedInterest.toBN(), bn(0.0001));
       });
     });
   });
@@ -153,14 +140,14 @@ describe('Position - interest rates', () => {
     { size: 5, time: _SECONDS_IN_DAY * 0.1 },
   ].forEach(({ size, time }) => {
     describe('new trader enters', () => {
-      let previousMarketInterestRate: Wei;
+      let previousMarketInterestRate: Wei, settleTrader2Txn: ethers.ContractTransaction;
       before('identify interest rate', async () => {
         previousMarketInterestRate = wei(await systems().PerpsMarket.interestRate());
       });
 
       before('trader2 changes OI', async () => {
         newPositionSize += size;
-        ({ settleTime: trader2OpenPositionTime } = await openPosition({
+        ({ settleTime: trader2OpenPositionTime, settleTx: settleTrader2Txn } = await openPosition({
           systems,
           provider,
           trader: trader2(),
@@ -171,6 +158,8 @@ describe('Position - interest rates', () => {
           settlementStrategyId: btcMarket.strategyId(),
           price: _BTC_PRICE.toBN(),
         }));
+
+        await assertEvent(settleTrader2Txn, 'InterestCharged(3', systems().PerpsMarket);
       });
 
       before('accumulate trader 1 interest', async () => {
@@ -196,7 +185,7 @@ describe('Position - interest rates', () => {
       });
 
       it('accrued correct interest for trader 1', async () => {
-        const { chargedInterest } = await systems().PerpsMarket.getOpenPosition(
+        const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
           2,
           ethMarket.marketId()
         );
@@ -205,21 +194,98 @@ describe('Position - interest rates', () => {
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(normalizedTime);
         trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
-        assertBn.near(chargedInterest, trader1InterestAccumulated.toBN(), bn(0.0001));
+        assertBn.near(owedInterest, trader1InterestAccumulated.toBN(), bn(0.0001));
       });
 
       it('accrued correct interest for trader 2', async () => {
-        const { chargedInterest } = await systems().PerpsMarket.getOpenPosition(
+        const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
           3,
           btcMarket.marketId()
         );
 
         const trader2Oi = wei(Math.abs(newPositionSize)).mul(_BTC_PRICE).mul(_BTC_LOCKED_OI_RATIO);
 
-        const expectedInterest = trader2Oi
+        const expectedTrader2Interest = trader2Oi
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(normalizedTime);
-        assertBn.near(chargedInterest, expectedInterest.toBN(), bn(0.00001));
+        assertBn.near(owedInterest, expectedTrader2Interest.toBN(), bn(0.00001));
+      });
+    });
+  });
+
+  describe('change delegated collateral and manual update', () => {
+    let previousMarketInterestRate: Wei, marketUpdateTime: number;
+    before('identify interest rate', async () => {
+      previousMarketInterestRate = wei(await systems().PerpsMarket.interestRate());
+    });
+
+    before('undelegate 10%', async () => {
+      const currentCollateralAmount = await systems().Core.getPositionCollateral(
+        1,
+        1,
+        systems().CollateralMock.address
+      );
+      // current assumption = 1000 collateral at $2000 price == $2M delegated collateral value
+      await systems()
+        .Core.connect(staker())
+        .delegateCollateral(
+          1,
+          1,
+          systems().CollateralMock.address,
+          wei(currentCollateralAmount).mul(wei(0.9)).toBN(),
+          ethers.utils.parseEther('1')
+        );
+    });
+
+    let updateTxn: ethers.providers.TransactionResponse;
+    before('call manual update', async () => {
+      updateTxn = await systems().PerpsMarket.updateInterestRate();
+      marketUpdateTime = await getTime(provider());
+    });
+
+    before('accumulate trader 1 interest', async () => {
+      const timeSinceLastAccrued = marketUpdateTime - lastTimeInterestAccrued;
+      // track interest accrued during new order
+      const newInterestAccrued = _TRADER1_LOCKED_OI
+        .mul(previousMarketInterestRate)
+        .mul(proportionalTime(timeSinceLastAccrued));
+      trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
+    });
+
+    const { currentInterestRate } = checkMarketInterestRate();
+
+    it('emits event', async () => {
+      await assertEvent(
+        updateTxn,
+        `InterestRateUpdated(${superMarketId()}, ${currentInterestRate().toString(
+          undefined,
+          true
+        )})`,
+        systems().PerpsMarket
+      );
+    });
+
+    describe('check trader interest after day passes', () => {
+      let normalizedTime: Wei;
+      before('fast forward time', async () => {
+        await fastForwardTo(marketUpdateTime + _SECONDS_IN_DAY * 50, provider());
+
+        const blockTime = await getTime(provider());
+        lastTimeInterestAccrued = blockTime;
+        normalizedTime = proportionalTime(blockTime - marketUpdateTime);
+      });
+
+      it('accrued correct interest for trader 1', async () => {
+        const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
+          2,
+          ethMarket.marketId()
+        );
+
+        const newInterestAccrued = _TRADER1_LOCKED_OI
+          .mul(wei(await systems().PerpsMarket.interestRate()))
+          .mul(normalizedTime);
+        trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
+        assertBn.near(owedInterest, trader1InterestAccumulated.toBN(), bn(0.0001));
       });
     });
   });

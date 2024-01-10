@@ -113,7 +113,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId } =
+  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId, staker } =
     chainStateWithPerpsMarkets;
   const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
@@ -220,6 +220,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
   }
 
   return {
+    staker,
     systems,
     signers,
     provider,

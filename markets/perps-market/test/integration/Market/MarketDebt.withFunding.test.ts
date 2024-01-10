@@ -75,15 +75,15 @@ describe('Market Debt - with funding', () => {
   });
 
   const calculateExpectedPnls = async () => {
-    const [trader1Pnl, trader1Interest] = await systems().PerpsMarket.getOpenPosition(
+    const [trader1Pnl, , , trader1Interest] = await systems().PerpsMarket.getOpenPosition(
       2,
       perpsMarket.marketId()
     );
-    const [trader2Pnl, trader2Interest] = await systems().PerpsMarket.getOpenPosition(
+    const [trader2Pnl, , , trader2Interest] = await systems().PerpsMarket.getOpenPosition(
       3,
       perpsMarket.marketId()
     );
-    const [trader3Pnl, trader3Interest] = await systems().PerpsMarket.getOpenPosition(
+    const [trader3Pnl, , , trader3Interest] = await systems().PerpsMarket.getOpenPosition(
       4,
       perpsMarket.marketId()
     );

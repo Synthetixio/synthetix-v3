@@ -11,13 +11,13 @@ interface IAsyncOrderSettlementPythModule {
      * @param accountId Id of the account used for the trade.
      * @param fillPrice Price at which the order was settled.
      * @param pnl Pnl of the previous closed position.
-     * @param chargedInterest Interest charged for the previous closed position.
      * @param accruedFunding Accrued funding of the previous closed position.
      * @param sizeDelta Size delta from order.
      * @param newSize New size of the position after settlement.
      * @param totalFees Amount of fees collected by the protocol.
      * @param referralFees Amount of fees collected by the referrer.
      * @param collectedFees Amount of fees collected by fee collector.
+     * @param settlementReward reward to sender for settling order.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param settler address of the settler of the order.
      */
@@ -26,22 +26,28 @@ interface IAsyncOrderSettlementPythModule {
         uint128 indexed accountId,
         uint256 fillPrice,
         int256 pnl,
-        uint256 chargedInterest,
         int256 accruedFunding,
         int128 sizeDelta,
         int128 newSize,
         uint256 totalFees,
         uint256 referralFees,
         uint256 collectedFees,
+        uint256 settlementReward,
         bytes32 indexed trackingCode,
         address settler
     );
+
+    /**
+     * @notice Gets fired after order settles and includes the interest charged to the account.
+     * @param accountId Id of the account used for the trade.
+     * @param interest interest charges
+     */
+    event InterestCharged(uint128 indexed accountId, uint256 interest);
 
     // only used due to stack too deep during settlement
     struct SettleOrderRuntime {
         uint128 marketId;
         uint128 accountId;
-        int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
         uint256 chargedInterest;
@@ -56,6 +62,8 @@ interface IAsyncOrderSettlementPythModule {
         Position.Data newPosition;
         MarketUpdate.Data updateData;
         uint256 synthDeductionIterator;
+        uint128[] deductedSynthIds;
+        uint256[] deductedAmount;
     }
 
     /**

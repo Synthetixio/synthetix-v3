@@ -6,6 +6,13 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IGlobalPerpsMarketModule {
     /**
+     * @notice Gets fired when the interest rate is updated.
+     * @param superMarketId global super market id
+     * @param interestRate new computed interest rate
+     */
+    event InterestRateUpdated(uint128 indexed superMarketId, uint128 interestRate);
+
+    /**
      * @notice Gets fired when max collateral amount for synth for all the markets is set by owner.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param maxCollateralAmount max amount that was set for the synth
@@ -243,4 +250,13 @@ interface IGlobalPerpsMarketModule {
             uint128 interestRateGradientBreakpoint,
             uint128 highUtilizationInterestRateGradient
         );
+
+    /**
+     * @notice Update the market interest rate based on current utilization of the super market against backing collateral
+     * @dev this is a convenience method to manually update interest rate if too much time has passed
+     *      since last update.
+     * @dev interest rate gets automatically updated when a trade is made or when a position is liquidated
+     * @dev InterestRateUpdated event is emitted
+     */
+    function updateInterestRate() external;
 }

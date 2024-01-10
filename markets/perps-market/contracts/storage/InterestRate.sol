@@ -34,7 +34,7 @@ library InterestRate {
         }
     }
 
-    function update() internal returns (uint256 currentInterestAccrued) {
+    function update() internal returns (uint128 newInterestRate, uint256 currentInterestAccrued) {
         Data storage self = load();
 
         (
@@ -43,9 +43,14 @@ library InterestRate {
             uint128 highUtilizationInterestRateGradient
         ) = GlobalPerpsMarketConfiguration.loadInterestRateParameters();
 
-        // interest rate not enabled
-        if (lowUtilizationInterestRateGradient == 0) {
-            return 0;
+        // if no interest parameters are set, interest rate is 0 and the interest accrued stays the same
+        if (
+            lowUtilizationInterestRateGradient == 0 ||
+            interestRateGradientBreakpoint == 0 ||
+            highUtilizationInterestRateGradient == 0
+        ) {
+            self.interestRate = 0;
+            return (0, self.interestAccrued);
         }
 
         (uint128 currentUtilizationRate, , ) = GlobalPerpsMarket.load().utilizationRate();
@@ -60,7 +65,7 @@ library InterestRate {
         );
         self.lastTimestamp = block.timestamp;
 
-        return self.interestAccrued;
+        return (self.interestRate, self.interestAccrued);
     }
 
     function proportionalElapsed(Data storage self) internal view returns (uint128) {
