@@ -6,8 +6,9 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
-interface IPerpMarketFactoryModule is IMarket {
+interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
@@ -83,6 +84,16 @@ interface IPerpMarketFactoryModule is IMarket {
      * @notice Registers a new PerpMarket with Synthetix and initializes storage.
      */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
+
+    /**
+     * @notice Recomputes utilization rate
+     */
+    function recomputeUtilization(uint128 marketId) external;
+
+    /**
+     * @notice Recomputes funding rate
+     */
+    function recomputeFunding(uint128 marketId) external;
 
     // --- Views --- //
 
