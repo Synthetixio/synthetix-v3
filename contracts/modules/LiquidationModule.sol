@@ -47,6 +47,9 @@ contract LiquidationModule is ILiquidationModule {
     ) private returns (Position.Data storage oldPosition, Position.Data memory newPosition, uint256 liqKeeperFee) {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        (int256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+
         uint128 liqSize;
 
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(

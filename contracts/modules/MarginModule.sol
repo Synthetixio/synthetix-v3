@@ -166,9 +166,11 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
-
-        (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
+        uint oraclePrice = market.getOraclePrice();
+        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        (int256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -239,6 +241,7 @@ contract MarginModule is IMarginModule {
 
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        market.recomputeUtilization(market.getOraclePrice());
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {

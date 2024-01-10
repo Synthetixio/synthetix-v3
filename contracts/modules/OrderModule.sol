@@ -121,6 +121,14 @@ contract OrderModule is IOrderModule {
     /**
      * @dev Generic helper for funding recomputation during order management.
      */
+    function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
+        (int256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+    }
+
+    /**
+     * @dev Generic helper for funding recomputation during order management.
+     */
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
         (int256 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
@@ -239,6 +247,7 @@ contract OrderModule is IOrderModule {
 
         validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.params);
 
+        recomputeUtilization(market, runtime.pythPrice);
         recomputeFunding(market, runtime.pythPrice);
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
