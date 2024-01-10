@@ -21,6 +21,7 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@synthetixio/core-utils": "^3.3.4",
+    "@synthetixio/router": "^3.3.0",
     "@synthetixio/v3-contracts": "^3.1.0",
     "@synthetixio/wei": "^2.74.4",
     "@typechain/ethers-v5": "^10.2.1",
@@ -55,5 +56,8 @@
     "@synthetixio/oracle-manager": "^3.3.6",
     "@synthetixio/spot-market": "^3.3.6"
   },
-  "packageManager": "yarn@3.6.1"
+  "packageManager": "yarn@3.6.1",
+  "resolutions": {
+    "@synthetixio/router": "portal:/Users/david/workspace/synthetix/synthetix-router"
+  }
 }

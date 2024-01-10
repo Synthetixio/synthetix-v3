@@ -1,5 +1,5 @@
 import { BigNumber, utils, Signer, constants } from 'ethers';
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
@@ -110,6 +110,10 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       CollateralMock: getContract('CollateralMock'),
       Collateral2Mock: getContract('Collateral2Mock'),
     };
+  });
+
+  before(() => {
+    console.log(_bootstraped.getExtras());
   });
 
   const getOwner = () => getSigners()[0];

@@ -1253,32 +1253,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/router@npm:^3.1.4":
-  version: 3.1.4
-  resolution: "@synthetixio/router@npm:3.1.4"
-  dependencies:
-    "@ethersproject/abi": ^5.7.0
-    ajv: ^8.11.0
-    debug: ^4.3.4
-    ethers: ^5.7.2
-    lodash: ^4.17.21
-    mustache: ^4.2.0
-    solc: ^0.8.17
-  peerDependencies:
-    "@usecannon/builder": ^2.4.0-alpha.1
-    hardhat: ^2.0.0
-  peerDependenciesMeta:
-    "@usecannon/builder":
-      optional: true
-    hardhat:
-      optional: true
-  checksum: da369169a1f25d67f395e569fbdd17dd8d776463c8f1c0b122f61617e4501da2f882590a0ee93043162d5850d9fa97ec3b619b0650c371e602bd2394c1c0224f
-  languageName: node
-  linkType: hard
-
-"@synthetixio/router@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@synthetixio/router@npm:3.3.0"
+"@synthetixio/router@portal:/Users/david/workspace/synthetix/synthetix-router::locator=bfp-market%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/router@portal:/Users/david/workspace/synthetix/synthetix-router::locator=bfp-market%40workspace%3A."
   dependencies:
     "@ethersproject/keccak256": ^5.7.0
     debug: ^4.3.4
@@ -1288,9 +1265,8 @@ __metadata:
     ethers: ^5.0.0
     hardhat: ^2.0.0
     solc: ^0.8.17
-  checksum: 923709d5b5a0955f4cdfa7271b0fa83ac10dc1d5dbb169be91c8c4c1c4929402681170a66a16f05879d9b012d665c44dad37307297cdf7dac8c8358d0f21f087
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@synthetixio/spot-market@npm:^3.3.6":
   version: 3.3.6
@@ -1768,7 +1744,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.1, ajv@npm:^8.11.0":
+"ajv@npm:^8.0.1":
   version: 8.12.0
   resolution: "ajv@npm:8.12.0"
   dependencies:
@@ -2060,6 +2036,7 @@ __metadata:
     "@synthetixio/core-utils": ^3.3.4
     "@synthetixio/main": ^3.3.6
     "@synthetixio/oracle-manager": ^3.3.6
+    "@synthetixio/router": "git+https://github.com/synthetixio/synthetix-router.git#7f9f819111ff76d76e6421177faaaf8f1368b14b"
     "@synthetixio/spot-market": ^3.3.6
     "@synthetixio/v3-contracts": ^3.1.0
     "@synthetixio/wei": ^2.74.4
@@ -2605,13 +2582,6 @@ __metadata:
   version: 10.0.1
   resolution: "commander@npm:10.0.1"
   checksum: 436901d64a818295803c1996cd856621a74f30b9f9e28a588e726b2b1670665bccd7c1a77007ebf328729f0139838a88a19265858a0fa7a8728c4656796db948
-  languageName: node
-  linkType: hard
-
-"commander@npm:^8.1.0":
-  version: 8.3.0
-  resolution: "commander@npm:8.3.0"
-  checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
   languageName: node
   linkType: hard
 
@@ -6474,23 +6444,6 @@ __metadata:
   bin:
     solcjs: solcjs
   checksum: 2d8eb16c6d8f648213c94dc8d977cffe5099cba7d41c82d92d769ef71ae8320a985065ce3d6c306440a85f8e8d2b27fb30bdd3ac38f69e5c1fa0ab8a3fb2f217
-  languageName: node
-  linkType: hard
-
-"solc@npm:^0.8.17":
-  version: 0.8.21
-  resolution: "solc@npm:0.8.21"
-  dependencies:
-    command-exists: ^1.2.8
-    commander: ^8.1.0
-    follow-redirects: ^1.12.1
-    js-sha3: 0.8.0
-    memorystream: ^0.3.1
-    semver: ^5.5.0
-    tmp: 0.0.33
-  bin:
-    solcjs: solc.js
-  checksum: 0145d0e1f4ba7b1ec574a2ad7c4782357c4a27949c3bcc7bb4411a7b325a3ad186c18f93b1802a438ea9a527711dd56d2d7190bc8dd431dc194fb6098ab6ed01
   languageName: node
   linkType: hard
 
