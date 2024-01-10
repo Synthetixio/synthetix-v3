@@ -36,6 +36,7 @@ import {
   SYNTHETIX_USD_MARKET_ID,
   findOrThrow,
   setMarketConfiguration,
+  SECONDS_ONE_DAY,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -1185,8 +1186,10 @@ describe('MarginModule', async () => {
       it('should withdraw correct amounts after losing position (sUSD)', async () => {
         const { PerpMarketProxy } = systems();
 
-        const { trader, traderAddress, marketId, collateralDepositAmount, market, collateral, collateralPrice } =
-          await depositMargin(bs, genTrader(bs, { desiredCollateral: getSusdCollateral(collaterals()) }));
+        const { trader, traderAddress, marketId, collateralDepositAmount, market, collateral } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredCollateral: getSusdCollateral(collaterals()) })
+        );
 
         const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
           collateralDepositAmount
@@ -1202,6 +1205,9 @@ describe('MarginModule', async () => {
         // Price change causing 50% loss.
         await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(0.5).toBN());
 
+        // Add some random wait time to lose some to funding as well
+        const now = (await provider().getBlock('latest')).timestamp;
+        await fastForwardTo(now + genNumber(1000, SECONDS_ONE_DAY), provider());
         // Close the order with a loss
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
