@@ -186,15 +186,18 @@ library PerpMarket {
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
+        if (lowUtilizationSlopePercent == 0) {
+            return 0;
+        }
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         if (utilization < utilizationBreakpointPercent) {
             // If utilization is below the breakpoint, use the low utilization slope
-            return utilization.mulDecimal(lowUtilizationSlopePercent);
+            return utilization.mulDecimal(lowUtilizationSlopePercent) * 100;
         } else {
             // If utilization is above the breakpoint, calculate interest for both low and high utilization parts
             return
-                lowUtilizationSlopePercent.mulDecimal(utilizationBreakpointPercent) +
-                globalConfig.highUtilizationSlopePercent.mulDecimal(utilization - utilizationBreakpointPercent);
+                (lowUtilizationSlopePercent.mulDecimal(utilizationBreakpointPercent) * 100) +
+                (globalConfig.highUtilizationSlopePercent.mulDecimal(utilization - utilizationBreakpointPercent) * 100);
         }
     }
 
