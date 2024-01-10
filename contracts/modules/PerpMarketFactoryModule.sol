@@ -169,6 +169,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market.getRemainingLiquidatableSizeCapacity(
             marketConfig
         );
@@ -188,16 +189,20 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 ++i;
             }
         }
-
+        uint256 oraclePrice = market.getOraclePrice();
         return
             IPerpMarketFactoryModule.MarketDigest(
                 depositedCollaterals,
                 market.name,
                 market.skew,
                 market.size,
-                market.getOraclePrice(),
+                oraclePrice,
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
+                PerpMarket.getCurrentUtilizationRate(
+                    market.getUtilization(oraclePrice, globalMarketConfig),
+                    globalMarketConfig
+                ),
                 remainingCapacity,
                 lastLiquidationTime,
                 market.getTotalCollateralValueUsd(),
