@@ -13,9 +13,6 @@ defaultValue = "main"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
-[setting.oracleManagerPackage]
-defaultValue = "oracle-manager:<%= package.dependencies['@synthetixio/oracle-manager'].replace('^', '') %>"
-
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
 
@@ -38,9 +35,6 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
-
-[import.oracleManager]
-source = "<%= settings.oracleManagerPackage %>"
 
 # --- Module Contracts --- #
 
@@ -198,7 +192,7 @@ artifact = "contracts/oracles/LidoWstEthToStEthRatioNode.sol:LidoWstEthToStEthRa
 args = ["<%= contracts.WstEthMock.address %>"]
 
 [invoke.registerNode_lidoWstEthToStEthRatioNode]
-target = ["oracleManager.Proxy"]
+target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     # external node
@@ -209,7 +203,7 @@ args = [
 ]
 extra.lidoWstEthToStEthRatioNodeId.event = "NodeRegistered"
 extra.lidoWstEthToStEthRatioNodeId.arg = 0
-depends = ["import.oracleManager", "contract.WstEthMock", "contract.LidoWstEthToStEthRatioNode"]
+depends = ["import.synthetix", "contract.WstEthMock", "contract.LidoWstEthToStEthRatioNode"]
 
 # --- Chainlink stETH <> ETH Ratio Oracle --- #
 
@@ -220,7 +214,7 @@ extra.chainlinkStEthToEthNode.event = "NodeRegistered"
 extra.chainlinkStEthToEthNode.arg = 0
 
 [invoke.registerNode_chainlinkStEthToEthNode]
-target = ["oracleManager.Proxy"]
+target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     # chainlink aggregator type
@@ -231,12 +225,12 @@ args = [
 ]
 extra.chainlinkStEthToEthNodeId.event = "NodeRegistered"
 extra.chainlinkStEthToEthNodeId.arg = 0
-depends = ["import.oracleManager", "contract.ChainlinkStEthToEthNode"]
+depends = ["import.synthetix", "contract.ChainlinkStEthToEthNode"]
 
 # --- Pyth ETH Oracle --- #
 
 [invoke.registerNode_pythEthNode]
-target = ["oracleManager.Proxy"]
+target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     # pyth aggregator type
@@ -247,13 +241,13 @@ args = [
 ]
 extra.pythEthNodeId.event = "NodeRegistered"
 extra.pythEthNodeId.arg = 0
-depends = ["import.oracleManager", "import.pyth"]
+depends = ["import.synthetix", "import.pyth"]
 
 # --- wstEth <> eth Oracle `reduce(wstEthToEth, stEthToEth)` --- #
 # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/oracle-manager/contracts/nodes/ReducerNode.sol
 
 [invoke.registerNode_wstEthToEthNode]
-target = ["oracleManager.Proxy"]
+target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     # reducer node
@@ -266,7 +260,7 @@ args = [
 extra.wstEthToEthNodeId.event = "NodeRegistered"
 extra.wstEthToEthNodeId.arg = 0
 depends = [
-    "import.oracleManager",
+    "import.synthetix",
     "invoke.registerNode_lidoWstEthToStEthRatioNode",
     "invoke.registerNode_chainlinkStEthToEthNode",
 ]
@@ -275,20 +269,20 @@ depends = [
 # @see: # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/oracle-manager/contracts/nodes/ReducerNode.sol
 
 [invoke.registerNode_pythWstEthNode]
-target = ["oracleManager.Proxy"]
+target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     # reducer node
     1,
     # mulDecimal
     "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
-    # pythEthPrice,
+    # pythEthPrice, wstEthExchangeRate
     ["<%= extras.pythEthNodeId %>", "<%= extras.wstEthToEthNodeId %>"],
 ]
 extra.pythWstEthNodeId.event = "NodeRegistered"
 extra.pythWstEthNodeId.arg = 0
 depends = [
-    "import.oracleManager",
+    "import.synthetix",
     "invoke.registerNode_pythEthNode",
     "invoke.registerNode_wstEthToEthNode",
 ]

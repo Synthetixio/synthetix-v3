@@ -52,7 +52,7 @@ export interface Contracts {
 // @see: https://github.com/Synthetixio/synthetix-router/blob/master/src/utils/tests.ts#L23
 // @see: https://github.com/usecannon/cannon/blob/main/packages/hardhat-cannon/src/tasks/build.ts
 // @see: https://github.com/foundry-rs/foundry/commit/b02dcd26ff2aabc305cee61cd2fa3f7c3a85aad2
-const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
+const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml', wipe: true } as any);
 const restoreSnapshot = _bootstraped.createSnapshot();
 
 export interface GeneratedBootstrap {
@@ -85,7 +85,7 @@ export interface PerpCollateral {
 }
 
 export const bootstrap = (args: GeneratedBootstrap) => {
-  const { getContract, getSigners, getProvider } = _bootstraped;
+  const { getContract, getSigners, getExtras, getProvider } = _bootstraped;
 
   before(restoreSnapshot);
 
@@ -112,16 +112,13 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     };
   });
 
-  before(() => {
-    console.log(_bootstraped.getExtras());
-  });
-
   const getOwner = () => getSigners()[0];
   const core = {
     provider: () => getProvider(),
     signers: () => getSigners(),
     owner: () => getOwner(),
     systems: () => systems,
+    extras: () => getExtras(),
   };
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
@@ -180,6 +177,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     before(`provision market price oracle nodes - ${readableName}`, async () => {
       // The market has its own price e.g. ETH/USD. This oracle node is for that.
+      //
+      // NOTE: For testing simplicity, every market's oracle node is a Chainlink aggregator.
       const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
         getOwner(),
         initialPrice,
