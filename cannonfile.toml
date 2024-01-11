@@ -184,12 +184,12 @@ args = []
 
 # --- Lido wstETH <> stETH Ratio Oracle --- #
 
-[contract.WstEthMock]
+[contract.WstETHMock]
 artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
 
 [contract.LidoWstEthToStEthRatioNode]
 artifact = "contracts/oracles/LidoWstEthToStEthRatioNode.sol:LidoWstEthToStEthRatioNode"
-args = ["<%= contracts.WstEthMock.address %>"]
+args = ["<%= contracts.WstETHMock.address %>"]
 
 [invoke.registerNode_lidoWstEthToStEthRatioNode]
 target = ["synthetix.oracle_manager.Proxy"]
@@ -203,7 +203,7 @@ args = [
 ]
 extra.lidoWstEthToStEthRatioNodeId.event = "NodeRegistered"
 extra.lidoWstEthToStEthRatioNodeId.arg = 0
-depends = ["import.synthetix", "contract.WstEthMock", "contract.LidoWstEthToStEthRatioNode"]
+depends = ["import.synthetix", "contract.WstETHMock", "contract.LidoWstEthToStEthRatioNode"]
 
 # --- Chainlink stETH <> ETH Ratio Oracle --- #
 
