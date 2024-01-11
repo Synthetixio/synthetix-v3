@@ -142,7 +142,7 @@ export const bootstrapPerpsMarkets = (
         await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSizes(
           marketId,
           maxMarketSize ? maxMarketSize : bn(10_000_000),
-          maxMarketValue ? maxMarketValue : bn(10_000_000_000_000)
+          maxMarketValue ? maxMarketValue : 0
         );
       });
 
