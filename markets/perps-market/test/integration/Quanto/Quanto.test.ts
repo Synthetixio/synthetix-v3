@@ -118,7 +118,7 @@ describe.only('Quanto', () => {
     });
   });
 
-  describe.only('withdraw with open positions', () => {
+  describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
         requestedMarketId: 25,
@@ -207,7 +207,7 @@ describe.only('Quanto', () => {
     });
     before('open positions', async () => {
       const positionSizes = [
-        // bn(2), // btc long
+        // this position is equivalent to 2 btc long, but with quanto units ((ETH*BTC)/USD)
         bn(0.001), // quanto size = 10 eth * 3 leverage / 30,000 = 0.001
       ];
 
@@ -221,7 +221,7 @@ describe.only('Quanto', () => {
         price: perpsMarketConfigs[0].price,
       });
     });
-    describe.only('account check after initial positions open', () => {
+    describe('account check after initial positions open', () => {
       it('has correct quanto market id', async () => {
         const ethSpotMarketId = synthMarkets()[0].marketId();
         const btcPerpsMarketId = perpsMarkets()[0].marketId();
@@ -251,7 +251,7 @@ describe.only('Quanto', () => {
         );
       });
     });
-    describe.only('allow withdraw when its less than collateral available for withdraw', () => {
+    describe('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
       let initialMarginReq: ethers.BigNumber;
@@ -278,7 +278,7 @@ describe.only('Quanto', () => {
         );
       });
     });
-    describe.only('pnl adjusts correctly', () => {
+    describe('pnl adjusts correctly', () => {
       before('check initial margin is as expected', async () => {
         assertBn.equal(
           await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
@@ -293,6 +293,7 @@ describe.only('Quanto', () => {
         await synthMarkets()[0].sellAggregator().mockSetCurrentPrice(bn(4_000));
       });
 
+      // NOTE: This test should fail based on a quanto payout, it succeeds with a classical payout
       it.skip('has correct margin based on classic perps price change', async () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
         const classicPnl = bn(10_000).mul(2); // $20k profit
