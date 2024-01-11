@@ -211,8 +211,6 @@ describe.only('Quanto', () => {
         bn(0.001), // quanto size = 10 eth * 3 leverage / 30,000 = 0.001
       ];
 
-      console.log("position size", positionSizes[0].toString());
-
       await openPosition({
         ...commonOpenPositionProps,
         marketId: perpsMarkets()[0].marketId(),
