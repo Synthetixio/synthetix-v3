@@ -207,25 +207,23 @@ depends = ["import.synthetix", "contract.WstETHMock", "contract.LidoWstEthToStEt
 
 # --- Chainlink stETH <> ETH Ratio Oracle --- #
 
-[contract.ChainlinkStEthToEthNode]
+[contract.StEthToEthMock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
-extra.chainlinkStEthToEthNode.event = "NodeRegistered"
-extra.chainlinkStEthToEthNode.arg = 0
 
-[invoke.registerNode_chainlinkStEthToEthNode]
+[invoke.registerNode_stEthToEthNode]
 target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
     # chainlink aggregator type
     3,
     # contract, twap, decimals
-    "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [contracts.ChainlinkStEthToEthNode.address, 0, 18]) %>",
+    "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [contracts.StEthToEthMock.address, 0, 18]) %>",
     [],
 ]
-extra.chainlinkStEthToEthNodeId.event = "NodeRegistered"
-extra.chainlinkStEthToEthNodeId.arg = 0
-depends = ["import.synthetix", "contract.ChainlinkStEthToEthNode"]
+extra.stEthToEthNodeId.event = "NodeRegistered"
+extra.stEthToEthNodeId.arg = 0
+depends = ["import.synthetix", "contract.StEthToEthMock"]
 
 # --- Pyth ETH Oracle --- #
 
@@ -255,14 +253,14 @@ args = [
     # mulDecimal
     "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
     # wstETH<>stEth ratio, stEth<>Eth ratio
-    ["<%= extras.lidoWstEthToStEthRatioNodeId %>", "<%= extras.chainlinkStEthToEthNodeId %>"],
+    ["<%= extras.lidoWstEthToStEthRatioNodeId %>", "<%= extras.stEthToEthNodeId %>"],
 ]
 extra.wstEthToEthNodeId.event = "NodeRegistered"
 extra.wstEthToEthNodeId.arg = 0
 depends = [
     "import.synthetix",
     "invoke.registerNode_lidoWstEthToStEthRatioNode",
-    "invoke.registerNode_chainlinkStEthToEthNode",
+    "invoke.registerNode_stEthToEthNode",
 ]
 
 # --- wstETH Oracle `reduce(pythEthPrice, wstEthToEth)` --- #

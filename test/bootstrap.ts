@@ -10,6 +10,7 @@ import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
+import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
@@ -21,6 +22,8 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   PythMock: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
+  WstETHMock: WstETHMock;
+  StEthToEthMock: AggregatorV3Mock;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -40,6 +43,8 @@ export interface Contracts {
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
   AggregatorV3Mock: AggregatorV3Mock;
+  WstETHMock: WstETHMock;
+  StEthToEthMock: AggregatorV3Mock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -109,6 +114,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
       CollateralMock: getContract('CollateralMock'),
       Collateral2Mock: getContract('Collateral2Mock'),
+      WstETHMock: getContract('WstETHMock'),
+      StEthToEthMock: getContract('StEthToEthMock'),
     };
   });
 
