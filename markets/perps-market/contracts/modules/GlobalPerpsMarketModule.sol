@@ -259,6 +259,14 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+
+        if (lowUtilizationInterestRateGradient > highUtilizationInterestRateGradient) {
+            revert InvalidInterestRateParameters(
+                lowUtilizationInterestRateGradient,
+                highUtilizationInterestRateGradient
+            );
+        }
+
         store.lowUtilizationInterestRateGradient = lowUtilizationInterestRateGradient;
         store.interestRateGradientBreakpoint = interestRateGradientBreakpoint;
         store.highUtilizationInterestRateGradient = highUtilizationInterestRateGradient;

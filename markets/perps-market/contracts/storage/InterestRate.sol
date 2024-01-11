@@ -45,8 +45,8 @@ library InterestRate {
 
         // if no interest parameters are set, interest rate is 0 and the interest accrued stays the same
         if (
-            lowUtilizationInterestRateGradient == 0 ||
-            interestRateGradientBreakpoint == 0 ||
+            lowUtilizationInterestRateGradient == 0 &&
+            interestRateGradientBreakpoint == 0 &&
             highUtilizationInterestRateGradient == 0
         ) {
             self.interestRate = 0;
@@ -69,6 +69,7 @@ library InterestRate {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (uint128) {
+        // even though timestamps here are not D18, divDecimal multiplies by 1e18 to preserve decimals into D18
         return (block.timestamp - self.lastTimestamp).divDecimal(AVERAGE_SECONDS_PER_YEAR).to128();
     }
 

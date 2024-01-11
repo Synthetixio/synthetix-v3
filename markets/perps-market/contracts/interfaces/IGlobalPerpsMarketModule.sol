@@ -88,6 +88,14 @@ interface IGlobalPerpsMarketModule {
     error InvalidReferrerShareRatio(uint256 shareRatioD18);
 
     /**
+     * @notice Thrown when gradient breakpoint is lower than low gradient or higher than high gradient
+     */
+    error InvalidInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 highUtilizationInterestRateGradient
+    );
+
+    /**
      * @notice Sets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param maxCollateralAmount Max collateral amount to set for the synth market id.

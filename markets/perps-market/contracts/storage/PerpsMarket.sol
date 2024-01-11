@@ -238,9 +238,6 @@ library PerpsMarket {
         PositionDataRuntime memory runtime;
         Position.Data storage oldPosition = self.positions[accountId];
 
-        // int128 oldPositionSize = oldPosition.size;
-        // int128 newPositionSize = newPosition.size;
-
         self.size =
             (self.size + MathUtil.abs128(newPosition.size)) -
             MathUtil.abs128(oldPosition.size);
@@ -353,6 +350,7 @@ library PerpsMarket {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
+        // even though timestamps here are not D18, divDecimal multiplies by 1e18 to preserve decimals into D18
         return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
