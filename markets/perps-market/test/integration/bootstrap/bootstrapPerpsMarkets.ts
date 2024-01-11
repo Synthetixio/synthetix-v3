@@ -37,6 +37,7 @@ export type PerpsMarketData = Array<{
     maxLiquidationPd?: ethers.BigNumber;
     endorsedLiquidator?: string;
   };
+  maxMarketSize?: ethers.BigNumber;
   maxMarketValue?: ethers.BigNumber;
   lockedOiRatioD18?: ethers.BigNumber;
   settlementStrategy?: Partial<{
@@ -108,6 +109,7 @@ export const bootstrapPerpsMarkets = (
       orderFees,
       fundingParams,
       liquidationParams,
+      maxMarketSize,
       maxMarketValue,
       lockedOiRatioD18,
       settlementStrategy,
@@ -137,9 +139,10 @@ export const bootstrapPerpsMarkets = (
       });
 
       before('set max market value', async () => {
-        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
+        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSizes(
           marketId,
-          maxMarketValue ? maxMarketValue : bn(10_000_000)
+          maxMarketSize ? maxMarketSize : bn(10_000_000),
+          maxMarketValue ? maxMarketValue : 0
         );
       });
 
