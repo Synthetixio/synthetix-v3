@@ -235,24 +235,47 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (uint) {
         uint totalCollateralValue;
-        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             uint amount = self.collateralAmounts[synthMarketId];
 
-            uint amountToAdd;
-            if (synthMarketId == SNX_USD_MARKET_ID) {
-                amountToAdd = amount;
-            } else {
-                (amountToAdd, ) = spotMarket.quoteSellExactIn(
-                    synthMarketId,
-                    amount,
-                    Price.Tolerance(uint(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
-                );
-            }
+            uint amountToAdd = convertAmountToUSD(amount, synthMarketId, Price.Tolerance(uint(stalenessTolerance))); // solhint-disable-line numcast/safe-cast
             totalCollateralValue += amountToAdd;
         }
         return totalCollateralValue;
+    }
+
+    function convertAmountToUSD(int amount, uint128 synthMarketId, Price.Tolerance stalenessTolerance)
+        internal
+        view
+        returns (int256)
+    {
+        if (synthMarketId == SNX_USD_MARKET_ID) {
+            return amount;
+        } else {
+            (uint amountUsdAbs, ) = PerpsMarketFactory.load().spotMarket.quoteSellExactIn(
+                synthMarketId,
+                MathUtil.abs(amount),
+                stalenessTolerance
+            );
+            return MathUtil.sameSide(amount, amountUsdAbs.toInt()) ? amountUsdAbs.toInt() : -amountUsdAbs.toInt();
+        }
+    }
+
+    function convertAmountToUSD(uint amount, uint128 synthMarketId, Price.Tolerance stalenessTolerance)
+        internal
+        view
+        returns (uint256 amountUsd)
+    {
+        if (synthMarketId == SNX_USD_MARKET_ID) {
+            amountUsd = amount;
+        } else {
+            (amountUsd, ) = PerpsMarketFactory.load().spotMarket.quoteSellExactIn(
+                synthMarketId,
+                amount,
+                stalenessTolerance
+            );
+        }
     }
 
     function getAccountPnl(
@@ -261,11 +284,17 @@ library PerpsAccount {
     ) internal view returns (int totalPnl) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+                marketId
+            );
+            uint256 quantoSynthMarketId = marketConfig.quantoSynthMarketId;
+
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (int pnl, , , , ) = position.getPnl(
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
-            totalPnl += pnl;
+            int usdPnl = convertAmountToUSD(pnl, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
+            totalPnl += usdPnl;
         }
     }
 
@@ -284,12 +313,18 @@ library PerpsAccount {
     ) internal view returns (uint totalAccountOpenInterest) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+                marketId
+            );
+            uint256 quantoSynthMarketId = marketConfig.quantoSynthMarketId;
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (uint openInterest, , , , , ) = position.getPositionData(
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
-            totalAccountOpenInterest += openInterest;
+
+            uint usdValue = convertAmountToUSD(openInterest, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
+            totalAccountOpenInterest += usdValue;
         }
     }
 
@@ -560,6 +595,7 @@ library PerpsAccount {
         updateOpenPositions(self, marketId, newPositionSize);
 
         // update market data
+        // TODO: ensure stuff going in here is correct
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
         sizeDelta = newPositionSize - oldPositionSize;
 
