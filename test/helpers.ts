@@ -96,6 +96,7 @@ export const getPythPriceData = async (
   marketId: BigNumber,
   publishTime?: number,
   price?: number,
+  priceFeedId?: string,
   priceExpo = 6,
   priceConfidence = 1
 ) => {
@@ -106,10 +107,16 @@ export const getPythPriceData = async (
     price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
   }
 
+  // Use the pythPriceFeedId from the market if priceFeedId not provided.
+  //
+  // TODO: Consider renaming this fn to getPythPriceDataByMarket and another that's market agnostic.
+  if (!priceFeedId) {
+    priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
+  }
+
   const pythPrice = wei(price, priceExpo).toBN();
-  const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
   const updateData = await PythMock.createPriceFeedUpdateData(
-    config.pythPriceFeedId,
+    priceFeedId,
     pythPrice,
     priceConfidence,
     -priceExpo,
