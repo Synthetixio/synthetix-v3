@@ -67,6 +67,10 @@ library PerpsMarketConfiguration {
          * @dev this address is allowed to fully liquidate any account eligible for liquidation.
          */
         address endorsedLiquidator;
+        /**
+         * @dev The Synth Market Id for the quanto asset for this market
+         */
+        uint256 quantoSynthMarketId;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
