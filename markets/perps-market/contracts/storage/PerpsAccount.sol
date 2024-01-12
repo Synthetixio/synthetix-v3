@@ -202,7 +202,7 @@ library PerpsAccount {
             uint256 initialRequiredMargin,
             ,
             uint256 liquidationReward
-        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.DEFAULT);
+        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.STRICT);
 
         if (isEligible) {
             revert AccountLiquidatable(self.id);

@@ -61,16 +61,16 @@ echo "" >> $OUT
 cat ./docs/84531-main.md >> $OUT
 echo "" >> $OUT
 
-node ./abis.js 84531 competition
-echo "## Competition on Base Goerli" >> $OUT
-echo "" >> $OUT
-cat ./docs/84531-competition.md >> $OUT
-echo "" >> $OUT
-
 node ./abis.js 84531 andromeda
 echo "## Andromeda on Base Goerli" >> $OUT
 echo "" >> $OUT
 cat ./docs/84531-andromeda.md >> $OUT
+echo "" >> $OUT
+
+node ./abis.js 84532 andromeda
+echo "## Andromeda on Base Sepolia" >> $OUT
+echo "" >> $OUT
+cat ./docs/84532-andromeda.md >> $OUT
 echo "" >> $OUT
 
 node ./abis.js 80001 main

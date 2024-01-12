@@ -123,11 +123,16 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external override {
+    function setMaxMarketSizes(
+        uint128 marketId,
+        uint256 maxMarketSize,
+        uint256 maxMarketValue
+    ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.maxMarketSize = maxMarketSize;
-        emit MaxMarketSizeSet(marketId, maxMarketSize);
+        config.maxMarketValue = maxMarketValue;
+        emit MaxMarketSizesSet(marketId, maxMarketSize, maxMarketValue);
     }
 
     /**
@@ -290,12 +295,13 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getMaxMarketSize(
+    function getMaxMarketSizes(
         uint128 marketId
-    ) external view override returns (uint256 maxMarketSize) {
+    ) external view override returns (uint256 maxMarketSize, uint256 maxMarketValue) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         maxMarketSize = config.maxMarketSize;
+        maxMarketValue = config.maxMarketValue;
     }
 
     /**
