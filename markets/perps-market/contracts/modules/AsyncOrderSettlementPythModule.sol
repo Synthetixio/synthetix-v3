@@ -79,14 +79,15 @@ contract AsyncOrderSettlementPythModule is
             .validateRequest(settlementStrategy, price);
 
         runtime.amountToDeduct = runtime.totalFees;
-        runtime.newPositionSize = runtime.newPosition.size;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
-        (runtime.pnl, , runtime.accruedFunding, , ) = oldPosition.getPnl(runtime.fillPrice);
+        (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
+            runtime.fillPrice
+        );
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
@@ -100,7 +101,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.accountId,
             runtime.newPosition
         );
-        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
+        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPosition.size);
 
         emit MarketUpdated(
             runtime.updateData.marketId,
@@ -109,20 +110,26 @@ contract AsyncOrderSettlementPythModule is
             runtime.updateData.size,
             runtime.sizeDelta,
             runtime.updateData.currentFundingRate,
-            runtime.updateData.currentFundingVelocity
+            runtime.updateData.currentFundingVelocity,
+            runtime.updateData.interestRate
         );
 
-        // since margin is deposited, as long as the owed collateral is deducted
-        // fees are realized by the stakers
+        // since margin is deposited when trader deposits, as long as the owed collateral is deducted
+        // from internal accounting, fees are automatically realized by the stakers
         if (runtime.amountToDeduct > 0) {
-            (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) = perpsAccount
-                .deductFromAccount(runtime.amountToDeduct);
-            for (uint256 i = 0; i < deductedSynthIds.length; i++) {
-                if (deductedAmount[i] > 0) {
+            (runtime.deductedSynthIds, runtime.deductedAmount) = perpsAccount.deductFromAccount(
+                runtime.amountToDeduct
+            );
+            for (
+                runtime.synthDeductionIterator = 0;
+                runtime.synthDeductionIterator < runtime.deductedSynthIds.length;
+                runtime.synthDeductionIterator++
+            ) {
+                if (runtime.deductedAmount[runtime.synthDeductionIterator] > 0) {
                     emit CollateralDeducted(
                         runtime.accountId,
-                        deductedSynthIds[i],
-                        deductedAmount[i]
+                        runtime.deductedSynthIds[runtime.synthDeductionIterator],
+                        runtime.deductedAmount[runtime.synthDeductionIterator]
                     );
                 }
             }
@@ -147,6 +154,9 @@ contract AsyncOrderSettlementPythModule is
         // trader can now commit a new order
         asyncOrder.reset();
 
+        // Note: new event for this due to stack too deep adding it to OrderSettled event
+        emit InterestCharged(runtime.accountId, runtime.chargedInterest);
+
         // emit event
         emit OrderSettled(
             runtime.marketId,
@@ -155,7 +165,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.pnl,
             runtime.accruedFunding,
             runtime.sizeDelta,
-            runtime.newPositionSize,
+            runtime.newPosition.size,
             runtime.totalFees,
             runtime.referralFees,
             runtime.feeCollectorFees,

@@ -1,21 +1,26 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
-import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
  */
 library PerpsMarketFactory {
     using SafeCastI256 for int256;
-    using DecimalMath for uint256;
+    using SafeCastU256 for uint256;
+    using SetUtil for SetUtil.UintSet;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using PerpsMarket for PerpsMarket.Data;
 
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
@@ -74,6 +79,11 @@ library PerpsMarketFactory {
         self.usdToken = ITokenModule(usdTokenAddress);
         self.oracle = synthetix.getOracleManager();
         self.perpsMarketId = perpsMarketId;
+    }
+
+    function totalWithdrawableUsd() internal view returns (uint256) {
+        Data storage self = load();
+        return self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
     }
 
     function depositMarketCollateral(
