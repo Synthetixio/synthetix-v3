@@ -173,31 +173,34 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 price,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256 utilization) {
+    ) internal view returns (uint128 utilization) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-        uint256 delegatedCollateralValueUsd = globalConfig.synthetix.getMarketCollateral(self.id);
-
+        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
+        uint256 delegatedCollateralValueUsd = withdrawableUsd - getTotalCollateralValueUsd(self);
         uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent.to256());
-        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd);
+        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd).to128();
     }
 
     function getCurrentUtilizationRate(
-        uint256 utilization,
+        uint128 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
-        if (lowUtilizationSlopePercent == 0) {
-            return 0;
-        }
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
+        uint128 highUtilizationSlopePercent = globalConfig.highUtilizationSlopePercent;
+
         if (utilization < utilizationBreakpointPercent) {
             // If utilization is below the breakpoint, use the low utilization slope
-            return utilization.mulDecimal(lowUtilizationSlopePercent) * 100;
+            return lowUtilizationSlopePercent.mulDecimalUint128(utilization) * 100;
         } else {
-            // If utilization is above the breakpoint, calculate interest for both low and high utilization parts
-            return
-                (lowUtilizationSlopePercent.mulDecimal(utilizationBreakpointPercent) * 100) +
-                (globalConfig.highUtilizationSlopePercent.mulDecimal(utilization - utilizationBreakpointPercent) * 100);
+            uint128 highUtilizationRate = utilization - utilizationBreakpointPercent;
+            uint128 highUtilizationRateInterest = highUtilizationSlopePercent.mulDecimalUint128(highUtilizationRate) *
+                100;
+            uint128 lowUtilizationRateInterest = lowUtilizationSlopePercent.mulDecimalUint128(
+                utilizationBreakpointPercent
+            ) * 100;
+
+            return highUtilizationRateInterest + lowUtilizationRateInterest;
         }
     }
 
