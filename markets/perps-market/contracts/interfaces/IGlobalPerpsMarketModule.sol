@@ -6,6 +6,13 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IGlobalPerpsMarketModule {
     /**
+     * @notice Gets fired when the interest rate is updated.
+     * @param superMarketId global super market id
+     * @param interestRate new computed interest rate
+     */
+    event InterestRateUpdated(uint128 indexed superMarketId, uint128 interestRate);
+
+    /**
      * @notice Gets fired when max collateral amount for synth for all the markets is set by owner.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param maxCollateralAmount max amount that was set for the synth
@@ -46,6 +53,18 @@ interface IGlobalPerpsMarketModule {
     event ReferrerShareUpdated(address referrer, uint256 shareRatioD18);
 
     /**
+     * @notice Emitted when interest rate parameters are set
+     * @param lowUtilizationInterestRateGradient interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+     * @param interestRateGradientBreakpoint breakpoint at which the interest rate gradient changes from low to high
+     * @param highUtilizationInterestRateGradient interest rate gradient applied to utilization after hitting the gradient breakpoint
+     */
+    event InterestRateParametersSet(
+        uint256 lowUtilizationInterestRateGradient,
+        uint256 interestRateGradientBreakpoint,
+        uint256 highUtilizationInterestRateGradient
+    );
+
+    /**
      * @notice Gets fired when the max number of Positions and Collaterals per Account are set by owner.
      * @param maxPositionsPerAccount The max number of concurrent Positions per Account
      * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
@@ -67,6 +86,14 @@ interface IGlobalPerpsMarketModule {
      * @notice Thrown when a referrer share gets set to larger than 100%
      */
     error InvalidReferrerShareRatio(uint256 shareRatioD18);
+
+    /**
+     * @notice Thrown when gradient breakpoint is lower than low gradient or higher than high gradient
+     */
+    error InvalidInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 highUtilizationInterestRateGradient
+    );
 
     /**
      * @notice Sets the max collateral amount for a specific synth market.
@@ -207,4 +234,40 @@ interface IGlobalPerpsMarketModule {
      * @return marketIds an array of existing market ids
      */
     function getMarkets() external view returns (uint256[] memory marketIds);
+
+    /**
+     * @notice Sets the interest rate parameters
+     * @param lowUtilizationInterestRateGradient interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+     * @param interestRateGradientBreakpoint breakpoint at which the interest rate gradient changes from low to high
+     * @param highUtilizationInterestRateGradient interest rate gradient applied to utilization after hitting the gradient breakpoint
+     */
+    function setInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 interestRateGradientBreakpoint,
+        uint128 highUtilizationInterestRateGradient
+    ) external;
+
+    /**
+     * @notice Gets the interest rate parameters
+     * @return lowUtilizationInterestRateGradient
+     * @return interestRateGradientBreakpoint
+     * @return highUtilizationInterestRateGradient
+     */
+    function getInterestRateParameters()
+        external
+        view
+        returns (
+            uint128 lowUtilizationInterestRateGradient,
+            uint128 interestRateGradientBreakpoint,
+            uint128 highUtilizationInterestRateGradient
+        );
+
+    /**
+     * @notice Update the market interest rate based on current utilization of the super market against backing collateral
+     * @dev this is a convenience method to manually update interest rate if too much time has passed
+     *      since last update.
+     * @dev interest rate gets automatically updated when a trade is made or when a position is liquidated
+     * @dev InterestRateUpdated event is emitted
+     */
+    function updateInterestRate() external;
 }

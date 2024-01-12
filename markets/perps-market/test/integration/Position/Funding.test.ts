@@ -131,7 +131,7 @@ describe('Position - funding', () => {
         });
 
         it('funding accrued is correct', async () => {
-          const [, accruedFunding] = await systems().PerpsMarket.getOpenPosition(
+          const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
             2,
             ethMarket.marketId()
           );

@@ -7,6 +7,8 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {InterestRate} from "../storage/InterestRate.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
@@ -245,5 +247,62 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         maxPositionsPerAccount = store.maxPositionsPerAccount;
         maxCollateralsPerAccount = store.maxCollateralsPerAccount;
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 interestRateGradientBreakpoint,
+        uint128 highUtilizationInterestRateGradient
+    ) external override {
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+
+        if (lowUtilizationInterestRateGradient > highUtilizationInterestRateGradient) {
+            revert InvalidInterestRateParameters(
+                lowUtilizationInterestRateGradient,
+                highUtilizationInterestRateGradient
+            );
+        }
+
+        store.lowUtilizationInterestRateGradient = lowUtilizationInterestRateGradient;
+        store.interestRateGradientBreakpoint = interestRateGradientBreakpoint;
+        store.highUtilizationInterestRateGradient = highUtilizationInterestRateGradient;
+
+        emit InterestRateParametersSet(
+            lowUtilizationInterestRateGradient,
+            interestRateGradientBreakpoint,
+            highUtilizationInterestRateGradient
+        );
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getInterestRateParameters()
+        external
+        view
+        override
+        returns (
+            uint128 lowUtilizationInterestRateGradient,
+            uint128 interestRateGradientBreakpoint,
+            uint128 highUtilizationInterestRateGradient
+        )
+    {
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        lowUtilizationInterestRateGradient = store.lowUtilizationInterestRateGradient;
+        interestRateGradientBreakpoint = store.interestRateGradientBreakpoint;
+        highUtilizationInterestRateGradient = store.highUtilizationInterestRateGradient;
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function updateInterestRate() external override {
+        (uint128 interestRate, ) = InterestRate.update();
+
+        emit InterestRateUpdated(PerpsMarketFactory.load().perpsMarketId, interestRate);
     }
 }

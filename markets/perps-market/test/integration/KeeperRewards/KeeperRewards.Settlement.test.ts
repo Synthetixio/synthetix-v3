@@ -173,6 +173,7 @@ describe('Keeper Rewards - Settlement', () => {
       sizeDelta,
       currentFundingRate,
       currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+      0, // interest rate is 0 since params were not set
     ];
     await assertEvent(settleTx, `MarketUpdated(${params.join(', ')})`, systems().PerpsMarket);
   });
