@@ -69,6 +69,11 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
+        if (position.size == 0) {
+            IPerpAccountModule.PositionDigest memory emptyPositionDigest;
+            return emptyPositionDigest;
+        }
+
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint256 oraclePrice = market.getOraclePrice();
 
