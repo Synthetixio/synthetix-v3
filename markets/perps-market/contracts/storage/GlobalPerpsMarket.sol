@@ -1,15 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
-import {PerpsAccount} from "./PerpsAccount.sol";
+import {PerpsAccount, SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
+import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
-import {SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 
 /**
  * @title This library contains all global perps market data
@@ -18,6 +19,7 @@ library GlobalPerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using DecimalMath for uint256;
     using SetUtil for SetUtil.UintSet;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
@@ -60,6 +62,30 @@ library GlobalPerpsMarket {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
         assembly {
             marketData.slot := s
+        }
+    }
+
+    function utilizationRate(
+        Data storage self
+    ) internal view returns (uint128 rate, uint256 delegatedCollateralValue, uint256 lockedCredit) {
+        uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
+        delegatedCollateralValue = withdrawableUsd - totalCollateralValue(self);
+        lockedCredit = minimumCredit(self);
+        if (delegatedCollateralValue == 0) {
+            return (0, 0, lockedCredit);
+        }
+
+        rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
+    }
+
+    function minimumCredit(
+        Data storage self
+    ) internal view returns (uint256 accumulatedMinimumCredit) {
+        uint256 activeMarketsLength = self.activeMarkets.length();
+        for (uint i = 1; i <= activeMarketsLength; i++) {
+            uint128 marketId = self.activeMarkets.valueAt(i).to128();
+
+            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId);
         }
     }
 

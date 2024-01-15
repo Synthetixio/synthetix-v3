@@ -329,6 +329,7 @@ describe('Settle Offchain Async Order test', () => {
               sizeDelta,
               currentFundingRate,
               currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+              0, // interest rate is 0 since no params were set
             ];
             await assertEvent(
               settleTx,

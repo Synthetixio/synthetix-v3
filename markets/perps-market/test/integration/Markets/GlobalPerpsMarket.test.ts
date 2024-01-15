@@ -181,4 +181,39 @@ describe('GlobalPerpsMarket', () => {
       assertBn.equal(supportedCollaterals[1], synthMarkets()[0].marketId());
     });
   });
+
+  describe('set interest rate params', () => {
+    // only owner can set params
+    it('reverts if not owner', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .setInterestRateParameters(bn(0.1), bn(0.2), bn(0.3)),
+        `Unauthorized("${await trader1().getAddress()}")`
+      );
+    });
+
+    it('reverts if low gradient higher than high gradient', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(owner()).setInterestRateParameters(bn(0.3), bn(0.2), bn(0.1)),
+        `InvalidInterestRateParameters(${bn(0.3)}, ${bn(0.1)})`
+      );
+    });
+
+    describe('correct params', () => {
+      before('set interest rate params', async () => {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .setInterestRateParameters(bn(0.1), bn(0.2), bn(0.3));
+      });
+
+      it('sets the correct interest rate params', async () => {
+        const params = await systems().PerpsMarket.getInterestRateParameters();
+
+        assertBn.equal(params.lowUtilizationInterestRateGradient, bn(0.1));
+        assertBn.equal(params.interestRateGradientBreakpoint, bn(0.2));
+        assertBn.equal(params.highUtilizationInterestRateGradient, bn(0.3));
+      });
+    });
+  });
 });
