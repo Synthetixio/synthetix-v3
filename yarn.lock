@@ -2134,16 +2134,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nomiclabs/hardhat-ethers@npm:2.2.1":
-  version: 2.2.1
-  resolution: "@nomiclabs/hardhat-ethers@npm:2.2.1"
-  peerDependencies:
-    ethers: ^5.0.0
-    hardhat: ^2.0.0
-  checksum: 43f8daa2f26797079cc05107fc0ab82417c41bdbea3d2882450178f386a0554533b7dfc3664a0ac1101e355c36d666c6b1b210a5562651d3af51b35105a752f5
-  languageName: node
-  linkType: hard
-
 "@nomiclabs/hardhat-ethers@npm:^2.2.3":
   version: 2.2.3
   resolution: "@nomiclabs/hardhat-ethers@npm:2.2.3"
@@ -3151,9 +3141,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/insurance-market@workspace:markets/insurance-market"
   dependencies:
-    "@ethersproject/abi": "npm:5.7.0"
-    "@ethersproject/providers": "npm:5.7.2"
-    "@nomiclabs/hardhat-ethers": "npm:2.2.1"
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
@@ -3162,7 +3149,6 @@ __metadata:
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": "npm:^3.3.0"
     "@synthetixio/wei": "npm:2.74.4"
-    "@usecannon/cli": "npm:2.1.10"
     ethers: "npm:^5.0.0"
     hardhat: "npm:2.13.0"
     node-fetch: "npm:2.6.9"
@@ -4007,7 +3993,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.10.6, @usecannon/builder@npm:^2.1.10, @usecannon/builder@npm:^2.10.6":
+"@usecannon/builder@npm:2.10.6, @usecannon/builder@npm:^2.10.6":
   version: 2.10.6
   resolution: "@usecannon/builder@npm:2.10.6"
   dependencies:
@@ -4025,31 +4011,6 @@ __metadata:
   peerDependencies:
     ethers: ">=5.6.0 < 6.0.0"
   checksum: 4d5201ab12468a292ec271807df12eea0f92a2594841cc91dd4db46f2f6d89bc027466e6fa2635501ab6182ca62232745fbd81fe853994a2048c6fb993902858
-  languageName: node
-  linkType: hard
-
-"@usecannon/cli@npm:2.1.10":
-  version: 2.1.10
-  resolution: "@usecannon/cli@npm:2.1.10"
-  dependencies:
-    "@iarna/toml": "npm:^3.0.0"
-    "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:^2.1.10"
-    chalk: "npm:^4.1.2"
-    commander: "npm:^9.3.0"
-    debug: "npm:^4.3.4"
-    ethers: "npm:^5.7.1"
-    fs-extra: "npm:^10.1.0"
-    lodash: "npm:^4.17.21"
-    promise-events: "npm:^0.2.4"
-    prompts: "npm:^2.4.2"
-    semver: "npm:^7.3.7"
-    table: "npm:^6.8.0"
-    tildify: "npm:2.0.0"
-    untildify: "npm:^4.0.0"
-  bin:
-    cannon: dist/bin/cannon.js
-  checksum: 90fb7fc548c5846f31858a5c2a1517ce8c712d2e4a66f1cd3d6487ba1d859d12036db063b1961e8bcddb77adcae9e25db14324997331f37d904439cead82d0e1
   languageName: node
   linkType: hard
 
@@ -6060,7 +6021,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^9.3.0, commander@npm:^9.5.0":
+"commander@npm:^9.5.0":
   version: 9.5.0
   resolution: "commander@npm:9.5.0"
   checksum: 41c49b3d0f94a1fbeb0463c85b13f15aa15a9e0b4d5e10a49c0a1d58d4489b549d62262b052ae0aa6cfda53299bee487bfe337825df15e342114dde543f82906
