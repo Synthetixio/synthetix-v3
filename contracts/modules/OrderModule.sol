@@ -247,7 +247,6 @@ contract OrderModule is IOrderModule {
 
         validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.params);
 
-        recomputeUtilization(market, runtime.pythPrice);
         recomputeFunding(market, runtime.pythPrice);
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
@@ -271,6 +270,11 @@ contract OrderModule is IOrderModule {
             // @dev This is (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
             runtime.trade.newMarginUsd
         );
+        // We want to do postSettlement updates before we update utilization.
+        // The reason for this is that we want to use the interest rate leading up to this point when computing the accrued utlization.
+        // `stateUpdatePostSettlement` will call getMarginUsd, which calls getAccruedFunding which checks the stored interest rate we want to use.
+        // When that is done, we can recompute and updated the stored utilization values.
+        recomputeUtilization(market, runtime.pythPrice);
 
         // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {

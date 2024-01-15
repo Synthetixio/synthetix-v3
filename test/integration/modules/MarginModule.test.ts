@@ -1328,8 +1328,8 @@ describe('MarginModule', async () => {
         await assertEvents(
           closeReceipt,
           [
-            /UtilizationRecomputed/,
-            /FundingRecomputed/, // funding recomputed, don't care about the exact values here
+            /FundingRecomputed/, // funding recomputed, don't care about the exact values here,
+
             `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralAmount})`,
             `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${collateralAmount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
             `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${collateralAmount})`, // withdraw collateral, to sell to pay back losing pos in sUSD
@@ -1338,6 +1338,7 @@ describe('MarginModule', async () => {
             `SynthSold(${synthMarketId}, ${usdDepositAmount}, [0, 0, 0, 0], 0, "${ADDRESS0}", ${newCollateralPrice.toBN()})`, // Sell collateral to sUSD to pay back losing pos
             `Transfer("${PerpMarketProxy.address}", "${ADDRESS0}", ${usdDepositAmount})`, // part of depositing sUSD to market manager
             `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${usdDepositAmount}, "${PerpMarketProxy.address}")`, // deposit sUSD into market manager, this will let LPs of this market profit
+            /UtilizationRecomputed/,
             `Transfer("${ADDRESS0}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
             `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}")`, // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited
             `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.accruedUtilization}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
