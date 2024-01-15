@@ -207,7 +207,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 marketUpdateData.size,
                 sizeDelta,
                 marketUpdateData.currentFundingRate,
-                marketUpdateData.currentFundingVelocity
+                marketUpdateData.currentFundingVelocity,
+                marketUpdateData.interestRate
             );
 
             emit PositionLiquidated(

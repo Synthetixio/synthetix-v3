@@ -226,6 +226,7 @@ library AsyncOrder {
      * @dev Struct used internally in validateOrder() to prevent stack too deep error.
      */
     struct SimulateDataRuntime {
+        bool isEligible;
         int128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
@@ -272,16 +273,15 @@ library AsyncOrder {
 
         PerpsAccount.Data storage account = PerpsAccount.load(runtime.accountId);
 
-        bool isEligible;
         (
-            isEligible,
+            runtime.isEligible,
             runtime.currentAvailableMargin,
             runtime.requiredInitialMargin,
             ,
             runtime.currentLiquidationReward
         ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
 
-        if (isEligible) {
+        if (runtime.isEligible) {
             revert PerpsAccount.AccountLiquidatable(runtime.accountId);
         }
 
@@ -355,6 +355,7 @@ library AsyncOrder {
             marketId: runtime.marketId,
             latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
+            latestInterestAccrued: 0,
             size: runtime.newPositionSize
         });
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
