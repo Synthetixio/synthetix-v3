@@ -203,33 +203,21 @@ library PerpMarket {
         }
     }
 
-    function getUnrecordedUtilizationWithRate(
+    function getUnrecordedUtilization(
         PerpMarket.Data storage self,
+        uint256 utilizationRate,
         uint256 price
-    ) internal view returns (uint256 currentUtilizationRate, uint256 unrecordedUtilization) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        currentUtilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
-
-        uint256 avgUtilizationRate = (self.currentUtilizationRateComputed + currentUtilizationRate).divDecimal(
-            (DecimalMath.UNIT * 2)
-        );
-        // Calculate the additive accrued utilization delta for the next utilisaction accrued value.
-        unrecordedUtilization = avgUtilizationRate.mulDecimal(getProportionalUtilizationElapsed(self)).mulDecimal(
-            price
-        );
-    }
-
-    function getUnrecordedUtilization(PerpMarket.Data storage self, uint256 price) internal view returns (uint256) {
-        (, uint256 unrecordedUtilization) = getUnrecordedUtilizationWithRate(self, price);
-        return unrecordedUtilization;
+    ) internal view returns (uint256 unrecordedUtilization) {
+        return utilizationRate.mulDecimal(getProportionalUtilizationElapsed(self)).mulDecimal(price);
     }
 
     function recomputeUtilization(
         PerpMarket.Data storage self,
         uint256 price
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
-        (utilizationRate, unrecordedUtilization) = getUnrecordedUtilizationWithRate(self, price);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        utilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
+        unrecordedUtilization = getUnrecordedUtilization(self, utilizationRate, price);
 
         self.currentUtilizationRateComputed = utilizationRate;
         self.currentUtilizationAccruedComputed += unrecordedUtilization;

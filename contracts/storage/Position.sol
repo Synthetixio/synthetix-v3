@@ -483,7 +483,7 @@ library Position {
         );
 
         healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(
-            market.getUnrecordedUtilization(price) +
+            market.getUnrecordedUtilization(market.currentUtilizationRateComputed, price) +
                 market.currentUtilizationAccruedComputed -
                 positionEntryUtilizationAccrued
         );
@@ -572,7 +572,7 @@ library Position {
             return 0;
         }
 
-        (, uint256 unrecordedUtilization) = market.getUnrecordedUtilizationWithRate(price);
+        uint256 unrecordedUtilization = market.getUnrecordedUtilization(market.currentUtilizationRateComputed, price);
 
         return
             MathUtil.abs(self.size).mulDecimal(
