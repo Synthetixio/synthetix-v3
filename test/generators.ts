@@ -82,8 +82,8 @@ export const genBootstrap = () => ({
     maxCollateralHaircut: bn(0.05),
     sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
     utilizationBreakpointPercent: bn(genNumber(0.65, 0.85)),
-    lowUtilizationSlopePercent: bn(genNumber(0.02, 0.04)),
-    highUtilizationSlopePercent: bn(genNumber(0.9, 1.1)),
+    lowUtilizationSlopePercent: bn(genNumber(0.0002, 0.0003)),
+    highUtilizationSlopePercent: bn(genNumber(0.005, 0.015)),
   },
   markets: MARKETS,
 });
