@@ -255,6 +255,16 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    function getNominatedMarketOwner(
+        uint128 synthMarketId
+    ) public view override returns (address marketOwner) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        return spotMarketFactory.nominatedMarketOwners[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function renounceMarketOwnership(uint128 synthMarketId) external override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.onlyMarketOwner(synthMarketId);

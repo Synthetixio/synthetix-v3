@@ -196,4 +196,10 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthMarketId synth market id value
      */
     function getMarketOwner(uint128 synthMarketId) external view returns (address);
+
+    /**
+     * @notice Returns nominated market owner.
+     * @param synthMarketId synth market id value
+     */
+    function getNominatedMarketOwner(uint128 synthMarketId) external view returns (address);
 }
