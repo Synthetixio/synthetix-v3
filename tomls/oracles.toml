@@ -1,3 +1,9 @@
+# --- Settings --- #
+
+# NOTE: This is the same pythETHFeedId defined in markets.fixture.ts for ETHPERP.
+[setting.pythEthFeedId]
+defaultValue = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
+
 # --- Lido wstETH <> stETH Ratio Oracle --- #
 
 [contract.WstETHMock]
