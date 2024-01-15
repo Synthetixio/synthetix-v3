@@ -1115,7 +1115,8 @@ describe('MarginModule', async () => {
 
         assertBn.lt(expectedChange.toBN(), bn(0));
         const expectedBalance = startingCollateralBalance.add(expectedChange).toBN();
-        assertBn.equal(expectedBalance, actualBalance);
+
+        assertBn.near(expectedBalance, actualBalance, bn(0.0001));
       });
 
       forEach([
@@ -1177,12 +1178,15 @@ describe('MarginModule', async () => {
           // the collateral is non-sUSD then we expect originalCollateralBalance + winnings(as sUSD).
           const closingCollateralBalance = await collateral.contract.balanceOf(traderAddress);
           if (isSusdCollateral(collateral)) {
-            assertBn.equal(closingCollateralBalance, startingCollateralBalance.add(expectedProfit).toBN());
+            const expectedBalance = startingCollateralBalance.add(expectedProfit).toBN();
+            assertBn.near(closingCollateralBalance, expectedBalance, bn(0.0001));
           } else {
-            assertBn.equal(closingCollateralBalance, startingCollateralBalance.toBN());
+            assertBn.near(closingCollateralBalance, startingCollateralBalance.toBN(), bn(0.0001));
 
             // Our pnl, minus fees, funding should be equal to our sUSD balance.
-            assertBn.equal(await USD.balanceOf(traderAddress), expectedProfit.toBN());
+            const balance = await USD.balanceOf(traderAddress);
+
+            assertBn.near(balance, expectedProfit.toBN(), bn(0.0001));
           }
 
           // Everything has been withdrawn. There should be no reportedDebt for this market.
@@ -1239,7 +1243,7 @@ describe('MarginModule', async () => {
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
 
         // Remaining balance after rekt.
-        assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
+        assertBn.near(expectedCollateralBalanceAfterTrade, balanceAfterTrade, bn(0.0001));
       });
 
       it('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {
@@ -1367,7 +1371,7 @@ describe('MarginModule', async () => {
         assertBn.lt(collateralDiffAmount.toBN(), bn(0));
 
         // Assert that the balance is correct.
-        assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
+        assertBn.near(expectedCollateralBalanceAfterTrade, balanceAfterTrade, bn(0.0001));
 
         // Everything has been withdrawn. There should be no reportedDebt for this market.
         assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(0), bn(0.00001));

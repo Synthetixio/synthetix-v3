@@ -19,7 +19,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       assertBn.equal(marketDigest.utilizationRate, bn(0));
     });
 
-    forEach(['lowUtilization', 'highUtilization']).it.only(
+    forEach(['lowUtilization', 'highUtilization']).it(
       'should return current utilization rate when %s',
       async (variant) => {
         const { PerpMarketProxy, Core } = systems();
