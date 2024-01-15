@@ -28,7 +28,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/cli": "2.1.10",
     "ethers": "^5.0.0",
