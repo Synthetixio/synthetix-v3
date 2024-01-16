@@ -94,6 +94,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit OrderFeesSet(marketId, makerFeeRatio, takerFeeRatio);
     }
 
+    // TODO: potentially update how this is set
+    // TODO: add interface
     function setQuantoSynthMarket(
         uint128 marketId,
         uint128 quantoSynthMarketId
@@ -103,6 +105,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.quantoSynthMarketId = quantoSynthMarketId;
     }
 
+    // TODO: add interface
     function getQuantoSynthMarket(
         uint128 marketId
     ) external view returns (uint256) {
