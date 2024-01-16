@@ -63,11 +63,6 @@ library ChainlinkNode {
     uint256 public constant PRECISION = 18;
 }
 
-// @custom:artifact contracts/nodes/PythNode.sol:PythNode
-library PythNode {
-    int256 public constant PRECISION = 18;
-}
-
 // @custom:artifact contracts/nodes/ReducerNode.sol:ReducerNode
 library ReducerNode {
     enum Operations {
@@ -77,13 +72,25 @@ library ReducerNode {
         MEAN,
         MEDIAN,
         MUL,
-        DIV
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
     }
 }
 
 // @custom:artifact contracts/nodes/UniswapNode.sol:UniswapNode
 library UniswapNode {
     uint8 public constant PRECISION = 18;
+}
+
+// @custom:artifact contracts/nodes/pyth/PythNode.sol:PythNode
+library PythNode {
+    int256 public constant PRECISION = 18;
+}
+
+// @custom:artifact contracts/nodes/pyth/PythOffchainLookupNode.sol:PythOffchainLookupNode
+library PythOffchainLookupNode {
+    int256 public constant PRECISION = 18;
 }
 
 // @custom:artifact contracts/storage/NodeDefinition.sol:NodeDefinition
@@ -97,7 +104,8 @@ library NodeDefinition {
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
         STALENESS_CIRCUIT_BREAKER,
-        CONSTANT
+        CONSTANT,
+        PYTH_OFFCHAIN_LOOKUP
     }
     struct Data {
         NodeType nodeType;

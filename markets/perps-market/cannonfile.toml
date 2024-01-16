@@ -39,9 +39,6 @@ artifact = "PerpsMarketFactoryModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AsyncOrderSettlementEIP3668Module]
-artifact = "AsyncOrderSettlementEIP3668Module"
-
 [contract.AsyncOrderSettlementPythModule]
 artifact = "AsyncOrderSettlementPythModule"
 
@@ -80,13 +77,11 @@ artifact = "GlobalPerpsMarketModule"
 contracts = [
     "synthetix.AccountModule",
     "synthetix.AssociatedSystemsModule",
-    "synthetix.MulticallModule",
     "CoreModule",
     "PerpsMarketFactoryModule",
     "PerpsAccountModule",
     "PerpsMarketModule",
     "AsyncOrderModule",
-    "AsyncOrderSettlementEIP3668Module",
     "AsyncOrderSettlementPythModule",
     "AsyncOrderCancelModule",
     "FeatureFlagModule",
@@ -103,10 +98,11 @@ args = ["<%= contracts.PerpsMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
+factory.PerpsMarketProxy.highlight = true
 
 [invoke.init_account]
 target = ["PerpsMarketProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "initOrUpgradeNft"
 args = [
     "<%= formatBytes32String('accountNft') %>",
@@ -119,12 +115,13 @@ depends = ["invoke.upgrade_proxy"]
 factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
 factory.PerpsAccountProxy.event = "AssociatedSystemSet"
 factory.PerpsAccountProxy.arg = 2
+factory.PerpsAccountProxy.highlight = true
 
 # add pool owner to feature flag allow list
 [invoke.addPerpsMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-from = "<%= settings.coreProxyOwner %>"
+fromCall.func = "owner"
 args = [
     "<%= formatBytes32String('registerMarket') %>",
     "<%= contracts.PerpsMarketProxy.address %>"
@@ -133,7 +130,7 @@ args = [
 [invoke.addCreateMarketToFeatureFlag]
 target = ["PerpsMarketProxy"]
 func = "addToFeatureFlagAllowlist"
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 
 [invoke.initializeFactory]
@@ -143,18 +140,12 @@ args = [
     "<%= imports.synthetix.contracts.CoreProxy.address %>",
     "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"
 ]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 extra.superMarketId.event = "FactoryInitialized"
 extra.superMarketId.arg = 0
 
-[invoke.enableBasicFeatures]
+[invoke.enableFeatureCreateAccount]
 target = ["PerpsMarketProxy"]
 fromCall.func = "owner"
-func = "multicall"
-args = [
-    [
-        # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createAccount'), true]).slice(2) %>",
-    ]
-]
-depends = ["invoke.upgrade_proxy"]
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('createAccount') %>", true]

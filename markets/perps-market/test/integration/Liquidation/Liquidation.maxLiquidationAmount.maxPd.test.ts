@@ -3,7 +3,7 @@ import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
-describe('Liquidation - max pd', async () => {
+describe('Liquidation - max pd', () => {
   const { systems, provider, owner, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
@@ -133,12 +133,16 @@ describe('Liquidation - max pd', async () => {
   describe('more liquidation of trader 1 since under max pd', () => {
     describe('same block', () => {
       before('call liquidate twice more since under max pd', async () => {
-        await systems()
-          .PerpsMarket.connect(keeper())
-          .multicall([
-            systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-            systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-          ]);
+        await systems().TrustedMulticallForwarder.aggregate([
+          {
+            target: systems().PerpsMarket.address,
+            callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+          },
+          {
+            target: systems().PerpsMarket.address,
+            callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+          },
+        ]);
       });
 
       it('liquidated 25 OP more', async () => {

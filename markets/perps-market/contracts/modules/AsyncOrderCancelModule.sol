@@ -1,22 +1,27 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IAsyncOrderCancelModule} from "../interfaces/IAsyncOrderCancelModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
-import {OffchainUtil} from "../utils/OffchainUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for cancelling async orders.
  * @dev See IAsyncOrderCancelModule.
  */
 contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAccountEvents {
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
     using PerpsAccount for PerpsAccount.Data;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
@@ -25,57 +30,21 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
     /**
      * @inheritdoc IAsyncOrderCancelModule
      */
-    function cancelOrder(uint128 accountId) external view {
-        GlobalPerpsMarket.load().checkLiquidation(accountId);
+    function cancelOrder(uint128 accountId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         (
-            AsyncOrder.Data storage order,
+            AsyncOrder.Data storage asyncOrder,
             SettlementStrategy.Data storage settlementStrategy
         ) = AsyncOrder.loadValid(accountId);
 
-        _cancelOffchain(order, settlementStrategy);
-    }
-
-    /**
-     * @inheritdoc IAsyncOrderCancelModule
-     */
-    function cancelPythOrder(bytes calldata result, bytes calldata extraData) external payable {
-        (
-            uint256 offchainPrice,
-            AsyncOrder.Data storage order,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = OffchainUtil.parsePythPrice(result, extraData);
-
-        _cancelOrder(offchainPrice, order, settlementStrategy);
-    }
-
-    /**
-     * @dev used for canceling offchain orders. This will revert with OffchainLookup.
-     */
-    function _cancelOffchain(
-        AsyncOrder.Data storage asyncOrder,
-        SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, int256, uint256) {
-        string[] memory urls = new string[](1);
-        urls[0] = settlementStrategy.url;
-
-        bytes4 selector;
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
-            selector = AsyncOrderCancelModule.cancelPythOrder.selector;
-        } else {
-            revert SettlementStrategyNotFound(settlementStrategy.strategyType);
-        }
-
-        // see EIP-3668: https://eips.ethereum.org/EIPS/eip-3668
-        revert OffchainLookup(
-            address(this),
-            urls,
-            abi.encodePacked(
+        int256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
+            .getBenchmarkPrice(
                 settlementStrategy.feedId,
-                OffchainUtil.getTimeInBytes(asyncOrder.settlementTime)
-            ),
-            selector,
-            abi.encode(asyncOrder.request.accountId) // extraData that gets sent to callback for validation
-        );
+                (asyncOrder.commitmentTime + settlementStrategy.commitmentPriceDelay).to64()
+            );
+
+        _cancelOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
     }
 
     /**

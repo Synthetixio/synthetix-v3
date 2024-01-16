@@ -16,6 +16,7 @@ const settlementStrategyWithNoMin = {
   settlementReward: 0,
   minimumUsdExchangeAmount: 0,
   maxRoundingLoss: bn(0.000001),
+  priceDeviationTolerance: bn(0.01),
   disabled: false,
 };
 

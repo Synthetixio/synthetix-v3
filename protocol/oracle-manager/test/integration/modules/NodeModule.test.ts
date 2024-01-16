@@ -39,7 +39,7 @@ describe('NodeModule', function () {
       NodeModule.registerNode(NodeTypes.REDUCER, abi.encode(['int'], [NodeOperations.MAX]), [
         invalidNode,
       ]),
-      'UnprocessableNode',
+      'InvalidNodeDefinition',
       NodeModule
     );
   });

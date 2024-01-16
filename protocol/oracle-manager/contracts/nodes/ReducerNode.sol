@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
@@ -9,6 +10,7 @@ import "../storage/NodeOutput.sol";
 library ReducerNode {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
+    using DecimalMath for int256;
 
     error UnsupportedOperation(Operations operation);
     error InvalidPrice(int256 price);
@@ -20,7 +22,9 @@ library ReducerNode {
         MEAN,
         MEDIAN,
         MUL,
-        DIV
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
     }
 
     function process(
@@ -49,6 +53,12 @@ library ReducerNode {
         }
         if (operation == Operations.DIV) {
             return div(parentNodeOutputs);
+        }
+        if (operation == Operations.MULDECIMAL) {
+            return mulDecimal(parentNodeOutputs);
+        }
+        if (operation == Operations.DIVDECIMAL) {
+            return divDecimal(parentNodeOutputs);
         }
 
         revert UnsupportedOperation(operation);
@@ -139,6 +149,33 @@ library ReducerNode {
         divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
     }
 
+    function mulDecimal(
+        NodeOutput.Data[] memory parentNodeOutputs
+    ) internal pure returns (NodeOutput.Data memory mulPrice) {
+        mulPrice.price = parentNodeOutputs[0].price;
+        mulPrice.timestamp = parentNodeOutputs[0].timestamp;
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
+            mulPrice.price = mulPrice.price.mulDecimal(parentNodeOutputs[i].price);
+            mulPrice.timestamp += parentNodeOutputs[i].timestamp;
+        }
+        mulPrice.timestamp = mulPrice.timestamp / parentNodeOutputs.length;
+    }
+
+    function divDecimal(
+        NodeOutput.Data[] memory parentNodeOutputs
+    ) internal pure returns (NodeOutput.Data memory divPrice) {
+        divPrice.price = parentNodeOutputs[0].price;
+        divPrice.timestamp = parentNodeOutputs[0].timestamp;
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
+            if (parentNodeOutputs[i].price == 0) {
+                revert InvalidPrice(parentNodeOutputs[i].price);
+            }
+            divPrice.price = divPrice.price.divDecimal(parentNodeOutputs[i].price);
+            divPrice.timestamp += parentNodeOutputs[i].timestamp;
+        }
+        divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
+    }
+
     function quickSort(NodeOutput.Data[] memory arr, int256 left, int256 right) internal pure {
         int256 i = left;
         int256 j = right;
@@ -170,7 +207,7 @@ library ReducerNode {
 
         // Must have valid operation
         uint256 operationId = abi.decode(nodeDefinition.parameters, (uint256));
-        if (operationId > 6) {
+        if (operationId > 8) {
             return false;
         }
 

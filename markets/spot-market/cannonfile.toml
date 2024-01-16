@@ -58,7 +58,6 @@ salt = "<%= settings.salt %>"
 # Core
 [router.SpotMarketRouter]
 contracts = [
-    "synthetix.MulticallModule",
     "CoreModule",
     "SpotMarketFactoryModule",
     "AtomicOrderModule",
@@ -78,6 +77,7 @@ args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
+factory.SpotMarketProxy.highlight = true
 
 # create synth router
 [router.SynthRouter]

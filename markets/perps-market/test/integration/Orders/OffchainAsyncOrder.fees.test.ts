@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { BigNumberish, ethers } from 'ethers';
 import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
@@ -154,6 +154,55 @@ describe('Offchain Async Order test - fees', () => {
           startTime = await getTxTime(provider(), tx);
         });
 
+        it('calculates different fees using withPrice', async () => {
+          let tentativePrice, tentativeOrderFees: BigNumberish, tentativeFeesPaidOnSettle;
+
+          // same price
+          tentativePrice = ethPrice;
+          tentativeFeesPaidOnSettle = computeFees(
+            wei(0),
+            wei(sizeDelta),
+            wei(tentativePrice),
+            orderFees
+          );
+          [tentativeOrderFees] = await systems().PerpsMarket.computeOrderFeesWithPrice(
+            ethMarketId,
+            sizeDelta,
+            tentativePrice
+          );
+          assertBn.equal(tentativeOrderFees, tentativeFeesPaidOnSettle.perpsMarketFee);
+
+          // double price
+          tentativePrice = ethPrice.mul(2);
+          tentativeFeesPaidOnSettle = computeFees(
+            wei(0),
+            wei(sizeDelta),
+            wei(tentativePrice),
+            orderFees
+          );
+          [tentativeOrderFees] = await systems().PerpsMarket.computeOrderFeesWithPrice(
+            ethMarketId,
+            sizeDelta,
+            tentativePrice
+          );
+          assertBn.equal(tentativeOrderFees, tentativeFeesPaidOnSettle.perpsMarketFee);
+
+          // half price
+          tentativePrice = ethPrice.div(2);
+          tentativeFeesPaidOnSettle = computeFees(
+            wei(0),
+            wei(sizeDelta),
+            wei(tentativePrice),
+            orderFees
+          );
+          [tentativeOrderFees] = await systems().PerpsMarket.computeOrderFeesWithPrice(
+            ethMarketId,
+            sizeDelta,
+            tentativePrice
+          );
+          assertBn.equal(tentativeOrderFees, tentativeFeesPaidOnSettle.perpsMarketFee);
+        });
+
         it('returns proper fees on getOrderFees', async () => {
           const [orderFees] = await systems().PerpsMarket.computeOrderFees(ethMarketId, sizeDelta);
           assertBn.equal(orderFees, feesPaidOnSettle.perpsMarketFee);
@@ -178,9 +227,8 @@ describe('Offchain Async Order test - fees', () => {
               systems,
               keeper: keeper(),
               accountId: 2,
-              feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              settlementTime,
-              offChainPrice: 1000,
+              commitmentTime: startTime,
+              offChainPrice: bn(1000),
             });
           });
 

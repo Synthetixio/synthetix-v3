@@ -1,0 +1,11 @@
+name = "op-gas-price-oracle"
+version = "<%= package.version %>"
+description = "Optimism Gas Price Oracle Node"
+
+[setting.ovmGasPriceOracleAddress]
+defaultValue = "0x420000000000000000000000000000000000000F"
+
+[contract.OpGasPriceOracle]
+artifact = "contracts/OpGasPriceOracle.sol:OpGasPriceOracle"
+args = ["<%= settings.ovmGasPriceOracleAddress %>"]
+create2 = true

@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import { calculatePricePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 
-describe('Liquidation - multi collateral', async () => {
+describe('Liquidation - multi collateral', () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -72,7 +72,9 @@ describe('Liquidation - multi collateral', async () => {
     bootstrapMarkets({
       liquidationGuards: {
         minLiquidationReward: bn(10),
+        minKeeperProfitRatioD18: bn(0),
         maxLiquidationReward: bn(1000),
+        maxKeeperScalingRatioD18: bn(0.5),
       },
       synthMarkets: [
         {
@@ -133,7 +135,7 @@ describe('Liquidation - multi collateral', async () => {
     OpenPositionData,
     'systems' | 'provider' | 'trader' | 'accountId' | 'keeper'
   >;
-  before('identify common props', async () => {
+  before('identify common props', () => {
     commonOpenPositionProps = {
       systems,
       provider,
@@ -161,7 +163,7 @@ describe('Liquidation - multi collateral', async () => {
     }
   });
 
-  describe('account check after initial positions open', async () => {
+  describe('account check after initial positions open', () => {
     it('should have correct open interest', async () => {
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), bn(80_000));
     });
@@ -189,68 +191,96 @@ describe('Liquidation - multi collateral', async () => {
   });
 
   describe('make account liquidatable', () => {
+    before('commit a new order', async () => {
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .commitOrder({
+          marketId: perpsMarkets()[0].marketId(),
+          accountId: 2,
+          sizeDelta: bn(0.1),
+          settlementStrategyId: perpsMarkets()[0].strategyId(),
+          acceptablePrice: bn(33_000), // 10% slippage
+          referrer: ethers.constants.AddressZero,
+          trackingCode: ethers.constants.HashZero,
+        });
+    });
+
     before('change perps token price', async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(31000)); // btc
       await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(1625)); // eth
       await perpsMarkets()[2].aggregator().mockSetCurrentPrice(bn(3)); // link
     });
 
-    let liquidateTxn: ethers.providers.TransactionResponse;
-    before('liquidate account', async () => {
-      liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    it('should have a pending order', async () => {
+      const order = await systems().PerpsMarket.getOrder(2);
+      assertBn.equal(order.request.accountId, 2);
+      assertBn.equal(order.request.sizeDelta, bn(0.1));
     });
 
-    it('empties account margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.totalCollateralValue(2), 0);
-    });
+    describe('liquidate the account', () => {
+      let liquidateTxn: ethers.providers.TransactionResponse;
+      before('liquidate account', async () => {
+        liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      });
 
-    it('empties open interest', async () => {
-      assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), 0);
-    });
+      it('empties account margin', async () => {
+        assertBn.equal(await systems().PerpsMarket.totalCollateralValue(2), 0);
+      });
 
-    it('emits account liquidated event', async () => {
-      await assertEvent(
-        liquidateTxn,
-        `AccountLiquidated(2, ${bn(1000)}, true)`, // max liquidation reward $1000
-        systems().PerpsMarket
-      );
-    });
+      it('empties open interest', async () => {
+        assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), 0);
+      });
 
-    it('sent reward to keeper', async () => {
-      assertBn.equal(await systems().USD.balanceOf(await keeper().getAddress()), bn(1000));
-    });
-
-    [bn(1), bn(20), bn(2000)].forEach((liquidatedSize, i) => {
-      it(`emits position liquidated event`, async () => {
+      it('emits account liquidated event', async () => {
         await assertEvent(
           liquidateTxn,
-          `PositionLiquidated(2, ${perpsMarkets()[i].marketId()}, ${liquidatedSize}, 0)`,
+          `AccountLiquidationAttempt(2, ${bn(1000)}, true)`, // max liquidation reward $1000
           systems().PerpsMarket
         );
       });
-    });
 
-    it('sold all market collateral for usd', async () => {
-      assertBn.equal(
-        await systems().Core.getMarketCollateralAmount(superMarketId(), btcSynth.synthAddress()),
-        bn(0)
-      );
+      it('sent reward to keeper', async () => {
+        assertBn.equal(await systems().USD.balanceOf(await keeper().getAddress()), bn(1000));
+      });
 
-      assertBn.equal(
-        await systems().Core.getMarketCollateralAmount(superMarketId(), ethSynth.synthAddress()),
-        bn(0)
-      );
-    });
+      [bn(1), bn(20), bn(2000)].forEach((liquidatedSize, i) => {
+        it(`emits position liquidated event`, async () => {
+          await assertEvent(
+            liquidateTxn,
+            `PositionLiquidated(2, ${perpsMarkets()[i].marketId()}, ${liquidatedSize}, 0)`,
+            systems().PerpsMarket
+          );
+        });
+      });
 
-    // all collateral is still in the core system
-    it('has correct market usd', async () => {
-      // $14_000 total collateral value
-      // $1000 paid to liquidation reward
-      assertBn.near(
-        await systems().Core.getWithdrawableMarketUsd(superMarketId()),
-        startingWithdrawableUsd.add(bn(13_000)),
-        bn(0.00001)
-      );
+      it('sold all market collateral for usd', async () => {
+        assertBn.equal(
+          await systems().Core.getMarketCollateralAmount(superMarketId(), btcSynth.synthAddress()),
+          bn(0)
+        );
+
+        assertBn.equal(
+          await systems().Core.getMarketCollateralAmount(superMarketId(), ethSynth.synthAddress()),
+          bn(0)
+        );
+      });
+
+      // all collateral is still in the core system
+      it('has correct market usd', async () => {
+        // $14_000 total collateral value
+        // $1000 paid to liquidation reward
+        assertBn.near(
+          await systems().Core.getWithdrawableMarketUsd(superMarketId()),
+          startingWithdrawableUsd.add(bn(13_000)),
+          bn(0.00001)
+        );
+      });
+
+      it('should not have a pending order', async () => {
+        const order = await systems().PerpsMarket.getOrder(2);
+        assertBn.equal(order.request.accountId, 2);
+        assertBn.equal(order.request.sizeDelta, bn(0));
+      });
     });
   });
 

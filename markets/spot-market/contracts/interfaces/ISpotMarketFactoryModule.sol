@@ -55,7 +55,8 @@ interface ISpotMarketFactoryModule is IMarket {
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
         bytes32 indexed buyFeedId,
-        bytes32 indexed sellFeedId
+        bytes32 indexed sellFeedId,
+        uint256 strictStalenessTolerance
     );
     /**
      * @notice Gets fired when the market's price feeds are updated, compatible with oracle manager
@@ -137,8 +138,14 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      * @param buyFeedId the oracle manager buy feed node id
      * @param sellFeedId the oracle manager sell feed node id
+     * @param strictPriceStalenessTolerance configurable price staleness tolerance used for transacting
      */
-    function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
+    function updatePriceData(
+        uint128 marketId,
+        bytes32 buyFeedId,
+        bytes32 sellFeedId,
+        uint256 strictPriceStalenessTolerance
+    ) external;
 
     /**
      * @notice upgrades the synth implementation to the current implementation for the specified market.

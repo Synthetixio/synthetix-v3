@@ -24,6 +24,8 @@ lerna.json
 **/cache/
 **/docs/
 **/tests/.latest.json
+**/lib
+**/out
 
 utils/docgen/deployments/
 utils/docgen/abis/

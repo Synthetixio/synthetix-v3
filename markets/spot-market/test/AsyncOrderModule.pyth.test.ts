@@ -1,12 +1,11 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import { SettlementStrategy } from './generated/typechain/SpotMarketProxy';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 const ASYNC_BUY_TRANSACTION = 3;
 
@@ -21,9 +20,7 @@ describe('AsyncOrderModule pyth', () => {
     synth: SynthRouter,
     startTime: number,
     strategyId: number,
-    pythSettlementStrategy: SettlementStrategy.DataStruct,
-    pythCallData: string,
-    extraData: string;
+    pythSettlementStrategy: SettlementStrategy.DataStruct;
 
   before('identify', async () => {
     [, , marketOwner, trader1, , keeper] = signers();
@@ -36,11 +33,12 @@ describe('AsyncOrderModule pyth', () => {
       strategyType: 1, // pyth
       settlementDelay: 5,
       settlementWindowDuration: 120,
-      priceVerificationContract: systems().OracleVerifierMock.address,
+      priceVerificationContract: systems().MockPythERC7412Wrapper.address,
       feedId: ethers.utils.formatBytes32String('ETH/USD'),
       url: 'https://fakeapi.pyth.network/',
       settlementReward: bn(5),
       disabled: false,
+      priceDeviationTolerance: bn(0.01),
       minimumUsdExchangeAmount: bn(0.000001),
       maxRoundingLoss: bn(0.000001),
     };
@@ -88,48 +86,35 @@ describe('AsyncOrderModule pyth', () => {
   });
 
   describe('settle order', () => {
-    before('fast forward to settlement time', async () => {
+    let settleTxn: ethers.providers.TransactionResponse;
+    before('fast forward to settle', async () => {
       await fastForwardTo(startTime + 6, provider());
     });
 
-    before('setup bytes data', () => {
-      extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [marketId(), 1]);
-      pythCallData = ethers.utils.solidityPack(
-        ['bytes32', 'uint64'],
-        [pythSettlementStrategy.feedId, startTime + 5]
-      );
+    before('set mock price', async () => {
+      await systems().MockPythERC7412Wrapper.setBenchmarkPrice(bn(1100));
     });
 
-    it('reverts with offchain error', async () => {
-      const functionSig = systems().SpotMarket.interface.getSighash('settlePythOrder');
-
-      // Coverage tests use hardhat provider, and hardhat provider stringifies array differently
-      const expectedUrl =
-        hre.network.name === 'hardhat'
-          ? `[${pythSettlementStrategy.url}]`
-          : pythSettlementStrategy.url;
-
-      await assertRevert(
-        systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
-        `OffchainLookup("${
-          systems().SpotMarket.address
-        }", "${expectedUrl}", "${pythCallData}", "${functionSig}", "${extraData}")`
-      );
-    });
-  });
-
-  // after off chain look up
-  describe('settle pyth order', () => {
-    describe('change mock pyth price', () => {
-      let settleTxn: ethers.providers.TransactionResponse;
-      before('set mock pyth price', async () => {
-        await systems().OracleVerifierMock.setPrice('1100');
+    describe('handles revert properly', () => {
+      before('set mock to revert', async () => {
+        await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(true);
       });
 
+      it('reverts', async () => {
+        await assertRevert(
+          systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
+          `OracleDataRequired(${pythSettlementStrategy.feedId}, ${startTime})`
+        );
+      });
+
+      after('set mock back to normal', async () => {
+        await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(false);
+      });
+    });
+
+    describe('settle', () => {
       before('settle', async () => {
-        settleTxn = await systems()
-          .SpotMarket.connect(keeper)
-          .settlePythOrder(pythCallData, extraData);
+        settleTxn = await systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1);
       });
 
       // ($1000 sent - $5 keeper) / ($1100/eth price) * 0.99 (1% fee) = 0.8955
@@ -157,10 +142,11 @@ describe('AsyncOrderModule pyth', () => {
         strategyType: 1, // pyth
         settlementDelay: 5,
         settlementWindowDuration: 120,
-        priceVerificationContract: systems().OracleVerifierMock.address,
+        priceVerificationContract: systems().MockPythERC7412Wrapper.address,
         feedId: ethers.utils.formatBytes32String('ETH/USD'),
         url: 'https://fakeapi.pyth.network/',
         settlementReward: 0,
+        priceDeviationTolerance: bn(0.01),
         disabled: false,
         minimumUsdExchangeAmount: bn(0.000001),
         maxRoundingLoss: bn(0.000001),
@@ -189,17 +175,9 @@ describe('AsyncOrderModule pyth', () => {
       startTime = await getTime(provider());
     });
 
-    before('setup bytes data', () => {
-      extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [marketId(), 2]);
-      pythCallData = ethers.utils.solidityPack(
-        ['bytes32', 'uint64'],
-        [pythSettlementStrategy.feedId, startTime + 5]
-      );
-    });
-
     before('settle', async () => {
       await fastForwardTo(startTime + 6, provider());
-      await systems().SpotMarket.connect(keeper).settlePythOrder(pythCallData, extraData);
+      await systems().SpotMarket.connect(keeper).settleOrder(marketId(), 2);
     });
 
     it('sent correct amount to trader', async () => {

@@ -16,4 +16,8 @@ library SafeCastU64 {
 
         return int64(x);
     }
+
+    function to256(uint64 x) internal pure returns (uint256) {
+        return uint256(x);
+    }
 }
