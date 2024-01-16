@@ -85,7 +85,7 @@ export interface PerpCollateral {
   synthAddress: () => string;
   oracleNodeId: () => string;
   rewardDistributorAddress: () => string;
-  getPrice: () => ReturnType<AggregatorV3Mock['latestRoundData']>;
+  getPrice: () => Promise<BigNumber>;
   setPrice: (price: BigNumber) => Promise<void>;
 }
 
@@ -300,7 +300,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         // still be referenced via `collateral.synthMarket.buyAggregator()`.
         //
         // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
-        getPrice: () => synthMarket.sellAggregator().latestRoundData(),
+        getPrice: async () => (await synthMarket.sellAggregator().latestRoundData()).answer,
         // Why `setPrice`?
         //
         // If you only update the price of the sell aggregator, and try to close a losing position things might fail.
@@ -327,7 +327,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       synthAddress: () => systems.USD.address,
       oracleNodeId: () => formatBytes32String(''),
       rewardDistributorAddress: () => rewardDistributors[0],
-      getPrice: () => sUsdAggregator.latestRoundData(),
+      getPrice: () => Promise.resolve(bn(1)),
       setPrice: async (price: BigNumber) => {
         await sUsdAggregator.mockSetCurrentPrice(price);
       },

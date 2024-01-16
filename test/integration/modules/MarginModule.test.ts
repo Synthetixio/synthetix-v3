@@ -2071,7 +2071,7 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collateralsWithoutSusd());
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
-      const { answer: collateralPrice } = await collateral.getPrice();
+      const collateralPrice = await collateral.getPrice();
       const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
 
       assertBn.equal(collateralPrice, priceWithHaircut);
@@ -2084,7 +2084,7 @@ describe('MarginModule', async () => {
 
       const collateral = genOneOf(collateralsWithoutSusd());
 
-      const { answer: collateralPrice } = await collateral.getPrice();
+      const collateralPrice = await collateral.getPrice();
       const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
 
       assertBn.equal(collateralPrice, priceWithHaircut);
@@ -2094,7 +2094,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
-      const { answer: collateralPrice } = await collateral.getPrice();
+      const collateralPrice = await collateral.getPrice();
 
       const maxCollateralHaircut = bn(0.02);
       await setMarketConfiguration(bs, { minCollateralHaircut: bn(0.01), maxCollateralHaircut });
@@ -2115,7 +2115,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
-      const { answer: collateralPrice } = await collateral.getPrice();
+      const collateralPrice = await collateral.getPrice();
 
       const minCollateralHaircut = bn(0.01);
       await setMarketConfiguration(bs, { minCollateralHaircut, maxCollateralHaircut: bn(0.02) });

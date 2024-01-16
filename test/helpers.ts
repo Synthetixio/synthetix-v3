@@ -1,4 +1,4 @@
-import { BigNumber, Contract, ContractReceipt, ethers, utils, providers } from 'ethers';
+import { BigNumber, Contract, ContractReceipt, ethers, utils, providers, Signer } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { genNumber, raise } from './generators';
@@ -18,28 +18,36 @@ export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 
 // --- Mutative helpers --- //
 
-/** A generalised mint/approve without accepting a generated trader. */
-export const mintAndApprove = async (
-  { provider, systems }: Bs,
-  collateral: Collateral,
-  amount: BigNumber,
-  to: ethers.Signer
+export const withImpersonate = async (
+  { provider }: Pick<Bs, 'provider'>,
+  address: string,
+  f: <A>(owner: Signer) => Promise<A | void>
 ) => {
+  await provider().send('hardhat_impersonateAccount', [address]);
+  const owner = provider().getSigner(address);
+  return f(owner);
+};
+
+/** A generalised mint/approve without accepting a generated trader. */
+export const mintAndApprove = async (bs: Bs, collateral: Collateral, amount: BigNumber, to: ethers.Signer) => {
+  const { systems, provider } = bs;
   const { PerpMarketProxy, SpotMarket } = systems();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
   const synth = collateral.contract;
   const synthOwnerAddress = await synth.owner();
 
-  await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
-  const synthOwner = provider().getSigner(synthOwnerAddress);
-  await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
+  return withImpersonate(bs, synthOwnerAddress, async (owner: Signer) => {
+    await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
+    const synthOwner = provider().getSigner(synthOwnerAddress);
+    await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
 
-  await synth.connect(synthOwner).mint(to.getAddress(), amount);
-  await synth.connect(to).approve(PerpMarketProxy.address, amount);
-  await synth.connect(to).approve(SpotMarket.address, amount);
+    await synth.connect(synthOwner).mint(to.getAddress(), amount);
+    await synth.connect(to).approve(PerpMarketProxy.address, amount);
+    await synth.connect(to).approve(SpotMarket.address, amount);
 
-  return synth;
+    return synth;
+  });
 };
 
 /** Provision margin for this trader given the full `gTrader` context. */
@@ -69,7 +77,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
 
 /** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
-  { systems, owner }: Bs,
+  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
   marketId: BigNumber,
   params: Partial<PerpMarketConfiguration.DataStruct>
 ) => {
@@ -81,7 +89,7 @@ export const setMarketConfigurationById = async (
 
 /** Generic update on global market data (similar to setMarketConfigurationById). */
 export const setMarketConfiguration = async (
-  { systems, owner }: Bs,
+  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
   params: Partial<PerpMarketConfiguration.GlobalDataStruct>
 ) => {
   const { PerpMarketProxy } = systems();
@@ -111,7 +119,7 @@ export const getPythPriceDataByMarketId = async (
 
 /** Returns a Pyth updateData blob with your specified feedId and price. */
 export const getPythPriceData = async (
-  { systems }: Bs,
+  { systems }: Pick<Bs, 'systems'>,
   price: number,
   priceFeedId: string,
   publishTime?: number,
@@ -159,7 +167,7 @@ export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketI
 
 /** Commits a generated `order` for `trader` on `marketId` */
 export const commitOrder = async (
-  { systems }: Bs,
+  { systems }: Pick<Bs, 'systems'>,
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>
@@ -182,7 +190,14 @@ export const commitAndSettle = async (
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>,
-  options?: { desiredKeeper?: ethers.Signer }
+  options?: {
+    desiredKeeper?: ethers.Signer;
+    // Why a function and not another desiredXXX primitive?
+    //
+    // Pyth data blob generation requires a publishTime. If we generate and pass a primitive _before_ invoking
+    // this function then the price would be too old and settlement would fail.
+    getPythData?: (publishTime: number) => ReturnType<typeof getPythPriceData>;
+  }
 ) => {
   const { systems, provider, keeper } = bs;
   const { PerpMarketProxy } = systems();
@@ -192,16 +207,24 @@ export const commitAndSettle = async (
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, provider());
 
-  const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+  const { updateData, updateFee } = options?.getPythData
+    ? await options.getPythData(publishTime)
+    : await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
   const settlementKeeper = options?.desiredKeeper ?? keeper();
 
-  const { tx, receipt } = await withExplicitEvmMine(
-    () =>
-      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
-        value: updateFee,
-      }),
-    provider()
-  );
+  // const { tx, receipt } = await withExplicitEvmMine(
+  //   () =>
+  //     PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
+  //       value: 1,
+  //     }),
+  //   provider()
+  // );
+  const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
+    value: updateFee.mul(2),
+  });
+  const receipt = await tx.wait();
+
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
