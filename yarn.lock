@@ -1253,9 +1253,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/router@portal:/Users/david/workspace/synthetix/synthetix-router::locator=bfp-market%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@synthetixio/router@portal:/Users/david/workspace/synthetix/synthetix-router::locator=bfp-market%40workspace%3A."
+"@synthetixio/router@npm:^3.1.4, @synthetixio/router@npm:^3.3.0":
+  version: 3.3.1
+  resolution: "@synthetixio/router@npm:3.3.1"
   dependencies:
     "@ethersproject/keccak256": ^5.7.0
     debug: ^4.3.4
@@ -1265,8 +1265,9 @@ __metadata:
     ethers: ^5.0.0
     hardhat: ^2.0.0
     solc: ^0.8.17
+  checksum: 16166bf5c4034085f893eb04b015de850b4a2ef92158f845443aea73fcaadeb564765b9a5fd431f66e3dfbd58589f7ca5a62dff06a13eb00e45175c06f95eb37
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@synthetixio/spot-market@npm:^3.3.6":
   version: 3.3.6
@@ -2036,7 +2037,7 @@ __metadata:
     "@synthetixio/core-utils": ^3.3.4
     "@synthetixio/main": ^3.3.6
     "@synthetixio/oracle-manager": ^3.3.6
-    "@synthetixio/router": "git+https://github.com/synthetixio/synthetix-router.git#7f9f819111ff76d76e6421177faaaf8f1368b14b"
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/spot-market": ^3.3.6
     "@synthetixio/v3-contracts": ^3.1.0
     "@synthetixio/wei": ^2.74.4

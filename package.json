@@ -54,10 +54,7 @@
     "@synthetixio/core-modules": "^3.3.6",
     "@synthetixio/main": "^3.3.6",
     "@synthetixio/oracle-manager": "^3.3.6",
+    "@synthetixio/router": "^3.3.1",
     "@synthetixio/spot-market": "^3.3.6"
-  },
-  "packageManager": "yarn@3.6.1",
-  "resolutions": {
-    "@synthetixio/router": "portal:/Users/david/workspace/synthetix/synthetix-router"
   }
 }
