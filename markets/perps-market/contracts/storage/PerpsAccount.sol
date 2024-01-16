@@ -253,6 +253,9 @@ library PerpsAccount {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             return amount;
         } else {
+            // TODO: check is this the best way to calculate the amount in USD, or should we use another method
+            // such as querying the oracle directly. Are fees included etc?
+            // Note: getTotalCollateralValue already used this approach before i modified the code
             (uint amountUsdAbs, ) = PerpsMarketFactory.load().spotMarket.quoteSellExactIn(
                 synthMarketId,
                 MathUtil.abs(amount),
@@ -270,6 +273,9 @@ library PerpsAccount {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             amountUsd = amount;
         } else {
+            // TODO: check is this the best way to calculate the amount in USD, or should we use another method
+            // such as querying the oracle directly. Are fees included etc?
+            // Note: getTotalCollateralValue already used this approach before i modified the code
             (amountUsd, ) = PerpsMarketFactory.load().spotMarket.quoteSellExactIn(
                 synthMarketId,
                 amount,
@@ -323,6 +329,7 @@ library PerpsAccount {
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
 
+            // TODO: should default price tolerance be used here? What does that even mean
             uint usdValue = convertAmountToUSD(openInterest, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
             totalAccountOpenInterest += usdValue;
         }
