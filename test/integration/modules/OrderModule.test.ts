@@ -26,6 +26,7 @@ import {
   getFastForwardTimestamp,
   getPythPriceData,
   getSusdCollateral,
+  getPythPriceDataByMarketId,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
@@ -486,7 +487,7 @@ describe('OrderModule', () => {
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -689,7 +690,7 @@ describe('OrderModule', () => {
       assertBn.equal((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta, order.sizeDelta);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -991,7 +992,7 @@ describe('OrderModule', () => {
         await commitOrder(bs, marketId, trader, order2);
 
         const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-        const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+        const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
         await fastForwardTo(settlementTime, provider());
 
         await assertRevert(
@@ -1042,7 +1043,7 @@ describe('OrderModule', () => {
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -1070,7 +1071,7 @@ describe('OrderModule', () => {
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -1098,7 +1099,7 @@ describe('OrderModule', () => {
       );
 
       const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       // Fast forward block.timestamp but make sure it's _just_ before readiness.
       const { minOrderAge } = await PerpMarketProxy.getMarketConfiguration();
@@ -1131,7 +1132,7 @@ describe('OrderModule', () => {
       );
 
       const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       // Fast forward block.timestamp but make sure it's at or after max age.
       const maxOrderAge = (await PerpMarketProxy.getMarketConfiguration()).maxOrderAge.toNumber();
@@ -1151,7 +1152,7 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId } = await depositMargin(bs, genTrader(bs));
       const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(
         PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
@@ -1184,7 +1185,7 @@ describe('OrderModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -1271,7 +1272,7 @@ describe('OrderModule', () => {
         otherTrader
       );
       await fastForwardTo(otherSettlementTime, provider());
-      const { updateData: otherUpdateData, updateFee: otherUpdateFee } = await getPythPriceData(
+      const { updateData: otherUpdateData, updateFee: otherUpdateFee } = await getPythPriceDataByMarketId(
         bs,
         marketId,
         otherPublishTime
@@ -1288,7 +1289,7 @@ describe('OrderModule', () => {
       // because the skew has changed, leading to an entry price that would be immediately eligible for liquidation.
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, mainTrader);
       await fastForwardTo(settlementTime, provider());
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(
         PerpMarketProxy.connect(keeper()).settleOrder(mainTrader.accountId, marketId, updateData, {
@@ -1332,8 +1333,9 @@ describe('OrderModule', () => {
         ]).toFixed(3)
       );
 
+      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, pythPrice);
+      const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, priceFeedId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -1378,15 +1380,15 @@ describe('OrderModule', () => {
         const updatePriceReflectVariant = async () => {
           switch (variant) {
             case ZeroPriceVariant.PYTH:
-              return getPythPriceData(bs, marketId, publishTime, 0);
+              return getPythPriceDataByMarketId(bs, marketId, publishTime, 0);
             case ZeroPriceVariant.CL: {
               const oraclePrice = wei(order.oraclePrice).toNumber();
               await market.aggregator().mockSetCurrentPrice(bn(0));
-              return getPythPriceData(bs, marketId, publishTime, oraclePrice);
+              return getPythPriceDataByMarketId(bs, marketId, publishTime, oraclePrice);
             }
             case ZeroPriceVariant.BOTH: {
               await market.aggregator().mockSetCurrentPrice(bn(0));
-              return getPythPriceData(bs, marketId, publishTime, 0);
+              return getPythPriceDataByMarketId(bs, marketId, publishTime, 0);
             }
           }
         };

@@ -25,13 +25,17 @@ describe.only('PythWstEthNode', () => {
     });
 
     it.only('should compute an accurate wstETH price', async () => {
-      const { OracleManager, WstETHMock, StEthToEthMock, PythMock } = systems();
+      const { PerpMarketProxy, OracleManager, WstETHMock, StEthToEthMock, PythMock } = systems();
       const { pythWstEthNodeId } = extras();
 
-      const market = genOneOf(markets());
+      const market = markets()[1]; // ETHPERP.
+      const marketId = market.marketId();
 
-      await WstETHMock.mockSetWstEthToStEthRatio(bn(1.15326952));
-      await StEthToEthMock.mockSetCurrentPrice(bn(0.99));
+      const wstEthToEth = bn(1.15326952);
+      const stEthToETh = bn(0.99);
+
+      await WstETHMock.mockSetWstEthToStEthRatio(wstEthToEth);
+      await StEthToEthMock.mockSetCurrentPrice(stEthToETh);
 
       // Perform a ETH price update (Pyth)
       // Perform a stETH<>wstETH exchange rate update (Lido)
@@ -45,19 +49,14 @@ describe.only('PythWstEthNode', () => {
       //
       // Then, 2000 / 0.99 / 0.8 = 2525.25252525 (per wstETH)
 
-      // FIXME: Super crude way to test this with data shared between cannonfile and fixtures.ts
       const ethPrice = 2586;
-      const { updateData, updateFee } = await getPythPriceData(
-        bs,
-        market.marketId(),
-        undefined,
-        ethPrice,
-        '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43'
-      );
+      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
+
+      const { updateData, updateFee } = await getPythPriceData(bs, ethPrice, priceFeedId);
       await PythMock.updatePriceFeeds([updateData], { value: updateFee });
 
       const { price } = await OracleManager.process(pythWstEthNodeId);
-      const expectedPrice = wei(ethPrice).mul(bn(0.99)).mul(1.15326952).toBN();
+      const expectedPrice = wei(ethPrice).mul(stEthToETh).mul(wstEthToEth).toBN();
 
       assertBn.near(price, expectedPrice, bn(0.000001));
     });

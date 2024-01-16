@@ -4,7 +4,7 @@ import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurati
 import { genNumber, raise } from './generators';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { isNil, uniq } from 'lodash';
+import { uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
@@ -91,29 +91,34 @@ export const setMarketConfiguration = async (
 };
 
 /** Returns a Pyth updateData blob and the update fee in wei. */
-export const getPythPriceData = async (
-  { systems }: Bs,
+export const getPythPriceDataByMarketId = async (
+  bs: Bs,
   marketId: BigNumber,
   publishTime?: number,
-  price?: number,
-  priceFeedId?: string,
   priceExpo = 6,
   priceConfidence = 1
 ) => {
-  const { PythMock, PerpMarketProxy } = systems();
+  const { PerpMarketProxy } = bs.systems();
 
   // Default price to the current market oraclePrice.
-  if (isNil(price)) {
-    price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
-  }
+  const price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
 
   // Use the pythPriceFeedId from the market if priceFeedId not provided.
-  //
-  // TODO: Consider renaming this fn to getPythPriceDataByMarket and another that's market agnostic.
-  if (!priceFeedId) {
-    priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
-  }
+  const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
 
+  return getPythPriceData(bs, price, priceFeedId, publishTime, priceExpo, priceConfidence);
+};
+
+/** Returns a Pyth updateData blob with your specified feedId and price. */
+export const getPythPriceData = async (
+  { systems }: Bs,
+  price: number,
+  priceFeedId: string,
+  publishTime?: number,
+  priceExpo = 6,
+  priceConfidence = 1
+) => {
+  const { PythMock } = systems();
   const pythPrice = wei(price, priceExpo).toBN();
   const updateData = await PythMock.createPriceFeedUpdateData(
     priceFeedId,
@@ -187,7 +192,7 @@ export const commitAndSettle = async (
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, provider());
 
-  const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+  const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
   const settlementKeeper = options?.desiredKeeper ?? keeper();
 
   const { tx, receipt } = await withExplicitEvmMine(
