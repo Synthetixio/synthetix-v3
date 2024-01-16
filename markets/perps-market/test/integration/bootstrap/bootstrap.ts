@@ -113,6 +113,17 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
+  before('set quanto markets', async () => {
+    for (const { requestedMarketId, quantoSynthMarketIndex } of data.perpsMarkets) {
+      if (typeof(quantoSynthMarketIndex) == 'number') {
+        const synthMarketId = synthMarkets()[quantoSynthMarketIndex].marketId();
+        await systems()
+        .PerpsMarket.connect(owner())
+        .setQuantoSynthMarket(requestedMarketId, synthMarketId);
+      }
+    }
+  });
+
   const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId, staker } =
     chainStateWithPerpsMarkets;
   const { trader1, trader2, trader3, keeper } = bootstrapTraders({

@@ -18,6 +18,7 @@ describe('Quanto', () => {
   const withdrawAmount = wei(0.1);
   const ETH_PRICE = wei(2_000);
 
+  // TODO: make this a quanto market or remove these tests
   const { systems, owner, synthMarkets, provider, superMarketId, trader1, trader2 } =
     bootstrapMarkets({
       synthMarkets: [
@@ -138,6 +139,7 @@ describe('Quanto', () => {
         settlementStrategy: {
           settlementReward: bn(0),
         },
+        quantoSynthMarketIndex: 0,
       },
     ];
 
@@ -163,13 +165,6 @@ describe('Quanto', () => {
       },
 
       traderAccountIds,
-    });
-    before('set quanto synth market id', async () => {
-      const ethSpotMarketId = synthMarkets()[0].marketId();
-      const btcPerpsMarketId = perpsMarkets()[0].marketId();
-      await systems()
-        .PerpsMarket.connect(owner())
-        .setQuantoSynthMarket(btcPerpsMarketId, ethSpotMarketId);
     });
     before('trader1 buys 10 snxETH', async () => {
       const ethSpotMarketId = synthMarkets()[0].marketId();

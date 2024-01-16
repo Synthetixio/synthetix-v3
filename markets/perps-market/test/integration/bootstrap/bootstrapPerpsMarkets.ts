@@ -50,6 +50,7 @@ export type PerpsMarketData = Array<{
     settlementReward: ethers.BigNumber;
     disabled: boolean;
   }>;
+  quantoSynthMarketIndex?: number;
 }>;
 
 type IncomingChainState =
