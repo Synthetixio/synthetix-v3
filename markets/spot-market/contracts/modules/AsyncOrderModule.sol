@@ -19,6 +19,7 @@ import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
+    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
@@ -57,11 +58,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountEscrowed = amountProvided;
         } else if (orderType == Transaction.Type.ASYNC_SELL) {
             // Get the dollar value of the provided synths
-            uint256 usdAmount = Price.synthUsdExchangeRate(
+            uint256 currentPrice = Price.getCurrentPrice(
                 marketId,
-                amountProvided,
-                Transaction.Type.ASYNC_SELL
+                Transaction.Type.ASYNC_SELL,
+                Price.Tolerance.STRICT
             );
+            uint256 usdAmount = amountProvided.mulDecimal(currentPrice);
 
             // ensures that the amount provided is greater than the settlement reward + minimum sell amount
             strategy.validateAmount(usdAmount);
@@ -74,17 +76,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        uint256 settlementDelay = AsyncOrderConfiguration
-            .load(marketId)
-            .settlementStrategies[settlementStrategyId]
-            .settlementDelay;
-
         asyncOrderClaim = AsyncOrderClaim.create(
             marketId,
             orderType,
             amountEscrowed,
             settlementStrategyId,
-            block.timestamp + settlementDelay,
             minimumSettlementAmount,
             ERC2771Context._msgSender(),
             referrer

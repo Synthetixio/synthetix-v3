@@ -345,6 +345,15 @@ describe('IssueUSDModule', function () {
           systems().Core
         );
       });
+      it('no event emitted when fee address is 0', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('mintUsd_feeAddress'),
+            ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+          );
+        await assertEvent(tx, `IssuanceFeePaid`, systems().Core, true);
+      });
     });
   });
 
@@ -532,6 +541,16 @@ describe('IssueUSDModule', function () {
           )})`,
           systems().Core
         );
+      });
+
+      it('no event emitted when fee address is 0', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeAddress'),
+            ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+          );
+        await assertEvent(tx, `IssuanceFeePaid`, systems().Core, true);
       });
     });
   });

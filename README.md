@@ -70,11 +70,47 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 ### Preparing a Release
 
-- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
-- After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
-- Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
-- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
-  - If you aren't using [Frame](https://frame.sh/), prepend `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the commands above.
-  - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
-- In all the package.json files, revert dependencies' version changes back to `"workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+#### Setup Cannon
+
+- Run `yarn upgrade-interactive` and make sure that `@usecannon/cli` and `hardhat-cannon` and updated to the latest versions.
+- After installing for the first time, run `yarn cannon:setup` to configure a reliable IPFS URL for publishing packages and any other preferred settings.
+
+#### Setup npm
+
+- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file or prepend `NPM_TOKEN=_` to the command used for publishing below.
+
+#### Publish Dev Release
+
+- Confirm you are on the development branch you’d like to release and that there are no git changes `git diff --exit-code .`
+- If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
+- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)
+- For each publishable package cannon will ask if you want to publish given package with version and tag. The question may not appear on screen, and you will observe npm just hanging and waiting for something. Press `y` and lerna publishing will continue. This situation will repeat for EACH package (13 times for now).
+- When packages are built and published to cannon, lerna will ask for the OTP code to publish npm packages. Supply it with your OTP (make sure your account has access to publish `@synthetixio` packages)
+- After successful publish, there should be no diff in git. But if there is a diff - make sure you reset any changes, fix publishing issues and re-publish again. Double-check all the package.json files, revert dependencies' version changes back to `"workspaces:*"`.
+
+#### Publish Official Release
+
+**Each step is necessary, do not skip any steps.**
+
+- Confirm you are on the `release` branch and that there are no git changes `git diff --exit-code .`
+  ```sh
+  git fetch --all
+  git checkout release
+  git pull
+  git diff --exit-code .
+  ```
+- Merge any changes from `main` to the `release` branch. It is essential that `release` branch has merge commits from `main` and not squashed updates or anything. Please do **NOT** use GitHub UI for this to avoid squashing.
+  ```sh
+  git merge origin/main
+  ```
+- In case of any conflicts - resolve them and push to upstream. It is essential that `release` branch is pushed to the upstream
+  ```sh
+  git push
+  ```
+- If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
+- Publish the release with `yarn publish:release`
+- For each publishable package cannon will ask if you want to publish given package with version and tag. The question may not appear on screen, and you will observe npm just hanging and waiting for something. Press `y` and lerna publishing will continue. This situation will repeat for EACH package (13 times for now).
+- When packages are built and published to cannon, lerna will ask for the OTP code to publish npm packages. Supply it with your OTP (make sure your account has access to publish `@synthetixio` packages)
+- After successful publish, there should be no diff in git. But if there is a diff - make sure you reset any changes, fix publishing issues and re-publish again. Double-check all the package.json files, revert dependencies' version changes back to `"workspaces:*"`.
+
+_In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately._

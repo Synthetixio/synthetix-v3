@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IAsyncOrderSettlementPythModule} from "../interfaces/IAsyncOrderSettlementPythModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
-import {OffchainUtil} from "../utils/OffchainUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
@@ -15,6 +16,9 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
+import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for settling async orders using pyth as price feed.
@@ -25,6 +29,8 @@ contract AsyncOrderSettlementPythModule is
     IMarketEvents,
     IAccountEvents
 {
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -32,18 +38,26 @@ contract AsyncOrderSettlementPythModule is
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using Position for Position.Data;
+    using KeeperCosts for KeeperCosts.Data;
 
     /**
      * @inheritdoc IAsyncOrderSettlementPythModule
      */
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
-        (
-            uint256 offchainPrice,
-            AsyncOrder.Data storage order,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = OffchainUtil.parsePythPrice(result, extraData);
+    function settleOrder(uint128 accountId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
 
-        _settleOrder(offchainPrice, order, settlementStrategy);
+        (
+            AsyncOrder.Data storage asyncOrder,
+            SettlementStrategy.Data storage settlementStrategy
+        ) = AsyncOrder.loadValid(accountId);
+
+        int256 offchainPrice = IPythERC7412Wrapper(settlementStrategy.priceVerificationContract)
+            .getBenchmarkPrice(
+                settlementStrategy.feedId,
+                (asyncOrder.commitmentTime + settlementStrategy.commitmentPriceDelay).to64()
+            );
+
+        _settleOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
     }
 
     /**
@@ -64,16 +78,16 @@ contract AsyncOrderSettlementPythModule is
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
 
-        runtime.amountToDeduct += runtime.totalFees;
-
-        runtime.newPositionSize = runtime.newPosition.size;
+        runtime.amountToDeduct = runtime.totalFees;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
-        (runtime.pnl, , runtime.accruedFunding, , ) = oldPosition.getPnl(runtime.fillPrice);
+        (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
+            runtime.fillPrice
+        );
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
@@ -87,7 +101,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.accountId,
             runtime.newPosition
         );
-        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
+        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPosition.size);
 
         emit MarketUpdated(
             runtime.updateData.marketId,
@@ -96,25 +110,33 @@ contract AsyncOrderSettlementPythModule is
             runtime.updateData.size,
             runtime.sizeDelta,
             runtime.updateData.currentFundingRate,
-            runtime.updateData.currentFundingVelocity
+            runtime.updateData.currentFundingVelocity,
+            runtime.updateData.interestRate
         );
 
-        // since margin is deposited, as long as the owed collateral is deducted
-        // fees are realized by the stakers
+        // since margin is deposited when trader deposits, as long as the owed collateral is deducted
+        // from internal accounting, fees are automatically realized by the stakers
         if (runtime.amountToDeduct > 0) {
-            (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) = perpsAccount
-                .deductFromAccount(runtime.amountToDeduct);
-            for (uint256 i = 0; i < deductedSynthIds.length; i++) {
-                if (deductedAmount[i] > 0) {
+            (runtime.deductedSynthIds, runtime.deductedAmount) = perpsAccount.deductFromAccount(
+                runtime.amountToDeduct
+            );
+            for (
+                runtime.synthDeductionIterator = 0;
+                runtime.synthDeductionIterator < runtime.deductedSynthIds.length;
+                runtime.synthDeductionIterator++
+            ) {
+                if (runtime.deductedAmount[runtime.synthDeductionIterator] > 0) {
                     emit CollateralDeducted(
                         runtime.accountId,
-                        deductedSynthIds[i],
-                        deductedAmount[i]
+                        runtime.deductedSynthIds[runtime.synthDeductionIterator],
+                        runtime.deductedAmount[runtime.synthDeductionIterator]
                     );
                 }
             }
         }
-        runtime.settlementReward = settlementStrategy.settlementReward;
+        runtime.settlementReward =
+            settlementStrategy.settlementReward +
+            KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId);
 
         if (runtime.settlementReward > 0) {
             // pay keeper
@@ -132,6 +154,9 @@ contract AsyncOrderSettlementPythModule is
         // trader can now commit a new order
         asyncOrder.reset();
 
+        // Note: new event for this due to stack too deep adding it to OrderSettled event
+        emit InterestCharged(runtime.accountId, runtime.chargedInterest);
+
         // emit event
         emit OrderSettled(
             runtime.marketId,
@@ -140,7 +165,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.pnl,
             runtime.accruedFunding,
             runtime.sizeDelta,
-            runtime.newPositionSize,
+            runtime.newPosition.size,
             runtime.totalFees,
             runtime.referralFees,
             runtime.feeCollectorFees,

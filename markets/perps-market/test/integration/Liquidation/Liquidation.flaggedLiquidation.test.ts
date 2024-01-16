@@ -6,12 +6,14 @@ import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 
-describe('Liquidation - flaggedLiquidation', async () => {
+describe('Liquidation - flaggedLiquidation', () => {
   const { systems, provider, trader1, trader2, trader3, keeper, owner, perpsMarkets } =
     bootstrapMarkets({
       liquidationGuards: {
         minLiquidationReward: bn(5),
+        minKeeperProfitRatioD18: bn(0),
         maxLiquidationReward: bn(1000),
+        maxKeeperScalingRatioD18: bn(0),
       },
       synthMarkets: [],
       perpsMarkets: [

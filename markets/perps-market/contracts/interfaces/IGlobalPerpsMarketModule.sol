@@ -6,11 +6,18 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IGlobalPerpsMarketModule {
     /**
+     * @notice Gets fired when the interest rate is updated.
+     * @param superMarketId global super market id
+     * @param interestRate new computed interest rate
+     */
+    event InterestRateUpdated(uint128 indexed superMarketId, uint128 interestRate);
+
+    /**
      * @notice Gets fired when max collateral amount for synth for all the markets is set by owner.
      * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount max amount that was set for the synth
+     * @param maxCollateralAmount max amount that was set for the synth
      */
-    event MaxCollateralAmountSet(uint128 indexed synthMarketId, uint256 collateralAmount);
+    event CollateralConfigurationSet(uint128 indexed synthMarketId, uint256 maxCollateralAmount);
 
     /**
      * @notice Gets fired when the synth deduction priority is updated by owner.
@@ -19,13 +26,17 @@ interface IGlobalPerpsMarketModule {
     event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
 
     /**
-     * @notice Gets fired when liquidation reward guard is set or updated.
-     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @notice Gets fired when keeper reward guard is set or updated.
+     * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @param maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    event LiquidationRewardGuardsSet(
-        uint256 indexed minLiquidationRewardUsd,
-        uint256 indexed maxLiquidationRewardUsd
+    event KeeperRewardGuardsSet(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     );
 
     /**
@@ -42,11 +53,29 @@ interface IGlobalPerpsMarketModule {
     event ReferrerShareUpdated(address referrer, uint256 shareRatioD18);
 
     /**
+     * @notice Emitted when interest rate parameters are set
+     * @param lowUtilizationInterestRateGradient interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+     * @param interestRateGradientBreakpoint breakpoint at which the interest rate gradient changes from low to high
+     * @param highUtilizationInterestRateGradient interest rate gradient applied to utilization after hitting the gradient breakpoint
+     */
+    event InterestRateParametersSet(
+        uint256 lowUtilizationInterestRateGradient,
+        uint256 interestRateGradientBreakpoint,
+        uint256 highUtilizationInterestRateGradient
+    );
+
+    /**
      * @notice Gets fired when the max number of Positions and Collaterals per Account are set by owner.
      * @param maxPositionsPerAccount The max number of concurrent Positions per Account
      * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
      */
     event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
+
+    /**
+     * @notice Gets fired when feed id for keeper cost node id is updated.
+     * @param keeperCostNodeId oracle node id
+     */
+    event KeeperCostNodeIdUpdated(bytes32 keeperCostNodeId);
 
     /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
@@ -59,18 +88,37 @@ interface IGlobalPerpsMarketModule {
     error InvalidReferrerShareRatio(uint256 shareRatioD18);
 
     /**
+     * @notice Thrown when gradient breakpoint is lower than low gradient or higher than high gradient
+     */
+    error InvalidInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 highUtilizationInterestRateGradient
+    );
+
+    /**
      * @notice Sets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount Max collateral amount to set for the synth market id.
+     * @param maxCollateralAmount Max collateral amount to set for the synth market id.
      */
-    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
+    function setCollateralConfiguration(uint128 synthMarketId, uint maxCollateralAmount) external;
 
     /**
      * @notice Gets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @return maxCollateralAmount max collateral amount of the specified synth market id
      */
-    function getMaxCollateralAmount(uint128 synthMarketId) external view returns (uint);
+    function getCollateralConfiguration(
+        uint128 synthMarketId
+    ) external view returns (uint256 maxCollateralAmount);
+
+    /**
+     * @notice Gets the list of supported collaterals.
+     * @return supportedCollaterals list of supported collateral ids. By supported collateral we mean a collateral which max is greater than zero
+     */
+    function getSupportedCollaterals()
+        external
+        view
+        returns (uint256[] memory supportedCollaterals);
 
     /**
      * @notice Sets the synth deduction priority ordered list.
@@ -87,24 +135,35 @@ interface IGlobalPerpsMarketModule {
     function getSynthDeductionPriority() external view returns (uint128[] memory);
 
     /**
-     * @notice Sets the liquidation reward guard (min and max).
-     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @notice Sets the keeper reward guard (min and max).
+     * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @param maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    function setLiquidationRewardGuards(
-        uint256 minLiquidationRewardUsd,
-        uint256 maxLiquidationRewardUsd
+    function setKeeperRewardGuards(
+        uint256 minKeeperRewardUsd,
+        uint256 minKeeperProfitRatioD18,
+        uint256 maxKeeperRewardUsd,
+        uint256 maxKeeperScalingRatioD18
     ) external;
 
     /**
-     * @notice Gets the liquidation reward guard (min and max).
-     * @return minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
-     * @return maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     * @notice Gets the keeper reward guard (min and max).
+     * @return minKeeperRewardUsd Minimum keeper reward expressed as USD value.
+     * @return minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
+     * @return maxKeeperRewardUsd Maximum keeper reward expressed as USD value.
+     * @return maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
-    function getLiquidationRewardGuards()
+    function getKeeperRewardGuards()
         external
         view
-        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd);
+        returns (
+            uint256 minKeeperRewardUsd,
+            uint256 minKeeperProfitRatioD18,
+            uint256 maxKeeperRewardUsd,
+            uint maxKeeperScalingRatioD18
+        );
 
     /**
      * @notice Gets the total collateral value of all deposited collateral from all traders.
@@ -159,8 +218,56 @@ interface IGlobalPerpsMarketModule {
     function getReferrerShare(address referrer) external view returns (uint256 shareRatioD18);
 
     /**
+     * @notice Set node id for keeper cost
+     * @param keeperCostNodeId the node id
+     */
+    function updateKeeperCostNodeId(bytes32 keeperCostNodeId) external;
+
+    /**
+     * @notice Get the node id for keeper cost
+     * @return keeperCostNodeId the node id
+     */
+    function getKeeperCostNodeId() external view returns (bytes32 keeperCostNodeId);
+
+    /**
      * @notice get all existing market ids
      * @return marketIds an array of existing market ids
      */
     function getMarkets() external view returns (uint256[] memory marketIds);
+
+    /**
+     * @notice Sets the interest rate parameters
+     * @param lowUtilizationInterestRateGradient interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+     * @param interestRateGradientBreakpoint breakpoint at which the interest rate gradient changes from low to high
+     * @param highUtilizationInterestRateGradient interest rate gradient applied to utilization after hitting the gradient breakpoint
+     */
+    function setInterestRateParameters(
+        uint128 lowUtilizationInterestRateGradient,
+        uint128 interestRateGradientBreakpoint,
+        uint128 highUtilizationInterestRateGradient
+    ) external;
+
+    /**
+     * @notice Gets the interest rate parameters
+     * @return lowUtilizationInterestRateGradient
+     * @return interestRateGradientBreakpoint
+     * @return highUtilizationInterestRateGradient
+     */
+    function getInterestRateParameters()
+        external
+        view
+        returns (
+            uint128 lowUtilizationInterestRateGradient,
+            uint128 interestRateGradientBreakpoint,
+            uint128 highUtilizationInterestRateGradient
+        );
+
+    /**
+     * @notice Update the market interest rate based on current utilization of the super market against backing collateral
+     * @dev this is a convenience method to manually update interest rate if too much time has passed
+     *      since last update.
+     * @dev interest rate gets automatically updated when a trade is made or when a position is liquidated
+     * @dev InterestRateUpdated event is emitted
+     */
+    function updateInterestRate() external;
 }

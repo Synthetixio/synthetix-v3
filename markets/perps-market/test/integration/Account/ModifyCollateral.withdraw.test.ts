@@ -38,13 +38,13 @@ describe('ModifyCollateral Withdraw', () => {
 
   const restoreToSetup = snapshotCheckpoint(provider);
 
-  describe('withdraw without open position modifyCollateral() from another account', async () => {
+  describe('withdraw without open position modifyCollateral() from another account', () => {
     before(restoreToSetup);
 
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(synthBTCMarketId, ethers.constants.MaxUint256);
     });
 
     before('trader1 buys 1 snxBTC', async () => {
@@ -88,7 +88,7 @@ describe('ModifyCollateral Withdraw', () => {
     });
   });
 
-  describe('withdraw without open position modifyCollateral()', async () => {
+  describe('withdraw without open position modifyCollateral()', () => {
     let spotBalanceBefore: ethers.BigNumber;
     let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
 
@@ -97,7 +97,7 @@ describe('ModifyCollateral Withdraw', () => {
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(synthBTCMarketId, ethers.constants.MaxUint256);
     });
 
     before('trader1 buys 1 snxBTC', async () => {
@@ -166,6 +166,7 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
   });
+
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
@@ -222,6 +223,13 @@ describe('ModifyCollateral Withdraw', () => {
     const { systems, provider, trader1, perpsMarkets, synthMarkets } = bootstrapMarkets({
       synthMarkets: spotMarketConfig,
       perpsMarkets: perpsMarketConfigs,
+      liquidationGuards: {
+        minLiquidationReward: bn(0),
+        minKeeperProfitRatioD18: bn(0),
+        maxLiquidationReward: bn(10_000),
+        maxKeeperScalingRatioD18: bn(1),
+      },
+
       traderAccountIds,
     });
     before('add some snx collateral to margin', async () => {
@@ -279,7 +287,7 @@ describe('ModifyCollateral Withdraw', () => {
         });
       }
     });
-    describe('account check after initial positions open', async () => {
+    describe('account check after initial positions open', () => {
       it('should have correct open interest', async () => {
         const expectedOi = 100_000; // abs((-2 * 30000) + (20 * 2000))
         assertBn.equal(

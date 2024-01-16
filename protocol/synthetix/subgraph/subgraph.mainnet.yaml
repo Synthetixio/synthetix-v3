@@ -16,7 +16,7 @@ dataSources:
       file: ./mainnet/index.ts
       abis:
         - name: CoreProxy
-          file: ./mainnet/deployments/CoreProxy.json
+          file: ./mainnet/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule

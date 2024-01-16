@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
-describe('MarketConfiguration', async () => {
+describe('MarketConfiguration', () => {
   const { systems, signers, owner } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [],
@@ -21,17 +21,26 @@ describe('MarketConfiguration', async () => {
     orderFees: { makerFee: 0, takerFee: 1 },
     settlementStrategy: {
       strategyType: 0,
+      commitmentPriceDelay: 0,
       settlementDelay: 500,
-      settlementWindowDuration: 100,
-      priceWindowDuration: 90,
+      settlementWindowDuration: 5000,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
-      url: 'url',
       settlementReward: 100,
       disabled: true,
     },
-
-    maxMarketValue: bn(10_000),
+    newSettlementStrategy: {
+      strategyType: 0,
+      commitmentPriceDelay: 10,
+      settlementDelay: 1000,
+      settlementWindowDuration: 10000,
+      priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+      feedId: utils.formatBytes32String('feedId'),
+      settlementReward: 200,
+      disabled: true,
+    },
+    maxMarketSize: bn(10_000),
+    maxMarketValue: bn(10_000_000),
     maxFundingVelocity: bn(0.3),
     skewScale: bn(1),
     initialMarginFraction: bn(2),
@@ -40,7 +49,7 @@ describe('MarketConfiguration', async () => {
     lockedOiPercentRatioD18: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     minimumPositionMargin: bn(50),
-    liquidationRewardRatioD18: bn(10e9),
+    flagRewardRatioD18: bn(10e9),
     maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
     maxLiquidationPd: bn(0),
   };
@@ -54,49 +63,175 @@ describe('MarketConfiguration', async () => {
     await systems().PerpsMarket.createMarket(marketId, fixture.marketName, fixture.token);
   });
 
-  it('owner can set settlement strategy and events are emitted', async () => {
-    await assertEvent(
-      await systems()
-        .PerpsMarket.connect(owner())
-        .addSettlementStrategy(marketId, fixture.settlementStrategy),
-      'SettlementStrategyAdded(' +
-        marketId.toString() +
-        ', [' +
-        fixture.settlementStrategy.strategyType.toString() +
-        ', ' +
-        fixture.settlementStrategy.settlementDelay.toString() +
-        ', ' +
-        fixture.settlementStrategy.settlementWindowDuration.toString() +
-        ', ' +
-        fixture.settlementStrategy.priceWindowDuration.toString() +
-        ', "' +
-        fixture.settlementStrategy.priceVerificationContract.toString() +
-        '", "' +
-        fixture.settlementStrategy.feedId.toString() +
-        '", "' +
-        fixture.settlementStrategy.url.toString() +
-        '", ' +
-        fixture.settlementStrategy.settlementReward.toString() +
-        ', ' +
-        fixture.settlementStrategy.disabled.toString() +
-        '], 0)',
-      systems().PerpsMarket
-    );
-  });
-  it('owner can enable settlement strategy and events are emitted', async () => {
-    await assertEvent(
-      await systems()
-        .PerpsMarket.connect(owner())
-        .setSettlementStrategyEnabled(marketId, 0, fixture.settlementStrategy.disabled),
-      'SettlementStrategyEnabled(' +
-        marketId.toString() +
-        ', ' +
-        0 +
-        ', ' +
-        String(fixture.settlementStrategy.disabled) +
-        ')',
-      systems().PerpsMarket
-    );
+  describe('settlement strategy', () => {
+    describe('adding strategy', () => {
+      it('fails using non-owner', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(randomUser)
+            .addSettlementStrategy(marketId, fixture.settlementStrategy),
+          `Unauthorized`
+        );
+      });
+
+      it('emits event on success', async () => {
+        await assertEvent(
+          await systems()
+            .PerpsMarket.connect(owner())
+            .addSettlementStrategy(marketId, fixture.settlementStrategy),
+          'SettlementStrategyAdded(' +
+            marketId.toString() +
+            ', [' +
+            fixture.settlementStrategy.strategyType.toString() +
+            ', ' +
+            fixture.settlementStrategy.settlementDelay.toString() +
+            ', ' +
+            fixture.settlementStrategy.settlementWindowDuration.toString() +
+            ', "' +
+            fixture.settlementStrategy.priceVerificationContract.toString() +
+            '", "' +
+            fixture.settlementStrategy.feedId.toString() +
+            '", ' +
+            fixture.settlementStrategy.settlementReward.toString() +
+            ', ' +
+            fixture.settlementStrategy.disabled.toString() +
+            ', ' +
+            fixture.settlementStrategy.commitmentPriceDelay.toString() +
+            '], 0)',
+          systems().PerpsMarket
+        );
+      });
+    });
+
+    describe('updating strategy', () => {
+      describe('when not owner', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(randomUser)
+              .setSettlementStrategyEnabled(marketId, 0, true),
+            `Unauthorized`
+          );
+
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(randomUser)
+              .setSettlementStrategy(marketId, 0, fixture.settlementStrategy),
+            `Unauthorized`
+          );
+        });
+      });
+
+      describe('when strategy doesnt exist', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            systems().PerpsMarket.connect(owner()).setSettlementStrategyEnabled(marketId, 1, true),
+            `InvalidSettlementStrategy`
+          );
+
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(owner())
+              .setSettlementStrategy(marketId, 1, fixture.settlementStrategy),
+            `InvalidSettlementStrategy`
+          );
+        });
+      });
+
+      it('owner can enable settlement strategy and events are emitted', async () => {
+        await assertEvent(
+          await systems()
+            .PerpsMarket.connect(owner())
+            .setSettlementStrategyEnabled(marketId, 0, fixture.settlementStrategy.disabled),
+          `SettlementStrategySet(${marketId}, 0`,
+          systems().PerpsMarket
+        );
+      });
+
+      it('owner can update settlement strategy and events are emitted', async () => {
+        const txn = await systems()
+          .PerpsMarket.connect(owner())
+          .setSettlementStrategy(marketId, 0, fixture.newSettlementStrategy);
+
+        await assertEvent(
+          txn,
+          'SettlementStrategySet(' +
+            marketId.toString() +
+            ', 0, [' +
+            fixture.newSettlementStrategy.strategyType.toString() +
+            ', ' +
+            fixture.newSettlementStrategy.settlementDelay.toString() +
+            ', ' +
+            fixture.newSettlementStrategy.settlementWindowDuration.toString() +
+            ', "' +
+            fixture.newSettlementStrategy.priceVerificationContract.toString() +
+            '", "' +
+            fixture.newSettlementStrategy.feedId.toString() +
+            '", ' +
+            fixture.newSettlementStrategy.settlementReward.toString() +
+            ', ' +
+            fixture.newSettlementStrategy.disabled.toString() +
+            ', ' +
+            fixture.newSettlementStrategy.commitmentPriceDelay.toString() +
+            '])',
+          systems().PerpsMarket
+        );
+      });
+    });
+
+    describe('getter', () => {
+      it('gets settlementStrategy', async () => {
+        const settlementStrategy = await systems().PerpsMarket.getSettlementStrategy(marketId, 0);
+        assertBn.equal(
+          settlementStrategy.settlementDelay,
+          fixture.newSettlementStrategy.settlementDelay
+        );
+        assertBn.equal(
+          settlementStrategy.settlementWindowDuration,
+          fixture.newSettlementStrategy.settlementWindowDuration
+        );
+        assertBn.equal(
+          settlementStrategy.settlementReward,
+          fixture.newSettlementStrategy.settlementReward
+        );
+        assert.equal(settlementStrategy.disabled, fixture.newSettlementStrategy.disabled);
+        assert.equal(settlementStrategy.feedId, fixture.newSettlementStrategy.feedId);
+        assert.equal(
+          settlementStrategy.priceVerificationContract,
+          fixture.newSettlementStrategy.priceVerificationContract
+        );
+      });
+    });
+
+    describe('delay', () => {
+      it('if settlement strategy settlement delay is set to zero, defaults to 1', async () => {
+        const settlementStrategy = {
+          ...fixture.settlementStrategy,
+          settlementDelay: 0,
+        };
+        await systems()
+          .PerpsMarket.connect(owner())
+          .addSettlementStrategy(marketId, settlementStrategy),
+          'SettlementStrategyAdded(' +
+            marketId.toString() +
+            ', [' +
+            settlementStrategy.strategyType.toString() +
+            ', ' +
+            settlementStrategy.settlementDelay.toString() +
+            ', ' +
+            bn(1).toString() +
+            ', "' +
+            settlementStrategy.priceVerificationContract.toString() +
+            '", "' +
+            settlementStrategy.feedId.toString() +
+            '", ' +
+            settlementStrategy.settlementReward.toString() +
+            ', ' +
+            settlementStrategy.disabled.toString() +
+            '], 0)',
+          systems().PerpsMarket;
+      });
+    });
   });
 
   it('owner can set order fees and events are emitted', async () => {
@@ -118,8 +253,14 @@ describe('MarketConfiguration', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxMarketSize(marketId, fixture.maxMarketValue),
-      'MaxMarketSizeSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
+        .setMaxMarketSizes(marketId, fixture.maxMarketSize, fixture.maxMarketValue),
+      'MaxMarketSizesSet(' +
+        marketId.toString() +
+        ', ' +
+        fixture.maxMarketSize.toString() +
+        ', ' +
+        fixture.maxMarketValue.toString() +
+        ')',
       systems().PerpsMarket
     );
   });
@@ -149,10 +290,10 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.minimumInitialMarginRatio,
           fixture.maintenanceMarginScalar,
-          fixture.liquidationRewardRatioD18,
+          fixture.flagRewardRatioD18,
           fixture.minimumPositionMargin
         ),
-      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.minimumPositionMargin.toString()})`,
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.flagRewardRatioD18.toString()}, ${fixture.minimumPositionMargin.toString()})`,
       systems().PerpsMarket
     );
   });
@@ -191,11 +332,17 @@ describe('MarketConfiguration', async () => {
     assertBn.equal(lockedOiRatio, fixture.lockedOiPercentRatioD18);
   });
 
-  it('should revert transaction when not market owner sets parameters', async () => {
+  it('should revert when a non-owner owner attempts to set parameters', async () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .addSettlementStrategy(marketId, fixture.settlementStrategy),
+      'Unauthorized'
+    );
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setSettlementStrategy(marketId, 0, fixture.settlementStrategy),
       'Unauthorized'
     );
     await assertRevert(
@@ -209,7 +356,9 @@ describe('MarketConfiguration', async () => {
       'Unauthorized'
     );
     await assertRevert(
-      systems().PerpsMarket.connect(randomUser).setMaxMarketSize(marketId, fixture.maxMarketValue),
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setMaxMarketSizes(marketId, fixture.maxMarketSize, fixture.maxMarketValue),
       'Unauthorized'
     );
     await assertRevert(
@@ -226,7 +375,7 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.minimumInitialMarginRatio,
           fixture.maintenanceMarginScalar,
-          fixture.liquidationRewardRatioD18,
+          fixture.flagRewardRatioD18,
           fixture.minimumPositionMargin
         ),
       'Unauthorized'
@@ -251,29 +400,9 @@ describe('MarketConfiguration', async () => {
     );
   });
 
-  it('get maxMarketValue', async () => {
-    const maxMarketValue = await systems().PerpsMarket.getMaxMarketSize(marketId);
-    assertBn.equal(maxMarketValue, fixture.maxMarketValue);
-  });
-
-  it('get settlementStrategy', async () => {
-    const settlementStrategy = await systems().PerpsMarket.getSettlementStrategy(marketId, 0);
-    assertBn.equal(settlementStrategy.settlementDelay, fixture.settlementStrategy.settlementDelay);
-    assertBn.equal(
-      settlementStrategy.settlementWindowDuration,
-      fixture.settlementStrategy.settlementWindowDuration
-    );
-    assertBn.equal(
-      settlementStrategy.settlementReward,
-      fixture.settlementStrategy.settlementReward
-    );
-    assert.equal(settlementStrategy.disabled, !fixture.settlementStrategy.disabled);
-    assert.equal(settlementStrategy.url, fixture.settlementStrategy.url);
-    assert.equal(settlementStrategy.feedId, fixture.settlementStrategy.feedId);
-    assert.equal(
-      settlementStrategy.priceVerificationContract,
-      fixture.settlementStrategy.priceVerificationContract
-    );
+  it('get maxMarketSize', async () => {
+    const maxMarketSizes = await systems().PerpsMarket.getMaxMarketSizes(marketId);
+    assertBn.equal(maxMarketSizes[0], fixture.maxMarketSize);
   });
 
   it('get orderFees', async () => {
@@ -294,12 +423,12 @@ describe('MarketConfiguration', async () => {
       initialMarginFraction,
       minimumInitialMarginRatio,
       maintenanceMarginScalar,
-      liquidationRewardRatioD18,
+      flagRewardRatioD18,
     ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
     assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
     assertBn.equal(minimumInitialMarginRatio, fixture.minimumInitialMarginRatio);
     assertBn.equal(maintenanceMarginScalar, fixture.maintenanceMarginScalar);
-    assertBn.equal(liquidationRewardRatioD18, fixture.liquidationRewardRatioD18);
+    assertBn.equal(flagRewardRatioD18, fixture.flagRewardRatioD18);
   });
 
   it('get maxLiquidationParameters', async () => {
@@ -316,37 +445,5 @@ describe('MarketConfiguration', async () => {
       fixture.maxLiquidationLimitAccumulationMultiplier
     );
     assertBn.equal(maxSecondsInLiquidationWindow, fixture.maxSecondsInLiquidationWindow);
-  });
-
-  it('if settlement strategy settlement delay is set to zero, defaults to 1', async () => {
-    const settlementStrategy = {
-      ...fixture.settlementStrategy,
-      settlementDelay: 0,
-    };
-    await systems()
-      .PerpsMarket.connect(owner())
-      .addSettlementStrategy(marketId, settlementStrategy),
-      'SettlementStrategyAdded(' +
-        marketId.toString() +
-        ', [' +
-        settlementStrategy.strategyType.toString() +
-        ', ' +
-        settlementStrategy.settlementDelay.toString() +
-        ', ' +
-        bn(1).toString() +
-        ', ' +
-        settlementStrategy.priceWindowDuration.toString() +
-        ', "' +
-        settlementStrategy.priceVerificationContract.toString() +
-        '", "' +
-        settlementStrategy.feedId.toString() +
-        '", "' +
-        settlementStrategy.url.toString() +
-        '", ' +
-        settlementStrategy.settlementReward.toString() +
-        ', ' +
-        settlementStrategy.disabled.toString() +
-        '], 0)',
-      systems().PerpsMarket;
   });
 });

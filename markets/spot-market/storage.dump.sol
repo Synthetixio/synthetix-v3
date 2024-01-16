@@ -64,7 +64,7 @@ library DecimalMath {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
 library ERC2771Context {
-    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/SetUtil.sol:SetUtil
@@ -155,6 +155,56 @@ library Initialized {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol:PythStructs
+contract PythStructs {
+    struct Price {
+        int64 price;
+        uint64 conf;
+        int32 expo;
+        uint publishTime;
+    }
+    struct PriceFeed {
+        bytes32 id;
+        Price price;
+        Price emaPrice;
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ChainlinkNode.sol:ChainlinkNode
+library ChainlinkNode {
+    uint256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ReducerNode.sol:ReducerNode
+library ReducerNode {
+    enum Operations {
+        RECENT,
+        MIN,
+        MAX,
+        MEAN,
+        MEDIAN,
+        MUL,
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/UniswapNode.sol:UniswapNode
+library UniswapNode {
+    uint8 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythNode.sol:PythNode
+library PythNode {
+    int256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythOffchainLookupNode.sol:PythOffchainLookupNode
+library PythOffchainLookupNode {
+    int256 public constant PRECISION = 18;
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -166,7 +216,8 @@ library NodeDefinition {
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
         STALENESS_CIRCUIT_BREAKER,
-        CONSTANT
+        CONSTANT,
+        PYTH_OFFCHAIN_LOOKUP
     }
     struct Data {
         NodeType nodeType;
@@ -191,24 +242,12 @@ library NodeOutput {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
-interface IPythVerifier {
-    struct Price {
-        int64 price;
-        uint64 conf;
-        int32 expo;
-        uint publishTime;
-    }
-    struct PriceFeed {
-        bytes32 id;
-        Price price;
-        Price emaPrice;
-    }
-}
-
-// @custom:artifact contracts/modules/AsyncOrderSettlementModule.sol:AsyncOrderSettlementModule
-contract AsyncOrderSettlementModule {
-    int256 public constant PRECISION = 18;
+// @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
+library TickMath {
+    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MAX_TICK = -MIN_TICK;
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
 
 // @custom:artifact contracts/modules/SpotMarketFactoryModule.sol:SpotMarketFactoryModule
@@ -239,7 +278,7 @@ library AsyncOrderClaim {
         Transaction.Type orderType;
         uint256 amountEscrowed;
         uint256 settlementStrategyId;
-        uint256 settlementTime;
+        uint256 commitmentTime;
         uint256 minimumSettlementAmount;
         uint256 settledAt;
         address referrer;
@@ -299,9 +338,14 @@ library OrderFees {
 
 // @custom:artifact contracts/storage/Price.sol:Price
 library Price {
+    enum Tolerance {
+        DEFAULT,
+        STRICT
+    }
     struct Data {
         bytes32 buyFeedId;
         bytes32 sellFeedId;
+        uint256 strictStalenessTolerance;
     }
     function load(uint128 marketId) internal pure returns (Data storage price) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
@@ -325,6 +369,7 @@ library SettlementStrategy {
         bytes32 feedId;
         string url;
         uint256 settlementReward;
+        uint256 priceDeviationTolerance;
         uint256 minimumUsdExchangeAmount;
         uint256 maxRoundingLoss;
         bool disabled;

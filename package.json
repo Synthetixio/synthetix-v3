@@ -53,12 +53,12 @@
     "@lerna-lite/publish": "^2.6.0",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@synthetixio/deps": "workspace:*",
-    "@types/mocha": "^10.0.3",
-    "@types/node": "^18.18.8",
-    "@typescript-eslint/eslint-plugin": "^6.9.1",
-    "@typescript-eslint/parser": "^6.9.1",
-    "@usecannon/cli": "^2.9.3",
-    "eslint": "^8.52.0",
+    "@types/mocha": "^10.0.4",
+    "@types/node": "^18.18.9",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
+    "@usecannon/cli": "2.10.6",
+    "eslint": "^8.53.0",
     "eslint-plugin-no-only-tests": "^3.1.0",
     "lint-staged": "^15.0.2",
     "mocha": "^10.2.0",
@@ -100,7 +100,8 @@
   "workspaces": [
     "utils/**",
     "protocol/**",
-    "markets/**"
+    "markets/**",
+    "auxiliary/**"
   ],
   "engines": {
     "node": "^18.16.0"

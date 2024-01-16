@@ -34,8 +34,10 @@ export function bootstrapWithNodes() {
   let nodeId4: string;
   let nodeId5: string;
 
+  let owner: ethers.Signer;
+
   before('deploy mock aggregator', async () => {
-    const [owner] = r.getSigners();
+    [owner] = r.getSigners();
     const factory = await hre.ethers.getContractFactory('MockV3Aggregator');
 
     aggregator = await factory.connect(owner).deploy();
@@ -78,6 +80,7 @@ export function bootstrapWithNodes() {
 
   return {
     ...r,
+    owner: () => owner,
     nodeId1: () => nodeId1,
     nodeId2: () => nodeId2,
     nodeId3: () => nodeId3,

@@ -11,16 +11,6 @@ interface IMarketEvents {
      * @notice Gets thrown when settle order is called with invalid settlement strategy.
      */
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
-    /**
-     * @notice Gets thrown when settle order is called as a signal to the client to perform offchain lookup.
-     */
-    error OffchainLookup(
-        address sender,
-        string[] urls,
-        bytes callData,
-        bytes4 callbackFunction,
-        bytes extraData
-    );
 
     /**
      * @notice Gets fired when the size of a market is updated by new orders or liquidations.
@@ -31,6 +21,7 @@ interface IMarketEvents {
      * @param sizeDelta Change in market size during this update.
      * @param currentFundingRate The current funding rate of this market (0.001 = 0.1% per day)
      * @param currentFundingVelocity The current rate of change of the funding rate (0.001 = +0.1% per day)
+     * @param interestRate Current supermarket interest rate based on updated market OI.
      */
     event MarketUpdated(
         uint128 marketId,
@@ -39,6 +30,7 @@ interface IMarketEvents {
         uint256 size,
         int256 sizeDelta,
         int256 currentFundingRate,
-        int256 currentFundingVelocity
+        int256 currentFundingVelocity,
+        uint128 interestRate
     );
 }
