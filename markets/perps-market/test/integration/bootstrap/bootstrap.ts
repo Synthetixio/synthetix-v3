@@ -98,6 +98,11 @@ type BootstrapArgs = {
     maxLiquidationReward: ethers.BigNumber;
     maxKeeperScalingRatioD18: ethers.BigNumber;
   };
+  interestRateParams?: {
+    lowUtilGradient: ethers.BigNumber;
+    gradientBreakpoint: ethers.BigNumber;
+    highUtilGradient: ethers.BigNumber;
+  };
   maxPositionsPerAccount?: ethers.BigNumber;
   maxCollateralsPerAccount?: ethers.BigNumber;
   skipKeeperCostOracleNode?: boolean;
@@ -108,7 +113,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId } =
+  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId, staker } =
     chainStateWithPerpsMarkets;
   const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
@@ -130,6 +135,24 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     keeperCostOracleNode = results.keeperCostNode;
 
     await systems().PerpsMarket.connect(owner()).updateKeeperCostNodeId(keeperCostNodeId);
+  });
+
+  before('set pool config', async () => {
+    const synthMarketConfigs = synthMarkets().map((s) => ({
+      marketId: s.marketId(),
+      weightD18: ethers.utils.parseEther('1'),
+      maxDebtShareValueD18: ethers.utils.parseEther('1'),
+    }));
+    await systems()
+      .Core.connect(owner())
+      .setPoolConfiguration(poolId, [
+        {
+          marketId: superMarketId(),
+          weightD18: ethers.utils.parseEther('1'),
+          maxDebtShareValueD18: ethers.utils.parseEther('1'),
+        },
+        ...synthMarketConfigs,
+      ]);
   });
 
   // auto set all synth markets collaterals to max
@@ -183,7 +206,21 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     });
   }
 
+  const { interestRateParams } = data;
+  if (interestRateParams) {
+    before('set interest rate params', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setInterestRateParameters(
+          interestRateParams.lowUtilGradient,
+          interestRateParams.gradientBreakpoint,
+          interestRateParams.highUtilGradient
+        );
+    });
+  }
+
   return {
+    staker,
     systems,
     signers,
     provider,

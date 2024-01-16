@@ -13,6 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {MarketUpdate} from "./MarketUpdate.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
+import {InterestRate} from "./InterestRate.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
@@ -296,7 +297,7 @@ library PerpsAccount {
             uint256 quantoSynthMarketId = marketConfig.quantoSynthMarketId;
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (int pnl, , , , ) = position.getPnl(
+            (int pnl, , , , , ) = position.getPnl(
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
             int usdPnl = convertAmountToUSD(pnl, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
@@ -325,7 +326,7 @@ library PerpsAccount {
             uint256 quantoSynthMarketId = marketConfig.quantoSynthMarketId;
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (uint openInterest, , , , , ) = position.getPositionData(
+            uint openInterest = position.getNotionalValue(
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
 
@@ -594,6 +595,7 @@ library PerpsAccount {
                 marketId: marketId,
                 latestInteractionPrice: price.to128(),
                 latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
+                latestInterestAccrued: 0,
                 size: newPositionSize
             });
         }

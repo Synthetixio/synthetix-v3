@@ -72,6 +72,18 @@ library GlobalPerpsMarketConfiguration {
          * @dev set of supported collateral types. By supported we mean collateral types that have a maxCollateralAmount > 0
          */
         SetUtil.UintSet supportedCollateralTypes;
+        /**
+         * @dev interest rate gradient applied to utilization prior to hitting the gradient breakpoint
+         */
+        uint128 lowUtilizationInterestRateGradient;
+        /**
+         * @dev breakpoint at which the interest rate gradient changes from low to high
+         */
+        uint128 interestRateGradientBreakpoint;
+        /**
+         * @dev interest rate gradient applied to utilization after hitting the gradient breakpoint
+         */
+        uint128 highUtilizationInterestRateGradient;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -79,6 +91,15 @@ library GlobalPerpsMarketConfiguration {
         assembly {
             globalMarketConfig.slot := s
         }
+    }
+
+    function loadInterestRateParameters() internal view returns (uint128, uint128, uint128) {
+        Data storage self = load();
+        return (
+            self.lowUtilizationInterestRateGradient,
+            self.interestRateGradientBreakpoint,
+            self.highUtilizationInterestRateGradient
+        );
     }
 
     function minimumKeeperRewardCap(
