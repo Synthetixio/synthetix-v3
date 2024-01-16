@@ -86,7 +86,7 @@ depends = [
 ]
 
 # --- wstETH Oracle `reduce(pythEthPrice, wstEthToEth)` --- #
-# @see: # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/oracle-manager/contracts/nodes/ReducerNode.sol
+# @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/oracle-manager/contracts/nodes/ReducerNode.sol
 
 [invoke.registerNode_pythWstEthNode]
 target = ["synthetix.oracle_manager.Proxy"]

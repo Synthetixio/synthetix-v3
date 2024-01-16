@@ -19,10 +19,6 @@ defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
 
-# NOTE: This is the same pythETHFeedId defined in markets.fixture.ts for ETHPERP.
-[setting.pythEthFeedId]
-defaultValue = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
-
 # What is salt?
 #
 # salt - The salt is a string which, when changed, will result in a new contract deployment.
