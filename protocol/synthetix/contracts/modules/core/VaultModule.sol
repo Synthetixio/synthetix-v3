@@ -66,10 +66,10 @@ contract VaultModule is IVaultModule {
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
         // Use account interaction to update its rewards.
-				uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
-				uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
-						accountId.toBytes32()
-				);
+        uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
@@ -155,7 +155,11 @@ contract VaultModule is IVaultModule {
             ERC2771Context._msgSender()
         );
 
-        vault.updateRewards(Vault.PositionSelector(accountId, poolId, collateralType), totalSharesD18, actorSharesD18);
+        vault.updateRewards(
+            Vault.PositionSelector(accountId, poolId, collateralType),
+            totalSharesD18,
+            actorSharesD18
+        );
     }
 
     /**

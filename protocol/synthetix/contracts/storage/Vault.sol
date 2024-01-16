@@ -67,11 +67,11 @@ library Vault {
         SetUtil.Bytes32Set rewardIds;
     }
 
-		struct PositionSelector {
+    struct PositionSelector {
         uint128 accountId;
         uint128 poolId;
         address collateralType;
-		}
+    }
 
     /**
      * @dev Return's the VaultEpoch data for the current epoch.
@@ -118,19 +118,25 @@ library Vault {
         return currentEpoch(self).consolidateAccountDebt(accountId);
     }
 
-		function updateRewards(
-			Data storage self,
-			uint128 accountId,
-			uint128 poolId,
-			address collateralType
-		) internal returns (uint256[] memory rewards, address[] memory distributors) {
-				uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
-				uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
-						accountId.toBytes32()
-				);
+    function updateRewards(
+        Data storage self,
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) internal returns (uint256[] memory rewards, address[] memory distributors) {
+        uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
 
-				return updateRewards(self, PositionSelector(accountId, poolId, collateralType), totalSharesD18, actorSharesD18);
-		}
+        return
+            updateRewards(
+                self,
+                PositionSelector(accountId, poolId, collateralType),
+                totalSharesD18,
+                actorSharesD18
+            );
+    }
 
     /**
      * @dev Traverses available rewards for this vault, and updates an accounts
@@ -138,9 +144,9 @@ library Vault {
      */
     function updateRewards(
         Data storage self,
-				PositionSelector memory pos,
-				uint256 totalSharesD18,
-				uint256 actorSharesD18
+        PositionSelector memory pos,
+        uint256 totalSharesD18,
+        uint256 actorSharesD18
     ) internal returns (uint256[] memory rewards, address[] memory distributors) {
         rewards = new uint256[](self.rewardIds.length());
         distributors = new address[](self.rewardIds.length());
@@ -156,10 +162,10 @@ library Vault {
             distributors[i] = address(dist.distributor);
             rewards[i] = updateReward(
                 self,
-								pos,
+                pos,
                 self.rewardIds.valueAt(i + 1),
-								totalSharesD18,
-								actorSharesD18
+                totalSharesD18,
+                actorSharesD18
             );
         }
     }
@@ -170,10 +176,10 @@ library Vault {
      */
     function updateReward(
         Data storage self,
-				PositionSelector memory pos,
+        PositionSelector memory pos,
         bytes32 rewardId,
-				uint256 totalSharesD18,
-				uint256 actorSharesD18
+        uint256 totalSharesD18,
+        uint256 actorSharesD18
     ) internal returns (uint256) {
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
@@ -181,12 +187,19 @@ library Vault {
             revert RewardDistributorNotFound();
         }
 
-        dist.distributor.onPositionUpdated(pos.accountId, pos.poolId, pos.collateralType, actorSharesD18);
+        dist.distributor.onPositionUpdated(
+            pos.accountId,
+            pos.poolId,
+            pos.collateralType,
+            actorSharesD18
+        );
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 
         dist.claimStatus[pos.accountId].pendingSendD18 += actorSharesD18
-            .mulDecimal(dist.rewardPerShareD18 - dist.claimStatus[pos.accountId].lastRewardPerShareD18)
+            .mulDecimal(
+                dist.rewardPerShareD18 - dist.claimStatus[pos.accountId].lastRewardPerShareD18
+            )
             .to128();
 
         dist.claimStatus[pos.accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
