@@ -1,16 +1,16 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 import { wei } from '@synthetixio/wei';
-import { OpenPositionData, openPosition } from '../helpers';
+import { OpenPositionData, openPosition } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
 const sUSDSynthId = 0;
-describe.only('Quanto', () => {
+describe('Quanto', () => {
   const accountIds = [10, 20];
   const oneETH = wei(1);
   const marginAmount = wei(2_000);
@@ -207,6 +207,7 @@ describe.only('Quanto', () => {
     });
     before('open positions', async () => {
       const positionSizes = [
+        // TODO: move this logic into the commitOrder function so we can just specify BTC or ETH position size
         // this position is equivalent to 2 btc long, but with quanto units ((ETH*BTC)/USD)
         bn(0.001), // quanto size = 10 eth * 3 leverage / 30,000 = 0.001
       ];
@@ -307,8 +308,8 @@ describe.only('Quanto', () => {
 
       it('has correct margin based on quanto perps price change', async () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
-        const classicPnl = bn(10_000).mul(2).mul(2); // $40k profit
-        const expectedMargin = expectedCollateral.add(classicPnl);
+        const quantoPnl = bn(10_000).mul(2).mul(2); // $40k profit
+        const expectedMargin = expectedCollateral.add(quantoPnl);
 
         // check the pnl
         const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader1AccountId);
