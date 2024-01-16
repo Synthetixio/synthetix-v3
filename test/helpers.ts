@@ -136,7 +136,8 @@ export const getPythPriceData = async (
     pythPrice,
     priceConfidence,
     publishTime ?? Math.floor(Date.now() / 1000),
-    0
+    // @ts-ignore
+    0 // Misaligned types due to PythMock types not having compiled.
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };
@@ -213,17 +214,13 @@ export const commitAndSettle = async (
 
   const settlementKeeper = options?.desiredKeeper ?? keeper();
 
-  // const { tx, receipt } = await withExplicitEvmMine(
-  //   () =>
-  //     PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
-  //       value: 1,
-  //     }),
-  //   provider()
-  // );
-  const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
-    value: updateFee.mul(2),
-  });
-  const receipt = await tx.wait();
+  const { tx, receipt } = await withExplicitEvmMine(
+    () =>
+      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
+        value: updateFee.mul(2),
+      }),
+    provider()
+  );
 
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 

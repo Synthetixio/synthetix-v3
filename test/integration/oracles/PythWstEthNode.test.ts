@@ -1,26 +1,17 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
   commitAndSettle,
   depositMargin,
-  findEventSafe,
-  getFastForwardTimestamp,
   getPythPriceData,
-  getPythPriceDataByMarketId,
   getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
-  withExplicitEvmMine,
-  withImpersonate,
 } from '../../helpers';
-import { Signer } from 'ethers';
-import { calcFillPrice } from '../../calculations';
 
-describe.only('PythWstEthNode', () => {
+describe('PythWstEthNode', () => {
   const bs = bootstrap(genBootstrap());
   const { systems, markets, collaterals, collateralsWithoutSusd, extras, restore, spotMarket, provider, keeper } = bs;
 
@@ -177,6 +168,7 @@ describe.only('PythWstEthNode', () => {
         collateral.synthMarketId(),
         pythWstEthNodeId,
         pythWstEthNodeId,
+        // @ts-ignore
         60 // Types misaligned due to spot market not compiling latest types.
       );
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
