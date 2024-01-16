@@ -300,6 +300,7 @@ library PerpsAccount {
             (int pnl, , , , , ) = position.getPnl(
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
+            // TODO: should default price tolerance be used here? What does that even mean
             int usdPnl = convertAmountToUSD(pnl, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
             totalPnl += usdPnl;
         }
