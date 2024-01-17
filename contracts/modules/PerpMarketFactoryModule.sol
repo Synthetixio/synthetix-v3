@@ -169,7 +169,6 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market.getRemainingLiquidatableSizeCapacity(
             marketConfig
         );
