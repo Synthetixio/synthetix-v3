@@ -188,14 +188,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 ++i;
             }
         }
-        uint256 oraclePrice = market.getOraclePrice();
+
         return
             IPerpMarketFactoryModule.MarketDigest(
                 depositedCollaterals,
                 market.name,
                 market.skew,
                 market.size,
-                oraclePrice,
+                market.getOraclePrice(),
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
                 market.currentUtilizationRateComputed,
