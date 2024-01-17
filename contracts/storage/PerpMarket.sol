@@ -204,11 +204,9 @@ library PerpMarket {
     }
 
     function getUnrecordedUtilization(
-        PerpMarket.Data storage self,
-        uint256 utilizationRate,
-        uint256 price
+        PerpMarket.Data storage self
     ) internal view returns (uint256 unrecordedUtilization) {
-        return utilizationRate.mulDecimal(getProportionalUtilizationElapsed(self)).mulDecimal(price);
+        return self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
     }
 
     function recomputeUtilization(
@@ -217,7 +215,7 @@ library PerpMarket {
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
-        unrecordedUtilization = getUnrecordedUtilization(self, utilizationRate, price);
+        unrecordedUtilization = getUnrecordedUtilization(self);
 
         self.currentUtilizationRateComputed = utilizationRate;
         self.currentUtilizationAccruedComputed += unrecordedUtilization;

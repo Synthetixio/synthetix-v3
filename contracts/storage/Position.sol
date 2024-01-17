@@ -481,9 +481,8 @@ library Position {
         healthData.accruedFunding = positionSize.mulDecimal(
             market.getUnrecordedFunding(price) + market.currentFundingAccruedComputed - positionEntryFundingAccrued
         );
-
-        healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(
-            market.getUnrecordedUtilization(market.currentUtilizationRateComputed, price) +
+        healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
+            market.getUnrecordedUtilization() +
                 market.currentUtilizationAccruedComputed -
                 positionEntryUtilizationAccrued
         );
@@ -572,10 +571,10 @@ library Position {
             return 0;
         }
 
-        uint256 unrecordedUtilization = market.getUnrecordedUtilization(market.currentUtilizationRateComputed, price);
-
+        uint256 unrecordedUtilization = market.getUnrecordedUtilization();
+        uint256 notional = MathUtil.abs(self.size).mulDecimal(price);
         return
-            MathUtil.abs(self.size).mulDecimal(
+            notional.mulDecimal(
                 unrecordedUtilization + market.currentUtilizationAccruedComputed - self.entryUtilizationAccrued
             );
     }
