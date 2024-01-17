@@ -196,7 +196,7 @@ async function run() {
         await prettyJson(fakeCollateral.contracts.MintableToken)
       );
       out.push(
-        `| Fake Collateral ${fakeCollateralOptions.symbol} ${fakeCollateralOptions.name} | [${
+        `| ${fakeCollateralOptions.symbol} / ${fakeCollateralOptions.name} | [${
           fakeCollateral.contracts.MintableToken.address
         }](${etherscanLink(
           chainId,
