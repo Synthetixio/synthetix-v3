@@ -33,6 +33,8 @@ function etherscanLink(chain, address) {
       return `https://basescan.org/address/${address}`;
     case 84531:
       return `https://goerli.basescan.org/address/${address}`;
+    case 84532:
+      return `https://sepolia.basescan.org/address/${address}`;
   }
 }
 
