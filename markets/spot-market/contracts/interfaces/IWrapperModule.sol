@@ -67,6 +67,16 @@ interface IWrapperModule {
     ) external;
 
     /**
+     * @notice Used to get the wrapper supply cap for a given market and collateral type.
+     * @param marketId Id of the market to enable wrapping for.
+     * @return wrapCollateralType The collateral being used to wrap the synth.
+     * @return maxWrappableAmount The maximum amount of collateral that can be wrapped.
+     */
+    function getWrapper(
+        uint128 marketId
+    ) external view returns (address wrapCollateralType, uint256 maxWrappableAmount);
+
+    /**
      * @notice Wraps the specified amount and returns similar value of synth minus the fees.
      * @dev Fees are collected from the user by way of the contract returning less synth than specified amount of collateral.
      * @param marketId Id of the market used for the trade.
