@@ -87,16 +87,6 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
      */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
 
-    /**
-     * @notice Recomputes utilization rate
-     */
-    function recomputeUtilization(uint128 marketId) external;
-
-    /**
-     * @notice Recomputes funding rate
-     */
-    function recomputeFunding(uint128 marketId) external;
-
     // --- Views --- //
 
     /**
