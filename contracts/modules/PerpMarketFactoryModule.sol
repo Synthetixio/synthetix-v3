@@ -199,10 +199,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 oraclePrice,
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
-                PerpMarket.getCurrentUtilizationRate(
-                    market.getUtilization(oraclePrice, globalMarketConfig),
-                    globalMarketConfig
-                ),
+                market.currentUtilizationRateComputed,
                 remainingCapacity,
                 lastLiquidationTime,
                 market.getTotalCollateralValueUsd(),
