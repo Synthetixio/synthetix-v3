@@ -242,7 +242,8 @@ library Position {
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
-            market.currentUtilizationAccruedComputed,
+            // Since utilization looks backwards and wont be recomputed here we need to manually add the unrecorded utilization.
+            market.currentUtilizationAccruedComputed + market.getUnrecordedUtilization(),
             params.fillPrice,
             orderFee + keeperFee
         );
