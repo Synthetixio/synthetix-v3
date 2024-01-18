@@ -28,22 +28,18 @@ library PythUtil {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = priceUpdateData;
 
-        IPyth pyth = IPyth(globalConfig.pyth);
-
         // NOTE: `unique` fn suffix is important here as it ensures the `prevPublishTime` in `priceUpdateData` is also
         // gt (not gte) `now + minTime`.
-        PythStructs.PriceFeed[] memory priceFeeds = pyth.parsePriceFeedUpdatesUnique{value: msg.value / 2}(
+        //
+        // `parsePrice` also performs an update to store new price if necessary.
+        PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdatesUnique{
+            value: msg.value
+        }(
             updateData,
             priceIds,
             commitmentTime.to64() + globalConfig.pythPublishTimeMin,
             commitmentTime.to64() + globalConfig.pythPublishTimeMax
         );
-
-        // NOTE: Adding this temporarily until Pyth add supports for updates to be stored as part of the `parsePriceFeedUpdatesUnique`.
-        //
-        // However, since this is two separate calls which both require an updateFee, keepers must send 2x. One for the
-        // `update` and another for `parse`.
-        pyth.updatePriceFeeds{value: msg.value / 2}(updateData);
 
         PythStructs.PriceFeed memory pythData = priceFeeds[0];
         price = getScaledPrice(pythData.price.price, pythData.price.expo);

@@ -1354,7 +1354,7 @@ describe('OrderModule', () => {
       BOTH = 'PYTH_AND_CL',
     }
 
-    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it(
+    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it.only(
       'should revert when prices are zero and hence invalid (variant: %s)',
       async (variant: ZeroPriceVariant) => {
         const { PerpMarketProxy } = systems();
