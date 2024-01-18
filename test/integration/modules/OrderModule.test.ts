@@ -1354,7 +1354,7 @@ describe('OrderModule', () => {
       BOTH = 'PYTH_AND_CL',
     }
 
-    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it.only(
+    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it(
       'should revert when prices are zero and hence invalid (variant: %s)',
       async (variant: ZeroPriceVariant) => {
         const { PerpMarketProxy } = systems();
@@ -1375,24 +1375,24 @@ describe('OrderModule', () => {
         const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
         assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
+        const { pythPriceFeedId } = await PerpMarketProxy.getMarketConfigurationById(marketId);
         const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
-        const updatePriceReflectVariant = async () => {
+        const updatePriceReflectVariant = () => {
           switch (variant) {
             case ZeroPriceVariant.PYTH:
-              return getPythPriceDataByMarketId(bs, marketId, publishTime, 0);
-            case ZeroPriceVariant.CL: {
-              const oraclePrice = wei(order.oraclePrice).toNumber();
-              await market.aggregator().mockSetCurrentPrice(bn(0));
-              return getPythPriceDataByMarketId(bs, marketId, publishTime, oraclePrice);
-            }
-            case ZeroPriceVariant.BOTH: {
-              await market.aggregator().mockSetCurrentPrice(bn(0));
-              return getPythPriceDataByMarketId(bs, marketId, publishTime, 0);
-            }
+              return { cl: bn(genNumber(1000, 5000)), pyth: 0 };
+            case ZeroPriceVariant.CL:
+              return { cl: bn(0), pyth: genNumber(1000, 5000) };
+            case ZeroPriceVariant.BOTH:
+              return { cl: bn(0), pyth: 0 };
           }
         };
-        const { updateData, updateFee } = await updatePriceReflectVariant();
+
+        const { cl: chainlinkPrice, pyth: pythPrice } = updatePriceReflectVariant();
+
+        await market.aggregator().mockSetCurrentPrice(chainlinkPrice);
+        const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, pythPriceFeedId, publishTime);
 
         await fastForwardTo(settlementTime, provider());
 
