@@ -10,7 +10,7 @@ import { OpenPositionData, openPosition } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
 const sUSDSynthId = 0;
-describe.only('Quanto', () => {
+describe('Quanto', () => {
   const accountIds = [10, 20];
   const oneETH = wei(1);
   const marginAmount = wei(2_000);
@@ -207,20 +207,8 @@ describe.only('Quanto', () => {
     });
     before('open positions', async () => {
       const positionSizes = [
-        // TODO: move this logic into the commitOrder function so we can just specify BTC or ETH position size
-        // this position is equivalent to 2 btc long, but with quanto units ((ETH*BTC)/USD)
-        bn(0.001), // quanto size = 10 eth * 3 leverage / 30,000 = 0.001
-        // bn(2)
-
-        // btc = 30k
-        // eth = 2k
-        // position size = 10 * 2000 * 3 = 60,000
-        // position size = 2 btc
-
-        // ((ETH*BTC)/USD) * USD/ETH = BTC
-        // BTC / (USD/ETH) = ((ETH*BTC)/USD)
-        // BTC * (ETH/USD) = ((ETH*BTC)/USD)
-        // BTC / quanto_factor = ((ETH*BTC)/USD)
+        // 2 BTC long position
+        bn(2)
       ];
 
       await openPosition({
