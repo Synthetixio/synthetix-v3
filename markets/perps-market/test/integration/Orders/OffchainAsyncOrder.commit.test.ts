@@ -253,9 +253,9 @@ describe('Commit Offchain Async Order test', () => {
           tx,
           `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
             1
-          )}, ${bn(1050)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
-            ethers.constants.HashZero
-          }", "${await trader1().getAddress()}")`,
+          )}, ${bn(1050)}, ${startTime}, ${startTime + 2}, ${startTime + 5}, ${
+            startTime + 5 + 120
+          }, "${ethers.constants.HashZero}", "${await trader1().getAddress()}")`,
           systems().PerpsMarket
         );
       });
@@ -266,7 +266,7 @@ describe('Commit Offchain Async Order test', () => {
         assertBn.equal(order.request.marketId, ethMarketId);
         assertBn.equal(order.request.sizeDelta, bn(1));
         assertBn.equal(order.request.settlementStrategyId, 0);
-        assertBn.equal(order.settlementTime, startTime + 5);
+        assertBn.equal(order.commitmentTime, startTime);
         assertBn.equal(order.request.acceptablePrice, bn(1050));
         assert.equal(order.request.trackingCode, ethers.constants.HashZero);
       });
@@ -297,9 +297,7 @@ describe('Commit Offchain Async Order test', () => {
             systems,
             keeper: keeper(),
             accountId: 2,
-            feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            settlementTime,
-            offChainPrice: 1000,
+            offChainPrice: bn(1000),
           });
         });
 
@@ -331,9 +329,9 @@ describe('Commit Offchain Async Order test', () => {
               tx,
               `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
                 1
-              )}, ${bn(1050)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
-                ethers.constants.HashZero
-              }", "${await trader1().getAddress()}")`,
+              )}, ${bn(1050)}, ${startTime}, ${startTime + 2}, ${startTime + 5}, ${
+                startTime + 5 + 120
+              }, "${ethers.constants.HashZero}", "${await trader1().getAddress()}")`,
               systems().PerpsMarket
             );
           });
@@ -344,7 +342,7 @@ describe('Commit Offchain Async Order test', () => {
             assertBn.equal(order.request.marketId, ethMarketId);
             assertBn.equal(order.request.sizeDelta, bn(1));
             assertBn.equal(order.request.settlementStrategyId, 0);
-            assertBn.equal(order.settlementTime, startTime + 5);
+            assertBn.equal(order.commitmentTime, startTime);
             assertBn.equal(order.request.acceptablePrice, bn(1050));
             assert.equal(order.request.trackingCode, ethers.constants.HashZero);
           });
@@ -369,9 +367,7 @@ describe('Commit Offchain Async Order test', () => {
               systems,
               keeper: keeper(),
               accountId: 2,
-              feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              settlementTime: expirationTime,
-              offChainPrice: 1000,
+              offChainPrice: bn(1000),
             }),
             'SettlementWindowExpired'
           );
@@ -400,7 +396,9 @@ describe('Commit Offchain Async Order test', () => {
               tx,
               `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
                 1
-              )}, ${bn(1050)}, ${secondOrderStartTime + 5}, ${secondOrderStartTime + 5 + 120}, "${
+              )}, ${bn(1050)}, ${secondOrderStartTime}, ${secondOrderStartTime + 2}, ${
+                secondOrderStartTime + 5
+              }, ${secondOrderStartTime + 5 + 120}, "${
                 ethers.constants.HashZero
               }", "${await trader1().getAddress()}")`,
               systems().PerpsMarket
@@ -410,7 +408,7 @@ describe('Commit Offchain Async Order test', () => {
           it('emit the order expired event', async () => {
             await assertEvent(
               tx,
-              `PreviousOrderExpired(${ethMarketId}, 2, ${bn(1)}, ${bn(1050)}, ${startTime + 5}, "${
+              `PreviousOrderExpired(${ethMarketId}, 2, ${bn(1)}, ${bn(1050)}, ${startTime}, "${
                 ethers.constants.HashZero
               }")`,
               systems().PerpsMarket

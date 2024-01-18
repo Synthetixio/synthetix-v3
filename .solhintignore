@@ -7,6 +7,10 @@ node_modules/
 utils/core-contracts/contracts/utils/SafeCast
 storage.dump.sol
 
+# foundry lib
+\*\*/lib
+\*\*/out
+
 # files that we cannot change due to immutable proxies
 
 \*\*/contracts/Proxy.sol

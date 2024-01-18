@@ -6,11 +6,14 @@ import {
   openPosition,
   requiredMargins,
   getRequiredLiquidationRewardMargin,
+  expectedStartingPnl,
 } from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
 const MIN_LIQUIDATION_REWARD = wei(100);
+const BTC_MARKET_PRICE = wei(10_000);
+const ETH_MARKET_PRICE = wei(2000);
 
 describe('Orders - margin validation', () => {
   const liqParams = {
@@ -27,19 +30,27 @@ describe('Orders - margin validation', () => {
       liqRatio: wei(0.01),
     },
   };
+  const liqGuards = {
+    minLiquidationReward: wei(MIN_LIQUIDATION_REWARD),
+    minKeeperProfitRatioD18: wei(0),
+    maxLiquidationReward: wei(10_000),
+    maxKeeperScalingRatioD18: wei(1000),
+  };
 
   const { systems, provider, trader1, perpsMarkets, keeper } = bootstrapMarkets({
     synthMarkets: [],
     liquidationGuards: {
-      minLiquidationReward: MIN_LIQUIDATION_REWARD.toBN(),
-      maxLiquidationReward: bn(500),
+      minLiquidationReward: liqGuards.minLiquidationReward.bn,
+      minKeeperProfitRatioD18: liqGuards.minKeeperProfitRatioD18.bn,
+      maxLiquidationReward: liqGuards.maxLiquidationReward.bn,
+      maxKeeperScalingRatioD18: liqGuards.maxKeeperScalingRatioD18.bn,
     },
     perpsMarkets: [
       {
         requestedMarketId: 50,
         name: 'Bitcoin',
         token: 'BTC',
-        price: bn(10_000),
+        price: BTC_MARKET_PRICE.toBN(),
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: liqParams.btc.imRatio.toBN(),
@@ -58,7 +69,7 @@ describe('Orders - margin validation', () => {
         requestedMarketId: 51,
         name: 'Ether',
         token: 'ETH',
-        price: bn(2000),
+        price: ETH_MARKET_PRICE.toBN(),
         fundingParams: { skewScale: bn(10_000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: liqParams.eth.imRatio.toBN(),
@@ -88,6 +99,7 @@ describe('Orders - margin validation', () => {
     });
 
     it('reverts if not enough margin', async () => {
+      const fillPrice = calculateFillPrice(wei(0), wei(10_000), wei(3), wei(2000));
       const { initialMargin, liquidationMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.eth.imRatio,
@@ -96,17 +108,26 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        calculateFillPrice(wei(0), wei(10_000), wei(3), wei(2000)),
+        fillPrice,
         wei(10_000)
       );
 
       const totalRequiredMargin = initialMargin
-        .add(getRequiredLiquidationRewardMargin(liquidationMargin, MIN_LIQUIDATION_REWARD))
+        .add(
+          getRequiredLiquidationRewardMargin(liquidationMargin, liqGuards, {
+            costOfTx: wei(0),
+            margin: wei(100),
+          })
+        )
         .add(orderFees);
 
       assertBn.equal(
         await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3)),
         totalRequiredMargin.toBN()
+      );
+
+      const availableMargin = wei(100).add(
+        expectedStartingPnl(ETH_MARKET_PRICE, fillPrice, wei(3))
       );
 
       await assertRevert(
@@ -121,7 +142,10 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${bn(100)}", "${totalRequiredMargin.toString(18, true)}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
+          18,
+          true
+        )}")`
       );
     });
   });
@@ -162,19 +186,19 @@ describe('Orders - margin validation', () => {
 
     it('reverts if not enough margin', async () => {
       // previous order margins
-      const { maintenanceMargin: ethMaintMargin, liquidationMargin: ethLiqMargin } =
-        requiredMargins(
-          {
-            initialMarginRatio: liqParams.eth.imRatio,
-            minimumInitialMarginRatio: liqParams.eth.minIm,
-            maintenanceMarginScalar: liqParams.eth.mmScalar,
-            liquidationRewardRatio: liqParams.eth.liqRatio,
-          },
-          wei(3),
-          wei(2000),
-          wei(10_000)
-        );
+      const { initialMargin: ethInitialMargin, liquidationMargin: ethLiqMargin } = requiredMargins(
+        {
+          initialMarginRatio: liqParams.eth.imRatio,
+          minimumInitialMarginRatio: liqParams.eth.minIm,
+          maintenanceMarginScalar: liqParams.eth.mmScalar,
+          liquidationRewardRatio: liqParams.eth.liqRatio,
+        },
+        wei(3),
+        wei(2000),
+        wei(10_000)
+      );
 
+      const fillPrice = calculateFillPrice(wei(0), wei(1000), wei(5), BTC_MARKET_PRICE);
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.btc.imRatio,
@@ -183,16 +207,20 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         wei(5),
-        calculateFillPrice(wei(0), wei(1000), wei(5), wei(10_000)),
+        fillPrice,
         wei(1000)
       );
 
       const liqReward = getRequiredLiquidationRewardMargin(
         ethLiqMargin.add(btcLiqMargin),
-        MIN_LIQUIDATION_REWARD
+        liqGuards,
+        {
+          costOfTx: wei(0),
+          margin: wei(100),
+        }
       );
 
-      const totalRequiredMargin = ethMaintMargin
+      const totalRequiredMargin = ethInitialMargin
         .add(btcInitialMargin)
         .add(liqReward)
         .add(orderFees);
@@ -200,6 +228,11 @@ describe('Orders - margin validation', () => {
       assertBn.equal(
         await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
         totalRequiredMargin.toBN()
+      );
+
+      const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
+      const availableMargin = wei(currentAvailableMargin).add(
+        expectedStartingPnl(BTC_MARKET_PRICE, fillPrice, wei(5))
       );
 
       await assertRevert(
@@ -214,9 +247,10 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${await systems().PerpsMarket.getAvailableMargin(
-          2
-        )}", "${totalRequiredMargin.toString(18, true)}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
+          18,
+          true
+        )}")`
       );
     });
   });
@@ -254,19 +288,20 @@ describe('Orders - margin validation', () => {
 
     it('reverts if not enough margin', async () => {
       // previous order margins
-      const { maintenanceMargin: ethMaintMargin, liquidationMargin: ethLiqMargin } =
-        requiredMargins(
-          {
-            initialMarginRatio: liqParams.eth.imRatio,
-            minimumInitialMarginRatio: liqParams.eth.minIm,
-            maintenanceMarginScalar: liqParams.eth.mmScalar,
-            liquidationRewardRatio: liqParams.eth.liqRatio,
-          },
-          wei(3),
-          wei(2000),
-          wei(10_000)
-        );
+      const { initialMargin: ethInitialMargin, liquidationMargin: ethLiqMargin } = requiredMargins(
+        {
+          initialMarginRatio: liqParams.eth.imRatio,
+          minimumInitialMarginRatio: liqParams.eth.minIm,
+          maintenanceMarginScalar: liqParams.eth.mmScalar,
+          liquidationRewardRatio: liqParams.eth.liqRatio,
+        },
+        wei(3),
+        wei(2000),
+        wei(10_000)
+      );
 
+      const newBtcSize = wei(10);
+      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), wei(10_000));
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.btc.imRatio,
@@ -274,17 +309,21 @@ describe('Orders - margin validation', () => {
           maintenanceMarginScalar: liqParams.btc.mmScalar,
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
-        wei(10),
-        calculateFillPrice(wei(5), wei(1000), wei(5), wei(10_000)),
+        newBtcSize,
+        fillPrice,
         wei(1000)
       );
 
       const liqReward = getRequiredLiquidationRewardMargin(
         ethLiqMargin.add(btcLiqMargin),
-        MIN_LIQUIDATION_REWARD
+        liqGuards,
+        {
+          costOfTx: wei(0),
+          margin: wei(100),
+        }
       );
 
-      const totalRequiredMargin = ethMaintMargin
+      const totalRequiredMargin = ethInitialMargin
         .add(btcInitialMargin)
         .add(liqReward)
         .add(orderFees);
@@ -292,6 +331,11 @@ describe('Orders - margin validation', () => {
       assertBn.equal(
         await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
         totalRequiredMargin.toBN()
+      );
+
+      const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
+      const availableMargin = wei(currentAvailableMargin).add(
+        expectedStartingPnl(BTC_MARKET_PRICE, fillPrice, wei(10))
       );
 
       await assertRevert(
@@ -306,9 +350,10 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${await systems().PerpsMarket.getAvailableMargin(
-          2
-        )}", "${totalRequiredMargin.toString(18, true)}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
+          18,
+          true
+        )}")`
       );
     });
   });

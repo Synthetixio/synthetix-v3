@@ -15,7 +15,8 @@ interface IAsyncOrderModule {
      * @param orderType Should send 0 (at time of writing) that correlates to the transaction type enum defined in SettlementStrategy.Type.
      * @param sizeDelta requested change in size of the order sent by the user.
      * @param acceptablePrice maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
-     * @param settlementTime Time at which the order can be settled.
+     * @param commitmentTime Time at which the order was committed.
+     * @param settlementTime start time of the settlement window.
      * @param expirationTime Time at which the order expired.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param sender address of the sender of the order. Authorized to commit by account owner.
@@ -26,6 +27,8 @@ interface IAsyncOrderModule {
         SettlementStrategy.Type orderType,
         int128 sizeDelta,
         uint256 acceptablePrice,
+        uint256 commitmentTime,
+        uint256 expectedPriceTime,
         uint256 settlementTime,
         uint256 expirationTime,
         bytes32 indexed trackingCode,
@@ -38,7 +41,7 @@ interface IAsyncOrderModule {
      * @param accountId Id of the account used for the trade.
      * @param sizeDelta requested change in size of the order sent by the user.
      * @param acceptablePrice maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
-     * @param settlementTime Time at which the order can be settled.
+     * @param commitmentTime Time at which the order was committed.
      * @param trackingCode Optional code for integrator tracking purposes.
      */
     event PreviousOrderExpired(
@@ -46,7 +49,7 @@ interface IAsyncOrderModule {
         uint128 indexed accountId,
         int128 sizeDelta,
         uint256 acceptablePrice,
-        uint256 settlementTime,
+        uint256 commitmentTime,
         bytes32 indexed trackingCode
     );
 
@@ -81,6 +84,21 @@ interface IAsyncOrderModule {
     ) external view returns (uint256 orderFees, uint256 fillPrice);
 
     /**
+     * @notice Simulates what the order fee would be for the given market with the specified size.
+     * @dev    Note that this does not include the settlement reward fee, which is based on the strategy type used
+     * @param marketId id of the market.
+     * @param sizeDelta size of position.
+     * @param price price of the market.
+     * @return orderFees incurred fees.
+     * @return fillPrice price at which the order would be filled.
+     */
+    function computeOrderFeesWithPrice(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 price
+    ) external view returns (uint256 orderFees, uint256 fillPrice);
+
+    /**
      * @notice For a given market, account id, and a position size, returns the required total account margin for this order to succeed
      * @dev    Useful for integrators to determine if an order will succeed or fail
      * @param marketId id of the market.
@@ -92,5 +110,21 @@ interface IAsyncOrderModule {
         uint128 marketId,
         uint128 accountId,
         int128 sizeDelta
+    ) external view returns (uint256 requiredMargin);
+
+    /**
+     * @notice For a given market, account id, and a position size, and expected price returns the required total account margin for this order to succeed
+     * @dev    Useful for integrators to determine if an order will succeed or fail faking different price scenarios
+     * @param marketId id of the market.
+     * @param accountId id of the trader account.
+     * @param sizeDelta size of position.
+     * @param price price of the market.
+     * @return requiredMargin margin required for the order to succeed.
+     */
+    function requiredMarginForOrderWithPrice(
+        uint128 marketId,
+        uint128 accountId,
+        int128 sizeDelta,
+        uint256 price
     ) external view returns (uint256 requiredMargin);
 }

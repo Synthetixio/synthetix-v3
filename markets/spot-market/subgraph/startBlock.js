@@ -6,8 +6,10 @@ async function getStartBlock({ namespace, networkName }) {
   const provider = new ethers.providers.JsonRpcProvider(
     `https://${networkName}.infura.io/v3/${process.env.INFURA_KEY}`
   );
-  const address = require(`./${namespace}/deployments/SpotMarketProxy.json`).address;
-  const deployTx = require(`./${namespace}/deployments/InitialSpotMarketProxy.json`).deployTxnHash;
+  const address = require(`./${namespace}/deployments/spotFactory/SpotMarketProxy.json`).address;
+  const deployTx = require(
+    `./${namespace}/deployments/spotFactory/InitialSpotMarketProxy.json`
+  ).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);
   return { namespace, networkName, address, startBlock: tx.blockNumber };
 }
@@ -21,6 +23,7 @@ async function findAll() {
     getStartBlock({ namespace: 'optimism-goerli', networkName: 'optimism-goerli' }),
     //    getStartBlock({ namespace: 'base-goerli', networkName: 'base-goerli' }),
     getStartBlock({ namespace: 'base-goerli-competition', networkName: 'base-goerli' }),
+    getStartBlock({ namespace: 'base-goerli-andromeda', networkName: 'base-goerli' }),
   ]);
 
   return Object.fromEntries(

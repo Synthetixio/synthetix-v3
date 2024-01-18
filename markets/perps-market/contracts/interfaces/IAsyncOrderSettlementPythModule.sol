@@ -17,7 +17,7 @@ interface IAsyncOrderSettlementPythModule {
      * @param totalFees Amount of fees collected by the protocol.
      * @param referralFees Amount of fees collected by the referrer.
      * @param collectedFees Amount of fees collected by fee collector.
-     * @param settlementReward Amount of fees collected by the settler.
+     * @param settlementReward reward to sender for settling order.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param settler address of the settler of the order.
      */
@@ -37,13 +37,20 @@ interface IAsyncOrderSettlementPythModule {
         address settler
     );
 
+    /**
+     * @notice Gets fired after order settles and includes the interest charged to the account.
+     * @param accountId Id of the account used for the trade.
+     * @param interest interest charges
+     */
+    event InterestCharged(uint128 indexed accountId, uint256 interest);
+
     // only used due to stack too deep during settlement
     struct SettleOrderRuntime {
         uint128 marketId;
         uint128 accountId;
-        int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
+        uint256 chargedInterest;
         int256 accruedFunding;
         uint256 pnlUint;
         uint256 amountToDeduct;
@@ -54,12 +61,14 @@ interface IAsyncOrderSettlementPythModule {
         uint256 feeCollectorFees;
         Position.Data newPosition;
         MarketUpdate.Data updateData;
+        uint256 synthDeductionIterator;
+        uint128[] deductedSynthIds;
+        uint256[] deductedAmount;
     }
 
     /**
      * @notice Settles an offchain order using the offchain retrieved data from pyth.
-     * @param result the blob of data retrieved offchain.
-     * @param extraData Extra data from OffchainLookupData.
+     * @param accountId The account id to settle the order
      */
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable;
+    function settleOrder(uint128 accountId) external;
 }

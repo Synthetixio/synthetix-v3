@@ -14,7 +14,7 @@ describe('Large Size Position', () => {
       token: 'NOT_PEPE',
       price: PRICE,
       fundingParams: { skewScale: bn(30_000_000_000_000_000), maxFundingVelocity: bn(0) },
-      maxMarketValue: bn(100_000_000_000_000_000),
+      maxMarketSize: bn(100_000_000_000_000_000),
       liquidationParams: {
         initialMarginFraction: bn(2),
         minimumInitialMarginRatio: bn(0.01),

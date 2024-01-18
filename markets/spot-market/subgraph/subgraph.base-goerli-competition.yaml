@@ -16,7 +16,7 @@ dataSources:
       file: ./base-goerli-competition/index.ts
       abis:
         - name: SpotMarketProxy
-          file: ./base-goerli-competition/deployments/SpotMarketProxy.json
+          file: ./base-goerli-competition/deployments/spotFactory/SpotMarketProxy.json
       entities:
         - Wrapper
         - Order

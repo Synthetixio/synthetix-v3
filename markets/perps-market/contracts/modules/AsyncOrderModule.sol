@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
@@ -15,24 +14,16 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {Flags} from "../utils/Flags.sol";
 
 /**
  * @title Module for committing async orders.
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
-    using DecimalMath for int256;
-    using DecimalMath for uint256;
-    using DecimalMath for int64;
-    using PerpsPrice for PerpsPrice.Data;
-    using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
-    using SettlementStrategy for SettlementStrategy.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
-    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
 
     /**
      * @inheritdoc IAsyncOrderModule
@@ -40,6 +31,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
@@ -66,16 +58,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 order.request.accountId,
                 order.request.sizeDelta,
                 order.request.acceptablePrice,
-                order.settlementTime,
+                order.commitmentTime,
                 order.request.trackingCode
             );
         }
 
-        order.updateValid(commitment, strategy);
+        order.updateValid(commitment);
 
         (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId)
+            PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
         emit OrderCommitted(
@@ -84,8 +76,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
             strategy.strategyType,
             commitment.sizeDelta,
             commitment.acceptablePrice,
-            order.settlementTime,
-            order.settlementTime + strategy.settlementWindowDuration,
+            order.commitmentTime,
+            order.commitmentTime + strategy.commitmentPriceDelay,
+            order.commitmentTime + strategy.settlementDelay,
+            order.commitmentTime + strategy.settlementDelay + strategy.settlementWindowDuration,
             commitment.trackingCode,
             ERC2771Context._msgSender()
         );
@@ -110,7 +104,22 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 orderFees, uint256 fillPrice) {
-        (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta);
+        (orderFees, fillPrice) = _computeOrderFees(
+            marketId,
+            sizeDelta,
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+        );
+    }
+
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
+    function computeOrderFeesWithPrice(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 price
+    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta, price);
     }
 
     function requiredMarginForOrder(
@@ -118,34 +127,57 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 requiredMargin) {
+        return
+            _requiredMarginForOrder(
+                accountId,
+                marketId,
+                sizeDelta,
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            );
+    }
+
+    function requiredMarginForOrderWithPrice(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 price
+    ) external view override returns (uint256 requiredMargin) {
+        return _requiredMarginForOrder(accountId, marketId, sizeDelta, price);
+    }
+
+    function _requiredMarginForOrder(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 orderPrice
+    ) internal view returns (uint256 requiredMargin) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
-        (
-            ,
-            uint256 currentMaintenanceMargin,
-            uint256 currentTotalLiquidationRewards,
-
-        ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
-        (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta);
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        (uint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
 
         return
             AsyncOrder.getRequiredMarginWithNewPosition(
+                account,
                 marketConfig,
                 marketId,
                 oldPosition.size,
                 oldPosition.size + sizeDelta,
                 fillPrice,
-                currentMaintenanceMargin,
-                currentTotalLiquidationRewards
+                currentInitialMargin
             ) + orderFees;
     }
 
     function _computeOrderFees(
         uint128 marketId,
-        int128 sizeDelta
+        int128 sizeDelta,
+        uint256 orderPrice
     ) private view returns (uint256 orderFees, uint256 fillPrice) {
         int256 skew = PerpsMarket.load(marketId).skew;
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
@@ -155,7 +187,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             skew,
             marketConfig.skewScale,
             sizeDelta,
-            PerpsPrice.getCurrentPrice(marketId)
+            orderPrice
         );
 
         orderFees = AsyncOrder.calculateOrderFee(

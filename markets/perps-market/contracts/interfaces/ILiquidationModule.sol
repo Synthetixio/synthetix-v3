@@ -31,7 +31,11 @@ interface ILiquidationModule {
      * @param reward total reward sent to liquidator.
      * @param fullLiquidation flag indicating if it was a partial or full liquidation.
      */
-    event AccountLiquidated(uint128 indexed accountId, uint256 reward, bool fullLiquidation);
+    event AccountLiquidationAttempt(
+        uint128 indexed accountId,
+        uint256 reward,
+        bool fullLiquidation
+    );
 
     /**
      * @notice Liquidates an account.

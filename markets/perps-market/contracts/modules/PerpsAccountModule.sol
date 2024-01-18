@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
@@ -15,6 +16,7 @@ import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
@@ -25,7 +27,6 @@ contract PerpsAccountModule is IPerpsAccountModule {
     using SetUtil for SetUtil.UintSet;
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
-    using AsyncOrder for AsyncOrder.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
@@ -39,6 +40,8 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 synthMarketId,
         int amountDelta
     ) external override {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(
             accountId,
@@ -83,7 +86,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
      * @inheritdoc IPerpsAccountModule
      */
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
-        return PerpsAccount.load(accountId).getTotalCollateralValue();
+        return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**
@@ -99,15 +102,20 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function getOpenPosition(
         uint128 accountId,
         uint128 marketId
-    ) external view override returns (int256 totalPnl, int256 accruedFunding, int128 positionSize) {
+    )
+        external
+        view
+        override
+        returns (int256 totalPnl, int256 accruedFunding, int128 positionSize, uint256 owedInterest)
+    {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
         Position.Data storage position = perpsMarket.positions[accountId];
 
-        (, totalPnl, , accruedFunding, , ) = position.getPositionData(
-            PerpsPrice.getCurrentPrice(marketId)
+        (, totalPnl, , owedInterest, accruedFunding, , ) = position.getPositionData(
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
-        return (totalPnl, accruedFunding, position.size);
+        return (totalPnl, accruedFunding, position.size, owedInterest);
     }
 
     /**
@@ -116,7 +124,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function getAvailableMargin(
         uint128 accountId
     ) external view override returns (int256 availableMargin) {
-        availableMargin = PerpsAccount.load(accountId).getAvailableMargin();
+        availableMargin = PerpsAccount.load(accountId).getAvailableMargin(
+            PerpsPrice.Tolerance.DEFAULT
+        );
     }
 
     /**
@@ -126,9 +136,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin();
-        (uint256 initialRequiredMargin, , , uint256 liquidationReward) = account
-            .getAccountRequiredMargins();
+        int256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
+        (uint256 initialRequiredMargin, , uint256 liquidationReward) = account
+            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
         uint256 requiredMargin = initialRequiredMargin + liquidationReward;
 
@@ -147,21 +157,16 @@ contract PerpsAccountModule is IPerpsAccountModule {
         returns (
             uint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
-            uint256 totalAccumulatedLiquidationRewards,
             uint256 maxLiquidationReward
         )
     {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (account.openPositionMarketIds.length() == 0) {
-            return (0, 0, 0, 0);
+            return (0, 0, 0);
         }
 
-        (
-            requiredInitialMargin,
-            requiredMaintenanceMargin,
-            totalAccumulatedLiquidationRewards,
-            maxLiquidationReward
-        ) = account.getAccountRequiredMargins();
+        (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = account
+            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
         // Include liquidation rewards to required initial margin and required maintenance margin
         requiredInitialMargin += maxLiquidationReward;
@@ -176,6 +181,24 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 synthMarketId
     ) external view override returns (uint256) {
         return PerpsAccount.load(accountId).collateralAmounts[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getAccountCollateralIds(
+        uint128 accountId
+    ) external view override returns (uint256[] memory) {
+        return PerpsAccount.load(accountId).activeCollateralTypes.values();
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getAccountOpenPositions(
+        uint128 accountId
+    ) external view override returns (uint256[] memory) {
+        return PerpsAccount.load(accountId).openPositionMarketIds.values();
     }
 
     function _depositMargin(

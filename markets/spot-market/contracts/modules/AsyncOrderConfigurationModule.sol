@@ -12,6 +12,7 @@ import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
  */
 contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
 
     /**
      * @inheritdoc IAsyncOrderConfigurationModule
@@ -21,6 +22,10 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         SettlementStrategy.Data memory strategy
     ) external override returns (uint256 strategyId) {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 
@@ -35,15 +40,41 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     /**
      * @inheritdoc IAsyncOrderConfigurationModule
      */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
+        AsyncOrderConfiguration.Data storage config = AsyncOrderConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
+        strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
+        config.settlementStrategies[strategyId] = strategy;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
+    }
+
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
         bool enabled
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
-        AsyncOrderConfiguration.load(marketId).settlementStrategies[strategyId].disabled = !enabled;
+        AsyncOrderConfiguration.Data storage config = AsyncOrderConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
 
-        emit SettlementStrategyUpdated(marketId, strategyId, enabled);
+        SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
+        strategy.disabled = !enabled;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
     }
 
     /**

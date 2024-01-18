@@ -16,7 +16,6 @@ export default function test(): void {
   const feedId = '0x6900000000000000000000000000000000000000';
   const url = 'https://example.com';
   const settlementReward = 10_000;
-  const priceDeviationTolerance = 10_000;
   const disabled = false;
   const strategyId = 1;
   const timestamp = 10_000;
@@ -34,7 +33,6 @@ export default function test(): void {
       feedId,
       url,
       settlementReward,
-      priceDeviationTolerance,
       disabled,
       strategyId,
       timestamp,
@@ -64,11 +62,5 @@ export default function test(): void {
   assert.fieldEquals('SettlementStrategy', '1-1', 'feedId', feedId.toString());
   assert.fieldEquals('SettlementStrategy', '1-1', 'url', url);
   assert.fieldEquals('SettlementStrategy', '1-1', 'settlementReward', settlementReward.toString());
-  assert.fieldEquals(
-    'SettlementStrategy',
-    '1-1',
-    'priceDeviationTolerance',
-    priceDeviationTolerance.toString()
-  );
   assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', (!disabled).toString());
 }

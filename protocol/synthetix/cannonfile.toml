@@ -67,9 +67,6 @@ artifact = "contracts/modules/core/MarketCollateralModule.sol:MarketCollateralMo
 [contract.MarketManagerModule]
 artifact = "contracts/modules/core/MarketManagerModule.sol:MarketManagerModule"
 
-[contract.MulticallModule]
-artifact = "contracts/modules/core/MulticallModule.sol:MulticallModule"
-
 [contract.PoolConfigurationModule]
 artifact = "contracts/modules/core/PoolConfigurationModule.sol:PoolConfigurationModule"
 
@@ -108,7 +105,6 @@ contracts = [
     "LiquidationModule",
     "MarketCollateralModule",
     "MarketManagerModule",
-    "MulticallModule",
     "PoolConfigurationModule",
     "PoolModule",
     "RewardsManagerModule",
@@ -132,6 +128,7 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
+factory.CoreProxy.highlight = true
 
 # Account
 [router.AccountRouter]
@@ -157,6 +154,7 @@ depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
+factory.AccountProxy.highlight = true
 
 [invoke.init_usd]
 target = ["CoreProxy"]
@@ -173,6 +171,7 @@ depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
+factory.USDProxy.highlight = true
 
 [invoke.set_oracle_manager]
 target = ["CoreProxy"]
@@ -180,28 +179,83 @@ fromCall.func = "owner"
 func = "configureOracleManager"
 args = ["<%= imports.oracle_manager.contracts.Proxy.address %>"]
 
-[invoke.enable_basic_features]
+[invoke.enable_feature_createAccount]
 target = ["CoreProxy"]
 fromCall.func = "owner"
-func = "multicall"
-args = [
-    [
-        # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createAccount'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('deposit'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('withdraw'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('mintUsd'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('burnUsd'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('liquidate'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('liquidateVault'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('depositMarketCollateral'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('withdrawMarketCollateral'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('depositMarketUsd'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('withdrawMarketUsd'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('claimRewards'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('delegateCollateral'), true]).slice(2) %>",
-    ]
-]
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('createAccount') %>", true]
+
+[invoke.enable_feature_deposit]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('deposit') %>", true]
+
+[invoke.enable_feature_withdraw]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdraw') %>", true]
+
+[invoke.enable_feature_mintUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('mintUsd') %>", true]
+
+[invoke.enable_feature_burnUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('burnUsd') %>", true]
+
+[invoke.enable_feature_liquidate]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidate') %>", true]
+
+[invoke.enable_feature_liquidateVault]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidateVault') %>", true]
+
+[invoke.enable_feature_depositMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketCollateral') %>", true]
+
+[invoke.enable_feature_withdrawMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketCollateral') %>", true]
+
+[invoke.enable_feature_depositMarketUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketUsd') %>", true]
+
+[invoke.enable_feature_withdrawMarketUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketUsd') %>", true]
+
+[invoke.enable_feature_claimRewards]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('claimRewards') %>", true]
+
+[invoke.enable_feature_delegateCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('delegateCollateral') %>", true]
 
 [invoke.register_const_one_oracle]
 target = ["oracle_manager.Proxy"]

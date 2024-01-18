@@ -126,7 +126,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
       ];
       await assertRevert(
         NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents),
-        'UnprocessableNode',
+        'NodeNotRegistered',
         NodeModule
       );
     });

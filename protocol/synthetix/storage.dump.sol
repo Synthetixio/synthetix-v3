@@ -101,7 +101,7 @@ library DecimalMath {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
 library ERC2771Context {
-    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
@@ -229,6 +229,56 @@ library CcipClient {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol:PythStructs
+contract PythStructs {
+    struct Price {
+        int64 price;
+        uint64 conf;
+        int32 expo;
+        uint publishTime;
+    }
+    struct PriceFeed {
+        bytes32 id;
+        Price price;
+        Price emaPrice;
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ChainlinkNode.sol:ChainlinkNode
+library ChainlinkNode {
+    uint256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ReducerNode.sol:ReducerNode
+library ReducerNode {
+    enum Operations {
+        RECENT,
+        MIN,
+        MAX,
+        MEAN,
+        MEDIAN,
+        MUL,
+        DIV,
+        MULDECIMAL,
+        DIVDECIMAL
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/UniswapNode.sol:UniswapNode
+library UniswapNode {
+    uint8 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythNode.sol:PythNode
+library PythNode {
+    int256 public constant PRECISION = 18;
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythOffchainLookupNode.sol:PythOffchainLookupNode
+library PythOffchainLookupNode {
+    int256 public constant PRECISION = 18;
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -240,7 +290,8 @@ library NodeDefinition {
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
         STALENESS_CIRCUIT_BREAKER,
-        CONSTANT
+        CONSTANT,
+        PYTH_OFFCHAIN_LOOKUP
     }
     struct Data {
         NodeType nodeType;
@@ -263,6 +314,14 @@ library NodeOutput {
         uint256 __slotAvailableForFutureUse1;
         uint256 __slotAvailableForFutureUse2;
     }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
+library TickMath {
+    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MAX_TICK = -MIN_TICK;
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
 
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
@@ -343,14 +402,6 @@ contract MarketManagerModule {
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
-}
-
-// @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
-contract MulticallModule {
-    bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
-    bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS = "_allowlistedMulticallTargets";
-    bytes32 private constant ALLOWED = bytes32(uint256(1));
-    bytes32 private constant DISALLOWED = bytes32(uint256(0));
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule

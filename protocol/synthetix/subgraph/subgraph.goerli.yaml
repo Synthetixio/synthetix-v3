@@ -16,7 +16,7 @@ dataSources:
       file: ./goerli/index.ts
       abis:
         - name: CoreProxy
-          file: ./goerli/deployments/CoreProxy.json
+          file: ./goerli/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule

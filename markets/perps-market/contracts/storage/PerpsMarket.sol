@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Position} from "./Position.sol";
@@ -11,6 +11,8 @@ import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
+import {KeeperCosts} from "./KeeperCosts.sol";
+import {InterestRate} from "./InterestRate.sol";
 
 /**
  * @title Data for a single perps market
@@ -33,6 +35,11 @@ library PerpsMarket {
      * @notice Thrown when attempting to load a market without a configured price feed
      */
     error PriceFeedNotSet(uint128 marketId);
+
+    /**
+     * @notice Thrown when attempting to load a market without a configured keeper costs
+     */
+    error KeeperCostsNotSet();
 
     struct Data {
         string name;
@@ -93,6 +100,10 @@ library PerpsMarket {
 
         if (PerpsPrice.load(marketId).feedId == "") {
             revert PriceFeedNotSet(marketId);
+        }
+
+        if (KeeperCosts.load().keeperCostNodeId == "") {
+            revert KeeperCostsNotSet();
         }
     }
 
@@ -207,6 +218,13 @@ library PerpsMarket {
         capacity = MathUtil.max(availableLiquidationCapacity, int(0)).toUint();
     }
 
+    struct PositionDataRuntime {
+        uint256 currentPrice;
+        int sizeDelta;
+        int fundingDelta;
+        int notionalDelta;
+    }
+
     /**
      * @dev Use this function to update both market/position size/skew.
      * @dev Size and skew should not be updated directly.
@@ -217,32 +235,41 @@ library PerpsMarket {
         uint128 accountId,
         Position.Data memory newPosition
     ) internal returns (MarketUpdate.Data memory) {
+        PositionDataRuntime memory runtime;
         Position.Data storage oldPosition = self.positions[accountId];
 
-        int128 oldPositionSize = oldPosition.size;
-        int128 newPositionSize = newPosition.size;
-
         self.size =
-            (self.size + MathUtil.abs128(newPositionSize)) -
-            MathUtil.abs128(oldPositionSize);
-        self.skew += newPositionSize - oldPositionSize;
+            (self.size + MathUtil.abs128(newPosition.size)) -
+            MathUtil.abs128(oldPosition.size);
+        self.skew += newPosition.size - oldPosition.size;
 
-        uint currentPrice = newPosition.latestInteractionPrice;
-        (int totalPositionPnl, , , , ) = oldPosition.getPnl(currentPrice);
+        runtime.currentPrice = newPosition.latestInteractionPrice;
+        (, int pricePnl, , int fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
-        int sizeDelta = newPositionSize - oldPositionSize;
-        int fundingDelta = calculateNextFunding(self, currentPrice).mulDecimal(sizeDelta);
-        int notionalDelta = currentPrice.toInt().mulDecimal(sizeDelta);
+        runtime.sizeDelta = newPosition.size - oldPosition.size;
+        runtime.fundingDelta = calculateNextFunding(self, runtime.currentPrice).mulDecimal(
+            runtime.sizeDelta
+        );
+        runtime.notionalDelta = runtime.currentPrice.toInt().mulDecimal(runtime.sizeDelta);
 
         // update the market debt correction accumulator before losing oldPosition details
         // by adding the new updated notional (old - new size) plus old position pnl
-        self.debtCorrectionAccumulator += fundingDelta + notionalDelta + totalPositionPnl;
+        self.debtCorrectionAccumulator +=
+            runtime.fundingDelta +
+            runtime.notionalDelta +
+            pricePnl +
+            fundingPnl;
 
-        oldPosition.update(newPosition);
+        // update position to new position
+        // Note: once market interest rate is updated, the current accrued interest is saved
+        // to figure out the unrealized interest for the position
+        (uint128 interestRate, uint256 currentInterestAccrued) = InterestRate.update();
+        oldPosition.update(newPosition, currentInterestAccrued);
 
         return
             MarketUpdate.Data(
                 self.id,
+                interestRate,
                 self.skew,
                 self.size,
                 self.lastFundingRate,
@@ -323,12 +350,15 @@ library PerpsMarket {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
+        // even though timestamps here are not D18, divDecimal multiplies by 1e18 to preserve decimals into D18
         return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     function validatePositionSize(
         Data storage self,
         uint maxSize,
+        uint maxValue,
+        uint price,
         int oldSize,
         int newSize
     ) internal view {
@@ -363,6 +393,17 @@ library PerpsMarket {
                     newSideSize / 2
                 );
             }
+
+            // same check but with value (size * price)
+            // note that if maxValue param is set to 0, this validation is skipped
+            if (maxValue > 0 && maxValue < MathUtil.abs(newSideSize / 2).mulDecimal(price)) {
+                revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
+                    self.id,
+                    maxValue,
+                    newSideSize / 2,
+                    price
+                );
+            }
         }
     }
 
@@ -373,10 +414,19 @@ library PerpsMarket {
     function marketDebt(Data storage self, uint price) internal view returns (int) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt());
-        int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
+        int positionPnl = self.skew.mulDecimal(price.toInt());
+        int fundingPnl = self.skew.mulDecimal(calculateNextFunding(self, price));
 
-        return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
+        return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
+    }
+
+    function requiredCredit(uint128 marketId) internal view returns (uint) {
+        return
+            PerpsMarket
+                .load(marketId)
+                .size
+                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 
     function accountPosition(

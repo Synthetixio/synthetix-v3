@@ -10,6 +10,7 @@ import "./SafeCast/SafeCastI24.sol";
 import "./SafeCast/SafeCastU56.sol";
 import "./SafeCast/SafeCastI56.sol";
 import "./SafeCast/SafeCastU64.sol";
+import "./SafeCast/SafeCastI64.sol";
 import "./SafeCast/SafeCastI128.sol";
 import "./SafeCast/SafeCastI256.sol";
 import "./SafeCast/SafeCastU128.sol";

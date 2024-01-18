@@ -38,6 +38,11 @@ describe('Position - funding', () => {
     await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(1_000_000));
   });
 
+  before('set Pyth Benchmark Price data', async () => {
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
+  });
+
   let openPositionTime: number;
   before('open 20 eth position', async () => {
     ({ settleTime: openPositionTime } = await openPosition({
@@ -49,7 +54,8 @@ describe('Position - funding', () => {
       marketId: ethMarket.marketId(),
       sizeDelta: _TRADER_SIZE,
       settlementStrategyId: ethMarket.strategyId(),
-      price: bn(2000),
+      price: _ETH_PRICE,
+      skipSettingPrice: true,
     }));
   });
 
@@ -119,12 +125,13 @@ describe('Position - funding', () => {
             marketId: ethMarket.marketId(),
             sizeDelta: newOrderSize,
             settlementStrategyId: ethMarket.strategyId(),
-            price: bn(2000),
+            price: _ETH_PRICE,
+            skipSettingPrice: true,
           });
         });
 
         it('funding accrued is correct', async () => {
-          const [, accruedFunding] = await systems().PerpsMarket.getOpenPosition(
+          const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
             2,
             ethMarket.marketId()
           );
