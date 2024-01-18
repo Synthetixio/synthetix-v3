@@ -226,7 +226,7 @@ describe('Quanto', () => {
         assert(quantoFeedId.length > 0);
       });
       it('should have correct open interest', async () => {
-        const expectedOi = 60_000; // abs((-2 * 30000) + (20 * 2000))
+        const expectedOi = 60_000; // 2 BTC * 30k
         assertBn.equal(
           await systems().PerpsMarket.totalAccountOpenInterest(trader1AccountId),
           bn(expectedOi)
