@@ -291,17 +291,15 @@ library PerpsAccount {
     ) internal view returns (int totalPnl) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
-            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-                marketId
-            );
-            uint256 quantoSynthMarketId = marketConfig.quantoSynthMarketId;
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (int pnl, , , , , ) = position.getPnl(
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
-            // TODO: should default price tolerance be used here? What does that even mean
-            int usdPnl = convertAmountToUSD(pnl, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
+
+            uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
+            int usdPnl = pnl.mulDecimal(quantoPrice.toInt());
+
             totalPnl += usdPnl;
         }
     }
@@ -321,18 +319,15 @@ library PerpsAccount {
     ) internal view returns (uint totalAccountOpenInterest) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
-            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-                marketId
-            );
-            uint256 quantoSynthMarketId = marketConfig.quantoSynthMarketId;
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             uint openInterest = position.getNotionalValue(
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
 
-            // TODO: should default price tolerance be used here? What does that even mean
-            uint usdValue = convertAmountToUSD(openInterest, uint128(quantoSynthMarketId), Price.Tolerance.DEFAULT);
+            uint quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
+            uint usdValue = openInterest.mulDecimal(quantoPrice);
+
             totalAccountOpenInterest += usdValue;
         }
     }
