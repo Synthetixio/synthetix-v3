@@ -9,6 +9,7 @@ import { wei } from '@synthetixio/wei';
 import { OpenPositionData, openPosition, getQuantoPnl } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
+const sUSDSynthId = 0;
 describe('Quanto', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
@@ -209,6 +210,30 @@ describe('Quanto', () => {
         // check the pnl
         const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader1AccountId);
         assertBn.equal(availableMargin, expectedMargin);
+      });
+
+      it('trader can withdraw all his quanto margin and winnings as sUSD', async () => {
+        const expectedCollateral = bn(4_000).mul(10); // $40k collateral
+
+        const quantoPnl = getQuantoPnl({
+          baseAssetStartPrice: 30_000,
+          baseAssetEndPrice: 40_000,
+          quantoAssetStartPrice: 2_000,
+          quantoAssetEndPrice: 4_000,
+          baseAssetSizeDelta: 2,
+        });
+
+        const withdrawAmt = expectedCollateral.add(bn(quantoPnl));
+
+        const trader1Address = await trader1().getAddress();
+        const balBeforeWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
+
+        await systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(trader1AccountId, sUSDSynthId, withdrawAmt);
+
+        const balAfterWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
+        assertBn.equal(balBeforeWithdraw.sub(balAfterWithdraw), withdrawAmt);
       });
     });
   });
