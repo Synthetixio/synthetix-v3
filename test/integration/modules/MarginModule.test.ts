@@ -286,6 +286,7 @@ describe('MarginModule', async () => {
             receipt,
             [
               /FundingRecomputed/,
+              /UtilizationRecomputed/,
               `Transfer("${traderAddress}", "${ADDRESS0}", ${collateralDepositAmount})`,
               `MarketUsdDeposited(${marketId}, "${traderAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
               `MarginDeposit(${marginDepositEventProperties})`,
@@ -303,6 +304,7 @@ describe('MarginModule', async () => {
             receipt,
             [
               /FundingRecomputed/,
+              /UtilizationRecomputed/,
               `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`, // From collateral ERC20 contract
               `Transfer("${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount})`, // From collateral ERC20 contract
               `MarketCollateralDeposited(${marketCollateralDepositedEventProperties})`, // From core.
@@ -618,7 +620,7 @@ describe('MarginModule', async () => {
             .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
         );
 
-        let expectedEvents: Array<string | RegExp> = [/FundingRecomputed/];
+        let expectedEvents: Array<string | RegExp> = [/FundingRecomputed/, /UtilizationRecomputed/];
 
         if (isSusdCollateral(collateral)) {
           // Both of these events are emitted by the core protocol.
