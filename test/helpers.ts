@@ -29,7 +29,9 @@ export const withImpersonate = async (
   const owner = p.getSigner(address);
 
   const res = await f(owner);
-  await p.send('anvil_stopImpersonatingAccount', [owner]);
+  // NOTE: `anvil_stopImpersonatingAccount` results in GC and heap errs.
+  //
+  // await p.send('anvil_stopImpersonatingAccount', [owner]);
 
   return res;
 };
