@@ -13,7 +13,7 @@ library PythUtil {
     using SafeCastI256 for int256;
 
     /**
-     * @dev Parse Pyth price for the market pass in through `priceUpdateData`.
+     * @dev Parse and update `priceUpdateData` relative to min/max publishTimes defined in config.
      * @notice This function will revert if the price timestamp is outside the acceptable window (pythPublicTime{Min,Max}).
      */
     function parsePythPrice(
@@ -30,7 +30,7 @@ library PythUtil {
 
         IPyth pyth = IPyth(globalConfig.pyth);
 
-        // NOTE: `unique` fn suffix is important here as it ensure the prevPublishTime in `priceUpdateData` is also
+        // NOTE: `unique` fn suffix is important here as it ensures the `prevPublishTime` in `priceUpdateData` is also
         // gt (not gte) `now + minTime`.
         PythStructs.PriceFeed[] memory priceFeeds = pyth.parsePriceFeedUpdatesUnique{value: msg.value / 2}(
             updateData,

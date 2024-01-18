@@ -11,7 +11,7 @@ import {
   setMarketConfigurationById,
 } from '../../helpers';
 
-describe.only('PythWstEthNode', () => {
+describe('PythWstEthNode', () => {
   const bs = bootstrap(genBootstrap());
   const { systems, markets, collaterals, collateralsWithoutSusd, extras, restore, spotMarket, provider, keeper } = bs;
 

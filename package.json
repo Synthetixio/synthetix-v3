@@ -55,5 +55,6 @@
     "@synthetixio/main": "^3.3.6",
     "@synthetixio/oracle-manager": "^3.3.6",
     "@synthetixio/spot-market": "^3.3.6"
-  }
+  },
+  "packageManager": "yarn@3.6.1"
 }

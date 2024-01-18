@@ -23,9 +23,15 @@ export const withImpersonate = async (
   address: string,
   f: <A>(owner: Signer) => Promise<A | void>
 ) => {
-  await provider().send('hardhat_impersonateAccount', [address]);
-  const owner = provider().getSigner(address);
-  return f(owner);
+  const p = provider();
+
+  await p.send('anvil_impersonateAccount', [address]);
+  const owner = p.getSigner(address);
+
+  const res = await f(owner);
+  await p.send('anvil_stopImpersonatingAccount', [owner]);
+
+  return res;
 };
 
 /** A generalised mint/approve without accepting a generated trader. */
@@ -38,7 +44,6 @@ export const mintAndApprove = async (bs: Bs, collateral: Collateral, amount: Big
   const synthOwnerAddress = await synth.owner();
 
   return withImpersonate(bs, synthOwnerAddress, async (owner: Signer) => {
-    await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
     const synthOwner = provider().getSigner(synthOwnerAddress);
     await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
 
