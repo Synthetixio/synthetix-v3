@@ -292,21 +292,20 @@ describe('Quanto', () => {
         await synthMarkets()[0].sellAggregator().mockSetCurrentPrice(bn(4_000));
       });
 
-      // NOTE: This test should fail based on a quanto payout, it succeeds with a classical payout
-      it.skip('has correct margin based on classic perps price change', async () => {
+      it('does not have the amount of margin for a classic perps payout', async () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
         const classicPnl = bn(10_000).mul(2); // $20k profit
-        const expectedMargin = expectedCollateral.add(classicPnl);
+        const classicPayoutMargin = expectedCollateral.add(classicPnl);
 
         // check the pnl
         const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader1AccountId);
-        assertBn.equal(
+        assertBn.notEqual(
           availableMargin,
-          expectedMargin
+          classicPayoutMargin
         );
       });
 
-      it('has correct margin based on quanto perps price change', async () => {
+      it('has correct margin based on quanto perps payout', async () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
         const quantoPnl = bn(10_000).mul(2).mul(2); // $40k profit
         const expectedMargin = expectedCollateral.add(quantoPnl);
