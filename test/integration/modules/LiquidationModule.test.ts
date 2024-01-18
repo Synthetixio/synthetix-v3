@@ -294,24 +294,30 @@ describe('LiquidationModule', () => {
       const poolCollateralAddress = pool().collateral().address;
       const poolId = pool().id;
 
-      let expectedEvents: string[];
+      let expectedEvents: Array<string | RegExp>;
       if (isSusdCollateral(collateral)) {
         expectedEvents = [
           `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
-          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          new RegExp(
+            `MarketUsdWithdrawn\\(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}",`
+          ), // + tail properties omitted.
           `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
         ];
       } else {
         expectedEvents = [
           // Withdraw and transfer from Core -> PerpMarket.
           `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
-          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
+          new RegExp(
+            `MarketCollateralWithdrawn\\(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}",`
+          ), // + tail properties omitted.
           // Transfer from PerpMarket -> RewardDistributor.
           `Transfer("${PerpMarketProxy.address}", "${distributorAddress}", ${collateralDepositAmount})`,
           `RewardsDistributed(${poolId}, "${poolCollateralAddress}", "${distributorAddress}", ${collateralDepositAmount}, ${blockTime}, 0)`,
           // Transfer flag reward from PerpMarket -> Keeper.
           `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
-          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          new RegExp(
+            `MarketUsdWithdrawn\\(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}",`
+          ), // + tail properties omitted.
           `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
         ];
       }
