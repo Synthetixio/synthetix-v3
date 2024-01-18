@@ -288,6 +288,9 @@ describe('Quanto', () => {
       });
 
       before('eth pumps', async () => {
+        // update eth price on perps market (effects USD pnl)
+        await perpsMarkets()[0].quantoAggregator().mockSetCurrentPrice(bn(4_000));
+        // update eth price on synth market (effects collateral value)
         await synthMarkets()[0].sellAggregator().mockSetCurrentPrice(bn(4_000));
       });
 

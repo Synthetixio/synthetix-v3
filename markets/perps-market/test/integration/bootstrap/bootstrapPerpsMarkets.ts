@@ -8,6 +8,7 @@ import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
   aggregator: () => MockPythExternalNode;
+  quantoAggregator: () => MockPythExternalNode;
   strategyId: () => ethers.BigNumber;
 };
 
