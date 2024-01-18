@@ -236,53 +236,24 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (uint) {
         uint totalCollateralValue;
+        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             uint amount = self.collateralAmounts[synthMarketId];
 
-            uint amountToAdd = convertAmountToUSD(amount, synthMarketId, Price.Tolerance(uint(stalenessTolerance))); // solhint-disable-line numcast/safe-cast
+            uint amountToAdd;
+            if (synthMarketId == SNX_USD_MARKET_ID) {
+                amountToAdd = amount;
+            } else {
+                (amountToAdd, ) = spotMarket.quoteSellExactIn(
+                    synthMarketId,
+                    amount,
+                    Price.Tolerance(uint(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
+                );
+            }
             totalCollateralValue += amountToAdd;
         }
         return totalCollateralValue;
-    }
-
-    function convertAmountToUSD(int amount, uint128 synthMarketId, Price.Tolerance stalenessTolerance)
-        internal
-        view
-        returns (int256)
-    {
-        if (synthMarketId == SNX_USD_MARKET_ID) {
-            return amount;
-        } else {
-            // TODO: check is this the best way to calculate the amount in USD, or should we use another method
-            // such as querying the oracle directly. Are fees included etc?
-            // Note: getTotalCollateralValue already used this approach before i modified the code
-            (uint amountUsdAbs, ) = PerpsMarketFactory.load().spotMarket.quoteSellExactIn(
-                synthMarketId,
-                MathUtil.abs(amount),
-                stalenessTolerance
-            );
-            return MathUtil.sameSide(amount, amountUsdAbs.toInt()) ? amountUsdAbs.toInt() : -amountUsdAbs.toInt();
-        }
-    }
-
-    function convertAmountToUSD(uint amount, uint128 synthMarketId, Price.Tolerance stalenessTolerance)
-        internal
-        view
-        returns (uint256 amountUsd)
-    {
-        if (synthMarketId == SNX_USD_MARKET_ID) {
-            amountUsd = amount;
-        } else {
-            // TODO: check is this the best way to calculate the amount in USD, or should we use another method
-            // such as querying the oracle directly. Are fees included etc?
-            // Note: getTotalCollateralValue already used this approach before i modified the code
-            (amountUsd, ) = PerpsMarketFactory.load().spotMarket.quoteSellExactIn(
-                synthMarketId,
-                amount,
-                stalenessTolerance
-            );
-        }
     }
 
     function getAccountPnl(
