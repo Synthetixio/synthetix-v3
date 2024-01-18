@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
-import "@synthetixio/core-modules/contracts/interfaces/external/ICcipRouterClient.sol";
+
+import "../interfaces/external/ICcipRouterClient.sol";
 
 contract CcipRouterMock {
     // solhint-disable no-empty-blocks

@@ -5,9 +5,10 @@ import "../../interfaces/ICrossChainUSDModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
+import "../../storage/CrossChain.sol";
+
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 
 /**
  * @title Module for the cross-chain transfers of stablecoins.
