@@ -197,7 +197,7 @@ export const commitAndSettle = async (
 
 // This is still quite buggy in anvil so use with care...
 export const setBaseFeePerGas = async (amountInGwei: number, provider: providers.JsonRpcProvider) => {
-  await provider.send('hardhat_setNextBlockBaseFeePerGas', [(amountInGwei * 1e9).toString(16)]);
+  await provider.send('anvil_setNextBlockBaseFeePerGas', ['0x' + (amountInGwei * 1e9).toString(16)]);
   return parseUnits(`${amountInGwei}`, 'gwei');
 };
 
