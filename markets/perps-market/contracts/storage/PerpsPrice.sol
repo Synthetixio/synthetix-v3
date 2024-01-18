@@ -62,6 +62,12 @@ library PerpsPrice {
     ) internal view returns (uint price) {
         Data storage self = load(marketId);
         bytes32 feedId = isQuanto ? self.quantoFeedId : self.feedId;
+        // TODO: check - are we certain this always works?
+        /// @dev if the quantoFeedId is not set, the base asset is USD, which has a price of 1 USD per USD
+        if (isQuanto && feedId == bytes32(0)) {
+            return 1 ether;
+        }
+
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         NodeOutput.Data memory output;
         if (priceTolerance == Tolerance.STRICT) {
