@@ -224,7 +224,7 @@ export const commitAndSettle = async (
   const { tx, receipt } = await withExplicitEvmMine(
     () =>
       PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
-        value: updateFee.mul(2),
+        value: updateFee,
       }),
     provider()
   );

@@ -1237,6 +1237,8 @@ describe('MarginModule', async () => {
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
       });
 
+      // TODO: Remove `.skip`
+      //
       // PythMock's `parsePriceFeedUpdatesInternal` doesn't perform a price update so this currently fails.
       //
       // @see: https://github.com/usecannon/pyth-crosschain/blob/main/target_chains/ethereum/sdk/solidity/MockPyth.sol#L80
