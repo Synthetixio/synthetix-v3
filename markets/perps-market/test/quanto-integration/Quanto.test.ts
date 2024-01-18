@@ -170,10 +170,11 @@ describe('Quanto', () => {
 
       traderAccountIds,
     });
+    const trader1ETHMargin = bn(10);
     before('trader1 buys 10 snxETH', async () => {
       const ethSpotMarketId = synthMarkets()[0].marketId();
       const usdAmount = bn(20_000);
-      const minAmountReceived = bn(10);
+      const minAmountReceived = trader1ETHMargin;
       const referrer = ethers.constants.AddressZero;
       await systems()
         .SpotMarket.connect(trader1())
@@ -188,7 +189,7 @@ describe('Quanto', () => {
         .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
       await systems()
         .PerpsMarket.connect(trader1())
-        .modifyCollateral(trader1AccountId, ethSpotMarketId, bn(10));
+        .modifyCollateral(trader1AccountId, ethSpotMarketId, trader1ETHMargin);
     });
 
     let commonOpenPositionProps: Pick<
