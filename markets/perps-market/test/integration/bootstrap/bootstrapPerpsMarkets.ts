@@ -55,8 +55,6 @@ export type PerpsMarketData = Array<{
     name: string
     token: string;
     price: ethers.BigNumber;
-    // TODO: remove quantoSynthMarketIndex
-    quantoSynthMarketIndex?: number;
   }
 }>;
 
