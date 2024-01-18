@@ -114,9 +114,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
      */
     function getQuantoFeedId(
         uint128 perpsMarketId
-    ) external view returns (bytes32) {
+    ) external view returns (bytes32 quantoFeedId) {
         PerpsPrice.Data storage priceData = PerpsPrice.load(perpsMarketId);
-        return priceData.quantoFeedId;
+        quantoFeedId = priceData.quantoFeedId;
     }
 
     /**
