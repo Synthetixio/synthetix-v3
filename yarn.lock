@@ -1517,9 +1517,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.10.7-alpha.1":
-  version: 2.10.7-alpha.1
-  resolution: "@usecannon/builder@npm:2.10.7-alpha.1"
+"@usecannon/builder@npm:^2.10.7":
+  version: 2.10.7
+  resolution: "@usecannon/builder@npm:2.10.7"
   dependencies:
     "@synthetixio/router": ^3.3.0
     axios: ^1.6.2
@@ -1534,17 +1534,17 @@ __metadata:
     zod: ^3.22.4
   peerDependencies:
     ethers: ">=5.6.0 < 6.0.0"
-  checksum: be16f41460816120764ea14977807282f0428c1798554a4d773f4144984768661955901ffe620f554da49cfda6b2e85d8acb3a049c751993bc51333df96c151d
+  checksum: e1b5910dea9bc5b1924eb3a39ad78c8115e8cb0eac0675e0f38f5cf91b9bf624184aba51f741fe68a83a20e7e5a0d1c439fbedc5aadb44e852e59ac5d620e10d
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.10.7-alpha.1":
-  version: 2.10.7-alpha.1
-  resolution: "@usecannon/cli@npm:2.10.7-alpha.1"
+"@usecannon/cli@npm:^2.10.7":
+  version: 2.10.7
+  resolution: "@usecannon/cli@npm:2.10.7"
   dependencies:
     "@iarna/toml": ^3.0.0
     "@synthetixio/wei": ^2.74.1
-    "@usecannon/builder": ^2.10.7-alpha.1
+    "@usecannon/builder": ^2.10.7
     chalk: ^4.1.2
     commander: ^9.5.0
     debug: ^4.3.4
@@ -1559,9 +1559,11 @@ __metadata:
     table: ^6.8.0
     tildify: 2.0.0
     untildify: ^4.0.0
+    znv: ^0.4.0
+    zod: ^3.22.4
   bin:
     cannon: bin/cannon.js
-  checksum: ca2e5613a09d2ab484a1530a76e06fe4cc21e85ef6215b63a3204e75d71e53ee5ef6d689cd181b4f70e6067b3bc103d63d50206c1a535b4fbe53128fb9920687
+  checksum: 58fc6f1b8a153c0f5f6a71b6080d1f18ef1dbdf56a9f86219071ba4f31b65c83612bd1254a9676c11737b23ebbff893c2fe3c253433b176e91b304827d1a43be
   languageName: node
   linkType: hard
 
@@ -1973,11 +1975,11 @@ __metadata:
     "@types/lodash": ^4.14.199
     "@types/mocha": ^10.0.2
     "@types/mocha-each": 2.0.1
-    "@usecannon/builder": ^2.10.7-alpha.1
-    "@usecannon/cli": ^2.10.7-alpha.1
+    "@usecannon/builder": ^2.10.7
+    "@usecannon/cli": ^2.10.7
     ethers: ^5.7.2
     hardhat: 2.18.1
-    hardhat-cannon: ^2.10.7-alpha.0
+    hardhat-cannon: ^2.10.7
     hardhat-contract-sizer: ^2.10.0
     hardhat-gas-reporter: ^1.0.9
     lodash: ^4.17.21
@@ -2444,6 +2446,13 @@ __metadata:
   bin:
     color-support: bin.js
   checksum: 9b7356817670b9a13a26ca5af1c21615463b500783b739b7634a0c2047c16cef4b2865d7576875c31c3cddf9dd621fa19285e628f20198b233a5cfdda6d0793b
+  languageName: node
+  linkType: hard
+
+"colorette@npm:^2.0.19":
+  version: 2.0.20
+  resolution: "colorette@npm:2.0.20"
+  checksum: 0c016fea2b91b733eb9f4bcdb580018f52c0bc0979443dad930e5037a968237ac53d9beb98e218d2e9235834f8eebce7f8e080422d6194e957454255bde71d3d
   languageName: node
   linkType: hard
 
@@ -3676,13 +3685,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:^2.10.7-alpha.0":
-  version: 2.10.7-alpha.1
-  resolution: "hardhat-cannon@npm:2.10.7-alpha.1"
+"hardhat-cannon@npm:^2.10.7":
+  version: 2.10.7
+  resolution: "hardhat-cannon@npm:2.10.7"
   dependencies:
     "@iarna/toml": ^3.0.0
-    "@usecannon/builder": ^2.10.7-alpha.1
-    "@usecannon/cli": ^2.10.7-alpha.1
+    "@usecannon/builder": ^2.10.7
+    "@usecannon/cli": ^2.10.7
     chalk: ^4.1.2
     debug: ^4.3.3
     ethers: ^5.7.1
@@ -3691,7 +3700,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ">=2.0.0"
     "@nomiclabs/hardhat-etherscan": ">=3.0.0"
     hardhat: ">=2.0.0"
-  checksum: b014ec21eac09c25ffc122a846c7fb359cc4302ae93f5750705672418b123dc4c7cb96a99965cf3e52f13b9fd38d44f37d445676379a4a76edabe47b23d9324f
+  checksum: 7089f78248e0fffd54a61f0a052251099f036b9da54cf0540640c75ec81b25e9cb7333fb581eda521d101eb7d36405b492dfa2198058d3fc3e9216aba86414e7
   languageName: node
   linkType: hard
 
@@ -7380,6 +7389,17 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: f77b3d8d00310def622123df93d4ee654fc6a0096182af8bd60679ddcdfb3474c56c6c7190817c84a2785648cdee9d721c0154eb45698c62176c322fb46fc700
+  languageName: node
+  linkType: hard
+
+"znv@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "znv@npm:0.4.0"
+  dependencies:
+    colorette: ^2.0.19
+  peerDependencies:
+    zod: ^3.13.2
+  checksum: 7dac62d9b83de85f46ebdcc3a8563a198129a34f60948e99ba339a824594ace4ca37d328ad358646f321ee42b9506ef71d9e9901d41a668cca843ac272194d71
   languageName: node
   linkType: hard
 
