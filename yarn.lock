@@ -3008,7 +3008,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/router": "npm:^3.3.0"
-    "@usecannon/cli": "npm:^2.9.11"
+    "@usecannon/cli": "npm:2.10.6"
     hardhat: "npm:^2.19.0"
     solidity-docgen: "npm:^0.6.0-beta.36"
     typechain: "npm:^8.3.2"
@@ -3900,7 +3900,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.10.6, @usecannon/builder@npm:^2.10.6":
+"@usecannon/builder@npm:2.10.6":
   version: 2.10.6
   resolution: "@usecannon/builder@npm:2.10.6"
   dependencies:
@@ -3921,7 +3921,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.10.7":
+"@usecannon/builder@npm:^2.10.6, @usecannon/builder@npm:^2.10.7":
   version: 2.10.7
   resolution: "@usecannon/builder@npm:2.10.7"
   dependencies:
@@ -3942,7 +3942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:2.10.6, @usecannon/cli@npm:^2.10.6":
+"@usecannon/cli@npm:2.10.6":
   version: 2.10.6
   resolution: "@usecannon/cli@npm:2.10.6"
   dependencies:
@@ -3969,7 +3969,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.9.11":
+"@usecannon/cli@npm:^2.10.6":
   version: 2.10.7
   resolution: "@usecannon/cli@npm:2.10.7"
   dependencies:
