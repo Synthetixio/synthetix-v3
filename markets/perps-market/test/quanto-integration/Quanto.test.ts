@@ -6,10 +6,9 @@ import assert from 'assert/strict';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 import { wei } from '@synthetixio/wei';
-import { OpenPositionData, openPosition } from '../integration/helpers';
+import { OpenPositionData, openPosition, getQuantoPnl } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
-const sUSDSynthId = 0;
 describe('Quanto', () => {
   const accountIds = [10, 20];
   const oneETH = wei(1);
@@ -143,7 +142,7 @@ describe('Quanto', () => {
           name: 'Ether',
           token: 'ETH',
           price: bn(2_000),
-        }
+        },
       },
     ];
 
@@ -208,7 +207,7 @@ describe('Quanto', () => {
     before('open positions', async () => {
       const positionSizes = [
         // 2 BTC long position
-        bn(2)
+        bn(2),
       ];
 
       await openPosition({
@@ -255,8 +254,8 @@ describe('Quanto', () => {
         const ethSpotMarketId = synthMarkets()[0].marketId();
 
         [initialMarginReq] = await systems()
-        .PerpsMarket.connect(trader1())
-        .getRequiredMargins(trader1AccountId);
+          .PerpsMarket.connect(trader1())
+          .getRequiredMargins(trader1AccountId);
         // available margin = collateral value + pnl = $19000
         const withdrawAmt = bn(20_000).sub(initialMarginReq).mul(-1).div(2000);
 
@@ -299,23 +298,25 @@ describe('Quanto', () => {
 
         // check the pnl
         const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader1AccountId);
-        assertBn.notEqual(
-          availableMargin,
-          classicPayoutMargin
-        );
+        assertBn.notEqual(availableMargin, classicPayoutMargin);
       });
 
       it('has correct margin based on quanto perps payout', async () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
-        const quantoPnl = bn(10_000).mul(2).mul(2); // $40k profit
-        const expectedMargin = expectedCollateral.add(quantoPnl);
+
+        const quantoPnl = getQuantoPnl({
+          baseAssetStartPrice: 30_000,
+          baseAssetEndPrice: 40_000,
+          quantoAssetStartPrice: 2_000,
+          quantoAssetEndPrice: 4_000,
+          baseAssetSizeDelta: 2,
+        });
+
+        const expectedMargin = expectedCollateral.add(bn(quantoPnl));
 
         // check the pnl
         const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader1AccountId);
-        assertBn.equal(
-          availableMargin,
-          expectedMargin
-        );
+        assertBn.equal(availableMargin, expectedMargin);
       });
     });
   });
