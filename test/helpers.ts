@@ -57,13 +57,16 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
 
   // Provision collateral and approve for access.
   const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, gTrader);
-
-  // Perform the deposit.
-  await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-    trader.accountId,
-    market.marketId(),
-    collateral.synthMarketId(),
-    collateralDepositAmount
+  await withExplicitEvmMine(
+    () =>
+      // Perform the deposit.
+      PerpMarketProxy.connect(trader.signer).modifyCollateral(
+        trader.accountId,
+        market.marketId(),
+        collateral.synthMarketId(),
+        collateralDepositAmount
+      ),
+    bs.provider()
   );
 
   return gTrader;
