@@ -111,7 +111,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     // TODO: add interface
     function getQuantoSynthMarket(
         uint128 marketId
-    ) external view returns (uint256) {
+    ) external view returns (uint128) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         return config.quantoSynthMarketId;
     }

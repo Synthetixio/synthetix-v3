@@ -82,7 +82,7 @@ library PerpsMarketConfiguration {
         /**
          * @dev The Synth Market Id for the quanto asset for this market
          */
-        uint256 quantoSynthMarketId;
+        uint128 quantoSynthMarketId;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
