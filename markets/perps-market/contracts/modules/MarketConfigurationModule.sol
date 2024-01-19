@@ -94,6 +94,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit OrderFeesSet(marketId, makerFeeRatio, takerFeeRatio);
     }
 
+    // TODO: remove this
+    // TODO: potentially update how this is set
+    // TODO: add interface
+    function setQuantoSynthMarket(
+        uint128 marketId,
+        uint128 quantoSynthMarketId
+    ) external {
+        OwnableStorage.onlyOwner();
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.quantoSynthMarketId = quantoSynthMarketId;
+    }
+
+    // TODO: remove this
+    // TODO: add interface
+    function getQuantoSynthMarket(
+        uint128 marketId
+    ) external view returns (uint256) {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        return config.quantoSynthMarketId;
+    }
+
     /**
      * @inheritdoc IMarketConfigurationModule
      */
