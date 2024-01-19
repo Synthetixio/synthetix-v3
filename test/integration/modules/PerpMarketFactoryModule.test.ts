@@ -160,7 +160,7 @@ describe('PerpMarketFactoryModule', () => {
 
   describe('getMarketDigest', () => {
     describe('{fundingRate,fundingVelocity}', () => {
-      const depostMarginToTraders = async (
+      const depositMarginToTraders = async (
         traders: Trader[],
         market: Market,
         collateral: Collateral,
@@ -178,7 +178,59 @@ describe('PerpMarketFactoryModule', () => {
           );
         }
       };
+      it('should have 0 velocity if skew is small enough', async () => {
+        const { PerpMarketProxy } = systems();
+        const market = genOneOf(markets());
+        const { minPSkewFundingVelocity, skewScale } = await PerpMarketProxy.getMarketConfigurationById(
+          market.marketId()
+        );
+        const minSkewFundingVelocity = wei(minPSkewFundingVelocity).mul(skewScale);
 
+        const { answer: marketPrice } = await market.aggregator().latestRoundData();
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: minSkewFundingVelocity.abs().mul(marketPrice).mul(2).toNumber(),
+          })
+        );
+
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          // Make sure the initial funding velocity is not zero
+          desiredSize: bn(
+            genNumber(minSkewFundingVelocity.abs().toNumber(), minSkewFundingVelocity.abs().mul(2).toNumber())
+          ),
+        });
+        await commitAndSettle(bs, marketId, trader, order);
+
+        const { fundingVelocity } = await PerpMarketProxy.getMarketDigest(marketId);
+        // Assert fundingVelocity is not zero
+        assertBn.notEqual(fundingVelocity, bn(0));
+
+        const skewNeededForZeroVelocity = wei(minSkewFundingVelocity).sub(order.sizeDelta).abs();
+
+        const secondOrderSizeAbs = minSkewFundingVelocity.gt(0)
+          ? genNumber(skewNeededForZeroVelocity.toNumber(), wei(order.sizeDelta).abs().toNumber())
+          : genNumber(wei(order.sizeDelta).abs().toNumber(), skewNeededForZeroVelocity.toNumber());
+        const orderSize = order.sizeDelta.gt(0) ? secondOrderSizeAbs * -1 : secondOrderSizeAbs;
+        const sizeWorth50Dollar = wei(order.sizeDelta.gt(0) ? -50 : 50)
+          .div(marketPrice)
+          .toNumber();
+
+        // Add 50 dollar extra to the size, to avoid creating exactly the same skew and to avoid NilOrder
+        const orderSizeWithBuffers = bn(orderSize + sizeWorth50Dollar);
+        await commitAndSettle(
+          bs,
+          marketId,
+          trader,
+          genOrder(bs, market, collateral, collateralDepositAmount, {
+            desiredSize: orderSizeWithBuffers,
+          })
+        );
+        const { fundingVelocity: fundingVelocity1 } = await PerpMarketProxy.getMarketDigest(marketId);
+
+        assertBn.equal(fundingVelocity1, 0);
+      });
       it('should compute current funding rate relative to time (concrete)', async () => {
         // This test is pulled directly from a concrete example developed for PerpsV2.
         //
@@ -234,7 +286,7 @@ describe('PerpMarketFactoryModule', () => {
         ];
 
         // Deposit margin into each trader's account before opening trades.
-        await depostMarginToTraders(
+        await depositMarginToTraders(
           trades.map(({ account }) => account),
           market,
           collateral,
@@ -271,31 +323,45 @@ describe('PerpMarketFactoryModule', () => {
 
       it('should demonstrate a balance market can have a non-zero funding', async () => {
         const { PerpMarketProxy } = systems();
-
         const market = genOneOf(markets());
-        const collateral = genOneOf(collaterals());
-        const trader1 = traders()[0];
-        const trader2 = traders()[1];
+        const { minPSkewFundingVelocity, skewScale } = await PerpMarketProxy.getMarketConfigurationById(
+          market.marketId()
+        );
+        const minSkewFundingVelocity = wei(minPSkewFundingVelocity).mul(skewScale);
 
-        // Deposit margin into each trader's account before opening trades.
-        await depostMarginToTraders(
-          [trader1, trader2],
-          market,
+        const { answer: marketPrice } = await market.aggregator().latestRoundData();
+        const {
+          trader: trader1,
           collateral,
-          500_000 // 500k USD margin
+          collateralDepositAmount,
+        } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: minSkewFundingVelocity.mul(marketPrice).mul(2).toNumber(),
+          })
         );
 
-        // Open a position for trader1.
-        const sizeDelta = bn(genOneOf([genNumber(1, 10), genNumber(-10, -1)]));
+        const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: bn(genNumber(minSkewFundingVelocity.toNumber(), minSkewFundingVelocity.mul(2).toNumber())),
+        });
 
-        const order1 = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
         await commitAndSettle(bs, market.marketId(), trader1, order1);
         await fastForwardBySec(provider(), genNumber(15_000, 30_000));
 
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
-        assert.notEqual(d1.fundingRate.toString(), '0');
 
-        const order2 = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
+        assert.notEqual(d1.fundingRate.toString(), '0');
+        const { trader: trader2 } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: minSkewFundingVelocity.mul(marketPrice).mul(2).toNumber(),
+          })
+        );
+        const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: order1.sizeDelta.mul(-1),
+        });
         await commitAndSettle(bs, market.marketId(), trader2, order2);
         await fastForwardBySec(provider(), genNumber(15_000, 30_000));
 
@@ -340,19 +406,36 @@ describe('PerpMarketFactoryModule', () => {
           })
         );
 
+        const { minPSkewFundingVelocity, skewScale } = await PerpMarketProxy.getMarketConfigurationById(
+          market.marketId()
+        );
+        const minSkewFundingVelocity = wei(minPSkewFundingVelocity).mul(skewScale);
+
         // Go short.
-        const order1 = await genOrderFromSizeDelta(bs, market, bn(genNumber(-10, -1)), {
-          desiredKeeperFeeBufferUsd: 0,
-        });
+        const order1 = await genOrderFromSizeDelta(
+          bs,
+          market,
+          bn(genNumber(minSkewFundingVelocity.toNumber(), minSkewFundingVelocity.mul(2).toNumber())).mul(-1),
+          {
+            desiredKeeperFeeBufferUsd: 0,
+          }
+        );
         await commitAndSettle(bs, market.marketId(), trader, order1);
         await fastForwardBySec(provider(), SECONDS_ONE_DAY);
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
         assertBn.lt(d1.fundingRate, bn(0));
 
         // Go long.
-        const order2 = await genOrderFromSizeDelta(bs, market, bn(genNumber(11, 20)), {
-          desiredKeeperFeeBufferUsd: 0,
-        });
+
+        const minSkewFundingVelocityDelta = wei(order1.sizeDelta).abs().add(minSkewFundingVelocity);
+        const order2 = await genOrderFromSizeDelta(
+          bs,
+          market,
+          bn(genNumber(minSkewFundingVelocityDelta.toNumber(), minSkewFundingVelocityDelta.mul(2).toNumber())),
+          {
+            desiredKeeperFeeBufferUsd: 0,
+          }
+        );
         await commitAndSettle(bs, market.marketId(), trader, order2);
         await fastForwardBySec(provider(), SECONDS_ONE_DAY);
         const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
