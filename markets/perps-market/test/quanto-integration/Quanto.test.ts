@@ -206,7 +206,7 @@ describe.only('Quanto', () => {
       it('has correct margin based on quanto perps payout', async () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
 
-        const quantoPnl = getQuantoPnl({
+        const quantoPnl = getQuantoPnl({ // 10k * 2 * 2 = $40k profit
           baseAssetStartPrice: 30_000,
           baseAssetEndPrice: 40_000,
           quantoAssetStartPrice: 2_000,
