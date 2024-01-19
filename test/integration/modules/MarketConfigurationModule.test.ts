@@ -81,6 +81,7 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
       assertBn.equal(specific.skewScale, config.skewScale);
+      assertBn.equal(specific.minPSkewFundingVelocity, config.minPSkewFundingVelocity);
       assertBn.equal(specific.minCreditPercent, config.minCreditPercent);
       assertBn.equal(specific.minMarginUsd, config.minMarginUsd);
       assertBn.equal(specific.minMarginRatio, config.minMarginRatio);
