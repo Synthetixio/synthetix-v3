@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert/strict';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 import { wei } from '@synthetixio/wei';
@@ -10,7 +10,7 @@ import { OpenPositionData, openPosition, getQuantoPnl } from '../integration/hel
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
 const sUSDSynthId = 0;
-describe('Quanto', () => {
+describe.only('Quanto', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
@@ -51,7 +51,7 @@ describe('Quanto', () => {
     ];
     const traderAccountIds = [2, 3];
     const trader1AccountId = traderAccountIds[0];
-    const { systems, provider, trader1, perpsMarkets, synthMarkets, owner } = bootstrapMarkets({
+    const { systems, provider, trader1, perpsMarkets, synthMarkets } = bootstrapMarkets({
       synthMarkets: spotMarketConfig,
       perpsMarkets: perpsMarketConfigs,
       liquidationGuards: {
@@ -121,6 +121,11 @@ describe('Quanto', () => {
           ethSpotMarketId
         );
       });
+      it('has quanto feed id set', async () => {
+        const btcPerpsMarketId = perpsMarkets()[0].marketId();
+        const quantoFeedId = await systems().PerpsMarket.getQuantoFeedId(btcPerpsMarketId);
+        assert(quantoFeedId.length > 0);
+      });
       it('should have correct open interest', async () => {
         const expectedOi = 60_000; // 2 BTC * 30k
         assertBn.equal(
@@ -181,6 +186,7 @@ describe('Quanto', () => {
       });
 
       before('eth pumps', async () => {
+        // TODO: adjust bootstrap so that the same aggregator/oracle is used for the spot market and the perps market
         // update eth price on perps market (effects USD pnl)
         await perpsMarkets()[0].quantoAggregator().mockSetCurrentPrice(bn(4_000));
         // update eth price on synth market (effects collateral value)

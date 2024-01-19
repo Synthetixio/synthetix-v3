@@ -94,8 +94,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit OrderFeesSet(marketId, makerFeeRatio, takerFeeRatio);
     }
 
-    // TODO: remove this
     // TODO: potentially update how this is set
+    // It may be better that setQuantoFeedId is updated in the same function call?
+    // There should be some way to ensure that both or neither are set, and that they match up
     // TODO: add interface
     function setQuantoSynthMarket(
         uint128 marketId,

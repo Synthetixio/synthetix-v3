@@ -113,7 +113,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  // TODO: remove this
+  // TODO: think about a better way to set this
   before('set quanto markets', async () => {
     for (const { requestedMarketId, quanto } of data.perpsMarkets) {
       if (typeof(quanto?.quantoSynthMarketIndex) == 'number') {
