@@ -205,11 +205,17 @@ describe('SpotMarketFactory', () => {
       );
     });
 
-    it('nominateMarketOwner nominate a new owner for the pool', async () => {
+    it('nominateMarketOwner nominate a new owner for the market', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .nominateMarketOwner(1, await newMarketOwner.getAddress()),
-        'OnlyMarketOwner';
+        .nominateMarketOwner(1, await newMarketOwner.getAddress());
+    });
+
+    it('check nominated market owner address', async () => {
+      assert.equal(
+        await systems().SpotMarket.getNominatedMarketOwner(1),
+        await newMarketOwner.getAddress()
+      );
     });
 
     it('only the nominated user can accept', async () => {
