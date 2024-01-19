@@ -1,7 +1,6 @@
-name = "synthetix-governance"
+name = "synthetix-governance-satellite"
 description = "On-chain voting for synthetix councils - Logic for satellite chains"
 version = "<%= package.version %>"
-preset = "satellite"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
 [setting.initial_epoch_index]
