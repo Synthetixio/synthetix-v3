@@ -80,7 +80,7 @@ library PerpMarket {
     }
 
     struct GlobalData {
-        // Array all market ids in the system
+        // Array of all market ids in the system
         uint128[] activeMarketIds;
     }
 
@@ -258,9 +258,12 @@ library PerpMarket {
         if (skewScale == 0) {
             return 0;
         }
-
-        // Ensures the proportionalSkew is between -1 and 1.
+        // proportional skew
         int256 pSkew = self.skew.divDecimal(skewScale);
+        if (MathUtil.abs(pSkew) < marketConfig.minPSkewFundingVelocity) {
+            return 0;
+        }
+        // Ensures the proportionalSkew is between -1 and 1.
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
