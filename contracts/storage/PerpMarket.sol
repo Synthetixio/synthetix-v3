@@ -52,7 +52,7 @@ library PerpMarket {
         uint128 size;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
-        // The value (in native units) of total market funding accumulated.
+        // The value (in USD) of total market funding accumulated.
         int256 currentFundingAccruedComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
