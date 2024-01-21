@@ -412,8 +412,9 @@ library Position {
         int128 positionSize,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 mm) {
-        (, mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
+    ) internal view returns (uint256) {
+        (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
+        return mm;
     }
 
     /**

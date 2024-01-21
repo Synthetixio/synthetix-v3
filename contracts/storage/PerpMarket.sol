@@ -172,7 +172,7 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 price,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint128 utilization) {
+    ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
         uint256 delegatedCollateralValueUsd = withdrawableUsd - getTotalCollateralValueUsd(self);
@@ -203,9 +203,7 @@ library PerpMarket {
         }
     }
 
-    function getUnrecordedUtilization(
-        PerpMarket.Data storage self
-    ) internal view returns (uint256 unrecordedUtilization) {
+    function getUnrecordedUtilization(PerpMarket.Data storage self) internal view returns (uint256) {
         return self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
     }
 
