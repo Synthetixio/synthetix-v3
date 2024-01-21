@@ -1,5 +1,5 @@
 import { BigNumber, utils, Signer, constants } from 'ethers';
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
@@ -10,6 +10,7 @@ import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
+import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
@@ -21,6 +22,8 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   PythMock: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
+  WstETHMock: WstETHMock;
+  StEthToEthMock: AggregatorV3Mock;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -40,6 +43,8 @@ export interface Contracts {
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
   AggregatorV3Mock: AggregatorV3Mock;
+  WstETHMock: WstETHMock;
+  StEthToEthMock: AggregatorV3Mock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -80,12 +85,12 @@ export interface PerpCollateral {
   synthAddress: () => string;
   oracleNodeId: () => string;
   rewardDistributorAddress: () => string;
-  getPrice: () => ReturnType<AggregatorV3Mock['latestRoundData']>;
+  getPrice: () => Promise<BigNumber>;
   setPrice: (price: BigNumber) => Promise<void>;
 }
 
 export const bootstrap = (args: GeneratedBootstrap) => {
-  const { getContract, getSigners, getProvider } = _bootstraped;
+  const { getContract, getSigners, getExtras, getProvider } = _bootstraped;
 
   before(restoreSnapshot);
 
@@ -100,7 +105,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
-      Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
+      // @ts-ignore
+      Synth: (address: string) => getContract('spotMarket.SynthRouter', address), // Misaligned types from spotMarket type compilation.
       // Difference between this and `Collateral{2}Mock`?
       //
       // `Collateral{2}Mock` is defined by a `cannon.test.toml` which isn't available here. Both mocks below
@@ -109,6 +115,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
       CollateralMock: getContract('CollateralMock'),
       Collateral2Mock: getContract('Collateral2Mock'),
+      WstETHMock: getContract('WstETHMock'),
+      StEthToEthMock: getContract('StEthToEthMock'),
     };
   });
 
@@ -118,6 +126,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     signers: () => getSigners(),
     owner: () => getOwner(),
     systems: () => systems,
+    extras: () => getExtras(),
   };
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
@@ -176,6 +185,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     before(`provision market price oracle nodes - ${readableName}`, async () => {
       // The market has its own price e.g. ETH/USD. This oracle node is for that.
+      //
+      // NOTE: For testing simplicity, every market's oracle node is a Chainlink aggregator.
       const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
         getOwner(),
         initialPrice,
@@ -290,7 +301,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         // still be referenced via `collateral.synthMarket.buyAggregator()`.
         //
         // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
-        getPrice: () => synthMarket.sellAggregator().latestRoundData(),
+        getPrice: async () => (await synthMarket.sellAggregator().latestRoundData()).answer,
         // Why `setPrice`?
         //
         // If you only update the price of the sell aggregator, and try to close a losing position things might fail.
@@ -317,7 +328,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       synthAddress: () => systems.USD.address,
       oracleNodeId: () => formatBytes32String(''),
       rewardDistributorAddress: () => rewardDistributors[0],
-      getPrice: () => sUsdAggregator.latestRoundData(),
+      getPrice: () => Promise.resolve(bn(1)),
       setPrice: async (price: BigNumber) => {
         await sUsdAggregator.mockSetCurrentPrice(price);
       },

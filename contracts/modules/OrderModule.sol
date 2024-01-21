@@ -233,7 +233,12 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
+        // NOTE: It's critical this step to parse and update Pyth prices is performed at the beginning of settlement.
+        //
+        // There are downstream operations both within this market but also in other markets (that share the same oracle)
+        // which rely on the most recent price available for access.
         runtime.pythPrice = PythUtil.parsePythPrice(globalConfig, marketConfig, order.commitmentTime, priceUpdateData);
+
         runtime.fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, runtime.pythPrice);
         runtime.params = Position.TradeParams(
             order.sizeDelta,

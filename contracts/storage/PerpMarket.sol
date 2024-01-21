@@ -291,7 +291,7 @@ library PerpMarket {
     function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
-        //  - velocity          = proportionalSkew * maxFundingVelocity
+        //  - velocity         = proportionalSkew * maxFundingVelocity
         //
         // example:
         //  - fundingRate         = 0

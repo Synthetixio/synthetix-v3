@@ -22,6 +22,7 @@ import {
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
+  getPythPriceDataByMarketId,
   isSusdCollateral,
   setMarketConfiguration,
   withExplicitEvmMine,
@@ -49,7 +50,7 @@ describe('OrderModule Cancelations', () => {
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -76,7 +77,7 @@ describe('OrderModule Cancelations', () => {
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -94,7 +95,7 @@ describe('OrderModule Cancelations', () => {
       const { trader, marketId } = await genTrader(bs);
       const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
-      const { updateData } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, updateData), `OrderNotFound()`);
     });
@@ -114,7 +115,7 @@ describe('OrderModule Cancelations', () => {
       );
       const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
-      const { updateData } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, updateData), `OrderNotReady()`);
     });
@@ -148,8 +149,9 @@ describe('OrderModule Cancelations', () => {
         ]).toFixed(3)
       );
 
+      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, pythPrice);
+      const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, priceFeedId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -183,7 +185,7 @@ describe('OrderModule Cancelations', () => {
       );
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(genNumber(expireTime, expireTime * 2), provider());
-      const { updateData } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(
         PerpMarketProxy.connect(tradersGenerator.next().value.signer).cancelOrder(
@@ -210,7 +212,7 @@ describe('OrderModule Cancelations', () => {
       );
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
       const fillPrice = await PerpMarketProxy.getFillPrice(marketId, order.sizeDelta);
       await assertRevert(
         PerpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData, { value: updateFee }),
@@ -237,7 +239,7 @@ describe('OrderModule Cancelations', () => {
       );
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
@@ -299,7 +301,7 @@ describe('OrderModule Cancelations', () => {
 
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);

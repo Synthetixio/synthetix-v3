@@ -13,8 +13,8 @@ library PythUtil {
     using SafeCastI256 for int256;
 
     /**
-     * @dev parses the result from the offchain lookup data and returns the offchain price plus order and settlementStrategy.
-     * @notice parsePriceFeedUpdates will revert if the price timestamp is outside the acceptable window.
+     * @dev Parse and update `priceUpdateData` relative to min/max publishTimes defined in config.
+     * @notice This function will revert if the price timestamp is outside the acceptable window (pythPublicTime{Min,Max}).
      */
     function parsePythPrice(
         PerpMarketConfiguration.GlobalData storage globalConfig,
@@ -28,6 +28,10 @@ library PythUtil {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = priceUpdateData;
 
+        // NOTE: `unique` fn suffix is important here as it ensures the `prevPublishTime` in `priceUpdateData` is also
+        // gt (not gte) `now + minTime`.
+        //
+        // `parsePrice` also performs an update to store new price if necessary.
         PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdatesUnique{
             value: msg.value
         }(

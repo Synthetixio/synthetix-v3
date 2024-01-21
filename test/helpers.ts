@@ -1,10 +1,10 @@
-import { BigNumber, Contract, ContractReceipt, ethers, utils, providers } from 'ethers';
+import { BigNumber, Contract, ContractReceipt, ethers, utils, providers, Signer } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { genNumber, raise } from './generators';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { isNil, uniq } from 'lodash';
+import { uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
@@ -20,28 +20,43 @@ export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 
 // --- Mutative helpers --- //
 
-/** A generalised mint/approve without accepting a generated trader. */
-export const mintAndApprove = async (
-  { provider, systems }: Bs,
-  collateral: Collateral,
-  amount: BigNumber,
-  to: ethers.Signer
+export const withImpersonate = async (
+  { provider }: Pick<Bs, 'provider'>,
+  address: string,
+  f: <A>(owner: Signer) => Promise<A | void>
 ) => {
+  const p = provider();
+
+  await p.send('anvil_impersonateAccount', [address]);
+  const owner = p.getSigner(address);
+
+  const res = await f(owner);
+  // NOTE: `anvil_stopImpersonatingAccount` results in GC and heap errs.
+  //
+  // await p.send('anvil_stopImpersonatingAccount', [owner]);
+
+  return res;
+};
+
+/** A generalised mint/approve without accepting a generated trader. */
+export const mintAndApprove = async (bs: Bs, collateral: Collateral, amount: BigNumber, to: ethers.Signer) => {
+  const { systems, provider } = bs;
   const { PerpMarketProxy, SpotMarket } = systems();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
   const synth = collateral.contract;
   const synthOwnerAddress = await synth.owner();
 
-  await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
-  const synthOwner = provider().getSigner(synthOwnerAddress);
-  await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
+  return withImpersonate(bs, synthOwnerAddress, async (owner: Signer) => {
+    const synthOwner = provider().getSigner(synthOwnerAddress);
+    await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
 
-  await synth.connect(synthOwner).mint(to.getAddress(), amount);
-  await synth.connect(to).approve(PerpMarketProxy.address, amount);
-  await synth.connect(to).approve(SpotMarket.address, amount);
+    await synth.connect(synthOwner).mint(to.getAddress(), amount);
+    await synth.connect(to).approve(PerpMarketProxy.address, amount);
+    await synth.connect(to).approve(SpotMarket.address, amount);
 
-  return synth;
+    return synth;
+  });
 };
 
 /** Provision margin for this trader given the full `gTrader` context. */
@@ -71,7 +86,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
 
 /** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
-  { systems, owner }: Bs,
+  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
   marketId: BigNumber,
   params: Partial<PerpMarketConfiguration.DataStruct>
 ) => {
@@ -83,7 +98,7 @@ export const setMarketConfigurationById = async (
 
 /** Generic update on global market data (similar to setMarketConfigurationById). */
 export const setMarketConfiguration = async (
-  { systems, owner }: Bs,
+  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
   params: Partial<PerpMarketConfiguration.GlobalDataStruct>
 ) => {
   const { PerpMarketProxy } = systems();
@@ -93,32 +108,45 @@ export const setMarketConfiguration = async (
 };
 
 /** Returns a Pyth updateData blob and the update fee in wei. */
-export const getPythPriceData = async (
-  { systems }: Bs,
+export const getPythPriceDataByMarketId = async (
+  bs: Bs,
   marketId: BigNumber,
   publishTime?: number,
-  price?: number,
   priceExpo = 6,
   priceConfidence = 1
 ) => {
-  const { PythMock, PerpMarketProxy } = systems();
+  const { PerpMarketProxy } = bs.systems();
 
   // Default price to the current market oraclePrice.
-  if (isNil(price)) {
-    price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
-  }
+  const price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
 
+  // Use the pythPriceFeedId from the market if priceFeedId not provided.
+  const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
+
+  return getPythPriceData(bs, price, priceFeedId, publishTime, priceExpo, priceConfidence);
+};
+
+/** Returns a Pyth updateData blob with your specified feedId and price. */
+export const getPythPriceData = async (
+  { systems }: Pick<Bs, 'systems'>,
+  price: number,
+  priceFeedId: string,
+  publishTime?: number,
+  priceExpo = 6,
+  priceConfidence = 1
+) => {
+  const { PythMock } = systems();
   const pythPrice = wei(price, priceExpo).toBN();
-  const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
   const updateData = await PythMock.createPriceFeedUpdateData(
-    config.pythPriceFeedId,
+    priceFeedId,
     pythPrice,
     priceConfidence,
     -priceExpo,
     pythPrice,
     priceConfidence,
     publishTime ?? Math.floor(Date.now() / 1000),
-    0
+    // @ts-ignore
+    0 // Misaligned types due to PythMock types not having compiled.
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };
@@ -149,7 +177,7 @@ export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketI
 
 /** Commits a generated `order` for `trader` on `marketId` */
 export const commitOrder = async (
-  { systems }: Bs,
+  { systems }: Pick<Bs, 'systems'>,
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>
@@ -172,7 +200,14 @@ export const commitAndSettle = async (
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>,
-  options?: { desiredKeeper?: ethers.Signer }
+  options?: {
+    desiredKeeper?: ethers.Signer;
+    // Why a function and not another desiredXXX primitive?
+    //
+    // Pyth data blob generation requires a publishTime. If we generate and pass a primitive _before_ invoking
+    // this function then the price would be too old and settlement would fail.
+    getPythData?: (publishTime: number) => ReturnType<typeof getPythPriceData>;
+  }
 ) => {
   const { systems, provider, keeper } = bs;
   const { PerpMarketProxy } = systems();
@@ -182,7 +217,10 @@ export const commitAndSettle = async (
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, provider());
 
-  const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+  const { updateData, updateFee } = options?.getPythData
+    ? await options.getPythData(publishTime)
+    : await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
   const settlementKeeper = options?.desiredKeeper ?? keeper();
 
   const { tx, receipt } = await withExplicitEvmMine(
@@ -192,12 +230,13 @@ export const commitAndSettle = async (
       }),
     provider()
   );
+
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
 };
 
-// This is still quite buggy in anvil so use with care...
+/** This is still quite buggy in anvil so use with care */
 export const setBaseFeePerGas = async (amountInGwei: number, provider: providers.JsonRpcProvider) => {
   await provider.send('anvil_setNextBlockBaseFeePerGas', ['0x' + (amountInGwei * 1e9).toString(16)]);
   return parseUnits(`${amountInGwei}`, 'gwei');
