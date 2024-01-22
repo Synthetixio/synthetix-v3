@@ -6,8 +6,6 @@ import {ISettlementHookModule} from "../interfaces/ISettlementHookModule.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 
 contract SettlementHookModule is ISettlementHookModule {
-    using SettlementHookConfiguration for SettlementHookConfiguration.GlobalData;
-
     // --- Mutative --- //
 
     /**

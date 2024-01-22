@@ -26,7 +26,7 @@ contract SettlementHookMock is ISettlementHook {
         shouldRevertOnSettlement = _shouldRevertOnSettlement;
     }
 
-    function onSettle() external {
+    function onSettle(uint128, uint128, int128, int128, uint256) external {
         if (msg.sender != market) {
             revert PermissionError(msg.sender);
         }

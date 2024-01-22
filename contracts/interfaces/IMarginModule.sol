@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./IBasePerpMarket.sol";
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
 interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //

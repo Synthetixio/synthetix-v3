@@ -14,9 +14,6 @@ interface ISettlementHookModule {
 
     // --- Events --- //
 
-    // @notice Emitted when an order is settled with a specified hook.
-    event SettlementHookInvoked(uint128 indexed accountId, uint128 marketId, address hook);
-
     // @notice Emitted when hooks are configured.
     event SettlementHookConfigured(address indexed from, uint256 hooks);
 

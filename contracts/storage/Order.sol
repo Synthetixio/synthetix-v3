@@ -23,6 +23,8 @@ library Order {
         uint256 limitPrice;
         // A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
         uint256 keeperFeeBufferUsd;
+        // Settlement hooks specified on commitment for invocation.
+        address[] hooks;
     }
 
     /**
@@ -121,5 +123,6 @@ library Order {
         self.limitPrice = data.limitPrice;
         self.sizeDelta = data.sizeDelta;
         self.keeperFeeBufferUsd = data.keeperFeeBufferUsd;
+        self.hooks = data.hooks;
     }
 }

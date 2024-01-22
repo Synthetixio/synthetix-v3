@@ -6,10 +6,12 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
+import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -119,6 +121,60 @@ contract OrderModule is IOrderModule {
     }
 
     /**
+     * @dev Validates that the hooks specified during commitment are valid and acceptable.
+     */
+    function validateOrderHooks(address[] memory hooks) private view {
+        uint256 length = hooks.length;
+
+        if (length == 0) {
+            return;
+        }
+
+        SettlementHookConfiguration.GlobalData storage config = SettlementHookConfiguration.load();
+
+        if (length > config.maxHooksPerOrderCommit) {
+            revert ErrorUtil.MaxHooksExceeded();
+        }
+
+        for (uint256 i = 0; i < length; ) {
+            if (!config.whitelisted[hooks[i]]) {
+                revert ErrorUtil.HookNotWhitelisted(hooks[i]);
+            }
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
+     * @dev Executes the hooks supplied in the order commitment.
+     */
+    function executeOrderHooks(
+        uint128 accountId,
+        uint128 marketId,
+        Order.Data storage order,
+        Position.Data memory newPosition,
+        uint256 fillPrice
+    ) private {
+        uint256 length = order.hooks.length;
+
+        if (length == 0) {
+            return;
+        }
+
+        for (uint256 i = 0; i < length; ) {
+            address hook = order.hooks[i];
+
+            ISettlementHook(hook).onSettle(accountId, marketId, order.sizeDelta, newPosition.size, fillPrice);
+            emit OrderSettlementHookExecuted(accountId, marketId, hook);
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
      * @dev Generic helper for funding recomputation during order management.
      */
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
@@ -170,25 +226,18 @@ contract OrderModule is IOrderModule {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd
+        uint256 keeperFeeBufferUsd,
+        address[] memory hooks
     ) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
-
-        /**
-         * TODO: Order commitments.
-         *
-         * Add additional arg hooks to commitOrder, storing details in Order.Data
-         * Verify address in hooks are whitelisted
-         * Verify # hooks do not exist # in config (can be done as part of validateTrade ???)
-         * On settlement, verify address again to double check if whitelisted (although probs safe not to)
-         * Invoke settlement with params ABC
-         */
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        validateOrderHooks(hooks);
 
         uint256 oraclePrice = market.getOraclePrice();
 
@@ -213,7 +262,7 @@ contract OrderModule is IOrderModule {
             )
         );
 
-        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
+        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks));
         emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
@@ -293,6 +342,9 @@ contract OrderModule is IOrderModule {
             runtime.pnl,
             runtime.fillPrice
         );
+
+        validateOrderHooks(order.hooks);
+        executeOrderHooks(accountId, marketId, order, runtime.trade.newPosition, runtime.fillPrice);
     }
 
     /**
