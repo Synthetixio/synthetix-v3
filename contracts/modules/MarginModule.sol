@@ -371,9 +371,9 @@ contract MarginModule is IMarginModule {
         for (uint i = 0; i < runtime.lengthBefore; ) {
             uint128 synthMarketId = runtime.previousSupportedSynthMarketIds[i];
 
-            // If collateral deposited have deposits, but is not in the new collateral list, revert.
-            // We do this to ensure that approvals for collateral in the system still exists.
-            // Worth noting that market owner can still set maxAllowable to 0 to disable deposits for the collateral.
+            // Removing a collateral with a non-zero deposit amount is _not_ allowed. To wind down a collateral,
+            // the market owner can set `maxAllowable=0` to disable deposits but to ensure traders can always withdraw
+            // their deposited collateral, we cannot remove the collateral if deposits still remain.
             if (isCollateralDeposited(synthMarketId) && !globalMarginConfig.supported[synthMarketId].exists) {
                 revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
             }
