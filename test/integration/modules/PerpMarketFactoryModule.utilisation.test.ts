@@ -3,7 +3,7 @@ import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
-import { commitAndSettle, depositMargin, setMarketConfigurationById } from '../../helpers';
+import { commitAndSettle, depositMargin, setMarketConfiguration, setMarketConfigurationById } from '../../helpers';
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
@@ -17,6 +17,33 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const market = genOneOf(markets());
       const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
       assertBn.equal(marketDigest.utilizationRate, bn(0));
+    });
+
+    it('should handle utilization config set to 0', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
+
+      // Should not be 0 as our settlement has recomputed utilization
+      assertBn.notEqual(marketDigest.utilizationRate, bn(0));
+      // Set config values to 0
+      await setMarketConfiguration(bs, {
+        utilizationBreakpointPercent: 0,
+        lowUtilizationSlopePercent: 0,
+        highUtilizationSlopePercent: 0,
+      });
+      const marketDigest1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+      // Should not be 0 as utilization has not been recomputed yet
+      assertBn.notEqual(marketDigest1.utilizationRate, bn(0));
+
+      await PerpMarketProxy.recomputeUtilization(marketId);
+      const marketDigest2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+      // We now expect utilization to be 0
+      assertBn.equal(marketDigest2.utilizationRate, bn(0));
     });
 
     forEach(['lowUtilization', 'highUtilization']).it(
@@ -64,7 +91,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
         });
         await commitAndSettle(bs, marketId, trader, order);
 
-        // Check the utilization rate
+        // assert the utilization rate
         const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
         if (variant === 'lowUtilization') {
           const expectedRate = wei(lowUtilizationSlopePercent).mul(targetUtilizationPercent).mul(100);
