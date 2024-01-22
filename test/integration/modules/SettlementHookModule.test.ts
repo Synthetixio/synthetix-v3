@@ -8,6 +8,8 @@ describe('SettlementHookModule', () => {
 
     it('should add new hook and not change previously configured hooks');
 
+    it('should remove all whitelisted hooks');
+
     it('should revert when settlment hook does not support interface');
 
     it('should revert with non-owner');

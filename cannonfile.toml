@@ -69,8 +69,8 @@ args = []
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
 
-[contract.SettlementHookConfiguration]
-artifact = "SettlementHookConfiguration"
+[contract.SettlementHookModule]
+artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
 args = []
 
 # --- Distributor Contract --- #
@@ -103,7 +103,7 @@ contracts = [
   "OrderModule",
   "LiquidationModule",
   "PerpRewardDistributorFactoryModule",
-  "SettlementHookConfiguration"
+  "SettlementHookModule"
 ]
 depends = [
   "import.synthetix",
@@ -116,7 +116,7 @@ depends = [
   "contract.OrderModule",
   "contract.LiquidationModule",
   "contract.PerpRewardDistributorFactoryModule",
-  "contract.SettlementHookConfiguration"
+  "contract.SettlementHookModule"
 ]
 
 # --- Proxy Post Deployment --- #
