@@ -188,11 +188,6 @@ describe('PythWstEthNode', () => {
       });
       await setMarketConfiguration(bs, { minKeeperFeeUsd: bn(0), maxKeeperFeeUsd: bn(0) });
 
-      // (4) [TMP] Update the oracleNodeId (currently CL) to be the same price as the underlying ETH pythPrice.
-      //
-      // TODO: Change when oracleNodeId is always a Pyth price.
-      await market.aggregator().mockSetCurrentPrice(bn(ethPrice));
-
       // Open a position (1x long).
       const { trader, collateralDepositAmount } = await depositMargin(
         bs,
