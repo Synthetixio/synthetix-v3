@@ -467,6 +467,16 @@ describe('OrderModule', () => {
         'CanLiquidatePosition()'
       );
     });
+
+    describe('hooks', () => {
+      it('should commit with valid hooks');
+
+      it('should commit without hooks');
+
+      it('should revert when one or many hooks are not whitelisted');
+
+      it('should revert when too many hooks are supplied');
+    });
   });
 
   describe('settleOrder', () => {
@@ -1413,6 +1423,14 @@ describe('OrderModule', () => {
     it('should revert if pyth vaa merkle/blob is invalid');
 
     it('should revert when not enough wei is available to pay pyth fee');
+
+    describe('hooks', () => {
+      it('should settle and execute committed hooks');
+
+      it('should settle multiple committed hooks');
+
+      it('should revert settlement when a hook also reverts');
+    });
   });
 
   describe('getOrderFees', () => {
