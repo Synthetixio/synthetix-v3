@@ -6,9 +6,6 @@ import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contra
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
-/**
- * @dev A pending order that awaiting settlement for position modification.
- */
 library Order {
     using DecimalMath for uint256;
     using DecimalMath for int256;
