@@ -81,6 +81,10 @@ export const genBootstrap = () => ({
     minCollateralHaircut: bn(0.01),
     maxCollateralHaircut: bn(0.05),
     sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
+    hooks: {
+      whitelistedHookAddresses: [],
+      maxHooksPerOrderCommit: genNumber(1, 3),
+    },
   },
   markets: MARKETS,
 });

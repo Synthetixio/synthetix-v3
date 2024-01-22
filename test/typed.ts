@@ -1,5 +1,7 @@
+import { BigNumber } from 'ethers';
+import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
-import type { genOrder, genTrader } from './generators';
+import type { genOrder, genTrader, genBootstrap } from './generators';
 
 export type Bs = ReturnType<typeof bootstrap>;
 export type Collateral = ReturnType<Bs['collaterals']>[number];
@@ -11,3 +13,11 @@ export type CommitableOrder = Pick<
   Awaited<ReturnType<typeof genOrder>>,
   'sizeDelta' | 'limitPrice' | 'keeperFeeBufferUsd'
 >;
+
+export type FixedMarket = {
+  name: string;
+  initialPrice: BigNumber;
+  specific: IMarketConfigurationModule.ConfigureByMarketParametersStruct;
+};
+
+export type GeneratedBootstrap = ReturnType<typeof genBootstrap>;
