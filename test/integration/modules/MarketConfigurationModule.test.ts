@@ -24,7 +24,6 @@ describe('MarketConfigurationModule', async () => {
       );
       const config = await PerpMarketProxy.getMarketConfiguration();
 
-      assertBn.equal(config.priceDivergencePercent, global.priceDivergencePercent);
       assert.equal(config.pythPublishTimeMin, global.pythPublishTimeMin);
       assert.equal(config.pythPublishTimeMax, global.pythPublishTimeMax);
       assert.equal(config.minOrderAge, global.minOrderAge);

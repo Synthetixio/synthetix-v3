@@ -67,27 +67,6 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Ensures Pyth and CL prices do diverge too far.
-     *
-     *  e.g. A maximum of 3% price divergence with the following prices:
-     * (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
-     * (1800, 1750) ~ 2.857143% divergence => Ok
-     * (1854, 1800) ~ 3%        divergence => Ok
-     * (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
-     */
-    function isPriceDivergenceExceeded(
-        uint256 onchainPrice,
-        uint256 oraclePrice,
-        uint256 priceDivergencePercent
-    ) private pure returns (bool) {
-        uint256 priceDelta = onchainPrice > oraclePrice
-            ? onchainPrice.divDecimal(oraclePrice) - DecimalMath.UNIT
-            : oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
-
-        return priceDelta > priceDivergencePercent;
-    }
-
-    /**
      * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
@@ -103,18 +82,12 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotReady();
         }
 
-        uint256 onchainPrice = market.getOraclePrice();
-
         // Do not accept zero prices.
-        if (onchainPrice == 0 || params.oraclePrice == 0) {
+        if (params.oraclePrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
         if (isPriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice)) {
             revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
-        }
-
-        if (isPriceDivergenceExceeded(onchainPrice, params.oraclePrice, globalConfig.priceDivergencePercent)) {
-            revert ErrorUtil.PriceDivergenceExceeded(params.oraclePrice, onchainPrice);
         }
     }
 
@@ -341,10 +314,6 @@ contract OrderModule is IOrderModule {
             );
             uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
             uint256 onchainPrice = market.getOraclePrice();
-
-            if (isPriceDivergenceExceeded(onchainPrice, pythPrice, globalConfig.priceDivergencePercent)) {
-                revert ErrorUtil.PriceDivergenceExceeded(pythPrice, onchainPrice);
-            }
 
             if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
                 revert ErrorUtil.PriceToleranceNotExceeded(order.sizeDelta, fillPrice, order.limitPrice);
