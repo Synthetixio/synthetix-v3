@@ -128,7 +128,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     function onPositionUpdated(uint128, uint128, address, uint256) external pure {}
 
     /**
-     * @dev See {IERC165-supportsInterface}.
+     * @inheritdoc IERC165
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
         return interfaceId == type(IRewardDistributor).interfaceId || interfaceId == this.supportsInterface.selector;

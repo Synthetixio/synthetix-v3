@@ -37,7 +37,7 @@ library Margin {
     struct GlobalData {
         // {synthMarketId: CollateralType}.
         mapping(uint128 => CollateralType) supported;
-        // Array of supported synth spot market ids useable as collateral for margin.
+        // Array of supported synth ids useable as collateral for margin (use supported mapping)
         uint128[] supportedSynthMarketIds;
     }
 
