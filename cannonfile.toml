@@ -69,6 +69,10 @@ args = []
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
 
+[contract.SettlementHookConfiguration]
+artifact = "SettlementHookConfiguration"
+args = []
+
 # --- Distributor Contract --- #
 
 [contract.PerpRewardDistributor]
@@ -98,7 +102,8 @@ contracts = [
   "MarginModule",
   "OrderModule",
   "LiquidationModule",
-  "PerpRewardDistributorFactoryModule"
+  "PerpRewardDistributorFactoryModule",
+  "SettlementHookConfiguration"
 ]
 depends = [
   "import.synthetix",
@@ -110,7 +115,8 @@ depends = [
   "contract.MarginModule",
   "contract.OrderModule",
   "contract.LiquidationModule",
-  "contract.PerpRewardDistributorFactoryModule"
+  "contract.PerpRewardDistributorFactoryModule",
+  "contract.SettlementHookConfiguration"
 ]
 
 # --- Proxy Post Deployment --- #
@@ -176,6 +182,11 @@ args = [120, 1] # 120s, 1wei
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
+
+[contract.SettlementHookMock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+depends = ["contract.InitialPerpMarketProxy"]
 
 # --- Market Post BFP Deployment Configuration --- #
 
