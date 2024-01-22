@@ -84,7 +84,7 @@ describe('cross chain election testing', function () {
         await chain.SnapshotRecordMock.setBalanceOfOnPeriod(
           await voter[chainName].getAddress(),
           ethers.utils.parseEther('100'),
-          snapshotId1.add(1).toString()
+          snapshotId1.toString()
         );
         await chain.CoreProxy.prepareBallotWithSnapshot(
           chain.SnapshotRecordMock.address,
