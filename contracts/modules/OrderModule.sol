@@ -174,6 +174,16 @@ contract OrderModule is IOrderModule {
     ) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
+        /**
+         * TODO: Order commitments.
+         *
+         * Add additional arg hooks to commitOrder, storing details in Order.Data
+         * Verify address in hooks are whitelisted
+         * Verify # hooks do not exist # in config (can be done as part of validateTrade ???)
+         * On settlement, verify address again to double check if whitelisted (although probs safe not to)
+         * Invoke settlement with params ABC
+         */
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         if (market.orders[accountId].sizeDelta != 0) {
