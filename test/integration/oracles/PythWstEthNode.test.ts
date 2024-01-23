@@ -188,11 +188,6 @@ describe('PythWstEthNode', () => {
       });
       await setMarketConfiguration(bs, { minKeeperFeeUsd: bn(0), maxKeeperFeeUsd: bn(0) });
 
-      // (4) [TMP] Update the oracleNodeId (currently CL) to be the same price as the underlying ETH pythPrice.
-      //
-      // TODO: Change when oracleNodeId is always a Pyth price and/or if we remove `isPriceDivergenceExceeded`.
-      await market.aggregator().mockSetCurrentPrice(bn(ethPrice));
-
       // Open a position (1x long).
       const { trader, collateralDepositAmount } = await depositMargin(
         bs,
@@ -229,9 +224,6 @@ describe('PythWstEthNode', () => {
       // - 9.47368421 remains
       // - ~10% loss
       const nextEthPrice = ethPrice * 0.95;
-
-      // TODO: This also may not be needed after removing `isPriceDivergenceExceeded`.
-      await market.aggregator().mockSetCurrentPrice(bn(nextEthPrice));
 
       // Close the position, the settlement should update the price.
       const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
