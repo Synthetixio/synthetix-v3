@@ -14,6 +14,8 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {Flags} from "../utils/Flags.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint256;
@@ -165,6 +167,7 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function flagPosition(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.FLAG_POSITION);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
@@ -231,6 +234,8 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_POSITION);
+
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 

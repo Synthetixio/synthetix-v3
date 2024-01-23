@@ -16,6 +16,8 @@ import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {Flags} from "../utils/Flags.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -175,6 +177,8 @@ contract OrderModule is IOrderModule {
         uint256 keeperFeeBufferUsd,
         address[] memory hooks
     ) external {
+        FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
+        // TODO, noticed perps v3 does a sepearte check that the account exists. Maybe add a test to ensure this works
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -216,6 +220,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+        FeatureFlag.ensureAccessToFeature(Flags.SETTLE_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
@@ -328,6 +333,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
@@ -347,6 +353,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+        FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
 

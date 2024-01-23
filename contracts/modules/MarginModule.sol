@@ -14,6 +14,8 @@ import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {Flags} from "../utils/Flags.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -147,6 +149,7 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -249,6 +252,7 @@ contract MarginModule is IMarginModule {
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
+            FeatureFlag.ensureAccessToFeature(Flags.DEPOSIT);
             uint256 maxAllowable = collateral.maxAllowable;
             uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
 
@@ -260,6 +264,7 @@ contract MarginModule is IMarginModule {
             market.depositedCollateral[synthMarketId] += absAmountDelta;
             transferAndDeposit(marketId, absAmountDelta, synthMarketId, globalConfig);
         } else {
+            FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
                 revert ErrorUtil.InsufficientCollateral(

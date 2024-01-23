@@ -253,3 +253,11 @@ args = [
   "<%= contracts.PerpMarketProxy.address %>",
 ]
 depends = ['invoke.upgradeProxy']
+
+
+[invoke.enableAllFeatures]
+target = ["PerpMarketProxy"]
+func = "enableAllFeatures"
+from = "<%= settings.owner %>"
+
+
