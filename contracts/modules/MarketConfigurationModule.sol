@@ -60,7 +60,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
         config.skewScale = data.skewScale;
-        config.minPSkewFundingVelocity = data.minPSkewFundingVelocity;
+        config.fundingVelocityClamp = data.fundingVelocityClamp;
         config.minCreditPercent = data.minCreditPercent;
         config.minMarginUsd = data.minMarginUsd;
         config.minMarginRatio = data.minMarginRatio;

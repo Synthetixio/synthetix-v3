@@ -181,10 +181,8 @@ describe('PerpMarketFactoryModule', () => {
       it('should have 0 velocity if skew is small enough', async () => {
         const { PerpMarketProxy } = systems();
         const market = genOneOf(markets());
-        const { minPSkewFundingVelocity, skewScale } = await PerpMarketProxy.getMarketConfigurationById(
-          market.marketId()
-        );
-        const minSkewFundingVelocity = wei(minPSkewFundingVelocity).mul(skewScale);
+        const { fundingVelocityClamp, skewScale } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const minSkewFundingVelocity = wei(fundingVelocityClamp).mul(skewScale);
 
         const { answer: marketPrice } = await market.aggregator().latestRoundData();
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -324,10 +322,8 @@ describe('PerpMarketFactoryModule', () => {
       it('should demonstrate a balance market can have a non-zero funding', async () => {
         const { PerpMarketProxy } = systems();
         const market = genOneOf(markets());
-        const { minPSkewFundingVelocity, skewScale } = await PerpMarketProxy.getMarketConfigurationById(
-          market.marketId()
-        );
-        const minSkewFundingVelocity = wei(minPSkewFundingVelocity).mul(skewScale);
+        const { fundingVelocityClamp, skewScale } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const minSkewFundingVelocity = wei(fundingVelocityClamp).mul(skewScale);
 
         const { answer: marketPrice } = await market.aggregator().latestRoundData();
         const {
@@ -406,10 +402,8 @@ describe('PerpMarketFactoryModule', () => {
           })
         );
 
-        const { minPSkewFundingVelocity, skewScale } = await PerpMarketProxy.getMarketConfigurationById(
-          market.marketId()
-        );
-        const minSkewFundingVelocity = wei(minPSkewFundingVelocity).mul(skewScale);
+        const { fundingVelocityClamp, skewScale } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const minSkewFundingVelocity = wei(fundingVelocityClamp).mul(skewScale);
 
         // Go short.
         const order1 = await genOrderFromSizeDelta(
