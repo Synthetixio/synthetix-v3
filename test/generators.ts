@@ -231,6 +231,7 @@ export const genOrder = async (
     oraclePrice,
     orderFee,
     keeperFee,
+    hooks: [] as string[],
   };
 };
 
@@ -267,5 +268,6 @@ export const genOrderFromSizeDelta = async (
     oraclePrice,
     orderFee,
     keeperFee,
+    hooks: [] as string[],
   };
 };

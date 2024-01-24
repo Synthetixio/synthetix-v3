@@ -48,7 +48,7 @@ describe('MarginModule', async () => {
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
-    it('should revert when modifying if expired order exists ', async () => {
+    it('should revert when modifying if expired order exists', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -60,7 +60,8 @@ describe('MarginModule', async () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       // Verify that an order exists.
@@ -140,7 +141,8 @@ describe('MarginModule', async () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       // Verify that an order exists.

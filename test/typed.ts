@@ -11,7 +11,7 @@ export type Trader = ReturnType<Bs['traders']>[number];
 export type GeneratedTrader = ReturnType<typeof genTrader> | Awaited<ReturnType<typeof genTrader>>;
 export type CommitableOrder = Pick<
   Awaited<ReturnType<typeof genOrder>>,
-  'sizeDelta' | 'limitPrice' | 'keeperFeeBufferUsd'
+  'sizeDelta' | 'limitPrice' | 'keeperFeeBufferUsd' | 'hooks'
 >;
 
 export type FixedMarket = {

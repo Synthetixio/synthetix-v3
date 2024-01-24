@@ -46,7 +46,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -73,7 +74,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -111,7 +113,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
@@ -131,7 +134,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       // Retrieve on-chain configuration to generate a Pyth price that's above the divergence.
       const priceDivergencePercent = wei(
@@ -181,7 +185,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(genNumber(expireTime, expireTime * 2), provider());
@@ -208,7 +213,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
@@ -235,7 +241,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());
@@ -288,7 +295,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       // Update market price to be outside of tolerance.
@@ -348,7 +356,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const invalidMarketId = bn(42069);
@@ -370,7 +379,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const invalidAccountId = bn(42069);
@@ -397,7 +407,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       await assertRevert(PerpMarketProxy.cancelStaleOrder(trader.accountId, marketId), `OrderNotStale()`);
@@ -418,7 +429,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
@@ -440,7 +452,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());
