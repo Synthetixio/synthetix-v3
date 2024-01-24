@@ -49,9 +49,6 @@ artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 [contract.CollateralConfigurationModule]
 artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralConfigurationModule"
 
-[contract.CrossChainModule]
-artifact = "contracts/modules/core/CrossChainModule.sol:CrossChainModule"
-
 [contract.CrossChainUSDModule]
 artifact = "contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule"
 
@@ -99,7 +96,6 @@ contracts = [
     "CcipReceiverModule",
     "CollateralModule",
     "CollateralConfigurationModule",
-    "CrossChainModule",
     "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",

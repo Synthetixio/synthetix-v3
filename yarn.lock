@@ -2887,7 +2887,7 @@ __metadata:
     "@typechain/hardhat": "npm:^9.1.0"
     dotenv: "npm:^16.3.1"
     hardhat: "npm:^2.19.0"
-    hardhat-cannon: "npm:2.10.6"
+    hardhat-cannon: "npm:2.10.8-alpha.1"
     hardhat-contract-sizer: "npm:^2.10.0"
     hardhat-gas-reporter: "npm:^1.0.9"
     hardhat-ignore-warnings: "npm:^0.2.9"
@@ -3006,7 +3006,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/router": "npm:^3.3.0"
-    "@usecannon/cli": "npm:^2.9.11"
+    "@usecannon/cli": "npm:2.10.6"
     hardhat: "npm:^2.19.0"
     solidity-docgen: "npm:^0.6.0-beta.36"
     typechain: "npm:^8.3.2"
@@ -3177,7 +3177,7 @@ __metadata:
     "@synthetixio/router": "npm:^3.3.0"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.0"
-    hardhat-cannon: "npm:2.10.6"
+    hardhat-cannon: "npm:2.10.8-alpha.1"
     solidity-coverage: "npm:^0.8.5"
   languageName: unknown
   linkType: soft
@@ -3967,7 +3967,11 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@usecannon/cli@npm:^2.10.6, @usecannon/cli@npm:^2.9.11":
+=======
+"@usecannon/cli@npm:^2.10.7":
+>>>>>>> gov-3.0.0
   version: 2.10.7
   resolution: "@usecannon/cli@npm:2.10.7"
   dependencies:
@@ -8768,13 +8772,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:2.10.6":
-  version: 2.10.6
-  resolution: "hardhat-cannon@npm:2.10.6"
+"hardhat-cannon@npm:2.10.8-alpha.1":
+  version: 2.10.8-alpha.1
+  resolution: "hardhat-cannon@npm:2.10.8-alpha.1"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
-    "@usecannon/builder": "npm:^2.10.6"
-    "@usecannon/cli": "npm:^2.10.6"
+    "@usecannon/builder": "npm:^2.10.7"
+    "@usecannon/cli": "npm:^2.10.7"
     chalk: "npm:^4.1.2"
     debug: "npm:^4.3.3"
     ethers: "npm:^5.7.1"
@@ -8783,7 +8787,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ">=2.0.0"
     "@nomiclabs/hardhat-etherscan": ">=3.0.0"
     hardhat: ">=2.0.0"
-  checksum: 2c5f26796c6de79e013dce624b97138a5b1046888cd15f3f849fdef7827596bf6d4dea8eea8b7ffcf2c06b4fb6adc41bd712f52ed34cbe20a25249dd61f4de2b
+  checksum: cfbf71d1b4a04046a43a1f29aa7656f0d48ddc1a4c5f977bd4388dbc04cd6d11b7665509a6073206e99c3fe36b259d5010ae9dcd6e237746dad62dddadf55f25
   languageName: node
   linkType: hard
 
