@@ -11,6 +11,9 @@ contract SnapshotRecordMock is ISnapshotRecord {
     mapping(uint128 => Period) private _periods;
     mapping(uint128 => uint) private _totalSupplyOnPeriod;
 
+    // start at 1 to help the tests
+    uint128 public currentPeriodId = 1;
+
     function setBalanceOfOnPeriod(address user, uint balance, uint periodId) external {
         // solhint-disable-next-line numcast/safe-cast
         Period storage period = _periods[uint128(periodId)];
@@ -18,13 +21,9 @@ contract SnapshotRecordMock is ISnapshotRecord {
         period.balances[user] = balance;
     }
 
-    function balanceOfOnPeriod(
-        address user,
-        uint128 periodId
-    ) external view override returns (uint) {
-        Period storage period = _periods[periodId];
-
-        return period.balances[user];
+    function balanceOfOnPeriod(address user, uint periodId) external view override returns (uint) {
+        // solhint-disable-next-line numcast/safe-cast
+        Period storage period = _periods[uint128(periodId)];
     }
 
     // solhint-disable-next-line no-empty-blocks
@@ -36,7 +35,7 @@ contract SnapshotRecordMock is ISnapshotRecord {
         _totalSupplyOnPeriod[snapshotId] = totalSupply;
     }
 
-    function totalSupplyOnPeriod(uint128) external pure override returns (uint) {
+    function totalSupplyOnPeriod(uint) external pure override returns (uint) {
         return 0;
     }
 }
