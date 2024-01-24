@@ -3900,7 +3900,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.10.6, @usecannon/builder@npm:^2.10.6":
+"@usecannon/builder@npm:2.10.6":
   version: 2.10.6
   resolution: "@usecannon/builder@npm:2.10.6"
   dependencies:
@@ -3921,7 +3921,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.10.7":
+"@usecannon/builder@npm:^2.10.6, @usecannon/builder@npm:^2.10.7":
   version: 2.10.7
   resolution: "@usecannon/builder@npm:2.10.7"
   dependencies:
@@ -3942,7 +3942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:2.10.6, @usecannon/cli@npm:^2.10.6":
+"@usecannon/cli@npm:2.10.6":
   version: 2.10.6
   resolution: "@usecannon/cli@npm:2.10.6"
   dependencies:
@@ -3969,7 +3969,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.9.11":
+"@usecannon/cli@npm:^2.10.6, @usecannon/cli@npm:^2.9.11":
   version: 2.10.7
   resolution: "@usecannon/cli@npm:2.10.7"
   dependencies:
