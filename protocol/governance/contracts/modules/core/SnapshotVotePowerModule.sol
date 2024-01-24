@@ -41,8 +41,8 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             revert SnapshotAlreadyTaken(snapshotVotePowerEpoch.snapshotId);
         }
 
-        snapshotId = block.timestamp.to128();
-        ISnapshotRecord(snapshotContract).takeSnapshot(snapshotId);
+        snapshotId = ISnapshotRecord(snapshotContract).currentPeriodId();
+        ISnapshotRecord(snapshotContract).takeSnapshot(block.timestamp.to128());
 
         snapshotVotePowerEpoch.snapshotId = snapshotId;
     }

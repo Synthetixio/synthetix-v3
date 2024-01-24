@@ -189,8 +189,6 @@ describe('SynthetixElectionModule - Elections', () => {
             mothership.SnapshotRecordMock.address
           );
 
-          snapshotId = snapshotId.add(1);
-
           await mothership.CoreProxy.takeVotePowerSnapshot(mothership.SnapshotRecordMock.address);
 
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
@@ -224,8 +222,6 @@ describe('SynthetixElectionModule - Elections', () => {
             satellite1.SnapshotRecordMock.address
           );
 
-          snapshotId1 = snapshotId1.add(1);
-
           await satellite1.CoreProxy.takeVotePowerSnapshot(satellite1.SnapshotRecordMock.address);
 
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
@@ -258,8 +254,6 @@ describe('SynthetixElectionModule - Elections', () => {
           snapshotId2 = await satellite2.CoreProxy.callStatic.takeVotePowerSnapshot(
             satellite2.SnapshotRecordMock.address
           );
-
-          snapshotId2 = snapshotId2.add(1);
 
           await satellite2.CoreProxy.takeVotePowerSnapshot(satellite2.SnapshotRecordMock.address);
 
