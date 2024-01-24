@@ -3967,11 +3967,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
-"@usecannon/cli@npm:^2.10.6, @usecannon/cli@npm:^2.9.11":
-=======
 "@usecannon/cli@npm:^2.10.7":
->>>>>>> gov-3.0.0
   version: 2.10.7
   resolution: "@usecannon/cli@npm:2.10.7"
   dependencies:
