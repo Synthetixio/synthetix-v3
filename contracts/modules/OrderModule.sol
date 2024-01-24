@@ -138,7 +138,7 @@ contract OrderModule is IOrderModule {
 
         for (uint256 i = 0; i < length; ) {
             if (!config.whitelisted[hooks[i]]) {
-                revert ErrorUtil.HookNotWhitelisted(hooks[i]);
+                revert ErrorUtil.InvalidHook(hooks[i]);
             }
             unchecked {
                 ++i;

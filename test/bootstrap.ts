@@ -25,6 +25,7 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   WstETHMock: WstETHMock;
   StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
+  SettlementHook2Mock: SettlementHookMock;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -47,6 +48,7 @@ export interface Contracts {
   WstETHMock: WstETHMock;
   StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
+  SettlementHook2Mock: SettlementHookMock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -106,6 +108,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       WstETHMock: getContract('WstETHMock'),
       StEthToEthMock: getContract('StEthToEthMock'),
       SettlementHookMock: getContract('SettlementHookMock'),
+      SettlementHook2Mock: getContract('SettlementHook2Mock'),
     };
   });
 

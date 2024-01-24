@@ -1711,7 +1711,7 @@ describe('MarginModule', async () => {
       assert.equal(collaterals.length, 0);
     });
 
-    it('should revert when non-owners configuring collateral', async () => {
+    it('should revert when non-owner', async () => {
       const { PerpMarketProxy } = systems();
       const from = await traders()[0].signer.getAddress();
       await assertRevert(

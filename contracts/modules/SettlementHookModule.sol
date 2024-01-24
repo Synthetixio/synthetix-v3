@@ -1,9 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {ISettlementHookModule} from "../interfaces/ISettlementHookModule.sol";
+import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 contract SettlementHookModule is ISettlementHookModule {
     // --- Mutative --- //
@@ -29,7 +33,13 @@ contract SettlementHookModule is ISettlementHookModule {
         delete config.whitelistedHookAddresses;
 
         // Update with passed in configuration.
+        address currentHook;
+
         for (uint256 i = 0; i < hooksLengthAfter; ) {
+            currentHook = data.whitelistedHookAddresses[i];
+            if (!ERC165Helper.safeSupportsInterface(currentHook, type(ISettlementHook).interfaceId)) {
+                revert ErrorUtil.InvalidHook(currentHook);
+            }
             config.whitelisted[data.whitelistedHookAddresses[i]] = true;
             unchecked {
                 ++i;
