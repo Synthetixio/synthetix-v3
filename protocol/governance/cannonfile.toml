@@ -62,6 +62,7 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
+factory.CoreProxy.highlight = true
 
 [invoke.init_election_module]
 target = ["CoreProxy"]
