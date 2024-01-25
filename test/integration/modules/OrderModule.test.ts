@@ -180,10 +180,12 @@ describe('OrderModule', () => {
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, order);
-      // Update the market's maxMarketSize to be just slightly below (95%) sizeDelta. We .abs because order can be short.
       await setMarketConfigurationById(bs, marketId, {
         maxMarketSize: bn(0),
       });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      assertBn.equal(maxMarketSize, 0);
+
       // Increasing position fails
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).commitOrder(

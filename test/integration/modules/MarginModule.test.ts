@@ -248,15 +248,22 @@ describe('MarginModule', async () => {
         const { collateral, collateralDepositAmount, trader, market } = await depositMargin(bs, genTrader(bs));
 
         await setMarketConfigurationById(bs, market.marketId(), { maxMarketSize: bn(0) });
+        const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        assertBn.equal(maxMarketSize, bn(0));
+
         await mintAndApprove(bs, collateral, collateralDepositAmount, trader.signer);
         // Should also be able to deposit
-        const depositTx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          market.marketId(),
-          collateral.synthMarketId(),
-          collateralDepositAmount
+        const { receipt: depositReceipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              market.marketId(),
+              collateral.synthMarketId(),
+              collateralDepositAmount
+            ),
+          provider()
         );
-        const depositReceipt = await depositTx.wait();
+
         await assertEvent(depositReceipt, 'MarginDeposit', PerpMarketProxy);
       });
 
@@ -609,14 +616,22 @@ describe('MarginModule', async () => {
       it('should allow withdraw when market is in close only', async () => {
         const { PerpMarketProxy } = systems();
         const { collateral, trader, marketId, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-        // We should be able to  withdraw
-        const withdrawTx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-          trader.accountId,
-          marketId,
-          collateral.synthMarketId(),
-          wei(collateralDepositAmount).mul(-1).mul(genNumber(0.1, 1)).toBN()
+
+        await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+        const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+        assertBn.equal(maxMarketSize, bn(0));
+
+        const { receipt: withdrawReceipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarketId(),
+              collateralDepositAmount.mul(-1)
+            ),
+          provider()
         );
-        const withdrawReceipt = await withdrawTx.wait();
+
         await assertEvent(withdrawReceipt, 'MarginWithdraw', PerpMarketProxy);
       });
 
@@ -1095,12 +1110,15 @@ describe('MarginModule', async () => {
       it('should allow withdrawing all when market is in close only', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+        await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+        const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+        assertBn.equal(maxMarketSize, bn(0));
         // We should be able to  withdraw
-        const withdrawTx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
-          trader.accountId,
-          marketId
+        const { receipt: withdrawReceipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          provider()
         );
-        const withdrawReceipt = await withdrawTx.wait();
+
         await assertEvent(withdrawReceipt, 'MarginWithdraw', PerpMarketProxy);
       });
 

@@ -122,6 +122,12 @@ describe('LiquidationModule', () => {
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       assertBn.lte(healthFactor, bn(1));
+
+      await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+
+      assertBn.equal(maxMarketSize, 0);
+
       const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
         provider()
@@ -598,15 +604,22 @@ describe('LiquidationModule', () => {
       const newMarketOraclePrice = wei(order.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
-      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
 
       // Set market to close only
       await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      assertBn.equal(maxMarketSize, 0);
 
-      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
-      const receipt = await tx.wait();
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
       await assertEvent(receipt, 'PositionLiquidated', PerpMarketProxy);
     });
 
