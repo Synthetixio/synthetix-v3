@@ -75,26 +75,39 @@ async function fastForwardChainsTo(timestamp: number) {
 }
 
 before(`setup integration chains`, async function () {
-  this.timeout(90000);
+  this.timeout(120000);
 
   const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
   const typechainFolder = path.resolve(generatedPath, 'typechain');
   const writeDeployments = path.resolve(generatedPath, 'deployments');
 
   /// @dev: show build logs with DEBUG=spawn:*
-  // TODO: When running in parallel there's an unknown error that causes to some
-  // builds to finish early without throwing error but they do not complete.
-  const [mothership, satellite1, satellite2] = await Promise.all([
-    spinChain<Proxies['mothership']>({
-      networkName: 'sepolia',
-      cannonfile: 'cannonfile.test.toml',
-      typechainFolder,
-      writeDeployments,
-      chainSlector: ChainSelector.mothership,
-    }),
+  const mothership = await spinChain<Proxies['mothership']>({
+    networkName: 'sepolia',
+    cannonfile: 'cannonfile.test.toml',
+    typechainFolder,
+    writeDeployments,
+    chainSlector: ChainSelector.mothership,
+  });
+
+  const schedule = await mothership.CoreProxy.getEpochSchedule();
+  const councilMembers = await mothership.CoreProxy.getCouncilMembers();
+  const epochIndex = await mothership.CoreProxy.getEpochIndex();
+
+  const cannonfileSettings = {
+    initial_epoch_index: epochIndex,
+    initial_epoch_start_date: schedule.startDate,
+    initial_nomination_period_start_date: schedule.nominationPeriodStartDate,
+    initial_voting_period_start_date: schedule.votingPeriodStartDate,
+    initial_epoch_end_date: schedule.endDate,
+    initial_council_member: councilMembers,
+  };
+
+  const [satellite1, satellite2] = await Promise.all([
     spinChain<Proxies['satellite1']>({
       networkName: 'optimistic-goerli',
       cannonfile: 'cannonfile.satellite.test.toml',
+      cannonfileSettings,
       typechainFolder,
       writeDeployments,
       chainSlector: ChainSelector.satellite1,
@@ -102,6 +115,7 @@ before(`setup integration chains`, async function () {
     spinChain<Proxies['satellite2']>({
       networkName: 'avalanche-fuji',
       cannonfile: 'cannonfile.satellite.test.toml',
+      cannonfileSettings,
       typechainFolder,
       writeDeployments,
       chainSlector: ChainSelector.satellite2,
@@ -113,25 +127,6 @@ before(`setup integration chains`, async function () {
     satellite1,
     satellite2,
   } satisfies Chains);
-});
-
-before('setup election cross chain state', async () => {
-  const { mothership, ...satellites } = chains;
-
-  for (const satellite of Object.values(satellites)) {
-    const schedule = await mothership.CoreProxy.getEpochSchedule();
-    const councilMembers = await mothership.CoreProxy.getCouncilMembers();
-    const epochIndex = await mothership.CoreProxy.getEpochIndex();
-    const tx = await satellite.CoreProxy.initElectionModuleSatellite(
-      epochIndex,
-      schedule.startDate,
-      schedule.nominationPeriodStartDate,
-      schedule.votingPeriodStartDate,
-      schedule.endDate,
-      councilMembers
-    );
-    await tx.wait();
-  }
 });
 
 before('snapshot checkpoint', createSnapshots);

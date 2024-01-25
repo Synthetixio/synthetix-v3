@@ -10,6 +10,7 @@ import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
 export async function spinChain<CoreProxy>({
   networkName,
   cannonfile,
+  cannonfileSettings,
   writeDeployments,
   typechainFolder,
   chainSlector,
@@ -17,6 +18,8 @@ export async function spinChain<CoreProxy>({
 }: {
   networkName: string;
   cannonfile: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cannonfileSettings?: { [key: string]: any };
   writeDeployments: string;
   typechainFolder: string;
   chainSlector: string;
@@ -39,6 +42,7 @@ export async function spinChain<CoreProxy>({
 
   const { packageRef, provider, outputs } = await cannonBuild({
     cannonfile: path.join(hre.config.paths.root, cannonfile),
+    settings: cannonfileSettings,
     chainId,
     impersonate: ownerAddress,
     wipe: true,

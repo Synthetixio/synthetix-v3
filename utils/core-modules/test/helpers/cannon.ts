@@ -17,6 +17,8 @@ interface BuildOptions {
   port?: number;
   impersonate?: string;
   wipe?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  settings?: { [key: string]: any };
 }
 
 interface InspectOptions {
@@ -60,7 +62,7 @@ export async function cannonBuild(options: BuildOptions) {
     packageDefinition: {
       name,
       version,
-      settings: {},
+      settings: options.settings || {},
     },
     getArtifact: options.getArtifact,
     getSigner,
