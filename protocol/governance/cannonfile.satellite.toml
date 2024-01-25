@@ -15,9 +15,6 @@ artifact = "contracts/modules/core/CrossChainModule.sol:CrossChainModule"
 [contract.ElectionModuleSatellite]
 artifact = "contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite"
 
-[contract.CouncilTokenModule]
-artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
-
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
@@ -31,8 +28,7 @@ contracts = [
     "ElectionModuleSatellite",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
-    "CcipReceiverModule",
-    "CouncilTokenModule"
+    "CcipReceiverModule"
 ]
 
 [invoke.upgrade_core_proxy]

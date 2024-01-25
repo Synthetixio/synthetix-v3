@@ -1,10 +1,11 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
+import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
 import { CouncilTokenModule } from '../generated/typechain/CouncilTokenModule';
 
 describe('CouncilTokenModule', function () {
-  const { c, getSigners, deployNewProxy } = bootstrap();
+  const { c, getSigners } = bootstrap();
 
   let user1: ethers.Signer;
   let user2: ethers.Signer;
@@ -14,9 +15,15 @@ describe('CouncilTokenModule', function () {
     [, user1, user2] = getSigners();
   });
 
-  before('deploy new council token router', async function () {
-    // create a new Proxy with our implementation of the CouncilToken so we can test it isolated
-    CouncilToken = await deployNewProxy(c.CouncilTokenRouter.address);
+  before('deploy new council token module with ownership', async function () {
+    const [owner] = getSigners();
+    const proxyFactory = await hre.ethers.getContractFactory(
+      '@synthetixio/core-contracts/contracts/proxy/UUPSProxyWithOwner.sol:UUPSProxyWithOwner',
+      owner
+    );
+    const proxy = await proxyFactory.deploy(c.CouncilTokenModule.address, await owner.getAddress());
+    CouncilToken = c.CouncilToken.attach(proxy.address);
+    await CouncilToken.initialize('Synthetix Governance Module', 'SNXGOV', 'https://synthetix.io');
   });
 
   it('can mint council nfts', async function () {
