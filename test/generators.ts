@@ -67,7 +67,6 @@ export const genBootstrap = () => ({
     stakedAmount: bn(500_000),
   },
   global: {
-    priceDivergencePercent: bn(genOneOf([0.01, 0.02, 0.03, 0.035, 0.04, 0.045, 0.05])),
     pythPublishTimeMin: 8,
     pythPublishTimeMax: 12,
     minOrderAge: 12,

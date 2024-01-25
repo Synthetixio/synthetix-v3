@@ -33,6 +33,7 @@ import {
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
+  mintAndApprove,
 } from '../../helpers';
 import { BigNumber, ethers } from 'ethers';
 import { calcFillPrice, calcOrderFees } from '../../calculations';
@@ -162,9 +163,9 @@ describe('OrderModule', () => {
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
 
-      // Update the market's maxMarketSize to be just slightly below (95%) sizeDelta. We .abs because order can be short.
+      // Update the market's maxMarketSize to be just slightly below sizeDelta. We .abs because order can be short.
       await setMarketConfigurationById(bs, marketId, {
-        maxMarketSize: wei(order.sizeDelta).abs().mul(0.95).toBN(),
+        maxMarketSize: wei(order.sizeDelta).abs().mul(genNumber(0, 0.99)).toBN(),
       });
 
       await assertRevert(
@@ -179,6 +180,39 @@ describe('OrderModule', () => {
         'MaxMarketSizeExceeded()',
         PerpMarketProxy
       );
+    });
+
+    it('should be able to set maxMarketSize (oi) to 0 with open positions', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, order);
+      await setMarketConfigurationById(bs, marketId, {
+        maxMarketSize: bn(0),
+      });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      assertBn.equal(maxMarketSize, 0);
+
+      // Increasing position fails
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        ),
+        'MaxMarketSizeExceeded()',
+        PerpMarketProxy
+      );
+
+      // We should still be able to close the position
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order.sizeDelta.mul(-1),
+      });
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order1);
+      await assertEvent(receipt, 'OrderSettled', PerpMarketProxy);
     });
 
     it('should revert when sizeDelta is 0', async () => {
@@ -1458,7 +1492,7 @@ describe('OrderModule', () => {
 
     it('should revert if collateral price slips into maxMarketSize between commit and settle');
 
-    it('should revert when price divergence exceed threshold', async () => {
+    it('should revert when prices from PYTH are zero ', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -1475,25 +1509,11 @@ describe('OrderModule', () => {
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
-      // Retrieve on-chain configuration to generate a Pyth price that's above the divergence.
-      const priceDivergencePercent = wei(
-        (await PerpMarketProxy.getMarketConfiguration()).priceDivergencePercent
-      ).toNumber();
-      const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
-
-      // Create a Pyth price that is > the oraclePrice +/- 0.001%. Randomly below or above the oracle price.
-      //
-      // We `parseFloat(xxx.toFixed(3))` to avoid really ugly numbers like 1864.7999999999997 during testing.
-      const pythPrice = parseFloat(
-        genOneOf([
-          oraclePrice * (1.001 + priceDivergencePercent),
-          oraclePrice * (0.999 - priceDivergencePercent),
-        ]).toFixed(3)
-      );
-
-      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
+      const { pythPriceFeedId } = await PerpMarketProxy.getMarketConfigurationById(marketId);
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, priceFeedId, publishTime);
+
+      const pythPrice = 0;
+      const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, pythPriceFeedId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -1501,69 +1521,10 @@ describe('OrderModule', () => {
         PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
-        `PriceDivergenceExceeded("${bn(pythPrice)}", "${bn(oraclePrice)}")`,
+        'InvalidPrice()',
         PerpMarketProxy
       );
     });
-
-    enum ZeroPriceVariant {
-      PYTH = 'PYTH',
-      CL = 'CL',
-      BOTH = 'PYTH_AND_CL',
-    }
-
-    forEach([ZeroPriceVariant.PYTH, ZeroPriceVariant.CL, ZeroPriceVariant.BOTH]).it(
-      'should revert when prices are zero and hence invalid (variant: %s)',
-      async (variant: ZeroPriceVariant) => {
-        const { PerpMarketProxy } = systems();
-
-        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
-          bs,
-          genTrader(bs)
-        );
-        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-
-        await PerpMarketProxy.connect(trader.signer).commitOrder(
-          trader.accountId,
-          marketId,
-          order.sizeDelta,
-          order.limitPrice,
-          order.keeperFeeBufferUsd,
-          order.hooks
-        );
-        const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
-        assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
-
-        const { pythPriceFeedId } = await PerpMarketProxy.getMarketConfigurationById(marketId);
-        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-
-        const updatePriceReflectVariant = () => {
-          switch (variant) {
-            case ZeroPriceVariant.PYTH:
-              return { cl: bn(genNumber(1000, 5000)), pyth: 0 };
-            case ZeroPriceVariant.CL:
-              return { cl: bn(0), pyth: genNumber(1000, 5000) };
-            case ZeroPriceVariant.BOTH:
-              return { cl: bn(0), pyth: 0 };
-          }
-        };
-
-        const { cl: chainlinkPrice, pyth: pythPrice } = updatePriceReflectVariant();
-
-        await market.aggregator().mockSetCurrentPrice(chainlinkPrice);
-        const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, pythPriceFeedId, publishTime);
-
-        await fastForwardTo(settlementTime, provider());
-
-        await assertRevert(
-          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
-            value: updateFee,
-          }),
-          'InvalidPrice()',
-          PerpMarketProxy
-        );
-      }
-    );
 
     it('should revert when pyth price is stale');
 

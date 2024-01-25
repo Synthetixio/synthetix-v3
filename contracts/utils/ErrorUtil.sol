@@ -26,9 +26,6 @@ library ErrorUtil {
     // @notice Thrown when an order cannot cancel due to limitPrice is met.
     error PriceToleranceNotExceeded(int128 sizeDelta, uint256 price, uint256 limitPrice);
 
-    // @notice Thrown during settlement when off-chain diverges too far from on-chain price.
-    error PriceDivergenceExceeded(uint256 offchainPrice, uint256 onchainPrice);
-
     // @notice Thrown when the operating market does not exist.
     error MarketNotFound(uint128 marketId);
 

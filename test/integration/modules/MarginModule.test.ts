@@ -37,6 +37,7 @@ import {
   findOrThrow,
   setMarketConfiguration,
   SECONDS_ONE_DAY,
+  setMarketConfigurationById,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -243,7 +244,30 @@ describe('MarginModule', async () => {
         assertBn.equal(await collateral.contract.balanceOf(traderAddress), expectedBalanceAfter);
       });
 
-      it('should emit depositMarketUsd when using sUSD as collateral'); // To write this test we need to configure `globalConfig.usdToken` as collateral in bootstrap.
+      it('should allow deposit of collateral when collateral maxAllowable is 0', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { collateral, collateralDepositAmount, trader, market } = await depositMargin(bs, genTrader(bs));
+
+        await setMarketConfigurationById(bs, market.marketId(), { maxMarketSize: bn(0) });
+        const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        assertBn.equal(maxMarketSize, bn(0));
+
+        await mintAndApprove(bs, collateral, collateralDepositAmount, trader.signer);
+        // Should also be able to deposit
+        const { receipt: depositReceipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              market.marketId(),
+              collateral.synthMarketId(),
+              collateralDepositAmount
+            ),
+          provider()
+        );
+
+        await assertEvent(depositReceipt, 'MarginDeposit', PerpMarketProxy);
+      });
 
       forEach([
         ['sUSD', () => getSusdCollateral(collaterals())],
@@ -589,6 +613,28 @@ describe('MarginModule', async () => {
         ].join(', ');
 
         await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      });
+
+      it('should allow withdraw when market is in close only', async () => {
+        const { PerpMarketProxy } = systems();
+        const { collateral, trader, marketId, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+
+        await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+        const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+        assertBn.equal(maxMarketSize, bn(0));
+
+        const { receipt: withdrawReceipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).modifyCollateral(
+              trader.accountId,
+              marketId,
+              collateral.synthMarketId(),
+              collateralDepositAmount.mul(-1)
+            ),
+          provider()
+        );
+
+        await assertEvent(withdrawReceipt, 'MarginWithdraw', PerpMarketProxy);
       });
 
       forEach([
@@ -1061,6 +1107,21 @@ describe('MarginModule', async () => {
         ].join(', ');
 
         await assertEvent(receipt, `MarginWithdraw(${marginWithdrawEventProperties})`, PerpMarketProxy);
+      });
+
+      it('should allow withdrawing all when market is in close only', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+        await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+        const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+        assertBn.equal(maxMarketSize, bn(0));
+        // We should be able to  withdraw
+        const { receipt: withdrawReceipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          provider()
+        );
+
+        await assertEvent(withdrawReceipt, 'MarginWithdraw', PerpMarketProxy);
       });
 
       it('should cancel order when withdrawing all if pending order exists and expired');

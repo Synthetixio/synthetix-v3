@@ -32,8 +32,6 @@ library PerpMarketConfiguration {
         bytes32 ethOracleNodeId;
         // Address of generic PerpRewardDistributor contract.
         address rewardDistributorImplementation;
-        // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
-        uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
         uint64 pythPublishTimeMin;
         // Max acceptable publishTime from Pyth.
