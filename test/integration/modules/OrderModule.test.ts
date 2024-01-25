@@ -201,7 +201,8 @@ describe('OrderModule', () => {
           marketId,
           order.sizeDelta,
           order.limitPrice,
-          order.keeperFeeBufferUsd
+          order.keeperFeeBufferUsd,
+          order.hooks
         ),
         'MaxMarketSizeExceeded()',
         PerpMarketProxy
