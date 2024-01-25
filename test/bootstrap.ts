@@ -209,9 +209,9 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   });
 
   before('configure settlment hooks', async () => {
-    const { PerpMarketProxy, SettlementHookMock } = systems;
+    const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems;
     await PerpMarketProxy.setSettlementHookConfiguration({
-      whitelistedHookAddresses: [SettlementHookMock.address],
+      whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
       maxHooksPerOrderCommit: args.global.hooks.maxHooksPerOrderCommit,
     });
   });
