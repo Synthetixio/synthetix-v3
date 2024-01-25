@@ -32,7 +32,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 
     /**
-     * @dev Utility method for initializing a new Satellite chain
+     * @dev Do not allow to initialize using the Satellite's function, this
+     *     will be taken care by initOrUpdateElectionSettings.
      */
     function initElectionModuleSatellite() external payable {
         revert NotImplemented();

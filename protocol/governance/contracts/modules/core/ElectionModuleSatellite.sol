@@ -28,6 +28,9 @@ contract ElectionModuleSatellite is
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
+    /**
+     * @dev Utility method for initializing a new Satellite chain
+     */
     function initElectionModuleSatellite(
         uint256 epochIndex,
         uint64 epochStartDate,
