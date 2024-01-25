@@ -55,7 +55,7 @@ describe('FeatureFlag', () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('createAccount');
     await PerpMarketProxy.setFeatureFlagDenyAll(feature, true);
-    // TODO, when this reverts it said the revert was coming from the spotMarket.synthetix.createAccount 🤔
+
     await assertRevert(PerpMarketProxy['createAccount()'](), `FeatureUnavailable("${feature}")`);
   });
   it('should disable deposit', async () => {
