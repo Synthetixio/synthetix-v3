@@ -12,53 +12,6 @@ describe('UtilsModule', function () {
     [owner, user1] = signers();
   });
 
-  describe('registerCcip()', () => {
-    it('is only owner', async () => {
-      await assertRevert(
-        systems()
-          .Core.connect(user1)
-          .configureChainlinkCrossChain(ethers.constants.AddressZero, ethers.constants.AddressZero),
-        `Unauthorized("${await user1.getAddress()}")`,
-        systems().Core
-      );
-    });
-
-    describe('on success', () => {
-      before('call', async () => {
-        await systems()
-          .Core.connect(owner)
-          .configureChainlinkCrossChain(user1.getAddress(), user1.getAddress());
-      });
-
-      it('sets ccip values in usd token', async () => {
-        assert.equal(
-          (
-            await systems().USD.getAssociatedSystem(
-              ethers.utils.formatBytes32String('ccipChainlinkSend')
-            )
-          )[0],
-          await user1.getAddress()
-        );
-        assert.equal(
-          (
-            await systems().USD.getAssociatedSystem(
-              ethers.utils.formatBytes32String('ccipChainlinkRecv')
-            )
-          )[0],
-          await user1.getAddress()
-        );
-        assert.equal(
-          (
-            await systems().USD.getAssociatedSystem(
-              ethers.utils.formatBytes32String('ccipChainlinkTokenPool')
-            )
-          )[0],
-          await user1.getAddress()
-        );
-      });
-    });
-  });
-
   describe('configureOracleManager()', () => {
     it('is only owner', async () => {
       await assertRevert(

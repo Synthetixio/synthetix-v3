@@ -22,9 +22,6 @@ artifact = "contracts/generated/test/TestableCollateralConfigurationStorage.sol:
 [contract.TestableCollateralLockStorage]
 artifact = "contracts/generated/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
-[contract.TestableCrossChainStorage]
-artifact = "contracts/generated/test/TestableCrossChainStorage.sol:TestableCrossChainStorage"
-
 [contract.TestableDistributionStorage]
 artifact = "contracts/generated/test/TestableDistributionStorage.sol:TestableDistributionStorage"
 
@@ -72,6 +69,7 @@ contracts = [
     "CcipReceiverModule",
     "CollateralModule",
     "CollateralConfigurationModule",
+    "CrossChainModule",
     "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",
@@ -87,7 +85,6 @@ contracts = [
     "TestableCollateralStorage",
     "TestableCollateralConfigurationStorage",
     "TestableCollateralLockStorage",
-    "TestableCrossChainStorage",
     "TestableDistributionStorage",
     "TestableDistributionActorStorage",
     "TestableMarketStorage",
