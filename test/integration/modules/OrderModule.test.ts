@@ -30,6 +30,7 @@ import {
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
+  mintAndApprove,
 } from '../../helpers';
 import { BigNumber, ethers } from 'ethers';
 import { calcFillPrice, calcOrderFees } from '../../calculations';
@@ -155,9 +156,9 @@ describe('OrderModule', () => {
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
 
-      // Update the market's maxMarketSize to be just slightly below (95%) sizeDelta. We .abs because order can be short.
+      // Update the market's maxMarketSize to be just slightly below sizeDelta. We .abs because order can be short.
       await setMarketConfigurationById(bs, marketId, {
-        maxMarketSize: wei(order.sizeDelta).abs().mul(0.95).toBN(),
+        maxMarketSize: wei(order.sizeDelta).abs().mul(genNumber(0, 0.99)).toBN(),
       });
 
       await assertRevert(
@@ -171,6 +172,39 @@ describe('OrderModule', () => {
         'MaxMarketSizeExceeded()',
         PerpMarketProxy
       );
+    });
+
+    it('should be able to set maxMarketSize (oi) to 0 with open positions', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, order);
+      await setMarketConfigurationById(bs, marketId, {
+        maxMarketSize: bn(0),
+      });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      assertBn.equal(maxMarketSize, 0);
+
+      // Increasing position fails
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        ),
+        'MaxMarketSizeExceeded()',
+        PerpMarketProxy
+      );
+
+      // We should still be able to close the position
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order.sizeDelta.mul(-1),
+      });
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order1);
+      await assertEvent(receipt, 'OrderSettled', PerpMarketProxy);
     });
 
     it('should revert when sizeDelta is 0', async () => {
