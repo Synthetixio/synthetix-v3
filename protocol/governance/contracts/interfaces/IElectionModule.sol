@@ -15,6 +15,7 @@ interface IElectionModule is IElectionModuleSatellite {
     error NoCandidates();
     error DuplicateCandidates(address duplicatedCandidate);
     error TooManyMembers();
+    error NotImplemented();
 
     event ElectionModuleInitialized();
     event EpochStarted(uint256 indexed epochId);

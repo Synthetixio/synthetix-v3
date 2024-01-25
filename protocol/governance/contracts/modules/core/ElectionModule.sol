@@ -34,30 +34,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     /**
      * @dev Utility method for initializing a new Satellite chain
      */
-    function initElectionModuleSatellite(uint256 chainId) external payable {
-        OwnableStorage.onlyOwner();
-
-        CrossChain.Data storage cc = CrossChain.load();
-
-        cc.validateChainId(chainId);
-
-        CouncilMembers.Data storage councilMembers = CouncilMembers.load();
-        Council.Data storage council = Council.load();
-        Epoch.Data memory epoch = council.getCurrentEpoch();
-
-        cc.transmit(
-            chainId.to64(),
-            abi.encodeWithSelector(
-                this._recvInitElectionModuleSatellite.selector,
-                council.currentElectionId,
-                epoch.startDate,
-                epoch.nominationPeriodStartDate,
-                epoch.votingPeriodStartDate,
-                epoch.endDate,
-                councilMembers.councilMembers.values()
-            ),
-            _CROSSCHAIN_GAS_LIMIT
-        );
+    function initElectionModuleSatellite() external payable {
+        revert NotImplemented();
     }
 
     function initOrUpdateElectionSettings(
