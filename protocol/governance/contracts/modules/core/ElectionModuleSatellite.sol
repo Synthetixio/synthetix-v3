@@ -28,7 +28,7 @@ contract ElectionModuleSatellite is
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
-    function _recvInitElectionModuleSatellite(
+    function initElectionModuleSatellite(
         uint256 epochIndex,
         uint64 epochStartDate,
         uint64 nominationPeriodStartDate,
@@ -36,7 +36,7 @@ contract ElectionModuleSatellite is
         uint64 epochEndDate,
         address[] calldata councilMembers
     ) external virtual {
-        CrossChain.onlyCrossChain();
+        OwnableStorage.onlyOwner();
 
         Council.Data storage council = Council.load();
 

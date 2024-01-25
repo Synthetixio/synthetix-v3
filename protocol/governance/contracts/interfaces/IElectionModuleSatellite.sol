@@ -8,7 +8,7 @@ interface IElectionModuleSatellite {
     event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
 
     /// @dev Initialize first epoch of the current election module. Can only be called once.
-    function _recvInitElectionModuleSatellite(
+    function initElectionModuleSatellite(
         uint256 epochIndex,
         uint64 epochStartDate,
         uint64 nominationPeriodStartDate,
