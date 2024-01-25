@@ -212,7 +212,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems;
     await PerpMarketProxy.setSettlementHookConfiguration({
       whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
-      maxHooksPerOrderCommit: args.global.hooks.maxHooksPerOrderCommit,
+      maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
     });
   });
 

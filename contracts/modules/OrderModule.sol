@@ -104,7 +104,7 @@ contract OrderModule is IOrderModule {
 
         SettlementHookConfiguration.GlobalData storage config = SettlementHookConfiguration.load();
 
-        if (length > config.maxHooksPerOrderCommit) {
+        if (length > config.maxHooksPerOrder) {
             revert ErrorUtil.MaxHooksExceeded();
         }
 

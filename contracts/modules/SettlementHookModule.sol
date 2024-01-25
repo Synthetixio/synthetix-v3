@@ -46,7 +46,7 @@ contract SettlementHookModule is ISettlementHookModule {
             }
         }
         config.whitelistedHookAddresses = data.whitelistedHookAddresses;
-        config.maxHooksPerOrderCommit = data.maxHooksPerOrderCommit;
+        config.maxHooksPerOrder = data.maxHooksPerOrder;
 
         emit SettlementHookConfigured(msg.sender, hooksLengthAfter);
     }
@@ -58,7 +58,7 @@ contract SettlementHookModule is ISettlementHookModule {
      */
     function getSettlementHookConfiguration() external view returns (ISettlementHookModule.ConfigureParameters memory) {
         SettlementHookConfiguration.GlobalData storage d = SettlementHookConfiguration.load();
-        return ISettlementHookModule.ConfigureParameters(d.whitelistedHookAddresses, d.maxHooksPerOrderCommit);
+        return ISettlementHookModule.ConfigureParameters(d.whitelistedHookAddresses, d.maxHooksPerOrder);
     }
 
     /**

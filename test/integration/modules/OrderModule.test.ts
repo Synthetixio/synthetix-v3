@@ -527,10 +527,10 @@ describe('OrderModule', () => {
           bs,
           genTrader(bs)
         );
-        const { maxHooksPerOrderCommit } = await PerpMarketProxy.getSettlementHookConfiguration();
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
         await PerpMarketProxy.setSettlementHookConfiguration({
           whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
-          maxHooksPerOrderCommit,
+          maxHooksPerOrder,
         });
         const hooks = genSubListOf([SettlementHookMock.address, SettlementHook2Mock.address], genNumber(1, 2));
 
@@ -584,7 +584,7 @@ describe('OrderModule', () => {
         const config = await PerpMarketProxy.getSettlementHookConfiguration();
 
         // All hooks are invalid - commitment will revert on the first invalid hook.
-        const hooks = genListOf(genNumber(1, config.maxHooksPerOrderCommit), genAddress);
+        const hooks = genListOf(genNumber(1, config.maxHooksPerOrder), genAddress);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -610,7 +610,7 @@ describe('OrderModule', () => {
 
         const config = await PerpMarketProxy.getSettlementHookConfiguration();
 
-        const numberOfInvalidHooks = genNumber(1, config.maxHooksPerOrderCommit - 2);
+        const numberOfInvalidHooks = genNumber(1, config.maxHooksPerOrder - 2);
         const invalidHooks = genListOf(numberOfInvalidHooks, genAddress);
         const hooks = [SettlementHookMock.address].concat(invalidHooks);
 
@@ -637,7 +637,7 @@ describe('OrderModule', () => {
         const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
         const config = await PerpMarketProxy.getSettlementHookConfiguration();
-        const hooks = genListOf(config.maxHooksPerOrderCommit + genNumber(1, 10), genAddress);
+        const hooks = genListOf(config.maxHooksPerOrder + genNumber(1, 10), genAddress);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -1544,10 +1544,10 @@ describe('OrderModule', () => {
           genTrader(bs)
         );
 
-        const { maxHooksPerOrderCommit } = await PerpMarketProxy.getSettlementHookConfiguration();
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
         await PerpMarketProxy.setSettlementHookConfiguration({
           whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
-          maxHooksPerOrderCommit,
+          maxHooksPerOrder,
         });
         const hooks = genSubListOf([SettlementHookMock.address, SettlementHook2Mock.address], genNumber(1, 2));
 
@@ -1576,10 +1576,10 @@ describe('OrderModule', () => {
           genTrader(bs)
         );
 
-        const { maxHooksPerOrderCommit } = await PerpMarketProxy.getSettlementHookConfiguration();
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
         await PerpMarketProxy.setSettlementHookConfiguration({
           whitelistedHookAddresses: [SettlementHookMock.address],
-          maxHooksPerOrderCommit,
+          maxHooksPerOrder,
         });
         const hooks = [SettlementHookMock.address];
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredHooks: hooks });
@@ -1617,10 +1617,10 @@ describe('OrderModule', () => {
           genTrader(bs)
         );
 
-        const { maxHooksPerOrderCommit } = await PerpMarketProxy.getSettlementHookConfiguration();
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
         await PerpMarketProxy.setSettlementHookConfiguration({
           whitelistedHookAddresses: [SettlementHookMock.address],
-          maxHooksPerOrderCommit,
+          maxHooksPerOrder,
         });
         const hooks = [SettlementHookMock.address];
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredHooks: hooks });
@@ -1637,7 +1637,7 @@ describe('OrderModule', () => {
         // Remove the original hook in commit from whitelist.
         await PerpMarketProxy.setSettlementHookConfiguration({
           whitelistedHookAddresses: [],
-          maxHooksPerOrderCommit,
+          maxHooksPerOrder,
         });
 
         const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);

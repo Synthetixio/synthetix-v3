@@ -9,7 +9,7 @@ interface ISettlementHookModule {
     // @notice See SettlementHookConfiguration.GlobalData for more details.
     struct ConfigureParameters {
         address[] whitelistedHookAddresses;
-        uint32 maxHooksPerOrderCommit;
+        uint32 maxHooksPerOrder;
     }
 
     // --- Events --- //

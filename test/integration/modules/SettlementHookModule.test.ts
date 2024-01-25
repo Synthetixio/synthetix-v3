@@ -16,14 +16,14 @@ describe('SettlementHookModule', () => {
     it('should configure settlement hooks', async () => {
       const { PerpMarketProxy, SettlementHookMock } = systems();
 
-      const maxHooksPerOrderCommit = genNumber(0, 100);
+      const maxHooksPerOrder = genNumber(0, 100);
       const whitelistedHookAddresses = [SettlementHookMock.address];
 
       const { receipt } = await withExplicitEvmMine(
         () =>
           PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
             whitelistedHookAddresses,
-            maxHooksPerOrderCommit,
+            maxHooksPerOrder,
           }),
         provider()
       );
@@ -33,7 +33,7 @@ describe('SettlementHookModule', () => {
 
       const config = await PerpMarketProxy.getSettlementHookConfiguration();
       assert.deepEqual(config.whitelistedHookAddresses, whitelistedHookAddresses);
-      assertBn.equal(config.maxHooksPerOrderCommit, maxHooksPerOrderCommit);
+      assertBn.equal(config.maxHooksPerOrder, maxHooksPerOrder);
     });
 
     it('should override existing config', async () => {
@@ -43,7 +43,7 @@ describe('SettlementHookModule', () => {
 
       await PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
         whitelistedHookAddresses: [SettlementHookMock.address],
-        maxHooksPerOrderCommit: genNumber(100, 500),
+        maxHooksPerOrder: genNumber(100, 500),
       });
 
       const configAfter = await PerpMarketProxy.getSettlementHookConfiguration();
@@ -58,13 +58,13 @@ describe('SettlementHookModule', () => {
 
       await PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
         whitelistedHookAddresses: [], // empty hooks
-        maxHooksPerOrderCommit: configBefore.maxHooksPerOrderCommit,
+        maxHooksPerOrder: configBefore.maxHooksPerOrder,
       });
 
       const configAfter = await PerpMarketProxy.getSettlementHookConfiguration();
 
       assert.deepEqual(configAfter.whitelistedHookAddresses, []); // empty
-      assertBn.equal(configBefore.maxHooksPerOrderCommit, configAfter.maxHooksPerOrderCommit); // unchainged
+      assertBn.equal(configBefore.maxHooksPerOrder, configAfter.maxHooksPerOrder); // unchainged
     });
 
     it('should add new hook and not change previously configured hooks', async () => {
@@ -73,7 +73,7 @@ describe('SettlementHookModule', () => {
       // Configure to have one hook.
       await PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
         whitelistedHookAddresses: [SettlementHookMock.address],
-        maxHooksPerOrderCommit: genNumber(0, 100),
+        maxHooksPerOrder: genNumber(0, 100),
       });
 
       const configBefore = await PerpMarketProxy.getSettlementHookConfiguration();
@@ -82,7 +82,7 @@ describe('SettlementHookModule', () => {
       // Configure to add another hook.
       await PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
         whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
-        maxHooksPerOrderCommit: configBefore.maxHooksPerOrderCommit,
+        maxHooksPerOrder: configBefore.maxHooksPerOrder,
       });
 
       const configAfter = await PerpMarketProxy.getSettlementHookConfiguration();
@@ -95,7 +95,7 @@ describe('SettlementHookModule', () => {
       // Configure to have 2 hooks.
       await PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
         whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
-        maxHooksPerOrderCommit: genNumber(0, 100),
+        maxHooksPerOrder: genNumber(0, 100),
       });
 
       const configBefore = await PerpMarketProxy.getSettlementHookConfiguration();
@@ -107,7 +107,7 @@ describe('SettlementHookModule', () => {
       // Remove one of the hooks.
       await PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
         whitelistedHookAddresses: [SettlementHookMock.address],
-        maxHooksPerOrderCommit: configBefore.maxHooksPerOrderCommit,
+        maxHooksPerOrder: configBefore.maxHooksPerOrder,
       });
 
       const configAfter = await PerpMarketProxy.getSettlementHookConfiguration();
@@ -121,7 +121,7 @@ describe('SettlementHookModule', () => {
       await assertRevert(
         PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
           whitelistedHookAddresses: [invalidHook],
-          maxHooksPerOrderCommit: 1,
+          maxHooksPerOrder: 1,
         }),
         `InvalidHook("${invalidHook}")`,
         PerpMarketProxy
@@ -135,7 +135,7 @@ describe('SettlementHookModule', () => {
       await assertRevert(
         PerpMarketProxy.connect(owner()).setSettlementHookConfiguration({
           whitelistedHookAddresses: [invalidHook, SettlementHookMock.address],
-          maxHooksPerOrderCommit: 1,
+          maxHooksPerOrder: 1,
         }),
         `InvalidHook("${invalidHook}")`,
         PerpMarketProxy
@@ -145,7 +145,7 @@ describe('SettlementHookModule', () => {
     it('should revert when non-owner', async () => {
       const { PerpMarketProxy, SettlementHookMock } = systems();
 
-      const maxHooksPerOrderCommit = genNumber(0, 100);
+      const maxHooksPerOrder = genNumber(0, 100);
       const whitelistedHookAddresses = [SettlementHookMock.address];
 
       const from = traders()[0].signer; // not owner.
@@ -153,7 +153,7 @@ describe('SettlementHookModule', () => {
       await assertRevert(
         PerpMarketProxy.connect(from).setSettlementHookConfiguration({
           whitelistedHookAddresses,
-          maxHooksPerOrderCommit,
+          maxHooksPerOrder,
         }),
         `Unauthorized("${await from.getAddress()}")`,
         PerpMarketProxy
