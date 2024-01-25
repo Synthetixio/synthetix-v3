@@ -10,12 +10,16 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "0"
 
 [setting.initial_epoch_start_date]
+defaultValue = "0"
 
 [setting.initial_nomination_period_start_date]
+defaultValue = "0"
 
 [setting.initial_voting_period_start_date]
+defaultValue = "0"
 
 [setting.initial_epoch_end_date]
+defaultValue = "0"
 
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
