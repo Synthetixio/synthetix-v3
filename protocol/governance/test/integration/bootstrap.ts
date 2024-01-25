@@ -1,5 +1,4 @@
 import path from 'node:path';
-import { ccipReceive } from '@synthetixio/core-modules/test/helpers/ccip';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
@@ -120,15 +119,18 @@ before('setup election cross chain state', async () => {
   const { mothership, ...satellites } = chains;
 
   for (const satellite of Object.values(satellites)) {
-    const tx = await mothership.CoreProxy.initElectionModuleSatellite(satellite.chainId);
-    const rx = await tx.wait();
-
-    await ccipReceive({
-      rx,
-      sourceChainSelector: mothership.chainSlector,
-      targetSigner: satellite.signer,
-      ccipAddress: mothership.CcipRouter.address,
-    });
+    const schedule = await mothership.CoreProxy.getEpochSchedule();
+    const councilMembers = await mothership.CoreProxy.getCouncilMembers();
+    const epochIndex = await mothership.CoreProxy.getEpochIndex();
+    const tx = await satellite.CoreProxy.initElectionModuleSatellite(
+      epochIndex,
+      schedule.startDate,
+      schedule.nominationPeriodStartDate,
+      schedule.votingPeriodStartDate,
+      schedule.endDate,
+      councilMembers
+    );
+    await tx.wait();
   }
 });
 
