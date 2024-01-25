@@ -72,7 +72,6 @@ contract OrderModule is IOrderModule {
      * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
-        PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
         Position.TradeParams memory params
@@ -240,7 +239,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.params);
+        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.params);
 
         recomputeFunding(market, runtime.pythPrice);
 
@@ -365,7 +364,6 @@ contract OrderModule is IOrderModule {
                 priceUpdateData
             );
             uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
-            uint256 onchainPrice = market.getOraclePrice();
 
             if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
                 revert ErrorUtil.PriceToleranceNotExceeded(order.sizeDelta, fillPrice, order.limitPrice);
