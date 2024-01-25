@@ -70,22 +70,6 @@ interface IMarginModule is IBasePerpMarket {
     // --- Views --- //
 
     /**
-     * TODO:
-     *
-     * getConfiguredCollaterals
-     * getConfiguredHooks
-     * getConfiguredMarkets
-     * getConfiguredMarketById
-
-        vs.
-
-     * getMarketConfiguration
-     * getMarketConfigurationById
-     * getCollateralConfiguration
-     * getSettlementHookConfiguration
-     */
-
-    /**
      * @notice Returns the configured collaterals used as margin.
      */
     function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory);
