@@ -188,7 +188,17 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
-        uint256 rewardAmount = vault.updateReward(accountId, poolId, collateralType, rewardId);
+        uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
+
+        uint256 rewardAmount = vault.updateReward(
+            Vault.PositionSelector(accountId, poolId, collateralType),
+            rewardId,
+            totalSharesD18,
+            actorSharesD18
+        );
 
         RewardDistribution.Data storage reward = vault.rewards[rewardId];
         reward.claimStatus[accountId].pendingSendD18 = 0;
