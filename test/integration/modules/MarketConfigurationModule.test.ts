@@ -41,7 +41,7 @@ describe('MarketConfigurationModule', async () => {
       await assertEvent(receipt, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
     });
 
-    it('should revert with non-owner', async () => {
+    it('should revert when non-owner', async () => {
       const { PerpMarketProxy } = systems();
       const from = traders()[0].signer;
 
@@ -93,7 +93,7 @@ describe('MarketConfigurationModule', async () => {
       );
     });
 
-    it('should revert with non-owner', async () => {
+    it('should revert when non-owner', async () => {
       const { PerpMarketProxy } = systems();
       const from = traders()[0].signer; // not owner.
 

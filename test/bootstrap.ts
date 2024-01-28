@@ -4,13 +4,13 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { PerpMarketProxy, PerpAccountProxy, AggregatorV3Mock, PythMock } from './generated/typechain';
-import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
-import { CollateralMock } from '../typechain-types';
+import { CollateralMock, SettlementHookMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
 import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
+import { GeneratedBootstrap } from './typed';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
@@ -24,6 +24,8 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   Collateral2Mock: CollateralMock;
   WstETHMock: WstETHMock;
   StEthToEthMock: AggregatorV3Mock;
+  SettlementHookMock: SettlementHookMock;
+  SettlementHook2Mock: SettlementHookMock;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -45,6 +47,8 @@ export interface Contracts {
   AggregatorV3Mock: AggregatorV3Mock;
   WstETHMock: WstETHMock;
   StEthToEthMock: AggregatorV3Mock;
+  SettlementHookMock: SettlementHookMock;
+  SettlementHook2Mock: SettlementHookMock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -59,20 +63,6 @@ export interface Contracts {
 // @see: https://github.com/foundry-rs/foundry/commit/b02dcd26ff2aabc305cee61cd2fa3f7c3a85aad2
 const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
 const restoreSnapshot = _bootstraped.createSnapshot();
-
-export interface GeneratedBootstrap {
-  initialEthPrice: BigNumber;
-  pool: {
-    stakedCollateralPrice: BigNumber;
-    stakedAmount: BigNumber;
-  };
-  global: IMarketConfigurationModule.ConfigureParametersStruct;
-  markets: {
-    name: string;
-    initialPrice: BigNumber;
-    specific: IMarketConfigurationModule.ConfigureByMarketParametersStruct;
-  }[];
-}
 
 export interface PerpCollateral {
   name: string;
@@ -117,6 +107,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       Collateral2Mock: getContract('Collateral2Mock'),
       WstETHMock: getContract('WstETHMock'),
       StEthToEthMock: getContract('StEthToEthMock'),
+      SettlementHookMock: getContract('SettlementHookMock'),
+      SettlementHook2Mock: getContract('SettlementHook2Mock'),
     };
   });
 
@@ -214,6 +206,14 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       aggregator: () => aggregator,
       marketId: () => marketId,
     };
+  });
+
+  before('configure settlment hooks', async () => {
+    const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems;
+    await PerpMarketProxy.setSettlementHookConfiguration({
+      whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
+      maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
+    });
   });
 
   before(`delegate pool collateral to all markets equally`, async () => {

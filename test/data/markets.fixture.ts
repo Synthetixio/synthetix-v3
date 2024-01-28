@@ -1,6 +1,6 @@
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import type { GeneratedBootstrap } from '../bootstrap';
+import type { FixedMarket } from '../typed';
 
 export const bn = (n: number) => wei(n).toBN();
 
@@ -11,7 +11,7 @@ export const bn = (n: number) => wei(n).toBN();
 // markets shuffle between the 5 below here (see `genBootstrap()`).
 //
 // If you're looking for a completely random market, see `genMarket()`.
-export const MARKETS: GeneratedBootstrap['markets'] = [
+export const MARKETS: FixedMarket[] = [
   {
     name: ethers.utils.formatBytes32String('BTCPERP'),
     initialPrice: bn(30_000),

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 

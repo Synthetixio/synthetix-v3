@@ -8,11 +8,14 @@ import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import {
   bn,
+  genAddress,
   genBootstrap,
+  genListOf,
   genNumber,
   genOneOf,
   genOrder,
   genSide,
+  genSubListOf,
   genTrader,
   toRoundRobinGenerators,
 } from '../../generators';
@@ -61,14 +64,15 @@ describe('OrderModule', () => {
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      const { tx, receipt } = await withExplicitEvmMine(
+      const { receipt } = await withExplicitEvmMine(
         () =>
           PerpMarketProxy.connect(trader.signer).commitOrder(
             trader.accountId,
             marketId,
             order.sizeDelta,
             order.limitPrice,
-            order.keeperFeeBufferUsd
+            order.keeperFeeBufferUsd,
+            order.hooks
           ),
         provider()
       );
@@ -97,7 +101,7 @@ describe('OrderModule', () => {
         orderCommittedArgs?.estimatedKeeperFee ?? 0,
       ].join(', ');
 
-      await assertEvent(tx, `OrderCommitted(${orderCommittedEventProperties})`, PerpMarketProxy);
+      await assertEvent(receipt, `OrderCommitted(${orderCommittedEventProperties})`, PerpMarketProxy);
     });
 
     it('should emit all events in correct order');
@@ -115,7 +119,8 @@ describe('OrderModule', () => {
           marketId,
           order.sizeDelta,
           order.limitPrice,
-          order.keeperFeeBufferUsd
+          order.keeperFeeBufferUsd,
+          order.hooks
         ),
         'InsufficientMargin()',
         PerpMarketProxy
@@ -132,7 +137,8 @@ describe('OrderModule', () => {
         marketId,
         order1.sizeDelta,
         order1.limitPrice,
-        order1.keeperFeeBufferUsd
+        order1.keeperFeeBufferUsd,
+        []
       );
 
       // Perform another commitment but expect fail as order already exists.
@@ -143,7 +149,8 @@ describe('OrderModule', () => {
           marketId,
           order2.sizeDelta,
           order2.limitPrice,
-          order2.keeperFeeBufferUsd
+          order2.keeperFeeBufferUsd,
+          order2.hooks
         ),
         `OrderFound()`,
         PerpMarketProxy
@@ -167,7 +174,8 @@ describe('OrderModule', () => {
           marketId,
           order.sizeDelta,
           order.limitPrice,
-          order.keeperFeeBufferUsd
+          order.keeperFeeBufferUsd,
+          order.hooks
         ),
         'MaxMarketSizeExceeded()',
         PerpMarketProxy
@@ -193,7 +201,8 @@ describe('OrderModule', () => {
           marketId,
           order.sizeDelta,
           order.limitPrice,
-          order.keeperFeeBufferUsd
+          order.keeperFeeBufferUsd,
+          order.hooks
         ),
         'MaxMarketSizeExceeded()',
         PerpMarketProxy
@@ -210,7 +219,7 @@ describe('OrderModule', () => {
     it('should revert when sizeDelta is 0', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const { limitPrice, keeperFeeBufferUsd } = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const { limitPrice, keeperFeeBufferUsd, hooks } = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       // Perform the commitment (everything valid except for sizeDelta = 0).
       const nilSizeDelta = 0;
@@ -220,7 +229,8 @@ describe('OrderModule', () => {
           marketId,
           nilSizeDelta,
           limitPrice,
-          keeperFeeBufferUsd
+          keeperFeeBufferUsd,
+          hooks
         ),
         'NilOrder()',
         PerpMarketProxy
@@ -256,7 +266,8 @@ describe('OrderModule', () => {
           marketId,
           order2.sizeDelta,
           order2.limitPrice,
-          order2.keeperFeeBufferUsd
+          order2.keeperFeeBufferUsd,
+          order2.hooks
         ),
         'CanLiquidatePosition()',
         PerpMarketProxy
@@ -294,7 +305,8 @@ describe('OrderModule', () => {
           marketId,
           order2.sizeDelta,
           order2.limitPrice,
-          order2.keeperFeeBufferUsd
+          order2.keeperFeeBufferUsd,
+          order2.hooks
         ),
         'PositionFlagged()',
         PerpMarketProxy
@@ -304,7 +316,7 @@ describe('OrderModule', () => {
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await genOrder(
         bs,
         market,
         collateral,
@@ -318,7 +330,8 @@ describe('OrderModule', () => {
           marketId,
           sizeDelta,
           limitPrice,
-          keeperFeeBufferUsd
+          keeperFeeBufferUsd,
+          hooks
         ),
         `PermissionDenied("${invalidAccountId}"`,
         PerpMarketProxy
@@ -328,7 +341,7 @@ describe('OrderModule', () => {
     it('should revert when marketId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await genOrder(
         bs,
         market,
         collateral,
@@ -342,7 +355,8 @@ describe('OrderModule', () => {
           invalidMarketId,
           sizeDelta,
           limitPrice,
-          keeperFeeBufferUsd
+          keeperFeeBufferUsd,
+          hooks
         ),
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
@@ -359,7 +373,7 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs, { desiredTrader: trader1 })
       );
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await genOrder(
         bs,
         market,
         collateral,
@@ -375,7 +389,8 @@ describe('OrderModule', () => {
           marketId,
           sizeDelta,
           limitPrice,
-          keeperFeeBufferUsd
+          keeperFeeBufferUsd,
+          hooks
         ),
         `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
       );
@@ -414,7 +429,8 @@ describe('OrderModule', () => {
           marketId,
           order2.sizeDelta,
           order2.limitPrice,
-          order2.keeperFeeBufferUsd
+          order2.keeperFeeBufferUsd,
+          order2.hooks
         ),
         'CanLiquidatePosition()'
       );
@@ -455,7 +471,8 @@ describe('OrderModule', () => {
           marketId,
           order2.sizeDelta,
           order2.limitPrice,
-          order2.keeperFeeBufferUsd
+          order2.keeperFeeBufferUsd,
+          order2.hooks
         ),
         'PositionFlagged()'
       );
@@ -496,10 +513,145 @@ describe('OrderModule', () => {
           marketId,
           order.sizeDelta,
           order.limitPrice,
-          order.keeperFeeBufferUsd
+          order.keeperFeeBufferUsd,
+          order.hooks
         ),
         'CanLiquidatePosition()'
       );
+    });
+
+    describe('hooks', () => {
+      it('should commit with valid hooks', async () => {
+        const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems();
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
+        await PerpMarketProxy.setSettlementHookConfiguration({
+          whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
+          maxHooksPerOrder,
+        });
+        const hooks = genSubListOf([SettlementHookMock.address, SettlementHook2Mock.address], genNumber(1, 2));
+
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).commitOrder(
+              trader.accountId,
+              marketId,
+              order.sizeDelta,
+              order.limitPrice,
+              order.keeperFeeBufferUsd,
+              hooks
+            ),
+          provider()
+        );
+        await assertEvent(receipt, 'OrderCommitted', PerpMarketProxy);
+      });
+
+      it('should commit without hooks', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+        const { receipt } = await withExplicitEvmMine(
+          () =>
+            PerpMarketProxy.connect(trader.signer).commitOrder(
+              trader.accountId,
+              marketId,
+              order.sizeDelta,
+              order.limitPrice,
+              order.keeperFeeBufferUsd,
+              []
+            ),
+          provider()
+        );
+        await assertEvent(receipt, 'OrderCommitted', PerpMarketProxy);
+      });
+
+      it('should revert when one or more hooks are not whitelisted', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+        const config = await PerpMarketProxy.getSettlementHookConfiguration();
+
+        // All hooks are invalid - commitment will revert on the first invalid hook.
+        const hooks = genListOf(genNumber(1, config.maxHooksPerOrder), genAddress);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd,
+            hooks
+          ),
+          `InvalidHook("${hooks[0]}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when any hook is not whitelisted', async () => {
+        const { PerpMarketProxy, SettlementHookMock } = systems();
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+        const config = await PerpMarketProxy.getSettlementHookConfiguration();
+
+        const numberOfInvalidHooks = genNumber(1, config.maxHooksPerOrder - 2);
+        const invalidHooks = genListOf(numberOfInvalidHooks, genAddress);
+        const hooks = [SettlementHookMock.address].concat(invalidHooks);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd,
+            hooks
+          ),
+          `InvalidHook("${hooks[1]}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when too many hooks are supplied', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+        const config = await PerpMarketProxy.getSettlementHookConfiguration();
+        const hooks = genListOf(config.maxHooksPerOrder + genNumber(1, 10), genAddress);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd,
+            hooks
+          ),
+          'MaxHooksExceeded()',
+          PerpMarketProxy
+        );
+      });
     });
   });
 
@@ -515,7 +667,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
@@ -1073,7 +1226,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -1101,7 +1255,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -1129,7 +1284,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -1162,7 +1318,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -1209,7 +1366,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       // Move price past limitPrice (+/- 30%).
@@ -1346,7 +1504,8 @@ describe('OrderModule', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
@@ -1375,6 +1534,126 @@ describe('OrderModule', () => {
     it('should revert if pyth vaa merkle/blob is invalid');
 
     it('should revert when not enough wei is available to pay pyth fee');
+
+    describe('hooks', () => {
+      it('should settle and execute committed hooks', async () => {
+        const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems();
+
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
+        await PerpMarketProxy.setSettlementHookConfiguration({
+          whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
+          maxHooksPerOrder,
+        });
+        const hooks = genSubListOf([SettlementHookMock.address, SettlementHook2Mock.address], genNumber(1, 2));
+
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredHooks: hooks });
+        const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+
+        await assertEvent(receipt, 'OrderSettled', PerpMarketProxy);
+
+        for (const hook of hooks) {
+          await assertEvent(
+            receipt,
+            `OrderSettlementHookExecuted(${trader.accountId}, ${marketId}, "${hook}")`,
+            PerpMarketProxy
+          );
+        }
+      });
+
+      // TODO: Implement this when data sent as part of the hook is more concretely defined.
+      it('should execute hook with expected data');
+
+      it('should revert settlement when a hook also reverts', async () => {
+        const { PerpMarketProxy, SettlementHookMock } = systems();
+
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
+        await PerpMarketProxy.setSettlementHookConfiguration({
+          whitelistedHookAddresses: [SettlementHookMock.address],
+          maxHooksPerOrder,
+        });
+        const hooks = [SettlementHookMock.address];
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredHooks: hooks });
+
+        await SettlementHookMock.mockSetShouldRevertOnSettlement(true);
+
+        await PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd,
+          order.hooks
+        );
+
+        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+        const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+        await fastForwardTo(settlementTime, provider());
+
+        await assertRevert(
+          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
+          'InvalidSettlement()',
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when a hook was removed between commit and settle', async () => {
+        const { PerpMarketProxy, SettlementHookMock } = systems();
+
+        const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
+        await PerpMarketProxy.setSettlementHookConfiguration({
+          whitelistedHookAddresses: [SettlementHookMock.address],
+          maxHooksPerOrder,
+        });
+        const hooks = [SettlementHookMock.address];
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredHooks: hooks });
+
+        await PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd,
+          order.hooks
+        );
+
+        // Remove the original hook in commit from whitelist.
+        await PerpMarketProxy.setSettlementHookConfiguration({
+          whitelistedHookAddresses: [],
+          maxHooksPerOrder,
+        });
+
+        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+        const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+        await fastForwardTo(settlementTime, provider());
+
+        await assertRevert(
+          PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
+          `InvalidHook("${SettlementHookMock.address}")`,
+          PerpMarketProxy
+        );
+      });
+    });
   });
 
   describe('getOrderFees', () => {

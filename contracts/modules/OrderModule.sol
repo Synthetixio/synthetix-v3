@@ -6,10 +6,12 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
+import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -70,7 +72,6 @@ contract OrderModule is IOrderModule {
      * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
-        PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
         Position.TradeParams memory params
@@ -92,45 +93,65 @@ contract OrderModule is IOrderModule {
     }
 
     /**
+     * @dev Validates that the hooks specified during commitment are valid and acceptable.
+     */
+    function validateOrderHooks(address[] memory hooks) private view {
+        uint256 length = hooks.length;
+
+        if (length == 0) {
+            return;
+        }
+
+        SettlementHookConfiguration.GlobalData storage config = SettlementHookConfiguration.load();
+
+        if (length > config.maxHooksPerOrder) {
+            revert ErrorUtil.MaxHooksExceeded();
+        }
+
+        for (uint256 i = 0; i < length; ) {
+            if (!config.whitelisted[hooks[i]]) {
+                revert ErrorUtil.InvalidHook(hooks[i]);
+            }
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
+     * @dev Executes the hooks supplied in the order commitment.
+     */
+    function executeOrderHooks(
+        uint128 accountId,
+        uint128 marketId,
+        Order.Data storage order,
+        Position.Data memory newPosition,
+        uint256 fillPrice
+    ) private {
+        uint256 length = order.hooks.length;
+
+        if (length == 0) {
+            return;
+        }
+
+        for (uint256 i = 0; i < length; ) {
+            address hook = order.hooks[i];
+
+            ISettlementHook(hook).onSettle(accountId, marketId, order.sizeDelta, newPosition.size, fillPrice);
+            emit OrderSettlementHookExecuted(accountId, marketId, hook);
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
      * @dev Generic helper for funding recomputation during order management.
      */
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
         (int256 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
-    }
-
-    /**
-     * @dev Upon successful settlement, update `market` and account margin with `newPosition` details.
-     */
-    function stateUpdatePostSettlement(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market,
-        Position.Data memory newPosition,
-        uint256 newMarginUsd
-    ) private {
-        Position.Data storage oldPosition = market.positions[accountId];
-
-        market.skew = market.skew + newPosition.size - oldPosition.size;
-        market.size = (market.size.to256() + MathUtil.abs(newPosition.size) - MathUtil.abs(oldPosition.size)).to128();
-
-        market.updateDebtCorrection(oldPosition, newPosition);
-
-        // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
-        if (oldPosition.size != 0) {
-            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId, false /* usehaircutCollateralPrice */);
-            Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - collateralUsd.toInt());
-        }
-
-        if (newPosition.size == 0) {
-            delete market.positions[accountId];
-        } else {
-            market.positions[accountId].update(newPosition);
-        }
-
-        // Wipe the order, successfully settled!
-        delete market.orders[accountId];
     }
 
     // --- Mutative --- //
@@ -143,7 +164,8 @@ contract OrderModule is IOrderModule {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd
+        uint256 keeperFeeBufferUsd,
+        address[] memory hooks
     ) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
@@ -152,6 +174,8 @@ contract OrderModule is IOrderModule {
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        validateOrderHooks(hooks);
 
         uint256 oraclePrice = market.getOraclePrice();
 
@@ -176,7 +200,7 @@ contract OrderModule is IOrderModule {
             )
         );
 
-        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
+        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks));
         emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
@@ -215,7 +239,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.params);
+        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.params);
 
         recomputeFunding(market, runtime.pythPrice);
 
@@ -231,14 +255,34 @@ contract OrderModule is IOrderModule {
             marketConfig
         );
 
-        stateUpdatePostSettlement(
-            accountId,
-            marketId,
-            market,
-            runtime.trade.newPosition,
-            // @dev This is (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
-            runtime.trade.newMarginUsd
-        );
+        Position.Data storage oldPosition = market.positions[accountId];
+
+        market.skew = market.skew + runtime.trade.newPosition.size - oldPosition.size;
+        market.size = (market.size.to256() +
+            MathUtil.abs(runtime.trade.newPosition.size) -
+            MathUtil.abs(oldPosition.size)).to128();
+
+        market.updateDebtCorrection(oldPosition, runtime.trade.newPosition);
+
+        // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
+        if (oldPosition.size != 0) {
+            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+            uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId, false /* usehaircutCollateralPrice */);
+            Margin.updateAccountCollateral(
+                accountId,
+                market,
+                // What is `newMarginUsd`?
+                //
+                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
+                runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
+            );
+        }
+
+        if (runtime.trade.newPosition.size == 0) {
+            delete market.positions[accountId];
+        } else {
+            market.positions[accountId].update(runtime.trade.newPosition);
+        }
 
         // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
@@ -256,6 +300,13 @@ contract OrderModule is IOrderModule {
             runtime.pnl,
             runtime.fillPrice
         );
+
+        // Validate and perform the hook post settlement execution.
+        validateOrderHooks(order.hooks);
+        executeOrderHooks(accountId, marketId, order, runtime.trade.newPosition, runtime.fillPrice);
+
+        // Wipe the order, successfully settled!
+        delete market.orders[accountId];
     }
 
     /**
@@ -313,7 +364,6 @@ contract OrderModule is IOrderModule {
                 priceUpdateData
             );
             uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
-            uint256 onchainPrice = market.getOraclePrice();
 
             if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
                 revert ErrorUtil.PriceToleranceNotExceeded(order.sizeDelta, fillPrice, order.limitPrice);

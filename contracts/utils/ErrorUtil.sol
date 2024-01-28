@@ -83,9 +83,15 @@ library ErrorUtil {
     // @notice Thrown when the input arrays have mismatched lengths.
     error ArrayLengthMismatch();
 
-    // @notice Thrown when trying to remove a collateral with money inside
+    // @notice Thrown when configuring margin where a previously added collateral was wrongly removed.
     error MissingRequiredCollateral(uint128 synthMarketId);
 
-    // @notice Thrown when and action is only allowed by account owner
+    // @notice Thrown when and action is only allowed by account owner.
     error OnlyAccountOwner();
+
+    // @notice Thrown when a specified hook is not whitelisted, or does not match spec, or otherwise.
+    error InvalidHook(address hook);
+
+    // @notice Thrown when there are too many hooks specified.
+    error MaxHooksExceeded();
 }

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./IBasePerpMarket.sol";
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Order} from "../storage/Order.sol";
 
@@ -31,6 +31,9 @@ interface IOrderModule is IBasePerpMarket {
         uint256 fillPrice
     );
 
+    // @notice Emitted after an order is settled with hook(s) and the hook was completely successfully.
+    event OrderSettlementHookExecuted(uint128 indexed accountId, uint128 marketId, address hook);
+
     // --- Mutative --- //
 
     /**
@@ -41,7 +44,8 @@ interface IOrderModule is IBasePerpMarket {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd
+        uint256 keeperFeeBufferUsd,
+        address[] memory hooks
     ) external;
 
     /**
