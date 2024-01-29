@@ -11,9 +11,6 @@ import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
-/**
- * @dev An open position on a specific perp market within bfp-market.
- */
 library Position {
     using DecimalMath for uint256;
     using DecimalMath for int256;

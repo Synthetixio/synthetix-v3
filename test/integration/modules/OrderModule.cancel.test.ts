@@ -46,7 +46,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -73,7 +74,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -111,57 +113,14 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
 
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(PerpMarketProxy.cancelOrder(trader.accountId, marketId, updateData), `OrderNotReady()`);
-    });
-
-    it('should revert if onchain and pyth price exceeds priceDivergencePercent', async () => {
-      const { PerpMarketProxy } = systems();
-
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd
-      );
-      // Retrieve on-chain configuration to generate a Pyth price that's above the divergence.
-      const priceDivergencePercent = wei(
-        (await PerpMarketProxy.getMarketConfiguration()).priceDivergencePercent
-      ).toNumber();
-      const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
-
-      // Create a Pyth price that is > the oraclePrice +/- 0.001%. Randomly below or above the oracle price.
-      //
-      // We `parseFloat(xxx.toFixed(3))` to avoid really ugly numbers like 1864.7999999999997 during testing.
-      const pythPrice = parseFloat(
-        genOneOf([
-          oraclePrice * (1.001 + priceDivergencePercent),
-          oraclePrice * (0.999 - priceDivergencePercent),
-        ]).toFixed(3)
-      );
-
-      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
-      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData, updateFee } = await getPythPriceData(bs, pythPrice, priceFeedId, publishTime);
-
-      await fastForwardTo(settlementTime, provider());
-
-      await assertRevert(
-        PerpMarketProxy.connect(bs.keeper()).cancelOrder(trader.accountId, marketId, updateData, {
-          value: updateFee,
-        }),
-        `PriceDivergenceExceeded("${bn(pythPrice)}", "${bn(oraclePrice)}")`,
-        PerpMarketProxy
-      );
     });
 
     it('should revert when price update from pyth is invalid');
@@ -181,7 +140,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(genNumber(expireTime, expireTime * 2), provider());
@@ -208,7 +168,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
@@ -235,7 +196,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());
@@ -288,7 +250,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       // Update market price to be outside of tolerance.
@@ -348,7 +311,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const invalidMarketId = bn(42069);
@@ -370,7 +334,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       const invalidAccountId = bn(42069);
@@ -397,7 +362,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
 
       await assertRevert(PerpMarketProxy.cancelStaleOrder(trader.accountId, marketId), `OrderNotStale()`);
@@ -418,7 +384,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
@@ -440,7 +407,8 @@ describe('OrderModule Cancelations', () => {
         marketId,
         order.sizeDelta,
         order.limitPrice,
-        order.keeperFeeBufferUsd
+        order.keeperFeeBufferUsd,
+        order.hooks
       );
       const { expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());

@@ -13,14 +13,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Margin} from "../storage/Margin.sol";
 
-/**
- * @dev A single perp market denoted by marketId within bfp-market.
- *
- * As of writing this, there will _only be one_ perp market (i.e. wstETH) however, this allows
- * bfp-market to extend to allow more in the future.
- *
- * We track the marketId here because each PerpMarket is a separate market in Synthetix core.
- */
 library PerpMarket {
     using DecimalMath for int128;
     using DecimalMath for uint128;
@@ -35,11 +27,12 @@ library PerpMarket {
     using Order for Order.Data;
     using Margin for Margin.GlobalData;
 
-    // --- Constants --- //
-
-    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket"));
-
     // --- Storage --- //
+
+    struct GlobalData {
+        // Array all market ids in the system
+        uint128[] activeMarketIds;
+    }
 
     struct Data {
         // A unique market id for market reference.
@@ -79,21 +72,15 @@ library PerpMarket {
         uint128[2][] pastLiquidations;
     }
 
-    struct GlobalData {
-        // Array all market ids in the system
-        uint128[] activeMarketIds;
-    }
-
     function load() internal pure returns (GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode(SLOT_NAME));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket"));
         assembly {
             d.slot := s
         }
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
-        bytes32 s = keccak256(abi.encode(SLOT_NAME, id));
-
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket", id));
         assembly {
             d.slot := s
         }
