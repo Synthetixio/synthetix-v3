@@ -20,7 +20,6 @@ import {
   toRoundRobinGenerators,
 } from '../../generators';
 import {
-  AVERAGE_SECONDS_PER_YEAR,
   SECONDS_ONE_DAY,
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
@@ -34,7 +33,6 @@ import {
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
-  mintAndApprove,
 } from '../../helpers';
 import { BigNumber, ethers } from 'ethers';
 import { calcFillPrice, calcOrderFees } from '../../calculations';
@@ -1055,8 +1053,7 @@ describe('OrderModule', () => {
     it('should accurately account for utilization when holding for a long time', async () => {
       const { PerpMarketProxy, Core } = systems();
 
-      const { collateral, collateralDepositAmount, marginUsdDepositAmount, trader, marketId, market } =
-        await depositMargin(bs, genTrader(bs));
+      const { collateral, collateralDepositAmount, trader, marketId, market } = await depositMargin(bs, genTrader(bs));
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: genOneOf([1, 2]),
@@ -1069,9 +1066,7 @@ describe('OrderModule', () => {
       const { accruedUtilization } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       const notionalSize = wei(order.sizeDelta).mul(order.fillPrice).abs();
 
-      const expectedAccruedUtilization = notionalSize
-        .mul(wei(utilizationRate).div(AVERAGE_SECONDS_PER_YEAR))
-        .mul(SECONDS_ONE_DAY + 1);
+      const expectedAccruedUtilization = notionalSize.mul(wei(utilizationRate)).mul(1).div(365); // 1 day
       // Asset accrued interest after one day
       assertBn.near(accruedUtilization, expectedAccruedUtilization.toBN(), bn(0.00001));
 
@@ -1106,8 +1101,9 @@ describe('OrderModule', () => {
       );
 
       const expectedAccruedUtilization1 = notionalSize
-        .mul(wei(newUtilizationRateAfterRecompute).div(AVERAGE_SECONDS_PER_YEAR))
-        .mul(SECONDS_THREE_DAYS)
+        .mul(wei(newUtilizationRateAfterRecompute))
+        .mul(3) // 3 days
+        .div(365)
         // The accrued interest should include the interest before the recompute as the trader hasn't touched his position
         .add(accruedUtilizationBeforeRecompute);
 
