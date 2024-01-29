@@ -24,10 +24,17 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
+        // A reward token to distribute must exist.
         if (data.token == address(0)) {
             revert ErrorUtil.ZeroAddress();
         }
 
+        // Collaterals in a V3 pool can be delegated to a specific market. `collateralTypes` are the pool collateral
+        // addresses delegated to this market. They're tracked here so downstream operations post creation can infer
+        // pct of `token` to distribute amongst delegated collaterals. For example, during liquidation we calc to total
+        // dollar value of delegated collateral and distribute the reward token proportionally to each collateral.
+        //
+        // There must be at least one pool collateral type available otherwise this reward distribute cannot distribute.
         uint256 collateralTypesLength = data.collateralTypes.length;
         if (collateralTypesLength == 0) {
             revert ErrorUtil.ZeroLength();

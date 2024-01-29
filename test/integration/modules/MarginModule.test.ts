@@ -1595,7 +1595,7 @@ describe('MarginModule', async () => {
       const newSynthMarketIds = newCollaterals.map(({ synthMarketId }) => synthMarketId());
       const newOracleNodeIds = genListOf(newCollaterals.length, () => genBytes32());
       const newMaxAllowables = genListOf(newCollaterals.length, () => bn(genNumber(10_000, 100_000)));
-      const newRewardDistributors = genListOf(newCollaterals.length, () => genAddress());
+      const newRewardDistributors = newCollaterals.map(({ rewardDistributorAddress }) => rewardDistributorAddress());
 
       const { receipt } = await withExplicitEvmMine(
         () =>
@@ -1640,7 +1640,7 @@ describe('MarginModule', async () => {
       const synthMarketIds1 = collaterals().map(({ synthMarketId }) => synthMarketId());
       const oracleNodeIds1 = collaterals().map(({ oracleNodeId }) => oracleNodeId());
       const maxAllowables1 = collaterals().map(() => bn(1));
-      const rewardDistributors1 = collaterals().map(() => genAddress());
+      const rewardDistributors1 = collaterals().map(({ rewardDistributorAddress }) => rewardDistributorAddress());
 
       await PerpMarketProxy.connect(from).setCollateralConfiguration(
         synthMarketIds1,
@@ -1656,7 +1656,7 @@ describe('MarginModule', async () => {
       ];
       const oracleNodeIds2 = [genBytes32()];
       const maxAllowables2 = [bn(1)];
-      const rewardDistributors2 = [genAddress()];
+      const rewardDistributors2 = [supportedCollaterals[0].rewardDistributorAddress()];
 
       await PerpMarketProxy.connect(from).setCollateralConfiguration(
         synthMarketIds2,
@@ -1693,7 +1693,10 @@ describe('MarginModule', async () => {
       const synthMarketIds = [supportedCollaterals[0].synthMarketId(), supportedCollaterals[1].synthMarketId()];
       const oracleNodeIds = [supportedCollaterals[0].oracleNodeId(), supportedCollaterals[1].oracleNodeId()];
       const maxAllowables = [bn(0), bn(0)];
-      const rewardDistributors = [genAddress(), genAddress()];
+      const rewardDistributors = [
+        supportedCollaterals[0].rewardDistributorAddress(),
+        supportedCollaterals[1].rewardDistributorAddress(),
+      ];
 
       // Ensure we can set maxAllowables to 0 even when there's collateral in the system.
       await depositMargin(bs, genTrader(bs, { desiredCollateral: supportedCollaterals[0] }));
@@ -1728,7 +1731,9 @@ describe('MarginModule', async () => {
       const synthMarketIds = collateralsWithoutDeposit.map(({ synthMarketId }) => synthMarketId());
       const oracleNodeIds = collateralsWithoutDeposit.map(({ oracleNodeId }) => oracleNodeId());
       const maxAllowables = collateralsWithoutDeposit.map(() => bn(0));
-      const rewardDistributors = collateralsWithoutDeposit.map(() => genAddress());
+      const rewardDistributors = collateralsWithoutDeposit.map(({ rewardDistributorAddress }) =>
+        rewardDistributorAddress()
+      );
 
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration(
@@ -1752,7 +1757,7 @@ describe('MarginModule', async () => {
       const synthMarketIds = [supportedCollaterals[1].synthMarketId()];
       const oracleNodeIds = [genBytes32()];
       const maxAllowables = [bn(0)];
-      const rewardDistributors = [genAddress()];
+      const rewardDistributors = [supportedCollaterals[1].rewardDistributorAddress()];
 
       await PerpMarketProxy.connect(from).setCollateralConfiguration(
         synthMarketIds,
@@ -1787,7 +1792,12 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([bn(genNumber())], [], [bn(-1)], [genAddress()]),
+        PerpMarketProxy.connect(from).setCollateralConfiguration(
+          [bn(genNumber())],
+          [],
+          [bn(-1)],
+          [collaterals()[0].rewardDistributorAddress()]
+        ),
         'Error: value out-of-bounds'
       );
     });
@@ -1799,7 +1809,7 @@ describe('MarginModule', async () => {
       const synthMarketIds = [BigNumber.from(696969)];
       const oracleNodeIds = [genBytes32()];
       const maxAllowables = [BigNumber.from(1)];
-      const rewardDistributors = [genAddress()];
+      const rewardDistributors = [genOneOf(collaterals()).rewardDistributorAddress()];
 
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration(
@@ -1809,6 +1819,29 @@ describe('MarginModule', async () => {
           rewardDistributors
         ),
         `transaction reverted in contract unknown: 0x`
+      );
+    });
+
+    it('should revert when a reward distributor address does not support interface', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const rewardDistributor = genAddress();
+
+      const synthMarketIds = [collateral.synthMarketId()];
+      const oracleNodeIds = [genBytes32()];
+      const maxAllowables = [bn(0)];
+      const rewardDistributors = [rewardDistributor];
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralConfiguration(
+          synthMarketIds,
+          oracleNodeIds,
+          maxAllowables,
+          rewardDistributors
+        ),
+        `InvalidRewardDistributor("${rewardDistributor}")`
       );
     });
 
@@ -2116,9 +2149,15 @@ describe('MarginModule', async () => {
   });
 
   describe('getConfiguredCollaterals', () => {
-    it('should return empty when there are no configured collaterals');
+    it('should return empty when there are no configured collaterals', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should return configured collaterals');
+      const from = owner();
+      await PerpMarketProxy.connect(from).setCollateralConfiguration([], [], [], []);
+
+      const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      assert.equal(collaterals.length, 0);
+    });
   });
 
   describe('getHaircutCollateralPrice', () => {

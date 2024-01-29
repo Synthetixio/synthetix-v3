@@ -1,11 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
@@ -349,9 +351,19 @@ contract MarginModule is IMarginModule {
             // Perform approve _once_ when this collateral is added as a supported collateral.
             approveSynthCollateral(synthMarketId, runtime.maxApproveAmount, globalMarketConfig);
 
-            // Non sUSD collaterals must have a rewards distributor.
-            if (synthMarketId != SYNTHETIX_USD_MARKET_ID && rewardDistributors[i] == address(0)) {
-                revert ErrorUtil.ZeroAddress();
+            // sUSD must have a 0x0 reward distributor.
+            address distributor = rewardDistributors[i];
+            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+                if (distributor != address(0)) {
+                    revert ErrorUtil.InvalidRewardDistributor(distributor);
+                }
+            } else {
+                // non-sUSD collateral must have a compatible reward distributor.
+                //
+                // NOTE: The comparison with `IRewardDistributor` here and not `IPerpRewardDistributor`.
+                if (!ERC165Helper.safeSupportsInterface(distributor, type(IRewardDistributor).interfaceId)) {
+                    revert ErrorUtil.InvalidRewardDistributor(distributor);
+                }
             }
 
             globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(

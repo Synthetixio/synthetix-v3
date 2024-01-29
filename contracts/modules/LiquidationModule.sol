@@ -145,7 +145,7 @@ contract LiquidationModule is ILiquidationModule {
                     }
                 }
 
-                // Clear out non-sUSD associated with the account of the liquidated position.
+                // Clear out non-sUSD collateral associated with the account of the liquidated position.
                 market.depositedCollateral[runtime.synthMarketId] -= runtime.availableAccountCollateral;
                 accountMargin.collaterals[runtime.synthMarketId] = 0;
             }
