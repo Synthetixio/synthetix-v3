@@ -1845,6 +1845,29 @@ describe('MarginModule', async () => {
       );
     });
 
+    it('should revert when a reward distributor for sUSD is not 0x0', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+
+      const collateral = getSusdCollateral(collaterals());
+      const rewardDistributor = genAddress();
+
+      const synthMarketIds = [collateral.synthMarketId()];
+      const oracleNodeIds = [genBytes32()];
+      const maxAllowables = [bn(0)];
+      const rewardDistributors = [rewardDistributor];
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralConfiguration(
+          synthMarketIds,
+          oracleNodeIds,
+          maxAllowables,
+          rewardDistributors
+        ),
+        `InvalidRewardDistributor("${rewardDistributor}")`
+      );
+    });
+
     it('should revoke/approve collateral with 0/maxUint');
   });
 
