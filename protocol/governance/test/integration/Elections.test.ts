@@ -20,17 +20,17 @@ describe('SynthetixElectionModule - Elections', () => {
   const { chains } = integrationBootstrap();
 
   const fastForwardToNominationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
-    const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
+    const schedule = await chains.mothership.GovernanceProxy.getEpochSchedule();
     await fastForwardTo(schedule.nominationPeriodStartDate.toNumber() + 10, provider);
   };
 
   const fastForwardToVotingPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
-    const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
+    const schedule = await chains.mothership.GovernanceProxy.getEpochSchedule();
     await fastForwardTo(schedule.votingPeriodStartDate.toNumber() + 10, provider);
   };
 
   const fastForwardToEvaluationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
-    const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
+    const schedule = await chains.mothership.GovernanceProxy.getEpochSchedule();
     await fastForwardTo(schedule.endDate.add(10).toNumber(), provider);
   };
 
@@ -56,9 +56,18 @@ describe('SynthetixElectionModule - Elections', () => {
 
   before('set snapshot contract', async () => {
     const { mothership, satellite1, satellite2 } = chains;
-    await mothership.CoreProxy.setSnapshotContract(mothership.SnapshotRecordMock.address, true);
-    await satellite1.CoreProxy.setSnapshotContract(satellite1.SnapshotRecordMock.address, true);
-    await satellite2.CoreProxy.setSnapshotContract(satellite2.SnapshotRecordMock.address, true);
+    await mothership.GovernanceProxy.setSnapshotContract(
+      mothership.SnapshotRecordMock.address,
+      true
+    );
+    await satellite1.GovernanceProxy.setSnapshotContract(
+      satellite1.SnapshotRecordMock.address,
+      true
+    );
+    await satellite2.GovernanceProxy.setSnapshotContract(
+      satellite2.SnapshotRecordMock.address,
+      true
+    );
   });
 
   before('fund addresses', async () => {
@@ -78,12 +87,12 @@ describe('SynthetixElectionModule - Elections', () => {
     epochs.forEach((epoch) => {
       describe(`epoch ${epoch.index}`, () => {
         it(`shows that the current epoch index is ${epoch.index}`, async () => {
-          assertBn.equal(await chains.mothership.CoreProxy.getEpochIndex(), epoch.index);
+          assertBn.equal(await chains.mothership.GovernanceProxy.getEpochIndex(), epoch.index);
         });
 
         it('shows that the current period is Administration', async () => {
           assertBn.equal(
-            await chains.mothership.CoreProxy.getCurrentPeriod(),
+            await chains.mothership.GovernanceProxy.getCurrentPeriod(),
             ElectionPeriod.Administration
           );
         });
@@ -91,15 +100,19 @@ describe('SynthetixElectionModule - Elections', () => {
         describe('when trying to retrieve the current debt share of a user', () => {
           it('returns zero', async () => {
             assertBn.equal(
-              await chains.mothership.CoreProxy.getVotePower(addresses[0].address, 1115111, 0),
+              await chains.mothership.GovernanceProxy.getVotePower(
+                addresses[0].address,
+                1115111,
+                0
+              ),
               0
             );
             assertBn.equal(
-              await chains.mothership.CoreProxy.getVotePower(addresses[0].address, 420, 0),
+              await chains.mothership.GovernanceProxy.getVotePower(addresses[0].address, 420, 0),
               0
             );
             assertBn.equal(
-              await chains.mothership.CoreProxy.getVotePower(addresses[0].address, 43113, 0),
+              await chains.mothership.GovernanceProxy.getVotePower(addresses[0].address, 43113, 0),
               0
             );
           });
@@ -111,15 +124,21 @@ describe('SynthetixElectionModule - Elections', () => {
           it('reverts', async () => {
             const { mothership, satellite1, satellite2 } = chains;
             await assertRevert(
-              mothership.CoreProxy.takeVotePowerSnapshot(mothership.SnapshotRecordMock.address),
+              mothership.GovernanceProxy.takeVotePowerSnapshot(
+                mothership.SnapshotRecordMock.address
+              ),
               'NotCallableInCurrentPeriod'
             );
             await assertRevert(
-              satellite1.CoreProxy.takeVotePowerSnapshot(satellite1.SnapshotRecordMock.address),
+              satellite1.GovernanceProxy.takeVotePowerSnapshot(
+                satellite1.SnapshotRecordMock.address
+              ),
               'NotCallableInCurrentPeriod'
             );
             await assertRevert(
-              satellite1.CoreProxy.takeVotePowerSnapshot(satellite2.SnapshotRecordMock.address),
+              satellite1.GovernanceProxy.takeVotePowerSnapshot(
+                satellite2.SnapshotRecordMock.address
+              ),
               'NotCallableInCurrentPeriod'
             );
           });
@@ -129,21 +148,21 @@ describe('SynthetixElectionModule - Elections', () => {
           it('reverts', async () => {
             const { mothership, satellite1, satellite2 } = chains;
             await assertRevert(
-              mothership.CoreProxy.prepareBallotWithSnapshot(
+              mothership.GovernanceProxy.prepareBallotWithSnapshot(
                 mothership.SnapshotRecordMock.address,
                 addresses[0].address
               ),
               'NotCallableInCurrentPeriod'
             );
             await assertRevert(
-              satellite1.CoreProxy.prepareBallotWithSnapshot(
+              satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                 satellite1.SnapshotRecordMock.address,
                 addresses[0].address
               ),
               'NotCallableInCurrentPeriod'
             );
             await assertRevert(
-              satellite2.CoreProxy.prepareBallotWithSnapshot(
+              satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                 satellite2.SnapshotRecordMock.address,
                 addresses[0].address
               ),
@@ -168,15 +187,24 @@ describe('SynthetixElectionModule - Elections', () => {
           it('reverts', async () => {
             const { mothership, satellite1, satellite2 } = chains;
             await assertRevert(
-              mothership.CoreProxy.setSnapshotContract(mothership.SnapshotRecordMock.address, true),
+              mothership.GovernanceProxy.setSnapshotContract(
+                mothership.SnapshotRecordMock.address,
+                true
+              ),
               'NotCallableInCurrentPeriod'
             );
             await assertRevert(
-              satellite1.CoreProxy.setSnapshotContract(satellite1.SnapshotRecordMock.address, true),
+              satellite1.GovernanceProxy.setSnapshotContract(
+                satellite1.SnapshotRecordMock.address,
+                true
+              ),
               'NotCallableInCurrentPeriod'
             );
             await assertRevert(
-              satellite2.CoreProxy.setSnapshotContract(satellite2.SnapshotRecordMock.address, true),
+              satellite2.GovernanceProxy.setSnapshotContract(
+                satellite2.SnapshotRecordMock.address,
+                true
+              ),
               'NotCallableInCurrentPeriod'
             );
           });
@@ -185,11 +213,13 @@ describe('SynthetixElectionModule - Elections', () => {
         it('simulate debt share data', async () => {
           const { mothership, satellite1, satellite2 } = chains;
 
-          snapshotId = await mothership.CoreProxy.callStatic.takeVotePowerSnapshot(
+          snapshotId = await mothership.GovernanceProxy.callStatic.takeVotePowerSnapshot(
             mothership.SnapshotRecordMock.address
           );
 
-          await mothership.CoreProxy.takeVotePowerSnapshot(mothership.SnapshotRecordMock.address);
+          await mothership.GovernanceProxy.takeVotePowerSnapshot(
+            mothership.SnapshotRecordMock.address
+          );
 
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[0].address,
@@ -218,11 +248,13 @@ describe('SynthetixElectionModule - Elections', () => {
           );
 
           //prepare voting for satellite1
-          snapshotId1 = await satellite1.CoreProxy.callStatic.takeVotePowerSnapshot(
+          snapshotId1 = await satellite1.GovernanceProxy.callStatic.takeVotePowerSnapshot(
             satellite1.SnapshotRecordMock.address
           );
 
-          await satellite1.CoreProxy.takeVotePowerSnapshot(satellite1.SnapshotRecordMock.address);
+          await satellite1.GovernanceProxy.takeVotePowerSnapshot(
+            satellite1.SnapshotRecordMock.address
+          );
 
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[0].address,
@@ -251,11 +283,13 @@ describe('SynthetixElectionModule - Elections', () => {
           );
 
           //prepare voting for satellite2
-          snapshotId2 = await satellite2.CoreProxy.callStatic.takeVotePowerSnapshot(
+          snapshotId2 = await satellite2.GovernanceProxy.callStatic.takeVotePowerSnapshot(
             satellite2.SnapshotRecordMock.address
           );
 
-          await satellite2.CoreProxy.takeVotePowerSnapshot(satellite2.SnapshotRecordMock.address);
+          await satellite2.GovernanceProxy.takeVotePowerSnapshot(
+            satellite2.SnapshotRecordMock.address
+          );
 
           await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[0].address,
@@ -286,7 +320,7 @@ describe('SynthetixElectionModule - Elections', () => {
 
         it('shows that the current period is Nomination', async () => {
           assertBn.equal(
-            await chains.mothership.CoreProxy.getCurrentPeriod(),
+            await chains.mothership.GovernanceProxy.getCurrentPeriod(),
             ElectionPeriod.Nomination
           );
         });
@@ -294,18 +328,21 @@ describe('SynthetixElectionModule - Elections', () => {
         it('shows that the snapshot id is set', async () => {
           const { mothership, satellite1, satellite2 } = chains;
 
-          const contractSnapShotIdMotherShip = await mothership.CoreProxy.getVotePowerSnapshotId(
-            mothership.SnapshotRecordMock.address,
-            epoch.index
-          );
-          const contractSnapShotIdSatellite1 = await satellite1.CoreProxy.getVotePowerSnapshotId(
-            satellite1.SnapshotRecordMock.address,
-            epoch.index
-          );
-          const contractSnapShotIdSatellite2 = await satellite2.CoreProxy.getVotePowerSnapshotId(
-            satellite2.SnapshotRecordMock.address,
-            epoch.index
-          );
+          const contractSnapShotIdMotherShip =
+            await mothership.GovernanceProxy.getVotePowerSnapshotId(
+              mothership.SnapshotRecordMock.address,
+              epoch.index
+            );
+          const contractSnapShotIdSatellite1 =
+            await satellite1.GovernanceProxy.getVotePowerSnapshotId(
+              satellite1.SnapshotRecordMock.address,
+              epoch.index
+            );
+          const contractSnapShotIdSatellite2 =
+            await satellite2.GovernanceProxy.getVotePowerSnapshotId(
+              satellite2.SnapshotRecordMock.address,
+              epoch.index
+            );
 
           assertBn.equal(contractSnapShotIdMotherShip, snapshotId);
 
@@ -319,37 +356,37 @@ describe('SynthetixElectionModule - Elections', () => {
             const { mothership } = chains;
 
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[1].connect(mothership.provider)
               ).nominate()
             ).wait();
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[3].connect(mothership.provider)
               ).nominate()
             ).wait();
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[4].connect(mothership.provider)
               ).nominate()
             ).wait();
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[5].connect(mothership.provider)
               ).nominate()
             ).wait();
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[6].connect(mothership.provider)
               ).nominate()
             ).wait();
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[7].connect(mothership.provider)
               ).nominate()
             ).wait();
             await (
-              await mothership.CoreProxy.connect(
+              await mothership.GovernanceProxy.connect(
                 addresses[8].connect(mothership.provider)
               ).nominate()
             ).wait();
@@ -357,33 +394,33 @@ describe('SynthetixElectionModule - Elections', () => {
 
           it('is nominated', async () => {
             const { mothership } = chains;
-            assert.equal(await mothership.CoreProxy.isNominated(addresses[3].address), true);
-            assert.equal(await mothership.CoreProxy.isNominated(addresses[4].address), true);
-            assert.equal(await mothership.CoreProxy.isNominated(addresses[5].address), true);
-            assert.equal(await mothership.CoreProxy.isNominated(addresses[6].address), true);
-            assert.equal(await mothership.CoreProxy.isNominated(addresses[7].address), true);
-            assert.equal(await mothership.CoreProxy.isNominated(addresses[8].address), true);
+            assert.equal(await mothership.GovernanceProxy.isNominated(addresses[3].address), true);
+            assert.equal(await mothership.GovernanceProxy.isNominated(addresses[4].address), true);
+            assert.equal(await mothership.GovernanceProxy.isNominated(addresses[5].address), true);
+            assert.equal(await mothership.GovernanceProxy.isNominated(addresses[6].address), true);
+            assert.equal(await mothership.GovernanceProxy.isNominated(addresses[7].address), true);
+            assert.equal(await mothership.GovernanceProxy.isNominated(addresses[8].address), true);
           });
 
           describe('when users declare their debt shares in the wrong period', () => {
             it('reverts', async () => {
               const { mothership, satellite2 } = chains;
               await assertRevert(
-                mothership.CoreProxy.prepareBallotWithSnapshot(
+                mothership.GovernanceProxy.prepareBallotWithSnapshot(
                   mothership.SnapshotRecordMock.address,
                   addresses[0].address
                 ),
                 'NotCallableInCurrentPeriod'
               );
               await assertRevert(
-                satellite2.CoreProxy.prepareBallotWithSnapshot(
+                satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                   mothership.SnapshotRecordMock.address,
                   addresses[0].address
                 ),
                 'NotCallableInCurrentPeriod'
               );
               await assertRevert(
-                satellite2.CoreProxy.prepareBallotWithSnapshot(
+                satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite2.SnapshotRecordMock.address,
                   addresses[0].address
                 ),
@@ -402,7 +439,7 @@ describe('SynthetixElectionModule - Elections', () => {
 
             it('shows that the current period is Voting', async () => {
               assertBn.equal(
-                await chains.mothership.CoreProxy.getCurrentPeriod(),
+                await chains.mothership.GovernanceProxy.getCurrentPeriod(),
                 ElectionPeriod.Vote
               );
             });
@@ -412,21 +449,21 @@ describe('SynthetixElectionModule - Elections', () => {
                 it('reverts', async () => {
                   const { mothership, satellite1, satellite2 } = chains;
                   await assertRevert(
-                    mothership.CoreProxy.prepareBallotWithSnapshot(
+                    mothership.GovernanceProxy.prepareBallotWithSnapshot(
                       mothership.SnapshotRecordMock.address,
                       ethers.Wallet.createRandom().address
                     ),
                     'NoPower'
                   );
                   await assertRevert(
-                    satellite1.CoreProxy.prepareBallotWithSnapshot(
+                    satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                       satellite1.SnapshotRecordMock.address,
                       ethers.Wallet.createRandom().address
                     ),
                     'NoPower'
                   );
                   await assertRevert(
-                    satellite2.CoreProxy.prepareBallotWithSnapshot(
+                    satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                       satellite2.SnapshotRecordMock.address,
                       ethers.Wallet.createRandom().address
                     ),
@@ -439,64 +476,64 @@ describe('SynthetixElectionModule - Elections', () => {
             describe('when users declare their cross chain debt shares correctly', () => {
               before('declare', async () => {
                 const { mothership, satellite1, satellite2 } = chains;
-                await mothership.CoreProxy.prepareBallotWithSnapshot(
+                await mothership.GovernanceProxy.prepareBallotWithSnapshot(
                   mothership.SnapshotRecordMock.address,
                   addresses[0].address
                 );
-                await mothership.CoreProxy.prepareBallotWithSnapshot(
+                await mothership.GovernanceProxy.prepareBallotWithSnapshot(
                   mothership.SnapshotRecordMock.address,
                   addresses[1].address
                 );
                 // @dev: dont declare for addresses[2]
 
-                await mothership.CoreProxy.prepareBallotWithSnapshot(
+                await mothership.GovernanceProxy.prepareBallotWithSnapshot(
                   mothership.SnapshotRecordMock.address,
                   addresses[3].address
                 );
-                await mothership.CoreProxy.prepareBallotWithSnapshot(
+                await mothership.GovernanceProxy.prepareBallotWithSnapshot(
                   mothership.SnapshotRecordMock.address,
                   addresses[4].address
                 );
 
-                await satellite1.CoreProxy.prepareBallotWithSnapshot(
+                await satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite1.SnapshotRecordMock.address,
                   addresses[0].address
                 );
 
-                await satellite1.CoreProxy.prepareBallotWithSnapshot(
+                await satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite1.SnapshotRecordMock.address,
                   addresses[1].address
                 );
 
                 // @dev: dont declare for addresses[2]
 
-                await satellite1.CoreProxy.prepareBallotWithSnapshot(
+                await satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite1.SnapshotRecordMock.address,
                   addresses[3].address
                 );
 
-                await satellite1.CoreProxy.prepareBallotWithSnapshot(
+                await satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite1.SnapshotRecordMock.address,
                   addresses[4].address
                 );
 
-                await satellite2.CoreProxy.prepareBallotWithSnapshot(
+                await satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite2.SnapshotRecordMock.address,
                   addresses[0].address
                 );
-                await satellite2.CoreProxy.prepareBallotWithSnapshot(
+                await satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite2.SnapshotRecordMock.address,
                   addresses[1].address
                 );
 
                 // @dev: dont declare for addresses[2]
 
-                await satellite2.CoreProxy.prepareBallotWithSnapshot(
+                await satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite2.SnapshotRecordMock.address,
                   addresses[3].address
                 );
 
-                await satellite2.CoreProxy.prepareBallotWithSnapshot(
+                await satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                   satellite2.SnapshotRecordMock.address,
                   addresses[4].address
                 );
@@ -506,21 +543,21 @@ describe('SynthetixElectionModule - Elections', () => {
                 it('reverts', async () => {
                   const { mothership, satellite1, satellite2 } = chains;
                   await assertRevert(
-                    mothership.CoreProxy.prepareBallotWithSnapshot(
+                    mothership.GovernanceProxy.prepareBallotWithSnapshot(
                       mothership.SnapshotRecordMock.address,
                       addresses[0].address
                     ),
                     'BallotAlreadyPrepared'
                   );
                   await assertRevert(
-                    satellite1.CoreProxy.prepareBallotWithSnapshot(
+                    satellite1.GovernanceProxy.prepareBallotWithSnapshot(
                       satellite1.SnapshotRecordMock.address,
                       addresses[0].address
                     ),
                     'BallotAlreadyPrepared'
                   );
                   await assertRevert(
-                    satellite2.CoreProxy.prepareBallotWithSnapshot(
+                    satellite2.GovernanceProxy.prepareBallotWithSnapshot(
                       satellite2.SnapshotRecordMock.address,
                       addresses[0].address
                     ),
@@ -533,29 +570,28 @@ describe('SynthetixElectionModule - Elections', () => {
                 before('vote', async () => {
                   const { mothership } = chains;
 
-                  await mothership.CoreProxy.connect(
+                  await mothership.GovernanceProxy.connect(
                     addresses[0].connect(mothership.provider)
                   ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
 
-                  await mothership.CoreProxy.connect(
+                  await mothership.GovernanceProxy.connect(
                     addresses[1].connect(mothership.provider)
                   ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
 
                   // addresses[2] didn't declare cross chain debt shares yet
                   await assertRevert(
-                    mothership.CoreProxy.connect(addresses[2].connect(mothership.provider)).cast(
-                      [addresses[4].address],
-                      [ethers.utils.parseEther('100')]
-                    ),
+                    mothership.GovernanceProxy.connect(
+                      addresses[2].connect(mothership.provider)
+                    ).cast([addresses[4].address], [ethers.utils.parseEther('100')]),
                     'NoVotingPower',
-                    mothership.CoreProxy
+                    mothership.GovernanceProxy
                   );
 
-                  await mothership.CoreProxy.connect(
+                  await mothership.GovernanceProxy.connect(
                     addresses[3].connect(mothership.provider)
                   ).cast([addresses[1].address], [ethers.utils.parseEther('100')]);
 
-                  await mothership.CoreProxy.connect(
+                  await mothership.GovernanceProxy.connect(
                     addresses[4].connect(mothership.provider)
                   ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
                 });
@@ -563,43 +599,42 @@ describe('SynthetixElectionModule - Elections', () => {
                 it('do not allow partial voting', async () => {
                   const { mothership } = chains;
                   await assertRevert(
-                    mothership.CoreProxy.connect(addresses[0].connect(mothership.provider)).cast(
-                      [addresses[3].address],
-                      [ethers.utils.parseEther('10')]
-                    ),
+                    mothership.GovernanceProxy.connect(
+                      addresses[0].connect(mothership.provider)
+                    ).cast([addresses[3].address], [ethers.utils.parseEther('10')]),
                     'InvalidBallot',
-                    mothership.CoreProxy
+                    mothership.GovernanceProxy
                   );
                 });
 
                 it('keeps track of which ballot each user voted on', async () => {
                   const { mothership } = chains;
 
-                  const ballotForFirstAddress = await mothership.CoreProxy.getBallot(
+                  const ballotForFirstAddress = await mothership.GovernanceProxy.getBallot(
                     addresses[0].address,
                     (await mothership.provider.getNetwork()).chainId,
                     epoch.index
                   );
 
-                  const ballotForSecondAddress = await mothership.CoreProxy.getBallot(
+                  const ballotForSecondAddress = await mothership.GovernanceProxy.getBallot(
                     addresses[1].address,
                     (await mothership.provider.getNetwork()).chainId,
                     epoch.index
                   );
 
-                  const ballotForThirdAddress = await mothership.CoreProxy.getBallot(
+                  const ballotForThirdAddress = await mothership.GovernanceProxy.getBallot(
                     addresses[2].address,
                     (await mothership.provider.getNetwork()).chainId,
                     epoch.index
                   );
 
-                  const ballotForFourthAddress = await mothership.CoreProxy.getBallot(
+                  const ballotForFourthAddress = await mothership.GovernanceProxy.getBallot(
                     addresses[3].address,
                     (await mothership.provider.getNetwork()).chainId,
                     epoch.index
                   );
 
-                  const ballotForFifthAddress = await mothership.CoreProxy.getBallot(
+                  const ballotForFifthAddress = await mothership.GovernanceProxy.getBallot(
                     addresses[4].address,
                     (await mothership.provider.getNetwork()).chainId,
                     epoch.index
@@ -671,7 +706,7 @@ describe('SynthetixElectionModule - Elections', () => {
                 it('keeps track of the candidates of each ballot', async () => {
                   const { mothership } = chains;
                   assert.deepEqual(
-                    await mothership.CoreProxy.getBallotCandidates(
+                    await mothership.GovernanceProxy.getBallotCandidates(
                       addresses[0].address,
                       11155111,
                       epoch.index
@@ -679,7 +714,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     [epoch.winners()[0]]
                   );
                   assert.deepEqual(
-                    await mothership.CoreProxy.getBallotCandidates(
+                    await mothership.GovernanceProxy.getBallotCandidates(
                       addresses[1].address,
                       11155111,
                       epoch.index
@@ -687,7 +722,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     [epoch.winners()[0]]
                   );
                   assert.deepEqual(
-                    await mothership.CoreProxy.getBallotCandidates(
+                    await mothership.GovernanceProxy.getBallotCandidates(
                       addresses[2].address,
                       11155111,
                       epoch.index
@@ -695,7 +730,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     []
                   );
                   assert.deepEqual(
-                    await mothership.CoreProxy.getBallotCandidates(
+                    await mothership.GovernanceProxy.getBallotCandidates(
                       addresses[3].address,
                       11155111,
                       epoch.index
@@ -703,7 +738,7 @@ describe('SynthetixElectionModule - Elections', () => {
                     [addresses[1].address]
                   );
                   assert.deepEqual(
-                    await mothership.CoreProxy.getBallotCandidates(
+                    await mothership.GovernanceProxy.getBallotCandidates(
                       addresses[4].address,
                       11155111,
                       epoch.index
@@ -723,7 +758,7 @@ describe('SynthetixElectionModule - Elections', () => {
                   it('shows that the current period is Evaluation', async () => {
                     const { mothership } = chains;
                     assertBn.equal(
-                      await mothership.CoreProxy.getCurrentPeriod(),
+                      await mothership.GovernanceProxy.getCurrentPeriod(),
                       ElectionPeriod.Evaluation
                     );
                   });
@@ -732,25 +767,28 @@ describe('SynthetixElectionModule - Elections', () => {
                     let rx: ethers.ContractReceipt;
 
                     before('evaluate', async () => {
-                      rx = await (await chains.mothership.CoreProxy.evaluate(0)).wait();
+                      rx = await (await chains.mothership.GovernanceProxy.evaluate(0)).wait();
                     });
 
                     it('emits the event ElectionEvaluated', async () => {
                       await assertEvent(
                         rx,
                         `ElectionEvaluated(${epoch.index}, 4)`,
-                        chains.mothership.CoreProxy
+                        chains.mothership.GovernanceProxy
                       );
                     });
 
                     it('shows that the election is evaluated', async () => {
-                      assert.equal(await chains.mothership.CoreProxy.isElectionEvaluated(), true);
+                      assert.equal(
+                        await chains.mothership.GovernanceProxy.isElectionEvaluated(),
+                        true
+                      );
                     });
 
                     it('shows the election winners', async () => {
                       const { mothership } = chains;
                       assert.deepEqual(
-                        await mothership.CoreProxy.getElectionWinners(),
+                        await mothership.GovernanceProxy.getElectionWinners(),
                         epoch.winners()
                       );
                     });
@@ -759,7 +797,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       before('resolve', async () => {
                         const { mothership, satellite1, satellite2 } = chains;
                         const rx = await (
-                          await mothership.CoreProxy.resolve({
+                          await mothership.GovernanceProxy.resolve({
                             value: ethers.utils.parseEther('1'),
                           })
                         ).wait();

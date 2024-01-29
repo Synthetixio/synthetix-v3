@@ -43,6 +43,7 @@ target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.TestRouter.address %>"]
-factory.CoreProxy.abiOf = ["TestRouter"]
-factory.CoreProxy.event = "Upgraded"
-factory.CoreProxy.arg = 0
+factory.GovernanceProxy.abiOf = ["TestRouter"]
+factory.GovernanceProxy.event = "Upgraded"
+factory.GovernanceProxy.arg = 0
+factory.GovernanceProxy.highlight = true

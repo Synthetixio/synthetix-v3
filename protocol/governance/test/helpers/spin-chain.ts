@@ -7,7 +7,7 @@ import { glob, runTypeChain } from 'typechain';
 import type { CcipRouterMock, CouncilToken } from '../generated/typechain/sepolia';
 import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
 
-export async function spinChain<CoreProxy>({
+export async function spinChain<GovernanceProxy>({
   networkName,
   cannonfile,
   cannonfileSettings,
@@ -70,11 +70,11 @@ export async function spinChain<CoreProxy>({
 
   const signer = provider.getSigner(ownerAddress);
 
-  const CoreProxy = new ethers.Contract(
-    outputs.contracts!.CoreProxy.address,
-    outputs.contracts!.CoreProxy.abi,
+  const GovernanceProxy = new ethers.Contract(
+    outputs.contracts!.GovernanceProxy.address,
+    outputs.contracts!.GovernanceProxy.abi,
     signer
-  ) as CoreProxy;
+  ) as GovernanceProxy;
 
   const SnapshotRecordMock = new ethers.Contract(
     outputs.contracts!.SnapshotRecordMock.address,
@@ -99,7 +99,7 @@ export async function spinChain<CoreProxy>({
     chainId,
     chainSlector,
     provider: provider as unknown as ethers.providers.JsonRpcProvider,
-    CoreProxy,
+    GovernanceProxy,
     CouncilToken,
     CcipRouter,
     signer,

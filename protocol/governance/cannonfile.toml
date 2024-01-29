@@ -55,13 +55,13 @@ target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
-factory.CoreProxy.abiOf = ["CoreRouter"]
-factory.CoreProxy.event = "Upgraded"
-factory.CoreProxy.arg = 0
-factory.CoreProxy.highlight = true
+factory.GovernanceProxy.abiOf = ["CoreRouter"]
+factory.GovernanceProxy.event = "Upgraded"
+factory.GovernanceProxy.arg = 0
+factory.GovernanceProxy.highlight = true
 
 [invoke.init_election_module]
-target = ["CoreProxy"]
+target = ["GovernanceProxy"]
 func = "initOrUpdateElectionSettings(address[],uint8,uint64,uint64,uint64,uint64)"
 args = [
     ["<%= settings.initial_council_member %>"],

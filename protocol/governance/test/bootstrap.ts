@@ -2,14 +2,14 @@ import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import hre from 'hardhat';
 
 import type {
-  CoreProxy,
+  GovernanceProxy,
   CouncilToken,
   CouncilTokenModule,
   SnapshotRecordMock,
 } from './generated/typechain';
 
 interface Contracts {
-  CoreProxy: CoreProxy;
+  GovernanceProxy: GovernanceProxy;
   CouncilToken: CouncilToken;
   CouncilTokenModule: CouncilTokenModule;
   SnapshotRecordMock: SnapshotRecordMock;
@@ -32,7 +32,7 @@ export function bootstrap() {
 
   before('load contracts', function () {
     Object.assign(contracts, {
-      CoreProxy: getContract('CoreProxy'),
+      GovernanceProxy: getContract('GovernanceProxy'),
       CouncilToken: getContract('CouncilToken'),
       CouncilTokenModule: getContract('CouncilTokenModule'),
       SnapshotRecordMock: getContract('SnapshotRecordMock'),
@@ -50,10 +50,10 @@ export function bootstrap() {
       const [owner] = getSigners();
       const factory = await hre.ethers.getContractFactory('Proxy', owner);
       const NewProxy = await factory.deploy(
-        implementation || (await c.CoreProxy.getImplementation()),
+        implementation || (await c.GovernanceProxy.getImplementation()),
         await owner.getAddress()
       );
-      return c.CoreProxy.attach(NewProxy.address);
+      return c.GovernanceProxy.attach(NewProxy.address);
     },
   };
 }
