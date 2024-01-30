@@ -95,6 +95,8 @@ library AsyncOrder {
         uint128 accountId;
         /**
          * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
+         * @dev For quanto this is in (base * quanto / usd) in decimal 18 digits. It can be positive or negative.
+         * @dev When passing the sizeDelta into the order for commitOrder, specify the value in base units, and the module will convert it to (base * quanto / usd) for you.
          */
         int128 sizeDelta;
         /**

@@ -33,6 +33,8 @@ function etherscanLink(chain, address) {
       return `https://basescan.org/address/${address}`;
     case 84531:
       return `https://goerli.basescan.org/address/${address}`;
+    case 84532:
+      return `https://sepolia.basescan.org/address/${address}`;
   }
 }
 
@@ -184,23 +186,28 @@ async function run() {
   async function mintableToken(provisionStep) {
     const fakeCollateral =
       deployments?.state?.[`provision.${provisionStep}`]?.artifacts?.imports?.[provisionStep];
-    if (fakeCollateral) {
-      const [name, ticker] = fakeCollateral.contracts.MintableToken.constructorArgs;
-      console.log(`Writing ${chainId}-${preset}-FakeCollateral${ticker}.json`);
+    const fakeCollateralOptions = deployments?.def?.provision?.[provisionStep]?.options;
+    if (fakeCollateral && fakeCollateralOptions) {
+      console.log(
+        `Writing ${chainId}-${preset}-FakeCollateral${fakeCollateralOptions.symbol}.json`
+      );
       await fs.writeFile(
-        `./abis/${chainId}-${preset}-FakeCollateral${ticker}.json`,
+        `./abis/${chainId}-${preset}-FakeCollateral${fakeCollateralOptions.symbol}.json`,
         await prettyJson(fakeCollateral.contracts.MintableToken)
       );
       out.push(
-        `| Fake Collateral ${name} $${ticker} | [${
+        `| ${fakeCollateralOptions.symbol} / ${fakeCollateralOptions.name} | [${
           fakeCollateral.contracts.MintableToken.address
         }](${etherscanLink(
           chainId,
           fakeCollateral.contracts.MintableToken.address
-        )}) | [View/Download](./abis/${chainId}-${preset}-FakeCollateral${ticker}.json) |`
+        )}) | [View/Download](./abis/${chainId}-${preset}-FakeCollateral${
+          fakeCollateralOptions.symbol
+        }.json) |`
       );
     }
   }
+
   await mintableToken('usdc_mock_collateral');
   await mintableToken('mintableToken');
 

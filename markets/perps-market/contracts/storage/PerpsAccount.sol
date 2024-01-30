@@ -262,11 +262,16 @@ library PerpsAccount {
     ) internal view returns (int totalPnl) {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (int pnl, , , , , ) = position.getPnl(
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
-            totalPnl += pnl;
+
+            uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
+            int usdPnl = pnl.mulDecimal(quantoPrice.toInt());
+
+            totalPnl += usdPnl;
         }
     }
 
@@ -290,7 +295,11 @@ library PerpsAccount {
             uint openInterest = position.getNotionalValue(
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
-            totalAccountOpenInterest += openInterest;
+
+            uint quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
+            uint usdValue = openInterest.mulDecimal(quantoPrice);
+
+            totalAccountOpenInterest += usdValue;
         }
     }
 
@@ -562,6 +571,7 @@ library PerpsAccount {
         updateOpenPositions(self, marketId, newPositionSize);
 
         // update market data
+        // TODO: ensure stuff going in here is correct
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
         sizeDelta = newPositionSize - oldPositionSize;
 

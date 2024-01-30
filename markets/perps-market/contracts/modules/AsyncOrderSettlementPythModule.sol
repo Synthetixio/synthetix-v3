@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IAsyncOrderSettlementPythModule} from "../interfaces/IAsyncOrderSettlementPythModule.sol";
-import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
+import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
@@ -14,6 +14,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
@@ -91,7 +92,10 @@ contract AsyncOrderSettlementPythModule is
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
-            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
+            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+                runtime.marketId
+            );
+            perpsAccount.updateCollateralAmount(marketConfig.quantoSynthMarketId, runtime.pnl);
         } else if (runtime.pnl < 0) {
             runtime.amountToDeduct += runtime.pnlUint;
         }
