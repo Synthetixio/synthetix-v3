@@ -24,7 +24,7 @@ describe('ElectionSchedule', function () {
   describe('#getEpochSchedule', function () {
     it('shows the current schedule', async function () {
       const now = await getTime(getProvider());
-      const schedule = await c.CoreProxy.connect(user).getEpochSchedule();
+      const schedule = await c.GovernanceProxy.connect(user).getEpochSchedule();
       assertBn.gt(schedule.startDate, 0);
       assertBn.gt(schedule.endDate, now);
       assertBn.gt(schedule.nominationPeriodStartDate, now);
@@ -40,8 +40,8 @@ describe('ElectionSchedule', function () {
       votingPeriodStartDate,
       endDate,
     }: Partial<ScheduleConfig> = {}) {
-      const schedule = await c.CoreProxy.getEpochSchedule();
-      const tx = await c.CoreProxy.tweakEpochSchedule(
+      const schedule = await c.GovernanceProxy.getEpochSchedule();
+      const tx = await c.GovernanceProxy.tweakEpochSchedule(
         nominationPeriodStartDate || schedule.nominationPeriodStartDate,
         votingPeriodStartDate || schedule.votingPeriodStartDate,
         endDate || schedule.endDate
@@ -51,12 +51,15 @@ describe('ElectionSchedule', function () {
     }
 
     it('shows that the current period is Administration', async function () {
-      assertBn.equal(await c.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
+      assertBn.equal(await c.GovernanceProxy.getCurrentPeriod(), ElectionPeriod.Administration);
     });
 
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
-        await assertRevert(c.CoreProxy.connect(user).tweakEpochSchedule(0, 0, 0), 'Unauthorized');
+        await assertRevert(
+          c.GovernanceProxy.connect(user).tweakEpochSchedule(0, 0, 0),
+          'Unauthorized'
+        );
       });
     });
 
@@ -65,9 +68,9 @@ describe('ElectionSchedule', function () {
       let schedule: ScheduleConfig;
 
       before('load current configuration', async function () {
-        const settings = await c.CoreProxy.getElectionSettings();
+        const settings = await c.GovernanceProxy.getElectionSettings();
         tolerance = settings.maxDateAdjustmentTolerance;
-        schedule = await c.CoreProxy.getEpochSchedule();
+        schedule = await c.GovernanceProxy.getEpochSchedule();
       });
 
       const dateNames = ['nominationPeriodStartDate', 'votingPeriodStartDate', 'endDate'] as const;
@@ -98,8 +101,8 @@ describe('ElectionSchedule', function () {
         snapshotCheckpoint();
 
         it('reverts', async function () {
-          const schedule = await c.CoreProxy.getEpochSchedule();
-          const settings = await c.CoreProxy.getElectionSettings();
+          const schedule = await c.GovernanceProxy.getEpochSchedule();
+          const settings = await c.GovernanceProxy.getElectionSettings();
           const tolerance = settings.maxDateAdjustmentTolerance;
 
           // Bring the date to the limit
@@ -123,7 +126,7 @@ describe('ElectionSchedule', function () {
       snapshotCheckpoint();
 
       before('load current configuration', async function () {
-        schedule = await c.CoreProxy.getEpochSchedule();
+        schedule = await c.GovernanceProxy.getEpochSchedule();
       });
 
       before('fast forward', async function () {
@@ -146,7 +149,7 @@ describe('ElectionSchedule', function () {
       snapshotCheckpoint();
 
       it('correctly tweaks to new schedule', async function () {
-        const original = await c.CoreProxy.getEpochSchedule();
+        const original = await c.GovernanceProxy.getEpochSchedule();
 
         const newSchedule = {
           nominationPeriodStartDate: original.nominationPeriodStartDate.add(daysToSeconds(2)),
@@ -156,7 +159,7 @@ describe('ElectionSchedule', function () {
 
         await _tweakEpochSchedule(newSchedule);
 
-        const result = await c.CoreProxy.getEpochSchedule();
+        const result = await c.GovernanceProxy.getEpochSchedule();
         assertBn.equal(result.nominationPeriodStartDate, newSchedule.nominationPeriodStartDate);
         assertBn.equal(result.votingPeriodStartDate, newSchedule.votingPeriodStartDate);
         assertBn.equal(result.endDate, newSchedule.endDate);
@@ -170,7 +173,7 @@ describe('ElectionSchedule', function () {
       snapshotCheckpoint();
 
       before('load current configuration', async function () {
-        schedule = await c.CoreProxy.getEpochSchedule();
+        schedule = await c.GovernanceProxy.getEpochSchedule();
       });
 
       describe('when calling during Nomination period', function () {

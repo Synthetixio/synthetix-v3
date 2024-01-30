@@ -11,12 +11,12 @@ describe('cross chain election testing', function () {
   const { chains, fixtureSignerOnChains, fastForwardChainsTo } = integrationBootstrap();
 
   const fastForwardToNominationPeriod = async () => {
-    const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
+    const schedule = await chains.mothership.GovernanceProxy.getEpochSchedule();
     await fastForwardChainsTo(schedule.nominationPeriodStartDate.toNumber() + 10);
   };
 
   const fastForwardToVotingPeriod = async () => {
-    const schedule = await chains.mothership.CoreProxy.getEpochSchedule();
+    const schedule = await chains.mothership.GovernanceProxy.getEpochSchedule();
     await fastForwardChainsTo(schedule.votingPeriodStartDate.toNumber() + 10);
   };
 
@@ -31,13 +31,13 @@ describe('cross chain election testing', function () {
   describe('on initialization', function () {
     it('shows that the current period is Administration', async function () {
       assertBn.equal(
-        await chains.mothership.CoreProxy.getCurrentPeriod(),
+        await chains.mothership.GovernanceProxy.getCurrentPeriod(),
         ElectionPeriod.Administration
       );
     });
 
     it('the current epoch index is correct', async function () {
-      assertBn.equal(await chains.mothership.CoreProxy.getEpochIndex(), 0);
+      assertBn.equal(await chains.mothership.GovernanceProxy.getEpochIndex(), 0);
     });
   });
 
@@ -46,7 +46,7 @@ describe('cross chain election testing', function () {
       const randomCandidate = ethers.Wallet.createRandom().address;
 
       await assertRevert(
-        chains.satellite1.CoreProxy.connect(voter.satellite1).cast(
+        chains.satellite1.GovernanceProxy.connect(voter.satellite1).cast(
           [randomCandidate],
           [1000000000],
           {
@@ -61,7 +61,7 @@ describe('cross chain election testing', function () {
   describe('successful voting on all chains', function () {
     before('prepare snapshot record on all chains', async function () {
       for (const chain of typedValues(chains)) {
-        await chain.CoreProxy.connect(chain.signer).setSnapshotContract(
+        await chain.GovernanceProxy.connect(chain.signer).setSnapshotContract(
           chain.SnapshotRecordMock.address,
           true
         );
@@ -70,23 +70,23 @@ describe('cross chain election testing', function () {
 
     before('nominate', async function () {
       await fastForwardToNominationPeriod();
-      await chains.mothership.CoreProxy.connect(nominee.mothership).nominate();
+      await chains.mothership.GovernanceProxy.connect(nominee.mothership).nominate();
     });
 
     before('preapare ballots on all chains', async function () {
       await fastForwardToVotingPeriod();
 
       for (const [chainName, chain] of typedEntries(chains)) {
-        const snapshotId1 = await chain.CoreProxy.callStatic.takeVotePowerSnapshot(
+        const snapshotId1 = await chain.GovernanceProxy.callStatic.takeVotePowerSnapshot(
           chain.SnapshotRecordMock.address // TODO: should we remove this param? it is being set on setSnapshotContract
         );
-        await chain.CoreProxy.takeVotePowerSnapshot(chain.SnapshotRecordMock.address);
+        await chain.GovernanceProxy.takeVotePowerSnapshot(chain.SnapshotRecordMock.address);
         await chain.SnapshotRecordMock.setBalanceOfOnPeriod(
           await voter[chainName].getAddress(),
           ethers.utils.parseEther('100'),
           snapshotId1.toString()
         );
-        await chain.CoreProxy.prepareBallotWithSnapshot(
+        await chain.GovernanceProxy.prepareBallotWithSnapshot(
           chain.SnapshotRecordMock.address,
           await voter[chainName].getAddress()
         );
@@ -96,13 +96,13 @@ describe('cross chain election testing', function () {
     it('casts vote on mothership', async function () {
       const { mothership } = chains;
 
-      const tx = await mothership.CoreProxy.connect(voter.mothership).cast(
+      const tx = await mothership.GovernanceProxy.connect(voter.mothership).cast(
         [await nominee.mothership.getAddress()],
         [ethers.utils.parseEther('100')]
       );
       await tx.wait();
 
-      const hasVoted = await mothership.CoreProxy.hasVoted(
+      const hasVoted = await mothership.GovernanceProxy.hasVoted(
         await voter.mothership.getAddress(),
         mothership.chainId
       );
@@ -113,7 +113,7 @@ describe('cross chain election testing', function () {
     it('casts vote on satellite1', async function () {
       const { mothership, satellite1 } = chains;
 
-      const tx = await satellite1.CoreProxy.connect(voter.satellite1).cast(
+      const tx = await satellite1.GovernanceProxy.connect(voter.satellite1).cast(
         [await nominee.mothership.getAddress()],
         [ethers.utils.parseEther('100')]
       );
@@ -125,7 +125,7 @@ describe('cross chain election testing', function () {
         ccipAddress: mothership.CcipRouter.address,
       });
 
-      const hasVoted = await mothership.CoreProxy.hasVoted(
+      const hasVoted = await mothership.GovernanceProxy.hasVoted(
         await voter.satellite1.getAddress(),
         satellite1.chainId
       );
@@ -136,7 +136,7 @@ describe('cross chain election testing', function () {
     it('casts vote on satellite2', async function () {
       const { mothership, satellite2 } = chains;
 
-      const tx = await satellite2.CoreProxy.connect(voter.satellite2).cast(
+      const tx = await satellite2.GovernanceProxy.connect(voter.satellite2).cast(
         [await nominee.mothership.getAddress()],
         [ethers.utils.parseEther('100')]
       );
@@ -148,7 +148,7 @@ describe('cross chain election testing', function () {
         ccipAddress: mothership.CcipRouter.address,
       });
 
-      const hasVoted = await mothership.CoreProxy.hasVoted(
+      const hasVoted = await mothership.GovernanceProxy.hasVoted(
         await voter.satellite2.getAddress(),
         satellite2.chainId
       );

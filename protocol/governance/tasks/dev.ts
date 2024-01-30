@@ -66,7 +66,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
       console.log(`  network: ${chain.networkName}`);
       console.log(`  chainId: ${node.options.chainId}`);
       console.log(`  rpc: ${rpcUrl}`);
-      console.log(`  CoreProxy: ${node.outputs.contracts?.CoreProxy.address}`);
+      console.log(`  GovernanceProxy: ${node.outputs.contracts?.GovernanceProxy.address}`);
 
       // Listen for cross chain message send events, and pass it on to the target network
       CcipRouter.connect(node.provider)

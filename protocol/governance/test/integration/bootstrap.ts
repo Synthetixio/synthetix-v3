@@ -5,14 +5,14 @@ import hre from 'hardhat';
 import { typedValues } from '../helpers/object';
 import { spinChain } from '../helpers/spin-chain';
 
-import type { CoreProxy as SepoliaCoreProxy } from '../generated/typechain/sepolia';
-import type { CoreProxy as OptimisticGoerliCoreProxy } from '../generated/typechain/optimistic-goerli';
-import type { CoreProxy as AvalancheFujiCoreProxy } from '../generated/typechain/avalanche-fuji';
+import type { GovernanceProxy as SepoliaGovernanceProxy } from '../generated/typechain/sepolia';
+import type { GovernanceProxy as OptimisticGoerliGovernanceProxy } from '../generated/typechain/optimistic-goerli';
+import type { GovernanceProxy as AvalancheFujiGovernanceProxy } from '../generated/typechain/avalanche-fuji';
 
 interface Proxies {
-  mothership: SepoliaCoreProxy;
-  satellite1: OptimisticGoerliCoreProxy;
-  satellite2: AvalancheFujiCoreProxy;
+  mothership: SepoliaGovernanceProxy;
+  satellite1: OptimisticGoerliGovernanceProxy;
+  satellite2: AvalancheFujiGovernanceProxy;
 }
 
 export enum ChainSelector {
@@ -90,9 +90,9 @@ before(`setup integration chains`, async function () {
     chainSlector: ChainSelector.mothership,
   });
 
-  const schedule = await mothership.CoreProxy.getEpochSchedule();
-  const councilMembers = await mothership.CoreProxy.getCouncilMembers();
-  const epochIndex = await mothership.CoreProxy.getEpochIndex();
+  const schedule = await mothership.GovernanceProxy.getEpochSchedule();
+  const councilMembers = await mothership.GovernanceProxy.getCouncilMembers();
+  const epochIndex = await mothership.GovernanceProxy.getEpochIndex();
 
   const cannonfileSettings = {
     initial_epoch_index: epochIndex,

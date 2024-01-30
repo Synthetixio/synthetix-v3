@@ -7,7 +7,7 @@ import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { ElectionPeriod } from '../../constants';
-import { CoreProxy } from '../../generated/typechain';
+import { GovernanceProxy } from '../../generated/typechain';
 
 describe('ElectionModule - Initialization', function () {
   const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
@@ -15,7 +15,7 @@ describe('ElectionModule - Initialization', function () {
   let owner: ethers.Signer;
   let user: ethers.Signer;
 
-  let ElectionModule: CoreProxy;
+  let ElectionModule: GovernanceProxy;
 
   async function _initOrUpdateElectionSettings({
     caller = owner,
@@ -130,11 +130,11 @@ describe('ElectionModule - Initialization', function () {
         });
 
         it('emitted a ElectionModuleInitialized event', async function () {
-          await assertEvent(rx, 'ElectionModuleInitialized', c.CoreProxy);
+          await assertEvent(rx, 'ElectionModuleInitialized', c.GovernanceProxy);
         });
 
         it('emitted a EpochStarted event', async function () {
-          await assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
+          await assertEvent(rx, 'EpochStarted(0)', c.GovernanceProxy);
         });
       });
     });

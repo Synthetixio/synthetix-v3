@@ -13,7 +13,7 @@ artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
 create2 = true
 
 [invoke.set_supported_cross_chain_networks]
-target = ["CoreProxy"]
+target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setSupportedCrossChainNetworks"
 args = [
@@ -26,7 +26,7 @@ args = [
 ]
 
 [invoke.configure_chainlink_cross_chain]
-target = ["CoreProxy"]
+target = ["GovernanceProxy"]
 func = "configureChainlinkCrossChain"
 from = "<%= settings.owner %>"
 args = ["<%= contracts.CcipRouterMock.address %>"]

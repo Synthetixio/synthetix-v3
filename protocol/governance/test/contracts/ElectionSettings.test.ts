@@ -25,7 +25,7 @@ describe('ElectionSettings', function () {
 
   describe('#getElectionSettings', function () {
     it('returns current election settings', async function () {
-      const settings = await c.CoreProxy.connect(user).getElectionSettings();
+      const settings = await c.GovernanceProxy.connect(user).getElectionSettings();
       assertBn.gt(settings.epochSeatCount, 0);
       assertBn.gt(settings.minimumActiveMembers, 0);
       assertBn.gt(settings.epochDuration, 0);
@@ -40,7 +40,7 @@ describe('ElectionSettings', function () {
       settings: Partial<ElectionSettings> = {},
       caller = owner
     ) {
-      const tx = await c.CoreProxy.connect(caller).setNextElectionSettings(
+      const tx = await c.GovernanceProxy.connect(caller).setNextElectionSettings(
         settings.epochSeatCount ?? 2,
         settings.minimumActiveMembers ?? 1,
         settings.epochDuration ?? 90,
@@ -103,7 +103,7 @@ describe('ElectionSettings', function () {
 
         await _setNextElectionSettings(newSettings);
 
-        const result = await c.CoreProxy.getNextElectionSettings();
+        const result = await c.GovernanceProxy.getNextElectionSettings();
 
         assertBn.equal(result.epochSeatCount, newSettings.epochSeatCount);
         assertBn.equal(result.minimumActiveMembers, newSettings.minimumActiveMembers);

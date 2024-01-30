@@ -14,7 +14,7 @@ artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenMod
 contracts = ["CouncilTokenModule", "InitialModuleBundle"]
 
 [invoke.init_council_token]
-target = ["CoreProxy"]
+target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
