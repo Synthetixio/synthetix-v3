@@ -24,7 +24,6 @@ describe('MarketConfigurationModule', async () => {
       );
       const config = await PerpMarketProxy.getMarketConfiguration();
 
-      assertBn.equal(config.priceDivergencePercent, global.priceDivergencePercent);
       assert.equal(config.pythPublishTimeMin, global.pythPublishTimeMin);
       assert.equal(config.pythPublishTimeMax, global.pythPublishTimeMax);
       assert.equal(config.minOrderAge, global.minOrderAge);
@@ -45,7 +44,7 @@ describe('MarketConfigurationModule', async () => {
       await assertEvent(receipt, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
     });
 
-    it('should revert with non-owner', async () => {
+    it('should revert when non-owner', async () => {
       const { PerpMarketProxy } = systems();
       const from = traders()[0].signer;
 
@@ -98,7 +97,7 @@ describe('MarketConfigurationModule', async () => {
       );
     });
 
-    it('should revert with non-owner', async () => {
+    it('should revert when non-owner', async () => {
       const { PerpMarketProxy } = systems();
       const from = traders()[0].signer; // not owner.
 

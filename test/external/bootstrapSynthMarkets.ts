@@ -64,7 +64,7 @@ export function bootstrapSynthMarkets(data: BootstrapSynthArgs, r: ReturnType<ty
     before('register synth', async () => {
       marketId = await contracts.SpotMarket.callStatic.createSynth(name, token, await marketOwner.getAddress());
       await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
-      await contracts.SpotMarket.connect(marketOwner).updatePriceData(marketId, buyNodeId, sellNodeId);
+      await contracts.SpotMarket.connect(marketOwner).updatePriceData(marketId, buyNodeId, sellNodeId, bn(60));
       await contracts.SpotMarket.connect(marketOwner).setMarketSkewScale(marketId, skewScale);
 
       synthAddress = await contracts.SpotMarket.getSynth(marketId);

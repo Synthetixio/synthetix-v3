@@ -6,9 +6,6 @@ import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contra
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
-/**
- * @dev A pending order that awaiting settlement for position modification.
- */
 library Order {
     using DecimalMath for uint256;
     using DecimalMath for int256;
@@ -26,6 +23,8 @@ library Order {
         uint256 limitPrice;
         // A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
         uint256 keeperFeeBufferUsd;
+        // Settlement hooks specified on commitment for invocation.
+        address[] hooks;
     }
 
     /**
@@ -124,5 +123,6 @@ library Order {
         self.limitPrice = data.limitPrice;
         self.sizeDelta = data.sizeDelta;
         self.keeperFeeBufferUsd = data.keeperFeeBufferUsd;
+        self.hooks = data.hooks;
     }
 }

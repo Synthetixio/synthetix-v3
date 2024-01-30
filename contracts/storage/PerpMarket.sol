@@ -13,14 +13,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Margin} from "../storage/Margin.sol";
 
-/**
- * @dev A single perp market denoted by marketId within bfp-market.
- *
- * As of writing this, there will _only be one_ perp market (i.e. wstETH) however, this allows
- * bfp-market to extend to allow more in the future.
- *
- * We track the marketId here because each PerpMarket is a separate market in Synthetix core.
- */
 library PerpMarket {
     using DecimalMath for int128;
     using DecimalMath for uint128;
@@ -35,11 +27,12 @@ library PerpMarket {
     using Order for Order.Data;
     using Margin for Margin.GlobalData;
 
-    // --- Constants --- //
-
-    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket"));
-
     // --- Storage --- //
+
+    struct GlobalData {
+        // Array all market ids in the system
+        uint128[] activeMarketIds;
+    }
 
     struct Data {
         // A unique market id for market reference.
@@ -52,7 +45,7 @@ library PerpMarket {
         uint128 size;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
-        // The value (in native units) of total market funding accumulated.
+        // The value (in USD) of total market funding accumulated.
         int256 currentFundingAccruedComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
@@ -79,21 +72,15 @@ library PerpMarket {
         uint128[2][] pastLiquidations;
     }
 
-    struct GlobalData {
-        // Array of all market ids in the system
-        uint128[] activeMarketIds;
-    }
-
     function load() internal pure returns (GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode(SLOT_NAME));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket"));
         assembly {
             d.slot := s
         }
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
-        bytes32 s = keccak256(abi.encode(SLOT_NAME, id));
-
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket", id));
         assembly {
             d.slot := s
         }
@@ -172,7 +159,7 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 price,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint128 utilization) {
+    ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
         uint256 delegatedCollateralValueUsd = withdrawableUsd - getTotalCollateralValueUsd(self);
@@ -203,9 +190,7 @@ library PerpMarket {
         }
     }
 
-    function getUnrecordedUtilization(
-        PerpMarket.Data storage self
-    ) internal view returns (uint256 unrecordedUtilization) {
+    function getUnrecordedUtilization(PerpMarket.Data storage self) internal view returns (uint256) {
         return self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
     }
 
@@ -282,10 +267,13 @@ library PerpMarket {
     /**
      * @dev Returns the proportional time elapsed since last utilization.
      */
-    function getProportionalUtilizationElapsed(PerpMarket.Data storage self) internal view returns (uint256) {
-        // 4 years which includes leap
-        uint256 AVERAGE_SECONDS_PER_YEAR = 31556952;
-        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
+    function getProportionalUtilizationElapsed(Data storage self) internal view returns (uint256) {
+        uint256 secondsPassed = block.timestamp - self.lastUtilizationTime;
+        // Convert secondsPassed to a fixed-point representation of days
+        uint256 daysPassedFixedPoint = (secondsPassed * DecimalMath.UNIT) / 1 days;
+        uint256 daysPerYear = 365 * DecimalMath.UNIT;
+
+        return daysPassedFixedPoint.divDecimal(daysPerYear);
     }
 
     /**
@@ -294,7 +282,7 @@ library PerpMarket {
     function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
-        //  - velocity          = proportionalSkew * maxFundingVelocity
+        //  - velocity         = proportionalSkew * maxFundingVelocity
         //
         // example:
         //  - fundingRate         = 0

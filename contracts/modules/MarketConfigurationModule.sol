@@ -15,7 +15,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         PerpMarketConfiguration.GlobalData storage config = PerpMarketConfiguration.load();
 
-        config.priceDivergencePercent = data.priceDivergencePercent;
         config.pythPublishTimeMin = data.pythPublishTimeMin;
         config.pythPublishTimeMax = data.pythPublishTimeMax;
         config.minOrderAge = data.minOrderAge;

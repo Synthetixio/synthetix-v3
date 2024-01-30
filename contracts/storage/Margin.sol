@@ -19,10 +19,6 @@ library Margin {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
-    // --- Constants --- //
-
-    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.Margin"));
-
     // --- Structs --- //
 
     struct CollateralType {
@@ -41,7 +37,7 @@ library Margin {
     struct GlobalData {
         // {synthMarketId: CollateralType}.
         mapping(uint128 => CollateralType) supported;
-        // Array of supported synth spot market ids useable as collateral for margin.
+        // Array of supported synth ids useable as collateral for margin (use supported mapping)
         uint128[] supportedSynthMarketIds;
     }
 
@@ -50,17 +46,15 @@ library Margin {
         mapping(uint128 => uint256) collaterals;
     }
 
-    function load(uint128 accountId, uint128 marketId) internal pure returns (Margin.Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.Margin", accountId, marketId));
-
+    function load() internal pure returns (Margin.GlobalData storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.Margin"));
         assembly {
             d.slot := s
         }
     }
 
-    function load() internal pure returns (Margin.GlobalData storage d) {
-        bytes32 s = SLOT_NAME;
-
+    function load(uint128 accountId, uint128 marketId) internal pure returns (Margin.Data storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.Margin", accountId, marketId));
         assembly {
             d.slot := s
         }
@@ -151,6 +145,11 @@ library Margin {
                 available = accountMargin.collaterals[synthMarketId];
 
                 // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
+                //
+                // NOTE: The invocation to fetch market price relies on an upstream operation to update and store a Pyth
+                // price. This is entirely due the atomic spot sale of non sUSD collateral. As such, any call to `updateAccountCollateral`
+                // must be preceeded with a `parsePythPrice` invocation (assuming the account has zero sUSD or not enough sUSD to
+                // cover costs to pay back negative pnl either via fees, losses, or both).
                 if (available > 0) {
                     collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(collateralPrice));

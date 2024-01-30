@@ -21,7 +21,7 @@ export function* toRoundRobinGenerators<A>(l: A[]): Generator<A, A> {
   }
 }
 
-// --- Primitive generators --- //
+// --- Gen Utils --- //
 
 export const genTimes = <A>(n: number, f: (n?: number) => A) => [...Array(n).keys()].map(f);
 
@@ -35,7 +35,10 @@ export const genOption = <A>(f: () => A): A | undefined => (genOneOf([true, fals
 export const genListOf = <A>(n: number, f: (n?: number) => A): A[] =>
   n <= 0 ? raise('listOf found invalid n') : genTimes(n, f);
 
-// --- Primitives --- //
+export const genSubListOf = <A>(l: A[], n: number): A[] =>
+  l.length < n ? raise('subListOf found n > l.length') : shuffle(l).slice(0, n);
+
+// --- Primitive generators --- //
 
 export const genString = (
   n: number,
@@ -64,7 +67,6 @@ export const genBootstrap = () => ({
     stakedAmount: bn(500_000),
   },
   global: {
-    priceDivergencePercent: bn(genOneOf([0.01, 0.02, 0.03, 0.035, 0.04, 0.045, 0.05])),
     pythPublishTimeMin: 8,
     pythPublishTimeMax: 12,
     minOrderAge: 12,
@@ -84,6 +86,9 @@ export const genBootstrap = () => ({
     utilizationBreakpointPercent: bn(genNumber(0.65, 0.85)),
     lowUtilizationSlopePercent: bn(genNumber(0.0002, 0.0003)),
     highUtilizationSlopePercent: bn(genNumber(0.005, 0.015)),
+    hooks: {
+      maxHooksPerOrder: genNumber(3, 5),
+    },
   },
   markets: MARKETS,
 });
@@ -157,7 +162,7 @@ export const genTrader = async (
   const marginUsdDepositAmount = !isNil(options?.desiredMarginUsdDepositAmount)
     ? wei(options?.desiredMarginUsdDepositAmount)
     : wei(genOneOf([1000, 5000, 10_000, 15_000]));
-  const { answer: collateralPrice } = await collateral.getPrice();
+  const collateralPrice = await collateral.getPrice();
   const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
   return {
@@ -187,6 +192,7 @@ export const genOrder = async (
     desiredKeeperFeeBufferUsd?: number;
     desiredSize?: BigNumber; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
     desiredPriceImpactPercentage?: number;
+    desiredHooks?: string[];
   }
 ) => {
   const { PerpMarketProxy } = systems();
@@ -198,7 +204,7 @@ export const genOrder = async (
   // Use a reasonable amount of leverage.
   let leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5]);
 
-  const { answer: collateralPrice } = await collateral.getPrice();
+  const collateralPrice = await collateral.getPrice();
   const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
 
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
@@ -231,6 +237,7 @@ export const genOrder = async (
     oraclePrice,
     orderFee,
     keeperFee,
+    hooks: options?.desiredHooks ?? [],
   };
 };
 
@@ -267,5 +274,6 @@ export const genOrderFromSizeDelta = async (
     oraclePrice,
     orderFee,
     keeperFee,
+    hooks: [] as string[],
   };
 };

@@ -11,9 +11,6 @@ import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
-/**
- * @dev An open position on a specific perp market within bfp-market.
- */
 library Position {
     using DecimalMath for uint256;
     using DecimalMath for int256;
@@ -412,8 +409,9 @@ library Position {
         int128 positionSize,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 mm) {
-        (, mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
+    ) internal view returns (uint256) {
+        (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
+        return mm;
     }
 
     /**

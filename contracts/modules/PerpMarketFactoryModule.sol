@@ -92,12 +92,18 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return id;
     }
 
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function recomputeUtilization(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (uint256 utilizationRate, ) = market.recomputeUtilization(market.getOraclePrice());
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
     }
 
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());

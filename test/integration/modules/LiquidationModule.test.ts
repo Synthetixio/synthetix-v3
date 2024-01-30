@@ -100,6 +100,41 @@ describe('LiquidationModule', () => {
       );
     });
 
+    it('should be able to flag when market is in close only', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.lte(healthFactor, bn(1));
+
+      await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+
+      assertBn.equal(maxMarketSize, 0);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      await assertEvent(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
+    });
+
     it('getLiquidationFees returns liqKeeperFees small position');
 
     it('getLiquidationFees returns liqKeeperFees big position');
@@ -294,24 +329,30 @@ describe('LiquidationModule', () => {
       const poolCollateralAddress = pool().collateral().address;
       const poolId = pool().id;
 
-      let expectedEvents: string[];
+      let expectedEvents: Array<string | RegExp>;
       if (isSusdCollateral(collateral)) {
         expectedEvents = [
           `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
-          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          new RegExp(
+            `MarketUsdWithdrawn\\(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}",`
+          ), // + tail properties omitted.
           `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
         ];
       } else {
         expectedEvents = [
           // Withdraw and transfer from Core -> PerpMarket.
           `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`,
-          `MarketCollateralWithdrawn(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`,
+          new RegExp(
+            `MarketCollateralWithdrawn\\(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${PerpMarketProxy.address}",`
+          ), // + tail properties omitted.
           // Transfer from PerpMarket -> RewardDistributor.
           `Transfer("${PerpMarketProxy.address}", "${distributorAddress}", ${collateralDepositAmount})`,
           `RewardsDistributed(${poolId}, "${poolCollateralAddress}", "${distributorAddress}", ${collateralDepositAmount}, ${blockTime}, 0)`,
           // Transfer flag reward from PerpMarket -> Keeper.
           `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
-          `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}")`,
+          new RegExp(
+            `MarketUsdWithdrawn\\(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${PerpMarketProxy.address}",`
+          ), // + tail properties omitted.
           `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
         ];
       }
@@ -429,7 +470,7 @@ describe('LiquidationModule', () => {
   });
 
   describe('liquidatePosition', () => {
-    const commtAndSettleLiquidatedPosition = async (desiredKeeper: ethers.Signer) => {
+    const commitAndSettleLiquidatedPosition = async (desiredKeeper: ethers.Signer) => {
       const { PerpMarketProxy } = systems();
 
       // Commit, settle, place position into liquidation, flag for liquidation. Additionally, we set
@@ -470,7 +511,7 @@ describe('LiquidationModule', () => {
       const desiredKeeper = keeper();
       const keeperAddress = await desiredKeeper.getAddress();
 
-      const { tx, receipt, trader, marketId, newMarketOraclePrice } = await commtAndSettleLiquidatedPosition(
+      const { tx, receipt, trader, marketId, newMarketOraclePrice } = await commitAndSettleLiquidatedPosition(
         desiredKeeper
       );
 
@@ -539,6 +580,47 @@ describe('LiquidationModule', () => {
       ].join(', ');
 
       await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
+    });
+
+    it('should be able to liquidate even when market is in close only', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Commit, settle, place position into liquidation, flag for liquidation. Additionally, we set
+      // `desiredMarginUsdDepositAmount` to a low~ish value to prevent partial liquidations.
+      const orderSide = genSide();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+
+      // Set market to close only
+      await setMarketConfigurationById(bs, marketId, { maxMarketSize: 0 });
+      const { maxMarketSize } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      assertBn.equal(maxMarketSize, 0);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+      await assertEvent(receipt, 'PositionLiquidated', PerpMarketProxy);
     });
 
     it('should update market size and skew upon full liquidation', async () => {
@@ -799,7 +881,7 @@ describe('LiquidationModule', () => {
     it('should remove all market deposited collateral after full liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
-      const { marketId } = await commtAndSettleLiquidatedPosition(keeper());
+      const { marketId } = await commitAndSettleLiquidatedPosition(keeper());
 
       // Expecting ZERO collateral deposited into the market.
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
@@ -809,7 +891,7 @@ describe('LiquidationModule', () => {
     it('should remove all account margin collateral after full liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
-      const { trader, marketId } = await commtAndSettleLiquidatedPosition(keeper());
+      const { trader, marketId } = await commitAndSettleLiquidatedPosition(keeper());
 
       // Expecting ZERO collateral left associated with the account.
       const d = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);

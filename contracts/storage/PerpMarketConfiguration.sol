@@ -11,15 +11,8 @@ import {IPyth} from "../external/pyth/IPyth.sol";
 // @dev A static uint128 of the sUSD marketId.
 uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
 
-/**
- * @dev Market specific and shared configuration.
- */
 library PerpMarketConfiguration {
     using SafeCastI256 for int256;
-
-    // --- Constants --- //
-
-    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
 
     // --- Storage --- //
 
@@ -39,8 +32,6 @@ library PerpMarketConfiguration {
         bytes32 ethOracleNodeId;
         // Address of generic PerpRewardDistributor contract.
         address rewardDistributorImplementation;
-        // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
-        uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
         uint64 pythPublishTimeMin;
         // Max acceptable publishTime from Pyth.
@@ -119,17 +110,15 @@ library PerpMarketConfiguration {
         uint128 liquidationMaxPd;
     }
 
-    function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId));
-
+    function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
         assembly {
             d.slot := s
         }
     }
 
-    function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = SLOT_NAME;
-
+    function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId));
         assembly {
             d.slot := s
         }
