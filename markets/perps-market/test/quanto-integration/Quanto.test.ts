@@ -1,15 +1,12 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assert from 'assert/strict';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
-import { wei } from '@synthetixio/wei';
 import { OpenPositionData, openPosition, getQuantoPnl } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
-const sUSDSynthId = 0;
 describe.only('Quanto', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
@@ -186,10 +183,12 @@ describe.only('Quanto', () => {
 
       before('eth pumps', async () => {
         // TODO: adjust bootstrap so that the same aggregator/oracle is used for the spot market and the perps market
+        // TODO: we should be able to set the price of all these aggregators in a single go
         // update eth price on perps market (effects USD pnl)
         await perpsMarkets()[0].quantoAggregator().mockSetCurrentPrice(bn(4_000));
         // update eth price on synth market (effects collateral value)
         await synthMarkets()[0].sellAggregator().mockSetCurrentPrice(bn(4_000));
+        await synthMarkets()[0].buyAggregator().mockSetCurrentPrice(bn(4_000));
       });
 
       it('does not have the amount of margin for a classic perps payout', async () => {
@@ -220,38 +219,17 @@ describe.only('Quanto', () => {
         assertBn.equal(availableMargin, expectedMargin);
       });
 
-      // it('trader can withdraw all his quanto margin and winnings as sUSD', async () => {
-      //   const expectedCollateral = bn(4_000).mul(10); // $40k collateral
-
-      //   const quantoPnl = getQuantoPnl({
-      //     baseAssetStartPrice: 30_000,
-      //     baseAssetEndPrice: 40_000,
-      //     quantoAssetStartPrice: 2_000,
-      //     quantoAssetEndPrice: 4_000,
-      //     baseAssetSizeDelta: 2,
-      //   });
-
-      //   const withdrawAmt = expectedCollateral.add(bn(quantoPnl));
-
-      //   const trader1Address = await trader1().getAddress();
-      //   const balBeforeWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
-
-      //   await systems()
-      //     .PerpsMarket.connect(trader1())
-      //     .modifyCollateral(trader1AccountId, sUSDSynthId, withdrawAmt);
-
-      //   const balAfterWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
-      //   assertBn.equal(balBeforeWithdraw.sub(balAfterWithdraw), withdrawAmt);
-      // });
-
       it('trader can withdraw all his quanto margin and winnings as sETH', async () => {
         const btcPerpsMarketId = perpsMarkets()[0].marketId();
         const ethSpotMarketId = synthMarkets()[0].marketId();
+        const ethSynthAddress = synthMarkets()[0].synthAddress();
         const trader1Address = await trader1().getAddress();
 
-        const resBefore = await systems().PerpsMarket.connect(trader1()).getOpenPosition(trader1AccountId, btcPerpsMarketId);
-        console.log('resBefore :', resBefore);
+        // check position is open
+        const positionOpen = await systems().PerpsMarket.connect(trader1()).getOpenPosition(trader1AccountId, btcPerpsMarketId);
+        assertBn.equal(positionOpen.positionSize, bn(0.001));
 
+        // close position
         await openPosition({
           ...commonOpenPositionProps,
           marketId: btcPerpsMarketId,
@@ -260,9 +238,14 @@ describe.only('Quanto', () => {
           settlementStrategyId: perpsMarkets()[0].strategyId(),
           price: bn(40_000),
         });
-        
-        const expectedCollateral = bn(4_000).mul(10); // $40k collateral
 
+        // check position is closed
+        const positionClosed = await systems().PerpsMarket.connect(trader1()).getOpenPosition(trader1AccountId, btcPerpsMarketId);
+        assertBn.equal(positionClosed.positionSize, bn(0));
+        
+        const balBeforeWithdraw = await systems().Synth(ethSynthAddress).balanceOf(trader1Address);
+        
+        // withdraw all collateral and winnings
         const quantoPnl = getQuantoPnl({
           baseAssetStartPrice: 30_000,
           baseAssetEndPrice: 40_000,
@@ -270,40 +253,15 @@ describe.only('Quanto', () => {
           quantoAssetEndPrice: 4_000,
           baseAssetSizeDelta: 2,
         });
-
+        const expectedCollateral = bn(4_000).mul(10); // $40k collateral
         const withdrawAmt = expectedCollateral.add(bn(quantoPnl)).div(4_000).mul(-1);
-        console.log('withdrawAmt :', withdrawAmt);
-
-        // const balBeforeWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
-
-        const resAfter = await systems().PerpsMarket.connect(trader1()).getOpenPosition(trader1AccountId, btcPerpsMarketId);
-        console.log('resAfter :', resAfter);
-
-
-        // // approve amount of collateral to be transfered to the market
-        // await synthMarkets()[0]
-        //   .synth()
-        //   .connect(trader1())
-        //   .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
-
-        const ethSynthAddress = synthMarkets()[0].synthAddress();
-        const balBeforeWithdraw = await systems().Synth(ethSynthAddress).balanceOf(trader1Address);
-        console.log('balBeforeWithdraw :', balBeforeWithdraw);
-
-        // this part is failing in synthetix/contracts/modules/core/MarketCollateralModule.sol:withdrawMarketCollateral
-        // PerpsAccountModule.modifyCollateral => PerpsAccountModule._withdrawMargin => synthetix.MarketCollateralModule.withdrawMarketCollateral
-        // if (systemAmount > collateralEntry.amountD18) {
-          // revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
-        // }
-
         await systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(trader1AccountId, ethSpotMarketId, withdrawAmt);
 
-        
-        // // const balAfterWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
-        // const balAfterWithdraw = await systems().Synth(synthMarkets()[0].synthAddress()).balanceOf(trader1Address);
-        // assertBn.equal(balBeforeWithdraw.sub(balAfterWithdraw), withdrawAmt);
+        // check everything was withdrawn
+        const balAfterWithdraw = await systems().Synth(ethSynthAddress).balanceOf(trader1Address);
+        assertBn.equal(balBeforeWithdraw.sub(balAfterWithdraw), withdrawAmt);
       });
     });
   });
