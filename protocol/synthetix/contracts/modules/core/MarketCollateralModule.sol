@@ -95,7 +95,6 @@ contract MarketCollateralModule is IMarketCollateralModule {
             marketData,
             collateralType
         );
-
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[
             depositedCollateralEntryIndex
         ];
