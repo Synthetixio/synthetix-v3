@@ -83,7 +83,6 @@ contract MarketCollateralModule is IMarketCollateralModule {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
-        // systemAmount is literally just the same as tokenAmount, but set to 18 decimals (which it already is, so no change)
         uint256 systemAmount = CollateralConfiguration
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
@@ -97,12 +96,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
             collateralType
         );
 
-        // this is some configuration for the market collateral type
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[
             depositedCollateralEntryIndex
         ];
 
-        // it is failing here as collateralEntry.amountD18 is not enough, we need to increase its value
         // Ensure that the market is not withdrawing more collateral than it has deposited
         if (systemAmount > collateralEntry.amountD18) {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
