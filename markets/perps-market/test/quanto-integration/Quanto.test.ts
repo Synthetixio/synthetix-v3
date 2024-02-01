@@ -232,11 +232,17 @@ describe('Quanto', () => {
         const positionOpen = await systems().PerpsMarket.connect(trader1()).getOpenPosition(trader1AccountId, btcPerpsMarketId);
         assertBn.equal(positionOpen.positionSize, bn(0.001));
 
+        // close out position (calculate same position size that was opened and multiply by -1)
+        const posSize = getQuantoPositionSize({
+          sizeInBaseAsset: bn(2),
+          quantoAssetPrice: bn(2_000)
+        }).mul(-1);
+
         // close position
         await openPosition({
           ...commonOpenPositionProps,
           marketId: btcPerpsMarketId,
-          sizeDelta: bn(0.001).mul(-1),
+          sizeDelta: posSize,
           settlementStrategyId: perpsMarkets()[0].strategyId(),
           price: bn(40_000),
         });
