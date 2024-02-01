@@ -6,11 +6,11 @@ import assert from 'assert/strict';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 import { wei } from '@synthetixio/wei';
-import { OpenPositionData, openPosition, getQuantoPnl } from '../integration/helpers';
+import { OpenPositionData, openPosition, getQuantoPnl, getQuantoPositionSize } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
 const sUSDSynthId = 0;
-describe('Quanto', () => {
+describe.only('Quanto', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
@@ -99,9 +99,13 @@ describe('Quanto', () => {
       };
     });
     before('open positions', async () => {
+      // 2 BTC long position
+      const posSize = getQuantoPositionSize({
+        sizeInBaseAsset: 2,
+        quantoAssetPrice: 2_000
+      });
       const positionSizes = [
-        // 2 BTC long position
-        bn(2),
+        bn(posSize),
       ];
 
       await openPosition({

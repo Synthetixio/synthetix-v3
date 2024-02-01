@@ -17,3 +17,16 @@ export const getQuantoPnl = ({
   const quantoMultiplier = quantoAssetEndPrice / quantoAssetStartPrice;
   return baseAssetPriceChange * baseAssetSizeDelta * quantoMultiplier;
 };
+
+export type GetQuantoPositionSizeArgs = {
+  sizeInBaseAsset: number;
+  quantoAssetPrice: number;
+};
+
+
+export const getQuantoPositionSize = ({
+  sizeInBaseAsset,
+  quantoAssetPrice
+}: GetQuantoPositionSizeArgs): number => {
+  return sizeInBaseAsset / quantoAssetPrice;
+}
