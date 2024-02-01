@@ -13,6 +13,7 @@ import { parseUnits } from 'ethers/lib/utils';
 
 export const SECONDS_ONE_HR = 60 * 60;
 export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
+export const AVERAGE_SECONDS_PER_YEAR = 31556952; // 4 years which includes leap
 
 export const SYNTHETIX_USD_MARKET_ID = BigNumber.from(0);
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
