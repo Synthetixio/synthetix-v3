@@ -252,7 +252,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
 
             // can withdraw all the payout from the markets collateral directly
             if (collateralAmount >= amount) {
-                // withdrawing from a synth market
+                // withdraw this markets trader deposited synth collateral
                 perpsMarketFactory.synthetix.withdrawMarketCollateral(
                     perpsMarketId,
                     address(synth),
