@@ -7,7 +7,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { OpenPositionData, openPosition, getQuantoPnl } from '../integration/helpers';
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
-describe.only('Quanto', () => {
+describe('Quanto', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {

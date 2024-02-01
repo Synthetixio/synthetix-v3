@@ -8,13 +8,10 @@
   "types": "index.d.ts",
   "scripts": {
     "abis": "node ./abis.js",
-    "docgen:abis": "./docgen-abis.sh",
     "docgen:contracts": "./docgen-contracts.sh"
   },
   "devDependencies": {
-    "@usecannon/builder": "2.10.6",
     "handlebars": "^4.7.8",
-    "prettier": "^3.0.3",
     "solidity-ast": "^0.4.52",
     "solidity-docgen": "^0.6.0-beta.36"
   }
