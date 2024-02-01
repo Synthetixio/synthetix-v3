@@ -96,11 +96,11 @@ describe('Quanto', () => {
     before('open positions', async () => {
       // 2 BTC long position
       const posSize = getQuantoPositionSize({
-        sizeInBaseAsset: 2,
-        quantoAssetPrice: 2_000
+        sizeInBaseAsset: bn(2),
+        quantoAssetPrice: bn(2_000)
       });
       const positionSizes = [
-        bn(posSize),
+        posSize,
       ];
 
       await openPosition({
@@ -236,8 +236,7 @@ describe('Quanto', () => {
         await openPosition({
           ...commonOpenPositionProps,
           marketId: btcPerpsMarketId,
-          // TODO: fix this, wtf, it should be -2 (this is due to eth fluctuations), perhaps best to use eth*btc/usd values directly
-          sizeDelta: bn(-4),
+          sizeDelta: bn(0.001).mul(-1),
           settlementStrategyId: perpsMarkets()[0].strategyId(),
           price: bn(40_000),
         });
