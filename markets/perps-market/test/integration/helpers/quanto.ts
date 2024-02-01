@@ -1,10 +1,14 @@
+import { ethers } from 'ethers';
+
 export type GetQuantoPnlArgs = {
-  baseAssetStartPrice: number;
-  baseAssetEndPrice: number;
-  quantoAssetStartPrice: number;
-  quantoAssetEndPrice: number;
-  baseAssetSizeDelta: number;
+  baseAssetStartPrice: ethers.BigNumber;
+  baseAssetEndPrice: ethers.BigNumber;
+  quantoAssetStartPrice: ethers.BigNumber;
+  quantoAssetEndPrice: ethers.BigNumber;
+  baseAssetSizeDelta: ethers.BigNumber;
 };
+
+const ONE_ETHER = ethers.utils.parseEther('1');
 
 export const getQuantoPnl = ({
   baseAssetStartPrice,
@@ -12,10 +16,14 @@ export const getQuantoPnl = ({
   quantoAssetStartPrice,
   quantoAssetEndPrice,
   baseAssetSizeDelta,
-}: GetQuantoPnlArgs): number => {
-  const baseAssetPriceChange = baseAssetEndPrice - baseAssetStartPrice;
-  const quantoMultiplier = quantoAssetEndPrice / quantoAssetStartPrice;
-  return baseAssetPriceChange * baseAssetSizeDelta * quantoMultiplier;
+}: GetQuantoPnlArgs): ethers.BigNumber => {
+  const baseAssetPriceChange = baseAssetEndPrice.sub(baseAssetStartPrice);
+  const quantoMultiplier = quantoAssetEndPrice.div(quantoAssetStartPrice).mul(ONE_ETHER);
+  return baseAssetPriceChange
+    .mul(baseAssetSizeDelta)
+    .mul(quantoMultiplier)
+    .div(ONE_ETHER)
+    .div(ONE_ETHER);
 };
 
 export type GetQuantoPositionSizeArgs = {
@@ -23,10 +31,9 @@ export type GetQuantoPositionSizeArgs = {
   quantoAssetPrice: number;
 };
 
-
 export const getQuantoPositionSize = ({
   sizeInBaseAsset,
-  quantoAssetPrice
+  quantoAssetPrice,
 }: GetQuantoPositionSizeArgs): number => {
   return sizeInBaseAsset / quantoAssetPrice;
-}
+};

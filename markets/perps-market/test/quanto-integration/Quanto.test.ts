@@ -208,14 +208,14 @@ describe('Quanto', () => {
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
 
         const quantoPnl = getQuantoPnl({ // 10k * 2 * 2 = $40k profit
-          baseAssetStartPrice: 30_000,
-          baseAssetEndPrice: 40_000,
-          quantoAssetStartPrice: 2_000,
-          quantoAssetEndPrice: 4_000,
-          baseAssetSizeDelta: 2,
+          baseAssetStartPrice: bn(30_000),
+          baseAssetEndPrice: bn(40_000),
+          quantoAssetStartPrice: bn(2_000),
+          quantoAssetEndPrice: bn(4_000),
+          baseAssetSizeDelta: bn(2),
         });
 
-        const expectedMargin = expectedCollateral.add(bn(quantoPnl));
+        const expectedMargin = expectedCollateral.add(quantoPnl);
 
         // check the pnl
         const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader1AccountId);
@@ -250,14 +250,14 @@ describe('Quanto', () => {
         
         // withdraw all collateral and winnings
         const quantoPnl = getQuantoPnl({
-          baseAssetStartPrice: 30_000,
-          baseAssetEndPrice: 40_000,
-          quantoAssetStartPrice: 2_000,
-          quantoAssetEndPrice: 4_000,
-          baseAssetSizeDelta: 2,
+          baseAssetStartPrice: bn(30_000),
+          baseAssetEndPrice: bn(40_000),
+          quantoAssetStartPrice: bn(2_000),
+          quantoAssetEndPrice: bn(4_000),
+          baseAssetSizeDelta: bn(2),
         });
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
-        const withdrawAmt = expectedCollateral.add(bn(quantoPnl)).div(4_000).mul(-1);
+        const withdrawAmt = expectedCollateral.add(quantoPnl).div(4_000).mul(-1);
         await systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(trader1AccountId, ethSpotMarketId, withdrawAmt);
