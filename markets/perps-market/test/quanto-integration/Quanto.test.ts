@@ -10,7 +10,7 @@ import { OpenPositionData, openPosition, getQuantoPnl, getQuantoPositionSize } f
 
 // NOTE: this is based on ModifyCollateral.withdraw.test.ts
 const sUSDSynthId = 0;
-describe.only('Quanto', () => {
+describe('Quanto', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
