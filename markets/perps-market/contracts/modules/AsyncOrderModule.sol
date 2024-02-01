@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
@@ -23,9 +21,6 @@ import {Flags} from "../utils/Flags.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
-    using DecimalMath for int128;
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
@@ -36,15 +31,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
-        uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT);
-        int128 sizeDelta = commitment.sizeDelta;
-        // if quanto price is 1, then market has a classic payoff, no change in units is needed
-        if (quantoPrice != 1 ether) {
-            // convert position size from base units to (base*quanto/usd)
-            int128 quantoSizeDelta = sizeDelta.divDecimal(quantoPrice.toInt().to128()).to128();
-            commitment.sizeDelta = quantoSizeDelta;
-        }
-
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         PerpsMarket.loadValid(commitment.marketId);
 
