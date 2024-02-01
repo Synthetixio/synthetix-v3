@@ -279,7 +279,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       }
       rewardDistributors.push(distributor);
     }
-    await PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
+    await PerpMarketProxy.connect(getOwner()).setMarginCollateralConfiguration(
       synthMarketIds,
       oracleNodeIds,
       maxAllowances,

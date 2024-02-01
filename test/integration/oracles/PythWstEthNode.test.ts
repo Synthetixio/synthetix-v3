@@ -161,7 +161,7 @@ describe('PythWstEthNode', () => {
       const maxAllowables = [sUsdCollateral.max, collateral.max];
       const rewardDistributors = [sUsdCollateral.rewardDistributorAddress(), collateral.rewardDistributorAddress()];
 
-      await PerpMarketProxy.setCollateralConfiguration(
+      await PerpMarketProxy.setMarginCollateralConfiguration(
         synthMarketIds,
         oracleNodeIds,
         maxAllowables,

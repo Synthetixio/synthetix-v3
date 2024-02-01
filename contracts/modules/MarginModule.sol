@@ -27,7 +27,7 @@ contract MarginModule is IMarginModule {
 
     // --- Runtime structs --- //
 
-    struct Runtime_setCollateralConfiguration {
+    struct Runtime_setMarginCollateralConfiguration {
         uint256 lengthBefore;
         uint256 lengthAfter;
         uint256 maxApproveAmount;
@@ -304,7 +304,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function setCollateralConfiguration(
+    function setMarginCollateralConfiguration(
         uint128[] calldata synthMarketIds,
         bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables,
@@ -315,7 +315,7 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
-        Runtime_setCollateralConfiguration memory runtime;
+        Runtime_setMarginCollateralConfiguration memory runtime;
         runtime.lengthBefore = globalMarginConfig.supportedSynthMarketIds.length;
         runtime.lengthAfter = synthMarketIds.length;
         runtime.maxApproveAmount = type(uint256).max;
@@ -403,7 +403,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory) {
+    function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;

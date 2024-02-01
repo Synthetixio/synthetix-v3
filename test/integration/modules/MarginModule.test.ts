@@ -137,13 +137,17 @@ describe('MarginModule', async () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       // Commit an order for this trader.
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
+      await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd,
+            order.hooks
+          ),
+        provider()
       );
 
       // Verify that an order exists.
@@ -583,9 +587,9 @@ describe('MarginModule', async () => {
           bs,
           genTrader(bs)
         );
-        const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+        const configuredCollaterals = await PerpMarketProxy.getMarginCollateralConfiguration();
 
-        await PerpMarketProxy.setCollateralConfiguration(
+        await PerpMarketProxy.setMarginCollateralConfiguration(
           configuredCollaterals.map(({ synthMarketId }) => synthMarketId),
           configuredCollaterals.map(({ oracleNodeId }) => oracleNodeId),
           // Set maxAllowable to 0 for all collaterals
@@ -1084,8 +1088,8 @@ describe('MarginModule', async () => {
           genTrader(bs)
         );
 
-        const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
-        await PerpMarketProxy.setCollateralConfiguration(
+        const configuredCollaterals = await PerpMarketProxy.getMarginCollateralConfiguration();
+        await PerpMarketProxy.setMarginCollateralConfiguration(
           configuredCollaterals.map(({ synthMarketId }) => synthMarketId),
           configuredCollaterals.map(({ oracleNodeId }) => oracleNodeId),
           // Set maxAllowable to 0 for all collaterals.
@@ -1566,7 +1570,7 @@ describe('MarginModule', async () => {
     });
   });
 
-  describe('setCollateralConfiguration', () => {
+  describe('setMarginMarginCollateralConfiguration', () => {
     it('should revert when config arrays has mismatched lengths', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
@@ -1577,7 +1581,7 @@ describe('MarginModule', async () => {
       const rewardDistributors = genListOf(genNumber(3, 10), () => genAddress());
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
           synthMarketIds,
           oracleNodeIds,
           maxAllowables,
@@ -1599,7 +1603,7 @@ describe('MarginModule', async () => {
 
       const { receipt } = await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(from).setCollateralConfiguration(
+          PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
             newSynthMarketIds,
             newOracleNodeIds,
             newMaxAllowables,
@@ -1607,7 +1611,7 @@ describe('MarginModule', async () => {
           ),
         provider()
       );
-      const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      const configuredCollaterals = await PerpMarketProxy.getMarginCollateralConfiguration();
 
       assert.equal(configuredCollaterals.length, newCollaterals.length);
 
@@ -1642,7 +1646,7 @@ describe('MarginModule', async () => {
       const maxAllowables1 = collaterals().map(() => bn(1));
       const rewardDistributors1 = collaterals().map(({ rewardDistributorAddress }) => rewardDistributorAddress());
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration(
+      await PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
         synthMarketIds1,
         oracleNodeIds1,
         maxAllowables1,
@@ -1658,14 +1662,14 @@ describe('MarginModule', async () => {
       const maxAllowables2 = [bn(1)];
       const rewardDistributors2 = [supportedCollaterals[0].rewardDistributorAddress()];
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration(
+      await PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
         synthMarketIds2,
         oracleNodeIds2,
         maxAllowables2,
         rewardDistributors2
       );
 
-      const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      const configuredCollaterals = await PerpMarketProxy.getMarginCollateralConfiguration();
       const removedCollateral = supportedCollaterals[1];
 
       const perpAllowance = await removedCollateral.contract.allowance(
@@ -1701,14 +1705,14 @@ describe('MarginModule', async () => {
       // Ensure we can set maxAllowables to 0 even when there's collateral in the system.
       await depositMargin(bs, genTrader(bs, { desiredCollateral: supportedCollaterals[0] }));
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration(
+      await PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
         synthMarketIds,
         oracleNodeIds,
         maxAllowables,
         rewardDistributors
       );
 
-      const configuredCollaterals = await PerpMarketProxy.connect(from).getConfiguredCollaterals();
+      const configuredCollaterals = await PerpMarketProxy.connect(from).getMarginCollateralConfiguration();
       assertBn.isZero(configuredCollaterals[0].maxAllowable);
       assertBn.isZero(configuredCollaterals[1].maxAllowable);
     });
@@ -1736,7 +1740,7 @@ describe('MarginModule', async () => {
       );
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
           synthMarketIds,
           oracleNodeIds,
           maxAllowables,
@@ -1759,13 +1763,13 @@ describe('MarginModule', async () => {
       const maxAllowables = [bn(0)];
       const rewardDistributors = [supportedCollaterals[1].rewardDistributorAddress()];
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration(
+      await PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
         synthMarketIds,
         oracleNodeIds,
         maxAllowables,
         rewardDistributors
       );
-      const configuredCollaterals = await PerpMarketProxy.connect(from).getConfiguredCollaterals();
+      const configuredCollaterals = await PerpMarketProxy.connect(from).getMarginCollateralConfiguration();
       assert.equal(configuredCollaterals.length, 1);
     });
 
@@ -1773,8 +1777,8 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration([], [], [], []);
-      const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      await PerpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], []);
+      const collaterals = await PerpMarketProxy.getMarginCollateralConfiguration();
 
       assert.equal(collaterals.length, 0);
     });
@@ -1783,7 +1787,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const from = await traders()[0].signer.getAddress();
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([], [], [], []),
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], []),
         `Unauthorized("${from}")`
       );
     });
@@ -1792,7 +1796,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
           [bn(genNumber())],
           [],
           [bn(-1)],
@@ -1812,7 +1816,7 @@ describe('MarginModule', async () => {
       const rewardDistributors = [genOneOf(collaterals()).rewardDistributorAddress()];
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
           synthMarketIds,
           oracleNodeIds,
           maxAllowables,
@@ -1835,7 +1839,7 @@ describe('MarginModule', async () => {
       const rewardDistributors = [rewardDistributor];
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
           synthMarketIds,
           oracleNodeIds,
           maxAllowables,
@@ -1858,7 +1862,7 @@ describe('MarginModule', async () => {
       const rewardDistributors = [rewardDistributor];
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(
+        PerpMarketProxy.connect(from).setMarginCollateralConfiguration(
           synthMarketIds,
           oracleNodeIds,
           maxAllowables,
@@ -1915,14 +1919,14 @@ describe('MarginModule', async () => {
         const collateral = genOneOf(collaterals());
 
         const { maxAllowable: maxAllowableBefore } = findOrThrow(
-          await PerpMarketProxy.getConfiguredCollaterals(),
+          await PerpMarketProxy.getMarginCollateralConfiguration(),
           ({ synthMarketId }) => synthMarketId.eq(collateral.synthMarketId())
         );
 
         assertBn.gt(maxAllowableBefore, bn(0));
 
         await PerpMarketProxy.connect(from).setCollateralMaxAllowable(collateral.synthMarketId(), newMaxAllowable);
-        const configuredCollateral = await PerpMarketProxy.getConfiguredCollaterals();
+        const configuredCollateral = await PerpMarketProxy.getMarginCollateralConfiguration();
 
         const { maxAllowable: maxAllowableAfter } = findOrThrow(configuredCollateral, ({ synthMarketId }) =>
           synthMarketId.eq(collateral.synthMarketId())
@@ -2171,14 +2175,14 @@ describe('MarginModule', async () => {
     });
   });
 
-  describe('getConfiguredCollaterals', () => {
+  describe('getMarginCollateralConfiguration', () => {
     it('should return empty when there are no configured collaterals', async () => {
       const { PerpMarketProxy } = systems();
 
       const from = owner();
-      await PerpMarketProxy.connect(from).setCollateralConfiguration([], [], [], []);
+      await PerpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], []);
 
-      const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      const collaterals = await PerpMarketProxy.getMarginCollateralConfiguration();
       assert.equal(collaterals.length, 0);
     });
   });
