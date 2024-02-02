@@ -32,7 +32,13 @@ contract RewardsDistributor is IRewardDistributor {
         shouldFailPayout = fail;
     }
 
-    function payout(uint128, uint128, address, address sender, uint256 amount) external returns (bool) {
+    function payout(
+        uint128,
+        uint128,
+        address,
+        address sender,
+        uint256 amount
+    ) external returns (bool) {
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         if (msg.sender != _rewardManager) {
             revert AccessError.Unauthorized(msg.sender);
@@ -41,10 +47,20 @@ contract RewardsDistributor is IRewardDistributor {
         return !shouldFailPayout;
     }
 
-    function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint64 start, uint32 duration)
-        public
-    {
-        IRewardsManagerModule(_rewardManager).distributeRewards(poolId, collateralType, amount, start, duration);
+    function distributeRewards(
+        uint128 poolId,
+        address collateralType,
+        uint256 amount,
+        uint64 start,
+        uint32 duration
+    ) public {
+        IRewardsManagerModule(_rewardManager).distributeRewards(
+            poolId,
+            collateralType,
+            amount,
+            start,
+            duration
+        );
     }
 
     function onPositionUpdated(uint128, uint128, address, uint256) external pure {
@@ -54,7 +70,11 @@ contract RewardsDistributor is IRewardDistributor {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IRewardDistributor).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IRewardDistributor).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }
