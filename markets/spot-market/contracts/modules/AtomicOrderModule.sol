@@ -346,4 +346,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         emit SynthSold(marketId, usdAmount, fees, collectedFees, referrer, price);
     }
+
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
+    function getMarketSkew(uint128 marketId) external view returns (int256 marketSkew) {
+        return MarketConfiguration.getMarketSkew(marketId);
+    }
 }

@@ -148,6 +148,21 @@ interface ISpotMarketFactoryModule is IMarket {
     ) external;
 
     /**
+     * @notice Gets the price data for a given market.
+     * @dev Only the market owner can call this function.
+     * @param marketId id of the market
+     * @return buyFeedId the oracle manager buy feed node id
+     * @return sellFeedId the oracle manager sell feed node id
+     * @return strictPriceStalenessTolerance configurable price staleness tolerance used for transacting
+     */
+    function getPriceData(
+        uint128 marketId
+    )
+        external
+        view
+        returns (bytes32 buyFeedId, bytes32 sellFeedId, uint256 strictPriceStalenessTolerance);
+
+    /**
      * @notice upgrades the synth implementation to the current implementation for the specified market.
      * Anyone who is willing and able to spend the gas can call this method.
      * @dev The synth implementation is upgraded via the proxy.
@@ -196,4 +211,10 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthMarketId synth market id value
      */
     function getMarketOwner(uint128 synthMarketId) external view returns (address);
+
+    /**
+     * @notice Returns nominated market owner.
+     * @param synthMarketId synth market id value
+     */
+    function getNominatedMarketOwner(uint128 synthMarketId) external view returns (address);
 }

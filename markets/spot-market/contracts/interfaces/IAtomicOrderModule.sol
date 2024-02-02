@@ -222,4 +222,11 @@ interface IAtomicOrderModule {
         uint256 usdAmount,
         Price.Tolerance stalenessTolerance
     ) external view returns (uint256 synthToBurn, OrderFees.Data memory fees);
+
+    /**
+     * @notice  gets the current market skew
+     * @param   marketId  synth market id
+     * @return  marketSkew  the skew
+     */
+    function getMarketSkew(uint128 marketId) external view returns (int256 marketSkew);
 }

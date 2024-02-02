@@ -47,18 +47,22 @@ describe('testing skew', () => {
         await systems()
           .SpotMarket.connect(trader1)
           .buyExactIn(marketId(), bn(10_000), bn(9.5), Ethers.constants.AddressZero);
-        boughtSynth = await synth.balanceOf(trader1.getAddress());
+        boughtSynth = await synth.balanceOf(await trader1.getAddress());
       });
 
       it('should have 9.9505ish snxETH', async () => {
         assertBn.near(boughtSynth, bn(9.9505), bn(0.0001));
+      });
+
+      it('market should have 9.9505ish skew', async () => {
+        assertBn.near(await systems().SpotMarket.getMarketSkew(marketId()), bn(9.9505), bn(0.0001));
       });
     });
 
     describe('sell', () => {
       let previousTrader1Balance: Ethers.BigNumber;
       before('sell all bought synth', async () => {
-        previousTrader1Balance = await systems().USD.balanceOf(trader1.getAddress());
+        previousTrader1Balance = await systems().USD.balanceOf(await trader1.getAddress());
         await systems()
           .SpotMarket.connect(trader1)
           .sellExactIn(marketId(), boughtSynth, 0, Ethers.constants.AddressZero);
@@ -66,10 +70,14 @@ describe('testing skew', () => {
 
       it('should get back $10k (original investment)', async () => {
         assertBn.near(
-          await systems().USD.balanceOf(trader1.getAddress()),
+          await systems().USD.balanceOf(await trader1.getAddress()),
           previousTrader1Balance.add(bn(10000)),
           bn(0.001)
         );
+      });
+
+      it('market should have 0 skew', async () => {
+        assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(0));
       });
     });
   });
@@ -80,7 +88,7 @@ describe('testing skew', () => {
     let startingTrader2Balance: Ethers.BigNumber;
 
     before('buy exact out', async () => {
-      startingTrader2Balance = await systems().USD.balanceOf(trader2.getAddress());
+      startingTrader2Balance = await systems().USD.balanceOf(await trader2.getAddress());
       await systems()
         .SpotMarket.connect(trader2)
         .buyExactOut(marketId(), boughtSynth, bn(11_000), Ethers.constants.AddressZero);
@@ -88,10 +96,14 @@ describe('testing skew', () => {
 
     it('should provide same amount of usd as when bought exact in', async () => {
       assertBn.near(
-        await systems().USD.balanceOf(trader2.getAddress()),
+        await systems().USD.balanceOf(await trader2.getAddress()),
         startingTrader2Balance.sub(bn(10000)),
         bn(0.0001)
       );
+    });
+
+    it('market should have 0 skew', async () => {
+      assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), boughtSynth);
     });
   });
 
@@ -108,11 +120,19 @@ describe('testing skew', () => {
         await systems()
           .SpotMarket.connect(trader1)
           .buyExactIn(marketId(), bn(10_000), bn(0), Ethers.constants.AddressZero);
-        synthBalance = await synth.balanceOf(trader1.getAddress());
+        synthBalance = await synth.balanceOf(await trader1.getAddress());
       });
 
       it('has correct synth balance', async () => {
-        assertBn.near(await synth.balanceOf(trader1.getAddress()), bn(7.96825), bn(0.0001));
+        assertBn.near(await synth.balanceOf(await trader1.getAddress()), bn(7.96825), bn(0.0001));
+      });
+
+      it('market should have 0 skew', async () => {
+        assertBn.near(
+          await systems().SpotMarket.getMarketSkew(marketId()),
+          bn(7.96825),
+          bn(0.0001)
+        );
       });
     });
 
@@ -124,7 +144,7 @@ describe('testing skew', () => {
       });
 
       before('buy exact out', async () => {
-        startingTrader2Balance = await systems().USD.balanceOf(trader2.getAddress());
+        startingTrader2Balance = await systems().USD.balanceOf(await trader2.getAddress());
         await systems()
           .SpotMarket.connect(trader2)
           .buyExactOut(marketId(), synthBalance, bn(5000000), Ethers.constants.AddressZero);
@@ -132,10 +152,14 @@ describe('testing skew', () => {
 
       it('should charge same amount as buy exact in', async () => {
         assertBn.near(
-          await systems().USD.balanceOf(trader2.getAddress()),
+          await systems().USD.balanceOf(await trader2.getAddress()),
           startingTrader2Balance.sub(bn(10000)),
           bn(0.000001)
         );
+      });
+
+      it('market should have 0 skew', async () => {
+        assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), synthBalance);
       });
     });
   });
@@ -143,7 +167,7 @@ describe('testing skew', () => {
   describe('sell path indenpendent with fixed fee', () => {
     before(restore);
 
-    before('buy 10 ETH exact', async () => {
+    before('buy 20 ETH exact', async () => {
       await systems()
         .SpotMarket.connect(trader1)
         .buyExactOut(marketId(), bn(20), bn(30000), Ethers.constants.AddressZero);
@@ -153,16 +177,16 @@ describe('testing skew', () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.2));
     });
 
-    // 10 ETH skew with fee set to 20%
+    // 20 ETH skew with fee set to 20%
     const restorePointForSell = snapshotCheckpoint(provider);
 
     let usdReceivedAfterFirstSell: Ethers.BigNumber;
     before('sell exact in', async () => {
-      const initialTraderUsdBalance = await systems().USD.balanceOf(trader1.getAddress());
+      const initialTraderUsdBalance = await systems().USD.balanceOf(await trader1.getAddress());
       await systems()
         .SpotMarket.connect(trader1)
         .sellExactIn(marketId(), bn(10), bn(0), Ethers.constants.AddressZero);
-      usdReceivedAfterFirstSell = (await systems().USD.balanceOf(trader1.getAddress())).sub(
+      usdReceivedAfterFirstSell = (await systems().USD.balanceOf(await trader1.getAddress())).sub(
         initialTraderUsdBalance
       );
     });
@@ -173,7 +197,7 @@ describe('testing skew', () => {
       let startingSynthBalance: Ethers.BigNumber;
 
       before('sell exact out', async () => {
-        startingSynthBalance = await synth.balanceOf(trader1.getAddress());
+        startingSynthBalance = await synth.balanceOf(await trader1.getAddress());
         await systems()
           .SpotMarket.connect(trader1)
           .sellExactOut(
@@ -186,10 +210,14 @@ describe('testing skew', () => {
 
       it('should charge 10 eth', async () => {
         assertBn.near(
-          await synth.balanceOf(trader1.getAddress()),
+          await synth.balanceOf(await trader1.getAddress()),
           startingSynthBalance.sub(bn(10)),
           bn(0.0001)
         );
+      });
+
+      it('market should have 0 skew', async () => {
+        assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(10));
       });
     });
   });
