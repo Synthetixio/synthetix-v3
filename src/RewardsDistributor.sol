@@ -9,23 +9,15 @@ import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.
 
 contract RewardsDistributor is IRewardDistributor {
     address private _rewardManager;
-    address private _token;
-    string private _name;
+    address public token;
+    string public name;
 
     bool public shouldFailPayout;
 
-    constructor(address rewardManager, address token_, string memory name_) {
-        _rewardManager = rewardManager;
-        _token = token_;
-        _name = name_;
-    }
-
-    function name() public view override returns (string memory) {
-        return _name;
-    }
-
-    function token() public view override returns (address) {
-        return _token;
+    constructor(address rewardManager_, address token_, string memory name_) {
+        _rewardManager = rewardManager_; // Synthetix CoreProxy
+        token = token_;
+        name = name_;
     }
 
     function setShouldFailPayout(bool fail) external {
@@ -33,17 +25,17 @@ contract RewardsDistributor is IRewardDistributor {
     }
 
     function payout(
-        uint128,
-        uint128,
-        address,
-        address sender,
+        uint128, // accountId,
+        uint128, // poolId,
+        address, // collateralType,
+        address sender, // msg.sender of claimRewards() call, payout target address
         uint256 amount
     ) external returns (bool) {
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         if (msg.sender != _rewardManager) {
             revert AccessError.Unauthorized(msg.sender);
         }
-        IERC20(_token).transfer(sender, amount);
+        IERC20(token).transfer(sender, amount);
         return !shouldFailPayout;
     }
 
@@ -63,9 +55,12 @@ contract RewardsDistributor is IRewardDistributor {
         );
     }
 
-    function onPositionUpdated(uint128, uint128, address, uint256) external pure {
-        return;
-    }
+    function onPositionUpdated(
+        uint128, // accountId,
+        uint128, // poolId,
+        address, // collateralType,
+        uint256 // actorSharesD18
+    ) external {}
 
     /**
      * @dev See {IERC165-supportsInterface}.
