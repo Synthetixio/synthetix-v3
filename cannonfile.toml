@@ -1,6 +1,9 @@
 name = "bfp-market"
 version = "<%= package.version %>"
 description = "bfp market for Synthetix v3"
+include = [
+  "tomls/oracles.toml",
+]
 
 # TODO: Replace this owner '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
 [setting.owner]
@@ -70,7 +73,11 @@ args = []
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
 
-# --- Distributor --- #
+[contract.SettlementHookModule]
+artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
+args = []
+
+# --- Distributor contract --- #
 
 [contract.PerpRewardDistributor]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
@@ -99,7 +106,8 @@ contracts = [
   "MarginModule",
   "OrderModule",
   "LiquidationModule",
-  "PerpRewardDistributorFactoryModule"
+  "PerpRewardDistributorFactoryModule",
+  "SettlementHookModule"
 ]
 depends = [
   "import.synthetix",
@@ -111,7 +119,8 @@ depends = [
   "contract.MarginModule",
   "contract.OrderModule",
   "contract.LiquidationModule",
-  "contract.PerpRewardDistributorFactoryModule"
+  "contract.PerpRewardDistributorFactoryModule",
+  "contract.SettlementHookModule"
 ]
 
 # --- Proxy Post Deployment --- #
@@ -171,7 +180,7 @@ args = ["XXX X", "XXX", "18"]
 depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
-source = "pyth:1.4.0"
+source = "pyth:1.4.1"
 args = [120, 1] # 120s, 1wei
 
 
@@ -179,7 +188,19 @@ args = [120, 1] # 120s, 1wei
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
 
-# --- Market Post Deployment Configuration --- #
+[contract.SettlementHookMock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+depends = ["contract.InitialPerpMarketProxy"]
+salt = "1"
+
+[contract.SettlementHook2Mock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+depends = ["contract.InitialPerpMarketProxy"]
+salt = "2"
+
+# --- Market Post BFP Deployment Configuration --- #
 
 [invoke.setSynthetix]
 target = ["PerpMarketProxy"]
