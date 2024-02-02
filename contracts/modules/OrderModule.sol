@@ -178,7 +178,7 @@ contract OrderModule is IOrderModule {
         address[] memory hooks
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
-        // TODO, noticed perps v3 does a sepearte check that the account exists. Maybe add a test to ensure this works
+
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
