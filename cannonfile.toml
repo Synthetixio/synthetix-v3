@@ -183,7 +183,6 @@ depends = ["contract.Collateral2Mock"]
 source = "pyth:1.4.1"
 args = [120, 1] # 120s, 1wei
 
-
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
@@ -254,10 +253,7 @@ args = [
 ]
 depends = ['invoke.upgradeProxy']
 
-
 [invoke.enableAllFeatures]
 target = ["PerpMarketProxy"]
 func = "enableAllFeatures"
 from = "<%= settings.owner %>"
-
-
