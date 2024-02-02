@@ -16,7 +16,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.only('FeatureFlag', () => {
+describe('FeatureFlag', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, systems, restore, keeper, provider } = bs;
 
