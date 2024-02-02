@@ -41,6 +41,7 @@ interface IMarketConfigurationModule {
         uint128 maxMarketSize;
         uint128 maxFundingVelocity;
         uint128 skewScale;
+        uint128 fundingVelocityClamp;
         uint128 minCreditPercent;
         uint256 minMarginUsd;
         uint256 minMarginRatio;

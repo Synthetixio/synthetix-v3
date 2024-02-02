@@ -88,6 +88,8 @@ library PerpMarketConfiguration {
         uint128 maxFundingVelocity;
         // Skew scaling denominator constant.
         uint128 skewScale;
+        // If the absolute proportional skew abs(skew/skewScale) is below this value, the funding velocity will be 0
+        uint128 fundingVelocityClamp;
         // A multiplier on OI * price * minCreditPercent to increase/decrease min credit for market.
         uint128 minCreditPercent;
         // Minimum margin in USD added to MM and IM.

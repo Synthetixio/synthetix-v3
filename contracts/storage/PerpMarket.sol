@@ -243,9 +243,12 @@ library PerpMarket {
         if (skewScale == 0) {
             return 0;
         }
-
-        // Ensures the proportionalSkew is between -1 and 1.
+        // proportional skew
         int256 pSkew = self.skew.divDecimal(skewScale);
+        if (MathUtil.abs(pSkew) < marketConfig.fundingVelocityClamp) {
+            return 0;
+        }
+        // Ensures the proportionalSkew is between -1 and 1.
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()

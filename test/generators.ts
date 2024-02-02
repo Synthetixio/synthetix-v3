@@ -111,6 +111,7 @@ export const genMarket = () => ({
     minMarginUsd: bn(genNumber(50, 60)),
     minCreditPercent: bn(genNumber(1, 1.1)),
     skewScale: bn(genNumber(100_000, 500_000)),
+    fundingVelocityClamp: bn(genNumber(0.000001, 0.00001)),
     minMarginRatio: bn(genNumber(0.01, 0.02)),
     incrementalMarginScalar: bn(genNumber(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
