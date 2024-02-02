@@ -31,6 +31,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.minCollateralHaircut = data.minCollateralHaircut;
         config.maxCollateralHaircut = data.maxCollateralHaircut;
         config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
+        config.utilizationBreakpointPercent = data.utilizationBreakpointPercent;
+        config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
+        config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
 
         emit ConfigurationUpdated(msg.sender);
     }
@@ -56,6 +59,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
         config.skewScale = data.skewScale;
+        config.fundingVelocityClamp = data.fundingVelocityClamp;
         config.minCreditPercent = data.minCreditPercent;
         config.minMarginUsd = data.minMarginUsd;
         config.minMarginRatio = data.minMarginRatio;

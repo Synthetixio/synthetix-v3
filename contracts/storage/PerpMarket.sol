@@ -11,6 +11,7 @@ import {IPyth} from "../external/pyth/IPyth.sol";
 import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {Margin} from "../storage/Margin.sol";
 
 library PerpMarket {
     using DecimalMath for int128;
@@ -44,10 +45,16 @@ library PerpMarket {
         uint128 size;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
-        // The value (in native units) of total market funding accumulated.
+        // The value (in USD) of total market funding accumulated.
         int256 currentFundingAccruedComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
+        // The value of the utilization rate last time this was computed.
+        uint256 currentUtilizationRateComputed;
+        // The value (in native units) of total market utilization accumulated.
+        uint256 currentUtilizationAccruedComputed;
+        // block.timestamp of when utilization was last computed.
+        uint256 lastUtilizationTime;
         // This is needed to perform a fast constant time op for overall market debt.
         //
         // debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
@@ -148,6 +155,58 @@ library PerpMarket {
         }
     }
 
+    function getUtilization(
+        PerpMarket.Data storage self,
+        uint256 price,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint128) {
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
+        uint256 delegatedCollateralValueUsd = withdrawableUsd - getTotalCollateralValueUsd(self);
+        uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent.to256());
+        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd).to128();
+    }
+
+    function getCurrentUtilizationRate(
+        uint128 utilization,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
+        uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
+        uint128 highUtilizationSlopePercent = globalConfig.highUtilizationSlopePercent;
+
+        if (utilization < utilizationBreakpointPercent) {
+            // If utilization is below the breakpoint, use the low utilization slope
+            return lowUtilizationSlopePercent.mulDecimalUint128(utilization) * 100;
+        } else {
+            uint128 highUtilizationRate = utilization - utilizationBreakpointPercent;
+            uint128 highUtilizationRateInterest = highUtilizationSlopePercent.mulDecimalUint128(highUtilizationRate) *
+                100;
+            uint128 lowUtilizationRateInterest = lowUtilizationSlopePercent.mulDecimalUint128(
+                utilizationBreakpointPercent
+            ) * 100;
+
+            return highUtilizationRateInterest + lowUtilizationRateInterest;
+        }
+    }
+
+    function getUnrecordedUtilization(PerpMarket.Data storage self) internal view returns (uint256) {
+        return self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
+    }
+
+    function recomputeUtilization(
+        PerpMarket.Data storage self,
+        uint256 price
+    ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        utilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
+        unrecordedUtilization = getUnrecordedUtilization(self);
+
+        self.currentUtilizationRateComputed = utilizationRate;
+        self.currentUtilizationAccruedComputed += unrecordedUtilization;
+        self.lastUtilizationTime = block.timestamp;
+    }
+
     /**
      * @dev Recompute and store funding related values given the current market conditions.
      */
@@ -184,9 +243,12 @@ library PerpMarket {
         if (skewScale == 0) {
             return 0;
         }
-
-        // Ensures the proportionalSkew is between -1 and 1.
+        // proportional skew
         int256 pSkew = self.skew.divDecimal(skewScale);
+        if (MathUtil.abs(pSkew) < marketConfig.fundingVelocityClamp) {
+            return 0;
+        }
+        // Ensures the proportionalSkew is between -1 and 1.
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
@@ -198,8 +260,17 @@ library PerpMarket {
     /**
      * @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
      */
-    function getProportionalElapsed(PerpMarket.Data storage self) internal view returns (int256) {
+    function getProportionalFundingElapsed(PerpMarket.Data storage self) internal view returns (int256) {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+    }
+
+    /**
+     * @dev Returns the proportional time elapsed since last utilization.
+     */
+    function getProportionalUtilizationElapsed(PerpMarket.Data storage self) internal view returns (uint256) {
+        // 4 years which includes leap
+        uint256 AVERAGE_SECONDS_PER_YEAR = 31556952;
+        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
     }
 
     /**
@@ -224,7 +295,7 @@ library PerpMarket {
         //                    = 0.00083912
         return
             self.currentFundingRateComputed +
-            (getCurrentFundingVelocity(self).mulDecimal(getProportionalElapsed(self)));
+            (getCurrentFundingVelocity(self).mulDecimal(getProportionalFundingElapsed(self)));
     }
 
     /**
@@ -240,7 +311,7 @@ library PerpMarket {
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
-        unrecordedFunding = avgFundingRate.mulDecimal(getProportionalElapsed(self)).mulDecimal(price.toInt());
+        unrecordedFunding = avgFundingRate.mulDecimal(getProportionalFundingElapsed(self)).mulDecimal(price.toInt());
     }
 
     function getMaxLiquidatableCapacity(

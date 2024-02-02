@@ -6,8 +6,9 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
-interface IPerpMarketFactoryModule is IMarket {
+interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
@@ -37,6 +38,8 @@ interface IPerpMarketFactoryModule is IMarket {
         int256 fundingVelocity;
         // Current funding rate as a function of funding velocity.
         int256 fundingRate;
+        // Current utilization rate
+        uint256 utilizationRate;
         // Amount of size remaining last recorded in current window.
         uint256 remainingLiquidatableSizeCapacity;
         // block.timestamp of when the last liqudation had occurred.
@@ -95,4 +98,14 @@ interface IPerpMarketFactoryModule is IMarket {
      * @notice Returns all market ids in the system
      */
     function getActiveMarketIds() external view returns (uint128[] memory);
+
+    /**
+     * @notice Recomputes utlisation rate for a given market
+     */
+    function recomputeUtilization(uint128 marketId) external;
+
+    /**
+     * @notice Recomputes funding rate for a given market
+     */
+    function recomputeFunding(uint128 marketId) external;
 }

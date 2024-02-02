@@ -64,6 +64,12 @@ library PerpMarketConfiguration {
         uint128 maxCollateralHaircut;
         // Maximum slippage on collateral sold for negative pnl position modifications.
         uint128 sellExactInMaxSlippagePercent;
+        // Dictates wheter or not the utilization rate should use high or low slope
+        uint128 utilizationBreakpointPercent;
+        // Used for utilization interest when below utilization breakpoint
+        uint128 lowUtilizationSlopePercent;
+        // Used for utilization interest when above utilization breakpoint
+        uint128 highUtilizationSlopePercent;
     }
 
     // @dev Perp market configuration specific to a market
@@ -82,6 +88,8 @@ library PerpMarketConfiguration {
         uint128 maxFundingVelocity;
         // Skew scaling denominator constant.
         uint128 skewScale;
+        // If the absolute proportional skew abs(skew/skewScale) is below this value, the funding velocity will be 0
+        uint128 fundingVelocityClamp;
         // A multiplier on OI * price * minCreditPercent to increase/decrease min credit for market.
         uint128 minCreditPercent;
         // Minimum margin in USD added to MM and IM.

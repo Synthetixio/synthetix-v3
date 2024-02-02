@@ -47,6 +47,9 @@ contract LiquidationModule is ILiquidationModule {
     ) private returns (Position.Data storage oldPosition, Position.Data memory newPosition, uint256 liqKeeperFee) {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+
         uint128 liqSize;
 
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(
@@ -205,6 +208,7 @@ contract LiquidationModule is ILiquidationModule {
         Position.Data memory newPosition = Position.Data(
             position.size,
             position.entryFundingAccrued,
+            position.entryUtilizationAccrued,
             position.entryPrice,
             position.accruedFeesUsd + flagReward
         );
@@ -342,15 +346,16 @@ contract LiquidationModule is ILiquidationModule {
         Position.Data storage position = market.positions[accountId];
 
         uint256 oraclePrice = market.getOraclePrice();
-        (uint256 healthFactor, , , ) = Position.getHealthData(
+        Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
             position.entryPrice,
             position.entryFundingAccrued,
+            position.entryUtilizationAccrued,
             Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
             oraclePrice,
             PerpMarketConfiguration.load(marketId)
         );
-        return healthFactor;
+        return healthData.healthFactor;
     }
 }

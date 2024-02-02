@@ -41,6 +41,14 @@ library Position {
         uint256 newMarginUsd;
     }
 
+    struct HealthData {
+        uint256 healthFactor;
+        int256 accruedFunding;
+        uint256 accruedUtilization;
+        int256 pnl;
+        uint256 remainingMarginUsd;
+    }
+
     // --- Runtime structs --- //
 
     struct Runtime_validateLiquidation {
@@ -58,6 +66,8 @@ library Position {
         int128 size;
         // The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
+        // The market's accumulated accrued utilisation at position settlement.
+        uint256 entryUtilizationAccrued;
         // The fill price at which this position was settled with.
         uint256 entryPrice;
         // Accured static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
@@ -229,6 +239,8 @@ library Position {
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
+            // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
+            market.currentUtilizationAccruedComputed + market.getUnrecordedUtilization(),
             params.fillPrice,
             orderFee + keeperFee
         );
@@ -328,6 +340,7 @@ library Position {
         newPosition = Position.Data(
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
+            oldPosition.entryUtilizationAccrued,
             oldPosition.entryPrice,
             // An accumulation of fees paid on liquidation paid out to the liquidator.
             oldPosition.accruedFeesUsd + liqKeeperFee
@@ -392,6 +405,15 @@ library Position {
             getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
     }
 
+    function getMaintenanceMargin(
+        int128 positionSize,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint256) {
+        (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
+        return mm;
+    }
+
     /**
      * @dev Returns the number of partial liquidations required given liquidation size and mac liquidation capacity.
      */
@@ -448,30 +470,37 @@ library Position {
         int128 positionSize,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
+        uint256 positionEntryUtilizationAccrued,
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+    ) internal view returns (Position.HealthData memory) {
+        Position.HealthData memory healthData;
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
-        int256 netFundingPerUnit = unrecordedFunding +
-            market.currentFundingAccruedComputed -
-            positionEntryFundingAccrued;
-
-        accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
+        healthData.accruedFunding = positionSize.mulDecimal(
+            unrecordedFunding + market.currentFundingAccruedComputed - positionEntryFundingAccrued
+        );
+        healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
+            market.getUnrecordedUtilization() +
+                market.currentUtilizationAccruedComputed -
+                positionEntryUtilizationAccrued
+        );
 
         // Calculate this position's PnL
-        pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+        healthData.pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
 
         // Ensure we also deduct the realized losses in fees to open trade.
         //
         // The remaining margin is defined as sum(collateral * price) + PnL + funding in USD.
         // We expect caller to have gotten this from Margin.getMarginUsd
-        remainingMarginUsd = marginUsd;
+        healthData.remainingMarginUsd = marginUsd;
 
         // margin / mm <= 1 means liquidation.
-        (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
-        healthFactor = remainingMarginUsd.divDecimal(mm);
+        healthData.healthFactor = healthData.remainingMarginUsd.divDecimal(
+            getMaintenanceMargin(positionSize, price, marketConfig)
+        );
+        return healthData;
     }
 
     // --- Member (views) --- //
@@ -489,16 +518,17 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-        (uint256 healthFactor, , , ) = Position.getHealthData(
+        Position.HealthData memory healthData = Position.getHealthData(
             market,
             self.size,
             self.entryPrice,
             self.entryFundingAccrued,
+            self.entryUtilizationAccrued,
             marginUsd,
             price,
             marketConfig
         );
-        return healthFactor <= DecimalMath.UNIT;
+        return healthData.healthFactor <= DecimalMath.UNIT;
     }
 
     /**
@@ -529,6 +559,26 @@ library Position {
             self.size.mulDecimal(unrecordedFunding + market.currentFundingAccruedComputed - self.entryFundingAccrued);
     }
 
+    /**
+     * @dev Returns the utilization accrued from when the position was opened to now.
+     */
+    function getAccruedUtilization(
+        Position.Data storage self,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (uint256) {
+        if (self.size == 0) {
+            return 0;
+        }
+
+        uint256 unrecordedUtilization = market.getUnrecordedUtilization();
+        uint256 notional = MathUtil.abs(self.size).mulDecimal(price);
+        return
+            notional.mulDecimal(
+                unrecordedUtilization + market.currentUtilizationAccruedComputed - self.entryUtilizationAccrued
+            );
+    }
+
     // --- Member (mutative) --- //
 
     /**
@@ -537,6 +587,7 @@ library Position {
     function update(Position.Data storage self, Position.Data memory data) internal {
         self.size = data.size;
         self.entryFundingAccrued = data.entryFundingAccrued;
+        self.entryUtilizationAccrued = data.entryUtilizationAccrued;
         self.entryPrice = data.entryPrice;
         self.accruedFeesUsd = data.accruedFeesUsd;
     }

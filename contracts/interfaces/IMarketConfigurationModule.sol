@@ -27,6 +27,9 @@ interface IMarketConfigurationModule {
         uint128 minCollateralHaircut;
         uint128 maxCollateralHaircut;
         uint128 sellExactInMaxSlippagePercent;
+        uint128 utilizationBreakpointPercent;
+        uint128 lowUtilizationSlopePercent;
+        uint128 highUtilizationSlopePercent;
     }
 
     // @notice See PerpMarketConfiguration.Data for more details.
@@ -38,6 +41,7 @@ interface IMarketConfigurationModule {
         uint128 maxMarketSize;
         uint128 maxFundingVelocity;
         uint128 skewScale;
+        uint128 fundingVelocityClamp;
         uint128 minCreditPercent;
         uint256 minMarginUsd;
         uint256 minMarginRatio;

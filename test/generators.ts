@@ -83,6 +83,9 @@ export const genBootstrap = () => ({
     minCollateralHaircut: bn(0.01),
     maxCollateralHaircut: bn(0.05),
     sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
+    utilizationBreakpointPercent: bn(genNumber(0.65, 0.85)),
+    lowUtilizationSlopePercent: bn(genNumber(0.0002, 0.0003)),
+    highUtilizationSlopePercent: bn(genNumber(0.005, 0.015)),
     hooks: {
       maxHooksPerOrder: genNumber(3, 5),
     },
@@ -108,6 +111,7 @@ export const genMarket = () => ({
     minMarginUsd: bn(genNumber(50, 60)),
     minCreditPercent: bn(genNumber(1, 1.1)),
     skewScale: bn(genNumber(100_000, 500_000)),
+    fundingVelocityClamp: bn(genNumber(0.000001, 0.00001)),
     minMarginRatio: bn(genNumber(0.01, 0.02)),
     incrementalMarginScalar: bn(genNumber(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
