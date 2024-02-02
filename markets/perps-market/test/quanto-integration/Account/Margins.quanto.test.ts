@@ -1,8 +1,8 @@
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import { openPosition } from '../helpers';
+import { openPosition } from '../../integration/helpers';
 import Wei, { wei } from '@synthetixio/wei';
-import { calculatePricePnl } from '../helpers/fillPrice';
+import { calculatePricePnl } from '../../integration/helpers/fillPrice';
 import { ethers } from 'ethers';
 
 describe('Account margins test', () => {

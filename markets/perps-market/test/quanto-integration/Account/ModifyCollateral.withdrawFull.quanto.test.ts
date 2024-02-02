@@ -1,4 +1,4 @@
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
 describe('ModifyCollateral Withdraw Deposit/Withdraw', () => {
