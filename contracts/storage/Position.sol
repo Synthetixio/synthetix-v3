@@ -587,6 +587,7 @@ library Position {
     function update(Position.Data storage self, Position.Data memory data) internal {
         self.size = data.size;
         self.entryFundingAccrued = data.entryFundingAccrued;
+        self.entryUtilizationAccrued = data.entryUtilizationAccrued;
         self.entryPrice = data.entryPrice;
         self.accruedFeesUsd = data.accruedFeesUsd;
     }

@@ -1126,6 +1126,71 @@ describe('OrderModule', () => {
       assertBn.near(accruedUtilizationAfterRecompute, orderSettledEvent.args.accruedUtilization, bn(0.0001));
     });
 
+    it('should have correct accrued utilization when modifying positions', async () => {
+      const { PerpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+
+      const { trader, market, marketId, collateralDepositAmount, collateral } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredTrader: tradersGenerator.next().value })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const { receipt, settlementTime } = await commitAndSettle(bs, marketId, trader, openOrder);
+      const event = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
+      assertBn.isZero(event.args.accruedUtilization);
+      const fastForwardBy = genNumber(SECONDS_ONE_DAY, SECONDS_ONE_DAY * 10);
+      await fastForwardTo(settlementTime + fastForwardBy, provider());
+
+      const { utilizationRate } = await PerpMarketProxy.getMarketDigest(marketId);
+      // Keep the position open but flip it to short
+      const flipToShortOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-2),
+      });
+
+      const { receipt: receipt2 } = await commitAndSettle(bs, marketId, trader, flipToShortOrder);
+      const event2 = findEventSafe(receipt2, 'OrderSettled', PerpMarketProxy);
+      assertBn.gt(event2.args.accruedUtilization, bn(0));
+
+      const notionalSize = wei(openOrder.sizeDelta).mul(flipToShortOrder.fillPrice).abs();
+
+      const expectedAccruedUtilization = notionalSize.mul(
+        wei(utilizationRate).mul(fastForwardBy).div(AVERAGE_SECONDS_PER_YEAR)
+      );
+
+      assertBn.near(event2.args.accruedUtilization, expectedAccruedUtilization.toBN(), bn(0.00001));
+
+      // Make sure a new trader gets the correct result too (while the other traders position is still open)
+      const {
+        trader: trader1,
+        collateralDepositAmount: collateralDepositAmount1,
+        collateral: collateral1,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredTrader: tradersGenerator.next().value, desiredMarket: market })
+      );
+      const openOrder1 = await genOrder(bs, market, collateral1, collateralDepositAmount1);
+
+      const { settlementTime: settlementTime1 } = await commitAndSettle(bs, marketId, trader1, openOrder1);
+
+      const fastForwardBy1 = genNumber(SECONDS_ONE_DAY, SECONDS_ONE_DAY * 10);
+      await fastForwardTo(settlementTime1 + fastForwardBy1, provider());
+
+      const { utilizationRate: utilizationRate1 } = await PerpMarketProxy.getMarketDigest(marketId);
+      const closeOrder = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
+        desiredSize: openOrder1.sizeDelta.mul(-1),
+      });
+      const { receipt: receipt3 } = await commitAndSettle(bs, marketId, trader1, closeOrder);
+
+      const event3 = findEventSafe(receipt3, 'OrderSettled', PerpMarketProxy);
+      const notionalSize1 = wei(openOrder1.sizeDelta).mul(closeOrder.fillPrice).abs();
+      const expectedAccruedUtilization1 = notionalSize1.mul(
+        wei(utilizationRate1).mul(fastForwardBy1).div(AVERAGE_SECONDS_PER_YEAR)
+      );
+
+      assertBn.near(event3.args.accruedUtilization, expectedAccruedUtilization1.toBN(), bn(0.00001));
+    });
+
     it('should realize non-zero sUSD to trader when closing a profitable trade', async () => {
       const { PerpMarketProxy } = systems();
 
