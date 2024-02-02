@@ -45,6 +45,17 @@ contract WrapperModule is IWrapperModule {
     /**
      * @inheritdoc IWrapperModule
      */
+    function getWrapper(
+        uint128 marketId
+    ) external view override returns (address wrapCollateralType, uint256 maxWrappableAmount) {
+        Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
+
+        return (wrapperStore.wrapCollateralType, wrapperStore.maxWrappableAmount);
+    }
+
+    /**
+     * @inheritdoc IWrapperModule
+     */
     function wrap(
         uint128 marketId,
         uint256 wrapAmount,

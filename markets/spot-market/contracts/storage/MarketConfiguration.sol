@@ -320,17 +320,7 @@ library MarketConfiguration {
 
         int256 skewScaleValue = self.skewScale.mulDecimal(synthPrice).toInt();
 
-        uint256 wrappedCollateralAmount = SpotMarketFactory
-            .load()
-            .synthetix
-            .getMarketCollateralAmount(marketId, Wrapper.load(marketId).wrapCollateralType)
-            .mulDecimal(synthPrice);
-
-        int256 initialSkew = SynthUtil
-            .getToken(marketId)
-            .totalSupply()
-            .mulDecimal(synthPrice)
-            .toInt() - wrappedCollateralAmount.toInt();
+        int256 initialSkew = getMarketSkew(marketId).mulDecimal(synthPrice.toInt());
 
         int256 skewAfterFill = initialSkew + usdAmount;
         int256 skewAverage = (skewAfterFill + initialSkew) / 2;
@@ -356,16 +346,24 @@ library MarketConfiguration {
             return MathUtil.abs(usdAmount).divDecimal(synthPrice);
         }
 
-        uint256 wrappedCollateralAmount = SpotMarketFactory
-            .load()
-            .synthetix
-            .getMarketCollateralAmount(marketId, Wrapper.load(marketId).wrapCollateralType);
-        int256 initialSkew = SynthUtil.getToken(marketId).totalSupply().toInt() -
-            wrappedCollateralAmount.toInt();
+        int256 initialSkew = getMarketSkew(marketId);
 
         synthAmount = MathUtil.abs(
             _calculateSkewAmountOut(self, usdAmount, synthPrice, initialSkew)
         );
+    }
+
+    /**
+     * @dev Returns the current skew for a given market in native units
+     */
+    function getMarketSkew(uint128 marketId) internal view returns (int256 marketSkew) {
+        uint256 wrappedCollateralAmount = SpotMarketFactory
+            .load()
+            .synthetix
+            .getMarketCollateralAmount(marketId, Wrapper.load(marketId).wrapCollateralType);
+        marketSkew =
+            SynthUtil.getToken(marketId).totalSupply().toInt() -
+            wrappedCollateralAmount.toInt();
     }
 
     /**
