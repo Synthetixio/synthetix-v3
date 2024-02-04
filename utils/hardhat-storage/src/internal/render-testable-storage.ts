@@ -156,9 +156,13 @@ function _generateTemplateInputs(
       (p) => p.storageLocation === 'storage'
     );
 
-    if (storageParams.length > 1) {
+    const memoryParams = functionDefinition.parameters.parameters.filter(
+      (p) => p.storageLocation === 'memory'
+    );
+
+    if (memoryParams.length || storageParams.length > 1) {
       logger.info(
-        `Skipping function ${functionDefinition.name} because it contains unsupported storage input parameter type`
+        `Skipping function ${functionDefinition.name} because it contains unsupported storage or memory input parameter type`
       );
       continue; // input parameter must be of the same type as the contract
     }

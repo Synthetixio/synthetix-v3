@@ -513,49 +513,6 @@ jobs:
           branch_base: en
           commit_message: "Update Smart Contracts"
 
-  docgen-abis:
-    docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
-    environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      - GIT_PAGER: cat
-    working_directory: ~/synthetix-v3
-    steps:
-      - add_ssh_keys:
-          fingerprints: "4b:3a:c8:23:b8:4e:86:32:8e:d3:2d:17:0c:2b:63:b6"
-      - run:
-          working_directory: ~/
-          name: "Checkout docs"
-          command: |
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
-            git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
-
-      - checkout
-      - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
-      - yarn-install
-      - wait-for-ipfs
-
-      - run:
-          name: "Generate combined addresses-+-abis.md"
-          working_directory: ~/synthetix-v3/utils/docgen
-          command: |
-            ./docgen-abis.sh
-            cp ~/synthetix-v3/docs/addresses-+-abis.md ~/synthetix-gitbook-v3/for-developers/addresses-+-abis.md
-            cp ~/synthetix-v3/docs/abis/*.json ~/synthetix-gitbook-v3/for-developers/abis/
-
-      - store_artifacts:
-          path: "docs"
-          destination: "."
-
-      - github-pr:
-          working_directory: "~/synthetix-gitbook-v3"
-          repo_slug: "Synthetixio/Synthetix-Gitbook-v3"
-          branch_head: abis
-          branch_base: en
-          commit_message: "Update ABIs and addresses"
-
   update-subgraphs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
@@ -737,14 +694,6 @@ workflows:
     jobs:
       - update-subgraphs
 
-  docgen-abis:
-    when:
-      and:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-        - equal: ["Check deploys", << pipeline.schedule.name >>]
-    jobs:
-      - docgen-abis
-
   dev-update-subgraphs:
     unless:
       or:
@@ -754,16 +703,6 @@ workflows:
           filters:
             branches:
               only: /update-subgraphs/
-
-  dev-docgen-abis:
-    unless:
-      or:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-    jobs:
-      - docgen-abis:
-          filters:
-            branches:
-              only: /docgen-abis/
 
   dev-docgen-contracts:
     unless:
