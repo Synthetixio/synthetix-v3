@@ -1,6 +1,11 @@
 import { ethers } from 'ethers';
-import { DEFAULT_SETTLEMENT_STRATEGY, PerpsMarket, bn, bootstrapMarkets } from '../../integration/bootstrap';
-import { openPosition } from '../../integration/helpers';
+import {
+  DEFAULT_SETTLEMENT_STRATEGY,
+  PerpsMarket,
+  bn,
+  bootstrapMarkets,
+} from '../../integration/bootstrap';
+import { openPosition, getQuantoPositionSize } from '../../integration/helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -17,32 +22,33 @@ describe.only('Position - funding', () => {
   const traderAccountIds = [2, 3];
   const trader1AccountId = traderAccountIds[0];
   const trader2AccountId = traderAccountIds[1];
-  const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'sBTC',
-        buyPrice: _BTC_PRICE,
-        sellPrice: _BTC_PRICE,
-      },
-    ],
-    perpsMarkets: [
-      {
-        requestedMarketId: 25,
-        name: 'Ether',
-        token: 'snxETH',
-        price: _ETH_PRICE,
-        fundingParams: { skewScale: _SKEW_SCALE, maxFundingVelocity: bn(3) },
-        quanto: {
+  const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, keeper } =
+    bootstrapMarkets({
+      synthMarkets: [
+        {
           name: 'Bitcoin',
-          token: 'BTC',
-          price: _BTC_PRICE,
-          quantoSynthMarketIndex: 0,
+          token: 'sBTC',
+          buyPrice: _BTC_PRICE,
+          sellPrice: _BTC_PRICE,
         },
-      },
-    ],
-    traderAccountIds,
-  });
+      ],
+      perpsMarkets: [
+        {
+          requestedMarketId: 25,
+          name: 'Ether',
+          token: 'snxETH',
+          price: _ETH_PRICE,
+          fundingParams: { skewScale: _SKEW_SCALE, maxFundingVelocity: bn(3) },
+          quanto: {
+            name: 'Bitcoin',
+            token: 'BTC',
+            price: _BTC_PRICE,
+            quantoSynthMarketIndex: 0,
+          },
+        },
+      ],
+      traderAccountIds,
+    });
 
   let ethMarket: PerpsMarket;
   before('identify actors', async () => {
@@ -99,21 +105,25 @@ describe.only('Position - funding', () => {
     await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
   });
 
-  // let openPositionTime: number;
-  // before('open 20 eth position', async () => {
-  //   ({ settleTime: openPositionTime } = await openPosition({
-  //     systems,
-  //     provider,
-  //     trader: trader1(),
-  //     accountId: 2,
-  //     keeper: keeper(),
-  //     marketId: ethMarket.marketId(),
-  //     sizeDelta: _TRADER_SIZE,
-  //     settlementStrategyId: ethMarket.strategyId(),
-  //     price: _ETH_PRICE,
-  //     skipSettingPrice: true,
-  //   }));
-  // });
+  let openPositionTime: number;
+  before('open 20 eth position', async () => {
+    const positionSize = getQuantoPositionSize({
+      sizeInBaseAsset: _TRADER_SIZE,
+      quantoAssetPrice: _BTC_PRICE,
+    });
+    ({ settleTime: openPositionTime } = await openPosition({
+      systems,
+      provider,
+      trader: trader1(),
+      accountId: 2,
+      keeper: keeper(),
+      marketId: ethMarket.marketId(),
+      sizeDelta: positionSize,
+      settlementStrategyId: ethMarket.strategyId(),
+      price: _ETH_PRICE,
+      skipSettingPrice: true,
+    }));
+  });
 
   it('magic', async () => {
     console.log('magic');
