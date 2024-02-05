@@ -55,7 +55,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.STRICT);
 
             if (isEligible) {
-                (uint256 flagCost, uint256 marginCollected) = account.flagForLiquidation();
+                (uint256 flagCost, uint256 seizedMarginValue) = account.flagForLiquidation();
 
                 emit AccountFlaggedForLiquidation(
                     accountId,
@@ -65,12 +65,28 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                     flagCost
                 );
 
-                liquidationReward = _liquidateAccount(account, flagCost, marginCollected, true);
+                liquidationReward = _liquidateAccount(account, flagCost, seizedMarginValue, true);
             } else {
                 revert NotEligibleForLiquidation(accountId);
             }
         } else {
             liquidationReward = _liquidateAccount(account, 0, 0, false);
+        }
+    }
+
+    function liquidateMarginOnly(
+        uint128 accountId
+    ) external override returns (uint256 liquidationReward) {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+        // TODO: ensure no positions
+
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        bool isEligible = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
+        if (isEligible) {
+            // TODO: keeper flag rewards
+            // TODO: send margin to liquidation rewards distributor
+        } else {
+            revert NotEligibleForMarginLiquidation(accountId);
         }
     }
 

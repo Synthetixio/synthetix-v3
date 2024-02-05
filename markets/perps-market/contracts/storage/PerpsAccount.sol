@@ -18,6 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {CollateralConfiguration} from "./CollateralConfiguration.sol";
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -36,6 +37,7 @@ library PerpsAccount {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using KeeperCosts for KeeperCosts.Data;
@@ -50,6 +52,8 @@ library PerpsAccount {
         SetUtil.UintSet activeCollateralTypes;
         // @dev set of open position market ids
         SetUtil.UintSet openPositionMarketIds;
+        // @dev account's debt accrued from previous positions
+        uint256 debt;
     }
 
     error InsufficientCollateralAvailableForWithdraw(
@@ -113,6 +117,33 @@ library PerpsAccount {
         }
     }
 
+    /**
+     * @notice This function applies the pnl of a closing position to the account
+     * @dev It will either reduce the account's debt or increase the account's debt
+     * @dev It will also update the account's collateral amount if the debt is fully paid off
+     */
+    function applyPnl(Data storage self, int256 pnl) internal {
+        // TODO: reduce snxUSD first
+        if (pnl > 0) {
+            int256 leftoverDebt = self.debt.toInt() - pnl;
+            if (leftoverDebt > 0) {
+                self.debt = leftoverDebt.toUint();
+            } else {
+                self.debt = 0;
+                updateCollateralAmount(self, SNX_USD_MARKET_ID, -leftoverDebt);
+            }
+        } else {
+            self.debt += pnl.toUint();
+        }
+    }
+
+    function isEligibleForMarginLiquidation(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal view returns (bool) {
+        return getAvailableMargin(self, stalenessTolerance) < 0;
+    }
+
     function isEligibleForLiquidation(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
@@ -139,7 +170,7 @@ library PerpsAccount {
 
     function flagForLiquidation(
         Data storage self
-    ) internal returns (uint256 flagKeeperCost, uint256 marginCollected) {
+    ) internal returns (uint256 flagKeeperCost, uint256 seizedMarginValue) {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -147,16 +178,12 @@ library PerpsAccount {
         if (!liquidatableAccounts.contains(self.id)) {
             flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
-            marginCollected = convertAllCollateralToUsd(self);
+            seizedMarginValue = transferAllCollateral(self);
             AsyncOrder.load(self.id).reset();
         }
     }
 
-    function updateOpenPositions(
-        Data storage self,
-        uint256 positionMarketId,
-        int256 size
-    ) internal {
+    function updateOpenPositions(Data storage self, uint256 positionMarketId, int size) internal {
         if (size == 0 && self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.remove(positionMarketId);
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
@@ -237,7 +264,8 @@ library PerpsAccount {
 
     function getTotalCollateralValue(
         Data storage self,
-        PerpsPrice.Tolerance stalenessTolerance
+        PerpsPrice.Tolerance stalenessTolerance,
+        bool useDiscountedValue
     ) internal view returns (uint256) {
         uint256 totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
@@ -254,6 +282,12 @@ library PerpsAccount {
                     amount,
                     Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
                 );
+
+                if (useDiscountedValue)
+                    amountToAdd = CollateralConfiguration.load(synthMarketId).discountedValue(
+                        amountToAdd,
+                        spotMarket
+                    );
             }
             totalCollateralValue += amountToAdd;
         }
@@ -278,10 +312,11 @@ library PerpsAccount {
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256) {
-        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance).toInt();
+        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance, true)
+            .toInt();
         int256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
-        return totalCollateralValue + accountPnl;
+        return totalCollateralValue + accountPnl - self.debt.toInt();
     }
 
     function getTotalNotionalOpenInterest(
@@ -391,7 +426,7 @@ library PerpsAccount {
         uint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
             costOfFlagging,
-            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT)
+            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false)
         );
         uint256 liquidateWindowsCosts = numOfWindows == 0
             ? 0
@@ -421,6 +456,31 @@ library PerpsAccount {
             } else {
                 totalConvertedCollateral += _deductAllSynth(self, factory, synthMarketId);
             }
+        }
+    }
+
+    function transferAllCollateral(
+        Data storage self
+    ) internal returns (uint256 seizedCollateralValue) {
+        uint[] memory activeCollateralTypes = self.activeCollateralTypes.values();
+
+        for (uint256 i = 0; i < activeCollateralTypes.length; i++) {
+            uint128 synthMarketId = activeCollateralTypes[i].to128();
+            if (synthMarketId == SNX_USD_MARKET_ID) {
+                seizedCollateralValue += self.collateralAmounts[synthMarketId];
+            } else {
+                // transfer to liquidation asset manager
+                seizedCollateralValue += PerpsMarketFactory.load().transferLiquidatedSynth(
+                    synthMarketId,
+                    self.collateralAmounts[synthMarketId]
+                );
+            }
+
+            updateCollateralAmount(
+                self,
+                synthMarketId,
+                -(self.collateralAmounts[synthMarketId].toInt())
+            );
         }
     }
 
@@ -603,8 +663,5 @@ library PerpsAccount {
 
         // 3. deposit snxUSD into market manager
         factory.depositMarketUsd(amountUsd);
-
-        // 4. update account collateral amount
-        updateCollateralAmount(self, synthMarketId, -(amount.toInt()));
     }
 }
