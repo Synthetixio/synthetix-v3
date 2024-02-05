@@ -26,6 +26,12 @@ describe('Account margins test', () => {
       settlementStrategy: {
         settlementReward: bn(0),
       },
+      quanto: {
+        name: 'Ether',
+        token: 'ETH',
+        price: bn(2_000),
+        quantoSynthMarketIndex: 0,
+      },
     },
     {
       requestedMarketId: 26,
@@ -45,10 +51,26 @@ describe('Account margins test', () => {
       settlementStrategy: {
         settlementReward: bn(0),
       },
+      quanto: {
+        name: 'Ether',
+        token: 'ETH',
+        price: bn(2_000),
+        quantoSynthMarketIndex: 0,
+      },
     },
   ];
-  const { systems, provider, trader1, perpsMarkets } = bootstrapMarkets({
-    synthMarkets: [],
+
+  const spotMarketConfig = [
+    {
+      name: 'Ether',
+      token: 'snxETH',
+      buyPrice: bn(2000),
+      sellPrice: bn(2000),
+    },
+  ];
+
+  const { systems, provider, trader1, perpsMarkets, synthMarkets } = bootstrapMarkets({
+    synthMarkets: spotMarketConfig,
     perpsMarkets: perpsMarketConfig,
     traderAccountIds: [accountId, 5],
     liquidationGuards: {
@@ -57,6 +79,17 @@ describe('Account margins test', () => {
       maxLiquidationReward: bn(10_000),
       maxKeeperScalingRatioD18: bn(1),
     },
+  });
+
+  before('buy sETH via spot market', async () => {
+    const ethSpotMarketId = synthMarkets()[0].marketId();
+    const usdAmount = bn(20_000);
+    const minAmountReceived = bn(10);
+    const referrer = ethers.constants.AddressZero;
+
+    await systems()
+      .SpotMarket.connect(trader1())
+      .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
   });
 
   // add $100k
