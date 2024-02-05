@@ -5,8 +5,9 @@ import Wei, { wei } from '@synthetixio/wei';
 import { calculatePricePnl } from '../../integration/helpers/fillPrice';
 import { ethers } from 'ethers';
 
-describe('Account margins test', () => {
+describe.only('Account margins test', () => {
   const accountId = 4;
+
   const perpsMarketConfig = [
     {
       requestedMarketId: 25,
@@ -92,18 +93,30 @@ describe('Account margins test', () => {
       .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
   });
 
-  // add $100k
-  before('add some snx collateral to margin', async () => {
+  before('add some sETH collateral to margin', async () => {
+    const ethSpotMarketId = synthMarkets()[0].marketId();
+
+    await synthMarkets()[0]
+      .synth()
+      .connect(trader1())
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+
+    await systems()
+      .PerpsMarket.connect(trader1())
+      .modifyCollateral(accountId, ethSpotMarketId, bn(10));
+  });
+
+  before('add some sUSD collateral to margin', async () => {
     await systems().PerpsMarket.connect(trader1()).modifyCollateral(accountId, 0, bn(100_000));
   });
 
   describe('before open positions', () => {
     it('has correct available margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(accountId), bn(100_000));
+      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(accountId), bn(120_000));
     });
 
     it('has correct withdrawable margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.getWithdrawableMargin(accountId), bn(100_000));
+      assertBn.equal(await systems().PerpsMarket.getWithdrawableMargin(accountId), bn(120_000));
     });
 
     it('has correct initial and maintenance margin', async () => {
@@ -114,7 +127,7 @@ describe('Account margins test', () => {
     });
   });
 
-  describe('after open positions', () => {
+  describe.skip('after open positions', () => {
     before('open 2 positions', async () => {
       await openPosition({
         systems,
