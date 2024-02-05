@@ -159,6 +159,8 @@ describe('PerpMarketFactoryModule', () => {
   });
 
   describe('getMarketDigest', () => {
+    it('should revert when marketId does not exist');
+
     describe('{fundingRate,fundingVelocity}', () => {
       const depositMarginToTraders = async (
         traders: Trader[],
@@ -876,5 +878,7 @@ describe('PerpMarketFactoryModule', () => {
     it('should incur no debt in a delta neutral market with high when price volatility');
 
     it('should incur small debt proportional to skew with high price volatility');
+
+    it('should revert when marketId does not exist');
   });
 });

@@ -2309,5 +2309,7 @@ describe('MarginModule', async () => {
 
       assertBn.equal(collateralPricePos, collateralPriceNeg);
     });
+
+    it('should revert when synthMarketId does not exist');
   });
 });

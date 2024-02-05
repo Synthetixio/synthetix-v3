@@ -1798,7 +1798,17 @@ describe('OrderModule', () => {
     });
   });
 
+  describe('getOrderDigest', () => {
+    it('should revert when accountId does not exist');
+
+    it('should revert when marketId does not exist');
+
+    it('should return default object when accountId/marketId exists but no order');
+  });
+
   describe('getOrderFees', () => {
+    it('should revert when marketId does not exist');
+
     describe('orderFee', () => {
       enum LiquidtyLeader {
         MAKER = 'MAKER',
@@ -2066,7 +2076,7 @@ describe('OrderModule', () => {
   });
 
   describe('getFillPrice', () => {
-    it('should revert invalid market id', async () => {
+    it('should revert when marketId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const invalidMarketId = bn(42069);
 
@@ -2170,5 +2180,9 @@ describe('OrderModule', () => {
 
       assertBn.equal(expectedFillPrice, actualFillPrice);
     });
+  });
+
+  describe('getOraclePrice', () => {
+    it('should revert when marketId does not exist');
   });
 });

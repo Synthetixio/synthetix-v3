@@ -993,6 +993,16 @@ describe('LiquidationModule', () => {
       );
     });
 
+    describe('getLiquidationFees', () => {
+      it('should revert when accountId does not exist');
+
+      it('should revert when marketId does not exist');
+
+      it('should return zero when accountId/marketId exists but no position');
+
+      it('should return the expected liquidationFees on an open position');
+    });
+
     describe('getRemainingLiquidatableSizeCapacity', () => {
       const calcMaxLiquidatableCapacity = (
         makerFee: BigNumber,
