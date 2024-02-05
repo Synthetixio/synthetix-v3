@@ -60,9 +60,9 @@ interface IPerpsAccountModule {
     function getAccountOpenPositions(uint128 accountId) external view returns (uint256[] memory);
 
     /**
-     * @notice Gets the account's total collateral value.
+     * @notice Gets the account's total collateral value without the discount applied.
      * @param accountId Id of the account.
-     * @return collateralValue total collateral value of the account. USD denominated.
+     * @return collateralValue total collateral value of the account without discount. USD denominated.
      */
     function totalCollateralValue(uint128 accountId) external view returns (uint256);
 

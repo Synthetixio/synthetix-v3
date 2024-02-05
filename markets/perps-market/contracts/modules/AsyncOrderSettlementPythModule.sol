@@ -88,13 +88,7 @@ contract AsyncOrderSettlementPythModule is
         (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
             runtime.fillPrice
         );
-        runtime.pnlUint = MathUtil.abs(runtime.pnl);
-
-        if (runtime.pnl > 0) {
-            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
-        } else if (runtime.pnl < 0) {
-            runtime.amountToDeduct += runtime.pnlUint;
-        }
+        perpsAccount.applyPnl(runtime.pnl);
 
         // after pnl is realized, update position
         runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
