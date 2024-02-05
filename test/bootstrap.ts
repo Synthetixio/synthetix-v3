@@ -379,14 +379,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     keeper3 = _keeper3;
     endorsedKeeper = _endorsedKeeper;
 
-    const owner = getOwner();
-    const createAccountFeature = utils.formatBytes32String('createAccount');
     for (const [i, signer] of [trader1, trader2, trader3, trader4, trader5].entries()) {
-      const address = await signer.getAddress();
-
-      // The Synthetix AccountModule has a feature flag that currently prevents anyone from creating an account.
-      await PerpMarketProxy.connect(owner).addToFeatureFlagAllowlist(createAccountFeature, address);
-
       const accountId = i + 10;
       await PerpMarketProxy.connect(signer)['createAccount(uint128)'](accountId);
 

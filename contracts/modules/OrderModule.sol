@@ -16,6 +16,8 @@ import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {Flags} from "../utils/Flags.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -149,6 +151,14 @@ contract OrderModule is IOrderModule {
     /**
      * @dev Generic helper for funding recomputation during order management.
      */
+    function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
+        (uint256 utilizationRate, ) = market.recomputeUtilization(price);
+        emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
+    }
+
+    /**
+     * @dev Generic helper for funding recomputation during order management.
+     */
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
         (int256 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
@@ -167,6 +177,8 @@ contract OrderModule is IOrderModule {
         uint256 keeperFeeBufferUsd,
         address[] memory hooks
     ) external {
+        FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
+
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -208,6 +220,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+        FeatureFlag.ensureAccessToFeature(Flags.SETTLE_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
@@ -245,11 +258,12 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        (, runtime.accruedFunding, runtime.pnl, ) = Position.getHealthData(
+        Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
             position.entryPrice,
             position.entryFundingAccrued,
+            position.entryUtilizationAccrued,
             runtime.trade.newMarginUsd,
             runtime.pythPrice,
             marketConfig
@@ -262,6 +276,11 @@ contract OrderModule is IOrderModule {
             MathUtil.abs(runtime.trade.newPosition.size) -
             MathUtil.abs(oldPosition.size)).to128();
 
+        // We want to validateTrade and update market size before we recompute utilisation
+        // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilisation rate up to this point
+        // 2. The new utlization rate is calculated using the new maret size, so we need to update the size before we recompute utilisation
+        recomputeUtilization(market, runtime.pythPrice);
+
         market.updateDebtCorrection(oldPosition, runtime.trade.newPosition);
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
@@ -273,7 +292,7 @@ contract OrderModule is IOrderModule {
                 market,
                 // What is `newMarginUsd`?
                 //
-                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
+                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
                 runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
             );
         }
@@ -296,8 +315,9 @@ contract OrderModule is IOrderModule {
             runtime.params.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
-            runtime.accruedFunding,
-            runtime.pnl,
+            healthData.accruedFunding,
+            healthData.accruedUtilization,
+            healthData.pnl,
             runtime.fillPrice
         );
 
@@ -313,6 +333,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
@@ -332,6 +353,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+        FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
 

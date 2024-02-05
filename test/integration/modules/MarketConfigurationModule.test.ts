@@ -37,6 +37,9 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(config.minCollateralHaircut, global.minCollateralHaircut);
       assertBn.equal(config.maxCollateralHaircut, global.maxCollateralHaircut);
       assertBn.equal(config.sellExactInMaxSlippagePercent, global.sellExactInMaxSlippagePercent);
+      assertBn.equal(config.utilizationBreakpointPercent, global.utilizationBreakpointPercent);
+      assertBn.equal(config.lowUtilizationSlopePercent, global.lowUtilizationSlopePercent);
+      assertBn.equal(config.highUtilizationSlopePercent, global.highUtilizationSlopePercent);
 
       await assertEvent(receipt, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
     });
@@ -77,6 +80,7 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
       assertBn.equal(specific.skewScale, config.skewScale);
+      assertBn.equal(specific.fundingVelocityClamp, config.fundingVelocityClamp);
       assertBn.equal(specific.minCreditPercent, config.minCreditPercent);
       assertBn.equal(specific.minMarginUsd, config.minMarginUsd);
       assertBn.equal(specific.minMarginRatio, config.minMarginRatio);

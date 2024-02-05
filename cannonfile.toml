@@ -10,6 +10,9 @@ include = [
 description = "bfp market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.synthetixPreset]
+defaultValue = "main"
+
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
@@ -27,6 +30,7 @@ defaultValue = "bfp"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
@@ -73,7 +77,7 @@ args = []
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
 args = []
 
-# --- Distributor Contract --- #
+# --- Distributor contract --- #
 
 [contract.PerpRewardDistributor]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
@@ -248,3 +252,8 @@ args = [
   "<%= contracts.PerpMarketProxy.address %>",
 ]
 depends = ['invoke.upgradeProxy']
+
+[invoke.enableAllFeatures]
+target = ["PerpMarketProxy"]
+func = "enableAllFeatures"
+from = "<%= settings.owner %>"

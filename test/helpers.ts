@@ -13,6 +13,8 @@ import { parseUnits } from 'ethers/lib/utils';
 
 export const SECONDS_ONE_HR = 60 * 60;
 export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
+export const AVERAGE_SECONDS_PER_YEAR = 31556952; // 4 years which includes leap
+
 export const SYNTHETIX_USD_MARKET_ID = BigNumber.from(0);
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 
@@ -70,13 +72,16 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
 
   // Provision collateral and approve for access.
   const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, gTrader);
-
-  // Perform the deposit.
-  await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-    trader.accountId,
-    market.marketId(),
-    collateral.synthMarketId(),
-    collateralDepositAmount
+  await withExplicitEvmMine(
+    () =>
+      // Perform the deposit.
+      PerpMarketProxy.connect(trader.signer).modifyCollateral(
+        trader.accountId,
+        market.marketId(),
+        collateral.synthMarketId(),
+        collateralDepositAmount
+      ),
+    bs.provider()
   );
 
   return gTrader;
