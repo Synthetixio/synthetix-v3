@@ -13,7 +13,14 @@ const _ETH_PRICE = bn(2000);
 
 describe.only('Position - funding', () => {
   const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
-    synthMarkets: [],
+    synthMarkets: [
+      {
+        name: 'Bitcoin',
+        token: 'sBTC',
+        buyPrice: bn(20_000),
+        sellPrice: bn(20_000),
+      },
+    ],
     perpsMarkets: [
       {
         requestedMarketId: 25,
@@ -21,6 +28,12 @@ describe.only('Position - funding', () => {
         token: 'snxETH',
         price: _ETH_PRICE,
         fundingParams: { skewScale: _SKEW_SCALE, maxFundingVelocity: bn(3) },
+        quanto: {
+          name: 'Bitcoin',
+          token: 'BTC',
+          price: bn(20_000),
+          quantoSynthMarketIndex: 0,
+        },
       },
     ],
     traderAccountIds: [2, 3],
