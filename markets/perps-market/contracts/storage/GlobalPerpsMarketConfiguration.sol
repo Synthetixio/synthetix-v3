@@ -8,6 +8,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
+import {CollateralConfiguration} from "./CollateralConfiguration.sol";
 
 /**
  * @title This library contains all global perps market configuration data
@@ -15,6 +16,7 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 library GlobalPerpsMarketConfiguration {
     using DecimalMath for uint256;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
     using SetUtil for SetUtil.UintSet;
     using SafeCastU128 for uint128;
 
@@ -32,10 +34,9 @@ library GlobalPerpsMarketConfiguration {
          */
         mapping(address => uint256) referrerShare;
         /**
-         * @dev mapping of configured synthMarketId to max collateral amount.
-         * @dev USD token synth market id = 0
+         * @dev previously maxCollateralAmounts[synthMarketId] was used in storage slot
          */
-        mapping(uint128 => uint256) maxCollateralAmounts;
+        mapping(uint128 => uint256) __unused_1;
         /**
          * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
          */
@@ -186,12 +187,13 @@ library GlobalPerpsMarketConfiguration {
         return (referralFees, feeCollectorQuote);
     }
 
+    // TODO: move this into separate module for collateral configuration
     function updateCollateral(
         Data storage self,
         uint128 synthMarketId,
         uint256 maxCollateralAmount
     ) internal {
-        self.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
+        CollateralConfiguration.load(synthMarketId).setMax(synthMarketId, maxCollateralAmount);
 
         bool isSupportedCollateral = self.supportedCollateralTypes.contains(synthMarketId);
         if (maxCollateralAmount > 0 && !isSupportedCollateral) {
