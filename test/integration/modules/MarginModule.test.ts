@@ -244,7 +244,7 @@ describe('MarginModule', async () => {
         assertBn.equal(await collateral.contract.balanceOf(traderAddress), expectedBalanceAfter);
       });
 
-      it('should allow deposit of collateral when collateral maxAllowable is 0', async () => {
+      it('should allow deposit of collateral when collateral maxMarketSize is 0', async () => {
         const { PerpMarketProxy } = systems();
 
         const { collateral, collateralDepositAmount, trader, market } = await depositMargin(bs, genTrader(bs));
@@ -254,7 +254,8 @@ describe('MarginModule', async () => {
         assertBn.equal(maxMarketSize, bn(0));
 
         await mintAndApprove(bs, collateral, collateralDepositAmount, trader.signer);
-        // Should also be able to deposit
+
+        // Should also be able to deposit.
         const { receipt: depositReceipt } = await withExplicitEvmMine(
           () =>
             PerpMarketProxy.connect(trader.signer).modifyCollateral(
