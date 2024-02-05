@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -11,7 +12,7 @@ import {PerpsAccount, SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {CollateralConfiguration} from "./CollateralConfiguration.sol";
 
 /**
  * @title This library contains all global perps market data
@@ -178,9 +179,7 @@ library GlobalPerpsMarket {
     ) internal view {
         uint256 collateralAmount = self.collateralAmounts[synthMarketId];
         if (synthAmount > 0) {
-            uint256 maxAmount = GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[
-                synthMarketId
-            ];
+            uint maxAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
             if (maxAmount == 0) {
                 revert SynthNotEnabledForCollateral(synthMarketId);
             }
