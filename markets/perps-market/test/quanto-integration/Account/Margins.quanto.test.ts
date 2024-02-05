@@ -127,19 +127,20 @@ describe.only('Account margins test', () => {
     });
   });
 
-  describe.skip('after open positions', () => {
+  describe('after open positions', () => {
     before('open 2 positions', async () => {
-      await openPosition({
-        systems,
-        provider,
-        trader: trader1(),
-        accountId,
-        keeper: trader1(),
-        marketId: perpsMarkets()[0].marketId(),
-        sizeDelta: bn(-2),
-        settlementStrategyId: perpsMarkets()[0].strategyId(),
-        price: bn(30_000),
-      });
+      // await openPosition({
+      //   systems,
+      //   provider,
+      //   trader: trader1(),
+      //   accountId,
+      //   keeper: trader1(),
+      //   marketId: perpsMarkets()[0].marketId(),
+      //   sizeDelta: bn(-2),
+      //   settlementStrategyId: perpsMarkets()[0].strategyId(),
+      //   price: bn(30_000),
+      // });
+
       await openPosition({
         systems,
         provider,
@@ -162,12 +163,16 @@ describe.only('Account margins test', () => {
       btcMaintenanceMargin: Wei,
       ethMaintenanceMargin: Wei,
       minimumPositionMargin: Wei;
+
     before('identify expected values', () => {
-      startingMargin = wei(100_000);
+      startingMargin = wei(120_000);
+
       const btcSkewScale = wei(perpsMarketConfig[0].fundingParams.skewScale);
       const ethSkewScale = wei(perpsMarketConfig[1].fundingParams.skewScale);
+
       const btcPnl = calculatePricePnl(wei(0), btcSkewScale, wei(-2), wei(30_000));
       const ethPnl = calculatePricePnl(wei(0), ethSkewScale, wei(20), wei(2000));
+
       initialPnl = btcPnl.add(ethPnl);
 
       const notionalBtcValue = wei(2).mul(wei(30_000));
@@ -190,10 +195,11 @@ describe.only('Account margins test', () => {
       minimumPositionMargin = wei(1500);
     });
 
-    it('has correct available margin', async () => {
+    it.only('has correct available margin', async () => {
+      // 🚨 available margin should NOT be negative 680000000000000000000000
       assertBn.equal(
-        await systems().PerpsMarket.getAvailableMargin(accountId),
-        startingMargin.add(initialPnl).toBN()
+        await systems().PerpsMarket.getAvailableMargin(accountId), // -680000000000000000000000
+        startingMargin.add(initialPnl).toBN() // 119000000000000000000000
       );
     });
 
