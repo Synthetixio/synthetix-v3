@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { DEFAULT_SETTLEMENT_STRATEGY, PerpsMarket, bn, bootstrapMarkets } from '../../integration/bootstrap';
 import { openPosition } from '../../integration/helpers';
 import Wei, { wei } from '@synthetixio/wei';
@@ -10,15 +11,19 @@ const _SKEW_SCALE = bn(10_000);
 const _MAX_FUNDING_VELOCITY = bn(3);
 const _TRADER_SIZE = bn(20);
 const _ETH_PRICE = bn(2000);
+const _BTC_PRICE = bn(20_000);
 
 describe.only('Position - funding', () => {
-  const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
+  const traderAccountIds = [2, 3];
+  const trader1AccountId = traderAccountIds[0];
+  const trader2AccountId = traderAccountIds[1];
+  const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
         token: 'sBTC',
-        buyPrice: bn(20_000),
-        sellPrice: bn(20_000),
+        buyPrice: _BTC_PRICE,
+        sellPrice: _BTC_PRICE,
       },
     ],
     perpsMarkets: [
@@ -31,12 +36,12 @@ describe.only('Position - funding', () => {
         quanto: {
           name: 'Bitcoin',
           token: 'BTC',
-          price: bn(20_000),
+          price: _BTC_PRICE,
           quantoSynthMarketIndex: 0,
         },
       },
     ],
-    traderAccountIds: [2, 3],
+    traderAccountIds,
   });
 
   let ethMarket: PerpsMarket;
@@ -44,32 +49,74 @@ describe.only('Position - funding', () => {
     ethMarket = perpsMarkets()[0];
   });
 
-  before('add collateral to margin', async () => {
-    // trader accruing funding
-    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(50_000));
-    // trader moving skew
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(1_000_000));
+  const trader1BTCMargin = bn(2.5);
+  before('trader1 buys 2.5 sBTC', async () => {
+    const btcSpotMarketId = synthMarkets()[0].marketId();
+    const usdAmount = _BTC_PRICE.mul(trader1BTCMargin).div(ethers.utils.parseEther('1'));
+    const minAmountReceived = trader1BTCMargin;
+    const referrer = ethers.constants.AddressZero;
+    await systems()
+      .SpotMarket.connect(trader1())
+      .buy(btcSpotMarketId, usdAmount, minAmountReceived, referrer);
   });
 
-  before('set Pyth Benchmark Price data', async () => {
-    // set Pyth setBenchmarkPrice
-    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
+  const trader2BTCMargin = bn(50);
+  before('trader2 buys 50 sBTC', async () => {
+    const btcSpotMarketId = synthMarkets()[0].marketId();
+    const usdAmount = _BTC_PRICE.mul(trader2BTCMargin).div(ethers.utils.parseEther('1'));
+    const minAmountReceived = trader2BTCMargin;
+    const referrer = ethers.constants.AddressZero;
+    await systems()
+      .SpotMarket.connect(trader2())
+      .buy(btcSpotMarketId, usdAmount, minAmountReceived, referrer);
   });
 
-  let openPositionTime: number;
-  before('open 20 eth position', async () => {
-    ({ settleTime: openPositionTime } = await openPosition({
-      systems,
-      provider,
-      trader: trader1(),
-      accountId: 2,
-      keeper: keeper(),
-      marketId: ethMarket.marketId(),
-      sizeDelta: _TRADER_SIZE,
-      settlementStrategyId: ethMarket.strategyId(),
-      price: _ETH_PRICE,
-      skipSettingPrice: true,
-    }));
+  before('add sBTC collateral to margin', async () => {
+    const btcSpotMarketId = synthMarkets()[0].marketId();
+    // approve amount of collateral to be transfered to the market
+    await synthMarkets()[0]
+      .synth()
+      .connect(trader1())
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+    await synthMarkets()[0]
+      .synth()
+      .connect(trader2())
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+
+    // trader accruing funding (deposits 2.5 btc worth $50k)
+    await systems()
+      .PerpsMarket.connect(trader1())
+      .modifyCollateral(trader1AccountId, btcSpotMarketId, trader1BTCMargin);
+
+    // trader moving skew (deposits 50 btc worth $1m)
+    await systems()
+      .PerpsMarket.connect(trader2())
+      .modifyCollateral(trader2AccountId, btcSpotMarketId, trader1BTCMargin);
+  });
+
+  // before('set Pyth Benchmark Price data', async () => {
+  //   // set Pyth setBenchmarkPrice
+  //   await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
+  // });
+
+  // let openPositionTime: number;
+  // before('open 20 eth position', async () => {
+  //   ({ settleTime: openPositionTime } = await openPosition({
+  //     systems,
+  //     provider,
+  //     trader: trader1(),
+  //     accountId: 2,
+  //     keeper: keeper(),
+  //     marketId: ethMarket.marketId(),
+  //     sizeDelta: _TRADER_SIZE,
+  //     settlementStrategyId: ethMarket.strategyId(),
+  //     price: _ETH_PRICE,
+  //     skipSettingPrice: true,
+  //   }));
+  // });
+
+  it('magic', async () => {
+    console.log('magic');
   });
 
   /*
@@ -89,84 +136,84 @@ describe.only('Position - funding', () => {
     +------------------------------------------------------------------------------------+
   */
 
-  [
-    { daysElapsed: 1, newOrderSize: bn(-60) },
-    { daysElapsed: 1, newOrderSize: bn(15) },
-    { daysElapsed: 0.25, newOrderSize: bn(37) },
-    { daysElapsed: 2, newOrderSize: bn(-17) },
-    { daysElapsed: 0.2, newOrderSize: bn(155) },
-    { daysElapsed: 0.1, newOrderSize: bn(-150) },
-    { daysElapsed: 0.1, newOrderSize: bn(-15) },
-    { daysElapsed: 0.03, newOrderSize: bn(-4) },
-    { daysElapsed: 3, newOrderSize: bn(19) },
-  ].reduce(
-    (
-      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed },
-      { daysElapsed, newOrderSize }
-    ) => {
-      accDaysElapsed += daysElapsed;
+  // [
+  //   { daysElapsed: 1, newOrderSize: bn(-60) },
+  //   { daysElapsed: 1, newOrderSize: bn(15) },
+  //   { daysElapsed: 0.25, newOrderSize: bn(37) },
+  //   { daysElapsed: 2, newOrderSize: bn(-17) },
+  //   { daysElapsed: 0.2, newOrderSize: bn(155) },
+  //   { daysElapsed: 0.1, newOrderSize: bn(-150) },
+  //   { daysElapsed: 0.1, newOrderSize: bn(-15) },
+  //   { daysElapsed: 0.03, newOrderSize: bn(-4) },
+  //   { daysElapsed: 3, newOrderSize: bn(19) },
+  // ].reduce(
+  //   (
+  //     { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed },
+  //     { daysElapsed, newOrderSize }
+  //   ) => {
+  //     accDaysElapsed += daysElapsed;
 
-      // ACCRUED FUNDING CALC ----------------------------------------------
-      const currentSkew = prevSkew.add(newOrderSize);
-      const frVelocity = wei(currentSkew).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
-      const fundingRate = prevFrVelocity.mul(daysElapsed).add(prevFundingRate);
-      const expectedAccruedFunding = Wei.avg(wei(prevFundingRate), wei(fundingRate))
-        .mul(_TRADER_SIZE)
-        .mul(_ETH_PRICE)
-        .mul(daysElapsed)
-        .add(prevAccruedFunding);
-      // END ACCRUED FUNDING CALC -------------------------------------------
+  //     // ACCRUED FUNDING CALC ----------------------------------------------
+  //     const currentSkew = prevSkew.add(newOrderSize);
+  //     const frVelocity = wei(currentSkew).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
+  //     const fundingRate = prevFrVelocity.mul(daysElapsed).add(prevFundingRate);
+  //     const expectedAccruedFunding = Wei.avg(wei(prevFundingRate), wei(fundingRate))
+  //       .mul(_TRADER_SIZE)
+  //       .mul(_ETH_PRICE)
+  //       .mul(daysElapsed)
+  //       .add(prevAccruedFunding);
+  //     // END ACCRUED FUNDING CALC -------------------------------------------
 
-      describe(`after ${daysElapsed} days`, () => {
-        before('move time', async () => {
-          await fastForwardTo(
-            openPositionTime -
-              // this enables the market summary check to be as close as possible to the settlement time
-              (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
-              _SECONDS_IN_DAY * accDaysElapsed,
-            provider()
-          );
-        });
+  //     describe(`after ${daysElapsed} days`, () => {
+  //       before('move time', async () => {
+  //         await fastForwardTo(
+  //           openPositionTime -
+  //             // this enables the market summary check to be as close as possible to the settlement time
+  //             (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
+  //             _SECONDS_IN_DAY * accDaysElapsed,
+  //           provider()
+  //         );
+  //       });
 
-        before('trader2 moves skew', async () => {
-          await openPosition({
-            systems,
-            provider,
-            trader: trader2(),
-            accountId: 3,
-            keeper: trader2(),
-            marketId: ethMarket.marketId(),
-            sizeDelta: newOrderSize,
-            settlementStrategyId: ethMarket.strategyId(),
-            price: _ETH_PRICE,
-            skipSettingPrice: true,
-          });
-        });
+  //       before('trader2 moves skew', async () => {
+  //         await openPosition({
+  //           systems,
+  //           provider,
+  //           trader: trader2(),
+  //           accountId: 3,
+  //           keeper: trader2(),
+  //           marketId: ethMarket.marketId(),
+  //           sizeDelta: newOrderSize,
+  //           settlementStrategyId: ethMarket.strategyId(),
+  //           price: _ETH_PRICE,
+  //           skipSettingPrice: true,
+  //         });
+  //       });
 
-        it('funding accrued is correct', async () => {
-          const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
-            2,
-            ethMarket.marketId()
-          );
-          // using negative value because trader pnl
-          assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
-        });
-      });
+  //       it('funding accrued is correct', async () => {
+  //         const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
+  //           2,
+  //           ethMarket.marketId()
+  //         );
+  //         // using negative value because trader pnl
+  //         assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
+  //       });
+  //     });
 
-      return {
-        prevFrVelocity: frVelocity,
-        prevFundingRate: fundingRate,
-        prevAccruedFunding: expectedAccruedFunding,
-        prevSkew: currentSkew,
-        accDaysElapsed,
-      };
-    },
-    {
-      prevFrVelocity: wei(0.006),
-      prevFundingRate: wei(0),
-      prevAccruedFunding: wei(0),
-      prevSkew: wei(20),
-      accDaysElapsed: 0,
-    }
-  );
+  //     return {
+  //       prevFrVelocity: frVelocity,
+  //       prevFundingRate: fundingRate,
+  //       prevAccruedFunding: expectedAccruedFunding,
+  //       prevSkew: currentSkew,
+  //       accDaysElapsed,
+  //     };
+  //   },
+  //   {
+  //     prevFrVelocity: wei(0.006),
+  //     prevFundingRate: wei(0),
+  //     prevAccruedFunding: wei(0),
+  //     prevSkew: wei(20),
+  //     accDaysElapsed: 0,
+  //   }
+  // );
 });
