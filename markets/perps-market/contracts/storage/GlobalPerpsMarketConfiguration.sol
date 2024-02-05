@@ -8,6 +8,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
+import {CollateralConfiguration} from "./CollateralConfiguration.sol";
 
 /**
  * @title This library contains all global perps market configuration data
@@ -15,6 +16,7 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 library GlobalPerpsMarketConfiguration {
     using DecimalMath for uint256;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
     using SetUtil for SetUtil.UintSet;
     using SafeCastU128 for uint128;
 
@@ -32,10 +34,9 @@ library GlobalPerpsMarketConfiguration {
          */
         mapping(address => uint256) referrerShare;
         /**
-         * @dev mapping of configured synthMarketId to max collateral amount.
-         * @dev USD token synth market id = 0
+         * @dev previously maxCollateralAmounts[synthMarketId] was used in storage slot
          */
-        mapping(uint128 => uint) maxCollateralAmounts;
+        mapping(uint128 => uint256) __unused_1;
         /**
          * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
          */
@@ -43,11 +44,11 @@ library GlobalPerpsMarketConfiguration {
         /**
          * @dev minimum configured keeper reward for the sender who liquidates the account
          */
-        uint minKeeperRewardUsd;
+        uint256 minKeeperRewardUsd;
         /**
          * @dev maximum configured keeper reward for the sender who liquidates the account
          */
-        uint maxKeeperRewardUsd;
+        uint256 maxKeeperRewardUsd;
         /**
          * @dev maximum configured number of concurrent positions per account.
          * @notice If set to zero it means no new positions can be opened, but existing positions can be increased or decreased.
@@ -63,11 +64,11 @@ library GlobalPerpsMarketConfiguration {
         /**
          * @dev used together with minKeeperRewardUsd to get the minumum keeper reward for the sender who settles, or liquidates the account
          */
-        uint minKeeperProfitRatioD18;
+        uint256 minKeeperProfitRatioD18;
         /**
          * @dev used together with maxKeeperRewardUsd to get the maximum keeper reward for the sender who settles, or liquidates the account
          */
-        uint maxKeeperScalingRatioD18;
+        uint256 maxKeeperScalingRatioD18;
         /**
          * @dev set of supported collateral types. By supported we mean collateral types that have a maxCollateralAmount > 0
          */
@@ -186,12 +187,13 @@ library GlobalPerpsMarketConfiguration {
         return (referralFees, feeCollectorQuote);
     }
 
+    // TODO: move this into separate module for collateral configuration
     function updateCollateral(
         Data storage self,
         uint128 synthMarketId,
         uint maxCollateralAmount
     ) internal {
-        self.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
+        CollateralConfiguration.load(synthMarketId).setMax(synthMarketId, maxCollateralAmount);
 
         bool isSupportedCollateral = self.supportedCollateralTypes.contains(synthMarketId);
         if (maxCollateralAmount > 0 && !isSupportedCollateral) {

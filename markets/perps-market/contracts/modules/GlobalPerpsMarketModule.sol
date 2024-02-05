@@ -14,6 +14,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -44,8 +45,8 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     function getCollateralConfiguration(
         uint128 synthMarketId
     ) external view override returns (uint256 maxCollateralAmount) {
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        maxCollateralAmount = store.maxCollateralAmounts[synthMarketId];
+        // TODO: move to collateral configuration module
+        maxCollateralAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
     }
 
     /**
