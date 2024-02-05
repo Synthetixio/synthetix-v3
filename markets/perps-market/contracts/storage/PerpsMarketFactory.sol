@@ -7,10 +7,9 @@ import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
-import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
@@ -41,6 +40,10 @@ library PerpsMarketFactory {
         ISpotMarketSystem spotMarket;
         uint128 perpsMarketId;
         string name;
+        /**
+         * @dev all liquidated account's assets are sent to this address
+         */
+        address liquidationAssetManager;
     }
 
     function onlyIfInitialized(Data storage self) internal view {
@@ -100,5 +103,21 @@ library PerpsMarketFactory {
 
     function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
         self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
+    }
+
+    function transferLiquidatedSynth(
+        Data storage self,
+        uint128 synthMarketId,
+        uint256 amount
+    ) internal returns (uint256 synthValue) {
+        address synth = self.spotMarket.getSynth(synthMarketId);
+        self.synthetix.withdrawMarketCollateral(self.perpsMarketId, synth, amount);
+
+        (synthValue, ) = self.spotMarket.quoteSellExactIn(
+            synthMarketId,
+            amount,
+            Price.Tolerance.DEFAULT
+        );
+        ITokenModule(synth).transfer(self.liquidationAssetManager, amount);
     }
 }

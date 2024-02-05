@@ -11,6 +11,11 @@ interface ILiquidationModule {
     error NotEligibleForLiquidation(uint128 accountId);
 
     /**
+     * @notice Thrown when attempting to liquidate an account's margin when not elegible for liquidation
+     */
+    error NotEligibleForMarginLiquidation(uint128 accountId);
+
+    /**
      * @notice Gets fired when an account position is liquidated .
      * @param marketId Id of the position's market.
      * @param accountId Id of the account liquidated.
@@ -60,6 +65,14 @@ interface ILiquidationModule {
      * @return liquidationReward total reward sent to liquidator.
      */
     function liquidate(uint128 accountId) external returns (uint256 liquidationReward);
+
+    /**
+     * @notice Liquidates an account's margin when no other positions exist.
+     * @dev if available margin is negative and no positions exist, then account margin can be liquidated by calling this function
+     * @param accountId Id of the account to liquidate.
+     * @return liquidationReward total reward sent to liquidator.
+     */
+    function liquidateMarginOnly(uint128 accountId) external returns (uint256 liquidationReward);
 
     /**
      * @notice Liquidates up to maxNumberOfAccounts flagged accounts.
