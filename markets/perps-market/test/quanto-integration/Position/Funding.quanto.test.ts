@@ -94,10 +94,10 @@ describe.only('Position - funding', () => {
       .modifyCollateral(trader2AccountId, btcSpotMarketId, trader1BTCMargin);
   });
 
-  // before('set Pyth Benchmark Price data', async () => {
-  //   // set Pyth setBenchmarkPrice
-  //   await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
-  // });
+  before('set Pyth Benchmark Price data', async () => {
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(_ETH_PRICE);
+  });
 
   // let openPositionTime: number;
   // before('open 20 eth position', async () => {
