@@ -16,11 +16,12 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe('FeatureFlag', () => {
+describe('FeatureFlagModule', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, systems, restore, keeper, provider } = bs;
 
   beforeEach(restore);
+
   it('should suspend and enable all features', async () => {
     const { PerpMarketProxy } = systems();
     await assertEvent(await PerpMarketProxy.suspendAllFeatures(), `PerpMarketSuspended(true)`, PerpMarketProxy);
@@ -43,6 +44,7 @@ describe('FeatureFlag', () => {
     await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
     await assertRevert(PerpMarketProxy['createAccount()'](), `FeatureUnavailable("${feature}")`);
   });
+
   it('should disable deposit', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('deposit');
@@ -69,6 +71,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable withdraw', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('withdraw');
@@ -94,6 +97,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable commitOrder', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('commitOrder');
@@ -117,6 +121,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable settleOrder', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('settleOrder');
@@ -137,6 +142,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable cancelOrder', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('cancelOrder');
@@ -161,6 +167,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable settleOrder', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('settleOrder');
@@ -181,6 +188,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable flagPosition', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('flagPosition');
@@ -210,6 +218,7 @@ describe('FeatureFlag', () => {
       `FeatureUnavailable("${feature}")`
     );
   });
+
   it('should disable liquidatePosition', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('liquidatePosition');

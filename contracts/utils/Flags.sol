@@ -1,8 +1,9 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 library Flags {
-    bytes32 public constant CREATE_ACCOUNT = "createAccount"; // Note this flag needs to match the create account in core-modules/contracts/storage/FeatureFlag.sol
+    // @dev This flag needs to match the create account in `core-modules/contracts/storage/FeatureFlag.sol`.
+    bytes32 public constant CREATE_ACCOUNT = "createAccount";
     bytes32 public constant DEPOSIT = "deposit";
     bytes32 public constant WITHDRAW = "withdraw";
     bytes32 public constant COMMIT_ORDER = "commitOrder";

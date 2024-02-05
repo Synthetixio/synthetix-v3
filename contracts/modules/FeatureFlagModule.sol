@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {FeatureFlagModule as BaseFeatureFlagModule} from "@synthetixio/core-modules/contracts/modules/FeatureFlagModule.sol";
 import {IFeatureFlagModule} from "../interfaces/IFeatureFlagModule.sol";
-
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Flags} from "../utils/Flags.sol";
@@ -12,7 +11,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
     using FeatureFlag for FeatureFlag.Data;
 
     /**
-     * @dev Allow all addresses to use a feature. This can be called by the owner.
+     * @dev Allow all addresses to use a feature.
      */
     function enableFeature(bytes32 feature) internal {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
