@@ -68,7 +68,7 @@ describe('Quanto', () => {
         .SpotMarket.connect(trader1())
         .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
     });
-    before('add some stop ETH collateral to margin', async () => {
+    before('add some ETH collateral to margin', async () => {
       const ethSpotMarketId = synthMarkets()[0].marketId();
       // approve amount of collateral to be transfered to the market
       await synthMarkets()[0]
