@@ -1,74 +1,111 @@
-import { BigNumber, ethers, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { wei } from '@synthetixio/wei';
-import assert from 'assert';
-import { shuffle } from 'lodash';
-import forEach from 'mocha-each';
-import { PerpCollateral, bootstrap } from '../../bootstrap';
-import {
-  bn,
-  genBootstrap,
-  genNumber,
-  genListOf,
-  genOneOf,
-  genTrader,
-  genOrder,
-  toRoundRobinGenerators,
-  genBytes32,
-  genAddress,
-} from '../../generators';
-import {
-  mintAndApproveWithTrader,
-  commitAndSettle,
-  commitOrder,
-  depositMargin,
-  extendContractAbi,
-  fastForwardBySec,
-  findEventSafe,
-  mintAndApprove,
-  ADDRESS0,
-  withExplicitEvmMine,
-  getSusdCollateral,
-  isSusdCollateral,
-  SYNTHETIX_USD_MARKET_ID,
-  findOrThrow,
-  setMarketConfiguration,
-  SECONDS_ONE_DAY,
-  setMarketConfigurationById,
-} from '../../helpers';
-import { calcPnl } from '../../calculations';
-import { assertEvents } from '../../assert';
+import { bootstrap } from '../../bootstrap';
+import { bn, genBootstrap, genNumber, genOneOf } from '../../generators';
+import { fastForwardBySec } from '../../helpers';
 
 describe.only('PerpAccountModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, collateralsWithoutSusd, spotMarket, traders, owner, systems, provider, restore } = bs;
+  const { markets, traders, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
   describe('getAccountDigest', async () => {
-    it('should revert when accountId does not exist');
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when marketId does not exist');
+      const market = genOneOf(markets());
+      const invalidAccountId = 42069;
 
-    it('should not revert when accountId/marketId exists but no positions are open');
+      await assertRevert(
+        PerpMarketProxy.getAccountDigest(invalidAccountId, market.marketId()),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const invalidMarketId = bn(genNumber(42069, 50_000));
+
+      await assertRevert(
+        PerpMarketProxy.getAccountDigest(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should return default object when accountId/marketId exists but no positions/orders are open', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const market = genOneOf(markets());
+
+      const digest = await PerpMarketProxy.getAccountDigest(trader.accountId, market.marketId());
+
+      assertBn.isZero(digest.order.sizeDelta);
+      assertBn.isZero(digest.position.size);
+    });
   });
 
   describe('getPositionDigest', () => {
-    it('should revert when accountId does not exist');
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when marketId does not exist');
+      const market = genOneOf(markets());
+      const invalidAccountId = 42069;
 
-    it('should return default object when accountId/marketId exists but no position');
+      await assertRevert(
+        PerpMarketProxy.getPositionDigest(invalidAccountId, market.marketId()),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const invalidMarketId = bn(genNumber(42069, 50_000));
+
+      await assertRevert(
+        PerpMarketProxy.getPositionDigest(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should return default object when accountId/marketId exists but no position', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const market = genOneOf(markets());
+
+      const digest = await PerpMarketProxy.getPositionDigest(trader.accountId, market.marketId());
+      assertBn.isZero(digest.size);
+    });
 
     describe('accruedFunding', () => {
       it('should accrue funding when position is opposite of skew');
 
       it('should pay funding when position is same side as skew');
 
-      it('should accrue or pay funding when size is 0');
+      it('should not accrue or pay funding when size is 0', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
+
+        const d1 = await PerpMarketProxy.getPositionDigest(trader.accountId, market.marketId());
+        assertBn.isZero(d1.size);
+
+        await fastForwardBySec(provider(), genNumber(60 * 60, 60 * 60 * 24));
+
+        const d2 = await PerpMarketProxy.getPositionDigest(trader.accountId, market.marketId());
+        assertBn.isZero(d2.size);
+      });
     });
 
     describe('{im,mm}', () => {});
