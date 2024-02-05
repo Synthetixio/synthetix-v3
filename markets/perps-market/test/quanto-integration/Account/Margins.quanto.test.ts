@@ -197,6 +197,14 @@ describe.only('Account margins test', () => {
 
     it.only('has correct available margin', async () => {
       // 🚨 available margin should NOT be negative 680000000000000000000000
+      //
+      // 🤔 this test in dev branch passes (as expected),
+      // but what is noteworthy is that the available margin
+      // is 99000000000000000000000.
+      //
+      // 💭 Margins.quanto.test.ts in the dev branch
+      // does not set `quanto` in the `perpsMarketConfig`
+
       assertBn.equal(
         await systems().PerpsMarket.getAvailableMargin(accountId), // -680000000000000000000000
         startingMargin.add(initialPnl).toBN() // 119000000000000000000000
