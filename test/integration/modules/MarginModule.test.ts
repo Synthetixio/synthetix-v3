@@ -5,7 +5,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import assert from 'assert';
-import { shuffle } from 'lodash';
+import { shuffle, times } from 'lodash';
 import forEach from 'mocha-each';
 import { PerpCollateral, bootstrap } from '../../bootstrap';
 import {
@@ -39,7 +39,7 @@ import {
   SECONDS_ONE_DAY,
   setMarketConfigurationById,
 } from '../../helpers';
-import { calcPnl } from '../../calculations';
+import { calcDiscountedCollateralPrice, calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
 
 describe('MarginModule', async () => {
@@ -2218,14 +2218,14 @@ describe('MarginModule', async () => {
 
   describe('getDiscountedCollateralPrice', () => {
     forEach([bn(0), bn(genNumber(1, 10_000))]).it(
-      'should return 1 when sUSD is the oracle price regardless of size (%s)',
-      async (size: BigNumber) => {
+      'should return 1 when sUSD is the oracle price regardless of amount (%s)',
+      async (amount: BigNumber) => {
         const { PerpMarketProxy } = systems();
 
         const sUsdCollateral = getSusdCollateral(collaterals());
         const collateralPrice = await PerpMarketProxy.getDiscountedCollateralPrice(
           sUsdCollateral.synthMarketId(),
-          size
+          amount
         );
         assertBn.equal(collateralPrice, bn(1));
       }
@@ -2243,7 +2243,7 @@ describe('MarginModule', async () => {
       assertBn.equal(collateralPrice, priceWithDiscount);
     });
 
-    it('should return oracle price when size and minCollateralDiscount is 0', async () => {
+    it('should return oracle price when amount and minCollateralDiscount is 0', async () => {
       const { PerpMarketProxy } = systems();
 
       await setMarketConfiguration(bs, { minCollateralDiscount: bn(0) });
@@ -2264,15 +2264,15 @@ describe('MarginModule', async () => {
 
       const maxCollateralDiscount = bn(0.02);
       await setMarketConfiguration(bs, { minCollateralDiscount: bn(0.01), maxCollateralDiscount });
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max(size / skewScale, minHaicut), maxCollateralDiscount))
+      // price = oraclePrice * (1 - min(max(amount / (skewScale * 2), minCollateralDiscount), maxCollateralDiscount))
       //
-      // 30_000 / 1_000_000 = 0.03 (bounded by max is 0.02).
-      const size = bn(30_000);
+      // 30k / (500k * 2) = 0.03 (bounded by max is 0.02).
+      const amount = bn(30_000);
 
       const expectedPrice = wei(collateralPrice).mul(bn(1).sub(maxCollateralDiscount)).toBN();
-      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), size);
+      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), amount);
 
       assertBn.equal(priceWithDiscount, expectedPrice);
     });
@@ -2284,33 +2284,47 @@ describe('MarginModule', async () => {
       const collateralPrice = await collateral.getPrice();
 
       const minCollateralDiscount = bn(0.01);
-      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount: bn(0.02) });
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
+      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount: bn(0.2) });
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max(size / skewScale, minHaicut), maxCollateralDiscount))
+      // price = oraclePrice * (1 - min(max(amount / (skewScale * 2), minCollateralDiscount), maxCollateralDiscount))
       //
-      // 5000 / 1_000_000 = 0.005 (bounded by min is 0.01).
-      const size = bn(5000);
+      // 500 / (500k * 2) = 0.0005 (bounded by min is 0.01).
+      const amount = bn(500);
 
       const expectedPrice = wei(collateralPrice).mul(bn(1).sub(minCollateralDiscount)).toBN();
-      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), size);
+      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), amount);
 
       assertBn.equal(priceWithDiscount, expectedPrice);
     });
 
-    it('should return same adjusted price on pos/neg size', async () => {
-      const { PerpMarketProxy } = systems();
+    it('should match the expected discounted collateral price', async () => {
+      const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collaterals());
-      const size = bn(genNumber(1, 10_000));
+      const collateralPrice = await collateral.getPrice();
 
-      const collateralPricePos = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), size);
-      const collateralPriceNeg = await PerpMarketProxy.getDiscountedCollateralPrice(
+      const minCollateralDiscount = bn(0.0001);
+      const maxCollateralDiscount = bn(0.99);
+      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount });
+
+      const spotMarketSkewScale = bn(500_000);
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
         collateral.synthMarketId(),
-        size.mul(-1)
+        spotMarketSkewScale
       );
+      const amount = bn(genNumber(3000, 5000));
 
-      assertBn.equal(collateralPricePos, collateralPriceNeg);
+      const expectedPrice = calcDiscountedCollateralPrice(
+        collateralPrice,
+        amount,
+        spotMarketSkewScale,
+        minCollateralDiscount,
+        maxCollateralDiscount
+      );
+      const actualPrice = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), amount);
+
+      assertBn.equal(actualPrice, expectedPrice);
     });
   });
 });

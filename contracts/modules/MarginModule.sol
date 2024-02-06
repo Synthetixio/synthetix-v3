@@ -462,9 +462,9 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getDiscountedCollateralPrice(uint128 synthMarketId, int256 size) external view returns (uint256) {
+    function getDiscountedCollateralPrice(uint128 synthMarketId, uint256 amount) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        return globalMarginConfig.getDiscountedCollateralPrice(synthMarketId, MathUtil.abs(size), globalMarketConfig);
+        return globalMarginConfig.getDiscountedCollateralPrice(synthMarketId, amount, globalMarketConfig);
     }
 }

@@ -7,7 +7,7 @@ import { PerpMarketProxy, PerpAccountProxy, AggregatorV3Mock, PythMock } from '.
 import { CollateralMock, SettlementHookMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
-import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
+import { ADDRESS0, SYNTHETIX_USD_MARKET_ID, sleep } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
 import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
 import { GeneratedBootstrap } from './typed';
@@ -149,6 +149,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     })),
     stakedPool
   );
+
+  before('wait for core bootstrap, pools, and synth markets...', async () => {
+    await sleep(1000);
+  });
+
   const getConfiguredSynths = () =>
     _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({ ...collateral, synthMarket: spotMarket.synthMarkets()[i] }));
 

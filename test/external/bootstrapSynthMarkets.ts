@@ -38,7 +38,7 @@ export type BootstrapSynthArgs = {
 export function bootstrapSynthMarkets(data: BootstrapSynthArgs, r: ReturnType<typeof createStakedPool>) {
   let contracts: Systems, marketOwner: ethers.Signer;
 
-  before('identify actors', () => {
+  before('identify actors', async () => {
     contracts = r.systems() as unknown as Systems;
     [, , marketOwner] = r.signers();
   });
