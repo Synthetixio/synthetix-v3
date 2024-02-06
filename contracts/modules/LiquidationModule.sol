@@ -283,8 +283,9 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint128 absSize = MathUtil.abs(market.positions[accountId].size).to128();
 
+        // Return empty when a position does not exist.
         if (absSize == 0) {
-            revert ErrorUtil.PositionNotFound();
+            return (0, 0);
         }
 
         flagKeeperReward = Position.getLiquidationFlagReward(

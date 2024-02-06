@@ -270,6 +270,10 @@ library Margin {
 
     // --- Member (views) --- //
 
+    /**
+     * @dev Helper to call oraclerManager.process on a given `synthMarketId`. Note that this can result in errors
+     * if the `synthMarketId` does not exist.
+     */
     function getOracleCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,

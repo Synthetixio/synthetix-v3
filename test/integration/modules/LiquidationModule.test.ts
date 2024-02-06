@@ -135,12 +135,6 @@ describe('LiquidationModule', () => {
       await assertEvent(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
     });
 
-    it('getLiquidationFees returns liqKeeperFees small position');
-
-    it('getLiquidationFees returns liqKeeperFees big position');
-
-    it('getLiquidationFees returns flagKeeperReward');
-
     it('should remove any pending orders when present', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -994,13 +988,49 @@ describe('LiquidationModule', () => {
     });
 
     describe('getLiquidationFees', () => {
-      it('should revert when accountId does not exist');
+      it('should revert when accountId does not exist', async () => {
+        const { PerpMarketProxy } = systems();
 
-      it('should revert when marketId does not exist');
+        const market = genOneOf(markets());
+        const invalidAccountId = 42069;
 
-      it('should return zero when accountId/marketId exists but no position');
+        await assertRevert(
+          PerpMarketProxy.getLiquidationFees(invalidAccountId, market.marketId()),
+          `AccountNotFound("${invalidAccountId}")`,
+          PerpMarketProxy
+        );
+      });
 
-      it('should return the expected liquidationFees on an open position');
+      it('should revert when marketId does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const invalidMarketId = 42069;
+
+        await assertRevert(
+          PerpMarketProxy.getLiquidationFees(trader.accountId, invalidMarketId),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should return zero when accountId/marketId exists but no position', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
+
+        const { flagKeeperReward, liqKeeperFee } = await PerpMarketProxy.getLiquidationFees(
+          trader.accountId,
+          market.marketId()
+        );
+        assertBn.isZero(flagKeeperReward);
+        assertBn.isZero(liqKeeperFee);
+      });
+
+      it('should return the expected liquidationFees on a large open position');
+
+      it('should return the expected liquidationFees on a small open position');
     });
 
     describe('getRemainingLiquidatableSizeCapacity', () => {

@@ -180,6 +180,7 @@ describe('PerpMarketFactoryModule', () => {
           );
         }
       };
+
       it('should have 0 velocity if skew is small enough', async () => {
         const { PerpMarketProxy } = systems();
         const market = genOneOf(markets());
@@ -231,6 +232,7 @@ describe('PerpMarketFactoryModule', () => {
 
         assertBn.equal(fundingVelocity1, 0);
       });
+
       it('should compute current funding rate relative to time (concrete)', async () => {
         // This test is pulled directly from a concrete example developed for PerpsV2.
         //
@@ -879,6 +881,14 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should incur small debt proportional to skew with high price volatility');
 
-    it('should revert when marketId does not exist');
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const invalidMarketId = 42069;
+      await assertRevert(
+        PerpMarketProxy.reportedDebt(invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 });
