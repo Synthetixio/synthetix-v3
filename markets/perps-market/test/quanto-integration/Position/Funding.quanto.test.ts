@@ -125,9 +125,21 @@ describe.only('Position - funding', () => {
     }));
   });
 
-  it('magic', async () => {
-    console.log('magic');
-  });
+  // it.only('magic', async () => {
+  //   await fastForwardTo(
+  //     openPositionTime -
+  //       // this enables the market summary check to be as close as possible to the settlement time
+  //       (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
+  //       _SECONDS_IN_DAY * 7,
+  //     provider()
+  //   );
+  //   const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
+  //     2,
+  //     ethMarket.marketId()
+  //     );
+  //   console.log('accruedFunding :', accruedFunding);
+  //   console.log('here');
+  // });
 
   /*
     +------------------------------------------------------------------------------------+
@@ -146,84 +158,103 @@ describe.only('Position - funding', () => {
     +------------------------------------------------------------------------------------+
   */
 
-  // [
-  //   { daysElapsed: 1, newOrderSize: bn(-60) },
-  //   { daysElapsed: 1, newOrderSize: bn(15) },
-  //   { daysElapsed: 0.25, newOrderSize: bn(37) },
-  //   { daysElapsed: 2, newOrderSize: bn(-17) },
-  //   { daysElapsed: 0.2, newOrderSize: bn(155) },
-  //   { daysElapsed: 0.1, newOrderSize: bn(-150) },
-  //   { daysElapsed: 0.1, newOrderSize: bn(-15) },
-  //   { daysElapsed: 0.03, newOrderSize: bn(-4) },
-  //   { daysElapsed: 3, newOrderSize: bn(19) },
-  // ].reduce(
-  //   (
-  //     { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed },
-  //     { daysElapsed, newOrderSize }
-  //   ) => {
-  //     accDaysElapsed += daysElapsed;
+  [
+    { daysElapsed: 1, newOrderSize: bn(-60) },
+    { daysElapsed: 1, newOrderSize: bn(15) },
+    { daysElapsed: 0.25, newOrderSize: bn(37) },
+    { daysElapsed: 2, newOrderSize: bn(-17) },
+    { daysElapsed: 0.2, newOrderSize: bn(155) },
+    { daysElapsed: 0.1, newOrderSize: bn(-150) },
+    { daysElapsed: 0.1, newOrderSize: bn(-15) },
+    { daysElapsed: 0.03, newOrderSize: bn(-4) },
+    { daysElapsed: 3, newOrderSize: bn(19) },
+  ].reduce(
+    (
+      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed },
+      { daysElapsed, newOrderSize }
+      ) => {
+      const newQuantoOrderSize = getQuantoPositionSize({
+        sizeInBaseAsset: newOrderSize,
+        quantoAssetPrice: _BTC_PRICE,
+      });
+      accDaysElapsed += daysElapsed;
 
-  //     // ACCRUED FUNDING CALC ----------------------------------------------
-  //     const currentSkew = prevSkew.add(newOrderSize);
-  //     const frVelocity = wei(currentSkew).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
-  //     const fundingRate = prevFrVelocity.mul(daysElapsed).add(prevFundingRate);
-  //     const expectedAccruedFunding = Wei.avg(wei(prevFundingRate), wei(fundingRate))
-  //       .mul(_TRADER_SIZE)
-  //       .mul(_ETH_PRICE)
-  //       .mul(daysElapsed)
-  //       .add(prevAccruedFunding);
-  //     // END ACCRUED FUNDING CALC -------------------------------------------
+      // ACCRUED FUNDING CALC ----------------------------------------------
+      console.log('prevSkew :', prevSkew);
+      const currentSkew = prevSkew.add(newQuantoOrderSize);
+      const frVelocity = wei(currentSkew).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
+      const fundingRate = prevFrVelocity.mul(daysElapsed).add(prevFundingRate);
+      const expectedAccruedFunding = Wei.avg(wei(prevFundingRate), wei(fundingRate))
+        .mul(_TRADER_SIZE)
+        .mul(_ETH_PRICE)
+        .mul(daysElapsed)
+        .add(prevAccruedFunding);
+      // END ACCRUED FUNDING CALC -------------------------------------------
 
-  //     describe(`after ${daysElapsed} days`, () => {
-  //       before('move time', async () => {
-  //         await fastForwardTo(
-  //           openPositionTime -
-  //             // this enables the market summary check to be as close as possible to the settlement time
-  //             (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
-  //             _SECONDS_IN_DAY * accDaysElapsed,
-  //           provider()
-  //         );
-  //       });
+      describe(`after ${daysElapsed} days`, () => {
+        before('move time', async () => {
+          await fastForwardTo(
+            openPositionTime -
+              // this enables the market summary check to be as close as possible to the settlement time
+              (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
+              _SECONDS_IN_DAY * accDaysElapsed,
+            provider()
+          );
+        });
 
-  //       before('trader2 moves skew', async () => {
-  //         await openPosition({
-  //           systems,
-  //           provider,
-  //           trader: trader2(),
-  //           accountId: 3,
-  //           keeper: trader2(),
-  //           marketId: ethMarket.marketId(),
-  //           sizeDelta: newOrderSize,
-  //           settlementStrategyId: ethMarket.strategyId(),
-  //           price: _ETH_PRICE,
-  //           skipSettingPrice: true,
-  //         });
-  //       });
+        before('trader2 moves skew', async () => {
+          await openPosition({
+            systems,
+            provider,
+            trader: trader2(),
+            accountId: 3,
+            keeper: trader2(),
+            marketId: ethMarket.marketId(),
+            sizeDelta: newQuantoOrderSize,
+            settlementStrategyId: ethMarket.strategyId(),
+            price: _ETH_PRICE,
+            skipSettingPrice: true,
+          });
+        });
 
-  //       it('funding accrued is correct', async () => {
-  //         const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
-  //           2,
-  //           ethMarket.marketId()
-  //         );
-  //         // using negative value because trader pnl
-  //         assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
-  //       });
-  //     });
+        it('funding accrued is correct', async () => {
+          console.log('------------- QUANTO TEST --------------');
+          console.log('prevFrVelocity :', prevFrVelocity.toString());
+          console.log('prevFundingRate :', prevFundingRate.toString());
+          console.log('prevAccruedFunding :', prevAccruedFunding.toString());
+          console.log('prevSkew :', prevSkew.toString());
+          console.log('accDaysElapsed :', accDaysElapsed.toString());
+          console.log('daysElapsed :', daysElapsed.toString());
+          console.log('newOrderSize :', newOrderSize.toString());
+          console.log('newQuantoOrderSize :', newQuantoOrderSize.toString());
+          console.log('currentSkew :', currentSkew.toString());
+          console.log('frVelocity :', frVelocity.toString());
+          console.log('fundingRate :', fundingRate.toString());
+          const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
+            2,
+            ethMarket.marketId()
+          );
+          console.log('accruedFunding', accruedFunding.toString());
+          console.log('expectedAccruedFunding', expectedAccruedFunding.mul(-1).toString());
+          // using negative value because trader pnl
+          assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
+        });
+      });
 
-  //     return {
-  //       prevFrVelocity: frVelocity,
-  //       prevFundingRate: fundingRate,
-  //       prevAccruedFunding: expectedAccruedFunding,
-  //       prevSkew: currentSkew,
-  //       accDaysElapsed,
-  //     };
-  //   },
-  //   {
-  //     prevFrVelocity: wei(0.006),
-  //     prevFundingRate: wei(0),
-  //     prevAccruedFunding: wei(0),
-  //     prevSkew: wei(20),
-  //     accDaysElapsed: 0,
-  //   }
-  // );
+      return {
+        prevFrVelocity: frVelocity,
+        prevFundingRate: fundingRate,
+        prevAccruedFunding: expectedAccruedFunding,
+        prevSkew: currentSkew,
+        accDaysElapsed,
+      };
+    },
+    {
+      prevFrVelocity: wei(0.006).div(_BTC_PRICE),
+      prevFundingRate: wei(0),
+      prevAccruedFunding: wei(0),
+      prevSkew: wei(20).div(_BTC_PRICE),
+      accDaysElapsed: 0,
+    }
+  );
 });
