@@ -246,7 +246,7 @@ const _render = {
   },
 
   BinaryOperation(node: BinaryOperation): string {
-    return `${render(node.leftExpression)}${node.operator}${render(node.rightExpression)}`;
+    return `${render(node.leftExpression)} ${node.operator} ${render(node.rightExpression)}`;
   },
 };
 
