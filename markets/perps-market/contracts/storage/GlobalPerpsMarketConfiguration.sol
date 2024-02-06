@@ -85,6 +85,10 @@ library GlobalPerpsMarketConfiguration {
          * @dev interest rate gradient applied to utilization after hitting the gradient breakpoint
          */
         uint128 highUtilizationInterestRateGradient;
+        /**
+         * @dev TODO
+         */
+        uint128 collateralLiquidateRewardRatioD18;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -185,6 +189,14 @@ library GlobalPerpsMarketConfiguration {
         factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorQuote);
 
         return (referralFees, feeCollectorQuote);
+    }
+
+    // TODO: decide if this belongs here or at collateral configuration lib.
+    function calculateCollateralLiquidateReward(
+        Data storage self,
+        uint256 notionalValue
+    ) internal view returns (uint256) {
+        return notionalValue.mulDecimal(self.collateralLiquidateRewardRatioD18);
     }
 
     // TODO: move this into separate module for collateral configuration

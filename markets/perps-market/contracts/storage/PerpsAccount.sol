@@ -183,6 +183,24 @@ library PerpsAccount {
         }
     }
 
+    function getMarginLiquidationCost(
+        Data storage self
+    ) internal returns (uint256 marginLiquidateCost, uint256 seizedMarginValue) {
+        // SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
+        //     .load()
+        //     .liquidatableAccounts;
+
+        // if (!liquidatableAccounts.contains(self.id)) {
+        // notice: using getFlagKeeperCosts here since the logic is the same, but with no positions.
+        marginLiquidateCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
+        // TODO do we need to add it to flagged accounts?
+        // liquidatableAccounts.add(self.id);
+        seizedMarginValue = transferAllCollateral(self);
+        // TODO do we need to reset it?
+        // AsyncOrder.load(self.id).reset();
+        // }
+    }
+
     function updateOpenPositions(Data storage self, uint256 positionMarketId, int size) internal {
         if (size == 0 && self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.remove(positionMarketId);

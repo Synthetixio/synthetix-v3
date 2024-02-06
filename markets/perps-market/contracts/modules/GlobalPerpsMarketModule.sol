@@ -86,6 +86,32 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
+    function setCollateralLiquidateRewardRatio(
+        uint128 collateralLiquidateRewardRatioD18
+    ) external override {
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration
+            .load()
+            .collateralLiquidateRewardRatioD18 = collateralLiquidateRewardRatioD18;
+
+        emit CollateralLiquidateRewardRatioSet(collateralLiquidateRewardRatioD18);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getCollateralLiquidateRewardRatio()
+        external
+        view
+        override
+        returns (uint128 collateralLiquidateRewardRatioD18)
+    {
+        return GlobalPerpsMarketConfiguration.load().collateralLiquidateRewardRatioD18;
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
     function setKeeperRewardGuards(
         uint256 minKeeperRewardUsd,
         uint256 minKeeperProfitRatioD18,

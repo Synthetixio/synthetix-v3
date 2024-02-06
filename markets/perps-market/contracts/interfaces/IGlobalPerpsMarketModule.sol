@@ -72,6 +72,12 @@ interface IGlobalPerpsMarketModule {
     event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
+     * @notice Gets fired when TODO.
+     * @param collateralLiquidateRewardRatioD18 TODO
+     */
+    event CollateralLiquidateRewardRatioSet(uint128 collateralLiquidateRewardRatioD18);
+
+    /**
      * @notice Gets fired when feed id for keeper cost node id is updated.
      * @param keeperCostNodeId oracle node id
      */
@@ -270,4 +276,11 @@ interface IGlobalPerpsMarketModule {
      * @dev InterestRateUpdated event is emitted
      */
     function updateInterestRate() external;
+
+    function setCollateralLiquidateRewardRatio(uint128 collateralLiquidateRewardRatioD18) external;
+
+    function getCollateralLiquidateRewardRatio()
+        external
+        view
+        returns (uint128 collateralLiquidateRewardRatioD18);
 }
