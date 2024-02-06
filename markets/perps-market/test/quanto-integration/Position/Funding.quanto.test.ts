@@ -38,7 +38,7 @@ describe.only('Position - funding', () => {
           name: 'Ether',
           token: 'snxETH',
           price: _ETH_PRICE,
-          fundingParams: { skewScale: _SKEW_SCALE, maxFundingVelocity: bn(3) },
+          fundingParams: { skewScale: _SKEW_SCALE.div(20_000), maxFundingVelocity: bn(3) },
           quanto: {
             name: 'Bitcoin',
             token: 'BTC',
@@ -218,24 +218,25 @@ describe.only('Position - funding', () => {
         });
 
         it('funding accrued is correct', async () => {
-          console.log('------------- QUANTO TEST --------------');
-          console.log('prevFrVelocity :', prevFrVelocity.toString());
-          console.log('prevFundingRate :', prevFundingRate.toString());
-          console.log('prevAccruedFunding :', prevAccruedFunding.toString());
-          console.log('prevSkew :', prevSkew.toString());
-          console.log('accDaysElapsed :', accDaysElapsed.toString());
-          console.log('daysElapsed :', daysElapsed.toString());
-          console.log('newOrderSize :', newOrderSize.toString());
-          console.log('newQuantoOrderSize :', newQuantoOrderSize.toString());
-          console.log('currentSkew :', currentSkew.toString());
-          console.log('frVelocity :', frVelocity.toString());
-          console.log('fundingRate :', fundingRate.toString());
+          // console.log('------------- QUANTO TEST --------------');
+          // console.log('prevFrVelocity :', prevFrVelocity.toString());
+          // console.log('prevFundingRate :', prevFundingRate.toString());
+          // console.log('prevAccruedFunding :', prevAccruedFunding.toString());
+          // console.log('prevSkew :', prevSkew.toString());
+          // console.log('accDaysElapsed :', accDaysElapsed.toString());
+          // console.log('daysElapsed :', daysElapsed.toString());
+          // console.log('newOrderSize :', newOrderSize.toString());
+          // console.log('newQuantoOrderSize :', newQuantoOrderSize.toString());
+          // console.log('currentSkew :', currentSkew.toString());
+          // console.log('frVelocity :', frVelocity.toString());
+          // console.log('fundingRate :', fundingRate.toString());
           const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
             2,
             ethMarket.marketId()
           );
           console.log('accruedFunding', accruedFunding.toString());
-          console.log('expectedAccruedFunding', expectedAccruedFunding.mul(-1).toString());
+          console.log('accruedFundingInUSD', accruedFunding.mul(20_000).toString());
+          // console.log('expectedAccruedFunding', expectedAccruedFunding.mul(-1).toString());
           // using negative value because trader pnl
           assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
         });
