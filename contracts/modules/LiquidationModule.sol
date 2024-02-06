@@ -278,9 +278,12 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256 flagKeeperReward, uint256 liqKeeperFee) {
+        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
         uint128 absSize = MathUtil.abs(market.positions[accountId].size).to128();
 
         // Return empty when a position does not exist.

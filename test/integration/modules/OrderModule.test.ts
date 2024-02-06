@@ -1799,16 +1799,44 @@ describe('OrderModule', () => {
   });
 
   describe('getOrderDigest', () => {
-    it('should revert when accountId does not exist');
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when marketId does not exist');
+      const market = genOneOf(markets());
+      const invalidAccountId = 42069;
 
-    it('should return default object when accountId/marketId exists but no order');
+      await assertRevert(
+        PerpMarketProxy.getOrderDigest(invalidAccountId, market.marketId()),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const invalidMarketId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getOrderDigest(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should return default object when accountId/marketId exists but no order', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const market = genOneOf(markets());
+
+      const { sizeDelta } = await PerpMarketProxy.getOrderDigest(trader.accountId, market.marketId());
+      assertBn.isZero(sizeDelta);
+    });
   });
 
   describe('getOrderFees', () => {
-    it('should revert when marketId does not exist');
-
     describe('orderFee', () => {
       enum LiquidtyLeader {
         MAKER = 'MAKER',
@@ -1968,6 +1996,17 @@ describe('OrderModule', () => {
         const takerFeeUsd = wei(order1.sizeDelta.abs()).mul(order2.fillPrice).mul(takerFee);
 
         assertBn.equal(orderFee2, makerFeeUsd.add(takerFeeUsd).toBN());
+      });
+
+      it('should revert when marketId does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const invalidMarketId = 42069;
+        await assertRevert(
+          PerpMarketProxy.getOrderFees(invalidMarketId, bn(0), bn(0)),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
       });
     });
 
@@ -2183,6 +2222,15 @@ describe('OrderModule', () => {
   });
 
   describe('getOraclePrice', () => {
-    it('should revert when marketId does not exist');
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const invalidMarketId = 42069;
+      await assertRevert(
+        PerpMarketProxy.getOraclePrice(invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 });

@@ -159,7 +159,17 @@ describe('PerpMarketFactoryModule', () => {
   });
 
   describe('getMarketDigest', () => {
-    it('should revert when marketId does not exist');
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const invalidMarketId = bn(genNumber(42069, 50_000));
+
+      await assertRevert(
+        PerpMarketProxy.getMarketDigest(invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
 
     describe('{fundingRate,fundingVelocity}', () => {
       const depositMarginToTraders = async (
