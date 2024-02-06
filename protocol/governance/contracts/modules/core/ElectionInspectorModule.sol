@@ -1,77 +1,67 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../interfaces/IElectionInspectorModule.sol";
-import "../../submodules/election/ElectionBase.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {IElectionInspectorModule} from "../../interfaces/IElectionInspectorModule.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Election} from "../../storage/Election.sol";
+import {Epoch} from "../../storage/Epoch.sol";
 
-contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
+contract ElectionInspectorModule is IElectionInspectorModule {
     using SetUtil for SetUtil.AddressSet;
+    using Ballot for Ballot.Data;
+    using Epoch for Epoch.Data;
 
-    function getEpochStartDateForIndex(uint epochIndex) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.startDate;
+    function getEpochStartDateForIndex(uint256 epochIndex) external view override returns (uint64) {
+        return Epoch.load(epochIndex).startDate;
     }
 
-    function getEpochEndDateForIndex(uint epochIndex) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.endDate;
+    function getEpochEndDateForIndex(uint256 epochIndex) external view override returns (uint64) {
+        return Epoch.load(epochIndex).endDate;
     }
 
     function getNominationPeriodStartDateForIndex(
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.nominationPeriodStartDate;
+        return Epoch.load(epochIndex).nominationPeriodStartDate;
     }
 
     function getVotingPeriodStartDateForIndex(
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (uint64) {
-        return Election.load(epochIndex).epoch.votingPeriodStartDate;
+        return Epoch.load(epochIndex).votingPeriodStartDate;
     }
 
     function wasNominated(
         address candidate,
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (bool) {
         return Election.load(epochIndex).nominees.contains(candidate);
     }
 
-    function getNomineesAtEpoch(uint epochIndex) external view override returns (address[] memory) {
+    function getNomineesAtEpoch(
+        uint256 epochIndex
+    ) external view override returns (address[] memory) {
         return Election.load(epochIndex).nominees.values();
     }
 
-    function getBallotVotedAtEpoch(
+    function hasVotedInEpoch(
         address user,
-        uint epochIndex
-    ) public view override returns (bytes32) {
-        return Election.load(epochIndex).ballotIdsByAddress[user];
-    }
-
-    function hasVotedInEpoch(address user, uint epochIndex) external view override returns (bool) {
-        return getBallotVotedAtEpoch(user, epochIndex) != bytes32(0);
-    }
-
-    function getBallotVotesInEpoch(
-        bytes32 ballotId,
-        uint epochIndex
-    ) external view override returns (uint) {
-        return Election.load(epochIndex).ballotsById[ballotId].votes;
-    }
-
-    function getBallotCandidatesInEpoch(
-        bytes32 ballotId,
-        uint epochIndex
-    ) external view override returns (address[] memory) {
-        return Election.load(epochIndex).ballotsById[ballotId].candidates;
+        uint256 chainId,
+        uint256 epochIndex
+    ) external view override returns (bool) {
+        return Ballot.load(epochIndex, user, chainId).hasVoted();
     }
 
     function getCandidateVotesInEpoch(
         address candidate,
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (uint) {
-        return Election.load(epochIndex).candidateVotes[candidate];
+        return Election.load(epochIndex).candidateVoteTotals[candidate];
     }
 
     function getElectionWinnersInEpoch(
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (address[] memory) {
         return Election.load(epochIndex).winners.values();
     }

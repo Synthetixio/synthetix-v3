@@ -1,24 +1,30 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ElectionBase.sol";
-
-import "../../storage/Council.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Council} from "../../storage/Council.sol";
+import {Election} from "../../storage/Election.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
-contract ElectionTally is ElectionBase {
+contract ElectionTally {
     using SetUtil for SetUtil.AddressSet;
-
+    using SetUtil for SetUtil.Bytes32Set;
     using Council for Council.Data;
 
+    uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;
+
     function _evaluateNextBallotBatch(uint numBallots) internal {
-        Election.Data storage election = Council.load().getCurrentElection();
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        ElectionSettings.Data storage settings = council.getCurrentElectionSettings();
 
         if (numBallots == 0) {
-            numBallots = election.settings.defaultBallotEvaluationBatchSize;
+            numBallots = _DEFAULT_EVALUATION_BATCH_SIZE;
         }
 
-        uint totalBallots = election.ballotIds.length;
+        uint totalBallots = election.ballotPtrs.length();
 
         uint firstBallotIndex = election.numEvaluatedBallots;
 
@@ -27,19 +33,24 @@ contract ElectionTally is ElectionBase {
             lastBallotIndex = totalBallots;
         }
 
-        _evaluateBallotRange(election, firstBallotIndex, lastBallotIndex);
+        _evaluateBallotRange(election, settings, firstBallotIndex, lastBallotIndex);
     }
 
     function _evaluateBallotRange(
         Election.Data storage election,
+        ElectionSettings.Data storage settings,
         uint fromIndex,
         uint toIndex
     ) private {
-        uint numSeats = election.settings.nextEpochSeatCount;
+        uint numSeats = settings.epochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
-            bytes32 ballotId = election.ballotIds[ballotIndex];
-            Ballot.Data storage ballot = election.ballotsById[ballotId];
+            bytes32 ballotPtr = election.ballotPtrs.valueAt(ballotIndex + 1);
+            Ballot.Data storage ballot;
+
+            assembly {
+                ballot.slot := ballotPtr
+            }
 
             _evaluateBallot(election, ballot, numSeats);
         }
@@ -50,15 +61,14 @@ contract ElectionTally is ElectionBase {
         Ballot.Data storage ballot,
         uint numSeats
     ) internal {
-        uint ballotVotes = ballot.votes;
+        uint numCandidates = ballot.votedCandidates.length;
 
-        uint numCandidates = ballot.candidates.length;
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
-            address candidate = ballot.candidates[candidateIndex];
+            address candidate = ballot.votedCandidates[candidateIndex];
 
-            uint currentCandidateVotes = election.candidateVotes[candidate];
-            uint newCandidateVotes = currentCandidateVotes + ballotVotes;
-            election.candidateVotes[candidate] = newCandidateVotes;
+            uint currentCandidateVotes = election.candidateVoteTotals[candidate];
+            uint newCandidateVotes = currentCandidateVotes + ballot.amounts[candidateIndex];
+            election.candidateVoteTotals[candidate] = newCandidateVotes;
 
             _updateWinnerSet(election, candidate, newCandidateVotes, numSeats);
         }
@@ -106,7 +116,7 @@ contract ElectionTally is ElectionBase {
 
         for (uint8 winnerPosition = 1; winnerPosition <= numWinners; winnerPosition++) {
             address winner = winners.valueAt(winnerPosition);
-            uint winnerVotes = election.candidateVotes[winner];
+            uint winnerVotes = election.candidateVoteTotals[winner];
 
             if (winnerVotes < leastVotes) {
                 leastVotes = winnerVotes;

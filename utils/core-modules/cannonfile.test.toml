@@ -24,6 +24,9 @@ artifact = "contracts/modules/CoreModule.sol:CoreModule"
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
+[contract.CrossChainModule]
+artifact = "contracts/modules/CrossChainModule.sol:CrossChainModule"
+
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
@@ -45,6 +48,9 @@ artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 
 [contract.GenericModule]
 artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
+
+[contract.CcipRouterMock]
+artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
 
 # Setup Initial Proxy
 [contract.Proxy]
@@ -93,6 +99,8 @@ salt = "second"
 contracts = ["CoreModule", "NftModule"]
 salt = "third"
 
-# FeatureFlagModule Router
 [router.FeatureFlagModuleRouter]
 contracts = ["CoreModule", "FeatureFlagModule", "SampleFeatureFlagModule"]
+
+[router.CrossChainModuleRouter]
+contracts = ["CoreModule", "CrossChainModule"]

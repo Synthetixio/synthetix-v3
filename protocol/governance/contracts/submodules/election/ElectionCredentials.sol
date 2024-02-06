@@ -1,53 +1,63 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
-import "./ElectionBase.sol";
-
-import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import {ArrayError} from "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {AssociatedSystem} from "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 
 /// @dev Core functionality for keeping track of council members with an NFT token
-contract ElectionCredentials is ElectionBase {
+contract ElectionCredentials {
     using SetUtil for SetUtil.AddressSet;
 
-    using Council for Council.Data;
+    using CouncilMembers for CouncilMembers.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+
+    event CouncilMemberAdded(address indexed member, uint256 indexed epochIndex);
+    event CouncilMemberRemoved(address indexed member, uint256 indexed epochIndex);
+
+    error AlreadyACouncilMember();
+    error NotACouncilMember();
 
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 
-    function _removeAllCouncilMembers(uint epochIndex) internal {
-        SetUtil.AddressSet storage members = Council.load().councilMembers;
+    function _removeAllCouncilMembers(uint256 epochIndex) internal {
+        SetUtil.AddressSet storage members = CouncilMembers.load().councilMembers;
 
-        uint numMembers = members.length();
+        uint256 numMembers = members.length();
 
-        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+        for (uint256 memberIndex = 0; memberIndex < numMembers; memberIndex++) {
             // Always removes the first element in the array
             // until none are left.
             _removeCouncilMember(members.valueAt(1), epochIndex);
         }
     }
 
-    function _addCouncilMembers(address[] memory membersToAdd, uint epochIndex) internal {
-        uint numMembers = membersToAdd.length;
+    function _addCouncilMembers(address[] memory membersToAdd, uint256 epochIndex) internal {
+        uint256 numMembers = membersToAdd.length;
         if (numMembers == 0) revert ArrayError.EmptyArray();
 
-        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            _addCouncilMember(membersToAdd[memberIndex], epochIndex);
+        CouncilMembers.Data storage store = CouncilMembers.load();
+
+        for (uint256 memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+            _addCouncilMember(store, membersToAdd[memberIndex], epochIndex);
         }
     }
 
-    function _removeCouncilMembers(address[] memory membersToRemove, uint epochIndex) internal {
-        uint numMembers = membersToRemove.length;
+    function _removeCouncilMembers(address[] memory membersToRemove, uint256 epochIndex) internal {
+        uint256 numMembers = membersToRemove.length;
         if (numMembers == 0) revert ArrayError.EmptyArray();
 
-        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+        for (uint256 memberIndex = 0; memberIndex < numMembers; memberIndex++) {
             _removeCouncilMember(membersToRemove[memberIndex], epochIndex);
         }
     }
 
-    function _addCouncilMember(address newMember, uint epochIndex) internal {
-        Council.Data storage store = Council.load();
+    function _addCouncilMember(
+        CouncilMembers.Data storage store,
+        address newMember,
+        uint256 epochIndex
+    ) internal {
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (members.contains(newMember)) {
@@ -56,17 +66,14 @@ contract ElectionCredentials is ElectionBase {
 
         members.add(newMember);
 
-        // Note that tokenId = 0 will not be used.
-        uint tokenId = members.length();
+        uint256 tokenId = _getCouncilMemberTokenId(newMember);
         AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft().mint(newMember, tokenId);
-
-        store.councilTokenIds[newMember] = tokenId;
 
         emit CouncilMemberAdded(newMember, epochIndex);
     }
 
-    function _removeCouncilMember(address member, uint epochIndex) internal {
-        Council.Data storage store = Council.load();
+    function _removeCouncilMember(address member, uint256 epochIndex) internal {
+        CouncilMembers.Data storage store = CouncilMembers.load();
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (!members.contains(member)) {
@@ -75,24 +82,15 @@ contract ElectionCredentials is ElectionBase {
 
         members.remove(member);
 
-        uint tokenId = _getCouncilMemberTokenId(member);
+        uint256 tokenId = _getCouncilMemberTokenId(member);
         AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft().burn(tokenId);
-
-        // tokenId = 0 means no associated token.
-        store.councilTokenIds[member] = 0;
 
         emit CouncilMemberRemoved(member, epochIndex);
     }
 
-    function _getCouncilToken() private view returns (IERC721) {
-        return AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft();
-    }
-
-    function _getCouncilMemberTokenId(address member) private view returns (uint) {
-        uint tokenId = Council.load().councilTokenIds[member];
-
-        if (tokenId == 0) revert NotACouncilMember();
-
-        return tokenId;
+    /// @dev cast member address to uint256 to use as tokenId
+    function _getCouncilMemberTokenId(address member) private pure returns (uint) {
+        // solhint-disable-next-line numcast/safe-cast
+        return uint256(uint160(member));
     }
 }

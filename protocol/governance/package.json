@@ -1,16 +1,24 @@
 {
   "name": "@synthetixio/governance",
-  "version": "2.0.0",
+  "version": "3.0.3",
   "description": "On-Chain elections for all Synthetix councils",
   "private": true,
   "scripts": {
-    "clean": "hardhat clean",
-    "test1": "hardhat test test/unit/**/*.test.js",
-    "coverage1": "hardhat coverage --testfiles test/unit/**/*.test.js",
+    "clean": "hardhat clean && rm -rf test/generated contracts/generated",
+    "build": "yarn clean && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
+    "build-testable": "yarn build cannonfile.test.toml ccip_mothership_chain_id=13370",
+    "check:storage": "git diff --exit-code storage.dump.sol",
+    "test": "yarn build-testable && hardhat test",
+    "coverage": "yarn build && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat size-contracts",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "publish-contracts": "yarn build && cannon publish synthetix:$(node -p 'require(`./package.json`).version') --quiet",
+    "postpack": "yarn publish-contracts",
     "docgen": "hardhat docgen"
   },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-contracts": "workspace:*",
@@ -18,7 +26,9 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/router": "^3.3.0",
+    "@usecannon/cli": "2.10.6",
     "hardhat": "^2.19.0",
-    "solidity-docgen": "^0.6.0-beta.36"
+    "solidity-docgen": "^0.6.0-beta.36",
+    "typechain": "^8.3.2"
   }
 }

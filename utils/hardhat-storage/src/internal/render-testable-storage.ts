@@ -11,6 +11,7 @@ interface TestableStorageTemplateInputs {
 
   loadParams?: string;
   loadInject?: string;
+  supportedLoadFunction?: boolean;
 
   fields: {
     name: string;
@@ -118,6 +119,7 @@ function _generateTemplateInputs(
   const methods: TestableStorageTemplateInputs['methods'] = [];
   let loadParams: TestableStorageTemplateInputs['loadParams'] = undefined;
   let loadInject: TestableStorageTemplateInputs['loadInject'] = undefined;
+  let supportedLoadFunction = false;
 
   for (const functionDefinition of findAll('FunctionDefinition', contractDefinition)) {
     if (functionDefinition.visibility === 'private') {
@@ -138,6 +140,8 @@ function _generateTemplateInputs(
       loadInject = functionDefinition.parameters.parameters
         .map((p) => '_load_' + p.name)
         .join(', ');
+
+      supportedLoadFunction = true;
 
       continue; // we have handled the load function
     }
@@ -202,6 +206,7 @@ function _generateTemplateInputs(
     relativeSourceName,
     loadParams,
     loadInject,
+    supportedLoadFunction,
     libraryName: contractDefinition.name,
     fields,
     indexedFields,

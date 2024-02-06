@@ -1,23 +1,63 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IElectionModuleSatellite} from "./IElectionModuleSatellite.sol";
+import {ElectionSettings} from "../storage/ElectionSettings.sol";
+import {Epoch} from "../storage/Epoch.sol";
+import {Ballot} from "../storage/Ballot.sol";
+
 /// @title Module for electing a council, represented by a set of NFT holders
-interface IElectionModule {
+interface IElectionModule is IElectionModuleSatellite {
+    error AlreadyNominated();
+    error ElectionAlreadyEvaluated();
+    error ElectionNotEvaluated();
+    error NotNominated();
+    error NoCandidates();
+    error DuplicateCandidates(address duplicatedCandidate);
+    error TooManyMembers();
+    error NotImplemented();
+
+    event ElectionModuleInitialized();
+    event EpochStarted(uint256 indexed epochId);
+    event EpochScheduleUpdated(uint64 indexed epochId, uint64 startDate, uint64 endDate);
+    event EmergencyElectionStarted(uint256 indexed epochId);
+    event CandidateNominated(address indexed candidate, uint256 indexed epochId);
+    event NominationWithdrawn(address indexed candidate, uint256 indexed epochId);
+    event VoteRecorded(
+        address indexed voter,
+        uint256 indexed chainId,
+        uint256 indexed epochId,
+        uint256 votingPower,
+        address[] candidates
+    );
+
+    event VoteWithdrawn(
+        address indexed voter,
+        uint256 indexed chainId,
+        uint256 indexed epochId,
+        address[] candidates
+    );
+
+    event ElectionBatchEvaluated(
+        uint256 indexed epochId,
+        uint256 numEvaluatedBallots,
+        uint256 totalBallots
+    );
+    event ElectionEvaluated(uint256 indexed epochId, uint256 ballotCount);
+
     // ---------------------------------------
     // Initialization
     // ---------------------------------------
 
-    /// @notice Initializes the module and immediately starts the first epoch
-    function initOrUpgradeElectionModule(
-        address[] memory firstCouncil,
+    /// @notice Initialises the module and immediately starts the first epoch
+    function initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate
+        uint64 initialNominationPeriodStartDate,
+        uint64 administrationPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
     ) external;
-
-    /// @notice Shows whether the module has been initialized
-    function isElectionModuleInitialized() external view returns (bool);
 
     // ---------------------------------------
     // Owner write functions
@@ -30,34 +70,18 @@ interface IElectionModule {
         uint64 newEpochEndDate
     ) external;
 
-    /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration
-    function modifyEpochSchedule(
-        uint64 newNominationPeriodStartDate,
-        uint64 newVotingPeriodStartDate,
-        uint64 newEpochEndDate
+    /// @notice Adjust settings that will be used on next epoch
+    function setNextElectionSettings(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
+        uint64 maxDateAdjustmentTolerance
     ) external;
-
-    /// @notice Determines minimum values for epoch schedule adjustments
-    function setMinEpochDurations(
-        uint64 newMinNominationPeriodDuration,
-        uint64 newMinVotingPeriodDuration,
-        uint64 newMinEpochDuration
-    ) external;
-
-    /// @notice Determines adjustment size for tweakEpochSchedule
-    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
-
-    /// @notice Determines batch size when evaluate() is called with numBallots = 0
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
-
-    /// @notice Determines the number of council members in the next epoch
-    function setNextEpochSeatCount(uint8 newSeatCount) external;
-
-    /// @notice Determines the minimum number of council members before triggering an emergency election
-    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external;
 
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
-    function dismissMembers(address[] calldata members) external;
+    function dismissMembers(address[] calldata members) external payable;
 
     // ---------------------------------------
     // User write functions
@@ -69,61 +93,50 @@ interface IElectionModule {
     /// @notice Self-withdrawal of nominations during the Nomination period
     function withdrawNomination() external;
 
-    /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
-    function cast(address[] calldata candidates) external;
+    /// @dev Internal voting logic, receiving end of CCIP voting
+    function _recvCast(
+        uint256 epochIndex,
+        address voter,
+        uint256 votingPower,
+        uint256 chainId,
+        address[] calldata candidates,
+        uint256[] calldata amounts
+    ) external;
 
-    /// @notice Allows votes to be withdraw
-    function withdrawVote() external;
+    function _recvWithdrawVote(
+        uint256 epochIndex,
+        address voter,
+        uint256 chainId,
+        address[] calldata candidates
+    ) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
-    function evaluate(uint numBallots) external;
+    function evaluate(uint256 numBallots) external;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
-    function resolve() external;
+    function resolve() external payable;
 
     // ---------------------------------------
     // View functions
     // ---------------------------------------
 
-    /// @notice Exposes minimum durations required when adjusting epoch schedules
-    function getMinEpochDurations()
+    /// @notice Shows the current epoch schedule dates
+    function getEpochSchedule() external view returns (Epoch.Data memory epoch);
+
+    /// @notice Shows the settings for the current election
+    function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
+
+    /// @notice Shows the settings for the next election
+    function getNextElectionSettings()
         external
         view
-        returns (
-            uint64 minNominationPeriodDuration,
-            uint64 minVotingPeriodDuration,
-            uint64 minEpochDuration
-        );
-
-    /// @notice Exposes maximum size of adjustments when calling tweakEpochSchedule
-    function getMaxDateAdjustmenTolerance() external view returns (uint64);
-
-    /// @notice Shows the default batch size when calling evaluate() with numBallots = 0
-    function getDefaultBallotEvaluationBatchSize() external view returns (uint);
-
-    /// @notice Shows the number of council members that the next epoch will have
-    function getNextEpochSeatCount() external view returns (uint8);
-
-    /// @notice Returns the minimum active members that the council needs to avoid an emergency election
-    function getMinimumActiveMembers() external view returns (uint8);
+        returns (ElectionSettings.Data memory settings);
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
-    function getEpochIndex() external view returns (uint);
-
-    /// @notice Returns the date in which the current epoch started
-    function getEpochStartDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the current epoch will end
-    function getEpochEndDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the Nomination period in the current epoch will start
-    function getNominationPeriodStartDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the Voting period in the current epoch will start
-    function getVotingPeriodStartDate() external view returns (uint64);
+    function getEpochIndex() external view returns (uint256);
 
     /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
-    function getCurrentPeriod() external view returns (uint);
+    function getCurrentPeriod() external view returns (uint256);
 
     /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view returns (bool);
@@ -131,29 +144,34 @@ interface IElectionModule {
     /// @notice Returns a list of all nominated candidates in the current epoch
     function getNominees() external view returns (address[] memory);
 
-    /// @notice Hashes a list of candidates (used for identifying and storing ballots)
-    function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
-
-    /// @notice Returns the ballot id that user voted on in the current election
-    function getBallotVoted(address user) external view returns (bytes32);
-
     /// @notice Returns if user has voted in the current election
-    function hasVoted(address user) external view returns (bool);
+    function hasVoted(address user, uint256 chainId) external view returns (bool);
 
     /// @notice Returns the vote power of user in the current election
-    function getVotePower(address user) external view returns (uint);
-
-    /// @notice Returns the number of votes given to a particular ballot
-    function getBallotVotes(bytes32 ballotId) external view returns (uint);
+    function getVotePower(
+        address user,
+        uint256 chainId,
+        uint256 electionId
+    ) external view returns (uint256);
 
     /// @notice Returns the list of candidates that a particular ballot has
-    function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
+    function getBallotCandidates(
+        address voter,
+        uint256 chainId,
+        uint256 electionId
+    ) external view returns (address[] memory);
 
     /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() external view returns (bool);
 
+    function getBallot(
+        address voter,
+        uint256 chainId,
+        uint256 electionId
+    ) external pure returns (Ballot.Data memory);
+
     /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
-    function getCandidateVotes(address candidate) external view returns (uint);
+    function getCandidateVotes(address candidate) external view returns (uint256);
 
     /// @notice Returns the winners of the current election. Requires the election to be partially or totally evaluated
     function getElectionWinners() external view returns (address[] memory);

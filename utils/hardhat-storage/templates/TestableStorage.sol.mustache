@@ -11,14 +11,14 @@ pragma solidity ^0.8.0;
 import "{{{relativeSourceName}}}";
 
 contract Testable{{{libraryName}}}Storage {
-    {{#loadParams}}
+	{{#loadParams}}
     function _getInstanceStore({{{loadParams}}}) internal pure returns ({{{libraryName}}}.Data storage) {
         return {{{libraryName}}}.load({{{loadInject}}});
     }
     {{/loadParams}}
     {{^loadParams}}
     function _getInstanceStore() internal pure returns ({{{libraryName}}}.Data storage data) {
-        bytes32 s = keccak256(abi.encode("Testable{{{libraryName}}}"));
+        bytes32 s = keccak256(abi.encode("{{{libraryName}}}"));
         assembly {
             data.slot := s
         }
@@ -27,36 +27,40 @@ contract Testable{{{libraryName}}}Storage {
 
     {{#fields}}
     function {{{libraryName}}}_set_{{{name}}}({{#loadParams}}{{{loadParams}}}, {{/loadParams}}{{{type}}} val) external {
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
+
         store.{{{name}}} = val;
     }
 
     function {{{libraryName}}}_get_{{{name}}}({{{loadParams}}}) external view returns ({{type}}) {
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
+
         return store.{{{name}}};
     }
 
     {{/fields}}
     {{#indexedFields}}
     function {{{libraryName}}}_set_{{{name}}}({{#loadParams}}{{{loadParams}}}, {{/loadParams}}{{{indexType}}} idx, {{{type}}} val) external {
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
+
         store.{{{name}}}[idx] = val;
     }
 
     function {{{libraryName}}}_get_{{{name}}}({{#loadParams}}{{{loadParams}}}, {{/loadParams}}{{{indexType}}} idx) external view returns ({{type}}) {
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
+
         return store.{{{name}}}[idx];
     }
 
     {{#isArray}}
     function {{{libraryName}}}_push_{{{name}}}({{#loadParams}}{{{loadParams}}}, {{/loadParams}}{{{type}}} val) external {
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
 
         store.{{{name}}}.push(val);
     }
 
     function {{{libraryName}}}_pop_{{{name}}}({{{loadParams}}}) external {
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
 
         store.{{{name}}}.pop();
     }
@@ -65,7 +69,8 @@ contract Testable{{{libraryName}}}Storage {
     {{/indexedFields}}
     {{#methods}}
     function {{{libraryName}}}_{{{name}}}({{#loadParams}}{{{loadParams}}}{{#params}}, {{/params}}{{/loadParams}}{{{params}}}) external{{#mutability}} {{{mutability}}}{{/mutability}} {{#returns}}returns ({{{returns}}}) {{/returns}}{
-        {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
+        {{{libraryName}}}.Data storage store = _getInstanceStore({{#loadParams}}{{{loadInject}}}{{/loadParams}});
+
         return {{{libraryName}}}.{{{name}}}({{{paramsInject}}});
     }
 

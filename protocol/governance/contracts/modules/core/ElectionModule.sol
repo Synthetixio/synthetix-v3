@@ -1,184 +1,567 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../../interfaces/IElectionModule.sol";
-import "../../interfaces/ISynthetixElectionModule.sol";
-import "../../submodules/election/DebtShareManager.sol";
-import "../../submodules/election/CrossChainDebtShareManager.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
+import {IElectionModule} from "../../interfaces/IElectionModule.sol";
+import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Council} from "../../storage/Council.sol";
+import {CouncilMembers} from "../../storage/CouncilMembers.sol";
+import {Election} from "../../storage/Election.sol";
+import {Epoch} from "../../storage/Epoch.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
+import {ElectionModuleSatellite} from "./ElectionModuleSatellite.sol";
 
-import "./BaseElectionModule.sol";
+contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTally {
+    using SetUtil for SetUtil.AddressSet;
+    using SetUtil for SetUtil.Bytes32Set;
+    using Council for Council.Data;
+    using ElectionSettings for ElectionSettings.Data;
+    using CouncilMembers for CouncilMembers.Data;
+    using CrossChain for CrossChain.Data;
+    using SafeCastU256 for uint256;
+    using Ballot for Ballot.Data;
+    using Epoch for Epoch.Data;
 
-/// @title Module for electing a council, represented by a set of NFT holders
-/// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt share
-contract ElectionModule is
-    ISynthetixElectionModule,
-    DebtShareManager,
-    CrossChainDebtShareManager,
-    BaseElectionModule
-{
-    error TooManyCandidates();
-    error WrongInitializer();
+    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
+    uint8 private constant _MAX_BALLOT_SIZE = 1;
 
-    /// @dev The BaseElectionModule initializer should not be called, and this one must be called instead
-    function initOrUpgradeElectionModule(
-        address[] memory,
-        uint8,
-        uint64,
-        uint64,
-        uint64
-    ) external override(BaseElectionModule, IElectionModule) {
-        OwnableStorage.onlyOwner();
-        revert WrongInitializer();
+    /**
+     * @dev Do not allow to initialize using the Satellite's function, this
+     *     will be taken care by initOrUpdateElectionSettings.
+     */
+    function initElectionModuleSatellite() external payable {
+        revert NotImplemented();
     }
 
-    /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
-    function initOrUpgradeElectionModule(
-        address[] memory firstCouncil,
+    function initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
-        address debtShareContract
+        uint64 initialNominationPeriodStartDate, // timestamp
+        uint64 administrationPeriodDuration, // days
+        uint64 nominationPeriodDuration, // days
+        uint64 votingPeriodDuration // days
     ) external override {
         OwnableStorage.onlyOwner();
-        if (Council.load().initialized) {
-            return;
-        }
-        _setDebtShareContract(debtShareContract);
 
-        _initOrUpgradeElectionModule(
-            firstCouncil,
+        if (initialCouncil.length > type(uint8).max) {
+            revert TooManyMembers();
+        }
+
+        Council.Data storage council = Council.load();
+
+        // Convert given days to seconds
+        administrationPeriodDuration = administrationPeriodDuration * 1 days;
+        nominationPeriodDuration = nominationPeriodDuration * 1 days;
+        votingPeriodDuration = votingPeriodDuration * 1 days;
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint8 epochSeatCount = uint8(initialCouncil.length);
+
+        uint64 epochDuration = administrationPeriodDuration +
+            nominationPeriodDuration +
+            votingPeriodDuration;
+
+        ElectionSettings.Data storage nextElectionSettings = council.getNextElectionSettings();
+
+        // Set the expected epoch durations for next council
+        nextElectionSettings.setElectionSettings(
+            epochSeatCount,
             minimumActiveMembers,
+            epochDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
+            3 days // maxDateAdjustmentTolerance
+        );
+
+        // Initialize first epoch if necessary
+        if (!_isInitialized()) {
+            _initElectionSettings(
+                council,
+                nextElectionSettings,
+                initialCouncil,
+                initialNominationPeriodStartDate
+            );
+        }
+    }
+
+    function _initElectionSettings(
+        Council.Data storage council,
+        ElectionSettings.Data storage electionSettings,
+        address[] memory initialCouncil,
+        uint64 nominationPeriodStartDate // timestamp
+    ) internal {
+        ElectionSettings.Data storage currentSettings = council.getCurrentElectionSettings();
+        currentSettings.copyMissingFrom(electionSettings);
+
+        // calculate periods timestamps based on durations
+        uint64 epochStartDate = block.timestamp.to64();
+        uint64 epochEndDate = epochStartDate + electionSettings.epochDuration;
+        uint64 votingPeriodStartDate = epochEndDate - electionSettings.votingPeriodDuration;
+
+        // Allow to not set "nominationPeriodStartDate" and infer it from the durations
+        if (nominationPeriodStartDate == 0) {
+            nominationPeriodStartDate =
+                votingPeriodStartDate -
+                electionSettings.nominationPeriodDuration;
+        }
+
+        Epoch.Data storage firstEpoch = council.getCurrentEpoch();
+        council.configureEpochSchedule(
+            firstEpoch,
+            epochStartDate,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
         );
+
+        _addCouncilMembers(initialCouncil, 0);
+
+        council.initialized = true;
+
+        emit ElectionModuleInitialized();
+        emit EpochStarted(0);
     }
 
-    /// @dev Overrides the BaseElectionModule nominate function to only allow 1 candidate to be nominated
-    function cast(
-        address[] calldata candidates
-    )
-        public
-        override(BaseElectionModule, IElectionModule)
-        onlyInPeriod(Council.ElectionPeriod.Vote)
-    {
-        if (candidates.length > 1) {
-            revert TooManyCandidates();
-        }
-
-        super.cast(candidates);
-    }
-
-    // ---------------------------------------
-    // Debt shares
-    // ---------------------------------------
-
-    function setDebtShareContract(
-        address debtShareContract
-    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    function tweakEpochSchedule(
+        uint64 newNominationPeriodStartDate,
+        uint64 newVotingPeriodStartDate,
+        uint64 newEpochEndDate
+    ) external override {
         OwnableStorage.onlyOwner();
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.Data storage council = Council.load();
 
-        _setDebtShareContract(debtShareContract);
+        Epoch.Data storage currentEpoch = council.getCurrentEpoch();
+        Epoch.Data memory newEpoch = Epoch.Data(
+            currentEpoch.startDate,
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate
+        );
 
-        emit DebtShareContractSet(debtShareContract);
-    }
+        council.validateEpochScheduleTweak(currentEpoch, newEpoch);
 
-    function getDebtShareContract() external view override returns (address) {
-        return address(DebtShare.load().debtShareContract);
-    }
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvTweakEpochSchedule.selector,
+                council.currentElectionId,
+                newEpoch.nominationPeriodStartDate,
+                newEpoch.votingPeriodStartDate,
+                newEpoch.endDate
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
 
-    function setDebtShareSnapshotId(
-        uint snapshotId
-    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
-        OwnableStorage.onlyOwner();
-        _setDebtShareSnapshotId(snapshotId);
-    }
-
-    function getDebtShareSnapshotId() external view override returns (uint) {
-        return _getDebtShareSnapshotId();
-    }
-
-    function getDebtShare(address user) external view override returns (uint) {
-        return _getDebtShare(user);
-    }
-
-    // ---------------------------------------
-    // Cross chain debt shares
-    // ---------------------------------------
-
-    function setCrossChainDebtShareMerkleRoot(
-        bytes32 merkleRoot,
-        uint blocknumber
-    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
-        OwnableStorage.onlyOwner();
-        _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
-
-        emit CrossChainDebtShareMerkleRootSet(
-            merkleRoot,
-            blocknumber,
-            Council.load().lastElectionId
+        emit EpochScheduleUpdated(
+            newEpoch.nominationPeriodStartDate,
+            newEpoch.votingPeriodStartDate,
+            newEpoch.endDate
         );
     }
 
-    function getCrossChainDebtShareMerkleRoot() external view override returns (bytes32) {
-        return _getCrossChainDebtShareMerkleRoot();
+    function setNextElectionSettings(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
+        uint64 epochDuration, // days
+        uint64 nominationPeriodDuration, // days
+        uint64 votingPeriodDuration, // days
+        uint64 maxDateAdjustmentTolerance // days
+    ) external override {
+        OwnableStorage.onlyOwner();
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+
+        Council.load().getNextElectionSettings().setElectionSettings(
+            epochSeatCount,
+            minimumActiveMembers,
+            epochDuration * 1 days,
+            nominationPeriodDuration * 1 days,
+            votingPeriodDuration * 1 days,
+            maxDateAdjustmentTolerance * 1 days
+        );
     }
 
-    function getCrossChainDebtShareMerkleRootBlockNumber() external view override returns (uint) {
-        return _getCrossChainDebtShareMerkleRootBlockNumber();
+    function dismissMembers(address[] calldata membersToDismiss) external payable override {
+        OwnableStorage.onlyOwner();
+
+        Council.Data storage council = Council.load();
+        Epoch.Data storage epoch = council.getCurrentEpoch();
+
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvDismissMembers.selector,
+                membersToDismiss,
+                council.currentElectionId
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+
+        CouncilMembers.Data storage membersStore = CouncilMembers.load();
+        if (epoch.getCurrentPeriod() != Epoch.ElectionPeriod.Administration) return;
+
+        // Don't immediately jump to an election if the council still has enough members
+        if (
+            membersStore.councilMembers.length() >=
+            council.getCurrentElectionSettings().minimumActiveMembers
+        ) {
+            return;
+        }
+
+        council.jumpToNominationPeriod();
+
+        emit EmergencyElectionStarted(council.currentElectionId);
     }
 
-    function declareCrossChainDebtShare(
-        address user,
-        uint256 debtShare,
-        bytes32[] calldata merkleProof
-    ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        _declareCrossChainDebtShare(user, debtShare, merkleProof);
+    function nominate() public override {
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
 
-        emit CrossChainDebtShareDeclared(user, debtShare);
+        SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+        address sender = ERC2771Context._msgSender();
+
+        if (nominees.contains(sender)) revert AlreadyNominated();
+
+        nominees.add(sender);
+
+        emit CandidateNominated(sender, Council.load().currentElectionId);
     }
 
-    function getDeclaredCrossChainDebtShare(address user) external view override returns (uint) {
-        return _getDeclaredCrossChainDebtShare(user);
+    function withdrawNomination() external override {
+        SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Nomination);
+
+        address sender = ERC2771Context._msgSender();
+
+        if (!nominees.contains(sender)) revert NotNominated();
+
+        nominees.remove(sender);
+
+        emit NominationWithdrawn(sender, Council.load().currentElectionId);
     }
 
-    function declareAndCast(
-        uint256 debtShare,
-        bytes32[] calldata merkleProof,
+    function _recvCast(
+        uint256 epochIndex,
+        address voter,
+        uint256 votingPower,
+        uint256 chainId,
+        address[] calldata candidates,
+        uint256[] calldata amounts
+    ) external override {
+        CrossChain.onlyCrossChain();
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
+
+        if (candidates.length > _MAX_BALLOT_SIZE) {
+            revert ParameterError.InvalidParameter("candidates", "too many candidates");
+        }
+
+        if (candidates.length != amounts.length) {
+            revert ParameterError.InvalidParameter("candidates", "length must match amounts");
+        }
+
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        uint256 currentElectionId = council.currentElectionId;
+
+        if (epochIndex != currentElectionId) {
+            revert ParameterError.InvalidParameter("epochIndex", "invalid epoch index");
+        }
+
+        _validateCandidates(candidates);
+
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
+
+        ballot.votedCandidates = candidates;
+        ballot.amounts = amounts;
+        ballot.votingPower = votingPower;
+
+        ballot.validate();
+
+        bytes32 ballotPtr;
+        assembly {
+            ballotPtr := ballot.slot
+        }
+
+        if (!election.ballotPtrs.contains(ballotPtr)) {
+            election.ballotPtrs.add(ballotPtr);
+        }
+
+        emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower, candidates);
+    }
+
+    function _recvWithdrawVote(
+        uint256 epochIndex,
+        address voter,
+        uint256 chainId,
         address[] calldata candidates
-    ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        declareCrossChainDebtShare(ERC2771Context._msgSender(), debtShare, merkleProof);
+    ) external override {
+        CrossChain.onlyCrossChain();
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
-        cast(candidates);
+        if (candidates.length > _MAX_BALLOT_SIZE) {
+            revert ParameterError.InvalidParameter("candidates", "too many candidates");
+        }
+
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        uint256 currentElectionId = council.currentElectionId;
+
+        if (epochIndex != currentElectionId) {
+            revert ParameterError.InvalidParameter("epochIndex", "invalid epoch index");
+        }
+
+        _validateCandidates(candidates);
+
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
+
+        ballot.amounts = new uint256[](0);
+        ballot.votedCandidates = new address[](0);
+
+        ballot.validate();
+
+        bytes32 ballotPtr;
+        assembly {
+            ballotPtr := ballot.slot
+        }
+
+        if (!election.ballotPtrs.contains(ballotPtr)) {
+            election.ballotPtrs.add(ballotPtr);
+        }
+
+        emit VoteWithdrawn(voter, chainId, currentElectionId, candidates);
     }
 
-    // ---------------------------------------
-    // Internal
-    // ---------------------------------------
+    /// @dev ElectionTally needs to be extended to specify how votes are counted
+    function evaluate(uint256 numBallots) external override {
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
-    function _sqrt(uint x) internal pure returns (uint y) {
-        uint z = (x + 1) / 2;
-        y = x;
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        Epoch.Data memory epoch = council.getCurrentEpoch();
+        ElectionSettings.Data storage electionSettings = ElectionSettings.load(
+            council.currentElectionId
+        );
+        if (election.nominees.values().length < electionSettings.minimumActiveMembers) {
+            CrossChain.Data storage cc = CrossChain.load();
+            cc.broadcast(
+                cc.getSupportedNetworks(),
+                abi.encodeWithSelector(
+                    this._recvTweakEpochSchedule.selector,
+                    council.currentElectionId,
+                    epoch.nominationPeriodStartDate,
+                    epoch.votingPeriodStartDate,
+                    epoch.endDate + electionSettings.votingPeriodDuration
+                ),
+                _CROSSCHAIN_GAS_LIMIT
+            );
+        } else {
+            if (election.evaluated) revert ElectionAlreadyEvaluated();
+
+            _evaluateNextBallotBatch(numBallots);
+
+            uint256 currentEpochIndex = council.currentElectionId;
+
+            uint256 totalBallots = election.ballotPtrs.length();
+            if (election.numEvaluatedBallots < totalBallots) {
+                emit ElectionBatchEvaluated(
+                    currentEpochIndex,
+                    election.numEvaluatedBallots,
+                    totalBallots
+                );
+            } else {
+                election.evaluated = true;
+                emit ElectionEvaluated(currentEpochIndex, totalBallots);
+            }
         }
     }
 
-    /// @dev Overrides the user's voting power by combining local chain debt share with debt shares in other chains, quadratically filtered
-    function _getVotePower(address user) internal view virtual override returns (uint) {
-        uint votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
+    /// @dev Burns previous NFTs and mints new ones
+    function resolve() public payable virtual override {
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
-        return _sqrt(votePower);
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+
+        if (!election.evaluated) revert ElectionNotEvaluated();
+
+        ElectionSettings.Data storage currentElectionSettings = council
+            .getCurrentElectionSettings();
+        ElectionSettings.Data storage nextElectionSettings = council.getNextElectionSettings();
+
+        nextElectionSettings.copyMissingFrom(currentElectionSettings);
+        Epoch.Data memory nextEpoch = _computeEpochFromSettings(nextElectionSettings);
+
+        council.validateEpochSchedule(
+            nextEpoch.startDate,
+            nextEpoch.nominationPeriodStartDate,
+            nextEpoch.votingPeriodStartDate,
+            nextEpoch.endDate
+        );
+
+        council.newElection();
+
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvResolve.selector,
+                council.currentElectionId,
+                nextEpoch.startDate,
+                nextEpoch.nominationPeriodStartDate,
+                nextEpoch.votingPeriodStartDate,
+                nextEpoch.endDate,
+                election.winners.values()
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+
+        election.resolved = true;
+
+        emit EpochStarted(council.currentElectionId);
     }
 
-    function _createNewEpoch() internal virtual {
-        DebtShare.Data storage store = DebtShare.load();
+    function _computeEpochFromSettings(
+        ElectionSettings.Data storage settings
+    ) private view returns (Epoch.Data memory epoch) {
+        uint64 startDate = SafeCastU256.to64(block.timestamp);
+        uint64 endDate = startDate + settings.epochDuration;
+        uint64 votingPeriodStartDate = endDate - settings.votingPeriodDuration;
+        uint64 nominationPeriodStartDate = votingPeriodStartDate -
+            settings.nominationPeriodDuration;
 
-        store.debtShareIds.push();
-        store.crossChainDebtShareData.push();
+        return
+            Epoch.Data({
+                startDate: startDate,
+                votingPeriodStartDate: votingPeriodStartDate,
+                nominationPeriodStartDate: nominationPeriodStartDate,
+                endDate: endDate
+            });
+    }
+
+    function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
+        return Council.load().getCurrentEpoch();
+    }
+
+    function getElectionSettings()
+        external
+        view
+        override
+        returns (ElectionSettings.Data memory settings)
+    {
+        return Council.load().getCurrentElectionSettings();
+    }
+
+    function getNextElectionSettings()
+        external
+        view
+        override
+        returns (ElectionSettings.Data memory settings)
+    {
+        return Council.load().getNextElectionSettings();
+    }
+
+    function getEpochIndex() external view override returns (uint256) {
+        return Council.load().currentElectionId;
+    }
+
+    function getCurrentPeriod() external view override returns (uint256) {
+        // solhint-disable-next-line numcast/safe-cast
+        return uint256(Council.load().getCurrentEpoch().getCurrentPeriod());
+    }
+
+    function isNominated(address candidate) external view override returns (bool) {
+        return Council.load().getCurrentElection().nominees.contains(candidate);
+    }
+
+    function getNominees() external view override returns (address[] memory) {
+        return Council.load().getCurrentElection().nominees.values();
+    }
+
+    function hasVoted(address user, uint256 chainId) public view override returns (bool) {
+        Council.Data storage council = Council.load();
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, chainId);
+        return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
+    }
+
+    function getVotePower(
+        address user,
+        uint256 chainId,
+        uint256 electionId
+    ) external view override returns (uint256) {
+        Ballot.Data storage ballot = Ballot.load(electionId, user, chainId);
+        return ballot.votingPower;
+    }
+
+    function getBallot(
+        address voter,
+        uint256 chainId,
+        uint256 electionId
+    ) external pure override returns (Ballot.Data memory) {
+        return Ballot.load(electionId, voter, chainId);
+    }
+
+    function getBallotCandidates(
+        address voter,
+        uint256 chainId,
+        uint256 electionId
+    ) external view override returns (address[] memory) {
+        return Ballot.load(electionId, voter, chainId).votedCandidates;
+    }
+
+    function isElectionEvaluated() public view override returns (bool) {
+        return Council.load().getCurrentElection().evaluated;
+    }
+
+    function getCandidateVotes(address candidate) external view override returns (uint256) {
+        return Council.load().getCurrentElection().candidateVoteTotals[candidate];
+    }
+
+    function getElectionWinners() external view override returns (address[] memory) {
+        return Council.load().getCurrentElection().winners.values();
+    }
+
+    function getCouncilToken() public view override returns (address) {
+        return CouncilMembers.load().councilToken;
+    }
+
+    function getCouncilMembers() external view override returns (address[] memory) {
+        return CouncilMembers.load().councilMembers.values();
+    }
+
+    function _validateCandidates(address[] calldata candidates) internal virtual {
+        uint256 length = candidates.length;
+
+        if (length == 0) {
+            revert NoCandidates();
+        }
+
+        SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+
+        for (uint256 i = 0; i < length; i++) {
+            address candidate = candidates[i];
+
+            // Reject candidates that are not nominated.
+            if (!nominees.contains(candidate)) {
+                revert NotNominated();
+            }
+
+            // Reject duplicate candidates.
+            if (i < length - 1) {
+                for (uint256 j = i + 1; j < length; j++) {
+                    address otherCandidate = candidates[j];
+
+                    if (candidate == otherCandidate) {
+                        revert DuplicateCandidates(candidate);
+                    }
+                }
+            }
+        }
     }
 }
