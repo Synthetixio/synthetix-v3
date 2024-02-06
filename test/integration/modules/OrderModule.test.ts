@@ -1300,8 +1300,8 @@ describe('OrderModule', () => {
         // A low slippage tolerance results in a revert on the position modify.
         await setMarketConfiguration(bs, {
           sellExactInMaxSlippagePercent: bn(0.00001),
-          maxCollateralHaircut: bn(0),
-          minCollateralHaircut: bn(0),
+          maxCollateralDiscount: bn(0),
+          minCollateralDiscount: bn(0),
         });
         await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
           collateral.synthMarketId(),

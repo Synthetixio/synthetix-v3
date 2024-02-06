@@ -201,7 +201,7 @@ library Margin {
     function getCollateralUsd(
         uint128 accountId,
         uint128 marketId,
-        bool useHaircutCollateralPrice
+        bool useDiscountedCollateralPrice
     ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -220,8 +220,8 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralPrice = useHaircutCollateralPrice
-                    ? getHaircutCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
+                collateralPrice = useDiscountedCollateralPrice
+                    ? getDiscountedCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
                     : getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
                 collateralUsd += available.mulDecimal(collateralPrice);
             }
@@ -246,9 +246,9 @@ library Margin {
         uint128 accountId,
         PerpMarket.Data storage market,
         uint256 marketPrice,
-        bool useHaircutCollateralPrice
+        bool useDiscountedCollateralPrice
     ) internal view returns (uint256) {
-        uint256 collateralUsd = getCollateralUsd(accountId, market.id, useHaircutCollateralPrice);
+        uint256 collateralUsd = getCollateralUsd(accountId, market.id, useDiscountedCollateralPrice);
         Position.Data storage position = market.positions[accountId];
 
         // Zero position means that marginUsd eq collateralUsd.
@@ -297,9 +297,9 @@ library Margin {
     }
 
     /**
-     * @dev Returns the haircut adjusted collateral price discounted proportional to `available`, scaled spot market skewScale.
+     * @dev Returns the discount adjusted collateral price proportional to `available`, scaled spot market skewScale.
      */
-    function getHaircutCollateralPrice(
+    function getDiscountedCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,
         uint256 available,
@@ -309,19 +309,19 @@ library Margin {
             return DecimalMath.UNIT;
         }
 
-        // Calculate haircut on collateral price if this collateral were to be instantly sold on spot.
+        // Calculate discount on collateral if this collateral were to be instantly sold on spot.
         uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
         uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
 
-        // skewScale _may_ be zero. In this event, do _not_ apply a haircut.
-        uint256 haircut = skewScale == 0
+        // skewScale _may_ be zero. In this event, do _not_ apply a discount.
+        uint256 discount = skewScale == 0
             ? 0
             : MathUtil.min(
-                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralHaircut),
-                globalConfig.maxCollateralHaircut
+                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralDiscount),
+                globalConfig.maxCollateralDiscount
             );
 
-        // Apply discount on price by the haircut.
-        return price.mulDecimal(DecimalMath.UNIT - haircut);
+        // Apply discount on price by the discount.
+        return price.mulDecimal(DecimalMath.UNIT - discount);
     }
 }

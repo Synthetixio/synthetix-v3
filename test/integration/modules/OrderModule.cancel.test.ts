@@ -260,7 +260,7 @@ describe('OrderModule Cancelations', () => {
         .mockSetCurrentPrice(orderSide === 1 ? order.limitPrice.add(1) : order.limitPrice.sub(1));
 
       // Fees are calculated against the discounted collateral value. Do not discount the collateral.
-      await setMarketConfiguration(bs, { minCollateralHaircut: bn(0), maxCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
 
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());

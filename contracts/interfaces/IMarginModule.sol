@@ -85,7 +85,7 @@ interface IMarginModule is IBasePerpMarket {
     function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 
     /**
-     * @notice Returns a haircut adjusted oracle price based on a given size.
+     * @notice Returns the discount adjusted oracle price based on a given size.
      */
-    function getHaircutCollateralPrice(uint128 marketId, int256 size) external view returns (uint256);
+    function getDiscountedCollateralPrice(uint128 marketId, int256 size) external view returns (uint256);
 }

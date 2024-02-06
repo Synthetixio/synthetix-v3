@@ -52,7 +52,7 @@ contract PerpAccountModule is IPerpAccountModule {
         return
             IPerpAccountModule.AccountDigest(
                 depositedCollaterals,
-                Margin.getCollateralUsd(accountId, marketId, false /* useHaircutCollateralPrice */),
+                Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */),
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)
             );
@@ -83,7 +83,7 @@ contract PerpAccountModule is IPerpAccountModule {
             position.entryPrice,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
             oraclePrice,
             marketConfig
         );

@@ -551,10 +551,10 @@ describe('PerpMarketFactoryModule', () => {
     it('should report usd value of margin as report when depositing into system', async () => {
       const { PerpMarketProxy } = systems();
 
-      // Remove any collateral haircut to minimise subtle differences in deposit values.
+      // Remove any collateral discount to minimise subtle differences in deposit values.
       await setMarketConfiguration(bs, {
-        minCollateralHaircut: bn(0),
-        maxCollateralHaircut: bn(0),
+        minCollateralDiscount: bn(0),
+        maxCollateralDiscount: bn(0),
       });
 
       const { market, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -640,8 +640,8 @@ describe('PerpMarketFactoryModule', () => {
       await setMarketConfiguration(bs, {
         keeperProfitMarginPercent: bn(0),
         maxKeeperFeeUsd: bn(0),
-        minCollateralHaircut: bn(0),
-        maxCollateralHaircut: bn(0),
+        minCollateralDiscount: bn(0),
+        maxCollateralDiscount: bn(0),
       });
 
       await market.aggregator().mockSetCurrentPrice(bn(2000));

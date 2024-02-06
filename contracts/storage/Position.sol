@@ -119,7 +119,7 @@ library Position {
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
-     * NOTE: The previous margin (which may include a haircut on the collteral; used for liquidation checks) includes the
+     * NOTE: The previous margin (which may include a discount on the collteral; used for liquidation checks) includes the
      * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
      * This is important as it helps avoid instant liquidations immediately after settlement.
      */
@@ -130,7 +130,7 @@ library Position {
     /**
      * @dev Validates whether the `newPosition` can be liquidated or below margin req.
      *
-     * NOTE: We expect marginUsd here to be the haircut adjusted margin due to liquidation checks as margin checks
+     * NOTE: We expect marginUsd here to be the discount adjusted margin due to liquidation checks as margin checks
      * for liquidations are expected to discount the collateral.
      */
     function validateNextPositionEnoughMargin(
@@ -146,8 +146,8 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, newPosition.entryPrice, marketConfig);
 
-        // Calc position margin using the fillPrice (pos.entryPrice) with the haircut adjustment applied. We
-        // care about haircut as as we're verifying for liquidation.
+        // Calc position margin using the fillPrice (pos.entryPrice) with the discount adjustment applied. We
+        // care about discount as as we're verifying for liquidation.
         //
         // NOTE: getMarginUsd looks at the current position's overall PnL but it does consider the post settled
         // incurred fees hence get `nextMarginUsd` with fees deducted.
@@ -155,7 +155,7 @@ library Position {
             accountId,
             market,
             newPosition.entryPrice,
-            true /* useHaircutCollateralPrice */
+            true /* useDiscountCollateralPrice */
         );
         uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
 
@@ -216,7 +216,7 @@ library Position {
                 isLiquidatable(
                     currentPosition,
                     market,
-                    Margin.getMarginUsd(accountId, market, params.oraclePrice, true /* useHaircutCollateralPrice */),
+                    Margin.getMarginUsd(accountId, market, params.oraclePrice, true /* useDiscountedCollateralPrice */),
                     params.oraclePrice,
                     marketConfig
                 )
@@ -259,13 +259,13 @@ library Position {
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
 
-        // For everything else, we actually need to use the unadjusted marginUsd as the collateral haircut is only
+        // For everything else, we actually need to use the unadjusted marginUsd as the collateral discount is only
         // applicable for liquidation related checks.
         uint256 marginUsd = Margin.getMarginUsd(
             accountId,
             market,
             params.fillPrice,
-            false /* useHaircutCollateralPrice */
+            false /* useDiscountedCollateralPrice */
         );
         uint256 nextMarginUsd = getNextMarginUsd(marginUsd, orderFee, keeperFee);
         return Position.ValidatedTrade(newPosition, orderFee, keeperFee, nextMarginUsd);
@@ -462,7 +462,7 @@ library Position {
     /**
      * @dev Returns the health data given the marketId, config, and position{...} details.
      *
-     * NOTE: marginUsd _must_ be calculated with `useHaircutCollateralPrice=true` in order to correctly calculate a position's
+     * NOTE: marginUsd _must_ be calculated with `useDiscountedCollateralPrice=true` in order to correctly calculate a position's
      * health related data and factor.
      */
     function getHealthData(

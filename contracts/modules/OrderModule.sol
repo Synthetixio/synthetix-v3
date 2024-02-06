@@ -286,7 +286,11 @@ contract OrderModule is IOrderModule {
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
             // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId, false /* usehaircutCollateralPrice */);
+            uint256 collateralUsd = Margin.getCollateralUsd(
+                accountId,
+                marketId,
+                false /* useDiscountedCollateralPrice */
+            );
             Margin.updateAccountCollateral(
                 accountId,
                 market,
