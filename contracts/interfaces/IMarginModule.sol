@@ -50,12 +50,12 @@ interface IMarginModule is IBasePerpMarket {
     function modifyCollateral(uint128 accountId, uint128 marketId, uint128 synthMarketId, int256 amountDelta) external;
 
     /**
-     * @notice Configure with collateral types (synth ids) and their max allowables (deposits).
+     * @notice Configure with collateral types (synth ids), their max allowables (deposits), and more.
      *
      * The order in which `synthMarketIds` is defined is also used as the deduction priority. It is recommended to use
      * sUSD as the first `synthMarketId` so that negative PnL/fees are deducted from sUSD before other collateral types.
      */
-    function setCollateralConfiguration(
+    function setMarginCollateralConfiguration(
         uint128[] calldata synthMarketIds,
         bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables,
@@ -70,9 +70,9 @@ interface IMarginModule is IBasePerpMarket {
     // --- Views --- //
 
     /**
-     * @notice Returns the configured collaterals used as margin.
+     * @notice Returns the configured collaterals useable for margin.
      */
-    function getConfiguredCollaterals() external view returns (ConfiguredCollateral[] memory);
+    function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory);
 
     /**
      * @notice Returns the USD value of deposited collaterals (unadjusted collteral price) for `accountId` and `marketId`.

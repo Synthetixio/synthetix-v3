@@ -89,6 +89,9 @@ library ErrorUtil {
     // @notice Thrown when and action is only allowed by account owner.
     error OnlyAccountOwner();
 
+    // @notice Thrown when an invalid reward distributor was specified.
+    error InvalidRewardDistributor(address distributor);
+
     // @notice Thrown when a specified hook is not whitelisted, or does not match spec, or otherwise.
     error InvalidHook(address hook);
 
