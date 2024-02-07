@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
@@ -21,6 +21,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
     using PerpMarket for PerpMarket.Data;
 
     // --- Mutative --- //
@@ -121,7 +122,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
 
-        if (market.skew == 0 && market.debtCorrection == 0) {
+        if (market.skew == 0 && market.debtCorrection == 0 && market.totalTraderDebt == 0) {
             return totalCollateralValueUsd;
         }
 
@@ -130,7 +131,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         int256 priceWithFunding = int(oraclePrice) + unrecordedFunding;
         int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
             market.skew.mulDecimal(priceWithFunding) -
-            market.debtCorrection;
+            market.debtCorrection +
+            market.totalTraderDebt.toInt();
 
         return MathUtil.max(marketReportedDebt, 0).toUint();
     }
