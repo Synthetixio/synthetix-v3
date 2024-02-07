@@ -162,14 +162,16 @@ library PerpMarket {
         int128 debtAmountDeltaUsd,
         int128 sUSDCollateralDelta
     ) internal {
-        // reduce total trader debt with debtAmountDeltaUsd
-        self.totalTraderDebt = debtAmountDeltaUsd >= 0
-            ? self.totalTraderDebt + debtAmountDeltaUsd.toUint()
-            : self.totalTraderDebt - (-debtAmountDeltaUsd).toUint();
-        // update market's deposited collateral with the reduced debt
-        self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUSDCollateralDelta >= 0
-            ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUSDCollateralDelta.toUint()
-            : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - (-sUSDCollateralDelta).toUint();
+        if (debtAmountDeltaUsd != 0) {
+            self.totalTraderDebt = debtAmountDeltaUsd > 0
+                ? self.totalTraderDebt - debtAmountDeltaUsd.toUint()
+                : self.totalTraderDebt + MathUtil.abs(debtAmountDeltaUsd).to128();
+        }
+        if (sUSDCollateralDelta != 0) {
+            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUSDCollateralDelta >= 0
+                ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUSDCollateralDelta.toUint()
+                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - MathUtil.abs(sUSDCollateralDelta).to128();
+        }
     }
 
     function getUtilization(
