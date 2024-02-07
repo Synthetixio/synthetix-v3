@@ -43,6 +43,8 @@ library PerpMarket {
         int128 skew;
         // sum(positions.map(p => abs(p.size))).
         uint128 size;
+        // Total trader debt, this is all the "realized" but unpaid losses from traders
+        uint128 totalTraderDebt;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
         // The value (in USD) of total market funding accumulated.
@@ -153,6 +155,21 @@ library PerpMarket {
             // A new timestamp (block) to be chunked.
             self.pastLiquidations.push([currentTime, liqSize]);
         }
+    }
+
+    function updateDebtAndCollateral(
+        PerpMarket.Data storage self,
+        int128 debtAmountDeltaUsd,
+        int128 sUSDCollateralDelta
+    ) internal {
+        // reduce total trader debt with debtAmountDeltaUsd
+        self.totalTraderDebt = debtAmountDeltaUsd >= 0
+            ? self.totalTraderDebt + debtAmountDeltaUsd.toUint()
+            : self.totalTraderDebt - (-debtAmountDeltaUsd).toUint();
+        // update market's deposited collateral with the reduced debt
+        self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUSDCollateralDelta >= 0
+            ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUSDCollateralDelta.toUint()
+            : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - (-sUSDCollateralDelta).toUint();
     }
 
     function getUtilization(

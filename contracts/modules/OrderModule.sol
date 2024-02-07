@@ -283,19 +283,22 @@ contract OrderModule is IOrderModule {
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
             // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+
             uint256 collateralUsd = Margin.getCollateralUsd(
                 accountId,
                 marketId,
                 false /* useDiscountedCollateralPrice */
             );
-            Margin.updateAccountCollateral(
+
+            (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) = Margin.updateAccountDebtAndCollateral(
                 accountId,
-                market,
+                marketId,
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
                 runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
             );
+            market.updateDebtAndCollateral(debtAmountDeltaUsd, sUSDCollateralDelta);
         }
 
         if (runtime.trade.newPosition.size == 0) {
@@ -395,7 +398,13 @@ contract OrderModule is IOrderModule {
 
         uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
         if (keeperFee > 0) {
-            Margin.updateAccountCollateral(accountId, market, keeperFee.toInt() * -1);
+            (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) = Margin.updateAccountDebtAndCollateral(
+                accountId,
+                market.id,
+                keeperFee.toInt() * -1
+            );
+            market.updateDebtAndCollateral(debtAmountDeltaUsd, sUSDCollateralDelta);
+
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
