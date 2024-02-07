@@ -1,57 +1,84 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {ISynthetixCore} from "./interfaces/ISynthetixCore.sol";
 
 contract RewardsDistributor is IRewardDistributor {
-    address private _rewardManager;
-    address public token;
+    address private rewardManager;
+    uint128 public poolId;
+    address public collateralType;
     string public name;
 
     bool public shouldFailPayout;
 
-    constructor(address rewardManager_, address token_, string memory name_) {
-        _rewardManager = rewardManager_; // Synthetix CoreProxy
-        token = token_;
+    constructor(
+        address rewardManager_,
+        uint128 poolId_,
+        address collateralType_,
+        string memory name_
+    ) {
+        rewardManager = rewardManager_; // Synthetix CoreProxy
+        poolId = poolId_;
+        collateralType = collateralType_;
         name = name_;
     }
 
-    function setShouldFailPayout(bool fail) external {
-        shouldFailPayout = fail;
+    function token() public view returns (address) {
+        return collateralType;
+    }
+
+    function setShouldFailPayout(bool shouldFailPayout_) external {
+        if (msg.sender != ISynthetixCore(rewardManager).getPoolOwner(poolId)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+        shouldFailPayout = shouldFailPayout_;
     }
 
     function payout(
         uint128, // accountId,
         uint128, // poolId,
         address, // collateralType,
-        address sender, // msg.sender of claimRewards() call, payout target address
-        uint256 amount
+        address payoutTarget_, // msg.sender of claimRewards() call, payout target address
+        uint256 payoutAmount_
     ) external returns (bool) {
+        if (shouldFailPayout) {
+            return false;
+        }
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
-        if (msg.sender != _rewardManager) {
+        if (msg.sender != rewardManager) {
             revert AccessError.Unauthorized(msg.sender);
         }
-        IERC20(token).transfer(sender, amount);
-        return !shouldFailPayout;
+        IERC20(collateralType).transfer(payoutTarget_, payoutAmount_);
+        return true;
     }
 
     function distributeRewards(
-        uint128 poolId,
-        address collateralType,
-        uint256 amount,
-        uint64 start,
-        uint32 duration
+        uint128 poolId_,
+        address collateralType_,
+        uint256 amount_,
+        uint64 start_,
+        uint32 duration_
     ) public {
-        IRewardsManagerModule(_rewardManager).distributeRewards(
-            poolId,
-            collateralType,
-            amount,
-            start,
-            duration
+        if (msg.sender != ISynthetixCore(rewardManager).getPoolOwner(poolId)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+        if (poolId_ != poolId) {
+            revert ParameterError.InvalidParameter("poolId", "Unexpected pool");
+        }
+        if (collateralType_ != collateralType) {
+            revert ParameterError.InvalidParameter("collateralType", "Unexpected collateral");
+        }
+        ISynthetixCore(rewardManager).distributeRewards(
+            poolId_,
+            collateralType_,
+            amount_,
+            start_,
+            duration_
         );
     }
 
