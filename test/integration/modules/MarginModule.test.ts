@@ -1542,6 +1542,26 @@ describe('MarginModule', async () => {
         );
       });
 
+      it('should revert when trader has debt', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+        await commitAndSettle(bs, marketId, trader, order);
+        const closeOrder = genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: wei(order.sizeDelta).mul(-1).toBN(),
+        });
+        await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `DebtFound("${trader.accountId}", "${marketId}")`,
+          PerpMarketProxy
+        );
+      });
+
       it('should revert when withdrawing all collateral of another account', async () => {
         const { PerpMarketProxy } = systems();
 
