@@ -142,20 +142,20 @@ describe.only('Position - funding', () => {
   // });
 
   /*
-    +------------------------------------------------------------------------------------+
-    | Days elapsed |   Time   | Δ Skew | Skew | FR Velocity |    FR    | Accrued Funding |
-    +------------------------------------------------------------------------------------+
-    |      0       |    0     |   0    |  20  |    0.006    |    0     |       0         |
-    |      1       |  86400   |  -60   | -40  |    -0.012   |  0.006   |      120        |
-    |      1       | 172800   |   15   | -25  |   -0.0075   |  -0.006  |      120        |
-    |     0.25     | 194400   |   37   |  12  |    0.0036   | -0.007875|     50.625      |
-    |      2       | 367200   |  -17   |  -5  |   -0.0015   | -0.000675|    -291.375     |
-    |     0.2      | 384480   |  155   | 150  |    0.045    | -0.000975|    -297.975     |
-    |     0.1      | 393120   | -150   |   0  |      0      | 0.003525 |    -292.875     |
-    |     0.1      | 401760   |  -15   | -15  |   -0.0045   | 0.003525 |    -278.775     |
-    |     0.03     | 404352   |   -4   | -19  |   -0.0057   |  0.00339 |    -274.626     |
-    |      3       | 663552   |   19   |   0  |      0      | -0.01371 |    -893.826     |
-    +------------------------------------------------------------------------------------+
+    +------------------------------------------------------------------------------------------+
+    | Days elapsed |   Time   | Δ Skew | Skew | FR Velocity |    FR    | Accrued Funding (USD) |
+    +------------------------------------------------------------------------------------------+
+    |      0       |    0     |   0    |  20  |    0.006    |    0     |          0            |
+    |      1       |  86400   |  -60   | -40  |    -0.012   |  0.006   |         120           |
+    |      1       | 172800   |   15   | -25  |   -0.0075   |  -0.006  |         120           |
+    |     0.25     | 194400   |   37   |  12  |    0.0036   | -0.007875|        50.625         |
+    |      2       | 367200   |  -17   |  -5  |   -0.0015   | -0.000675|       -291.375        |
+    |     0.2      | 384480   |  155   | 150  |    0.045    | -0.000975|       -297.975        |
+    |     0.1      | 393120   | -150   |   0  |      0      | 0.003525 |       -292.875        |
+    |     0.1      | 401760   |  -15   | -15  |   -0.0045   | 0.003525 |       -278.775        |
+    |     0.03     | 404352   |   -4   | -19  |   -0.0057   |  0.00339 |       -274.626        |
+    |      3       | 663552   |   19   |   0  |      0      | -0.01371 |       -893.826        |
+    +------------------------------------------------------------------------------------------+
   */
 
   [
@@ -170,7 +170,12 @@ describe.only('Position - funding', () => {
     { daysElapsed: 3, newOrderSize: bn(19) },
   ].reduce(
     (
-      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed },
+      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed,
+        classicPrevFrVelocity,
+        classicPrevFundingRate,
+        classicPrevAccruedFunding,
+        classicPrevSkew,
+      },
       { daysElapsed, newOrderSize }
       ) => {
       const newQuantoOrderSize = getQuantoPositionSize({
@@ -179,8 +184,7 @@ describe.only('Position - funding', () => {
       });
       accDaysElapsed += daysElapsed;
 
-      // ACCRUED FUNDING CALC ----------------------------------------------
-      console.log('prevSkew :', prevSkew);
+      // ACCRUED QUANTO FUNDING CALC ----------------------------------------------
       const currentSkew = prevSkew.add(newQuantoOrderSize);
       const frVelocity = wei(currentSkew).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
       const fundingRate = prevFrVelocity.mul(daysElapsed).add(prevFundingRate);
@@ -189,7 +193,18 @@ describe.only('Position - funding', () => {
         .mul(_ETH_PRICE)
         .mul(daysElapsed)
         .add(prevAccruedFunding);
-      // END ACCRUED FUNDING CALC -------------------------------------------
+      // END ACCRUED QUANTO FUNDING CALC -------------------------------------------
+
+      // ACCRUED Classic FUNDING CALC ----------------------------------------------
+      const currentSkewClassic = classicPrevSkew.add(newOrderSize);
+      const frVelocityClassic = wei(currentSkewClassic).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
+      const fundingRateClassic = classicPrevFrVelocity.mul(daysElapsed).add(classicPrevFundingRate);
+      const expectedAccruedFundingClassic = Wei.avg(wei(classicPrevFundingRate), wei(fundingRateClassic))
+        .mul(_TRADER_SIZE)
+        .mul(_ETH_PRICE)
+        .mul(daysElapsed)
+        .add(classicPrevAccruedFunding);
+      // END Classic QUANTO FUNDING CALC -------------------------------------------
 
       describe(`after ${daysElapsed} days`, () => {
         before('move time', async () => {
@@ -218,26 +233,14 @@ describe.only('Position - funding', () => {
         });
 
         it('funding accrued is correct', async () => {
-          // console.log('------------- QUANTO TEST --------------');
-          // console.log('prevFrVelocity :', prevFrVelocity.toString());
-          // console.log('prevFundingRate :', prevFundingRate.toString());
-          // console.log('prevAccruedFunding :', prevAccruedFunding.toString());
-          // console.log('prevSkew :', prevSkew.toString());
-          // console.log('accDaysElapsed :', accDaysElapsed.toString());
-          // console.log('daysElapsed :', daysElapsed.toString());
-          // console.log('newOrderSize :', newOrderSize.toString());
-          // console.log('newQuantoOrderSize :', newQuantoOrderSize.toString());
-          // console.log('currentSkew :', currentSkew.toString());
-          // console.log('frVelocity :', frVelocity.toString());
-          // console.log('fundingRate :', fundingRate.toString());
           const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
             2,
             ethMarket.marketId()
           );
-          console.log('accruedFunding', accruedFunding.toString());
-          console.log('accruedFundingInUSD', accruedFunding.mul(20_000).toString());
-          // console.log('expectedAccruedFunding', expectedAccruedFunding.mul(-1).toString());
+          const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(20_000);
+
           // using negative value because trader pnl
+          assertBn.equal(expectedAccruedFundingClassic.toBN(), expectedAccruedFundingInUSD.toBN());
           assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
         });
       });
@@ -248,6 +251,10 @@ describe.only('Position - funding', () => {
         prevAccruedFunding: expectedAccruedFunding,
         prevSkew: currentSkew,
         accDaysElapsed,
+        classicPrevFrVelocity: frVelocityClassic,
+        classicPrevFundingRate: fundingRateClassic,
+        classicPrevAccruedFunding: expectedAccruedFundingClassic,
+        classicPrevSkew: currentSkewClassic,
       };
     },
     {
@@ -256,6 +263,10 @@ describe.only('Position - funding', () => {
       prevAccruedFunding: wei(0),
       prevSkew: wei(20).div(_BTC_PRICE),
       accDaysElapsed: 0,
+      classicPrevFrVelocity: wei(0.006),
+      classicPrevFundingRate: wei(0),
+      classicPrevAccruedFunding: wei(0),
+      classicPrevSkew: wei(20),
     }
   );
 });
