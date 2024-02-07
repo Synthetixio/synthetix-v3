@@ -2263,10 +2263,14 @@ describe('MarginModule', async () => {
       const collateralPrice = await collateral.getPrice();
 
       const maxCollateralDiscount = bn(0.02);
-      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0.01), maxCollateralDiscount });
+      await setMarketConfiguration(bs, {
+        minCollateralDiscount: bn(0.01),
+        maxCollateralDiscount,
+        spotMarketSkewScaleScalar: bn(2),
+      });
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max(amount / (skewScale * 2), minCollateralDiscount), maxCollateralDiscount))
+      // price = oraclePrice * (1 - min(max(amount / (skewScale * spotMarketSkewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
       //
       // 30k / (500k * 2) = 0.03 (bounded by max is 0.02).
       const amount = bn(30_000);
@@ -2284,10 +2288,14 @@ describe('MarginModule', async () => {
       const collateralPrice = await collateral.getPrice();
 
       const minCollateralDiscount = bn(0.01);
-      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount: bn(0.2) });
+      await setMarketConfiguration(bs, {
+        minCollateralDiscount,
+        maxCollateralDiscount: bn(0.2),
+        spotMarketSkewScaleScalar: bn(2),
+      });
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max(amount / (skewScale * 2), minCollateralDiscount), maxCollateralDiscount))
+      // price = oraclePrice * (1 - min(max(amount / (skewScale * spotMarketSkewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
       //
       // 500 / (500k * 2) = 0.0005 (bounded by min is 0.01).
       const amount = bn(500);
@@ -2306,7 +2314,8 @@ describe('MarginModule', async () => {
 
       const minCollateralDiscount = bn(0.0001);
       const maxCollateralDiscount = bn(0.99);
-      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount });
+      const spotMarketSkewScaleScalar = bn(2);
+      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount, spotMarketSkewScaleScalar });
 
       const spotMarketSkewScale = bn(500_000);
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
@@ -2319,6 +2328,7 @@ describe('MarginModule', async () => {
         collateralPrice,
         amount,
         spotMarketSkewScale,
+        spotMarketSkewScaleScalar,
         minCollateralDiscount,
         maxCollateralDiscount
       );

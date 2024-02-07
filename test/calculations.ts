@@ -166,16 +166,18 @@ export const calcDiscountedCollateralPrice = (
   collateralPrice: BigNumber,
   amount: BigNumber,
   spotMarketSkewScale: BigNumber,
+  spotMarketSkewScaleScalar: BigNumber,
   min: BigNumber,
   max: BigNumber
 ) => {
   const w_collateralPrice = wei(collateralPrice);
   const w_amount = wei(amount);
   const w_spotMarketSkewScale = wei(spotMarketSkewScale);
+  const w_spotMarketSkewScaleScalar = wei(spotMarketSkewScaleScalar);
   const w_min = wei(min);
   const w_max = wei(max);
 
-  // price = oraclePrice * (1 - min(max(size / (skewScale * 2), minCollateralDiscount), maxCollateralDiscount))
-  const discount = Wei.min(Wei.max(w_amount.div(w_spotMarketSkewScale.mul(wei(2))), w_min), w_max);
+  // price = oraclePrice * (1 - min(max(size / (skewScale * skewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
+  const discount = Wei.min(Wei.max(w_amount.div(w_spotMarketSkewScale.mul(w_spotMarketSkewScaleScalar)), w_min), w_max);
   return w_collateralPrice.mul(wei(1).sub(discount)).toBN();
 };

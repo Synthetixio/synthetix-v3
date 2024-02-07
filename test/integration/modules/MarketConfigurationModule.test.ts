@@ -34,6 +34,7 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperSettlementGasUnits, global.keeperSettlementGasUnits);
       assert.equal(config.keeperLiquidationGasUnits, global.keeperLiquidationGasUnits);
       assertBn.equal(config.keeperLiquidationFeeUsd, global.keeperLiquidationFeeUsd);
+      assertBn.equal(config.spotMarketSkewScaleScalar, global.spotMarketSkewScaleScalar);
       assertBn.equal(config.minCollateralDiscount, global.minCollateralDiscount);
       assertBn.equal(config.maxCollateralDiscount, global.maxCollateralDiscount);
       assertBn.equal(config.sellExactInMaxSlippagePercent, global.sellExactInMaxSlippagePercent);
