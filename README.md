@@ -17,12 +17,14 @@ forge test -vvvvv \
 ```
 
 Coverage report
+
 ```sh
 forge coverage --report lcov
 genhtml ./lcov.info --output-directory coverage
 ```
 
 To install `genhtml`:
+
 ```sh
 brew install lcov
 ```

@@ -42,10 +42,7 @@ contract CoreProxyMock {
     }
 
     function getPoolOwner(uint128 poolId_) public view returns (address) {
-        if (poolId_ == 1) {
-            return address(this);
-        }
-        return address(0);
+        return address(this);
     }
 }
 
