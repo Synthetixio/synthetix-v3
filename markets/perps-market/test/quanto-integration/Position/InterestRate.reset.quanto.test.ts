@@ -8,7 +8,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 const _SECONDS_IN_YEAR = 31557600;
 
-const _TRADER_SIZE = wei(20);
+const _TRADER_SIZE = wei(getQuantoPositionSize({
+  sizeInBaseAsset: bn(20),
+  quantoAssetPrice: bn(20_000),
+}));
 const _ETH_PRICE = wei(2000);
 const _ETH_LOCKED_OI_RATIO = wei(1);
 
@@ -86,10 +89,6 @@ describe.only('Position - interest rates - reset', () => {
       .modifyCollateral(2, btcSpotMarketId, bn(2.5));
   });
 
-  // before('add collateral to margin', async () => {
-  //   await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(50_000));
-  // });
-
   const checkMarketInterestRate = () => {
     it('has correct interest rate', async () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
@@ -120,10 +119,6 @@ describe.only('Position - interest rates - reset', () => {
   let trader1OpenPositionTime: number;
   // trader 1
   before('open 20 eth position', async () => {
-    const quantoPositionSize = getQuantoPositionSize({
-      sizeInBaseAsset: _TRADER_SIZE.toBN(),
-      quantoAssetPrice: bn(20_000),
-    });
     ({ settleTime: trader1OpenPositionTime } = await openPosition({
       systems,
       provider,
@@ -131,14 +126,13 @@ describe.only('Position - interest rates - reset', () => {
       accountId: 2,
       keeper: keeper(),
       marketId: ethMarket.marketId(),
-      sizeDelta: quantoPositionSize,
+      sizeDelta: _TRADER_SIZE.toBN(),
       settlementStrategyId: ethMarket.strategyId(),
       price: _ETH_PRICE.toBN(),
     }));
   });
 
   checkMarketInterestRate();
-  // checked up to here
 
   let trader1InterestAccumulated: Wei = wei(0);
 
@@ -153,6 +147,7 @@ describe.only('Position - interest rates - reset', () => {
 
     describe('check trader 1 interest', () => {
       it('has correct interest rate', async () => {
+        // checked up to here
         const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
           2,
           ethMarket.marketId()
@@ -160,6 +155,8 @@ describe.only('Position - interest rates - reset', () => {
         const expectedInterest = _TRADER1_LOCKED_OI
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(proportionalTime(_SECONDS_IN_DAY));
+        console.log('quanto BTC expectedInterest :', expectedInterest.toString());
+        console.log('quanto USD expectedInterest :', expectedInterest.mul(20_000).toString());
         trader1InterestAccumulated = trader1InterestAccumulated.add(owedInterest);
         assertBn.near(owedInterest, expectedInterest.toBN(), bn(0.0001));
       });
