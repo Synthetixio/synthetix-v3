@@ -44,6 +44,8 @@ library Margin {
     struct Data {
         // {synthMarketId: collateralAmount} (amount of collateral deposited into this account).
         mapping(uint128 => uint256) collaterals;
+        // debt for this account
+        uint128 debt;
     }
 
     function load() internal pure returns (Margin.GlobalData storage d) {
@@ -250,16 +252,18 @@ library Margin {
     ) internal view returns (uint256) {
         uint256 collateralUsd = getCollateralUsd(accountId, market.id, useDiscountedCollateralPrice);
         Position.Data storage position = market.positions[accountId];
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
-        // Zero position means that marginUsd eq collateralUsd.
+        // Zero position means collateral - debt is the margin.
         if (position.size == 0) {
-            return collateralUsd;
+            return collateralUsd - accountMargin.debt;
         }
         return
             MathUtil
                 .max(
                     collateralUsd.toInt() +
-                        position.getPnl(marketPrice) +
+                        position.getPnl(marketPrice) -
+                        accountMargin.debt.toInt() +
                         position.getAccruedFunding(market, marketPrice) -
                         position.getAccruedUtilization(market, marketPrice).toInt() -
                         position.accruedFeesUsd.toInt(),
