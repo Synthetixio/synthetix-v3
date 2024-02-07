@@ -170,14 +170,19 @@ describe.only('Position - funding', () => {
     { daysElapsed: 3, newOrderSize: bn(19) },
   ].reduce(
     (
-      { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed,
+      {
+        prevFrVelocity,
+        prevFundingRate,
+        prevAccruedFunding,
+        prevSkew,
+        accDaysElapsed,
         prevFrVelocityClassic,
         prevFundingRateClassic,
         prevAccruedFundingClassic,
         prevSkewClassic,
       },
       { daysElapsed, newOrderSize }
-      ) => {
+    ) => {
       const newQuantoOrderSize = getQuantoPositionSize({
         sizeInBaseAsset: newOrderSize,
         quantoAssetPrice: _BTC_PRICE,
@@ -199,7 +204,10 @@ describe.only('Position - funding', () => {
       const currentSkewClassic = prevSkewClassic.add(newOrderSize);
       const frVelocityClassic = wei(currentSkewClassic).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
       const fundingRateClassic = prevFrVelocityClassic.mul(daysElapsed).add(prevFundingRateClassic);
-      const expectedAccruedFundingClassic = Wei.avg(wei(prevFundingRateClassic), wei(fundingRateClassic))
+      const expectedAccruedFundingClassic = Wei.avg(
+        wei(prevFundingRateClassic),
+        wei(fundingRateClassic)
+      )
         .mul(_TRADER_SIZE)
         .mul(_ETH_PRICE)
         .mul(daysElapsed)
