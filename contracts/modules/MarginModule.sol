@@ -292,7 +292,7 @@ contract MarginModule is IMarginModule {
             // Ensure we perform this _after_ the accounting update so marginUsd uses with post withdrawal
             // collateral amounts.
             Position.Data storage position = market.positions[accountId];
-            if (position.size != 0) {
+            if (position.size != 0 || accountMargin.debt != 0) {
                 validatePositionPostWithdraw(accountId, position, market);
             }
 
