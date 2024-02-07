@@ -269,24 +269,25 @@ contract OrderModule is IOrderModule {
             marketConfig
         );
 
-        Position.Data storage oldPosition = market.positions[accountId];
-
-        market.skew = market.skew + runtime.trade.newPosition.size - oldPosition.size;
-        market.size = (market.size.to256() +
-            MathUtil.abs(runtime.trade.newPosition.size) -
-            MathUtil.abs(oldPosition.size)).to128();
+        market.skew = market.skew + runtime.trade.newPosition.size - position.size;
+        market.size = (market.size.to256() + MathUtil.abs(runtime.trade.newPosition.size) - MathUtil.abs(position.size))
+            .to128();
 
         // We want to validateTrade and update market size before we recompute utilisation
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilisation rate up to this point
         // 2. The new utlization rate is calculated using the new maret size, so we need to update the size before we recompute utilisation
         recomputeUtilization(market, runtime.pythPrice);
 
-        market.updateDebtCorrection(oldPosition, runtime.trade.newPosition);
+        market.updateDebtCorrection(position, runtime.trade.newPosition);
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
-        if (oldPosition.size != 0) {
+        if (position.size != 0) {
             // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId, false /* usehaircutCollateralPrice */);
+            uint256 collateralUsd = Margin.getCollateralUsd(
+                accountId,
+                marketId,
+                false /* useDiscountedCollateralPrice */
+            );
             Margin.updateAccountCollateral(
                 accountId,
                 market,

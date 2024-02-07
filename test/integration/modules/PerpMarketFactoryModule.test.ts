@@ -159,6 +159,18 @@ describe('PerpMarketFactoryModule', () => {
   });
 
   describe('getMarketDigest', () => {
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const invalidMarketId = bn(genNumber(42069, 50_000));
+
+      await assertRevert(
+        PerpMarketProxy.getMarketDigest(invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
     describe('{fundingRate,fundingVelocity}', () => {
       const depositMarginToTraders = async (
         traders: Trader[],
@@ -178,6 +190,7 @@ describe('PerpMarketFactoryModule', () => {
           );
         }
       };
+
       it('should have 0 velocity if skew is small enough', async () => {
         const { PerpMarketProxy } = systems();
         const market = genOneOf(markets());
@@ -229,6 +242,7 @@ describe('PerpMarketFactoryModule', () => {
 
         assertBn.equal(fundingVelocity1, 0);
       });
+
       it('should compute current funding rate relative to time (concrete)', async () => {
         // This test is pulled directly from a concrete example developed for PerpsV2.
         //
@@ -537,10 +551,10 @@ describe('PerpMarketFactoryModule', () => {
     it('should report usd value of margin as report when depositing into system', async () => {
       const { PerpMarketProxy } = systems();
 
-      // Remove any collateral haircut to minimise subtle differences in deposit values.
+      // Remove any collateral discount to minimise subtle differences in deposit values.
       await setMarketConfiguration(bs, {
-        minCollateralHaircut: bn(0),
-        maxCollateralHaircut: bn(0),
+        minCollateralDiscount: bn(0),
+        maxCollateralDiscount: bn(0),
       });
 
       const { market, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -626,8 +640,8 @@ describe('PerpMarketFactoryModule', () => {
       await setMarketConfiguration(bs, {
         keeperProfitMarginPercent: bn(0),
         maxKeeperFeeUsd: bn(0),
-        minCollateralHaircut: bn(0),
-        maxCollateralHaircut: bn(0),
+        minCollateralDiscount: bn(0),
+        maxCollateralDiscount: bn(0),
       });
 
       await market.aggregator().mockSetCurrentPrice(bn(2000));
@@ -876,5 +890,15 @@ describe('PerpMarketFactoryModule', () => {
     it('should incur no debt in a delta neutral market with high when price volatility');
 
     it('should incur small debt proportional to skew with high price volatility');
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const invalidMarketId = 42069;
+      await assertRevert(
+        PerpMarketProxy.reportedDebt(invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 });

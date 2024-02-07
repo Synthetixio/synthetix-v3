@@ -37,7 +37,7 @@ import {
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
-import { calculateLiquidationKeeperFee, calculateTransactionCostInUsd } from '../../calculations';
+import { calcLiquidationKeeperFee, calcTransactionCostInUsd } from '../../calculations';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -134,12 +134,6 @@ describe('LiquidationModule', () => {
       );
       await assertEvent(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
     });
-
-    it('getLiquidationFees returns liqKeeperFees small position');
-
-    it('getLiquidationFees returns liqKeeperFees big position');
-
-    it('getLiquidationFees returns flagKeeperReward');
 
     it('should remove any pending orders when present', async () => {
       const { PerpMarketProxy } = systems();
@@ -993,6 +987,52 @@ describe('LiquidationModule', () => {
       );
     });
 
+    describe('getLiquidationFees', () => {
+      it('should revert when accountId does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const market = genOneOf(markets());
+        const invalidAccountId = 42069;
+
+        await assertRevert(
+          PerpMarketProxy.getLiquidationFees(invalidAccountId, market.marketId()),
+          `AccountNotFound("${invalidAccountId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when marketId does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const invalidMarketId = 42069;
+
+        await assertRevert(
+          PerpMarketProxy.getLiquidationFees(trader.accountId, invalidMarketId),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should return zero when accountId/marketId exists but no position', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
+
+        const { flagKeeperReward, liqKeeperFee } = await PerpMarketProxy.getLiquidationFees(
+          trader.accountId,
+          market.marketId()
+        );
+        assertBn.isZero(flagKeeperReward);
+        assertBn.isZero(liqKeeperFee);
+      });
+
+      it('should return the expected liquidationFees on a large open position');
+
+      it('should return the expected liquidationFees on a small open position');
+    });
+
     describe('getRemainingLiquidatableSizeCapacity', () => {
       const calcMaxLiquidatableCapacity = (
         makerFee: BigNumber,
@@ -1571,7 +1611,7 @@ describe('LiquidationModule', () => {
         const { liqKeeperFee } = await PerpMarketProxy.getLiquidationFees(trader.accountId, marketId);
 
         const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
-        const expectedLiqFee = calculateLiquidationKeeperFee(
+        const expectedLiqFee = calcLiquidationKeeperFee(
           ethPrice,
           baseFeePerGas,
           wei(order.sizeDelta).abs(),
@@ -1709,14 +1749,14 @@ describe('LiquidationModule', () => {
           PerpMarketProxy
         ).args;
         const sizeAbsUsd = wei(order.sizeDelta).abs().mul(flaggedPrice);
-        const expectedCostFlag = calculateTransactionCostInUsd(baseFeePerGas, keeperFlagGasUnits, ethPrice);
+        const expectedCostFlag = calcTransactionCostInUsd(baseFeePerGas, keeperFlagGasUnits, ethPrice);
         const expectedFlagReward = wei(expectedCostFlag)
           .mul(wei(1).add(keeperProfitMarginPercent))
           .add(sizeAbsUsd.mul(flagRewardPercent));
 
         assertBn.equal(flagKeeperReward, expectedFlagReward.toBN());
 
-        const expectedCostLiq = calculateTransactionCostInUsd(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
+        const expectedCostLiq = calcTransactionCostInUsd(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
         const expectedKeeperFee = wei(expectedCostLiq).mul(wei(1).add(keeperProfitMarginPercent));
 
         assertBn.equal(liqKeeperFee, wei(expectedKeeperFee).toBN());
@@ -1784,14 +1824,14 @@ describe('LiquidationModule', () => {
         ).args;
         const { liqKeeperFee } = findEventSafe(liqReceipt, 'PositionLiquidated', PerpMarketProxy).args;
         const sizeAbsUsd = wei(order.sizeDelta).abs().mul(flaggedPrice);
-        const expectedCostFlag = calculateTransactionCostInUsd(baseFeePerGas, keeperFlagGasUnits, ethPrice);
+        const expectedCostFlag = calcTransactionCostInUsd(baseFeePerGas, keeperFlagGasUnits, ethPrice);
         const expectedFlagReward = wei(expectedCostFlag)
           .add(wei(keeperProfitMarginUsd))
           .add(sizeAbsUsd.mul(flagRewardPercent));
 
         assertBn.equal(flagKeeperReward, expectedFlagReward.toBN());
 
-        const expectedCostLiq = calculateTransactionCostInUsd(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
+        const expectedCostLiq = calcTransactionCostInUsd(baseFeePerGas, keeperLiquidationGasUnits, ethPrice);
         const expectedKeeperFee = wei(expectedCostLiq).add(wei(keeperProfitMarginUsd));
 
         assertBn.equal(liqKeeperFee, wei(expectedKeeperFee).toBN());

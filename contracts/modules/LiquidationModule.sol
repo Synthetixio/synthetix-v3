@@ -180,7 +180,7 @@ contract LiquidationModule is ILiquidationModule {
         uint256 oraclePrice = market.getOraclePrice();
         bool isLiquidatable = position.isLiquidatable(
             market,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
             oraclePrice,
             PerpMarketConfiguration.load(marketId)
         );
@@ -278,13 +278,17 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256 flagKeeperReward, uint256 liqKeeperFee) {
+        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
         uint128 absSize = MathUtil.abs(market.positions[accountId].size).to128();
 
+        // Return empty when a position does not exist.
         if (absSize == 0) {
-            revert ErrorUtil.PositionNotFound();
+            return (0, 0);
         }
 
         flagKeeperReward = Position.getLiquidationFlagReward(
@@ -319,7 +323,7 @@ contract LiquidationModule is ILiquidationModule {
         return
             market.positions[accountId].isLiquidatable(
                 market,
-                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
@@ -357,7 +361,7 @@ contract LiquidationModule is ILiquidationModule {
             position.entryPrice,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */),
+            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
             oraclePrice,
             PerpMarketConfiguration.load(marketId)
         );

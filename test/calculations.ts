@@ -2,6 +2,21 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
+import { bn } from './generators';
+
+// --- Primitives --- //
+
+const divDecimalAndCeil = (a: Wei, b: Wei) => {
+  const x = wei(a).toNumber() / wei(b).toNumber();
+  return wei(Math.ceil(x));
+};
+
+// --- Domain --- //
+
+/** Calculates whether two numbers are the same sign. */
+export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) => a.eq(0) || b.eq(0) || a.gt(0) == b.gt(0);
+
+// --- Calcs --- //
 
 /** Calculates a position's unrealised PnL (no funding or fees) given the current and previous price. */
 export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
@@ -23,9 +38,6 @@ export const calcFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNu
 
   return priceBefore.add(priceAfter).div(2).toBN();
 };
-
-/** Calculates whether two numbers are the same sign. */
-export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) => a.eq(0) || b.eq(0) || a.gt(0) == b.gt(0);
 
 /** Calculates order fees and keeper fees associated to settle the order. */
 export const calcOrderFees = async (
@@ -91,7 +103,7 @@ export const calcOrderFees = async (
   return { notional, orderFee, calcKeeperOrderSettlementFee };
 };
 
-export const calculateTransactionCostInUsd = (
+export const calcTransactionCostInUsd = (
   baseFeePerGas: BigNumber, // in gwei
   gasUnitsForTx: BigNumber, // in gwei
   ethPrice: BigNumber // in ether
@@ -100,7 +112,8 @@ export const calculateTransactionCostInUsd = (
   return costInGwei.mul(ethPrice).div(BigNumber.from(10).pow(18));
 };
 
-export const calculateFlagReward = (
+/** Calculates the in USD, the reward to flag a position for liquidation. */
+export const calcFlagReward = (
   ethPrice: BigNumber,
   baseFeePerGas: BigNumber, // in gwei
   sizeAbs: Wei,
@@ -108,11 +121,7 @@ export const calculateFlagReward = (
   globalConfig: PerpMarketConfiguration.GlobalDataStructOutput,
   marketConfig: PerpMarketConfiguration.DataStructOutput
 ) => {
-  const flagExecutionCostInUsd = calculateTransactionCostInUsd(
-    baseFeePerGas,
-    globalConfig.keeperFlagGasUnits,
-    ethPrice
-  );
+  const flagExecutionCostInUsd = calcTransactionCostInUsd(baseFeePerGas, globalConfig.keeperFlagGasUnits, ethPrice);
 
   const flagFeeInUsd = Wei.max(
     wei(flagExecutionCostInUsd).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
@@ -129,11 +138,9 @@ export const calculateFlagReward = (
     flagFeeInUsd,
   };
 };
-const divDecimalAndCeil = (a: Wei, b: Wei) => {
-  const x = wei(a).toNumber() / wei(b).toNumber();
-  return wei(Math.ceil(x));
-};
-export const calculateLiquidationKeeperFee = (
+
+/** Calculates the liquidation fees in USD given price of ETH, gas, size of position and capacity. */
+export const calcLiquidationKeeperFee = (
   ethPrice: BigNumber,
   baseFeePerGas: BigNumber, // in gwei
   sizeAbs: Wei,
@@ -144,7 +151,7 @@ export const calculateLiquidationKeeperFee = (
   const iterations = divDecimalAndCeil(sizeAbs, maxLiqCapacity);
 
   const totalGasUnitsToLiquidate = wei(globalConfig.keeperLiquidationGasUnits).toBN();
-  const flagExecutionCostInUsd = calculateTransactionCostInUsd(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
+  const flagExecutionCostInUsd = calcTransactionCostInUsd(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
 
   const liquidationFeeInUsd = Wei.max(
     wei(flagExecutionCostInUsd).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
@@ -152,4 +159,25 @@ export const calculateLiquidationKeeperFee = (
   );
 
   return Wei.min(liquidationFeeInUsd, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);
+};
+
+/** Calculates the discounted collateral price given the size, spot market skew scale, and min/max discounts. */
+export const calcDiscountedCollateralPrice = (
+  collateralPrice: BigNumber,
+  amount: BigNumber,
+  spotMarketSkewScale: BigNumber,
+  spotMarketSkewScaleScalar: BigNumber,
+  min: BigNumber,
+  max: BigNumber
+) => {
+  const w_collateralPrice = wei(collateralPrice);
+  const w_amount = wei(amount);
+  const w_spotMarketSkewScale = wei(spotMarketSkewScale);
+  const w_spotMarketSkewScaleScalar = wei(spotMarketSkewScaleScalar);
+  const w_min = wei(min);
+  const w_max = wei(max);
+
+  // price = oraclePrice * (1 - min(max(size / (skewScale * skewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
+  const discount = Wei.min(Wei.max(w_amount.div(w_spotMarketSkewScale.mul(w_spotMarketSkewScaleScalar)), w_min), w_max);
+  return w_collateralPrice.mul(wei(1).sub(discount)).toBN();
 };

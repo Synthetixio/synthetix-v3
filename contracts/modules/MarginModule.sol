@@ -48,8 +48,13 @@ contract MarginModule is IMarginModule {
     ) private view {
         uint256 oraclePrice = market.getOraclePrice();
 
-        // We use the haircut adjusted price here due to the explicit liquidation check.
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice, true /* useHaircutCollateralPrice */);
+        // We use the discount adjusted price here due to the explicit liquidation check.
+        uint256 marginUsd = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice,
+            true /* useDiscountedCollateralPrice */
+        );
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
@@ -441,7 +446,7 @@ contract MarginModule is IMarginModule {
     function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.exists(marketId);
-        return Margin.getCollateralUsd(accountId, marketId, false /* useHaircutCollateralPrice */);
+        return Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */);
     }
 
     /**
@@ -450,15 +455,16 @@ contract MarginModule is IMarginModule {
     function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.getMarginUsd(accountId, market, market.getOraclePrice(), false /* useHaircutCollateralPrice */);
+        return
+            Margin.getMarginUsd(accountId, market, market.getOraclePrice(), false /* useDiscountedCollateralPrice */);
     }
 
     /**
      * @inheritdoc IMarginModule
      */
-    function getHaircutCollateralPrice(uint128 synthMarketId, int256 size) external view returns (uint256) {
+    function getDiscountedCollateralPrice(uint128 synthMarketId, uint256 amount) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        return globalMarginConfig.getHaircutCollateralPrice(synthMarketId, MathUtil.abs(size), globalMarketConfig);
+        return globalMarginConfig.getDiscountedCollateralPrice(synthMarketId, amount, globalMarketConfig);
     }
 }

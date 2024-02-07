@@ -1300,8 +1300,8 @@ describe('OrderModule', () => {
         // A low slippage tolerance results in a revert on the position modify.
         await setMarketConfiguration(bs, {
           sellExactInMaxSlippagePercent: bn(0.00001),
-          maxCollateralHaircut: bn(0),
-          minCollateralHaircut: bn(0),
+          maxCollateralDiscount: bn(0),
+          minCollateralDiscount: bn(0),
         });
         await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
           collateral.synthMarketId(),
@@ -1798,6 +1798,44 @@ describe('OrderModule', () => {
     });
   });
 
+  describe('getOrderDigest', () => {
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const market = genOneOf(markets());
+      const invalidAccountId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getOrderDigest(invalidAccountId, market.marketId()),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const invalidMarketId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getOrderDigest(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should return default object when accountId/marketId exists but no order', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const market = genOneOf(markets());
+
+      const { sizeDelta } = await PerpMarketProxy.getOrderDigest(trader.accountId, market.marketId());
+      assertBn.isZero(sizeDelta);
+    });
+  });
+
   describe('getOrderFees', () => {
     describe('orderFee', () => {
       enum LiquidtyLeader {
@@ -1959,6 +1997,17 @@ describe('OrderModule', () => {
 
         assertBn.equal(orderFee2, makerFeeUsd.add(takerFeeUsd).toBN());
       });
+
+      it('should revert when marketId does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const invalidMarketId = 42069;
+        await assertRevert(
+          PerpMarketProxy.getOrderFees(invalidMarketId, bn(0), bn(0)),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
     });
 
     // Due to a bug with hardhat_setNextBlockBaseFeePerGas, block.basefee is 0 on views. This means, it's very
@@ -2066,7 +2115,7 @@ describe('OrderModule', () => {
   });
 
   describe('getFillPrice', () => {
-    it('should revert invalid market id', async () => {
+    it('should revert when marketId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const invalidMarketId = bn(42069);
 
@@ -2169,6 +2218,19 @@ describe('OrderModule', () => {
       const expectedFillPrice = calcFillPrice(marketSkew, skewScale, size, oraclePrice);
 
       assertBn.equal(expectedFillPrice, actualFillPrice);
+    });
+  });
+
+  describe('getOraclePrice', () => {
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const invalidMarketId = 42069;
+      await assertRevert(
+        PerpMarketProxy.getOraclePrice(invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
     });
   });
 });

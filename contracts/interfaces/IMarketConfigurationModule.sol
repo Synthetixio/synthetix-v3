@@ -24,8 +24,9 @@ interface IMarketConfigurationModule {
         uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
         address keeperLiquidationEndorsed;
-        uint128 minCollateralHaircut;
-        uint128 maxCollateralHaircut;
+        uint128 spotMarketSkewScaleScalar;
+        uint128 minCollateralDiscount;
+        uint128 maxCollateralDiscount;
         uint128 sellExactInMaxSlippagePercent;
         uint128 utilizationBreakpointPercent;
         uint128 lowUtilizationSlopePercent;

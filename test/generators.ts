@@ -80,8 +80,9 @@ export const genBootstrap = () => ({
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Temporary dummy address to be reconfigurd later.
-    minCollateralHaircut: bn(0.01),
-    maxCollateralHaircut: bn(0.05),
+    spotMarketSkewScaleScalar: bn(1),
+    minCollateralDiscount: bn(0.01),
+    maxCollateralDiscount: bn(0.05),
     sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
     utilizationBreakpointPercent: bn(genNumber(0.65, 0.85)),
     lowUtilizationSlopePercent: bn(genNumber(0.0002, 0.0003)),

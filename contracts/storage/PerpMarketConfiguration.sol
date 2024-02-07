@@ -58,10 +58,12 @@ library PerpMarketConfiguration {
         uint256 keeperLiquidationFeeUsd;
         // Address of endorsed liquidation keeper to exceed liq caps.
         address keeperLiquidationEndorsed;
-        // Minimum haircut applied on deposited margin collateral.
-        uint128 minCollateralHaircut;
-        // Maximum haircut applied on deposited margin collateral.
-        uint128 maxCollateralHaircut;
+        // A scalar applied on the spot market skewScale for collateral discount adjustment.
+        uint128 spotMarketSkewScaleScalar;
+        // Minimum discount applied on deposited margin collateral.
+        uint128 minCollateralDiscount;
+        // Maximum discount applied on deposited margin collateral.
+        uint128 maxCollateralDiscount;
         // Maximum slippage on collateral sold for negative pnl position modifications.
         uint128 sellExactInMaxSlippagePercent;
         // Dictates wheter or not the utilization rate should use high or low slope

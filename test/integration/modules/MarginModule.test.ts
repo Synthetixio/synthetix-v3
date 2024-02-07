@@ -5,7 +5,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import assert from 'assert';
-import { shuffle } from 'lodash';
+import { shuffle, times } from 'lodash';
 import forEach from 'mocha-each';
 import { PerpCollateral, bootstrap } from '../../bootstrap';
 import {
@@ -39,7 +39,7 @@ import {
   SECONDS_ONE_DAY,
   setMarketConfigurationById,
 } from '../../helpers';
-import { calcPnl } from '../../calculations';
+import { calcDiscountedCollateralPrice, calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
 
 describe('MarginModule', async () => {
@@ -356,7 +356,7 @@ describe('MarginModule', async () => {
         const order = await genOrder(bs, market, collateral, collateralDepositAmount);
         const { accountId } = trader;
 
-        await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
         // Create a new position.
         await commitAndSettle(bs, marketId, trader, order);
@@ -877,9 +877,9 @@ describe('MarginModule', async () => {
           desiredLeverage: 5,
         });
 
-        // `collateralPrice` does not include haircut so to make it easier, do the same here. If not, a higher price
+        // `collateralPrice` does not include discount so to make it easier, do the same here. If not, a higher price
         // would mean fewer units to withdraw and hence will stay above im.
-        await setMarketConfiguration(bs, { minCollateralHaircut: bn(0), maxCollateralHaircut: bn(0) });
+        await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
 
         // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
@@ -1330,7 +1330,7 @@ describe('MarginModule', async () => {
       it.skip('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {
         const { PerpMarketProxy, SpotMarket, Core } = systems();
 
-        await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
         const { trader, traderAddress, marketId, collateralDepositAmount, market, collateral, collateralPrice } =
           await depositMargin(bs, genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) }));
@@ -1966,7 +1966,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
 
-      await setMarketConfiguration(bs, { minCollateralHaircut: bn(0), maxCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
     });
@@ -1980,7 +1980,7 @@ describe('MarginModule', async () => {
       const { trader, marketId, marginUsdDepositAmount, collateralPrice, collateralDepositAmount } =
         await depositMargin(bs, genTrader(bs, { desiredCollateral: collateral }));
 
-      await setMarketConfiguration(bs, { minCollateralHaircut: bn(0), maxCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
 
@@ -2030,7 +2030,7 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(bs, genTrader(bs));
 
-      await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
       const marginUsd = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
       assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).toBN());
@@ -2047,7 +2047,7 @@ describe('MarginModule', async () => {
       const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
-      await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
       const { receipt } = await commitAndSettle(bs, marketId, trader, order);
       const settleEvent = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
@@ -2099,7 +2099,7 @@ describe('MarginModule', async () => {
         desiredSide: -1,
       });
 
-      await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
       await commitAndSettle(bs, marketId, trader, order);
 
@@ -2127,7 +2127,7 @@ describe('MarginModule', async () => {
         genTrader(bs, { desiredMarket: bs.markets()[0] })
       );
 
-      await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
       // Deposit margin to another market
       const otherDeposit = await depositMargin(
@@ -2163,7 +2163,7 @@ describe('MarginModule', async () => {
         genTrader(bs, { desiredCollateral: collateral })
       );
 
-      await setMarketConfiguration(bs, { maxCollateralHaircut: bn(0), minCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
       assertBn.equal(marginUsdBeforePriceChange, wei(collateralDepositAmount).mul(collateralPrice).toBN());
@@ -2216,98 +2216,125 @@ describe('MarginModule', async () => {
     });
   });
 
-  describe('getHaircutCollateralPrice', () => {
+  describe('getDiscountedCollateralPrice', () => {
     forEach([bn(0), bn(genNumber(1, 10_000))]).it(
-      'should return 1 when sUSD is the oracle price regardless of size (%s)',
-      async (size: BigNumber) => {
+      'should return 1 when sUSD is the oracle price regardless of amount (%s)',
+      async (amount: BigNumber) => {
         const { PerpMarketProxy } = systems();
 
         const sUsdCollateral = getSusdCollateral(collaterals());
-        const collateralPrice = await PerpMarketProxy.getHaircutCollateralPrice(sUsdCollateral.synthMarketId(), size);
+        const collateralPrice = await PerpMarketProxy.getDiscountedCollateralPrice(
+          sUsdCollateral.synthMarketId(),
+          amount
+        );
         assertBn.equal(collateralPrice, bn(1));
       }
     );
 
-    it('should not apply a haircut on collateral price when spot market skew is 0', async () => {
+    it('should not apply a discount on collateral price when spot market skew is 0', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(0));
 
       const collateralPrice = await collateral.getPrice();
-      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
+      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), bn(0));
 
-      assertBn.equal(collateralPrice, priceWithHaircut);
+      assertBn.equal(collateralPrice, priceWithDiscount);
     });
 
-    it('should return oracle price when size and minHaircut is 0', async () => {
+    it('should return oracle price when amount and minCollateralDiscount is 0', async () => {
       const { PerpMarketProxy } = systems();
 
-      await setMarketConfiguration(bs, { minCollateralHaircut: bn(0) });
+      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0) });
 
       const collateral = genOneOf(collateralsWithoutSusd());
 
       const collateralPrice = await collateral.getPrice();
-      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), bn(0));
+      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), bn(0));
 
-      assertBn.equal(collateralPrice, priceWithHaircut);
+      assertBn.equal(collateralPrice, priceWithDiscount);
     });
 
-    it('should max bound the haircut on large skew shift', async () => {
+    it('should max bound the collateral discount on large skew shift', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
       const collateralPrice = await collateral.getPrice();
 
-      const maxCollateralHaircut = bn(0.02);
-      await setMarketConfiguration(bs, { minCollateralHaircut: bn(0.01), maxCollateralHaircut });
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
+      const maxCollateralDiscount = bn(0.02);
+      await setMarketConfiguration(bs, {
+        minCollateralDiscount: bn(0.01),
+        maxCollateralDiscount,
+        spotMarketSkewScaleScalar: bn(2),
+      });
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max(size / skewScale, minHaicut), maxHaircut))
+      // price = oraclePrice * (1 - min(max(amount / (skewScale * spotMarketSkewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
       //
-      // 30_000 / 1_000_000 = 0.03 (bounded by max is 0.02).
-      const size = bn(30_000);
+      // 30k / (500k * 2) = 0.03 (bounded by max is 0.02).
+      const amount = bn(30_000);
 
-      const expectedPrice = wei(collateralPrice).mul(bn(1).sub(maxCollateralHaircut)).toBN();
-      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);
+      const expectedPrice = wei(collateralPrice).mul(bn(1).sub(maxCollateralDiscount)).toBN();
+      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), amount);
 
-      assertBn.equal(priceWithHaircut, expectedPrice);
+      assertBn.equal(priceWithDiscount, expectedPrice);
     });
 
-    it('should min bound the haircut on small skew shift', async () => {
+    it('should min bound the collateral discount on small skew shift', async () => {
       const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
       const collateralPrice = await collateral.getPrice();
 
-      const minCollateralHaircut = bn(0.01);
-      await setMarketConfiguration(bs, { minCollateralHaircut, maxCollateralHaircut: bn(0.02) });
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(1_000_000));
+      const minCollateralDiscount = bn(0.01);
+      await setMarketConfiguration(bs, {
+        minCollateralDiscount,
+        maxCollateralDiscount: bn(0.2),
+        spotMarketSkewScaleScalar: bn(2),
+      });
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max(size / skewScale, minHaicut), maxHaircut))
+      // price = oraclePrice * (1 - min(max(amount / (skewScale * spotMarketSkewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
       //
-      // 5000 / 1_000_000 = 0.005 (bounded by min is 0.01).
-      const size = bn(5000);
+      // 500 / (500k * 2) = 0.0005 (bounded by min is 0.01).
+      const amount = bn(500);
 
-      const expectedPrice = wei(collateralPrice).mul(bn(1).sub(minCollateralHaircut)).toBN();
-      const priceWithHaircut = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);
+      const expectedPrice = wei(collateralPrice).mul(bn(1).sub(minCollateralDiscount)).toBN();
+      const priceWithDiscount = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), amount);
 
-      assertBn.equal(priceWithHaircut, expectedPrice);
+      assertBn.equal(priceWithDiscount, expectedPrice);
     });
 
-    it('should return same adjusted price on pos/neg size', async () => {
-      const { PerpMarketProxy } = systems();
+    it('should match the expected discounted collateral price', async () => {
+      const { PerpMarketProxy, SpotMarket } = systems();
 
       const collateral = genOneOf(collaterals());
-      const size = bn(genNumber(1, 10_000));
+      const collateralPrice = await collateral.getPrice();
 
-      const collateralPricePos = await PerpMarketProxy.getHaircutCollateralPrice(collateral.synthMarketId(), size);
-      const collateralPriceNeg = await PerpMarketProxy.getHaircutCollateralPrice(
+      const minCollateralDiscount = bn(0.0001);
+      const maxCollateralDiscount = bn(0.99);
+      const spotMarketSkewScaleScalar = bn(2);
+      await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount, spotMarketSkewScaleScalar });
+
+      const spotMarketSkewScale = bn(500_000);
+      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
         collateral.synthMarketId(),
-        size.mul(-1)
+        spotMarketSkewScale
       );
+      const amount = bn(genNumber(3000, 5000));
 
-      assertBn.equal(collateralPricePos, collateralPriceNeg);
+      const expectedPrice = calcDiscountedCollateralPrice(
+        collateralPrice,
+        amount,
+        spotMarketSkewScale,
+        spotMarketSkewScaleScalar,
+        minCollateralDiscount,
+        maxCollateralDiscount
+      );
+      const actualPrice = await PerpMarketProxy.getDiscountedCollateralPrice(collateral.synthMarketId(), amount);
+
+      assertBn.equal(actualPrice, expectedPrice);
     });
   });
 });

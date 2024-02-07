@@ -43,9 +43,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function setSpotMarket(ISpotMarketSystem spotMarket) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        globalConfig.spotMarket = spotMarket;
+        PerpMarketConfiguration.load().spotMarket = spotMarket;
     }
 
     /**
@@ -53,8 +51,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function setPyth(IPyth pyth) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        globalConfig.pyth = pyth;
+        PerpMarketConfiguration.load().pyth = pyth;
     }
 
     /**
@@ -62,8 +59,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function setEthOracleNodeId(bytes32 ethOracleNodeId) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        globalConfig.ethOracleNodeId = ethOracleNodeId;
+        PerpMarketConfiguration.load().ethOracleNodeId = ethOracleNodeId;
     }
 
     /**
@@ -71,8 +67,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function setRewardDistributorImplementation(address implementation) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        globalConfig.rewardDistributorImplementation = implementation;
+        PerpMarketConfiguration.load().rewardDistributorImplementation = implementation;
     }
 
     /**
