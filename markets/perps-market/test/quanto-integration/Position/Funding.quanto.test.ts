@@ -18,7 +18,7 @@ const _TRADER_SIZE = bn(20);
 const _ETH_PRICE = bn(2000);
 const _BTC_PRICE = bn(20_000);
 
-describe.only('Position - funding', () => {
+describe('Position - funding', () => {
   const traderAccountIds = [2, 3];
   const trader1AccountId = traderAccountIds[0];
   const trader2AccountId = traderAccountIds[1];
@@ -125,22 +125,6 @@ describe.only('Position - funding', () => {
     }));
   });
 
-  // it.only('magic', async () => {
-  //   await fastForwardTo(
-  //     openPositionTime -
-  //       // this enables the market summary check to be as close as possible to the settlement time
-  //       (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
-  //       _SECONDS_IN_DAY * 7,
-  //     provider()
-  //   );
-  //   const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
-  //     2,
-  //     ethMarket.marketId()
-  //     );
-  //   console.log('accruedFunding :', accruedFunding);
-  //   console.log('here');
-  // });
-
   /*
     +------------------------------------------------------------------------------------------+
     | Days elapsed |   Time   | Δ Skew | Skew | FR Velocity |    FR    | Accrued Funding (USD) |
@@ -176,6 +160,7 @@ describe.only('Position - funding', () => {
         prevAccruedFunding,
         prevSkew,
         accDaysElapsed,
+        // values used to compare quanto values with classic funding
         prevFrVelocityClassic,
         prevFundingRateClassic,
         prevAccruedFundingClassic,
@@ -247,8 +232,10 @@ describe.only('Position - funding', () => {
           );
           const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(20_000);
 
-          // using negative value because trader pnl
+          // Check the expected value of the quanto funding in USD is equal to the classic funding
+          // for this skewScale. This is because we have set skewScale to skewScale.div(BTC_PRICE)
           assertBn.equal(expectedAccruedFundingClassic.toBN(), expectedAccruedFundingInUSD.toBN());
+          // using negative value because trader pnl
           assertBn.near(accruedFunding, expectedAccruedFunding.mul(-1).toBN(), bn(0.1));
         });
       });
