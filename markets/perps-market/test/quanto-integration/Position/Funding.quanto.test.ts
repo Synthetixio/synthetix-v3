@@ -171,10 +171,10 @@ describe.only('Position - funding', () => {
   ].reduce(
     (
       { prevFrVelocity, prevFundingRate, prevAccruedFunding, prevSkew, accDaysElapsed,
-        classicPrevFrVelocity,
-        classicPrevFundingRate,
-        classicPrevAccruedFunding,
-        classicPrevSkew,
+        prevFrVelocityClassic,
+        prevFundingRateClassic,
+        prevAccruedFundingClassic,
+        prevSkewClassic,
       },
       { daysElapsed, newOrderSize }
       ) => {
@@ -196,14 +196,14 @@ describe.only('Position - funding', () => {
       // END ACCRUED QUANTO FUNDING CALC -------------------------------------------
 
       // ACCRUED Classic FUNDING CALC ----------------------------------------------
-      const currentSkewClassic = classicPrevSkew.add(newOrderSize);
+      const currentSkewClassic = prevSkewClassic.add(newOrderSize);
       const frVelocityClassic = wei(currentSkewClassic).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
-      const fundingRateClassic = classicPrevFrVelocity.mul(daysElapsed).add(classicPrevFundingRate);
-      const expectedAccruedFundingClassic = Wei.avg(wei(classicPrevFundingRate), wei(fundingRateClassic))
+      const fundingRateClassic = prevFrVelocityClassic.mul(daysElapsed).add(prevFundingRateClassic);
+      const expectedAccruedFundingClassic = Wei.avg(wei(prevFundingRateClassic), wei(fundingRateClassic))
         .mul(_TRADER_SIZE)
         .mul(_ETH_PRICE)
         .mul(daysElapsed)
-        .add(classicPrevAccruedFunding);
+        .add(prevAccruedFundingClassic);
       // END Classic QUANTO FUNDING CALC -------------------------------------------
 
       describe(`after ${daysElapsed} days`, () => {
@@ -251,10 +251,10 @@ describe.only('Position - funding', () => {
         prevAccruedFunding: expectedAccruedFunding,
         prevSkew: currentSkew,
         accDaysElapsed,
-        classicPrevFrVelocity: frVelocityClassic,
-        classicPrevFundingRate: fundingRateClassic,
-        classicPrevAccruedFunding: expectedAccruedFundingClassic,
-        classicPrevSkew: currentSkewClassic,
+        prevFrVelocityClassic: frVelocityClassic,
+        prevFundingRateClassic: fundingRateClassic,
+        prevAccruedFundingClassic: expectedAccruedFundingClassic,
+        prevSkewClassic: currentSkewClassic,
       };
     },
     {
@@ -263,10 +263,10 @@ describe.only('Position - funding', () => {
       prevAccruedFunding: wei(0),
       prevSkew: wei(20).div(_BTC_PRICE),
       accDaysElapsed: 0,
-      classicPrevFrVelocity: wei(0.006),
-      classicPrevFundingRate: wei(0),
-      classicPrevAccruedFunding: wei(0),
-      classicPrevSkew: wei(20),
+      prevFrVelocityClassic: wei(0.006),
+      prevFundingRateClassic: wei(0),
+      prevAccruedFundingClassic: wei(0),
+      prevSkewClassic: wei(20),
     }
   );
 });
