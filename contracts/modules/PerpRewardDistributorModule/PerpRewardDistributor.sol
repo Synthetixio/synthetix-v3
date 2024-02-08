@@ -48,8 +48,8 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     }
 
     /**
-    * @dev Throwns `Unauthorized` when msg.sender is not the `poolId` pool owner.
-    */
+     * @dev Throwns `Unauthorized` when msg.sender is not the `poolId` pool owner.
+     */
     function onlyPoolOwner() private view {
         if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
             revert AccessError.Unauthorized(msg.sender);
