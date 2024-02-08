@@ -53,6 +53,7 @@ contract PerpAccountModule is IPerpAccountModule {
             IPerpAccountModule.AccountDigest(
                 depositedCollaterals,
                 Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */),
+                accountMargin.debt,
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)
             );

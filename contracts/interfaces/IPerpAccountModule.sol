@@ -21,6 +21,8 @@ interface IPerpAccountModule {
         IPerpAccountModule.DepositedCollateral[] depositedCollaterals;
         // USD value of deposited collateral.
         uint256 collateralUsd;
+        // Debt of account in USD.
+        uint128 debt;
         // Struct of order if one is pending, default values if none.
         Order.Data order;
         // Struct of `PositionDigest` if a position is open, default values if none.
