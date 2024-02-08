@@ -7,6 +7,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "cov": "forge coverage --report lcov && genhtml ./lcov.info --output-directory coverage",
     "pretty": "prettier --write ./src/**/* ./test/**/* ./*.*",
     "pretty:check": "prettier --check ./src/**/* ./test/**/* ./*.*"
   },
