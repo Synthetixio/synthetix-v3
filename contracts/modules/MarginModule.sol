@@ -26,6 +26,7 @@ contract MarginModule is IMarginModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
+    using Margin for Margin.Data;
 
     // --- Runtime structs --- //
 
@@ -416,6 +417,46 @@ contract MarginModule is IMarginModule {
         }
 
         emit CollateralConfigured(msg.sender, runtime.lengthAfter);
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function payDebt(uint128 accountId, uint128 marketId, uint256 amount) external {
+        FeatureFlag.ensureAccessToFeature(Flags.PAY_DEBT);
+
+        // Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_DEBT_PERMISSION);
+        // TODO replace with proper permission when it exists
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        uint128 debt = accountMargin.debt;
+        uint256 amountToUse = MathUtil.min(amount, debt);
+        uint256 availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+        uint256 acountPaidWithCollateral = 0;
+        if (availableSusd > 0) {
+            // We have some sUSD collateral.
+            if (availableSusd > accountMargin.debt) {
+                // We have enough sUSD collateral to cover all debt.
+                amountToUse -= 0;
+                acountPaidWithCollateral = accountMargin.debt;
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= accountMargin.debt;
+            } else {
+                // We couldn't cover all debt, take what we can.
+                amountToUse -= availableSusd;
+                acountPaidWithCollateral = availableSusd;
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+            }
+        }
+
+        (int128 debtAmountDeltaUsd, ) = accountMargin.updateAccountDebtAndCollateral(amountToUse.toInt());
+        market.updateDebtAndCollateral(debtAmountDeltaUsd, availableSusd.to128().toInt() * -1);
+
+        globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amount);
+
+        emit DebtPaid(amountToUse, acountPaidWithCollateral, accountMargin.debt);
     }
 
     // --- Views --- //

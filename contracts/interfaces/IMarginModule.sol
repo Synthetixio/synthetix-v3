@@ -28,7 +28,16 @@ interface IMarginModule is IBasePerpMarket {
     // @notice Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
 
+    // @notice Emitted when debt is paid off.
+    event DebtPaid(uint256 amountPaid, uint256 amountFromCollateral, uint256 newDebt);
+
     // --- Mutative --- //
+
+    /**
+     * @notice Pays back debt for `accountId` and `marketId`.
+     * Users can partially pay off their debt and if amount is bigger than the debt, only the debt will be cleared.
+     */
+    function payDebt(uint128 accountId, uint128 marketId, uint256 amount) external;
 
     /**
      * @notice Convenience method to withdraw all collateral for `accountId` and `marketId`.

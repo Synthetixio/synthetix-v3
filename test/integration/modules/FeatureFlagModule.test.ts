@@ -18,7 +18,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('FeatureFlagModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, systems, restore, keeper, provider } = bs;
+  const { markets, collaterals, traders, systems, restore, keeper, provider, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
@@ -187,6 +187,28 @@ describe('FeatureFlagModule', () => {
       PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, { value: updateFee }),
       `FeatureUnavailable("${feature}")`
     );
+  });
+
+  it('should disable payDebt', async () => {
+    const { PerpMarketProxy } = systems();
+    const feature = formatBytes32String('payDebt');
+    const { receipt } = await withExplicitEvmMine(
+      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+
+    const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+    await commitAndSettle(bs, marketId, trader, order);
+    const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSize: order.sizeDelta.mul(-1),
+    });
+    await commitAndSettle(bs, marketId, trader, closeOrder);
+    await assertRevert(PerpMarketProxy.payDebt(trader.accountId, marketId, bn(1)), `FeatureUnavailable("${feature}")`);
   });
 
   it('should disable flagPosition', async () => {
