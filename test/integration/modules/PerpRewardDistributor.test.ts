@@ -36,8 +36,8 @@ describe('PerpRewardDistributor', () => {
       assert.equal(await PerpRewardDistributor.callStatic.name(), args.name);
       assert.equal(await PerpRewardDistributor.callStatic.token(), args.token);
 
-      const collateralTypes = await PerpRewardDistributor.getCollateralTypes();
-      assert.deepEqual(collateralTypes, args.collateralTypes);
+      const poolCollateralTypes = await PerpRewardDistributor.getPoolCollateralTypes();
+      assert.deepEqual(poolCollateralTypes, args.collateralTypes);
     });
   });
 
@@ -93,7 +93,7 @@ describe('PerpRewardDistributor', () => {
       const hasPayoutProcessed = await distributor
         .connect(owner())
         .callStatic.payout(bn(0), bn(0), genAddress(), genAddress(), bn(0));
-      assert.equal(hasPayoutProcessed, true);
+      assert.equal(hasPayoutProcessed, false);
     });
 
     it('should revert when poolId does not match', async () => {

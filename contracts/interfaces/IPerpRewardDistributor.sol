@@ -15,7 +15,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
     /**
      * @notice Returns a list of pool collateral types this distributor was registered with.
      */
-    function getCollateralTypes() external view returns (address[] memory);
+    function getPoolCollateralTypes() external view returns (address[] memory);
 
     // --- Mutative --- //
 

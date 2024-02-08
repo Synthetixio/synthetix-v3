@@ -21,8 +21,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     address private _token;
     string private _name;
     uint128 private _poolId;
-    // TODO: Rename to delegatedCollateralTypes.
-    address[] private _collateralTypes;
+    address[] private _poolCollateralTypes;
     bool public shouldFailPayout;
 
     constructor() {
@@ -48,7 +47,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     }
 
     /**
-     * @dev Throwns `Unauthorized` when msg.sender is not the `poolId` pool owner.
+     * @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
      */
     function onlyPoolOwner() private view {
         if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
@@ -63,14 +62,14 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         address rewardManager,
         address perpMarket,
         uint128 poolId_,
-        address[] calldata collateralTypes_,
+        address[] calldata poolCollateralTypes_,
         address token_,
         string memory name_
     ) external initializer {
         _rewardManager = rewardManager; // CoreProxy
         _perpMarket = perpMarket;
         _poolId = poolId_;
-        _collateralTypes = collateralTypes_;
+        _poolCollateralTypes = poolCollateralTypes_;
         _token = token_;
         _name = name_;
     }
@@ -99,8 +98,8 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     /**
      * @inheritdoc IPerpRewardDistributor
      */
-    function getCollateralTypes() external view returns (address[] memory) {
-        return _collateralTypes;
+    function getPoolCollateralTypes() external view returns (address[] memory) {
+        return _poolCollateralTypes;
     }
 
     /**
@@ -111,7 +110,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         shouldFailPayout = _shouldFailedPayout;
     }
 
-    // --- IRewardDistributor Requirements --- //
+    // --- IRewardDistributor requirements --- //
 
     /**
      * @inheritdoc IRewardDistributor
@@ -134,7 +133,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         uint128,
         uint128 poolId,
         address token_,
-        address sender, // claimRewards
+        address sender, // msg.sender that called `claimRewards`
         uint256 amount
     ) external returns (bool) {
         if (shouldFailPayout) {

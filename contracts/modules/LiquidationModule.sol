@@ -112,7 +112,7 @@ contract LiquidationModule is ILiquidationModule {
                 ITokenModule(synth).transfer(address(distributor), runtime.availableAccountCollateral);
 
                 runtime.poolId = distributor.getPoolId();
-                address[] memory poolCollateralTypes = distributor.getCollateralTypes();
+                address[] memory poolCollateralTypes = distributor.getPoolCollateralTypes();
                 runtime.poolCollateralTypesLength = poolCollateralTypes.length;
 
                 // Calculate the USD value of each collateral delegated to pool.
