@@ -32,7 +32,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
     ) external;
 
     /**
-     * @notice Set true to disable `payout` to revert on claim or false to allow.
+     * @notice Set true to disable `payout` to revert on claim or false to allow. Only callable by pool owner.
      */
     function setShouldFailPayout(bool _shouldFailedPayout) external;
 
