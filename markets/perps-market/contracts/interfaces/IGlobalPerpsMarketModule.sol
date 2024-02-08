@@ -72,16 +72,22 @@ interface IGlobalPerpsMarketModule {
     event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
+     * @notice Gets fired when feed id for keeper cost node id is updated.
+     * @param keeperCostNodeId oracle node id
+     */
+    event KeeperCostNodeIdUpdated(bytes32 keeperCostNodeId);
+
+    /**
      * @notice Gets fired when TODO.
      * @param collateralLiquidateRewardRatioD18 TODO
      */
     event CollateralLiquidateRewardRatioSet(uint128 collateralLiquidateRewardRatioD18);
 
     /**
-     * @notice Gets fired when feed id for keeper cost node id is updated.
-     * @param keeperCostNodeId oracle node id
+     * @notice Gets fired when TODO.
+     * @param rewardDistributorImplementation TODO
      */
-    event KeeperCostNodeIdUpdated(bytes32 keeperCostNodeId);
+    event RewardDistributorImplementationSet(address rewardDistributorImplementation);
 
     /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
@@ -283,4 +289,11 @@ interface IGlobalPerpsMarketModule {
         external
         view
         returns (uint128 collateralLiquidateRewardRatioD18);
+
+    function setRewardDistributorImplementation(address rewardDistributorImplementation) external;
+
+    function getRewardDistributorImplementation()
+        external
+        view
+        returns (address rewardDistributorImplementation);
 }

@@ -89,6 +89,10 @@ library GlobalPerpsMarketConfiguration {
          * @dev TODO
          */
         uint128 collateralLiquidateRewardRatioD18;
+        /**
+         * @dev TODO
+         */
+        address rewardDistributorImplementation;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {

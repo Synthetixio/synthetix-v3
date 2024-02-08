@@ -12,6 +12,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
@@ -331,5 +332,39 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         (uint128 interestRate, ) = InterestRate.update();
 
         emit InterestRateUpdated(PerpsMarketFactory.load().perpsMarketId, interestRate);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setRewardDistributorImplementation(
+        address rewardDistributorImplementation
+    ) external override {
+        if (rewardDistributorImplementation == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        if (!AddressUtil.isContract(rewardDistributorImplementation)) {
+            revert AddressError.NotAContract(rewardDistributorImplementation);
+        }
+
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration
+            .load()
+            .rewardDistributorImplementation = rewardDistributorImplementation;
+
+        emit RewardDistributorImplementationSet(rewardDistributorImplementation);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getRewardDistributorImplementation()
+        external
+        view
+        override
+        returns (address rewardDistributorImplementation)
+    {
+        return GlobalPerpsMarketConfiguration.load().rewardDistributorImplementation;
     }
 }
