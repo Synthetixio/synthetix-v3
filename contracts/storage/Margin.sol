@@ -71,8 +71,7 @@ library Margin {
      * account. Returns the collateral and debt delta's.
      */
     function updateAccountDebtAndCollateral(
-        uint128 accountId,
-        uint128 marketId,
+        Margin.Data storage accountMargin,
         int256 amountDeltaUsd
     ) internal returns (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) {
         // Nothing to update, this is a no-op.
@@ -96,7 +95,6 @@ library Margin {
         // - All position modifications involve 'touching' a position which realizes the profit/loss
         // - All profitable positions are first paying back any debt and the rest is added as sUSD as collateral
         // - All accounting can be performed within the market (i.e. no need to move tokens around)
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         uint128 absAmountDeltaUsd = MathUtil.abs(amountDeltaUsd).to128();
         // >0 means to add sUSD to this account's margin (realized profit).
         if (amountDeltaUsd > 0) {

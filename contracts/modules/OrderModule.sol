@@ -31,6 +31,7 @@ contract OrderModule is IOrderModule {
     using Order for Order.Data;
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
+    using Margin for Margin.Data;
 
     // --- Runtime structs --- //
 
@@ -39,6 +40,7 @@ contract OrderModule is IOrderModule {
         int256 accruedFunding;
         int256 pnl;
         uint256 fillPrice;
+        uint128 accountDebt;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
@@ -283,22 +285,20 @@ contract OrderModule is IOrderModule {
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
             // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-
             uint256 collateralUsd = Margin.getCollateralUsd(
                 accountId,
                 marketId,
                 false /* useDiscountedCollateralPrice */
             );
-
-            (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) = Margin.updateAccountDebtAndCollateral(
-                accountId,
-                marketId,
+            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+            (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) = accountMargin.updateAccountDebtAndCollateral(
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
                 runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
             );
             market.updateDebtAndCollateral(debtAmountDeltaUsd, sUSDCollateralDelta);
+            runtime.accountDebt = accountMargin.debt;
         }
 
         if (runtime.trade.newPosition.size == 0) {
@@ -322,7 +322,8 @@ contract OrderModule is IOrderModule {
             healthData.accruedFunding,
             healthData.accruedUtilization,
             healthData.pnl,
-            runtime.fillPrice
+            runtime.fillPrice,
+            runtime.accountDebt
         );
 
         // Validate and perform the hook post settlement execution.
@@ -398,9 +399,9 @@ contract OrderModule is IOrderModule {
 
         uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
         if (keeperFee > 0) {
-            (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) = Margin.updateAccountDebtAndCollateral(
-                accountId,
-                market.id,
+            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
+            (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) = accountMargin.updateAccountDebtAndCollateral(
                 keeperFee.toInt() * -1
             );
             market.updateDebtAndCollateral(debtAmountDeltaUsd, sUSDCollateralDelta);
