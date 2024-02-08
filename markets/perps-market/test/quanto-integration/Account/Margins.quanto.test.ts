@@ -1,7 +1,12 @@
 import { bn, bootstrapMarkets } from '../../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { openPosition } from '../../integration/helpers';
-import { getQuantoPositionSize, getQuantoPnlWithSkew, ONE_ETHER } from '../../integration/helpers/';
+import {
+  getQuantoPositionSize,
+  getQuantoPnlWithSkew,
+  getQuantoFillPrice,
+  ONE_ETHER,
+} from '../../integration/helpers/';
 import { ethers } from 'ethers';
 
 describe.only('Account margins test', () => {
@@ -9,7 +14,9 @@ describe.only('Account margins test', () => {
   const accountId = 4;
   const usdMarketId = 0;
   const btcMarketId = 25;
+  const btcMarketIdBn = bn(btcMarketId).div(ONE_ETHER);
   const ethMarketId = 26;
+  const ethMarketIdBn = bn(ethMarketId).div(ONE_ETHER);
   const quantoSynthMarketIndex = 0;
 
   // Market Prices
@@ -220,7 +227,7 @@ describe.only('Account margins test', () => {
         trader: trader1(),
         accountId,
         keeper: trader1(),
-        marketId: perpsMarkets()[0].marketId(),
+        marketId: btcMarketIdBn,
         sizeDelta: orderSizeBtcMarket,
         settlementStrategyId: perpsMarkets()[0].strategyId(),
         price: btcPrice,
@@ -232,7 +239,7 @@ describe.only('Account margins test', () => {
         trader: trader1(),
         accountId,
         keeper: trader1(),
-        marketId: perpsMarkets()[1].marketId(),
+        marketId: ethMarketIdBn,
         sizeDelta: orderSizeEthMarket,
         settlementStrategyId: perpsMarkets()[1].strategyId(),
         price: ethPrice,
@@ -285,24 +292,71 @@ describe.only('Account margins test', () => {
       minimumPositionMargin = btcMinimumPositionMargin.add(ethMinimumPositionMargin);
     });
 
+    it('btc position has correct fill price', async () => {
+      const actualBtcFillPrice = await systems().PerpsMarket.fillPrice(
+        bn(btcMarketId).div(ONE_ETHER),
+        btcInitialPositionSize,
+        btcPrice
+      );
+
+      const expectedBtcFillPrice = getQuantoFillPrice({
+        skew: startingSkew,
+        skewScale: perpsMarketConfig[0].fundingParams.skewScale,
+        size: btcInitialPositionSize,
+        price: btcPrice,
+      });
+
+      // 🚨 expected and actual fill price precision loss
+      // 29700000000000000000000 -> expected
+      // 29699980000000000020000 -> actual
+      assertBn.equal(expectedBtcFillPrice, actualBtcFillPrice);
+    });
+
+    it('eth position has correct fill price', async () => {
+      const actualEthFillPrice = await systems().PerpsMarket.fillPrice(
+        bn(ethMarketId).div(ONE_ETHER),
+        ethInitialPositionSize,
+        ethPrice
+      );
+
+      const expectedEthFillPrice = getQuantoFillPrice({
+        skew: startingSkew,
+        skewScale: perpsMarketConfig[1].fundingParams.skewScale,
+        size: ethInitialPositionSize,
+        price: ethPrice,
+      });
+
+      // 🚨 expected and actual fill price precision loss
+      // 2020000000000000000000 -> expected
+      // 2020020000000000000000 -> actual
+      assertBn.equal(expectedEthFillPrice, actualEthFillPrice);
+    });
+
     it('has correct available margin', async () => {
-      // 🚨 test helper is off by <0.00001% of returned system value. why?
+      // 🚨 expected and actual available margin precision loss
+      // 99999999899333333333335 -> expected
+      // 99999798666666666670000 -> actual
       assertBn.equal(
-        await systems().PerpsMarket.getAvailableMargin(accountId),
-        initialAccountMargin.add(initialPnl)
+        initialAccountMargin.add(initialPnl),
+        await systems().PerpsMarket.getAvailableMargin(accountId)
       );
     });
 
     it('has correct withdrawable margin', async () => {
+      const expectedWithdrawableMargin = initialAccountMargin
+        .add(initialPnl)
+        .sub(btcInitialPositionMargin)
+        .sub(ethInitialPositionMargin)
+        .sub(ethLiqMargin)
+        .sub(btcLiqMargin)
+        .sub(minimumPositionMargin);
+
+      // 🚨 expected and actual withdrawable margin precision loss
+      // 99699999899333333333335 -> expected
+      // 98498478264000000004537 -> actual
       assertBn.equal(
-        await systems().PerpsMarket.getWithdrawableMargin(accountId),
-        initialAccountMargin
-          .add(initialPnl)
-          .sub(btcInitialPositionMargin)
-          .sub(ethInitialPositionMargin)
-          .sub(ethLiqMargin)
-          .sub(btcLiqMargin)
-          .sub(minimumPositionMargin)
+        expectedWithdrawableMargin,
+        await systems().PerpsMarket.getWithdrawableMargin(accountId)
       );
     });
 
@@ -310,20 +364,28 @@ describe.only('Account margins test', () => {
       const [initialMargin, , maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
 
-      assertBn.equal(
-        initialMargin.sub(maxLiquidationReward),
-        btcInitialPositionMargin.add(ethInitialPositionMargin).add(minimumPositionMargin)
-      );
+      const expectedInitialMargin = btcInitialPositionMargin
+        .add(ethInitialPositionMargin)
+        .add(minimumPositionMargin);
+
+      // 🚨 expected and actual initial margin calculation error
+      // 1300000000000000000000 -> expected
+      // 1500220402666666666463 -> actual
+      assertBn.equal(expectedInitialMargin, initialMargin.sub(maxLiquidationReward));
     });
 
     it('has correct maintenance margin', async () => {
       const [, maintenanceMargin, maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
 
-      assertBn.equal(
-        maintenanceMargin.sub(maxLiquidationReward),
-        btcMaintenanceMargin.add(ethMaintenanceMargin).add(minimumPositionMargin)
-      );
+      const expectedMaintenanceMargin = btcMaintenanceMargin
+        .add(ethMaintenanceMargin)
+        .add(minimumPositionMargin);
+
+      // 🚨 expected and actual maintenance margin calculation error
+      // 1400000000000000000000 -> expected
+      // 1500110201333333333231 -> actual
+      assertBn.equal(expectedMaintenanceMargin, maintenanceMargin.sub(maxLiquidationReward));
     });
   });
 });
