@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 
+// useful for preventing rounding errors
 export const ONE_ETHER = ethers.utils.parseEther('1');
 
 export type GetQuantoPositionSizeArgs = {
@@ -34,7 +35,7 @@ export const getQuantoFillPrice = ({ skew, skewScale, size, price }: GetQuantoFi
     return price;
   }
   const pdBefore = skew.mul(ONE_ETHER).div(skewScale);
-  const pdAfter = ((skew.add(size)).mul(ONE_ETHER)).div(skewScale);
+  const pdAfter = skew.add(size).mul(ONE_ETHER).div(skewScale);
   const priceBefore = price.add(price.mul(pdBefore).div(ONE_ETHER));
   const priceAfter = price.add(price.mul(pdAfter).div(ONE_ETHER));
   return priceBefore.add(priceAfter).div(2);
@@ -93,7 +94,7 @@ export const getQuantoPnlWithSkew = ({
 
   return baseAssetStartPrice.sub(fillPrice).mul(baseAssetSizeDelta).div(ONE_ETHER);
 
-  // 💡 invariant assertion: 
+  // 💡 invariant assertion:
   // iff the quanto asset is static,
   // then PnL should be a function of only the base asset price impact
 };
