@@ -38,6 +38,7 @@ import {
   setMarketConfiguration,
   SECONDS_ONE_DAY,
   setMarketConfigurationById,
+  payDebt,
 } from '../../helpers';
 import { calcDiscountedCollateralPrice, calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -1148,7 +1149,7 @@ describe('MarginModule', async () => {
       it('should withdraw with fees and funding removed when no price changes', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress, collateralPrice } =
-          await depositMargin(bs, genTrader(bs));
+          await depositMargin(bs, genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })); // we exclude sUSD to get consistent debt behavior
 
         // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
         // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
@@ -1172,6 +1173,10 @@ describe('MarginModule', async () => {
         // Get the fees from the open and close order events
         const openOrderEvent = findEventSafe(openReceipt, 'OrderSettled', PerpMarketProxy);
         const closeOrderEvent = findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy);
+
+        // payDebt will mint the sUSD so we don't expect that to affect final balance.
+        await payDebt(bs, marketId, trader);
+
         const fees = wei(openOrderEvent?.args.orderFee)
           .add(openOrderEvent?.args.keeperFee)
           .add(closeOrderEvent?.args.orderFee)
@@ -1183,16 +1188,17 @@ describe('MarginModule', async () => {
           .sub(fees)
           .add(closeOrderEvent?.args.accruedFunding)
           .sub(closeOrderEvent?.args.accruedUtilization);
-        const expectedChange = expectedChangeUsd.div(collateralPrice);
+
+        // The account's debt should account for all the fees and pnl.
+        assertBn.near(expectedChangeUsd.abs().toBN(), closeOrderEvent.args.accountDebt, bn(0.0001));
 
         // Perform the withdrawal.
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
-        assertBn.lt(expectedChange.toBN(), bn(0));
-        const expectedBalance = startingCollateralBalance.add(expectedChange).toBN();
-
-        assertBn.near(expectedBalance, actualBalance, bn(0.0001));
+        // Since we minted sUSD to pay the debt we expect the balance to be the same as the starting balance.
+        assertBn.near(startingCollateralBalance.toBN(), actualBalance, bn(0.0001));
       });
 
       forEach([
@@ -1325,6 +1331,7 @@ describe('MarginModule', async () => {
       // TODO: Remove `.skip`
       //
       // PythMock's `parsePriceFeedUpdatesInternal` doesn't perform a price update so this currently fails.
+      // Also make make sure this takes debt into account.
       //
       // @see: https://github.com/usecannon/pyth-crosschain/blob/main/target_chains/ethereum/sdk/solidity/MockPyth.sol#L80
       it.skip('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {

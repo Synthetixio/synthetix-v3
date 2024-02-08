@@ -240,6 +240,20 @@ export const commitAndSettle = async (
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
 };
 
+export const payDebt = async (bs: Bs, marketId: BigNumber, trader: Trader) => {
+  const { collaterals, systems } = bs;
+  const { PerpMarketProxy } = systems();
+
+  const sUsdCollateral = getSusdCollateral(collaterals());
+  const { debt } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+  if (debt.eq(0)) return;
+  await mintAndApprove(bs, sUsdCollateral, debt, trader.signer);
+  return withExplicitEvmMine(
+    () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debt),
+    bs.provider()
+  );
+};
+
 /** This is still quite buggy in anvil so use with care */
 export const setBaseFeePerGas = async (amountInGwei: number, provider: providers.JsonRpcProvider) => {
   await provider.send('anvil_setNextBlockBaseFeePerGas', ['0x' + (amountInGwei * 1e9).toString(16)]);
