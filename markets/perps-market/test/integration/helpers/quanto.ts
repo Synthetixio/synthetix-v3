@@ -93,6 +93,11 @@ export type getQuantoPnlWithSkew = {
   skewScale: ethers.BigNumber;
 };
 
+// ❌ not confirmed; precision loss possible
+//
+// Calculates the PnL of a quanto position at the point of trade
+// given the premium or discount applied to the base asset price
+// based on the skew and skewScale.
 export const getQuantoPnlWithSkew = ({
   baseAssetStartPrice,
   baseAssetSizeDelta,
