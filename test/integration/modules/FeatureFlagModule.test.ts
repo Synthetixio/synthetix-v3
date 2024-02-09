@@ -211,6 +211,23 @@ describe('FeatureFlagModule', () => {
     await assertRevert(PerpMarketProxy.payDebt(trader.accountId, marketId, bn(1)), `FeatureUnavailable("${feature}")`);
   });
 
+  it('should disable liquidateMargin', async () => {
+    const { PerpMarketProxy } = systems();
+    const feature = formatBytes32String('liquidateMargin');
+    const { receipt } = await withExplicitEvmMine(
+      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+
+    const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+
+    await assertRevert(
+      PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
+      `FeatureUnavailable("${feature}")`
+    );
+  });
+
   it('should disable flagPosition', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('flagPosition');

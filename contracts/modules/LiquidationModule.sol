@@ -26,7 +26,7 @@ contract LiquidationModule is ILiquidationModule {
 
     // --- Runtime structs --- //
 
-    struct Runtime_updateMarketPostFlag {
+    struct Runtime_liquidateCollateral {
         uint256 availableSusd;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
@@ -73,16 +73,15 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Invoked post flag when position is dead and set to liquidate.
+     * @dev Invoked post flag when position is dead and set to liquidate. Or when liquidating margin only due to debt.
      */
-    function updateMarketPostFlag(
+    function liquidateCollateral(
         uint128 accountId,
         uint128 marketId,
         PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
-        Runtime_updateMarketPostFlag memory runtime;
-
+        Runtime_liquidateCollateral memory runtime;
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
 
@@ -90,6 +89,11 @@ contract LiquidationModule is ILiquidationModule {
         if (runtime.availableSusd > 0) {
             market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= runtime.availableSusd;
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+        }
+        // Clear out debt
+        if (accountMargin.debt > 0) {
+            market.totalTraderDebt -= accountMargin.debt;
+            accountMargin.debt = 0;
         }
 
         // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,
@@ -219,7 +223,8 @@ contract LiquidationModule is ILiquidationModule {
 
         // Update position and market accounting.
         position.update(newPosition);
-        updateMarketPostFlag(accountId, marketId, market, globalConfig);
+
+        liquidateCollateral(accountId, marketId, market, globalConfig);
 
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
@@ -267,6 +272,31 @@ contract LiquidationModule is ILiquidationModule {
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
         emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqKeeperFee, oraclePrice);
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidateMarginOnly(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN);
+
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        if (!isMarginLiquidatable(accountId, marketId)) {
+            revert ErrorUtil.CannotLiquidateMargin();
+        }
+
+        // Remove any pending orders that may exist.
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta != 0) {
+            emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
+            delete market.orders[accountId];
+        }
+
+        liquidateCollateral(accountId, marketId, market, PerpMarketConfiguration.load());
+        // TODO figure out keeper fees
+        // TODO define more properties for event
+        emit MarginLiquidated(accountId, marketId);
     }
 
     // --- Views --- //
@@ -327,6 +357,17 @@ contract LiquidationModule is ILiquidationModule {
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function isMarginLiquidatable(uint128 accountId, uint128 marketId) public view returns (bool) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return
+            Margin.getMarginUsd(accountId, market, market.getOraclePrice(), true /* useDiscountedCollateralPrice */) <
+            0;
     }
 
     /**

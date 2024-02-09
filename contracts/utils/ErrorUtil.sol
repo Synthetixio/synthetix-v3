@@ -44,6 +44,9 @@ library ErrorUtil {
     // @notice Thrown when a position cannot be liquidated.
     error CannotLiquidatePosition();
 
+    // @notice Thrown when margin cannot be liquidated.
+    error CannotLiquidateMargin();
+
     // @notice Thrown when liquidation has hit its capacity limit for current window.
     error LiquidationZeroCapacity();
 
