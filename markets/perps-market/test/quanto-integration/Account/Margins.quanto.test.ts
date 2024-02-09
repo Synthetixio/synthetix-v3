@@ -189,6 +189,10 @@ describe.only('Account margins test', () => {
     let btcInitialPositionMargin: ethers.BigNumber;
     let ethInitialPositionMargin: ethers.BigNumber;
 
+    // Position Fill Prices
+    let btcFillPrice: ethers.BigNumber;
+    let ethFillPrice: ethers.BigNumber;
+
     // Starting Market Skew
     const startingSkew = bn(0);
 
@@ -220,6 +224,22 @@ describe.only('Account margins test', () => {
         sizeInBaseAsset: ethInitialPositionSize,
         quantoAssetPrice: ethPrice,
       });
+
+      // must record prior to opening position otherwise
+      // accurate system state is not achieved
+      btcFillPrice = await systems().PerpsMarket.fillPrice(
+        bn(btcMarketId).div(ONE_ETHER),
+        btcInitialPositionSize,
+        btcPrice
+      );
+
+      // must record prior to opening position otherwise
+      // accurate system state is not achieved
+      ethFillPrice = await systems().PerpsMarket.fillPrice(
+        bn(ethMarketId).div(ONE_ETHER),
+        ethInitialPositionSize,
+        ethPrice
+      );
 
       await openPosition({
         systems,
@@ -293,12 +313,6 @@ describe.only('Account margins test', () => {
     });
 
     it('btc position has correct fill price', async () => {
-      const actualBtcFillPrice = await systems().PerpsMarket.fillPrice(
-        bn(btcMarketId).div(ONE_ETHER),
-        btcInitialPositionSize,
-        btcPrice
-      );
-
       const expectedBtcFillPrice = getQuantoFillPrice({
         skew: startingSkew,
         skewScale: perpsMarketConfig[0].fundingParams.skewScale,
@@ -306,19 +320,10 @@ describe.only('Account margins test', () => {
         price: btcPrice,
       });
 
-      // 🚨 expected and actual fill price precision loss
-      // 29700000000000000000000 -> expected
-      // 29699980000000000020000 -> actual
-      assertBn.equal(expectedBtcFillPrice, actualBtcFillPrice);
+      assertBn.equal(expectedBtcFillPrice, btcFillPrice);
     });
 
     it('eth position has correct fill price', async () => {
-      const actualEthFillPrice = await systems().PerpsMarket.fillPrice(
-        bn(ethMarketId).div(ONE_ETHER),
-        ethInitialPositionSize,
-        ethPrice
-      );
-
       const expectedEthFillPrice = getQuantoFillPrice({
         skew: startingSkew,
         skewScale: perpsMarketConfig[1].fundingParams.skewScale,
@@ -326,10 +331,7 @@ describe.only('Account margins test', () => {
         price: ethPrice,
       });
 
-      // 🚨 expected and actual fill price precision loss
-      // 2020000000000000000000 -> expected
-      // 2020020000000000000000 -> actual
-      assertBn.equal(expectedEthFillPrice, actualEthFillPrice);
+      assertBn.equal(expectedEthFillPrice, ethFillPrice);
     });
 
     it('has correct available margin', async () => {
