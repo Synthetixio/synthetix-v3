@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { PerpsMarket, bn, bootstrapMarkets } from '../../integration/bootstrap';
 import { calculateInterestRate, openPosition, getQuantoPositionSize } from '../../integration/helpers';
+import { stake } from '@synthetixio/main/test/common';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -27,8 +28,8 @@ const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR)
 
 // This test ensures interest accrued is accurately reflected even if the interest rate is turned off
 // at a later time.
-describe.only('Position - interest rates - reset', () => {
-  const { systems, perpsMarkets, synthMarkets, superMarketId, provider, trader1, keeper, owner } =
+describe('Position - interest rates - reset', () => {
+  const { systems, perpsMarkets, synthMarkets, superMarketId, provider, trader1, trader3, keeper, owner, poolId } =
     bootstrapMarkets({
       interestRateParams: {
         lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
@@ -62,6 +63,19 @@ describe.only('Position - interest rates - reset', () => {
     });
 
   let ethMarket: PerpsMarket;
+
+  // this is so that the creditCapacityD18 for the perps market is the same as in the non-quanto tests
+  // as this test includes a synth market, the creditCapacityD18 is split between the two markets
+  // halving the amount of credit available to the perps market, which effects the expected interest
+  before('stake some extra collateral in the core pool', async () => {
+    await stake(
+      { Core: systems().Core, CollateralMock: systems().CollateralMock },
+      poolId,
+      2,
+      trader3(),
+      bn(1000)
+    );
+  })
 
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
@@ -152,13 +166,12 @@ describe.only('Position - interest rates - reset', () => {
           2,
           ethMarket.marketId()
         );
-        const expectedInterest = _TRADER1_LOCKED_OI
+        const expectedInterestBTC = _TRADER1_LOCKED_OI
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(proportionalTime(_SECONDS_IN_DAY));
-        console.log('quanto BTC expectedInterest :', expectedInterest.toString());
-        console.log('quanto USD expectedInterest :', expectedInterest.mul(20_000).toString());
+
         trader1InterestAccumulated = trader1InterestAccumulated.add(owedInterest);
-        assertBn.near(owedInterest, expectedInterest.toBN(), bn(0.0001));
+        assertBn.near(owedInterest, expectedInterestBTC.toBN(), bn(0.0001));
       });
     });
   });
