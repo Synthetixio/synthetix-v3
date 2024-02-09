@@ -4,12 +4,14 @@ pragma solidity ^0.8.13;
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ISynthetixCore} from "./interfaces/ISynthetixCore.sol";
 
 contract RewardsDistributor is IRewardDistributor {
-    address private rewardManager;
+    using ERC20Helper for address;
+
+    address public rewardManager;
     uint128 public poolId;
     address public collateralType;
     string public name;
@@ -41,8 +43,8 @@ contract RewardsDistributor is IRewardDistributor {
 
     function payout(
         uint128, // accountId,
-        uint128, // poolId,
-        address, // collateralType,
+        uint128 poolId_,
+        address collateralType_,
         address payoutTarget_, // msg.sender of claimRewards() call, payout target address
         uint256 payoutAmount_
     ) external returns (bool) {
@@ -53,7 +55,19 @@ contract RewardsDistributor is IRewardDistributor {
         if (msg.sender != rewardManager) {
             revert AccessError.Unauthorized(msg.sender);
         }
-        IERC20(collateralType).transfer(payoutTarget_, payoutAmount_);
+        if (poolId_ != poolId) {
+            revert ParameterError.InvalidParameter(
+                "poolId",
+                "Pool does not match the rewards pool"
+            );
+        }
+        if (collateralType_ != collateralType) {
+            revert ParameterError.InvalidParameter(
+                "collateralType",
+                "Collateral does not match the rewards token"
+            );
+        }
+        collateralType.safeTransfer(payoutTarget_, payoutAmount_);
         return true;
     }
 
@@ -68,10 +82,16 @@ contract RewardsDistributor is IRewardDistributor {
             revert AccessError.Unauthorized(msg.sender);
         }
         if (poolId_ != poolId) {
-            revert ParameterError.InvalidParameter("poolId", "Unexpected pool");
+            revert ParameterError.InvalidParameter(
+                "poolId",
+                "Pool does not match the rewards pool"
+            );
         }
         if (collateralType_ != collateralType) {
-            revert ParameterError.InvalidParameter("collateralType", "Unexpected collateral");
+            revert ParameterError.InvalidParameter(
+                "collateralType",
+                "Collateral does not match the rewards token"
+            );
         }
         ISynthetixCore(rewardManager).distributeRewards(
             poolId_,

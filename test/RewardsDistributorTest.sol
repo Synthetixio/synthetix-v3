@@ -9,6 +9,7 @@ import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRew
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
 contract FakeSNX is MockERC20 {
     constructor() {
@@ -41,7 +42,9 @@ contract CoreProxyMock {
         duration = duration_;
     }
 
-    function getPoolOwner(uint128 poolId_) public view returns (address) {
+    function getPoolOwner(
+        uint128 // poolId_
+    ) public view returns (address) {
         return address(this);
     }
 }
@@ -64,6 +67,7 @@ contract RewardsDistributorTest is Test {
     }
 
     function test_constructor_arguments() public {
+        assertEq(rewardsDistributor.rewardManager(), address(rewardsManager));
         assertEq(rewardsDistributor.name(), "whatever");
         assertEq(rewardsDistributor.collateralType(), address(fakeSnxToken));
         assertEq(rewardsDistributor.token(), address(fakeSnxToken));
@@ -109,12 +113,61 @@ contract RewardsDistributorTest is Test {
         vm.stopPrank();
     }
 
+    function test_payout_WrongPool() public {
+        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        vm.startPrank(address(rewardsManager));
+        vm.deal(address(rewardsManager), 1 ether);
+        uint128 accountId = 1;
+        uint128 poolId = 2;
+        address collateralType = address(fakeSnxToken);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "poolId",
+                "Pool does not match the rewards pool"
+            )
+        );
+        assertEq(
+            rewardsDistributor.payout(accountId, poolId, collateralType, vm.addr(0xB0B), 10e18),
+            false
+        );
+        vm.stopPrank();
+    }
+
+    function test_payout_WrongCollateralType() public {
+        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        vm.startPrank(address(rewardsManager));
+        vm.deal(address(rewardsManager), 1 ether);
+        uint128 accountId = 1;
+        uint128 poolId = 1;
+        address collateralType = address(0xB0B);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "collateralType",
+                "Collateral does not match the rewards token"
+            )
+        );
+        assertEq(
+            rewardsDistributor.payout(accountId, poolId, collateralType, vm.addr(0xB0B), 10e18),
+            false
+        );
+        vm.stopPrank();
+    }
+
     function test_payout_underflow() public {
         vm.startPrank(address(rewardsManager));
         vm.deal(address(rewardsManager), 1 ether);
         uint128 accountId = 1;
         uint128 poolId = 1;
-        vm.expectRevert(bytes("ERC20: subtraction underflow"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20Helper.FailedTransfer.selector,
+                address(rewardsDistributor),
+                vm.addr(0xB0B),
+                10e18
+            )
+        );
         assertEq(
             rewardsDistributor.payout(
                 accountId,
@@ -195,7 +248,7 @@ contract RewardsDistributorTest is Test {
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
                 "poolId",
-                "Unexpected pool"
+                "Pool does not match the rewards pool"
             )
         );
         rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
@@ -215,7 +268,7 @@ contract RewardsDistributorTest is Test {
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
                 "collateralType",
-                "Unexpected collateral"
+                "Collateral does not match the rewards token"
             )
         );
         rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
