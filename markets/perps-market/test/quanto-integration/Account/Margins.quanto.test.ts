@@ -181,27 +181,21 @@ describe.only('Account margins test', () => {
   });
 
   describe('after open positions', () => {
-    // Initial Position Sizes
-    const btcInitialPositionSize = bn(-2);
-    const ethInitialPositionSize = bn(20);
+    // Position Sizes (vanilla perp sizes, not quanto adjusted)
+    const perpPositionSizeBtcMarket = bn(-2);
+    const perpPositionSizeEthMarket = bn(20);
 
-    // Initial Position Margins
-    let btcInitialPositionMargin: ethers.BigNumber;
-    let ethInitialPositionMargin: ethers.BigNumber;
+    // Quanto Position Sizes (adjusted for quanto)
+    let quantoPositionSizeBtcMarket: ethers.BigNumber;
+    let quantoPositionSizeEthMarket: ethers.BigNumber;
 
     // Position Fill Prices
     let btcFillPrice: ethers.BigNumber;
     let ethFillPrice: ethers.BigNumber;
 
-    // Starting Market Skew
-    const startingSkew = bn(0);
-
-    // Order Sizes
-    let orderSizeBtcMarket: ethers.BigNumber;
-    let orderSizeEthMarket: ethers.BigNumber;
-
-    // Initial Profit and Loss
-    let initialPnl: ethers.BigNumber;
+    // Initial Position Margins
+    let btcInitialPositionMargin: ethers.BigNumber;
+    let ethInitialPositionMargin: ethers.BigNumber;
 
     // Liquidation Margins
     let ethLiqMargin: ethers.BigNumber;
@@ -214,31 +208,24 @@ describe.only('Account margins test', () => {
     // General Position Margins
     let minimumPositionMargin: ethers.BigNumber;
 
-    before('open 2 positions', async () => {
-      orderSizeBtcMarket = getQuantoPositionSize({
-        sizeInBaseAsset: btcInitialPositionSize,
-        quantoAssetPrice: btcPrice,
-      });
+    // Starting Market Skew
+    const startingSkew = bn(0);
 
-      orderSizeEthMarket = getQuantoPositionSize({
-        sizeInBaseAsset: ethInitialPositionSize,
-        quantoAssetPrice: ethPrice,
+    // Initial Profit and Loss
+    let initialPnl: ethers.BigNumber;
+
+    before('open BTC position', async () => {
+      quantoPositionSizeBtcMarket = getQuantoPositionSize({
+        sizeInBaseAsset: perpPositionSizeBtcMarket,
+        quantoAssetPrice: btcPrice,
       });
 
       // must record prior to opening position otherwise
       // accurate system state is not achieved
       btcFillPrice = await systems().PerpsMarket.fillPrice(
         bn(btcMarketId).div(ONE_ETHER),
-        btcInitialPositionSize,
+        perpPositionSizeBtcMarket,
         btcPrice
-      );
-
-      // must record prior to opening position otherwise
-      // accurate system state is not achieved
-      ethFillPrice = await systems().PerpsMarket.fillPrice(
-        bn(ethMarketId).div(ONE_ETHER),
-        ethInitialPositionSize,
-        ethPrice
       );
 
       await openPosition({
@@ -248,10 +235,25 @@ describe.only('Account margins test', () => {
         accountId,
         keeper: trader1(),
         marketId: btcMarketIdBn,
-        sizeDelta: orderSizeBtcMarket,
+        sizeDelta: quantoPositionSizeBtcMarket,
         settlementStrategyId: perpsMarkets()[0].strategyId(),
         price: btcPrice,
       });
+    });
+
+    before('open ETH position', async () => {
+      quantoPositionSizeEthMarket = getQuantoPositionSize({
+        sizeInBaseAsset: perpPositionSizeEthMarket,
+        quantoAssetPrice: ethPrice,
+      });
+
+      // must record prior to opening position otherwise
+      // accurate system state is not achieved
+      ethFillPrice = await systems().PerpsMarket.fillPrice(
+        bn(ethMarketId).div(ONE_ETHER),
+        perpPositionSizeEthMarket,
+        ethPrice
+      );
 
       await openPosition({
         systems,
@@ -260,7 +262,7 @@ describe.only('Account margins test', () => {
         accountId,
         keeper: trader1(),
         marketId: ethMarketIdBn,
-        sizeDelta: orderSizeEthMarket,
+        sizeDelta: quantoPositionSizeEthMarket,
         settlementStrategyId: perpsMarkets()[1].strategyId(),
         price: ethPrice,
       });
@@ -272,28 +274,28 @@ describe.only('Account margins test', () => {
 
       const btcPnl = getQuantoPnlWithSkew({
         baseAssetStartPrice: btcPrice,
-        baseAssetSizeDelta: orderSizeBtcMarket,
+        baseAssetSizeDelta: quantoPositionSizeBtcMarket,
         startingSkew: startingSkew,
         skewScale: btcSkewScale,
       });
 
       const ethPnl = getQuantoPnlWithSkew({
         baseAssetStartPrice: ethPrice,
-        baseAssetSizeDelta: orderSizeEthMarket,
+        baseAssetSizeDelta: quantoPositionSizeEthMarket,
         startingSkew: startingSkew,
         skewScale: ethSkewScale,
       });
 
       initialPnl = btcPnl.add(ethPnl);
 
-      const notionalBtcValue = btcInitialPositionSize.mul(btcPrice).div(ONE_ETHER);
-      const notionalEthValue = ethInitialPositionSize.mul(ethPrice).div(ONE_ETHER);
+      const notionalBtcValue = perpPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER);
+      const notionalEthValue = perpPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER);
 
-      const btcInitialMarginRatio = btcInitialPositionSize
+      const btcInitialMarginRatio = perpPositionSizeBtcMarket
         .div(btcSkewScale)
         .mul(initialMarginFraction)
         .add(minimumInitialMarginRatio);
-      const ethInitialMarginRatio = ethInitialPositionSize
+      const ethInitialMarginRatio = perpPositionSizeEthMarket
         .div(ethSkewScale)
         .mul(initialMarginFraction)
         .add(minimumInitialMarginRatio);
@@ -316,7 +318,7 @@ describe.only('Account margins test', () => {
       const expectedBtcFillPrice = getQuantoFillPrice({
         skew: startingSkew,
         skewScale: perpsMarketConfig[0].fundingParams.skewScale,
-        size: btcInitialPositionSize,
+        size: perpPositionSizeBtcMarket,
         price: btcPrice,
       });
 
@@ -327,7 +329,7 @@ describe.only('Account margins test', () => {
       const expectedEthFillPrice = getQuantoFillPrice({
         skew: startingSkew,
         skewScale: perpsMarketConfig[1].fundingParams.skewScale,
-        size: ethInitialPositionSize,
+        size: perpPositionSizeEthMarket,
         price: ethPrice,
       });
 
@@ -335,9 +337,6 @@ describe.only('Account margins test', () => {
     });
 
     it('has correct available margin', async () => {
-      // 🚨 expected and actual available margin precision loss
-      // 99999999899333333333335 -> expected
-      // 99999798666666666670000 -> actual
       assertBn.equal(
         initialAccountMargin.add(initialPnl),
         await systems().PerpsMarket.getAvailableMargin(accountId)
