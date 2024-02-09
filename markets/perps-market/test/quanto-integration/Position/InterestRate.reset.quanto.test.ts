@@ -1,6 +1,10 @@
 import { ethers } from 'ethers';
 import { PerpsMarket, bn, bootstrapMarkets } from '../../integration/bootstrap';
-import { calculateInterestRate, openPosition, getQuantoPositionSize } from '../../integration/helpers';
+import {
+  calculateInterestRate,
+  openPosition,
+  getQuantoPositionSize,
+} from '../../integration/helpers';
 import { stake } from '@synthetixio/main/test/common';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
@@ -9,10 +13,12 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 const _SECONDS_IN_YEAR = 31557600;
 
-const _TRADER_SIZE = wei(getQuantoPositionSize({
-  sizeInBaseAsset: bn(20),
-  quantoAssetPrice: bn(20_000),
-}));
+const _TRADER_SIZE = wei(
+  getQuantoPositionSize({
+    sizeInBaseAsset: bn(20),
+    quantoAssetPrice: bn(20_000),
+  })
+);
 const _ETH_PRICE = wei(2000);
 const _ETH_LOCKED_OI_RATIO = wei(1);
 
@@ -29,38 +35,48 @@ const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR)
 // This test ensures interest accrued is accurately reflected even if the interest rate is turned off
 // at a later time.
 describe('Position - interest rates - reset', () => {
-  const { systems, perpsMarkets, synthMarkets, superMarketId, provider, trader1, trader3, keeper, owner, poolId } =
-    bootstrapMarkets({
-      interestRateParams: {
-        lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
-        gradientBreakpoint: interestRateParams.gradientBreakpoint.toBN(),
-        highUtilGradient: interestRateParams.highUtilGradient.toBN(),
+  const {
+    systems,
+    perpsMarkets,
+    synthMarkets,
+    superMarketId,
+    provider,
+    trader1,
+    trader3,
+    keeper,
+    owner,
+    poolId,
+  } = bootstrapMarkets({
+    interestRateParams: {
+      lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
+      gradientBreakpoint: interestRateParams.gradientBreakpoint.toBN(),
+      highUtilGradient: interestRateParams.highUtilGradient.toBN(),
+    },
+    synthMarkets: [
+      {
+        name: 'Bitcoin',
+        token: 'sBTC',
+        buyPrice: bn(20_000),
+        sellPrice: bn(20_000),
       },
-      synthMarkets: [
-        {
+    ],
+    perpsMarkets: [
+      {
+        lockedOiRatioD18: _ETH_LOCKED_OI_RATIO.toBN(),
+        requestedMarketId: 25,
+        name: 'Ether',
+        token: 'snxETH',
+        price: _ETH_PRICE.toBN(),
+        quanto: {
           name: 'Bitcoin',
-          token: 'sBTC',
-          buyPrice: bn(20_000),
-          sellPrice: bn(20_000),
-        }
-      ],
-      perpsMarkets: [
-        {
-          lockedOiRatioD18: _ETH_LOCKED_OI_RATIO.toBN(),
-          requestedMarketId: 25,
-          name: 'Ether',
-          token: 'snxETH',
-          price: _ETH_PRICE.toBN(),
-          quanto: {
-            name: 'Bitcoin',
-            token: 'BTC',
-            price: bn(20_000),
-            quantoSynthMarketIndex: 0,
-          }
+          token: 'BTC',
+          price: bn(20_000),
+          quantoSynthMarketIndex: 0,
         },
-      ],
-      traderAccountIds: [2],
-    });
+      },
+    ],
+    traderAccountIds: [2],
+  });
 
   let ethMarket: PerpsMarket;
 
@@ -75,7 +91,7 @@ describe('Position - interest rates - reset', () => {
       trader3(),
       bn(1000)
     );
-  })
+  });
 
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
@@ -98,9 +114,7 @@ describe('Position - interest rates - reset', () => {
       .synth()
       .connect(trader1())
       .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
-    await systems()
-      .PerpsMarket.connect(trader1())
-      .modifyCollateral(2, btcSpotMarketId, bn(2.5));
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, btcSpotMarketId, bn(2.5));
   });
 
   const checkMarketInterestRate = () => {
