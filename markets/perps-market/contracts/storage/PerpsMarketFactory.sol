@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
@@ -120,6 +119,5 @@ library PerpsMarketFactory {
         );
 
         LiquidationAssetManager.loadValid(synthMarketId).distrubuteCollateral(synth, amount);
-        ITokenModule(synth).transfer(self.liquidationAssetManager, amount);
     }
 }

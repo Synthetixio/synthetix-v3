@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IPerpRewardDistributor} from "@synthetixio/perps-reward-distributor/contracts/interfaces/IPerpsRewardDistributor.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
@@ -71,12 +72,16 @@ library LiquidationAssetManager {
         uint poolCollateralTypesLength = self.collateralTypes.length;
         ISynthetixSystem synthetix = PerpsMarketFactory.load().synthetix;
 
+        // Transfer collateral to the distributor
+        ITokenModule(tokenAddres).transfer(self.distributor, amount);
+
         // Calculate the USD value of each collateral delegated to pool.
+        uint128 poolId = distributor.getPoolId();
         uint256[] memory collateralValuesUsd = new uint256[](poolCollateralTypesLength);
         uint256 totalCollateralValueUsd;
         for (uint256 i = 0; i < poolCollateralTypesLength; ) {
             (, uint256 collateralValueUsd) = synthetix.getVaultCollateral(
-                distributor.getPoolId(),
+                poolId,
                 self.collateralTypes[i]
             );
             totalCollateralValueUsd += collateralValueUsd;
