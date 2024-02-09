@@ -8,7 +8,6 @@ import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.so
 
 contract PerpsRewardDistributor is IPerpRewardDistributor {
     bool private _initialized;
-    address private _owner;
 
     address private _rewardManager; // synthetix
     address private _token;
@@ -23,6 +22,7 @@ contract PerpsRewardDistributor is IPerpRewardDistributor {
     error OnlyRewardManager();
 
     constructor() {
+        // Should be initialized by the factory. This prevents usage of the instance without proper initialization
         _initialized = true;
     }
 

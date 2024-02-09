@@ -5,6 +5,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 
 import {LiquidationAssetManager} from "../storage/LiquidationAssetManager.sol";
+import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {Clones} from "../utils/Clones.sol";
@@ -23,6 +24,7 @@ contract LiquidationAssetManagerModule {
     function registerDistributor(
         uint128 poolId,
         address token,
+        address previousDistributor,
         string calldata name,
         uint128 collateralId,
         address[] calldata collateralTypes
@@ -58,11 +60,19 @@ contract LiquidationAssetManagerModule {
             }
         }
 
-        // Create a new distributor by cloning an existing implementation.
-        lam.distributor = GlobalPerpsMarketConfiguration
-            .load()
-            .rewardDistributorImplementation
-            .clone();
+        if (previousDistributor != address(0)) {
+            if (!AddressUtil.isContract(previousDistributor)) {
+                revert AddressError.NotAContract(previousDistributor);
+            }
+            // Reuse the previous distributor.
+            lam.distributor = previousDistributor;
+        } else {
+            // Create a new distributor by cloning an existing implementation.
+            lam.distributor = GlobalPerpsMarketConfiguration
+                .load()
+                .rewardDistributorImplementation
+                .clone();
+        }
 
         IPerpRewardDistributor distributor = IPerpRewardDistributor(lam.distributor);
         distributor.initialize(
