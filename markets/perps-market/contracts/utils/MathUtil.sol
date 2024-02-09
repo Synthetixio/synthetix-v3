@@ -45,7 +45,7 @@ library MathUtil {
     }
 
     function isSameSideReducing(int128 a, int128 b) internal pure returns (bool) {
-        return sameSide(a, b) && abs(b) <= abs(a);
+        return sameSide(a, b) && abs(b) < abs(a);
     }
 
     function ceilDivide(uint a, uint b) internal pure returns (uint) {

@@ -107,7 +107,7 @@ describe('Orders - allow size reduction', () => {
       accountId: 2,
       keeper: keeper(),
       marketId: perpsMarkets()[1].marketId(),
-      sizeDelta: bn(3),
+      sizeDelta: bn(-3),
       settlementStrategyId: perpsMarkets()[1].strategyId(),
       price: bn(2000),
     });
@@ -115,50 +115,78 @@ describe('Orders - allow size reduction', () => {
 
   before('reduce price so margin is lower than initial margin', async () => {
     await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(9_500));
-    await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(1_990));
+    await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(2_040));
   });
 
   describe('increasing position size', () => {
-    it('reverts', async () => {
-      // market ids
-      [50, 51].forEach(async (marketId) => {
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(trader1())
-            .commitOrder({
-              marketId: marketId,
-              accountId: 2,
-              sizeDelta: bn(1),
-              settlementStrategyId: perpsMarkets()[0].strategyId(),
-              acceptablePrice: bn(20_000),
-              referrer: ethers.constants.AddressZero,
-              trackingCode: ethers.constants.HashZero,
-            }),
-          `InsufficientMargin`
-        );
-      });
+    it('reverts for btc position', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: 50,
+            accountId: 2,
+            sizeDelta: bn(1),
+            settlementStrategyId: perpsMarkets()[0].strategyId(),
+            acceptablePrice: bn(20_000),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `InsufficientMargin`
+      );
+    });
+
+    it('reverts for eth position', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: 51,
+            accountId: 2,
+            sizeDelta: bn(-1),
+            settlementStrategyId: perpsMarkets()[0].strategyId(),
+            acceptablePrice: bn(2000),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `InsufficientMargin`
+      );
     });
   });
 
-  describe('decreasing position large enough to take short position', () => {
-    it('reverts on both position', async () => {
-      // market ids
-      [50, 51].forEach(async (marketId) => {
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(trader1())
-            .commitOrder({
-              marketId: marketId,
-              accountId: 2,
-              sizeDelta: bn(-7),
-              settlementStrategyId: perpsMarkets()[0].strategyId(),
-              acceptablePrice: bn(20_000),
-              referrer: ethers.constants.AddressZero,
-              trackingCode: ethers.constants.HashZero,
-            }),
-          `InsufficientMargin`
-        );
-      });
+  describe('decreasing position large enough to take the other side of the position', () => {
+    it('reverts for btc position', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: 50,
+            accountId: 2,
+            sizeDelta: bn(-9),
+            settlementStrategyId: perpsMarkets()[0].strategyId(),
+            acceptablePrice: bn(8_000),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `InsufficientMargin`
+      );
+    });
+
+    it('reverts for eth position', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: 51,
+            accountId: 2,
+            sizeDelta: bn(5),
+            settlementStrategyId: perpsMarkets()[1].strategyId(),
+            acceptablePrice: bn(2100),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `InsufficientMargin`
+      );
     });
   });
 
@@ -167,59 +195,59 @@ describe('Orders - allow size reduction', () => {
       it('is only order fees', async () => {
         const [orderFees] = await systems().PerpsMarket.computeOrderFees(50, bn(-2));
         assertBn.equal(
-          await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(-2)),
+          await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(-2)),
           orderFees
         );
       });
       describe('fully close eth position', () => {
         it('is only order fees', async () => {
-          const [orderFees] = await systems().PerpsMarket.computeOrderFees(50, bn(-3));
+          const [orderFees] = await systems().PerpsMarket.computeOrderFees(50, bn(3));
           assertBn.equal(
-            await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(-3)),
+            await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3)),
             orderFees
           );
         });
       });
     });
+  });
 
-    describe('lower positions', () => {
-      before('reduce btc by 2', async () => {
-        await openPosition({
-          systems,
-          provider,
-          trader: trader1(),
-          accountId: 2,
-          keeper: keeper(),
-          marketId: perpsMarkets()[0].marketId(),
-          sizeDelta: bn(-2),
-          settlementStrategyId: perpsMarkets()[0].strategyId(),
-          price: bn(10_000),
-        });
+  describe('lower positions', () => {
+    before('reduce btc by 2', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        accountId: 2,
+        keeper: keeper(),
+        marketId: perpsMarkets()[0].marketId(),
+        sizeDelta: bn(-2),
+        settlementStrategyId: perpsMarkets()[0].strategyId(),
+        price: bn(10_000),
       });
+    });
 
-      before('close eth position', async () => {
-        await openPosition({
-          systems,
-          provider,
-          trader: trader1(),
-          accountId: 2,
-          keeper: keeper(),
-          marketId: perpsMarkets()[1].marketId(),
-          sizeDelta: bn(-3),
-          settlementStrategyId: perpsMarkets()[1].strategyId(),
-          price: bn(2_000),
-        });
+    before('close eth position', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        accountId: 2,
+        keeper: keeper(),
+        marketId: perpsMarkets()[1].marketId(),
+        sizeDelta: bn(3),
+        settlementStrategyId: perpsMarkets()[1].strategyId(),
+        price: bn(2000),
       });
+    });
 
-      it('reduced btc position', async () => {
-        const [, , positionSize] = await systems().PerpsMarket.getOpenPosition(2, 50);
-        assertBn.equal(positionSize, bn(3));
-      });
+    it('reduced btc position', async () => {
+      const [, , positionSize] = await systems().PerpsMarket.getOpenPosition(2, 50);
+      assertBn.equal(positionSize, bn(3));
+    });
 
-      it('reduced eth position', async () => {
-        const [, , positionSize] = await systems().PerpsMarket.getOpenPosition(2, 51);
-        assertBn.equal(positionSize, 0);
-      });
+    it('reduced eth position', async () => {
+      const [, , positionSize] = await systems().PerpsMarket.getOpenPosition(2, 51);
+      assertBn.equal(positionSize, 0);
     });
   });
 });
