@@ -204,6 +204,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.currentUtilizationRateComputed,
                 remainingCapacity,
                 lastLiquidationTime,
+                market.totalTraderDebt,
                 market.getTotalCollateralValueUsd(),
                 market.debtCorrection
             );

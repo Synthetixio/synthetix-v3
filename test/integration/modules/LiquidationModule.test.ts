@@ -277,7 +277,60 @@ describe('LiquidationModule', () => {
 
       assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection.sub(flagEvent.args.flagKeeperReward));
     });
-    it('should reset account debt and update total trader debt');
+
+    it('should reset account debt and update total trader debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) }) // use non-sUSD collateral to make sure we accrue some debt (and don't pay it off with sUSD collateral)
+      );
+
+      // Execute two orders to accrue some debt for the trader.
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      const newMarketOraclePrice = wei(openOrder.oraclePrice)
+        .mul(openOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      // Execute a new order that will create a position that can be flagged for liquidation.
+      const openFlagOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 9.9,
+      });
+      await commitAndSettle(bs, marketId, trader, openFlagOrder);
+
+      // Price moves 10% and results in a healthFactor of < 1.
+      const newMarketOraclePrice1 = wei(openFlagOrder.oraclePrice)
+        .mul(openFlagOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
+
+      const { debt: accountDebtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { totalTraderDebt: totalTraderDebtBefore } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.gt(accountDebtBefore, 0);
+      assertBn.gt(totalTraderDebtBefore, 0);
+
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper2()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const { debt: accountDebtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { totalTraderDebt: totalTraderDebtAfter } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.isZero(accountDebtAfter);
+      assertBn.isZero(totalTraderDebtAfter);
+    });
+
     it('should not modify any existing collateral as margin');
 
     forEach([

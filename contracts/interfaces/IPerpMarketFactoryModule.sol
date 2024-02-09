@@ -44,6 +44,8 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         uint256 remainingLiquidatableSizeCapacity;
         // block.timestamp of when the last liqudation had occurred.
         uint128 lastLiquidationTime;
+        // All traders unsettled debt in USD.
+        uint128 totalTraderDebt;
         // Total value in USD of all market depositedCollateral if sold on spot.
         uint256 totalCollateralValueUsd;
         // Most recently calculated debt entry for reportedDebt calc.

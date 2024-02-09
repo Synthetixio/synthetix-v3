@@ -9,6 +9,23 @@ import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './type
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
 
+const fgReset = '\x1b[0m';
+const fgGreen = '\x1b[32m';
+const fgYellow = '\x1b[33m';
+const fgCyan = '\x1b[36m';
+const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom');
+
+declare module 'ethers' {
+  interface BigNumber {
+    [customInspectSymbol]?: () => string;
+  }
+}
+ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
+  return `${fgCyan}BigNumber( ${fgYellow}${fgGreen}${this.toString()} ${fgYellow}${wei(
+    this
+  ).toNumber()}${fgCyan} )${fgReset}`;
+};
+
 // --- Constants --- //
 
 export const SECONDS_ONE_HR = 60 * 60;
