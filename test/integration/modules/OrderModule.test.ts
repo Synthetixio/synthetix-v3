@@ -34,7 +34,6 @@ import {
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
-  mintAndApprove,
 } from '../../helpers';
 import { BigNumber, ethers } from 'ethers';
 import { calcFillPrice, calcOrderFees } from '../../calculations';
@@ -123,6 +122,49 @@ describe('OrderModule', () => {
           order.limitPrice,
           order.keeperFeeBufferUsd,
           order.hooks
+        ),
+        'InsufficientMargin()',
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert insufficient margin when margin is less than initial margin due to debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount, marginUsdDepositAmount } =
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarginUsdDepositAmount: 100000,
+            desiredCollateral: genOneOf(collateralsWithoutSusd()),
+          })
+        );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 6 });
+      await commitAndSettle(bs, marketId, trader, order);
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const orderExpectedToFail = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 20, // TODO it would be nice to figure out a way to make this more precise, depending on market configuration this might revert even without debt
+      });
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          orderExpectedToFail.sizeDelta,
+          orderExpectedToFail.limitPrice,
+          orderExpectedToFail.keeperFeeBufferUsd,
+          orderExpectedToFail.hooks
         ),
         'InsufficientMargin()',
         PerpMarketProxy
