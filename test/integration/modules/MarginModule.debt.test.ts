@@ -315,9 +315,79 @@ describe('MarginModule Debt', async () => {
       assert.equal(isMarginLiquidatableBefore, false);
 
       await collateral.setPrice(wei(collateralPrice).mul(0.01).toBN());
+
       const isMarginLiquidatableAfter = await PerpMarketProxy.isMarginLiquidatable(trader.accountId, marketId);
 
       assert.equal(isMarginLiquidatableAfter, true);
+    });
+  });
+  describe('liquidateMarginOnly', () => {
+    it('should revert on invalid market id');
+    it('should revert on invalid account id');
+    it('should revert if we have a position', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      await assertRevert(
+        PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
+        `PositionFound("${trader.accountId}", "${marketId}")`
+      );
+    });
+    it('should revert if margin cant be liquidated', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+      );
+      // accrue some debt
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      // Price moves, causing a 10% loss.
+      const newMarketOraclePrice1 = wei(openOrder.oraclePrice)
+        .mul(openOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      await assertRevert(PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId), `CannotLiquidateMargin()`);
+    });
+
+    it('should liquidate margin', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralPrice, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+      );
+      // accrue some debt
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      // Price moves, causing a 10% loss.
+      const newMarketOraclePrice1 = wei(openOrder.oraclePrice)
+        .mul(openOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+      await collateral.setPrice(wei(collateralPrice).mul(0.01).toBN());
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
+        provider()
+      );
+      await assertEvent(receipt, 'MarginLiquidated', PerpMarketProxy);
+      const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.isZero(accountDigest.debt);
+      assertBn.isZero(accountDigest.collateralUsd);
     });
   });
 });
