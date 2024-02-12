@@ -365,8 +365,12 @@ contract LiquidationModule is ILiquidationModule {
     function isMarginLiquidatable(uint128 accountId, uint128 marketId) public view returns (bool) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        // Cannot liquidate margin is we have a position.
+        if (market.positions[accountId].size > 0) {
+            return false;
+        }
         return
-            Margin.getMarginUsd(accountId, market, market.getOraclePrice(), true /* useDiscountedCollateralPrice */) <
+            Margin.getMarginUsd(accountId, market, market.getOraclePrice(), true /* useDiscountedCollateralPrice */) ==
             0;
     }
 

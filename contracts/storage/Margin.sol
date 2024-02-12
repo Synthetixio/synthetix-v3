@@ -191,7 +191,7 @@ library Margin {
 
         // Zero position means collateral - debt is the margin.
         if (position.size == 0) {
-            return collateralUsd - accountMargin.debt;
+            return MathUtil.max(collateralUsd - accountMargin.debt, 0);
         }
         return
             MathUtil
