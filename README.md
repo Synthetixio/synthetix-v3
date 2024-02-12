@@ -11,10 +11,8 @@ The primary use case of bfp-market is to create a hyper-stable perp derivative u
 Please caution as this project is **_still under active development, not yet released, currently undergoing audit_**.
 
 <p align="center">
-  <img src="./docs/diagrams/overview/overview.png">
+  <img src="./assets/overview.png">
 </p>
-
-_You can find more details on the working model under [`docs/images`](./docs/diagrams/)._
 
 ## Development
 
