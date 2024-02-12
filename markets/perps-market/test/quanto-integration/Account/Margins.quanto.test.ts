@@ -297,16 +297,34 @@ describe.only('Account margins test', () => {
       const btcSkewScale = perpsMarketConfig[0].fundingParams.skewScale;
       const ethSkewScale = perpsMarketConfig[1].fundingParams.skewScale;
 
-      const btcPnl = calculatePricePnl(wei(0), wei(btcSkewScale), wei(quantoPositionSizeBtcMarket), wei(btcPrice)).toBN();
-      const ethPnl = calculatePricePnl(wei(0), wei(ethSkewScale), wei(quantoPositionSizeEthMarket), wei(ethPrice)).toBN();
+      const btcPnl = calculatePricePnl(
+        wei(0),
+        wei(btcSkewScale),
+        wei(quantoPositionSizeBtcMarket),
+        wei(btcPrice)
+      ).toBN();
+      const ethPnl = calculatePricePnl(
+        wei(0),
+        wei(ethSkewScale),
+        wei(quantoPositionSizeEthMarket),
+        wei(ethPrice)
+      ).toBN();
 
       initialPnl = btcPnl.add(ethPnl);
 
       const notionalBtcValue = perpPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
       const notionalEthValue = perpPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
 
-      const btcInitialMarginRatio = wei(quantoPositionSizeBtcMarket.abs()).div(wei(btcSkewScale)).mul(wei(2)).add(wei(0.01)).toBN();
-      const ethInitialMarginRatio = wei(quantoPositionSizeEthMarket.abs()).div(wei(ethSkewScale)).mul(wei(2)).add(wei(0.01)).toBN();
+      const btcInitialMarginRatio = wei(quantoPositionSizeBtcMarket.abs())
+        .div(wei(btcSkewScale))
+        .mul(wei(2))
+        .add(wei(0.01))
+        .toBN();
+      const ethInitialMarginRatio = wei(quantoPositionSizeEthMarket.abs())
+        .div(wei(ethSkewScale))
+        .mul(wei(2))
+        .add(wei(0.01))
+        .toBN();
 
       btcInitialPositionMargin = notionalBtcValue.mul(btcInitialMarginRatio).div(ONE_ETHER);
       ethInitialPositionMargin = notionalEthValue.mul(ethInitialMarginRatio).div(ONE_ETHER);
@@ -346,10 +364,7 @@ describe.only('Account margins test', () => {
       // 🚨 expected and actual withdrawable margin precision loss
       // 99699999899333333333335 -> expected
       // 98498478264000000004537 -> actual
-      assertBn.equal(
-        expectedWithdrawableMargin,
-        res
-      );
+      assertBn.equal(expectedWithdrawableMargin, res);
     });
 
     it('has correct initial margin', async () => {
