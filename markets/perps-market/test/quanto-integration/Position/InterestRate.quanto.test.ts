@@ -36,10 +36,11 @@ const interestRateParams = {
 
 const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR);
 
-describe.only('Position - interest rates', () => {
+describe('Position - interest rates', () => {
   const {
     systems,
     perpsMarkets,
+    synthMarkets,
     superMarketId,
     provider,
     trader1,
@@ -57,7 +58,7 @@ describe.only('Position - interest rates', () => {
     synthMarkets: [
       {
         name: 'Ether',
-        token: 'snxETH',
+        token: 'sETH',
         buyPrice: _ETH_PRICE.toBN(),
         sellPrice: _ETH_PRICE.toBN(),
       },
@@ -113,9 +114,38 @@ describe.only('Position - interest rates', () => {
     btcMarket = perpsMarkets()[1];
   });
 
+  before('trader1 buys 25 sETH', async () => {
+    const ethSpotMarketId = synthMarkets()[0].marketId();
+    const usdAmount = bn(50_000);
+    const minAmountReceived = bn(25);
+    const referrer = ethers.constants.AddressZero;
+    await systems()
+      .SpotMarket.connect(trader1())
+      .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
+  });
+
+  before('trader2 buys 100 sETH', async () => {
+    const ethSpotMarketId = synthMarkets()[0].marketId();
+    const usdAmount = bn(200_000);
+    const minAmountReceived = bn(100);
+    const referrer = ethers.constants.AddressZero;
+    await systems()
+      .SpotMarket.connect(trader2())
+      .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
+  });
+
   before('add collateral to margin', async () => {
-    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(50_000));
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(200_000));
+    const ethSpotMarketId = synthMarkets()[0].marketId();
+    await synthMarkets()[0]
+      .synth()
+      .connect(trader1())
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, ethSpotMarketId, bn(25));
+    await synthMarkets()[0]
+      .synth()
+      .connect(trader2())
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, ethSpotMarketId, bn(100));
   });
 
   const checkMarketInterestRate = () => {
@@ -187,10 +217,10 @@ describe.only('Position - interest rates', () => {
   let newPositionSize = 0;
   [
     { size: -10, time: _SECONDS_IN_DAY },
-    // { size: 115, time: _SECONDS_IN_DAY },
-    // { size: -70, time: _SECONDS_IN_DAY * 0.25 },
-    // { size: -25, time: _SECONDS_IN_DAY * 2 },
-    // { size: 5, time: _SECONDS_IN_DAY * 0.1 },
+    { size: 115, time: _SECONDS_IN_DAY },
+    { size: -70, time: _SECONDS_IN_DAY * 0.25 },
+    { size: -25, time: _SECONDS_IN_DAY * 2 },
+    { size: 5, time: _SECONDS_IN_DAY * 0.1 },
   ].forEach(({ size, time }) => {
     describe('new trader enters', () => {
       let previousMarketInterestRate: Wei, settleTrader2Txn: ethers.ContractTransaction;
@@ -199,7 +229,7 @@ describe.only('Position - interest rates', () => {
       });
 
       before('trader2 changes OI', async () => {
-        newPositionSize += size;
+        newPositionSize += size / 2_000;
         ({ settleTime: trader2OpenPositionTime, settleTx: settleTrader2Txn } = await openPosition({
           systems,
           provider,
@@ -264,13 +294,12 @@ describe.only('Position - interest rates', () => {
         const expectedTrader2Interest = trader2Oi
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(normalizedTime);
-        const owedInterestInUSD = owedInterest.mul(2_000);
-        assertBn.near(owedInterestInUSD, expectedTrader2Interest.toBN(), bn(0.00001));
+        assertBn.near(owedInterest, expectedTrader2Interest.toBN(), bn(0.00001));
       });
     });
   });
 
-  describe.skip('change delegated collateral and manual update', () => {
+  describe('change delegated collateral and manual update', () => {
     let previousMarketInterestRate: Wei, marketUpdateTime: number;
     before('identify interest rate', async () => {
       previousMarketInterestRate = wei(await systems().PerpsMarket.interestRate());
