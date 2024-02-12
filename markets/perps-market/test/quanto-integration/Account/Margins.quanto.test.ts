@@ -2,13 +2,12 @@ import { bn, bootstrapMarkets } from '../../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { openPosition } from '../../integration/helpers';
 import {
+  ONE_ETHER,
   getQuantoPositionSize,
   getQuantoFillPrice,
-  ONE_ETHER,
-  calculatePricePnl,
+  getQuantoPnl,
 } from '../../integration/helpers/';
 import { ethers } from 'ethers';
-import { wei } from '@synthetixio/wei';
 
 describe.only('Account margins test', () => {
   // Account and Market Identifiers
@@ -269,24 +268,22 @@ describe.only('Account margins test', () => {
       });
     });
 
-    it.skip('btc position has correct fill price', async () => {
+    it('btc position has correct fill price', async () => {
       const expectedBtcFillPrice = getQuantoFillPrice({
         skew: startingSkew,
         skewScale: perpsMarketConfig[0].fundingParams.skewScale,
-        // size: quantoPositionSizeBtcMarket,
-        size: perpPositionSizeBtcMarket,
+        size: quantoPositionSizeBtcMarket,
         price: btcPrice,
       });
 
       assertBn.equal(expectedBtcFillPrice, btcFillPrice);
     });
 
-    it.skip('eth position has correct fill price', async () => {
+    it('eth position has correct fill price', async () => {
       const expectedEthFillPrice = getQuantoFillPrice({
         skew: startingSkew,
         skewScale: perpsMarketConfig[1].fundingParams.skewScale,
-        // size: quantoPositionSizeEthMarket,
-        size: perpPositionSizeEthMarket,
+        size: quantoPositionSizeEthMarket,
         price: ethPrice,
       });
 
@@ -297,43 +294,48 @@ describe.only('Account margins test', () => {
       const btcSkewScale = perpsMarketConfig[0].fundingParams.skewScale;
       const ethSkewScale = perpsMarketConfig[1].fundingParams.skewScale;
 
-      const btcPnl = calculatePricePnl(
-        wei(0),
-        wei(btcSkewScale),
-        wei(quantoPositionSizeBtcMarket),
-        wei(btcPrice)
-      ).toBN();
-      const ethPnl = calculatePricePnl(
-        wei(0),
-        wei(ethSkewScale),
-        wei(quantoPositionSizeEthMarket),
-        wei(ethPrice)
-      ).toBN();
+      const btcPnl = getQuantoPnl({
+        baseAssetStartPrice: btcFillPrice,
+        baseAssetEndPrice: btcPrice,
+        quantoAssetStartPrice: ethPrice,
+        quantoAssetEndPrice: ethPrice,
+        quantoSizeDelta: quantoPositionSizeBtcMarket,
+      });
+      const ethPnl = getQuantoPnl({
+        baseAssetStartPrice: ethFillPrice,
+        baseAssetEndPrice: ethPrice,
+        quantoAssetStartPrice: ethPrice,
+        quantoAssetEndPrice: ethPrice,
+        quantoSizeDelta: quantoPositionSizeEthMarket,
+      });
 
-      initialPnl = btcPnl.add(ethPnl);
+      initialPnl = btcPnl.add(ethPnl).mul(ethPrice).div(ONE_ETHER);
 
-      const notionalBtcValue = perpPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
-      const notionalEthValue = perpPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
+      const absNotionalBtcValue = quantoPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
+      const absNotionalEthValue = quantoPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
 
-      const btcInitialMarginRatio = wei(quantoPositionSizeBtcMarket.abs())
-        .div(wei(btcSkewScale))
-        .mul(wei(2))
-        .add(wei(0.01))
-        .toBN();
-      const ethInitialMarginRatio = wei(quantoPositionSizeEthMarket.abs())
-        .div(wei(ethSkewScale))
-        .mul(wei(2))
-        .add(wei(0.01))
-        .toBN();
+      const btcInitialMarginRatio = quantoPositionSizeBtcMarket
+        .abs()
+        .mul(ONE_ETHER)
+        .div(btcSkewScale)
+        .mul(initialMarginFraction)
+        .div(ONE_ETHER)
+        .add(minimumInitialMarginRatio);
 
-      btcInitialPositionMargin = notionalBtcValue.mul(btcInitialMarginRatio).div(ONE_ETHER);
-      ethInitialPositionMargin = notionalEthValue.mul(ethInitialMarginRatio).div(ONE_ETHER);
+      const ethInitialMarginRatio = quantoPositionSizeEthMarket
+        .abs()
+        .mul(ONE_ETHER)
+        .div(ethSkewScale)
+        .mul(initialMarginFraction)
+        .div(ONE_ETHER)
+        .add(minimumInitialMarginRatio);
 
-      btcLiqMargin = notionalBtcValue.mul(liquidationRewardRatio).div(ONE_ETHER);
-      ethLiqMargin = notionalEthValue.mul(liquidationRewardRatio).div(ONE_ETHER);
+      btcInitialPositionMargin = absNotionalBtcValue.mul(btcInitialMarginRatio).div(ONE_ETHER);
+      ethInitialPositionMargin = absNotionalEthValue.mul(ethInitialMarginRatio).div(ONE_ETHER);
 
-      // maintenance margin ratio == 1
-      // 🚨 where is it set to "1"? minimumInitialMarginRatio is set to bn(0.01);
+      btcLiqMargin = absNotionalBtcValue.mul(liquidationRewardRatio).div(ONE_ETHER);
+      ethLiqMargin = absNotionalEthValue.mul(liquidationRewardRatio).div(ONE_ETHER);
+
       btcMaintenanceMargin = btcInitialPositionMargin.mul(maintenanceMarginScalar).div(ONE_ETHER);
       ethMaintenanceMargin = ethInitialPositionMargin.mul(maintenanceMarginScalar).div(ONE_ETHER);
 
@@ -342,29 +344,24 @@ describe.only('Account margins test', () => {
 
     it('has correct available margin', async () => {
       assertBn.equal(
-        initialAccountMargin.add(initialPnl.mul(2_000)),
+        initialAccountMargin.add(initialPnl),
         await systems().PerpsMarket.getAvailableMargin(accountId)
       );
     });
 
-    it.only('has correct withdrawable margin', async () => {
-      console.log('initialAccountMargin :', initialAccountMargin);
+    it('has correct withdrawable margin', async () => {
       const expectedWithdrawableMargin = initialAccountMargin
-        .add(initialPnl.mul(2_000))
+        .add(initialPnl)
         .sub(btcInitialPositionMargin)
         .sub(ethInitialPositionMargin)
         .sub(ethLiqMargin)
         .sub(btcLiqMargin)
         .sub(minimumPositionMargin);
-      console.log('expectedWithdrawableMargin :', expectedWithdrawableMargin); // this is what i expect
 
-      const res = await systems().PerpsMarket.getWithdrawableMargin(accountId);
-      console.log('res :', res); // this is not the value i expect, perhaps a contract change is needed
-
-      // 🚨 expected and actual withdrawable margin precision loss
-      // 99699999899333333333335 -> expected
-      // 98498478264000000004537 -> actual
-      assertBn.equal(expectedWithdrawableMargin, res);
+      assertBn.equal(
+        expectedWithdrawableMargin,
+        await systems().PerpsMarket.getWithdrawableMargin(accountId)
+      );
     });
 
     it('has correct initial margin', async () => {
@@ -375,9 +372,6 @@ describe.only('Account margins test', () => {
         .add(ethInitialPositionMargin)
         .add(minimumPositionMargin);
 
-      // 🚨 expected and actual initial margin calculation error
-      // 1300000000000000000000 -> expected
-      // 1500220402666666666463 -> actual
       assertBn.equal(expectedInitialMargin, initialMargin.sub(maxLiquidationReward));
     });
 
@@ -389,9 +383,6 @@ describe.only('Account margins test', () => {
         .add(ethMaintenanceMargin)
         .add(minimumPositionMargin);
 
-      // 🚨 expected and actual maintenance margin calculation error
-      // 1400000000000000000000 -> expected
-      // 1500110201333333333231 -> actual
       assertBn.equal(expectedMaintenanceMargin, maintenanceMargin.sub(maxLiquidationReward));
     });
   });
