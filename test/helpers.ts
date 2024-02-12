@@ -205,7 +205,7 @@ export const commitOrder = async (
   const { PerpMarketProxy } = systems();
 
   const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await order;
-  await PerpMarketProxy.connect(trader.signer).commitOrder(
+  return await PerpMarketProxy.connect(trader.signer).commitOrder(
     trader.accountId,
     marketId,
     sizeDelta,

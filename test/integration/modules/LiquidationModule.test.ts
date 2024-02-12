@@ -151,7 +151,9 @@ describe('LiquidationModule', () => {
         desiredLeverage: 0.5,
         desiredSide: orderSide,
       });
-      await commitOrder(bs, marketId, trader, order2);
+
+      await withExplicitEvmMine(() => commitOrder(bs, marketId, trader, order2), provider());
+
       const commitmentTime = await getBlockTimestamp(provider());
 
       // Price moves 10% and results in a healthFactor of < 1.
