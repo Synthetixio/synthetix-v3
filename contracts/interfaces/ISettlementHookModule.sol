@@ -17,7 +17,7 @@ interface ISettlementHookModule {
     // @notice Emitted when hooks are configured.
     event SettlementHookConfigured(address indexed from, uint256 hooks);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Configures settlement hook parameters applied globally.

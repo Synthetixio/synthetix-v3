@@ -62,7 +62,7 @@ interface IMarketConfigurationModule {
     // @notice Emitted when parameters for a specific market is updated.
     event MarketConfigurationUpdated(uint128 marketId, address from);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Configures market parameters applied globally.

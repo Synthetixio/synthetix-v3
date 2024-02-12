@@ -28,7 +28,7 @@ interface IMarginModule is IBasePerpMarket {
     // @notice Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Convenience method to withdraw all collateral for `accountId` and `marketId`.

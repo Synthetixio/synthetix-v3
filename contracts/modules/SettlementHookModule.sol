@@ -10,7 +10,7 @@ import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguratio
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 contract SettlementHookModule is ISettlementHookModule {
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @inheritdoc ISettlementHookModule

@@ -113,7 +113,7 @@ library Order {
         return boundedKeeperFeeUsd;
     }
 
-    // --- Member (mutative) --- //
+    // --- Member (mutations) --- //
 
     /**
      * @dev Updates the current order struct in-place with new data from `data`.

@@ -87,7 +87,7 @@ library Margin {
         globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
     }
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @dev Reevaluates the collateral in `market` for `accountId` with `amountDeltaUsd`. When amount is negative,

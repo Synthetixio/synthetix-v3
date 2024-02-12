@@ -13,7 +13,7 @@ import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
     using Clones for address;
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @inheritdoc IPerpRewardDistributorFactoryModule

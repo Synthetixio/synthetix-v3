@@ -26,7 +26,7 @@ interface ILiquidationModule is IBasePerpMarket {
         uint256 flaggedPrice
     );
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Flags position belonging to `accountId` for liquidation. A flagged position is frozen from all operations.
