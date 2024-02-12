@@ -267,7 +267,7 @@ contract OrderModule is IOrderModule {
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
             runtime.trade.newMarginUsd,
-            runtime.pythPrice,
+            runtime.fillPrice,
             marketConfig
         );
 
