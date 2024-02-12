@@ -282,6 +282,11 @@ contract LiquidationModule is ILiquidationModule {
 
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // Cannot liquidate margin if trader has a position.
+        if (market.positions[accountId].size > 0) {
+            revert ErrorUtil.PositionFound(accountId, marketId);
+        }
         if (!isMarginLiquidatable(accountId, marketId)) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
