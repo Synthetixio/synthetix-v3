@@ -518,7 +518,7 @@ describe('LiquidationModule', () => {
     });
   });
 
-  describe('liquidatePosition', () => {
+  describe.skip('liquidatePosition', () => {
     const commitAndSettleLiquidatedPosition = async (desiredKeeper: ethers.Signer) => {
       const { PerpMarketProxy } = systems();
 

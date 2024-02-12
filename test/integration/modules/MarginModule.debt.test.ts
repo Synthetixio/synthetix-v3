@@ -271,8 +271,24 @@ describe('MarginModule Debt', async () => {
     });
   });
   describe('isMarginLiquidatable', () => {
-    it('should revert on invalid market id');
-    it('should revert on invalid account id');
+    it('should revert on invalid market id', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader } = await depositMargin(bs, genTrader(bs));
+
+      const invalidMarketId = genNumber(42069, 50000);
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).isMarginLiquidatable(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`
+      );
+    });
+    it('should revert on invalid account id', async () => {
+      const { PerpMarketProxy } = systems();
+      const invalidAccountId = genNumber(42069, 50000);
+      await assertRevert(
+        PerpMarketProxy.isMarginLiquidatable(invalidAccountId, 2),
+        `AccountNotFound("${invalidAccountId}"`
+      );
+    });
 
     it('should return false if we have a position', async () => {
       const { PerpMarketProxy } = systems();
@@ -322,8 +338,24 @@ describe('MarginModule Debt', async () => {
     });
   });
   describe('liquidateMarginOnly', () => {
-    it('should revert on invalid market id');
-    it('should revert on invalid account id');
+    it('should revert on invalid market id', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader } = await depositMargin(bs, genTrader(bs));
+
+      const invalidMarketId = genNumber(42069, 50000);
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).liquidateMarginOnly(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`
+      );
+    });
+    it('should revert on invalid account id', async () => {
+      const { PerpMarketProxy } = systems();
+      const invalidAccountId = genNumber(42069, 50000);
+      await assertRevert(
+        PerpMarketProxy.liquidateMarginOnly(invalidAccountId, 2),
+        `AccountNotFound("${invalidAccountId}"`
+      );
+    });
     it('should revert if we have a position', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
