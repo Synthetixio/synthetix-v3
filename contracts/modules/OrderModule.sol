@@ -164,7 +164,7 @@ contract OrderModule is IOrderModule {
         emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
     }
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @inheritdoc IOrderModule

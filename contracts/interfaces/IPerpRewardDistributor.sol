@@ -17,7 +17,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
      */
     function getPoolCollateralTypes() external view returns (address[] memory);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Initializes the PerpRewardDistributor with references, name, token to distribute etc.

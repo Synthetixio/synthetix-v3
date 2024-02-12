@@ -23,7 +23,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @inheritdoc IPerpMarketFactoryModule

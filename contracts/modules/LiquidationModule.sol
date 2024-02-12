@@ -161,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
         }
     }
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @inheritdoc ILiquidationModule
