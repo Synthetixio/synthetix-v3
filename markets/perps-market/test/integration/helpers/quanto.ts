@@ -1,95 +1,76 @@
 import { ethers } from 'ethers';
 
-// unit for precision: 1e18
 export const ONE_ETHER = ethers.utils.parseEther('1');
 
-export type GetQuantoPositionSizeArgs = {
+export interface GetQuantoPositionSizeArgs {
   sizeInBaseAsset: ethers.BigNumber;
   quantoAssetPrice: ethers.BigNumber;
-};
+}
 
-// ✅ confirmed no precision loss
-//
-// Calculates the size of a quanto position in
-// terms of the quanto asset
-//
-// Unit of the result: ($BASE * $QUANTO) / $sUSD
+/**
+ * Calculates the size of a quanto position in
+ * terms of the quanto asset.
+ * Confirmed no precision loss.
+ * Unit of the result: ($BASE * $QUANTO) / $sUSD
+ */
 export const getQuantoPositionSize = ({
   sizeInBaseAsset,
   quantoAssetPrice,
-}: GetQuantoPositionSizeArgs): ethers.BigNumber => {
-  return sizeInBaseAsset.mul(ONE_ETHER).div(quantoAssetPrice);
-};
+}: GetQuantoPositionSizeArgs): ethers.BigNumber =>
+  sizeInBaseAsset.mul(ONE_ETHER).div(quantoAssetPrice);
 
-export type GetQuantoFillPrice = {
+export interface GetQuantoFillPriceArgs {
   skew: ethers.BigNumber;
   skewScale: ethers.BigNumber;
   size: ethers.BigNumber;
   price: ethers.BigNumber;
-};
+}
 
-// ✅ confirmed no precision loss
-//
-// Calculates the fill price of a quanto position; the price of the base asset
-// at which the position is filled taking into account the skew and skewScale.
-//
-// Unit of the result: $sUSD
-//
-// see AsyncOrder.calculateFillPrice for contract implementation
-// that is mirrored below
-export const getQuantoFillPrice = ({ skew, skewScale, size, price }: GetQuantoFillPrice) => {
-  if (skewScale.eq(0)) {
-    return price;
-  }
-
-  // calculate pd (premium/discount) before and after the trade
+/**
+ * Calculates the fill price of a quanto position
+ * taking into account the skew and skewScale.
+ * Confirmed no precision loss.
+ * Unit of the result: $sUSD
+ */
+export const getQuantoFillPrice = ({
+  skew,
+  skewScale,
+  size,
+  price,
+}: GetQuantoFillPriceArgs): ethers.BigNumber => {
+  if (skewScale.eq(0)) return price;
   const pdBefore = skew.mul(ONE_ETHER).div(skewScale);
   const newSkew = skew.add(size);
   const pdAfter = newSkew.mul(ONE_ETHER).div(skewScale);
-
-  // calculate price before and after trade with pd applied
   const priceBefore = price.add(price.mul(pdBefore).div(ONE_ETHER));
   const priceAfter = price.add(price.mul(pdAfter).div(ONE_ETHER));
-
-  // the fill price is the average of those prices
-  return priceBefore.add(priceAfter).mul(ONE_ETHER).div(ONE_ETHER.mul(2));
+  return priceBefore.add(priceAfter).div(2);
 };
 
-export type GetQuantoPnlArgs = {
+export interface GetQuantoPnlArgs {
   baseAssetStartPrice: ethers.BigNumber;
   baseAssetEndPrice: ethers.BigNumber;
   quantoAssetStartPrice: ethers.BigNumber;
   quantoAssetEndPrice: ethers.BigNumber;
-  baseAssetSizeDelta: ethers.BigNumber;
-};
+  quantoSizeDelta: ethers.BigNumber;
+}
 
-// Calculates the PnL of a quanto position
-// given the start and end prices of the base asset and quanto asset
-// and the size of the position in the base asset.
-//
-// Calculation assumes PnL from funding is zero.
-//
-// Unit of the result: $sUSD
+/**
+ * Calculates the PnL of a quanto position given the start
+ * and end prices of the base and quanto asset,
+ * and the size of the position in the base asset.
+ * Assumes PnL from funding is zero.
+ * Confirmed no precision loss.
+ * Unit of the result: $sUSD
+ */
 export const getQuantoPnl = ({
   baseAssetStartPrice,
   baseAssetEndPrice,
   quantoAssetStartPrice,
   quantoAssetEndPrice,
-  baseAssetSizeDelta,
+  quantoSizeDelta,
 }: GetQuantoPnlArgs): ethers.BigNumber => {
   const baseAssetPriceChange = baseAssetEndPrice.sub(baseAssetStartPrice);
   const quantoMultiplier = quantoAssetEndPrice.mul(ONE_ETHER).div(quantoAssetStartPrice);
-  return baseAssetPriceChange
-    .mul(baseAssetSizeDelta)
-    .mul(quantoMultiplier)
-    .div(ONE_ETHER)
-    .div(ONE_ETHER);
-};
-
-export type getQuantoPnlWithSkew = {
-  baseAssetStartPrice: ethers.BigNumber;
-  baseAssetSizeDelta: ethers.BigNumber;
-  quantoAssetPrice: ethers.BigNumber;
-  startingSkew: ethers.BigNumber;
-  skewScale: ethers.BigNumber;
+  return baseAssetPriceChange.mul(quantoSizeDelta).mul(quantoMultiplier).div(ONE_ETHER.pow(2));
 };
