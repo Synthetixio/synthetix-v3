@@ -1553,7 +1553,7 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
           bs,
-          genTrader(bs)
+          genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
         );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount);
         await commitAndSettle(bs, marketId, trader, order);
