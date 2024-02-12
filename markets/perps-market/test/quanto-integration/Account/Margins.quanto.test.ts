@@ -4,12 +4,11 @@ import { openPosition } from '../../integration/helpers';
 import {
   getQuantoPositionSize,
   getQuantoFillPrice,
-  getQuantoPnl,
   ONE_ETHER,
   calculatePricePnl,
 } from '../../integration/helpers/';
 import { ethers } from 'ethers';
-import Wei, { wei } from '@synthetixio/wei';
+import { wei } from '@synthetixio/wei';
 
 describe.only('Account margins test', () => {
   // Account and Market Identifiers
@@ -306,14 +305,8 @@ describe.only('Account margins test', () => {
       const notionalBtcValue = perpPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
       const notionalEthValue = perpPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
 
-      const btcInitialMarginRatio = perpPositionSizeBtcMarket
-        .div(btcSkewScale)
-        .mul(initialMarginFraction)
-        .add(minimumInitialMarginRatio);
-      const ethInitialMarginRatio = perpPositionSizeEthMarket
-        .div(ethSkewScale)
-        .mul(initialMarginFraction)
-        .add(minimumInitialMarginRatio);
+      const btcInitialMarginRatio = wei(quantoPositionSizeBtcMarket.abs()).div(wei(btcSkewScale)).mul(wei(2)).add(wei(0.01)).toBN();
+      const ethInitialMarginRatio = wei(quantoPositionSizeEthMarket.abs()).div(wei(ethSkewScale)).mul(wei(2)).add(wei(0.01)).toBN();
 
       btcInitialPositionMargin = notionalBtcValue.mul(btcInitialMarginRatio).div(ONE_ETHER);
       ethInitialPositionMargin = notionalEthValue.mul(ethInitialMarginRatio).div(ONE_ETHER);
@@ -340,24 +333,22 @@ describe.only('Account margins test', () => {
       console.log('initialAccountMargin :', initialAccountMargin);
       const expectedWithdrawableMargin = initialAccountMargin
         .add(initialPnl.mul(2_000))
-        .sub(btcInitialPositionMargin) // odd values
-        .sub(ethInitialPositionMargin) // odd values
+        .sub(btcInitialPositionMargin)
+        .sub(ethInitialPositionMargin)
         .sub(ethLiqMargin)
-        .sub(btcLiqMargin) // for some reason is negative (i think it should be positive)
+        .sub(btcLiqMargin)
         .sub(minimumPositionMargin);
-      console.log('initialPnl.mul(2_000) :', initialPnl.mul(2_000));
-      console.log('btcInitialPositionMargin :', btcInitialPositionMargin);
-      console.log('ethInitialPositionMargin :', ethInitialPositionMargin);
-      console.log('ethLiqMargin :', ethLiqMargin);
-      console.log('btcLiqMargin :', btcLiqMargin);
-      console.log('minimumPositionMargin :', minimumPositionMargin);
+      console.log('expectedWithdrawableMargin :', expectedWithdrawableMargin); // this is what i expect
+
+      const res = await systems().PerpsMarket.getWithdrawableMargin(accountId);
+      console.log('res :', res); // this is not the value i expect, perhaps a contract change is needed
 
       // 🚨 expected and actual withdrawable margin precision loss
       // 99699999899333333333335 -> expected
       // 98498478264000000004537 -> actual
       assertBn.equal(
         expectedWithdrawableMargin,
-        await systems().PerpsMarket.getWithdrawableMargin(accountId)
+        res
       );
     });
 
