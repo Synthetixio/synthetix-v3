@@ -52,6 +52,7 @@ export const genAddress = () => ethers.Wallet.createRandom().address;
 export const genMarketName = () => genString(3, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') + 'PERP';
 export const genBytes32 = () => ethers.utils.formatBytes32String(crypto.randomBytes(8).toString('hex'));
 export const genNumber = (min = 0, max = 1) => random(min, max);
+export const genBoolean = () => genOneOf([true, false]);
 
 // --- Composition --- //
 //

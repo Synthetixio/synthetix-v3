@@ -579,7 +579,7 @@ library Position {
             );
     }
 
-    // --- Member (mutative) --- //
+    // --- Member (mutations) --- //
 
     /**
      * @dev Clears the current position struct in-place of any stored data.

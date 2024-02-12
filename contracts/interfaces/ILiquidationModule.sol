@@ -28,7 +28,7 @@ interface ILiquidationModule is IBasePerpMarket {
     // @notice Emitted when margin is liquidated due to debt.
     event MarginLiquidated(uint128 indexed accountId, uint128 marketId);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Flags position belonging to `accountId` for liquidation. A flagged position is frozen from all operations.

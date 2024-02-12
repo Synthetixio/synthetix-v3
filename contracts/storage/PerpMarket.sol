@@ -119,7 +119,7 @@ library PerpMarket {
         globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
-    // --- Member (mutative) --- //
+    // --- Member (mutations) --- //
 
     /**
      * @dev Updates the debt correction given an `oldPosition` and `newPosition`.

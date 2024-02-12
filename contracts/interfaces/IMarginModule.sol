@@ -31,7 +31,7 @@ interface IMarginModule is IBasePerpMarket {
     // @notice Emitted when debt is paid off.
     event DebtPaid(uint256 amountPaidOff, uint256 amountFromCollateral, uint256 newDebt);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Pays back debt for `accountId` and `marketId`.

@@ -57,7 +57,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     // @notice Emitted when a market is created.
     event MarketCreated(uint128 id, bytes32 name);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Stores a reference to the Synthetix core system.

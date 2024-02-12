@@ -23,7 +23,7 @@ interface IPerpRewardDistributorFactoryModule {
     // @notice Emitted when a distributor is created.
     event RewardDistributorCreated(address distributor);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Create a new RewardDistributor with Synthetix and initializes storage.

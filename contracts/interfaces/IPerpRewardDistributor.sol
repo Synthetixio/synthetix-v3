@@ -15,9 +15,9 @@ interface IPerpRewardDistributor is IRewardDistributor {
     /**
      * @notice Returns a list of pool collateral types this distributor was registered with.
      */
-    function getCollateralTypes() external view returns (address[] memory);
+    function getPoolCollateralTypes() external view returns (address[] memory);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Initializes the PerpRewardDistributor with references, name, token to distribute etc.
@@ -32,7 +32,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
     ) external;
 
     /**
-     * @notice Set true to disable `payout` to revert on claim or false to allow.
+     * @notice Set true to disable `payout` to revert on claim or false to allow. Only callable by pool owner.
      */
     function setShouldFailPayout(bool _shouldFailedPayout) external;
 

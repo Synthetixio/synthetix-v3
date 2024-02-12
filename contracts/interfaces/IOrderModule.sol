@@ -36,7 +36,7 @@ interface IOrderModule is IBasePerpMarket {
     // @notice Emitted after an order is settled with hook(s) and the hook was completely successfully.
     event OrderSettlementHookExecuted(uint128 indexed accountId, uint128 marketId, address hook);
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @notice Creates an order for `accountId` in `marketId` to be settled at a later time.

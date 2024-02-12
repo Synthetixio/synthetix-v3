@@ -2345,10 +2345,16 @@ describe('MarginModule', async () => {
       await setMarketConfiguration(bs, { minCollateralDiscount, maxCollateralDiscount, spotMarketSkewScaleScalar });
 
       const spotMarketSkewScale = bn(500_000);
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-        collateral.synthMarketId(),
-        spotMarketSkewScale
+
+      await withExplicitEvmMine(
+        () =>
+          SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
+            collateral.synthMarketId(),
+            spotMarketSkewScale
+          ),
+        provider()
       );
+
       const amount = bn(genNumber(3000, 5000));
 
       const expectedPrice = calcDiscountedCollateralPrice(

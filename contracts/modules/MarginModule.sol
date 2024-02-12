@@ -151,7 +151,7 @@ contract MarginModule is IMarginModule {
         return false;
     }
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @inheritdoc IMarginModule
