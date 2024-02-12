@@ -3,8 +3,8 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import { openPosition } from '../../integration/helpers';
 import {
   getQuantoPositionSize,
-  getQuantoPnlWithSkew,
   getQuantoFillPrice,
+  getQuantoPnl,
   ONE_ETHER,
 } from '../../integration/helpers/';
 import { ethers } from 'ethers';
@@ -268,22 +268,46 @@ describe.only('Account margins test', () => {
       });
     });
 
+    it('btc position has correct fill price', async () => {
+      const expectedBtcFillPrice = getQuantoFillPrice({
+        skew: startingSkew,
+        skewScale: perpsMarketConfig[0].fundingParams.skewScale,
+        size: quantoPositionSizeBtcMarket,
+        price: btcPrice,
+      });
+
+      assertBn.equal(expectedBtcFillPrice, btcFillPrice);
+    });
+
+    it('eth position has correct fill price', async () => {
+      const expectedEthFillPrice = getQuantoFillPrice({
+        skew: startingSkew,
+        skewScale: perpsMarketConfig[1].fundingParams.skewScale,
+        size: quantoPositionSizeEthMarket,
+        price: ethPrice,
+      });
+
+      assertBn.equal(expectedEthFillPrice, ethFillPrice);
+    });
+
     before('identify expected values', () => {
       const btcSkewScale = perpsMarketConfig[0].fundingParams.skewScale;
       const ethSkewScale = perpsMarketConfig[1].fundingParams.skewScale;
 
-      const btcPnl = getQuantoPnlWithSkew({
+      const btcPnl = getQuantoPnl({
         baseAssetStartPrice: btcPrice,
+        baseAssetEndPrice: btcFillPrice,
+        quantoAssetStartPrice: ethPrice,
+        quantoAssetEndPrice: ethPrice,
         baseAssetSizeDelta: quantoPositionSizeBtcMarket,
-        startingSkew: startingSkew,
-        skewScale: btcSkewScale,
       });
 
-      const ethPnl = getQuantoPnlWithSkew({
+      const ethPnl = getQuantoPnl({
         baseAssetStartPrice: ethPrice,
+        baseAssetEndPrice: ethFillPrice,
+        quantoAssetStartPrice: ethPrice,
+        quantoAssetEndPrice: ethPrice,
         baseAssetSizeDelta: quantoPositionSizeEthMarket,
-        startingSkew: startingSkew,
-        skewScale: ethSkewScale,
       });
 
       initialPnl = btcPnl.add(ethPnl);
@@ -312,28 +336,6 @@ describe.only('Account margins test', () => {
       ethMaintenanceMargin = ethInitialPositionMargin.mul(maintenanceMarginScalar).div(ONE_ETHER);
 
       minimumPositionMargin = btcMinimumPositionMargin.add(ethMinimumPositionMargin);
-    });
-
-    it('btc position has correct fill price', async () => {
-      const expectedBtcFillPrice = getQuantoFillPrice({
-        skew: startingSkew,
-        skewScale: perpsMarketConfig[0].fundingParams.skewScale,
-        size: quantoPositionSizeBtcMarket,
-        price: btcPrice,
-      });
-
-      assertBn.equal(expectedBtcFillPrice, btcFillPrice);
-    });
-
-    it('eth position has correct fill price', async () => {
-      const expectedEthFillPrice = getQuantoFillPrice({
-        skew: startingSkew,
-        skewScale: perpsMarketConfig[1].fundingParams.skewScale,
-        size: quantoPositionSizeEthMarket,
-        price: ethPrice,
-      });
-
-      assertBn.equal(expectedEthFillPrice, ethFillPrice);
     });
 
     it('has correct available margin', async () => {

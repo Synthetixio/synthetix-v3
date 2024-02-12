@@ -89,31 +89,7 @@ export const getQuantoPnl = ({
 export type getQuantoPnlWithSkew = {
   baseAssetStartPrice: ethers.BigNumber;
   baseAssetSizeDelta: ethers.BigNumber;
+  quantoAssetPrice: ethers.BigNumber;
   startingSkew: ethers.BigNumber;
   skewScale: ethers.BigNumber;
-};
-
-// ❌ not confirmed; precision loss possible
-//
-// Calculates the PnL of a quanto position at the point of trade
-// given the premium or discount applied to the base asset price
-// based on the skew and skewScale.
-export const getQuantoPnlWithSkew = ({
-  baseAssetStartPrice,
-  baseAssetSizeDelta,
-  startingSkew,
-  skewScale,
-}: getQuantoPnlWithSkew): ethers.BigNumber => {
-  const fillPrice = getQuantoFillPrice({
-    skew: startingSkew,
-    skewScale: skewScale,
-    size: baseAssetSizeDelta,
-    price: baseAssetStartPrice,
-  });
-
-  return baseAssetStartPrice.sub(fillPrice).mul(baseAssetSizeDelta).div(ONE_ETHER);
-
-  // 💡 invariant assertion:
-  // iff the quanto asset is static,
-  // then PnL should be a function of only the base asset price impact
 };
