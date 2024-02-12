@@ -80,6 +80,9 @@ library ErrorUtil {
     // @notice Thrown when an account tries to withdrawAll but has debt.
     error DebtFound(uint128 accountId, uint128 marketId);
 
+    // @notice Thrown when a user calls payDebt without any debt.
+    error NoDebt(uint128 accountId, uint128 marketId);
+
     // @notice Thrown when attempting to deposit a collateral that has reached a max deportable amount.
     error MaxCollateralExceeded(uint256 value, uint256 max);
 
