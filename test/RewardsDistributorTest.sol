@@ -11,9 +11,15 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
-contract FakeSNX is MockERC20 {
+contract SynthUSDCToken is MockERC20 {
     constructor() {
-        initialize("Fake SNX", "fSNX", 18);
+        initialize("Synth USDC", "sUSDC", 18);
+    }
+}
+
+contract SNXToken is MockERC20 {
+    constructor() {
+        initialize("Synthetix Network Token", "SNX", 18);
     }
 
     function mint(address to, uint256 amount) public {
@@ -50,34 +56,48 @@ contract CoreProxyMock {
 }
 
 contract RewardsDistributorTest is Test {
-    FakeSNX internal fakeSnxToken;
+    address private ALICE;
+    address private BOB;
+
+    SynthUSDCToken internal sUSDC;
+    SNXToken internal SNX;
     RewardsDistributor internal rewardsDistributor;
     CoreProxyMock internal rewardsManager;
 
     function setUp() public {
-        fakeSnxToken = new FakeSNX();
+        ALICE = vm.addr(0xA11CE);
+        BOB = vm.addr(0xB0B);
+
+        SNX = new SNXToken();
+        sUSDC = new SynthUSDCToken();
+
         rewardsManager = new CoreProxyMock();
+
         uint128 poolId = 1;
+        address collateralType = address(sUSDC);
+        address payoutToken = address(SNX);
+        string memory name = "whatever";
+
         rewardsDistributor = new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            address(fakeSnxToken),
-            "whatever"
+            collateralType,
+            payoutToken,
+            name
         );
     }
 
     function test_constructor_arguments() public {
         assertEq(rewardsDistributor.rewardManager(), address(rewardsManager));
         assertEq(rewardsDistributor.name(), "whatever");
-        assertEq(rewardsDistributor.collateralType(), address(fakeSnxToken));
-        assertEq(rewardsDistributor.token(), address(fakeSnxToken));
+        assertEq(rewardsDistributor.collateralType(), address(sUSDC));
+        assertEq(rewardsDistributor.payoutToken(), address(SNX));
+        assertEq(rewardsDistributor.token(), address(SNX));
     }
 
     function test_setShouldFailPayout_AccessError() public {
-        vm.startPrank(vm.addr(0xA11CE));
-        vm.expectRevert(
-            abi.encodeWithSelector(AccessError.Unauthorized.selector, vm.addr(0xA11CE))
-        );
+        vm.startPrank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, ALICE));
         rewardsDistributor.setShouldFailPayout(true);
         vm.stopPrank();
     }
@@ -95,31 +115,21 @@ contract RewardsDistributorTest is Test {
     function test_payout_AccessError() public {
         uint128 accountId = 1;
         uint128 poolId = 1;
+        address collateralType = address(sUSDC);
 
-        vm.startPrank(vm.addr(0xA11CE));
-        vm.expectRevert(
-            abi.encodeWithSelector(AccessError.Unauthorized.selector, vm.addr(0xA11CE))
-        );
-        assertEq(
-            rewardsDistributor.payout(
-                accountId,
-                poolId,
-                address(fakeSnxToken),
-                vm.addr(0xB0B),
-                100
-            ),
-            false
-        );
+        vm.startPrank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, ALICE));
+        assertEq(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 100), false);
         vm.stopPrank();
     }
 
     function test_payout_WrongPool() public {
-        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        SNX.mint(address(rewardsDistributor), 1000e18);
         vm.startPrank(address(rewardsManager));
         vm.deal(address(rewardsManager), 1 ether);
         uint128 accountId = 1;
         uint128 poolId = 2;
-        address collateralType = address(fakeSnxToken);
+        address collateralType = address(sUSDC);
         vm.expectRevert(
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
@@ -127,20 +137,17 @@ contract RewardsDistributorTest is Test {
                 "Pool does not match the rewards pool"
             )
         );
-        assertEq(
-            rewardsDistributor.payout(accountId, poolId, collateralType, vm.addr(0xB0B), 10e18),
-            false
-        );
+        assertEq(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 10e18), false);
         vm.stopPrank();
     }
 
     function test_payout_WrongCollateralType() public {
-        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        SNX.mint(address(rewardsDistributor), 1000e18);
         vm.startPrank(address(rewardsManager));
         vm.deal(address(rewardsManager), 1 ether);
         uint128 accountId = 1;
         uint128 poolId = 1;
-        address collateralType = address(0xB0B);
+        address collateralType = address(0); // wrong one
         vm.expectRevert(
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
@@ -148,10 +155,7 @@ contract RewardsDistributorTest is Test {
                 "Collateral does not match the rewards token"
             )
         );
-        assertEq(
-            rewardsDistributor.payout(accountId, poolId, collateralType, vm.addr(0xB0B), 10e18),
-            false
-        );
+        assertEq(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 10e18), false);
         vm.stopPrank();
     }
 
@@ -160,84 +164,59 @@ contract RewardsDistributorTest is Test {
         vm.deal(address(rewardsManager), 1 ether);
         uint128 accountId = 1;
         uint128 poolId = 1;
+        address collateralType = address(sUSDC);
         vm.expectRevert(
             abi.encodeWithSelector(
                 ERC20Helper.FailedTransfer.selector,
                 address(rewardsDistributor),
-                vm.addr(0xB0B),
+                BOB,
                 10e18
             )
         );
-        assertEq(
-            rewardsDistributor.payout(
-                accountId,
-                poolId,
-                address(fakeSnxToken),
-                vm.addr(0xB0B),
-                10e18
-            ),
-            false
-        );
+        assertEq(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 10e18), false);
         vm.stopPrank();
     }
 
     function test_payout_shouldFail() public {
-        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        SNX.mint(address(rewardsDistributor), 1000e18);
         vm.startPrank(address(rewardsManager));
         vm.deal(address(rewardsManager), 1 ether);
         uint128 accountId = 1;
         uint128 poolId = 1;
+        address collateralType = address(sUSDC);
         rewardsDistributor.setShouldFailPayout(true);
-        assertEq(
-            rewardsDistributor.payout(
-                accountId,
-                poolId,
-                address(fakeSnxToken),
-                vm.addr(0xB0B),
-                10e18
-            ),
-            false
-        );
+        assertEq(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 10e18), false);
         vm.stopPrank();
     }
 
     function test_payout() public {
-        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        SNX.mint(address(rewardsDistributor), 1000e18);
         vm.startPrank(address(rewardsManager));
         vm.deal(address(rewardsManager), 1 ether);
         uint128 accountId = 1;
         uint128 poolId = 1;
-        assertTrue(
-            rewardsDistributor.payout(
-                accountId,
-                poolId,
-                address(fakeSnxToken),
-                vm.addr(0xB0B),
-                10e18
-            )
-        );
+        address collateralType = address(sUSDC);
+        assertTrue(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 10e18));
         vm.stopPrank();
     }
 
     function test_distributeRewards_AccessError() public {
         uint128 poolId = 1;
-        address collateralType = address(fakeSnxToken);
+        address collateralType = address(sUSDC);
         uint256 amount = 100e18;
         uint64 start = 12345678;
         uint32 duration = 3600;
 
-        vm.startPrank(vm.addr(0xA11CE));
+        vm.startPrank(ALICE);
         vm.deal(address(rewardsManager), 1 ether);
-        vm.expectRevert(
-            abi.encodeWithSelector(AccessError.Unauthorized.selector, vm.addr(0xA11CE))
-        );
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, ALICE));
         rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
         vm.stopPrank();
     }
 
     function test_distributeRewards_WrongPool() public {
         uint128 poolId = 2;
-        address collateralType = address(fakeSnxToken);
+        address collateralType = address(sUSDC);
         uint256 amount = 100e18;
         uint64 start = 12345678;
         uint32 duration = 3600;
@@ -257,7 +236,7 @@ contract RewardsDistributorTest is Test {
 
     function test_distributeRewards_WrongCollateralType() public {
         uint128 poolId = 1;
-        address collateralType = address(0xB0B);
+        address collateralType = address(SNX); // incorrect one
         uint256 amount = 100e18;
         uint64 start = 12345678;
         uint32 duration = 3600;
@@ -277,36 +256,28 @@ contract RewardsDistributorTest is Test {
 
     function test_distributeRewards() public {
         uint128 poolId = 1;
+        address collateralType = address(sUSDC);
         uint256 amount = 100e18;
         uint64 start = 12345678;
         uint32 duration = 3600;
+
         vm.startPrank(address(rewardsManager));
-        rewardsDistributor.distributeRewards(
-            poolId,
-            address(fakeSnxToken),
-            amount,
-            start,
-            duration
-        );
+        rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
         vm.stopPrank();
         assertEq(rewardsManager.poolId(), poolId);
-        assertEq(rewardsManager.collateralType(), address(fakeSnxToken));
+        assertEq(rewardsManager.collateralType(), collateralType);
         assertEq(rewardsManager.amount(), 100e18);
         assertEq(rewardsManager.start(), 12345678);
         assertEq(rewardsManager.duration(), 3600);
     }
 
     function test_onPositionUpdated() public {
-        fakeSnxToken.mint(address(rewardsDistributor), 1000e18);
+        SNX.mint(address(rewardsDistributor), 1000e18);
         uint128 accountId = 1;
         uint128 poolId = 1;
+        address collateralType = address(sUSDC);
         uint256 actorSharesD18 = 123;
-        rewardsDistributor.onPositionUpdated(
-            accountId,
-            poolId,
-            address(fakeSnxToken),
-            actorSharesD18
-        ); // does nothing
+        rewardsDistributor.onPositionUpdated(accountId, poolId, collateralType, actorSharesD18);
     }
 
     function test_supportsInterface() public {

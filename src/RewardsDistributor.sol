@@ -14,6 +14,7 @@ contract RewardsDistributor is IRewardDistributor {
     address public rewardManager;
     uint128 public poolId;
     address public collateralType;
+    address public payoutToken;
     string public name;
 
     bool public shouldFailPayout;
@@ -22,16 +23,18 @@ contract RewardsDistributor is IRewardDistributor {
         address rewardManager_,
         uint128 poolId_,
         address collateralType_,
+        address payoutToken_,
         string memory name_
     ) {
         rewardManager = rewardManager_; // Synthetix CoreProxy
         poolId = poolId_;
         collateralType = collateralType_;
+        payoutToken = payoutToken_;
         name = name_;
     }
 
     function token() public view returns (address) {
-        return collateralType;
+        return payoutToken;
     }
 
     function setShouldFailPayout(bool shouldFailPayout_) external {
@@ -67,7 +70,7 @@ contract RewardsDistributor is IRewardDistributor {
                 "Collateral does not match the rewards token"
             );
         }
-        collateralType.safeTransfer(payoutTarget_, payoutAmount_);
+        payoutToken.safeTransfer(payoutTarget_, payoutAmount_);
         return true;
     }
 
