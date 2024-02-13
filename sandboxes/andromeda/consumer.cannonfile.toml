@@ -58,7 +58,7 @@ args = [
     # uint256 wrapAmount
     "<%= parseEther(String(10_000)) %>",
     # uint256 minAmountReceived (0% slippage!)
-    "<%= parseEther(String(10_000)) %>"
+    "<%= parseEther(String(10_000)) %>",
 ]
 depends = ["invoke.approve_10k_usdc_for_SpotMarketProxy_to_wrap_for_liquidity"]
 
@@ -132,7 +132,7 @@ args = [
     # uint256 wrapAmount
     "<%= parseEther(String(20_000)) %>",
     # uint256 minAmountReceived (0% slippage!)
-    "<%= parseEther(String(20_000)) %>"
+    "<%= parseEther(String(20_000)) %>",
 ]
 depends = ["invoke.approve_20k_usdc_for_SpotMarketProxy_for_wrapping"]
 
@@ -148,7 +148,7 @@ args = [
     # uint256 minUsdAmount (0% slippage!)
     "<%= parseEther(String(20_000)) %>",
     # address referrer
-    "<%= AddressZero %>"
+    "<%= AddressZero %>",
 ]
 depends = ["invoke.wrap_20k_usdc_into_synth_usdc"]
 
@@ -170,7 +170,7 @@ depends = [
     # We want to ensure pool has some liquidity before test user start interacting with perps market, so adding this dependency step
     "invoke.delegate_10k_synth_usdc_to_pool",
     # We want to ensure user has sUSD available in their wallet too
-    "invoke.atomic_sell_20k_synth_usdc_for_20k_susd"
+    "invoke.atomic_sell_20k_synth_usdc_for_20k_susd",
 ]
 
 [invoke.approve_1k_susd_for_PerpsMarketProxy_to_trade]
@@ -189,7 +189,7 @@ from = "<%= settings.test_user %>"
 func = "modifyCollateral"
 args = [
     "<%= extras.test_user_perps_account_id %>",
-    0, # 0 is a special market id for susd
+    0,                                          # 0 is a special market id for susd
     "<%= parseEther(String(1_000)) %>",
 ]
 depends = ["invoke.approve_1k_susd_for_PerpsMarketProxy_to_trade"]
@@ -217,7 +217,7 @@ from = "<%= settings.test_user %>"
 func = "modifyCollateral"
 args = [
     "<%= extras.test_user_perps_account_id %>",
-    0, # 0 is a special market id for susd
+    0,                                          # 0 is a special market id for susd
     "<%= parseEther(String(700)) %>",
 ]
 depends = ["invoke.approve_700_susd_for_PerpsMarketProxy_to_withdraw"]
@@ -244,7 +244,7 @@ args = [
     # uint256 minAmountReceived (0% slippage!)
     "<%= parseEther('300') %>",
     # address referrer
-    "<%= AddressZero %>"
+    "<%= AddressZero %>",
 ]
 depends = ["invoke.approve_300_susd_for_SpotMarketProxy_to_buy_synth_usdc"]
 
@@ -258,7 +258,7 @@ args = [
     # uint256 unwrapAmount
     "<%= parseEther('300') %>",
     # uint256 minAmountReceived (0% slippage!)
-    "<%= parseEther('300') %>"
+    "<%= parseEther('300') %>",
 ]
 depends = ["invoke.atomic_buy_300_synth_usdc_with_300_susd"]
 #

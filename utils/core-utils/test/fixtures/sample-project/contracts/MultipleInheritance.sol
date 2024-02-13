@@ -5,11 +5,7 @@ import {AnotherModule} from "./AnotherModule.sol";
 import {SampleModule as AliasedModule} from "./SampleModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
-contract SomeModule is AnotherModule {
-
-}
+contract SomeModule is AnotherModule {}
 
 // solhint-disable-next-line no-empty-blocks
-contract MultipleInheritancce is SomeModule, AliasedModule {
-
-}
+contract MultipleInheritancce is SomeModule, AliasedModule {}

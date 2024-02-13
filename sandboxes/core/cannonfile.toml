@@ -30,7 +30,7 @@ func = "setConfig"
 args = [
     "<%= formatBytes32String('accountTimeoutWithdraw') %>",
     # seconds
-    "<%= hexZeroPad(hexlify(0), 32) %>"
+    "<%= hexZeroPad(hexlify(0), 32) %>",
 ]
 
 #
@@ -73,7 +73,8 @@ func = "registerNode"
 args = [
     8, # 8 = constant
     "<%= defaultAbiCoder.encode(['int256'], [parseEther('10')]) %>", # 1 parameter: price
-    []
+    [
+    ],
 ]
 extra.box_oracle_id.event = "NodeRegistered"
 extra.box_oracle_id.arg = 0
@@ -86,13 +87,13 @@ func = "updatePriceData"
 args = [
     "<%= extras.synth_box_market_id %>",
     "<%= extras.box_oracle_id %>",
-    "<%= extras.box_oracle_id %>"
+    "<%= extras.box_oracle_id %>",
 ]
 
 [invoke.configure_box_token_as_collateral]
 target = ["synthetix.CoreProxy"]
 fromCall.func = "owner"
-func = "configureCollateral" # args below
+func = "configureCollateral"     # args below
 
 [[invoke.configure_box_token_as_collateral.args]]
 tokenAddress = "<%= imports.box_token.contracts.MintableToken.address %>"
@@ -146,5 +147,5 @@ args = [
     "<%= extras.spartan_council_pool_id %>",
     [
         { marketId = "<%= extras.synth_box_market_id %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
-    ]
+    ],
 ]

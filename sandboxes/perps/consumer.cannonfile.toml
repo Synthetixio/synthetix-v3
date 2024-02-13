@@ -130,7 +130,7 @@ from = "<%= settings.test_user %>"
 func = "modifyCollateral"
 args = [
     "<%= extras.test_user_perps_account_id %>",
-    0, # 0 is a special market id for sUSD
+    0,                                          # 0 is a special market id for sUSD
     "<%= parseEther('100') %>",
 ]
 

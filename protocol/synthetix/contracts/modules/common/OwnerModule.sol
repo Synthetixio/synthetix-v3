@@ -8,6 +8,4 @@ import {OwnerModule as BaseOwnerModule} from "@synthetixio/core-modules/contract
  * See core-modules/../OwnerModule
  */
 // solhint-disable-next-line no-empty-blocks
-contract OwnerModule is BaseOwnerModule {
-
-}
+contract OwnerModule is BaseOwnerModule {}

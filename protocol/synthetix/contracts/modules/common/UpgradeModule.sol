@@ -8,6 +8,4 @@ import {UpgradeModule as BaseUpgradeModule} from "@synthetixio/core-modules/cont
  * See core-modules/../UpgradeModule
  */
 // solhint-disable-next-line no-empty-blocks
-contract UpgradeModule is BaseUpgradeModule {
-
-}
+contract UpgradeModule is BaseUpgradeModule {}
