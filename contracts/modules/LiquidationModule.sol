@@ -91,9 +91,9 @@ contract LiquidationModule is ILiquidationModule {
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
         }
         // Clear out debt
-        if (accountMargin.debt > 0) {
-            market.totalTraderDebtUsd -= accountMargin.debt;
-            accountMargin.debt = 0;
+        if (accountMargin.debtUsd > 0) {
+            market.totalTraderDebtUsd -= accountMargin.debtUsd;
+            accountMargin.debtUsd = 0;
         }
 
         // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,

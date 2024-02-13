@@ -298,7 +298,7 @@ contract OrderModule is IOrderModule {
                 runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
             );
             market.updateDebtAndCollateral(debtAmountDeltaUsd, sUSDCollateralDelta);
-            runtime.accountDebt = accountMargin.debt;
+            runtime.accountDebt = accountMargin.debtUsd;
         }
 
         if (runtime.trade.newPosition.size == 0) {

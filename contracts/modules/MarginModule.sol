@@ -180,7 +180,7 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
         // Prevent withdraw all when there is unpaid debt owned on the account margin.
-        if (accountMargin.debt != 0) {
+        if (accountMargin.debtUsd != 0) {
             revert ErrorUtil.DebtFound(accountId, marketId);
         }
 
@@ -294,7 +294,7 @@ contract MarginModule is IMarginModule {
             // Ensure we perform this _after_ the accounting update so marginUsd uses with post withdrawal
             // collateral amounts.
             Position.Data storage position = market.positions[accountId];
-            if (position.size != 0 || accountMargin.debt != 0) {
+            if (position.size != 0 || accountMargin.debtUsd != 0) {
                 validatePositionPostWithdraw(accountId, position, market);
             }
 
@@ -436,7 +436,7 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        uint128 debt = accountMargin.debt;
+        uint128 debt = accountMargin.debtUsd;
         if (debt == 0) {
             revert ErrorUtil.NoDebt(accountId, marketId);
         }
@@ -450,7 +450,7 @@ contract MarginModule is IMarginModule {
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= paidFromCollateral;
         }
         uint128 amountPaidWithBalance = decreaseDebtAmount - paidFromCollateral;
-        accountMargin.debt -= decreaseDebtAmount;
+        accountMargin.debtUsd -= decreaseDebtAmount;
         market.updateDebtAndCollateral(decreaseDebtAmount.toInt() * -1, paidFromCollateral.toInt() * -1);
         if (amountPaidWithBalance > 0) {
             globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountPaidWithBalance);
