@@ -179,6 +179,7 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+        // Prevent withdraw all when there is unpaid debt owned on the account margin.
         if (accountMargin.debt != 0) {
             revert ErrorUtil.DebtFound(accountId, marketId);
         }
