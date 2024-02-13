@@ -456,7 +456,7 @@ contract MarginModule is IMarginModule {
             globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountPaidWithBalance);
         }
 
-        emit DebtPaid(decreaseDebtAmount, paidFromCollateral, accountMargin.debt);
+        emit DebtPaid(decreaseDebtAmount, paidFromCollateral, debt);
     }
 
     // --- Views --- //

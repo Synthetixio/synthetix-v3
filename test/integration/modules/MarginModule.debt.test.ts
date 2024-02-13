@@ -167,7 +167,7 @@ describe('MarginModule Debt', async () => {
       );
 
       const receipt = await tx.wait();
-      await assertEvent(receipt, `DebtPaid(${debtFromAccountDigest}, 0, 0)`, PerpMarketProxy);
+      await assertEvent(receipt, `DebtPaid(${debtFromAccountDigest}, 0, ${debtFromAccountDigest})`, PerpMarketProxy);
 
       const { debt: debtFromAccountDigestAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
@@ -262,7 +262,7 @@ describe('MarginModule Debt', async () => {
       // Assert events
       assertBn.equal(debtPaidEvent.args.amountPaidOff, debtBefore);
       assertBn.equal(debtPaidEvent.args.amountFromCollateral, amountToBePaidOffByCollateral);
-      assertBn.isZero(debtPaidEvent.args.newDebt);
+      assertBn.equal(debtPaidEvent.args.oldDebt, debtBefore);
 
       const sUSDBalanceAfter = await sUSDcollateral.contract.balanceOf(await trader.signer.getAddress());
 
