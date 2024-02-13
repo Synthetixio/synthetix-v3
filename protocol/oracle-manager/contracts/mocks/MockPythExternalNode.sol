@@ -6,15 +6,15 @@ import {NodeOutput} from "../storage/NodeOutput.sol";
 import {NodeDefinition} from "../storage/NodeDefinition.sol";
 
 contract MockPythExternalNode is IExternalNode {
-    uint private _price;
+    uint256 private _price;
 
     error OracleDataRequired();
 
-    function mockSetCurrentPrice(uint currentPrice) external {
+    function mockSetCurrentPrice(uint256 currentPrice) external {
         _price = currentPrice;
     }
 
-    function getCurrentPrice() external view returns (uint) {
+    function getCurrentPrice() external view returns (uint256) {
         return _price;
     }
 
@@ -27,7 +27,7 @@ contract MockPythExternalNode is IExternalNode {
         // Note: when it's 50 seconds, it should revert.  This is a way to test the right
         // tolerance is being sent in during different situations (like liquidations on perps, we should use a strict staleness tolerance)
         if (runtimeValues.length > 0) {
-            uint strictTolerance = 50;
+            uint256 strictTolerance = 50;
             if (runtimeValues[0] == bytes32(strictTolerance)) {
                 revert OracleDataRequired();
             }

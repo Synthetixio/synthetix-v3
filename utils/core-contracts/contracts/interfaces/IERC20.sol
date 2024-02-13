@@ -11,7 +11,7 @@ interface IERC20 {
      * @param to The address that received the tokens.
      * @param amount The number of tokens that were transferred.
      */
-    event Transfer(address indexed from, address indexed to, uint amount);
+    event Transfer(address indexed from, address indexed to, uint256 amount);
 
     /**
      * @notice Emitted when a user has provided allowance to another user for transferring tokens on its behalf.
@@ -19,21 +19,21 @@ interface IERC20 {
      * @param spender The address that received the allowance.
      * @param amount The number of tokens that were added to `spender`'s allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint amount);
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
 
     /**
      * @notice Thrown when the address interacting with the contract does not have sufficient allowance to transfer tokens from another contract.
      * @param required The necessary allowance.
      * @param existing The current allowance.
      */
-    error InsufficientAllowance(uint required, uint existing);
+    error InsufficientAllowance(uint256 required, uint256 existing);
 
     /**
      * @notice Thrown when the address interacting with the contract does not have sufficient tokens.
      * @param required The necessary balance.
      * @param existing The current balance.
      */
-    error InsufficientBalance(uint required, uint existing);
+    error InsufficientBalance(uint256 required, uint256 existing);
 
     /**
      * @notice Retrieves the name of the token, e.g. "Synthetix Network Token".
@@ -57,14 +57,14 @@ interface IERC20 {
      * @notice Returns the total number of tokens in circulation (minted - burnt).
      * @return The total number of tokens.
      */
-    function totalSupply() external view returns (uint);
+    function totalSupply() external view returns (uint256);
 
     /**
      * @notice Returns the balance of a user.
      * @param owner The address whose balance is being retrieved.
      * @return The number of tokens owned by the user.
      */
-    function balanceOf(address owner) external view returns (uint);
+    function balanceOf(address owner) external view returns (uint256);
 
     /**
      * @notice Returns how many tokens a user has allowed another user to transfer on its behalf.
@@ -72,7 +72,7 @@ interface IERC20 {
      * @param spender The user who was given the allowance.
      * @return The amount of tokens `spender` can transfer on `owner`'s behalf.
      */
-    function allowance(address owner, address spender) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint256);
 
     /**
      * @notice Transfer tokens from one address to another.
@@ -80,7 +80,7 @@ interface IERC20 {
      * @param amount The amount of tokens to be transferred.
      * @return A boolean which is true if the operation succeeded.
      */
-    function transfer(address to, uint amount) external returns (bool);
+    function transfer(address to, uint256 amount) external returns (bool);
 
     /**
      * @notice Allows users to provide allowance to other users so that they can transfer tokens on their behalf.
@@ -88,7 +88,7 @@ interface IERC20 {
      * @param amount The amount of tokens that are being added to the allowance.
      * @return A boolean which is true if the operation succeeded.
      */
-    function approve(address spender, uint amount) external returns (bool);
+    function approve(address spender, uint256 amount) external returns (bool);
 
     /**
      * @notice Atomically increases the allowance granted to `spender` by the caller.
@@ -127,5 +127,5 @@ interface IERC20 {
      * @param amount The number of tokens to transfer.
      * @return A boolean which is true if the operation succeeded.
      */
-    function transferFrom(address from, address to, uint amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }

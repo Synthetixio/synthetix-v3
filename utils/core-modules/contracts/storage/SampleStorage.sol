@@ -6,8 +6,8 @@ library SampleStorage {
         keccak256(abi.encode("io.synthetix.core-modules.Sample"));
 
     struct Data {
-        uint someValue;
-        uint protectedValue;
+        uint256 someValue;
+        uint256 protectedValue;
     }
 
     function load() internal pure returns (Data storage store) {

@@ -118,19 +118,19 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             // debt is the total debt of all markets
             // can be computed as total collateral value - sum_each_market( debt )
             GlobalPerpsMarket.Data storage globalMarket = GlobalPerpsMarket.load();
-            uint collateralValue = globalMarket.totalCollateralValue();
-            int totalMarketDebt;
+            uint256 collateralValue = globalMarket.totalCollateralValue();
+            int256 totalMarketDebt;
 
             SetUtil.UintSet storage activeMarkets = globalMarket.activeMarkets;
             uint256 activeMarketsLength = activeMarkets.length();
-            for (uint i = 1; i <= activeMarketsLength; i++) {
+            for (uint256 i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
                 totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
                     PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 );
             }
 
-            int totalDebt = collateralValue.toInt() + totalMarketDebt;
+            int256 totalDebt = collateralValue.toInt() + totalMarketDebt;
             return MathUtil.max(0, totalDebt).toUint();
         }
 

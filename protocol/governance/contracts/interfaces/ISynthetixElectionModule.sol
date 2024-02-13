@@ -25,26 +25,26 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     function getDebtShareContract() external view returns (address);
 
     /// @notice Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
-    function setDebtShareSnapshotId(uint snapshotId) external;
+    function setDebtShareSnapshotId(uint256 snapshotId) external;
 
     /// @notice Returns the Synthetix v2 DebtShare snapshot id set for this epoch
-    function getDebtShareSnapshotId() external view returns (uint);
+    function getDebtShareSnapshotId() external view returns (uint256);
 
     /// @notice Returns the Synthetix v2 debt share for the provided address, at this epoch's snapshot
-    function getDebtShare(address user) external view returns (uint);
+    function getDebtShare(address user) external view returns (uint256);
 
     // ---------------------------------------
     // Cross chain debt shares
     // ---------------------------------------
 
     /// @notice Allows the system owner to declare a merkle root for user debt shares on other chains for this epoch
-    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
+    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint256 blocknumber) external;
 
     /// @notice Returns the current epoch's merkle root for user debt shares on other chains
     function getCrossChainDebtShareMerkleRoot() external view returns (bytes32);
 
     /// @notice Returns the current epoch's merkle root block number
-    function getCrossChainDebtShareMerkleRootBlockNumber() external view returns (uint);
+    function getCrossChainDebtShareMerkleRootBlockNumber() external view returns (uint256);
 
     /// @notice Allows users to declare their Synthetix v2 debt shares on other chains
     function declareCrossChainDebtShare(
@@ -54,7 +54,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     ) external;
 
     /// @notice Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains
-    function getDeclaredCrossChainDebtShare(address account) external view returns (uint);
+    function getDeclaredCrossChainDebtShare(address account) external view returns (uint256);
 
     /// @notice Declares cross chain debt shares and casts a vote
     function declareAndCast(

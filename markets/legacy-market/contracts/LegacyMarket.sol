@@ -141,7 +141,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         oldUSD.transferFrom(ERC2771Context._msgSender(), address(this), amount);
 
         // now burn it
-        uint beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
+        uint256 beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
         oldSynthetix.burnSynths(amount);
         if (iss.debtBalanceOf(address(this), "sUSD") != beforeDebt - amount) {
             revert Paused();

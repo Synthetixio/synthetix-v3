@@ -95,7 +95,7 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
             uint64[] memory publishTimes = new uint64[](priceIds.length);
 
-            for (uint i = 0; i < priceIds.length; i++) {
+            for (uint256 i = 0; i < priceIds.length; i++) {
                 publishTimes[i] = minAcceptedPublishTime;
             }
 
@@ -131,7 +131,7 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
                     type(uint64).max
                 )
             returns (PythStructs.PriceFeed[] memory priceFeeds) {
-                for (uint i = 0; i < priceFeeds.length; i++) {
+                for (uint256 i = 0; i < priceFeeds.length; i++) {
                     Price.load(priceIds[i]).benchmarkPrices[timestamp] = priceFeeds[i].price;
                 }
             } catch (bytes memory reason) {

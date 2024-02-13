@@ -39,7 +39,7 @@ library PerpsPrice {
     function getCurrentPrice(
         uint128 marketId,
         Tolerance priceTolerance
-    ) internal view returns (uint price) {
+    ) internal view returns (uint256 price) {
         Data storage self = load(marketId);
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         NodeOutput.Data memory output;

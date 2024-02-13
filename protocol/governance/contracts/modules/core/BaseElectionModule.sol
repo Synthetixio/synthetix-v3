@@ -168,7 +168,7 @@ contract BaseElectionModule is
     }
 
     function setDefaultBallotEvaluationBatchSize(
-        uint newDefaultBallotEvaluationBatchSize
+        uint256 newDefaultBallotEvaluationBatchSize
     ) external override {
         OwnableStorage.onlyOwner();
         if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
@@ -204,7 +204,7 @@ contract BaseElectionModule is
     function dismissMembers(address[] calldata membersToDismiss) external override {
         OwnableStorage.onlyOwner();
 
-        uint epochIndex = Council.load().lastElectionId;
+        uint256 epochIndex = Council.load().lastElectionId;
 
         _removeCouncilMembers(membersToDismiss, epochIndex);
 
@@ -250,7 +250,7 @@ contract BaseElectionModule is
     function cast(
         address[] calldata candidates
     ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        uint votePower = _getVotePower(ERC2771Context._msgSender());
+        uint256 votePower = _getVotePower(ERC2771Context._msgSender());
 
         if (votePower == 0) revert NoVotePower();
 
@@ -258,7 +258,7 @@ contract BaseElectionModule is
 
         bytes32 ballotId;
 
-        uint epochIndex = Council.load().lastElectionId;
+        uint256 epochIndex = Council.load().lastElectionId;
 
         if (hasVoted(ERC2771Context._msgSender())) {
             _withdrawCastedVote(ERC2771Context._msgSender(), epochIndex);
@@ -279,7 +279,7 @@ contract BaseElectionModule is
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(
-        uint numBallots
+        uint256 numBallots
     ) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
         Election.Data storage election = Council.load().getCurrentElection();
 
@@ -287,9 +287,9 @@ contract BaseElectionModule is
 
         _evaluateNextBallotBatch(numBallots);
 
-        uint currentEpochIndex = Council.load().lastElectionId;
+        uint256 currentEpochIndex = Council.load().lastElectionId;
 
-        uint totalBallots = election.ballotIds.length;
+        uint256 totalBallots = election.ballotIds.length;
         if (election.numEvaluatedBallots < totalBallots) {
             emit ElectionBatchEvaluated(
                 currentEpochIndex,
@@ -309,7 +309,7 @@ contract BaseElectionModule is
 
         if (!election.evaluated) revert ElectionNotEvaluated();
 
-        uint newEpochIndex = Council.load().lastElectionId + 1;
+        uint256 newEpochIndex = Council.load().lastElectionId + 1;
 
         _removeAllCouncilMembers(newEpochIndex);
         _addCouncilMembers(election.winners.values(), newEpochIndex);
@@ -345,7 +345,7 @@ contract BaseElectionModule is
         return Council.load().nextElectionSettings.maxDateAdjustmentTolerance;
     }
 
-    function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
+    function getDefaultBallotEvaluationBatchSize() external view override returns (uint256) {
         return Council.load().nextElectionSettings.defaultBallotEvaluationBatchSize;
     }
 
@@ -357,7 +357,7 @@ contract BaseElectionModule is
         return Council.load().nextElectionSettings.minimumActiveMembers;
     }
 
-    function getEpochIndex() external view override returns (uint) {
+    function getEpochIndex() external view override returns (uint256) {
         return Council.load().lastElectionId;
     }
 
@@ -377,7 +377,7 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().epoch.votingPeriodStartDate;
     }
 
-    function getCurrentPeriod() external view override returns (uint) {
+    function getCurrentPeriod() external view override returns (uint256) {
         // solhint-disable-next-line numcast/safe-cast
         return uint(Council.load().getCurrentPeriod());
     }
@@ -404,11 +404,11 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().ballotIdsByAddress[user] != bytes32(0);
     }
 
-    function getVotePower(address user) external view override returns (uint) {
+    function getVotePower(address user) external view override returns (uint256) {
         return _getVotePower(user);
     }
 
-    function getBallotVotes(bytes32 ballotId) external view override returns (uint) {
+    function getBallotVotes(bytes32 ballotId) external view override returns (uint256) {
         return Council.load().getCurrentElection().ballotsById[ballotId].votes;
     }
 
@@ -422,7 +422,7 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().evaluated;
     }
 
-    function getCandidateVotes(address candidate) external view override returns (uint) {
+    function getCandidateVotes(address candidate) external view override returns (uint256) {
         return Council.load().getCurrentElection().candidateVotes[candidate];
     }
 

@@ -2,5 +2,5 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface INewModule {
-    function setSomeNewValue(uint newValue) external;
+    function setSomeNewValue(uint256 newValue) external;
 }

@@ -9,8 +9,8 @@ library CrossChainDebtShare {
         // Synthetix v2 cross chain debt share merkle root
         bytes32 merkleRoot;
         // Cross chain debt share merkle root snapshot blocknumber
-        uint merkleRootBlockNumber;
+        uint256 merkleRootBlockNumber;
         // Cross chain debt shares declared on this chain
-        mapping(address => uint) debtShares;
+        uint256 debtShares;
     }
 }
