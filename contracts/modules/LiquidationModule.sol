@@ -298,7 +298,7 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function liquidateMarginOnly(uint128 accountId, uint128 marketId) external {
-        FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN);
+        FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN_ONLY);
 
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);

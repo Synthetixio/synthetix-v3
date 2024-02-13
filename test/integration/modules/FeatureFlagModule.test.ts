@@ -211,9 +211,9 @@ describe('FeatureFlagModule', () => {
     await assertRevert(PerpMarketProxy.payDebt(trader.accountId, marketId, bn(1)), `FeatureUnavailable("${feature}")`);
   });
 
-  it('should disable liquidateMargin', async () => {
+  it('should disable liquidateMarginOnly', async () => {
     const { PerpMarketProxy } = systems();
-    const feature = formatBytes32String('liquidateMargin');
+    const feature = formatBytes32String('liquidateMarginOnly');
     const { receipt } = await withExplicitEvmMine(
       () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
