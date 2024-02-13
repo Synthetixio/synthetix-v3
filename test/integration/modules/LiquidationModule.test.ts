@@ -316,10 +316,10 @@ describe('LiquidationModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
 
       const { debt: accountDebtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const { totalTraderDebt: totalTraderDebtBefore } = await PerpMarketProxy.getMarketDigest(marketId);
+      const { totalTraderDebtUsd: totalTraderDebtUsdBefore } = await PerpMarketProxy.getMarketDigest(marketId);
 
       assertBn.gt(accountDebtBefore, 0);
-      assertBn.gt(totalTraderDebtBefore, 0);
+      assertBn.gt(totalTraderDebtUsdBefore, 0);
 
       await withExplicitEvmMine(
         () => PerpMarketProxy.connect(keeper2()).flagPosition(trader.accountId, marketId),
@@ -327,10 +327,10 @@ describe('LiquidationModule', () => {
       );
 
       const { debt: accountDebtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const { totalTraderDebt: totalTraderDebtAfter } = await PerpMarketProxy.getMarketDigest(marketId);
+      const { totalTraderDebtUsd: totalTraderDebtUsdAfter } = await PerpMarketProxy.getMarketDigest(marketId);
 
       assertBn.isZero(accountDebtAfter);
-      assertBn.isZero(totalTraderDebtAfter);
+      assertBn.isZero(totalTraderDebtUsdAfter);
     });
 
     it('should not modify any existing collateral as margin');

@@ -92,7 +92,7 @@ contract LiquidationModule is ILiquidationModule {
         }
         // Clear out debt
         if (accountMargin.debt > 0) {
-            market.totalTraderDebt -= accountMargin.debt;
+            market.totalTraderDebtUsd -= accountMargin.debt;
             accountMargin.debt = 0;
         }
 

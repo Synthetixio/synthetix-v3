@@ -122,7 +122,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
 
-        if (market.skew == 0 && market.debtCorrection == 0 && market.totalTraderDebt == 0) {
+        if (market.skew == 0 && market.debtCorrection == 0 && market.totalTraderDebtUsd == 0) {
             return totalCollateralValueUsd;
         }
 
@@ -132,7 +132,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
             market.skew.mulDecimal(priceWithFunding) -
             market.debtCorrection +
-            market.totalTraderDebt.toInt();
+            market.totalTraderDebtUsd.toInt();
 
         return MathUtil.max(marketReportedDebt, 0).toUint();
     }
@@ -204,7 +204,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.currentUtilizationRateComputed,
                 remainingCapacity,
                 lastLiquidationTime,
-                market.totalTraderDebt,
+                market.totalTraderDebtUsd,
                 market.getTotalCollateralValueUsd(),
                 market.debtCorrection
             );
