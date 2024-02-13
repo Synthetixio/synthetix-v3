@@ -112,7 +112,7 @@ contract UintSetMock {
         return _set.positionOf(value);
     }
 
-    function values() external view returns (uint256 memory) {
+    function values() external view returns (uint256[] memory) {
         return _set.values();
     }
 }
