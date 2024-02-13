@@ -170,7 +170,7 @@ describe('MarginModule Debt', async () => {
       );
 
       const receipt = await tx.wait();
-      await assertEvent(receipt, `DebtPaid(${debtFromAccountDigest}, 0, ${debtFromAccountDigest})`, PerpMarketProxy);
+      await assertEvent(receipt, `DebtPaid(${debtFromAccountDigest}, 0, 0)`, PerpMarketProxy);
 
       const { debt: debtFromAccountDigestAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
@@ -250,6 +250,7 @@ describe('MarginModule Debt', async () => {
           ),
         bs.provider()
       );
+
       const sUSDBalanceBefore = await sUSDcollateral.contract.balanceOf(await trader.signer.getAddress());
 
       // Make sure sUSD balance is less than debt
@@ -262,9 +263,10 @@ describe('MarginModule Debt', async () => {
 
       const debtPaidEvent = findEventSafe(receipt, 'DebtPaid', PerpMarketProxy);
       const { debt: debtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
       // Assert events
-      assertBn.equal(debtPaidEvent.args.amountPaidOff, debtBefore);
-      assertBn.equal(debtPaidEvent.args.amountFromCollateral, amountToBePaidOffByCollateral);
+      assertBn.equal(debtPaidEvent.args.newDebt, debtAfter);
+      assertBn.equal(debtPaidEvent.args.paidFromUsdCollateral, amountToBePaidOffByCollateral);
       assertBn.equal(debtPaidEvent.args.oldDebt, debtBefore);
 
       const sUSDBalanceAfter = await sUSDcollateral.contract.balanceOf(await trader.signer.getAddress());
@@ -362,12 +364,12 @@ describe('MarginModule Debt', async () => {
     });
     it('should revert if we have a position', async () => {
       const { PerpMarketProxy } = systems();
-      const { trader, market, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
-        bs,
-        genTrader(bs)
-      );
-      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
       await commitAndSettle(bs, marketId, trader, openOrder);
+      const { size } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.gt(size, 0);
+
       await assertRevert(
         PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
         `PositionFound("${trader.accountId}", "${marketId}")`

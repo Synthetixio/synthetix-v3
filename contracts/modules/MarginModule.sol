@@ -423,7 +423,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function payDebt(uint128 accountId, uint128 marketId, uint128 amount) external {
+    function payDebt(uint128 accountId, uint128 marketId, uint256 amount) external {
         FeatureFlag.ensureAccessToFeature(Flags.PAY_DEBT);
         if (amount == 0) {
             revert ErrorUtil.ZeroAmount();
@@ -441,22 +441,26 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.NoDebt();
         }
         uint128 decreaseDebtAmount = MathUtil.min(amount, debt).to128();
-        uint128 availableSusdCollateral = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID].to128();
-        uint128 paidFromCollateral = 0;
-        if (availableSusdCollateral != 0) {
-            paidFromCollateral = availableSusdCollateral >= decreaseDebtAmount
-                ? decreaseDebtAmount
-                : availableSusdCollateral;
-            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= paidFromCollateral;
-        }
-        uint128 amountPaidWithBalance = decreaseDebtAmount - paidFromCollateral;
-        accountMargin.debtUsd -= decreaseDebtAmount;
-        market.updateDebtAndCollateral(decreaseDebtAmount.toInt() * -1, paidFromCollateral.toInt() * -1);
-        if (amountPaidWithBalance > 0) {
-            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountPaidWithBalance);
+        uint128 availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID].to128();
+
+        // Infer the amount of sUSD to deduct from margin.
+        uint128 sUsdToDeduct = 0;
+        if (availableSusd != 0) {
+            sUsdToDeduct = MathUtil.min(decreaseDebtAmount, availableSusd).to128();
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= sUsdToDeduct;
         }
 
-        emit DebtPaid(decreaseDebtAmount, paidFromCollateral, debt);
+        // Perform account and margin debt updates.
+        accountMargin.debtUsd -= decreaseDebtAmount;
+        market.updateDebtAndCollateral(decreaseDebtAmount.toInt() * -1, sUsdToDeduct.toInt() * -1);
+
+        // Infer the remaining sUSD to burn from `msg.sender` after attributing sUSD in margin.
+        uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
+        if (amountToBurn > 0) {
+            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountToBurn);
+        }
+
+        emit DebtPaid(debt, accountMargin.debtUsd, sUsdToDeduct);
     }
 
     // --- Views --- //
