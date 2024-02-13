@@ -10,7 +10,7 @@ library Ballot {
         // List of candidates in this ballot
         address[] candidates;
         // Vote power added per voter
-        uint256 votesByUser;
+        mapping(address => uint256) votesByUser;
     }
 
     function isInitiated(Data storage self) internal view returns (bool) {

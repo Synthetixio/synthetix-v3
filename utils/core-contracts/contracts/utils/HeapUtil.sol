@@ -13,7 +13,7 @@ library HeapUtil {
     struct Data {
         uint128 idCount;
         Node[] nodes; // root is index 1; index 0 not used
-        uint256 indices; // unique id => node index
+        mapping(uint128 => uint256) indices; // unique id => node index
     }
     struct Node {
         uint128 id; //use with another mapping to store arbitrary object types

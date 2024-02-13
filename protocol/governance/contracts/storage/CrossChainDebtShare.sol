@@ -11,6 +11,6 @@ library CrossChainDebtShare {
         // Cross chain debt share merkle root snapshot blocknumber
         uint256 merkleRootBlockNumber;
         // Cross chain debt shares declared on this chain
-        uint256 debtShares;
+        mapping(address => uint256) debtShares;
     }
 }

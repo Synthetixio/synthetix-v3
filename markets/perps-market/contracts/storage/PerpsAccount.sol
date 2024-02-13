@@ -404,7 +404,7 @@ library PerpsAccount {
         Data storage self
     ) internal returns (uint256 totalConvertedCollateral) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        uint256 memory activeCollateralTypes = self.activeCollateralTypes.values();
+        uint256[] memory activeCollateralTypes = self.activeCollateralTypes.values();
 
         // 1. withdraw all collateral from synthetix
         // 2. sell all collateral for snxUSD

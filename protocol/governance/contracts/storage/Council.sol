@@ -13,7 +13,7 @@ library Council {
         // Council member addresses
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
-        uint256 councilTokenIds;
+        mapping(address => uint256) councilTokenIds;
         // id of the last election
         uint256 lastElectionId;
         ElectionSettings.Data nextElectionSettings;

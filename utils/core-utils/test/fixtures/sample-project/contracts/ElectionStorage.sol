@@ -15,14 +15,14 @@ contract ElectionStorage {
         // Council member addresses
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
-        uint256 councilTokenIds;
+        mapping(address => uint256) councilTokenIds;
         // Array of EpochData's for each epoch
         EpochData[] epochs;
         // Array of ElectionData's for each election
         ElectionData[] elections;
         // Pointer to ElectionSettings
         // To be always used via store.settings[0] to avoid storage collisions
-        uint256 settings;
+        mapping(uint256 => ElectionSettings) settings;
     }
 
     struct ElectionSettings {
@@ -71,7 +71,7 @@ contract ElectionStorage {
         // Ballot id that each user voted on
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
-        uint256 candidateVotes;
+        mapping(address => uint256) candidateVotes;
     }
 
     struct BallotData {
@@ -80,7 +80,7 @@ contract ElectionStorage {
         // List of candidates in this ballot
         address[] candidates;
         // Vote power added per voter
-        uint256 votesByUser;
+        mapping(address => uint256) votesByUser;
     }
 
     function _electionSettings() internal view returns (ElectionSettings storage) {

@@ -44,9 +44,9 @@ library SetUtil {
         return positionOf(set.raw, value.toBytes32());
     }
 
-    function values(UintSet storage set) internal view returns (uint256 memory) {
+    function values(UintSet storage set) internal view returns (uint256[] memory) {
         bytes32[] memory store = values(set.raw);
-        uint256 memory result;
+        uint256[] memory result;
 
         assembly {
             result := store
@@ -112,7 +112,7 @@ library SetUtil {
 
     struct Bytes32Set {
         bytes32[] _values;
-        uint256 _positions; // Position zero is never used.
+        mapping(bytes32 => uint256) _positions; // Position zero is never used.
     }
 
     function add(Bytes32Set storage set, bytes32 value) internal {

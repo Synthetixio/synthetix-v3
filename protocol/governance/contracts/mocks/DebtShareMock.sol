@@ -5,7 +5,7 @@ import "../interfaces/IDebtShare.sol";
 
 contract DebtShareMock is IDebtShare {
     struct Period {
-        uint256 balances;
+        mapping(address => uint256) balances;
     }
 
     mapping(uint128 => Period) private _periods;

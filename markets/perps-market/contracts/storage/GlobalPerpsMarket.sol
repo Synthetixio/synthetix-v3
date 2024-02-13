@@ -57,7 +57,7 @@ library GlobalPerpsMarket {
         /**
          * @dev Collateral amounts running total, by collateral synth market id.
          */
-        uint256 collateralAmounts;
+        mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
     }

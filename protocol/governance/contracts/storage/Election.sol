@@ -28,7 +28,7 @@ library Election {
         // Ballot id that each user voted on
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
-        uint256 candidateVotes;
+        mapping(address => uint256) candidateVotes;
         ElectionSettings.Data settings;
     }
 

@@ -35,7 +35,7 @@ library GlobalPerpsMarketConfiguration {
          * @dev mapping of configured synthMarketId to max collateral amount.
          * @dev USD token synth market id = 0
          */
-        uint256 maxCollateralAmounts;
+        mapping(uint128 => uint256) maxCollateralAmounts;
         /**
          * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
          */

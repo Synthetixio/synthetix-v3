@@ -58,9 +58,9 @@ library PerpsMarket {
         // accumulates total notional size of the market including accrued funding until the last time any position changed
         int256 debtCorrectionAccumulator;
         // accountId => asyncOrder
-        uint256 asyncOrders;
+        mapping(uint256 => AsyncOrder.Data) asyncOrders;
         // accountId => position
-        uint256 positions;
+        mapping(uint256 => Position.Data) positions;
         // liquidation amounts
         Liquidation.Data[] liquidationData;
     }
