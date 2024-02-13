@@ -197,11 +197,11 @@ library Margin {
             MathUtil
                 .max(
                     collateralUsd.toInt() +
-                        position.getPnl(marketPrice) -
-                        accountMargin.debtUsd.toInt() +
+                        position.getPnl(marketPrice) +
                         position.getAccruedFunding(market, marketPrice) -
                         position.getAccruedUtilization(market, marketPrice).toInt() -
-                        position.accruedFeesUsd.toInt(),
+                        position.accruedFeesUsd.toInt() -
+                        accountMargin.debtUsd.toInt(),
                     0
                 )
                 .toUint();
