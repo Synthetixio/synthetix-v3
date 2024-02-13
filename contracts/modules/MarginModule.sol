@@ -452,7 +452,7 @@ contract MarginModule is IMarginModule {
 
         // Perform account and margin debt updates.
         accountMargin.debtUsd -= decreaseDebtAmount;
-        market.updateDebtAndCollateral(decreaseDebtAmount.toInt() * -1, sUsdToDeduct.toInt() * -1);
+        market.updateDebtAndCollateral(-decreaseDebtAmount.toInt(), -sUsdToDeduct.toInt());
 
         // Infer the remaining sUSD to burn from `msg.sender` after attributing sUSD in margin.
         uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
