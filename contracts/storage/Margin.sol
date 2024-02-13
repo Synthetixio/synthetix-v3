@@ -73,7 +73,7 @@ library Margin {
     function updateAccountDebtAndCollateral(
         Margin.Data storage accountMargin,
         int256 amountDeltaUsd
-    ) internal returns (int128 debtAmountDeltaUsd, int128 sUSDCollateralDelta) {
+    ) internal returns (int128 debtAmountDeltaUsd, int128 sUsdCollateralDelta) {
         // Nothing to update, this is a no-op.
         if (amountDeltaUsd == 0) {
             return (0, 0);
@@ -105,7 +105,7 @@ library Margin {
                 accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += profitAfterDebt;
 
                 debtAmountDeltaUsd = -accountMargin.debtUsd.toInt(); // Debt should be reduced when position in profit
-                sUSDCollateralDelta = profitAfterDebt.toInt();
+                sUsdCollateralDelta = profitAfterDebt.toInt();
             } else {
                 // The trader has an outstanding debt larger than the profit, just reduce the debt with all the profits
                 accountMargin.debtUsd -= absAmountDeltaUsd;
@@ -119,12 +119,12 @@ library Margin {
             if (newDebt > 0) {
                 // We have enough sUSD to cover the loss, just deduct from collateral
                 accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= absAmountDeltaUsd;
-                sUSDCollateralDelta = -absAmountDeltaUsd.toInt();
+                sUsdCollateralDelta = -absAmountDeltaUsd.toInt();
             } else {
                 // We don't have enough sUSD to cover the loss, deduct what we can from the sUSD collateral and increase debt with the rest.
                 accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
                 accountMargin.debtUsd += MathUtil.abs(newDebt).to128();
-                sUSDCollateralDelta = -available.to128().toInt();
+                sUsdCollateralDelta = -available.to128().toInt();
                 debtAmountDeltaUsd = newDebt.to128();
             }
         }

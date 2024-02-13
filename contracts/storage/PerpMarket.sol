@@ -160,17 +160,17 @@ library PerpMarket {
     function updateDebtAndCollateral(
         PerpMarket.Data storage self,
         int128 debtAmountDeltaUsd,
-        int128 sUSDCollateralDelta
+        int128 sUsdCollateralDelta
     ) internal {
         if (debtAmountDeltaUsd != 0) {
             self.totalTraderDebtUsd = debtAmountDeltaUsd > 0
                 ? self.totalTraderDebtUsd - debtAmountDeltaUsd.toUint()
                 : self.totalTraderDebtUsd + MathUtil.abs(debtAmountDeltaUsd).to128();
         }
-        if (sUSDCollateralDelta != 0) {
-            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUSDCollateralDelta >= 0
-                ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUSDCollateralDelta.toUint()
-                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - MathUtil.abs(sUSDCollateralDelta).to128();
+        if (sUsdCollateralDelta != 0) {
+            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUsdCollateralDelta >= 0
+                ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUsdCollateralDelta.toUint()
+                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - MathUtil.abs(sUsdCollateralDelta).to128();
         }
     }
 
