@@ -25,6 +25,7 @@ interface ILiquidationModule is IBasePerpMarket {
         uint256 flagKeeperReward,
         uint256 flaggedPrice
     );
+
     // @notice Emitted when margin is liquidated due to debt.
     event MarginLiquidated(uint128 indexed accountId, uint128 marketId, uint256 keeperReward);
 
