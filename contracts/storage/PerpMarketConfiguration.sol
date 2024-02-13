@@ -54,6 +54,8 @@ library PerpMarketConfiguration {
         uint128 keeperLiquidationGasUnits;
         // Number of gas units required to flag a position by a keeper.
         uint128 keeperFlagGasUnits;
+        // Number of gas units required to liquidate margin only by a keeper.
+        uint128 keeperLiquidateMarginGasUnits;
         // A fixed fee sent to the liquidator upon position liquidation.
         uint256 keeperLiquidationFeeUsd;
         // Address of endorsed liquidation keeper to exceed liq caps.
