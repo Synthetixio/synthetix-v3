@@ -141,14 +141,14 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
 
@@ -208,14 +208,14 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: << parameters.parallelism >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - restore_cache:
           keys:
@@ -290,14 +290,14 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - restore_cache:
           keys:
@@ -415,14 +415,14 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
       - restore_cache:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
@@ -460,8 +460,8 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      - GIT_PAGER: cat
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
       - add_ssh_keys:
@@ -475,10 +475,10 @@ jobs:
 
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - run:
           name: "Build TS"
@@ -517,8 +517,8 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      - GIT_PAGER: cat
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
       - run:
@@ -532,10 +532,10 @@ jobs:
             git checkout $CIRCLE_SHA1
 
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - run:
           name: "Generate updated subgraph code"
