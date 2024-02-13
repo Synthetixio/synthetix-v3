@@ -45,7 +45,7 @@ library Margin {
     struct Data {
         // {synthMarketId: collateralAmount} (amount of collateral deposited into this account).
         mapping(uint128 => uint256) collaterals;
-        // debt for this account
+        // Debt in USD for this account.
         uint128 debtUsd;
     }
 

@@ -43,7 +43,7 @@ library PerpMarket {
         int128 skew;
         // sum(positions.map(p => abs(p.size))).
         uint128 size;
-        // Total trader debt, this is all the "realized" but unpaid losses from traders
+        // The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
         uint128 totalTraderDebtUsd;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
@@ -157,6 +157,9 @@ library PerpMarket {
         }
     }
 
+    /**
+     * @dev Updates totalTraderDebtUsd and depositedCollateral[SYNTHETIX_USD_MARKET_ID]
+     */
     function updateDebtAndCollateral(
         PerpMarket.Data storage self,
         int128 debtAmountDeltaUsd,
