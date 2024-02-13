@@ -1,10 +1,10 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { wei } from '@synthetixio/wei';
+import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
-import { calcPnl } from '../../calculations';
+import { calcPnl, calcTransactionCostInUsd } from '../../calculations';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
   ADDRESS0,
@@ -13,6 +13,7 @@ import {
   findEventSafe,
   getSusdCollateral,
   mintAndApprove,
+  setBaseFeePerGas,
   withExplicitEvmMine,
 } from '../../helpers';
 import assert from 'assert';
@@ -412,11 +413,35 @@ describe('MarginModule Debt', async () => {
       });
       await commitAndSettle(bs, marketId, trader, closeOrder);
       await collateral.setPrice(wei(collateralPrice).mul(0.01).toBN());
+      // Grab the collateral price so we can calculate keeper rewards correctly.
+      const { collateralUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      // Set baseFeePerGas to 1 gwei to make the keeper rewards calculation easier.
+      const baseFeePerGas = await setBaseFeePerGas(1, provider());
       const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
         provider()
       );
-      await assertEvent(receipt, 'MarginLiquidated', PerpMarketProxy);
+      // Calculate liq reward
+      const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+      const { keeperProfitMarginPercent, keeperLiquidateMarginGasUnits, keeperProfitMarginUsd, maxKeeperFeeUsd } =
+        await PerpMarketProxy.getMarketConfiguration();
+      const { liquidationRewardPercent } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      const expectedCostLiq = wei(calcTransactionCostInUsd(baseFeePerGas, keeperLiquidateMarginGasUnits, ethPrice));
+
+      const liqFeeInUsd = Wei.max(
+        expectedCostLiq.mul(wei(1).add(wei(keeperProfitMarginPercent))),
+        expectedCostLiq.add(wei(keeperProfitMarginUsd))
+      );
+      const liqFeeWithRewardInUsd = liqFeeInUsd.add(wei(collateralUsd).mul(wei(liquidationRewardPercent)));
+
+      const expectedLiqReward = Wei.min(liqFeeWithRewardInUsd, wei(maxKeeperFeeUsd));
+
+      await assertEvent(
+        receipt,
+        `MarginLiquidated(${trader.accountId}, ${marketId}, ${expectedLiqReward.toBN()})`,
+        PerpMarketProxy
+      );
+
       const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(accountDigest.debt);
       assertBn.isZero(accountDigest.collateralUsd);

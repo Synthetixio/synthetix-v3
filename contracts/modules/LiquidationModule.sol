@@ -275,6 +275,26 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
+     * @dev Returns the reward for liquidating margin.
+     */
+    function getMarginLiquidationOnlyReward(
+        uint256 collateralValue,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
+        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(block.basefee * globalConfig.keeperLiquidateMarginGasUnits);
+
+        uint256 liqFeeInUsd = MathUtil.max(
+            liqExecutionCostInUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            liqExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
+        );
+        uint256 liqFeeWithRewardInUsd = liqFeeInUsd + collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
+
+        return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
+    }
+
+    /**
      * @inheritdoc ILiquidationModule
      */
     function liquidateMarginOnly(uint128 accountId, uint128 marketId) external {
@@ -297,11 +317,20 @@ contract LiquidationModule is ILiquidationModule {
             emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
             delete market.orders[accountId];
         }
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 keeperReward = getMarginLiquidationOnlyReward(
+            Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */),
+            PerpMarketConfiguration.load(marketId),
+            globalConfig
+        );
 
         liquidateCollateral(accountId, marketId, market, PerpMarketConfiguration.load());
-        // TODO figure out keeper fees
-        // TODO define more properties for event
-        emit MarginLiquidated(accountId, marketId);
+
+        // Pay flagger.
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperReward);
+
+        emit MarginLiquidated(accountId, marketId, keeperReward);
     }
 
     // --- Views --- //
