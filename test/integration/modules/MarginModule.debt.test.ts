@@ -52,7 +52,10 @@ describe('MarginModule Debt', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, marketId } = await depositMargin(bs, genTrader(bs));
-      await assertRevert(PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, bn(100)), 'NoDebt');
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, bn(100)),
+        'NoDebt()'
+      );
     });
 
     it('should revert when sUSD is not approved', async () => {

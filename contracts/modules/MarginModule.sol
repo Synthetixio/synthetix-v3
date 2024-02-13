@@ -438,7 +438,7 @@ contract MarginModule is IMarginModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         uint128 debt = accountMargin.debtUsd;
         if (debt == 0) {
-            revert ErrorUtil.NoDebt(accountId, marketId);
+            revert ErrorUtil.NoDebt();
         }
         uint128 decreaseDebtAmount = MathUtil.min(amount, debt).to128();
         uint128 availableSusdCollateral = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID].to128();
