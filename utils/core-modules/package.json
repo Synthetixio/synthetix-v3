@@ -23,9 +23,9 @@
   "devDependencies": {
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/router": "^3.3.0",
+    "@synthetixio/router": "^3.3.2",
     "ethers": "^5.7.2",
-    "hardhat": "^2.19.0"
+    "hardhat": "^2.19.5"
   },
   "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
 }
