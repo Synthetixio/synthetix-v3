@@ -520,6 +520,7 @@ library AsyncOrder {
     /**
      * @notice After the required margins are calculated with the old position, this function replaces the
      * old position initial margin with the new position initial margin requirements and returns them.
+     * @dev SIP-359: If the position is being reduced, required margin is 0.
      */
     function getRequiredMarginWithNewPosition(
         PerpsAccount.Data storage account,
@@ -531,6 +532,11 @@ library AsyncOrder {
         uint256 currentTotalInitialMargin
     ) internal view returns (uint256) {
         RequiredMarginWithNewPositionRuntime memory runtime;
+
+        if (MathUtil.isSameSideReducing(oldPositionSize, newPositionSize)) {
+            return 0;
+        }
+
         // get initial margin requirement for the new position
         (, , runtime.newRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             newPositionSize,

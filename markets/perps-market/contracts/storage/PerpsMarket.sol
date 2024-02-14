@@ -359,13 +359,12 @@ library PerpsMarket {
         uint maxSize,
         uint maxValue,
         uint price,
-        int oldSize,
-        int newSize
+        int128 oldSize,
+        int128 newSize
     ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        bool isNotReducingInterest = !(MathUtil.sameSide(oldSize, newSize) &&
-            MathUtil.abs(newSize) <= MathUtil.abs(oldSize));
-        if (isNotReducingInterest) {
+        bool isReducingInterest = MathUtil.isSameSideReducing(oldSize, newSize);
+        if (!isReducingInterest) {
             int newSkew = self.skew - oldSize + newSize;
 
             int newMarketSize = self.size.toInt() -
