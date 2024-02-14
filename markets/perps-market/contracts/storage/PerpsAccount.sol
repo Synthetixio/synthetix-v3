@@ -231,6 +231,7 @@ library PerpsAccount {
         }
     }
 
+    /// @dev returns USD
     function getTotalCollateralValue(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
@@ -256,6 +257,7 @@ library PerpsAccount {
         return totalCollateralValue;
     }
 
+    /// @dev returns USD
     function getAccountPnl(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
@@ -275,6 +277,7 @@ library PerpsAccount {
         }
     }
 
+    /// @dev returns USD
     function getAvailableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
@@ -307,6 +310,7 @@ library PerpsAccount {
      * @notice  This function returns the required margins for an account
      * @dev The initial required margin is used to determine withdrawal amount and when opening positions
      * @dev The maintenance margin is used to determine when to liquidate a position
+     * @dev Returns USD
      */
     function getAccountRequiredMargins(
         Data storage self,
@@ -334,8 +338,9 @@ library PerpsAccount {
                     PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
                 );
 
-            maintenanceMargin += positionMaintenanceMargin;
-            initialMargin += positionInitialMargin;
+            uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
+            maintenanceMargin += positionMaintenanceMargin.mulDecimal(quantoPrice);
+            initialMargin += positionInitialMargin.mulDecimal(quantoPrice);
         }
 
         (uint accumulatedLiquidationRewards, uint maxNumberOfWindows) = getKeeperRewardsAndCosts(
@@ -351,6 +356,7 @@ library PerpsAccount {
         return (initialMargin, maintenanceMargin, possibleLiquidationReward);
     }
 
+    /// @dev Returns USD
     function getKeeperRewardsAndCosts(
         Data storage self,
         uint128 skipMarketId
@@ -373,7 +379,8 @@ library PerpsAccount {
                     PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 )
             );
-            accumulatedLiquidationRewards += flagReward;
+            uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
+            accumulatedLiquidationRewards += flagReward.mulDecimal(quantoPrice);
 
             maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }
