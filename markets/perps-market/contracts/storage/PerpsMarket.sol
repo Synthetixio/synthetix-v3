@@ -426,6 +426,7 @@ library PerpsMarket {
                 .load(marketId)
                 .size
                 .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
                 .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 
