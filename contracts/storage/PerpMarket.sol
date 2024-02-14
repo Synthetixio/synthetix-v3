@@ -158,7 +158,7 @@ library PerpMarket {
     }
 
     /**
-     * @dev Updates totalTraderDebtUsd and depositedCollateral[SYNTHETIX_USD_MARKET_ID]
+     * @dev Updates totalTraderDebtUsd and sUSD collateral. It also calls market.updateDebtAndCollateral to update global debt tracking.
      */
     function updateDebtAndCollateral(
         PerpMarket.Data storage self,
@@ -166,9 +166,10 @@ library PerpMarket {
         int128 sUsdCollateralDelta
     ) internal {
         if (debtAmountDeltaUsd != 0) {
+            // debtAmountDeltaUsd is a "delta", so if it's is positive we want to increase the debt.
             self.totalTraderDebtUsd = debtAmountDeltaUsd > 0
-                ? self.totalTraderDebtUsd - debtAmountDeltaUsd.toUint()
-                : self.totalTraderDebtUsd + MathUtil.abs(debtAmountDeltaUsd).to128();
+                ? self.totalTraderDebtUsd + debtAmountDeltaUsd.toUint()
+                : self.totalTraderDebtUsd - MathUtil.abs(debtAmountDeltaUsd).to128();
         }
         if (sUsdCollateralDelta != 0) {
             self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUsdCollateralDelta >= 0

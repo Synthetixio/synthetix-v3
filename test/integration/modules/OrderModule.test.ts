@@ -901,6 +901,65 @@ describe('OrderModule', () => {
       assertBn.equal(marketDigest.skew, order.sizeDelta);
     });
 
+    it('should update totalTraderDebtUsd and account debt when settling a winning position', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, marketId, collateralDepositAmount, market, collateral } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()), desiredMarginUsdDepositAmount: 10_000 })
+      );
+      // Create some debt by opening and closing a position with a price change.
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Price change causing 10% loss.
+      const newPrice = openOrder.sizeDelta.gt(0)
+        ? wei(openOrder.oraclePrice).mul(0.9)
+        : wei(openOrder.oraclePrice).mul(1.1);
+
+      await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+      const closeLossOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+      });
+
+      const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeLossOrder);
+      const closeEvent = findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy);
+      const { totalTraderDebtUsd: totalTraderDebtUsdAfterLoss } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      // Assert that we have some debt
+      assertBn.gt(closeEvent.args.accountDebt, 0);
+      assertBn.equal(totalTraderDebtUsdAfterLoss, closeEvent.args.accountDebt);
+
+      // Now create a winning position and make sure debt is updated.
+      const winningOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+      });
+      await commitAndSettle(bs, marketId, trader, winningOrder);
+
+      // Price change causing 50% win.
+      const newPrice1 = openOrder.sizeDelta.gt(0)
+        ? wei(openOrder.oraclePrice).mul(1.5)
+        : wei(openOrder.oraclePrice).mul(0.5);
+      await market.aggregator().mockSetCurrentPrice(newPrice1.toBN());
+
+      const closeWinningOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(winningOrder.sizeDelta).mul(-1).toBN(),
+      });
+
+      const { receipt: closeWinningReceipt } = await commitAndSettle(bs, marketId, trader, closeWinningOrder);
+      const closeWinningEvent = findEventSafe(closeWinningReceipt, 'OrderSettled', PerpMarketProxy);
+
+      assertBn.isZero(closeWinningEvent.args.accountDebt);
+
+      const { totalTraderDebtUsd } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.equal(totalTraderDebtUsd, closeWinningEvent.args.accountDebt);
+      assertBn.lt(totalTraderDebtUsd, totalTraderDebtUsdAfterLoss);
+    });
+
     it('should settle order when market price moves between commit/settle but next position still safe', async () => {
       const { PerpMarketProxy } = systems();
 

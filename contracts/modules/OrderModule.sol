@@ -291,13 +291,14 @@ contract OrderModule is IOrderModule {
                 false /* useDiscountedCollateralPrice */
             );
             Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-            (int128 debtAmountDeltaUsd, int128 sUsdCollateralDelta) = accountMargin.updateAccountDebtAndCollateral(
+            accountMargin.updateAccountDebtAndCollateral(
+                market,
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
                 runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
             );
-            market.updateDebtAndCollateral(debtAmountDeltaUsd, sUsdCollateralDelta);
+
             runtime.accountDebt = accountMargin.debtUsd;
         }
 
@@ -401,10 +402,7 @@ contract OrderModule is IOrderModule {
         if (keeperFee > 0) {
             Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-            (int128 debtAmountDeltaUsd, int128 sUsdCollateralDelta) = accountMargin.updateAccountDebtAndCollateral(
-                keeperFee.toInt() * -1
-            );
-            market.updateDebtAndCollateral(debtAmountDeltaUsd, sUsdCollateralDelta);
+            accountMargin.updateAccountDebtAndCollateral(market, -keeperFee.toInt());
 
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
