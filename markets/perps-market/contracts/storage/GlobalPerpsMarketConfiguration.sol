@@ -195,7 +195,6 @@ library GlobalPerpsMarketConfiguration {
         return (referralFees, feeCollectorQuote);
     }
 
-    // TODO: decide if this belongs here or at collateral configuration lib.
     function calculateCollateralLiquidateReward(
         Data storage self,
         uint256 notionalValue

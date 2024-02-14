@@ -7,6 +7,7 @@ import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
 import {LiquidationAssetManager} from "../storage/LiquidationAssetManager.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
@@ -119,6 +120,6 @@ library PerpsMarketFactory {
             Price.Tolerance.DEFAULT
         );
 
-        LiquidationAssetManager.loadValid(synthMarketId).distrubuteCollateral(synth, amount);
+        CollateralConfiguration.loadValidLam(synthMarketId).distrubuteCollateral(synth, amount);
     }
 }

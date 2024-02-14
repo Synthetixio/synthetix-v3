@@ -1,27 +1,34 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IPerpRewardDistributor} from "@synthetixio/perps-reward-distributor/contracts/interfaces/IPerpsRewardDistributor.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
+import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {Clones} from "../utils/Clones.sol";
 
 /**
  * @title LiquidationAssetManager send liquidity to the reward distributor according to each collateral type
  */
 library LiquidationAssetManager {
     using DecimalMath for uint256;
-
-    /**
-     * @notice Thrown when attempting to access a not registered id
-     */
-    error InvalidId(uint128 id);
+    using Clones for address;
 
     /**
      * @notice Thrown when attempting to use a wrong distributor
      */
     error InvalidDistributor(uint128 id, address distributor);
+
+    /**
+     * @notice Thrown when attempting to use a wrong distributor
+     */
+    error InvalidDistributorAddress(address distributor);
 
     struct Data {
         /**
@@ -35,31 +42,59 @@ library LiquidationAssetManager {
         /**
          * @dev TODO: add comment
          */
-        address[] collateralTypes;
+        address[] poolDelegatedCollateralTypes;
     }
 
-    /**
-     * @dev Load the collateral configuration data using collateral/synth id
-     */
-    function load(uint128 collateralId) internal pure returns (Data storage collateralLAMConfig) {
-        bytes32 s = keccak256(
-            abi.encode("io.synthetix.perps-market.LiquidationAssetManager", collateralId)
-        );
-        assembly {
-            collateralLAMConfig.slot := s
+    function setValidPoolDelegatedCollateralTypes(
+        Data storage self,
+        address[] calldata poolDelegatedCollateralTypes
+    ) internal {
+        self.poolDelegatedCollateralTypes = poolDelegatedCollateralTypes;
+
+        // Collaterals in a V3 pool can be delegated to a specific market. `collateralTypes` are the pool collateral
+        // addresses delegated to this market. They're tracked here so downstream operations post creation can infer
+        // pct of `token` to distribute amongst delegated collaterals. For example, during liquidation we calc to total
+        // dollar value of delegated collateral and distribute the reward token proportionally to each collateral.
+        //
+        // There must be at least one pool collateral type available otherwise this reward distribute cannot distribute.
+        uint256 collateralTypesLength = self.poolDelegatedCollateralTypes.length;
+        if (collateralTypesLength == 0) {
+            revert ParameterError.InvalidParameter("collateralTypes", "must not be empty");
+        }
+        for (uint256 i = 0; i < collateralTypesLength; ) {
+            if (self.poolDelegatedCollateralTypes[i] == address(0)) {
+                revert AddressError.ZeroAddress();
+            }
+            unchecked {
+                ++i;
+            }
         }
     }
 
-    /**
-     * @dev Load the collateral configuration data using collateral/synth id
-     */
-    function loadValid(
-        uint128 collateralId
-    ) internal view returns (Data storage collateralLAMConfig) {
-        collateralLAMConfig = load(collateralId);
-        if (collateralLAMConfig.id == 0) {
-            revert InvalidId(collateralId);
+    function setValidDistributor(Data storage self, address distributor) internal {
+        if (distributor != address(0)) {
+            if (
+                !ERC165Helper.safeSupportsInterface(
+                    distributor,
+                    type(IPerpRewardDistributor).interfaceId
+                )
+            ) {
+                revert InvalidDistributorAddress(distributor);
+            }
+
+            // Reuse the previous distributor.
+            self.distributor = distributor;
+        } else {
+            // Create a new distributor by cloning an existing implementation.
+            self.distributor = GlobalPerpsMarketConfiguration
+                .load()
+                .rewardDistributorImplementation
+                .clone();
         }
+        // if (distributor == address(0)) {
+        //     revert AddressError.ZeroAddress();
+        // }
+        // self.distributor = distributor;
     }
 
     function distrubuteCollateral(Data storage self, address tokenAddres, uint256 amount) internal {
@@ -69,7 +104,7 @@ library LiquidationAssetManager {
             revert InvalidDistributor(self.id, tokenAddres);
         }
 
-        uint poolCollateralTypesLength = self.collateralTypes.length;
+        uint poolCollateralTypesLength = self.poolDelegatedCollateralTypes.length;
         ISynthetixSystem synthetix = PerpsMarketFactory.load().synthetix;
 
         // Transfer collateral to the distributor
@@ -82,7 +117,7 @@ library LiquidationAssetManager {
         for (uint256 i = 0; i < poolCollateralTypesLength; ) {
             (, uint256 collateralValueUsd) = synthetix.getVaultCollateral(
                 poolId,
-                self.collateralTypes[i]
+                self.poolDelegatedCollateralTypes[i]
             );
             totalCollateralValueUsd += collateralValueUsd;
             collateralValuesUsd[i] = collateralValueUsd;
@@ -97,13 +132,19 @@ library LiquidationAssetManager {
         for (uint256 j = 0; j < poolCollateralTypesLength; ) {
             // Ensure total amounts fully distributed, the last collateral receives the remainder.
             if (j == poolCollateralTypesLength - 1) {
-                distributor.distributeRewards(self.collateralTypes[j], remainingAmountToDistribute);
+                distributor.distributeRewards(
+                    self.poolDelegatedCollateralTypes[j],
+                    remainingAmountToDistribute
+                );
             } else {
                 uint256 amountToDistribute = amount.mulDecimal(
                     collateralValuesUsd[j].divDecimal(totalCollateralValueUsd)
                 );
                 remainingAmountToDistribute -= amountToDistribute;
-                distributor.distributeRewards(self.collateralTypes[j], amountToDistribute);
+                distributor.distributeRewards(
+                    self.poolDelegatedCollateralTypes[j],
+                    amountToDistribute
+                );
             }
 
             unchecked {

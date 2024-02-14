@@ -30,6 +30,8 @@ interface ICollateralConfigurationModule {
      */
     event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
 
+    event RewardDistributorRegistered(address distributor);
+
     /**
      * @notice Sets the synth deduction priority ordered list.
      * @dev The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
@@ -88,4 +90,19 @@ interface ICollateralConfigurationModule {
         external
         view
         returns (address rewardDistributorImplementation);
+
+    function registerDistributor(
+        uint128 poolId,
+        address token,
+        address previousDistributor,
+        string calldata name,
+        uint128 collateralId,
+        address[] calldata poolDelegatedCollateralTypes
+    ) external returns (address);
+
+    function isRegistered(address distributor) external view returns (bool);
+
+    function getRegisteredDistributor(
+        uint128 collateralId
+    ) external view returns (address distributor, address[] memory poolDelegatedCollateralTypes);
 }
