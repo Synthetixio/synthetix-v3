@@ -30,6 +30,10 @@ interface ICollateralConfigurationModule {
      */
     event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
 
+    /**
+     * @notice Gets fired when a new reward distributor is registered.
+     * @param distributor the new distributor address.
+     */
     event RewardDistributorRegistered(address distributor);
 
     /**
@@ -77,20 +81,44 @@ interface ICollateralConfigurationModule {
      */
     function totalGlobalCollateralValue() external view returns (uint256 totalCollateralValue);
 
+    /**
+     * @notice Sets the collateral liquidation reward ratio.
+     * @param collateralLiquidateRewardRatioD18 the new collateral liquidation reward ratio.
+     */
     function setCollateralLiquidateRewardRatio(uint128 collateralLiquidateRewardRatioD18) external;
 
+    /**
+     * @notice Gets the collateral liquidation reward ratio.
+     */
     function getCollateralLiquidateRewardRatio()
         external
         view
         returns (uint128 collateralLiquidateRewardRatioD18);
 
+    /**
+     * @notice Sets the reward distributor implementation. This is used as base to be cloned to distribute rewards to the liquidator.
+     * @param rewardDistributorImplementation the new reward distributor implementation.
+     */
     function setRewardDistributorImplementation(address rewardDistributorImplementation) external;
 
+    /**
+     * @notice Gets the reward distributor implementation.
+     */
     function getRewardDistributorImplementation()
         external
         view
         returns (address rewardDistributorImplementation);
 
+    /**
+     * @notice Registers a new reward distributor.
+     * @param poolId the pool id.
+     * @param token the token address.
+     * @param previousDistributor the previous distributor address if there was one. Set it to address(0) if first distributor, or need to create a new clone.
+     * @param name the name of the distributor.
+     * @param collateralId the collateral id.
+     * @param poolDelegatedCollateralTypes the pool delegated collateral types.
+     * @return distributor the new distributor address.
+     */
     function registerDistributor(
         uint128 poolId,
         address token,
@@ -98,10 +126,21 @@ interface ICollateralConfigurationModule {
         string calldata name,
         uint128 collateralId,
         address[] calldata poolDelegatedCollateralTypes
-    ) external returns (address);
+    ) external returns (address distributor);
 
+    /**
+     * @notice Checks if a distributor is registered.
+     * @param distributor the distributor address.
+     * @return isRegistered true if the distributor is registered.
+     */
     function isRegistered(address distributor) external view returns (bool);
 
+    /**
+     * @notice Gets the registered distributor for a collateral id.
+     * @param collateralId the collateral id.
+     * @return distributor the distributor address.
+     * @return poolDelegatedCollateralTypes the pool delegated collateral types.
+     */
     function getRegisteredDistributor(
         uint128 collateralId
     ) external view returns (address distributor, address[] memory poolDelegatedCollateralTypes);
