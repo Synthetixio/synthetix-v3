@@ -15,36 +15,36 @@ interface IIssuer {
 
     function availableCurrencyKeys() external view returns (bytes32[] memory);
 
-    function availableSynthCount() external view returns (uint);
+    function availableSynthCount() external view returns (uint256);
 
-    function availableSynths(uint index) external view returns (ISynth);
+    function availableSynths(uint256 index) external view returns (ISynth);
 
     function canBurnSynths(address account) external view returns (bool);
 
-    function collateral(address account) external view returns (uint);
+    function collateral(address account) external view returns (uint256);
 
-    function collateralisationRatio(address issuer) external view returns (uint);
+    function collateralisationRatio(address issuer) external view returns (uint256);
 
     function collateralisationRatioAndAnyRatesInvalid(
         address _issuer
-    ) external view returns (uint cratio, bool anyRateIsInvalid);
+    ) external view returns (uint256 cratio, bool anyRateIsInvalid);
 
     function debtBalanceOf(
         address issuer,
         bytes32 currencyKey
-    ) external view returns (uint debtBalance);
+    ) external view returns (uint256 debtBalance);
 
-    function issuanceRatio() external view returns (uint);
+    function issuanceRatio() external view returns (uint256);
 
-    function lastIssueEvent(address account) external view returns (uint);
+    function lastIssueEvent(address account) external view returns (uint256);
 
-    function maxIssuableSynths(address issuer) external view returns (uint maxIssuable);
+    function maxIssuableSynths(address issuer) external view returns (uint256 maxIssuable);
 
-    function minimumStakeTime() external view returns (uint);
+    function minimumStakeTime() external view returns (uint256);
 
     function remainingIssuableSynths(
         address issuer
-    ) external view returns (uint maxIssuable, uint alreadyIssued, uint totalSystemDebt);
+    ) external view returns (uint256 maxIssuable, uint256 alreadyIssued, uint256 totalSystemDebt);
 
     function synths(bytes32 currencyKey) external view returns (ISynth);
 
@@ -55,12 +55,12 @@ interface IIssuer {
     function totalIssuedSynths(
         bytes32 currencyKey,
         bool excludeOtherCollateral
-    ) external view returns (uint);
+    ) external view returns (uint256);
 
     function transferableSynthetixAndAnyRateIsInvalid(
         address account,
-        uint balance
-    ) external view returns (uint transferable, bool anyRateIsInvalid);
+        uint256 balance
+    ) external view returns (uint256 transferable, bool anyRateIsInvalid);
 
     function liquidationAmounts(
         address account,
@@ -69,26 +69,26 @@ interface IIssuer {
         external
         view
         returns (
-            uint totalRedeemed,
-            uint debtToRemove,
-            uint escrowToLiquidate,
-            uint initialDebtBalance
+            uint256 totalRedeemed,
+            uint256 debtToRemove,
+            uint256 escrowToLiquidate,
+            uint256 initialDebtBalance
         );
 
     // Restricted: used internally to Synthetix
     function addSynths(ISynth[] calldata synthsToAdd) external;
 
-    function issueSynths(address from, uint amount) external;
+    function issueSynths(address from, uint256 amount) external;
 
-    function issueSynthsOnBehalf(address issueFor, address from, uint amount) external;
+    function issueSynthsOnBehalf(address issueFor, address from, uint256 amount) external;
 
     function issueMaxSynths(address from) external;
 
     function issueMaxSynthsOnBehalf(address issueFor, address from) external;
 
-    function burnSynths(address from, uint amount) external;
+    function burnSynths(address from, uint256 amount) external;
 
-    function burnSynthsOnBehalf(address burnForAddress, address from, uint amount) external;
+    function burnSynthsOnBehalf(address burnForAddress, address from, uint256 amount) external;
 
     function burnSynthsToTarget(address from) external;
 
@@ -97,7 +97,7 @@ interface IIssuer {
     function burnForRedemption(
         address deprecatedSynthProxy,
         address account,
-        uint balance
+        uint256 balance
     ) external;
 
     function setCurrentPeriodId(uint128 periodId) external;
@@ -105,19 +105,19 @@ interface IIssuer {
     function liquidateAccount(
         address account,
         bool isSelfLiquidation
-    ) external returns (uint totalRedeemed, uint debtRemoved, uint escrowToLiquidate);
+    ) external returns (uint256 totalRedeemed, uint256 debtRemoved, uint256 escrowToLiquidate);
 
     function issueSynthsWithoutDebt(
         bytes32 currencyKey,
         address to,
-        uint amount
+        uint256 amount
     ) external returns (bool rateInvalid);
 
     function burnSynthsWithoutDebt(
         bytes32 currencyKey,
         address to,
-        uint amount
+        uint256 amount
     ) external returns (bool rateInvalid);
 
-    function modifyDebtSharesForMigration(address account, uint amount) external;
+    function modifyDebtSharesForMigration(address account, uint256 amount) external;
 }

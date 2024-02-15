@@ -38,7 +38,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function modifyCollateral(
         uint128 accountId,
         uint128 synthMarketId,
-        int amountDelta
+        int256 amountDelta
     ) external override {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
 
@@ -85,14 +85,14 @@ contract PerpsAccountModule is IPerpsAccountModule {
     /**
      * @inheritdoc IPerpsAccountModule
      */
-    function totalCollateralValue(uint128 accountId) external view override returns (uint) {
+    function totalCollateralValue(uint128 accountId) external view override returns (uint256) {
         return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**
      * @inheritdoc IPerpsAccountModule
      */
-    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
+    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint256) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
     }
 

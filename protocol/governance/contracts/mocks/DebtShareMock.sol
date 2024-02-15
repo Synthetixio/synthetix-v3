@@ -5,12 +5,12 @@ import "../interfaces/IDebtShare.sol";
 
 contract DebtShareMock is IDebtShare {
     struct Period {
-        mapping(address => uint) balances;
+        mapping(address => uint256) balances;
     }
 
     mapping(uint128 => Period) private _periods;
 
-    function setBalanceOfOnPeriod(address user, uint balance, uint periodId) external {
+    function setBalanceOfOnPeriod(address user, uint256 balance, uint256 periodId) external {
         // solhint-disable-next-line numcast/safe-cast
         Period storage period = _periods[uint128(periodId)];
 
@@ -19,8 +19,8 @@ contract DebtShareMock is IDebtShare {
 
     function balanceOfOnPeriod(
         address user,
-        uint periodId
-    ) external view virtual override returns (uint) {
+        uint256 periodId
+    ) external view virtual override returns (uint256) {
         // solhint-disable-next-line numcast/safe-cast
         Period storage period = _periods[uint128(periodId)];
 
