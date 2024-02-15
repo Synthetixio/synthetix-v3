@@ -68,8 +68,8 @@ export const genBootstrap = () => ({
     stakedAmount: bn(500_000),
   },
   global: {
-    pythPublishTimeMin: 8,
-    pythPublishTimeMax: 12,
+    pythPublishTimeMin: 12,
+    pythPublishTimeMax: 60,
     minOrderAge: 12,
     maxOrderAge: 60,
     minKeeperFeeUsd: bn(genNumber(10, 15)),
