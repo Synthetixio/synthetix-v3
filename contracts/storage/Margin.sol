@@ -311,15 +311,13 @@ library Margin {
 
         // Calculate discount on collateral if this collateral were to be instantly sold on spot.
         uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
-        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId).mulDecimal(
-            globalConfig.spotMarketSkewScaleScalar
-        );
+        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
 
         // skewScale _may_ be zero. In this event, do _not_ apply a discount.
         uint256 discount = skewScale == 0
             ? 0
             : MathUtil.min(
-                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralDiscount),
+                MathUtil.max(available.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(skewScale), globalConfig.minCollateralDiscount),
                 globalConfig.maxCollateralDiscount
             );
 
