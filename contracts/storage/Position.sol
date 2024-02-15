@@ -463,7 +463,7 @@ library Position {
         );
 
         uint256 iterations = getLiquidationIterations(size, maxLiqCapacity);
-        return MathUtil.min(liquidationFeeInUsd, globalConfig.maxKeeperFeeUsd) * iterations;
+        return MathUtil.min(liquidationFeeInUsd * iterations, globalConfig.maxKeeperFeeUsd);
     }
 
     /**
