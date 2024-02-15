@@ -2794,11 +2794,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/buyback-snx@workspace:auxiliary/BuybackSnx"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
     "@synthetixio/router": "npm:^3.3.2"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
@@ -2809,13 +2809,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
+"@synthetixio/common-config@npm:3.3.8, @synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
   version: 0.0.0-use.local
   resolution: "@synthetixio/common-config@workspace:utils/common-config"
   dependencies:
     "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@nomiclabs/hardhat-etherscan": "npm:^3.1.8"
-    "@synthetixio/hardhat-storage": "workspace:*"
+    "@synthetixio/hardhat-storage": "npm:3.3.8"
     "@typechain/ethers-v5": "npm:^11.1.2"
     "@typechain/hardhat": "npm:^9.1.0"
     dotenv: "npm:^16.4.3"
@@ -2829,25 +2829,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/core-contracts@workspace:*, @synthetixio/core-contracts@workspace:utils/core-contracts":
+"@synthetixio/core-contracts@npm:3.3.8, @synthetixio/core-contracts@workspace:*, @synthetixio/core-contracts@workspace:utils/core-contracts":
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-contracts@workspace:utils/core-contracts"
   dependencies:
     "@ethersproject/abstract-provider": "npm:^5.7.0"
     "@ethersproject/bignumber": "npm:^5.7.0"
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
   languageName: unknown
   linkType: soft
 
-"@synthetixio/core-modules@workspace:*, @synthetixio/core-modules@workspace:utils/core-modules":
+"@synthetixio/core-modules@npm:3.3.8, @synthetixio/core-modules@workspace:*, @synthetixio/core-modules@workspace:utils/core-modules":
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-modules@workspace:utils/core-modules"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
     "@synthetixio/router": "npm:^3.3.2"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
@@ -2867,7 +2867,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/core-utils@workspace:*, @synthetixio/core-utils@workspace:utils/core-utils":
+"@synthetixio/core-utils@npm:3.3.8, @synthetixio/core-utils@workspace:*, @synthetixio/core-utils@workspace:utils/core-utils":
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-utils@workspace:utils/core-utils"
   dependencies:
@@ -2917,7 +2917,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/docgen@workspace:*, @synthetixio/docgen@workspace:utils/docgen":
+"@synthetixio/docgen@npm:1.0.0, @synthetixio/docgen@workspace:*, @synthetixio/docgen@workspace:utils/docgen":
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
@@ -2942,11 +2942,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/hardhat-storage@workspace:*, @synthetixio/hardhat-storage@workspace:utils/hardhat-storage":
+"@synthetixio/hardhat-storage@npm:3.3.8, @synthetixio/hardhat-storage@workspace:*, @synthetixio/hardhat-storage@workspace:utils/hardhat-storage":
   version: 0.0.0-use.local
   resolution: "@synthetixio/hardhat-storage@workspace:utils/hardhat-storage"
   dependencies:
-    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/core-utils": "npm:3.3.8"
     "@types/jest": "npm:^29.5.12"
     "@types/mustache": "npm:^4.2.5"
     hardhat: "npm:^2.19.5"
@@ -2972,16 +2972,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/main@workspace:*, @synthetixio/main@workspace:protocol/synthetix":
+"@synthetixio/main@npm:3.3.8, @synthetixio/main@workspace:protocol/synthetix":
   version: 0.0.0-use.local
   resolution: "@synthetixio/main@workspace:protocol/synthetix"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
+    "@synthetixio/oracle-manager": "npm:3.3.8"
     "@synthetixio/router": "npm:^3.3.2"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
@@ -2996,10 +2996,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/op-gas-price-oracle@workspace:auxiliary/OpGasPriceOracle"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
@@ -3007,15 +3007,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/oracle-manager@workspace:*, @synthetixio/oracle-manager@workspace:protocol/oracle-manager":
+"@synthetixio/oracle-manager@npm:3.3.8, @synthetixio/oracle-manager@workspace:protocol/oracle-manager":
   version: 0.0.0-use.local
   resolution: "@synthetixio/oracle-manager@workspace:protocol/oracle-manager"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
     "@synthetixio/router": "npm:^3.3.2"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node": "npm:^20.11.17"
@@ -3044,15 +3044,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market@workspace:markets/perps-market"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/main": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
+    "@synthetixio/main": "npm:3.3.8"
+    "@synthetixio/oracle-manager": "npm:3.3.8"
     "@synthetixio/router": "npm:^3.3.2"
-    "@synthetixio/spot-market": "workspace:*"
+    "@synthetixio/spot-market": "npm:3.3.8"
     "@synthetixio/wei": "npm:^2.74.4"
     "@usecannon/cli": "npm:2.10.6"
     ethers: "npm:^5.7.2"
@@ -3067,10 +3067,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/pyth-erc7412-wrapper@workspace:auxiliary/PythERC7412Wrapper"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
@@ -3114,10 +3114,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/spot-market-oracle@workspace:auxiliary/SpotMarketOracle"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
@@ -3138,17 +3138,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/spot-market@workspace:*, @synthetixio/spot-market@workspace:markets/spot-market":
+"@synthetixio/spot-market@npm:3.3.8, @synthetixio/spot-market@workspace:markets/spot-market":
   version: 0.0.0-use.local
   resolution: "@synthetixio/spot-market@workspace:markets/spot-market"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/main": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/common-config": "npm:3.3.8"
+    "@synthetixio/core-contracts": "npm:3.3.8"
+    "@synthetixio/core-modules": "npm:3.3.8"
+    "@synthetixio/core-utils": "npm:3.3.8"
+    "@synthetixio/docgen": "npm:1.0.0"
+    "@synthetixio/main": "npm:3.3.8"
+    "@synthetixio/oracle-manager": "npm:3.3.8"
     "@synthetixio/router": "npm:^3.3.2"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node-fetch": "npm:^2.6.11"

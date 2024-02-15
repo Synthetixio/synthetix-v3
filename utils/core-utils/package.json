@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-utils",
-  "version": "3.3.7",
+  "version": "3.3.8",
   "publishConfig": {
     "access": "public"
   },
@@ -58,5 +58,5 @@
     "prompts": "^2.4.2",
     "rfdc": "^1.3.1"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "0a059a9864b16ec5b89477457152c4e58262c8cb"
 }

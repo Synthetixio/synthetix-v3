@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/pyth-erc7412-wrapper",
-  "version": "3.3.7",
+  "version": "3.3.8",
   "description": "Benchmark prices oracle",
   "publishConfig": {
     "access": "public"
@@ -23,13 +23,14 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-contracts": "workspace:*",
-    "@synthetixio/core-modules": "workspace:*",
-    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/common-config": "3.3.8",
+    "@synthetixio/core-contracts": "3.3.8",
+    "@synthetixio/core-modules": "3.3.8",
+    "@synthetixio/docgen": "1.0.0",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  }
+  },
+  "gitHead": "0a059a9864b16ec5b89477457152c4e58262c8cb"
 }
