@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-contracts",
-  "version": "3.3.8",
+  "version": "3.3.9",
   "publishConfig": {
     "access": "public"
   },
@@ -27,8 +27,8 @@
   "devDependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/bignumber": "^5.7.0",
-    "@synthetixio/common-config": "3.3.8",
-    "@synthetixio/core-utils": "3.3.8",
+    "@synthetixio/common-config": "3.3.9",
+    "@synthetixio/core-utils": "3.3.9",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5"
   },

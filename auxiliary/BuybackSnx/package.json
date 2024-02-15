@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/buyback-snx",
-  "version": "3.3.8",
+  "version": "3.3.9",
   "description": "Market buys and burns SNX",
   "publishConfig": {
     "access": "public"
@@ -23,10 +23,10 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.3.8",
-    "@synthetixio/core-contracts": "3.3.8",
-    "@synthetixio/core-modules": "3.3.8",
-    "@synthetixio/core-utils": "3.3.8",
+    "@synthetixio/common-config": "3.3.9",
+    "@synthetixio/core-contracts": "3.3.9",
+    "@synthetixio/core-modules": "3.3.9",
+    "@synthetixio/core-utils": "3.3.9",
     "@synthetixio/docgen": "1.0.0",
     "@synthetixio/router": "^3.3.2",
     "@synthetixio/wei": "^2.74.4",

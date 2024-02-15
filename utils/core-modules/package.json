@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "3.3.8",
+  "version": "3.3.9",
   "publishConfig": {
     "access": "public"
   },
@@ -21,8 +21,8 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.3.8",
-    "@synthetixio/core-utils": "3.3.8",
+    "@synthetixio/common-config": "3.3.9",
+    "@synthetixio/core-utils": "3.3.9",
     "@synthetixio/router": "^3.3.2",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5"

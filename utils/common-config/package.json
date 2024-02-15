@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/common-config",
-  "version": "3.3.8",
+  "version": "3.3.9",
   "publishConfig": {
     "access": "public"
   },
@@ -12,7 +12,7 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.8",
-    "@synthetixio/hardhat-storage": "3.3.8",
+    "@synthetixio/hardhat-storage": "3.3.9",
     "@typechain/ethers-v5": "^11.1.2",
     "@typechain/hardhat": "^9.1.0",
     "dotenv": "^16.4.3",

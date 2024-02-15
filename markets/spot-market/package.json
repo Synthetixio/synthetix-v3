@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.3.8",
+  "version": "3.3.9",
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -24,13 +24,13 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.3.8",
-    "@synthetixio/core-contracts": "3.3.8",
-    "@synthetixio/core-modules": "3.3.8",
-    "@synthetixio/core-utils": "3.3.8",
+    "@synthetixio/common-config": "3.3.9",
+    "@synthetixio/core-contracts": "3.3.9",
+    "@synthetixio/core-modules": "3.3.9",
+    "@synthetixio/core-utils": "3.3.9",
     "@synthetixio/docgen": "1.0.0",
-    "@synthetixio/main": "3.3.8",
-    "@synthetixio/oracle-manager": "3.3.8",
+    "@synthetixio/main": "3.3.9",
+    "@synthetixio/oracle-manager": "3.3.9",
     "@synthetixio/router": "^3.3.2",
     "@synthetixio/wei": "^2.74.4",
     "@types/node-fetch": "^2.6.11",

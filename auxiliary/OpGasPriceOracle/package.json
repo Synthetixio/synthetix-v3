@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/op-gas-price-oracle",
-  "version": "3.3.8",
+  "version": "3.3.9",
   "description": "Optimism Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"
@@ -23,9 +23,9 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.3.8",
-    "@synthetixio/core-contracts": "3.3.8",
-    "@synthetixio/core-modules": "3.3.8",
+    "@synthetixio/common-config": "3.3.9",
+    "@synthetixio/core-contracts": "3.3.9",
+    "@synthetixio/core-modules": "3.3.9",
     "@synthetixio/docgen": "1.0.0",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
