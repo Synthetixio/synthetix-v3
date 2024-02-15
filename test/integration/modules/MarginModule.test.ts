@@ -2270,7 +2270,7 @@ describe('MarginModule', async () => {
       });
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max((amount * collateralDiscountScalar) / skewScale, minCollateralDiscount), maxCollateralDiscount))
+      // price = oraclePrice * (1 - min(max((amount * collateralDiscountScalar) / skewScale), minCollateralDiscount), maxCollateralDiscount))
       //
       // (30k * 0.5) / 500k * 2 = 0.03 (bounded by max is 0.02).
       const amount = bn(30_000);
@@ -2295,7 +2295,7 @@ describe('MarginModule', async () => {
       });
       await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(collateral.synthMarketId(), bn(500_000));
 
-      // price = oraclePrice * (1 - min(max((amount * collateralDiscountScalar) / skewScale, minCollateralDiscount), maxCollateralDiscount))
+      // price = oraclePrice * (1 - min(max((amount * collateralDiscountScalar) / skewScale), minCollateralDiscount), maxCollateralDiscount))
       //
       // (500 * 0.5) / 500k * 2 = 0.0005 (bounded by min is 0.01).
       const amount = bn(500);
