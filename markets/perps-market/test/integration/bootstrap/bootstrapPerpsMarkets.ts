@@ -216,6 +216,7 @@ export const bootstrapPerpsMarkets = (
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,
     poolId: r.poolId,
+    collateralAddress: r.collateralAddress,
   };
 };
 

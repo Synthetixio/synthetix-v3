@@ -247,7 +247,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             ERC2771Context._msgSender() !=
             PerpsMarketConfiguration.load(runtime.positionMarketId).endorsedLiquidator
         ) {
-            // using oldPositionAbsSize to calculate flag reward
+            // Use max of collateral or positions flag rewards
             uint256 totalCollateralLiquidateRewards = GlobalPerpsMarketConfiguration
                 .load()
                 .calculateCollateralLiquidateReward(totalCollateralValue);

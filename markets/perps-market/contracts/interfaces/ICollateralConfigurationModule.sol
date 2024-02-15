@@ -112,7 +112,7 @@ interface ICollateralConfigurationModule {
     /**
      * @notice Registers a new reward distributor.
      * @param poolId the pool id.
-     * @param token the token address.
+     * @param token the collateral token address.
      * @param previousDistributor the previous distributor address if there was one. Set it to address(0) if first distributor, or need to create a new clone.
      * @param name the name of the distributor.
      * @param collateralId the collateral id.
