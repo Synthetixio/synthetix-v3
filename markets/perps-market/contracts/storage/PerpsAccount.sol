@@ -123,7 +123,6 @@ library PerpsAccount {
      * @dev It will also update the account's collateral amount if the debt is fully paid off
      */
     function applyPnl(Data storage self, int256 pnl) internal {
-        // TODO: reduce snxUSD first
         if (pnl > 0) {
             int256 leftoverDebt = self.debt.toInt() - pnl;
             if (leftoverDebt > 0) {
@@ -133,15 +132,21 @@ library PerpsAccount {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -leftoverDebt);
             }
         } else {
-            self.debt += pnl.toUint();
+            // if snxUSD exists, use it first
+            if (self.collateralAmounts[SNX_USD_MARKET_ID].toInt() >= pnl) {
+                updateCollateralAmount(self, SNX_USD_MARKET_ID, pnl);
+            } else {
+                self.debt += (-pnl).toUint();
+            }
         }
     }
 
     function isEligibleForMarginLiquidation(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (bool) {
-        return getAvailableMargin(self, stalenessTolerance) < 0;
+    ) internal view returns (bool isEligible, int256 availableMargin) {
+        availableMargin = getAvailableMargin(self, stalenessTolerance);
+        isEligible = availableMargin < 0;
     }
 
     function isEligibleForLiquidation(
@@ -222,11 +227,39 @@ library PerpsAccount {
         uint256 amountToWithdraw,
         ISpotMarketSystem spotMarket
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
+        bool hasActivePositions = openPositionMarketIds.length() > 0;
+
         uint256 collateralAmount = self.collateralAmounts[synthMarketId];
         if (collateralAmount < amountToWithdraw) {
             revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
         }
 
+        __validateWithdrawalLimitWithOpenPositions();
+    }
+
+    function _validateWithdrawalLimitWithNoPositions(uint256 synthMarketId) private {
+        uint256 amountToWithdrawUsd;
+        if (synthMarketId == SNX_USD_MARKET_ID) {
+            amountToWithdrawUsd = amountToWithdraw;
+        } else {
+            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
+                synthMarketId,
+                amountToWithdraw,
+                Price.Tolerance.DEFAULT
+            );
+        }
+
+        if (
+            amountToWithdrawUsd > getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false)
+        ) {
+            revert InsufficientCollateralAvailableForWithdraw(
+                getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false),
+                amountToWithdrawUsd
+            );
+        }
+    }
+
+    function _validateWithdrawalLimitWithOpenPositions(uint256 synthMarketId) private {
         (
             bool isEligible,
             int256 availableMargin,
@@ -277,17 +310,11 @@ library PerpsAccount {
             if (synthMarketId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
-                (amountToAdd, ) = spotMarket.quoteSellExactIn(
-                    synthMarketId,
+                amountToAdd = CollateralConfiguration.load(synthMarketId).valueInUsd(
                     amount,
-                    Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
+                    spotMarket,
+                    useDiscountedValue
                 );
-
-                if (useDiscountedValue)
-                    amountToAdd = CollateralConfiguration.load(synthMarketId).discountedValue(
-                        amountToAdd,
-                        spotMarket
-                    );
             }
             totalCollateralValue += amountToAdd;
         }
