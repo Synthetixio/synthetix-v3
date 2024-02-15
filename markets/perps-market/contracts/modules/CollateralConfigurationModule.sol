@@ -47,7 +47,6 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     function getCollateralConfiguration(
         uint128 synthMarketId
     ) external view override returns (uint256 maxCollateralAmount) {
-        // TODO: move to collateral configuration module
         maxCollateralAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
     }
 

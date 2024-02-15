@@ -86,11 +86,11 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128 highUtilizationInterestRateGradient;
         /**
-         * @dev TODO
+         * @dev ratio of the collateral liquidation reward. 1e18 is 100%.
          */
         uint128 collateralLiquidateRewardRatioD18;
         /**
-         * @dev TODO
+         * @dev reward distributor implementation. This is used as a base to be cloned to distribute rewards to the liquidator.
          */
         address rewardDistributorImplementation;
     }

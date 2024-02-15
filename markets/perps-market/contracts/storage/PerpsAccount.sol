@@ -183,7 +183,7 @@ library PerpsAccount {
         }
     }
 
-    function getMarginLiquidationCost(
+    function getMarginLiquidationCostAndSeizeMargin(
         Data storage self
     ) internal returns (uint256 marginLiquidateCost, uint256 seizedMarginValue) {
         // notice: using getFlagKeeperCosts here since the logic is the same, but with no positions.

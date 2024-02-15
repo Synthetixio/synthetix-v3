@@ -70,15 +70,16 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         bool isEligible = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
         if (isEligible) {
-            (uint marginLiquidateCost, uint seizedMarginValue) = account.getMarginLiquidationCost();
+            // margin is sent to liquidation rewards distributor in getMarginLiquidationCostAndSeizeMargin
+            (uint marginLiquidateCost, uint seizedMarginValue) = account
+                .getMarginLiquidationCostAndSeizeMargin();
+            // keeper is rewarded in _liquidateAccount
             liquidationReward = _liquidateAccount(
                 account,
                 marginLiquidateCost,
                 seizedMarginValue,
                 true
             );
-            // TODO: keeper flag rewards
-            // TODO: send margin to liquidation rewards distributor
         } else {
             revert NotEligibleForMarginLiquidation(accountId);
         }

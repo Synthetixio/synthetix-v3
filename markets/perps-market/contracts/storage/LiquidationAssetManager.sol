@@ -36,11 +36,12 @@ library LiquidationAssetManager {
          */
         uint128 id;
         /**
-         * @dev TODO: add comment
+         * @dev Distributor address used for reward distribution. If address is 0x0, a new distributor will be created.
          */
         address distributor;
         /**
-         * @dev TODO: add comment
+         * @dev Addresses of collateral types delegated to the pool. Used to distribute rewards.
+         * @dev Needs to be manually maintained in synch with pool configuration to distribute proportionally to all LPs.
          */
         address[] poolDelegatedCollateralTypes;
     }
@@ -91,10 +92,6 @@ library LiquidationAssetManager {
                 .rewardDistributorImplementation
                 .clone();
         }
-        // if (distributor == address(0)) {
-        //     revert AddressError.ZeroAddress();
-        // }
-        // self.distributor = distributor;
     }
 
     function distrubuteCollateral(Data storage self, address tokenAddres, uint256 amount) internal {

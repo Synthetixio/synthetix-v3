@@ -13,14 +13,14 @@ interface ICollateralConfigurationModule {
     event CollateralConfigurationSet(uint128 indexed synthMarketId, uint256 maxCollateralAmount);
 
     /**
-     * @notice Gets fired when TODO.
-     * @param collateralLiquidateRewardRatioD18 TODO
+     * @notice Gets fired when the collateral liquidation reward ratio is updated.
+     * @param collateralLiquidateRewardRatioD18 new collateral liquidation reward ratio.
      */
     event CollateralLiquidateRewardRatioSet(uint128 collateralLiquidateRewardRatioD18);
 
     /**
-     * @notice Gets fired when TODO.
-     * @param rewardDistributorImplementation TODO
+     * @notice Gets fired when the reward distribitor implementation is set. This is used as base to be cloned to distribute rewards to the liquidator.
+     * @param rewardDistributorImplementation new reward distributor implementation.
      */
     event RewardDistributorImplementationSet(address rewardDistributorImplementation);
 
