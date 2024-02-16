@@ -23,11 +23,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.3.9",
-    "@synthetixio/core-contracts": "3.3.9",
-    "@synthetixio/core-modules": "3.3.9",
-    "@synthetixio/core-utils": "3.3.9",
-    "@synthetixio/docgen": "1.0.0",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
     "@synthetixio/router": "^3.3.2",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
@@ -35,6 +35,5 @@
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "gitHead": "0a059a9864b16ec5b89477457152c4e58262c8cb"
+  }
 }

@@ -23,14 +23,13 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.3.9",
-    "@synthetixio/core-contracts": "3.3.9",
-    "@synthetixio/core-modules": "3.3.9",
-    "@synthetixio/docgen": "1.0.0",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "gitHead": "0a059a9864b16ec5b89477457152c4e58262c8cb"
+  }
 }

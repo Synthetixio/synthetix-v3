@@ -27,12 +27,11 @@
   "devDependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/bignumber": "^5.7.0",
-    "@synthetixio/common-config": "3.3.9",
-    "@synthetixio/core-utils": "3.3.9",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5"
   },
-  "gitHead": "0a059a9864b16ec5b89477457152c4e58262c8cb",
   "depcheck": {
     "ignoreMatches": [
       "@ethersproject/abi",
