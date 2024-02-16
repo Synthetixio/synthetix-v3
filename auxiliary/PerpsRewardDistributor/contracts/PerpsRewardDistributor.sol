@@ -7,6 +7,8 @@ import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 contract PerpsRewardDistributor is IPerpRewardDistributor {
+    string public constant version = "1.0.0";
+
     bool private _initialized;
 
     address private _rewardManager; // synthetix

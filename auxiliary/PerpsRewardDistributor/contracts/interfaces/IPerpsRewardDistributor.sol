@@ -5,6 +5,12 @@ import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/externa
 
 interface IPerpRewardDistributor is IRewardDistributor {
     /**
+     * @notice Returns the version of the PerpRewardDistributor.
+     * @return The Semver contract version as a string.
+     */
+    function version() external view returns (string memory);
+
+    /**
      * @notice Returns the id of the pool this was registered with.
      */
     function getPoolId() external view returns (uint128);
