@@ -83,8 +83,7 @@ export const bootstrapPerpsMarkets = (
   before('create super market', async () => {
     superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
       contracts.Core.address,
-      contracts.SpotMarket.address,
-      'SuperMarket'
+      contracts.SpotMarket.address
     );
     await contracts.PerpsMarket.initializeFactory(
       contracts.Core.address,
