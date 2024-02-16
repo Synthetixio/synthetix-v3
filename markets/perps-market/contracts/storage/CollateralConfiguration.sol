@@ -31,6 +31,10 @@ library CollateralConfiguration {
          */
         uint256 lowerLimitDiscount;
         /**
+         * @dev This value is used to scale the impactOnSkew of the collateral.
+         */
+        uint256 discountScalar;
+        /**
          * @dev Liquidation Asset Manager data. (see LiquidationAssetManager.Data struct).
          */
         LiquidationAssetManager.Data lam;
@@ -79,12 +83,30 @@ library CollateralConfiguration {
         return self.maxAmount != 0;
     }
 
-    function discountedValue(
+    function valueInUsd(
         Data storage self,
-        uint256 usdAmount,
-        ISpotMarketSystem spotMarket
-    ) internal view returns (uint256) {
-        // TODO
-        return usdAmount;
+        uint256 collateralAmount,
+        ISpotMarketSystem spotMarket,
+        bool useDiscount
+    ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
+        uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
+        uint256 impactOnSkew = useDiscount
+            ? collateralAmount.divDecimal(skewScale).mulDecimal(self.discountScalar)
+            : 0;
+        discount =
+            DecimalMath.UNIT -
+            (
+                MathUtil.max(
+                    MathUtil.min(impactOnSkew, self.lowerLimitDiscount),
+                    self.upperLimitDiscount
+                )
+            );
+        uint256 discountedCollateralAmount = collateralAmount.mulDecimal(discount);
+
+        (collateralValueInUsd, ) = spotMarket.quoteSellExactIn(
+            self.id,
+            discountedCollateralAmount,
+            Price.Tolerance(uint(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
+        );
     }
 }
