@@ -88,8 +88,7 @@ export const bootstrapPerpsMarkets = (
     );
     await contracts.PerpsMarket.initializeFactory(
       contracts.Core.address,
-      contracts.SpotMarket.address,
-      'SuperMarket'
+      contracts.SpotMarket.address
     );
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
       {
