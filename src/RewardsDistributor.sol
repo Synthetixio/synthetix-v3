@@ -6,6 +6,7 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {ISynthetixCore} from "./interfaces/ISynthetixCore.sol";
 
 contract RewardsDistributor is IRewardDistributor {
@@ -16,6 +17,9 @@ contract RewardsDistributor is IRewardDistributor {
     address public collateralType;
     address public payoutToken;
     string public name;
+
+    uint256 public precision;
+    uint256 public constant SYSTEM_PRECISION = 10 ** 18;
 
     bool public shouldFailPayout;
 
@@ -31,6 +35,7 @@ contract RewardsDistributor is IRewardDistributor {
         collateralType = collateralType_;
         payoutToken = payoutToken_;
         name = name_;
+        precision = 10 ** IERC20(payoutToken_).decimals();
     }
 
     function token() public view returns (address) {
@@ -70,7 +75,10 @@ contract RewardsDistributor is IRewardDistributor {
                 "Collateral does not match the rewards token"
             );
         }
-        payoutToken.safeTransfer(payoutTarget_, payoutAmount_);
+
+        // payoutAmount_ is always in 18 decimals precision, adjust actual payout amount to match payout token decimals
+        uint256 adjustedAmount = (payoutAmount_ * precision) / SYSTEM_PRECISION;
+        payoutToken.safeTransfer(payoutTarget_, adjustedAmount);
         return true;
     }
 
@@ -96,10 +104,15 @@ contract RewardsDistributor is IRewardDistributor {
                 "Collateral does not match the rewards token"
             );
         }
+
+        // amount_ is in payout token decimals precision, adjust actual distribution amount to 18 decimals that core is making its calculations in
+        // this is necessary to avoid rounding issues when doing actual payouts
+        uint256 adjustedAmount = (amount_ * SYSTEM_PRECISION) / precision;
+
         ISynthetixCore(rewardManager).distributeRewards(
             poolId_,
             collateralType_,
-            amount_,
+            adjustedAmount,
             start_,
             duration_
         );
