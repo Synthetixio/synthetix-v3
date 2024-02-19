@@ -100,7 +100,7 @@ describe('LiquidationModule', () => {
       );
     });
 
-    it('should charge correct flagKeeperReward collateral bigger than notional', async () => {
+    it('should charge a flag reward that is larger than the notional value', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
