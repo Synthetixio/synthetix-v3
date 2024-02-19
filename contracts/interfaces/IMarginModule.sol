@@ -85,7 +85,7 @@ interface IMarginModule is IBasePerpMarket {
     function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory);
 
     /**
-     * @notice Returns a margin digest, see Margin.MarginValues for comments about the values.
+     * @notice Returns a digest of account margin USD values. See `Margin.MarginValues` for specifics.
      */
     function getMarginDigest(uint128 accountId, uint128 marketId) external view returns (Margin.MarginValues memory);
 
