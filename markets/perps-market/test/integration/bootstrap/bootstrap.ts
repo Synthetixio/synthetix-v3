@@ -111,6 +111,7 @@ type BootstrapArgs = {
   maxCollateralsPerAccount?: ethers.BigNumber;
   collateralLiquidateRewardRatio?: ethers.BigNumber;
   skipKeeperCostOracleNode?: boolean;
+  skipRegisterDistributors?: boolean;
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -219,17 +220,19 @@ export function bootstrapMarkets(data: BootstrapArgs) {
         collateralLiquidateRewardRatio ? collateralLiquidateRewardRatio : 0 // set to zero means no rewards based on collateral only
       );
 
-    for (const { marketId, synthAddress } of synthMarkets()) {
-      await systems()
-        .PerpsMarket.connect(owner())
-        .registerDistributor(
-          poolId,
-          synthAddress(),
-          '0x0000000000000000000000000000000000000000',
-          `Distributor for ${marketId()}`,
-          marketId(),
-          [collateralAddress()]
-        );
+    if (!data.skipRegisterDistributors) {
+      for (const { marketId, synthAddress } of synthMarkets()) {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .registerDistributor(
+            poolId,
+            synthAddress(),
+            '0x0000000000000000000000000000000000000000',
+            `Distributor for ${marketId()}`,
+            marketId(),
+            [collateralAddress()]
+          );
+      }
     }
   });
 
