@@ -74,7 +74,7 @@ library Margin {
         }
     }
 
-    // --- Mutative --- //
+    // --- Mutations --- //
 
     /**
      * @dev Reevaluates the collateral and debt for `accountId` with `amountDeltaUsd`. When amount is negative,
