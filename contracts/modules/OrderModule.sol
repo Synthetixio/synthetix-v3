@@ -400,9 +400,7 @@ contract OrderModule is IOrderModule {
 
         uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
         if (keeperFee > 0) {
-            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-
-            accountMargin.updateAccountDebtAndCollateral(market, -keeperFee.toInt());
+            Margin.load(accountId, marketId).updateAccountDebtAndCollateral(market, -keeperFee.toInt());
 
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
