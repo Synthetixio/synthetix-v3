@@ -33,8 +33,6 @@ library Margin {
         bool exists;
     }
 
-    // --- Structs --- //
-
     struct MarginValues {
         // USD value of deposited collaterals (adjusted collateral price) -fees, -funding, -utilization, +PnL.
         uint256 discountedMarginUsd;
