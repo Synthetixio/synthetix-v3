@@ -189,7 +189,7 @@ describe('MarginModule Debt', async () => {
       assertBn.isZero(debtFromAccountDigestAfter);
     });
 
-    it('should allow max uint when paying off debt', async () => {
+    it('should allow max sending a bigger amount than the debt', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -215,7 +215,7 @@ describe('MarginModule Debt', async () => {
       const sUSD = getSusdCollateral(collaterals());
 
       await mintAndApprove(bs, sUSD, debtBefore, trader.signer);
-      await PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, ethers.constants.MaxUint256);
+      await PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debtBefore.mul(2));
 
       const { debtUsd: debtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(debtAfter);

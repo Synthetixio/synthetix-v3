@@ -423,7 +423,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function payDebt(uint128 accountId, uint128 marketId, uint256 amount) external {
+    function payDebt(uint128 accountId, uint128 marketId, uint128 amount) external {
         FeatureFlag.ensureAccessToFeature(Flags.PAY_DEBT);
         if (amount == 0) {
             revert ErrorUtil.ZeroAmount();
