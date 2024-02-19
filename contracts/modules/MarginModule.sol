@@ -434,6 +434,8 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
+        // We're storing debt separately to track the current debt before we pay down.
         uint128 debt = accountMargin.debtUsd;
         if (debt == 0) {
             revert ErrorUtil.NoDebt();
