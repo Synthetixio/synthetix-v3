@@ -8,6 +8,7 @@ import { calcPnl, calcTransactionCostInUsd } from '../../calculations';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
   ADDRESS0,
+  MaxUint128,
   SECONDS_ONE_DAY,
   commitAndSettle,
   depositMargin,
@@ -80,7 +81,7 @@ describe('MarginModule Debt', async () => {
       });
       await commitAndSettle(bs, marketId, trader, closeOrder);
       await assertRevert(
-        PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, ethers.constants.MaxUint256),
+        PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, MaxUint128),
         'InsufficientAllowance'
       );
     });
@@ -116,7 +117,7 @@ describe('MarginModule Debt', async () => {
       // Make sure we have some debt
       assertBn.gt(closeOrderEvent.args.accountDebt, 0);
 
-      await sUSD.contract.connect(trader.signer).approve(PerpMarketProxy.address, ethers.constants.MaxUint256);
+      await sUSD.contract.connect(trader.signer).approve(PerpMarketProxy.address, MaxUint128);
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, closeOrderEvent.args.accountDebt),
         'InsufficientBalance'
@@ -269,7 +270,7 @@ describe('MarginModule Debt', async () => {
       assertBn.lt(sUSDBalanceBefore, debtBefore);
 
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, ethers.constants.MaxUint256),
+        () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, MaxUint128),
         provider()
       );
 
