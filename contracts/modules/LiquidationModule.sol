@@ -405,7 +405,8 @@ contract LiquidationModule is ILiquidationModule {
     function isMarginLiquidatable(uint128 accountId, uint128 marketId) public view returns (bool) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        // Cannot liquidate margin is we have a position.
+
+        // Cannot liquidate margin when there is an open position.
         if (market.positions[accountId].size != 0) {
             return false;
         }
