@@ -60,8 +60,8 @@ library PerpMarketConfiguration {
         uint256 keeperLiquidationFeeUsd;
         // Address of endorsed liquidation keeper to exceed liq caps.
         address keeperLiquidationEndorsed;
-        // A scalar applied on the spot market skewScale for collateral discount adjustment.
-        uint128 spotMarketSkewScaleScalar;
+        // A scalar applied on the collateral amount as part of discount adjustment.
+        uint128 collateralDiscountScalar;
         // Minimum discount applied on deposited margin collateral.
         uint128 minCollateralDiscount;
         // Maximum discount applied on deposited margin collateral.

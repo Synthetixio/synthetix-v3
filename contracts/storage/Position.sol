@@ -144,6 +144,13 @@ library Position {
     ) internal view {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
+
+        // Decreasing a position will not place them into further liquidation or use _more_ of their margin so
+        // we can bypass remaining checks completely.
+        if (positionDecreasing) {
+            return;
+        }
+
         (uint256 im, , ) = getLiquidationMarginUsd(newPosition.size, newPosition.entryPrice, marketConfig);
 
         // Calc position margin using the fillPrice (pos.entryPrice) with the discount adjustment applied. We
@@ -161,7 +168,7 @@ library Position {
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
-        if (!positionDecreasing && nextMarginUsd < im) {
+        if (nextMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
 
@@ -456,7 +463,7 @@ library Position {
         );
 
         uint256 iterations = getLiquidationIterations(size, maxLiqCapacity);
-        return MathUtil.min(liquidationFeeInUsd, globalConfig.maxKeeperFeeUsd) * iterations;
+        return MathUtil.min(liquidationFeeInUsd * iterations, globalConfig.maxKeeperFeeUsd);
     }
 
     /**

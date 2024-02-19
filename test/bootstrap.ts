@@ -23,6 +23,7 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
   WstETHMock: WstETHMock;
+  StEthMock: AggregatorV3Mock;
   StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
@@ -46,6 +47,7 @@ export interface Contracts {
   PerpAccountProxy: PerpAccountProxy;
   AggregatorV3Mock: AggregatorV3Mock;
   WstETHMock: WstETHMock;
+  StEthMock: AggregatorV3Mock;
   StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
@@ -106,6 +108,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       CollateralMock: getContract('CollateralMock'),
       Collateral2Mock: getContract('Collateral2Mock'),
       WstETHMock: getContract('WstETHMock'),
+      StEthMock: getContract('StEthMock'),
       StEthToEthMock: getContract('StEthToEthMock'),
       SettlementHookMock: getContract('SettlementHookMock'),
       SettlementHook2Mock: getContract('SettlementHook2Mock'),
