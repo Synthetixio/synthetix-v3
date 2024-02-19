@@ -42,7 +42,7 @@ interface ILiquidationModule is IBasePerpMarket {
     function liquidatePosition(uint128 accountId, uint128 marketId) external;
 
     /**
-     * @notice Liquidates a margin due to debt.
+     * @notice Liquidates an account's margin (only) due to debt by.
      */
     function liquidateMarginOnly(uint128 accountId, uint128 marketId) external;
 
