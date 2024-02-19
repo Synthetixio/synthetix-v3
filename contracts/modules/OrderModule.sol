@@ -295,6 +295,7 @@ contract OrderModule is IOrderModule {
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
+                // And We're using collateral and not marginUsd as we dont want price changes to be deducted yet.
                 runtime.trade.newMarginUsd.toInt() - marginValues.collateralUsd.toInt()
             );
 
