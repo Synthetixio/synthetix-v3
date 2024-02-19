@@ -262,11 +262,11 @@ export const payDebt = async (bs: Bs, marketId: BigNumber, trader: Trader) => {
   const { PerpMarketProxy } = systems();
 
   const sUsdCollateral = getSusdCollateral(collaterals());
-  const { debt } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-  if (debt.eq(0)) return;
-  await mintAndApprove(bs, sUsdCollateral, debt, trader.signer);
+  const { debtUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+  if (debtUsd.eq(0)) return;
+  await mintAndApprove(bs, sUsdCollateral, debtUsd, trader.signer);
   return withExplicitEvmMine(
-    () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debt),
+    () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debtUsd),
     bs.provider()
   );
 };

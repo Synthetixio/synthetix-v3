@@ -133,13 +133,13 @@ describe('LiquidationModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order2);
 
-      const { collateralUsd, debt } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      // 0 debt and collateral bigger than debt
-      assertBn.gt(debt, 0);
-      assertBn.gt(collateralUsd, debt);
+      const { collateralUsd, debtUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      // 0 debtUsd and collateral bigger than debtUsd
+      assertBn.gt(debtUsd, 0);
+      assertBn.gt(collateralUsd, debtUsd);
 
       // Calculate the decrease percentage required to get a collateral value just below the debt
-      const decreasePercentage = wei(collateralUsd).sub(debt).div(collateralUsd).add(0.01).toNumber();
+      const decreasePercentage = wei(collateralUsd).sub(debtUsd).div(collateralUsd).add(0.01).toNumber();
       const collateralPrice = await collateral.getPrice();
 
       // Decrease collateral price and assert that collateral is smaller than debt and that position is liquidatable.
@@ -150,7 +150,7 @@ describe('LiquidationModule', () => {
       );
       assertBn.lt(position.healthFactor, 1);
 
-      assertBn.lt(newCollateralUsd, debt);
+      assertBn.lt(newCollateralUsd, debtUsd);
       // Make sure collateral is bigger than size so the flag reward is based on collateral
       assertBn.gt(newCollateralUsd, wei(position.size).mul(newMarketOraclePrice).toBN());
 
@@ -435,7 +435,7 @@ describe('LiquidationModule', () => {
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
 
-      const { debt: accountDebtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: accountDebtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       const { totalTraderDebtUsd: totalTraderDebtUsdBefore } = await PerpMarketProxy.getMarketDigest(marketId);
 
       assertBn.gt(accountDebtBefore, 0);
@@ -446,7 +446,7 @@ describe('LiquidationModule', () => {
         provider()
       );
 
-      const { debt: accountDebtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: accountDebtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       const { totalTraderDebtUsd: totalTraderDebtUsdAfter } = await PerpMarketProxy.getMarketDigest(marketId);
 
       assertBn.isZero(accountDebtAfter);
@@ -680,9 +680,8 @@ describe('LiquidationModule', () => {
       const desiredKeeper = keeper();
       const keeperAddress = await desiredKeeper.getAddress();
 
-      const { tx, receipt, trader, marketId, newMarketOraclePrice } = await commitAndSettleLiquidatedPosition(
-        desiredKeeper
-      );
+      const { tx, receipt, trader, marketId, newMarketOraclePrice } =
+        await commitAndSettleLiquidatedPosition(desiredKeeper);
 
       const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const positionLiquidatedEventProperties = [
@@ -2224,9 +2223,8 @@ describe('LiquidationModule', () => {
 
         // Verify internal accounting tracks correct liquidation time and amount.
         const block = await provider().getBlock(receipt1.blockNumber);
-        const { lastLiquidationTime, remainingLiquidatableSizeCapacity } = await PerpMarketProxy.getMarketDigest(
-          marketId
-        );
+        const { lastLiquidationTime, remainingLiquidatableSizeCapacity } =
+          await PerpMarketProxy.getMarketDigest(marketId);
         assertBn.equal(lastLiquidationTime, block.timestamp);
         assertBn.equal(capAfter.maxLiquidatableCapacity.sub(remainingLiquidatableSizeCapacity), sizeToLiquidate);
       });

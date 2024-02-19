@@ -158,7 +158,7 @@ describe('MarginModule Debt', async () => {
         .sub(fees)
         .add(closeOrderEvent.args.accruedFunding)
         .sub(closeOrderEvent.args.accruedUtilization);
-      const { debt: debtFromAccountDigest } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: debtFromAccountDigest } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       // Make sure we had from funding and utilization accrued.
       assertBn.notEqual(closeOrderEvent.args.accruedFunding, 0);
       assertBn.notEqual(closeOrderEvent.args.accruedUtilization, 0);
@@ -181,7 +181,10 @@ describe('MarginModule Debt', async () => {
       const receipt = await tx.wait();
       await assertEvent(receipt, `DebtPaid(${debtFromAccountDigest}, 0, 0)`, PerpMarketProxy);
 
-      const { debt: debtFromAccountDigestAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: debtFromAccountDigestAfter } = await PerpMarketProxy.getAccountDigest(
+        trader.accountId,
+        marketId
+      );
 
       assertBn.isZero(debtFromAccountDigestAfter);
     });
@@ -206,7 +209,7 @@ describe('MarginModule Debt', async () => {
       });
       await commitAndSettle(bs, marketId, trader, closeOrder);
 
-      const { debt: debtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: debtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.gt(debtBefore, bn(0));
 
       const sUSD = getSusdCollateral(collaterals());
@@ -214,7 +217,7 @@ describe('MarginModule Debt', async () => {
       await mintAndApprove(bs, sUSD, debtBefore, trader.signer);
       await PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, ethers.constants.MaxUint256);
 
-      const { debt: debtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: debtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(debtAfter);
     });
     it('should remove debt using sUSD collateral when user have some', async () => {
@@ -238,7 +241,7 @@ describe('MarginModule Debt', async () => {
       await commitAndSettle(bs, marketId, trader, closeOrder);
 
       // Make sure we have some debt
-      const { debt: debtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: debtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.gt(debtBefore, bn(0));
 
       const sUSDcollateral = getSusdCollateral(collaterals());
@@ -271,7 +274,7 @@ describe('MarginModule Debt', async () => {
       );
 
       const debtPaidEvent = findEventSafe(receipt, 'DebtPaid', PerpMarketProxy);
-      const { debt: debtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { debtUsd: debtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
       // Assert events
       assertBn.equal(debtPaidEvent.args.newDebt, debtAfter);
@@ -459,7 +462,7 @@ describe('MarginModule Debt', async () => {
       );
 
       const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      assertBn.isZero(accountDigest.debt);
+      assertBn.isZero(accountDigest.debtUsd);
       assertBn.isZero(accountDigest.collateralUsd);
     });
   });
