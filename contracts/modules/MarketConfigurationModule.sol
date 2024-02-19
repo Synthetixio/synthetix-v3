@@ -28,7 +28,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperFlagGasUnits = data.keeperFlagGasUnits;
         config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
         config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
-        config.spotMarketSkewScaleScalar = data.spotMarketSkewScaleScalar;
+        config.collateralDiscountScalar = data.collateralDiscountScalar;
         config.minCollateralDiscount = data.minCollateralDiscount;
         config.maxCollateralDiscount = data.maxCollateralDiscount;
         config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
