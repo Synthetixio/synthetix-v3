@@ -134,7 +134,6 @@ library Position {
      */
     function validateNextPositionIm(
         PerpMarketConfiguration.Data storage marketConfig,
-        Position.Data storage currentPosition,
         Position.Data memory newPosition,
         uint256 collateralUsd,
         uint256 nextMarginUsd
@@ -248,13 +247,7 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
             // Check new position initial margin validations.
-            validateNextPositionIm(
-                marketConfig,
-                currentPosition,
-                newPosition,
-                marginValues.collateralUsd,
-                nextMarginUsd
-            );
+            validateNextPositionIm(marketConfig, newPosition, marginValues.collateralUsd, nextMarginUsd);
             // Check new position margin validations.
             validateNextPositionEnoughMargin(marketConfig, market, newPosition, nextMarginUsd);
         }
