@@ -261,7 +261,8 @@ contract OrderModule is IOrderModule {
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, runtime.fillPrice);
-        // Eventhough this is only used for the event, we need to grab the values before we recompute utilisation to get accurate utilisation.
+
+        // We call `getHeathData` here to fetch accrued utilisation before utilisation recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
