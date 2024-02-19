@@ -209,7 +209,7 @@ library Margin {
         Position.Data storage position = market.positions[accountId];
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
-        // Zero position means collateral - debt is the margin.
+        // Zero size means there are no running sums to adjust margin by.
         int256 marginAdjustements = position.size == 0
             ? -(accountMargin.debtUsd.toInt())
             : position.getPnl(marketPrice) +
