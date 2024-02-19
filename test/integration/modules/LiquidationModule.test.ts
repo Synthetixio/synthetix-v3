@@ -108,30 +108,30 @@ describe('LiquidationModule', () => {
         genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()), desiredMarginUsdDepositAmount: 10_000 })
       );
       // Create some debt
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await commitAndSettle(bs, marketId, trader, order);
+      await commitAndSettle(bs, marketId, trader, order1);
 
       // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
-      const newMarketOraclePrice = wei(order.oraclePrice)
-        .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(order1.sizeDelta.gt(0) ? 0.9 : 1.1)
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
       await commitAndSettle(
         bs,
         marketId,
         trader,
-        genOrder(bs, market, collateral, collateralDepositAmount, { desiredSize: order.sizeDelta.mul(-1) })
+        genOrder(bs, market, collateral, collateralDepositAmount, { desiredSize: order1.sizeDelta.mul(-1) })
       );
 
       // Create a small order
-      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSize: wei(100).div(newMarketOraclePrice).toBN(),
       });
 
-      await commitAndSettle(bs, marketId, trader, order1);
+      await commitAndSettle(bs, marketId, trader, order2);
 
       const { collateralUsd, debt } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       // 0 debt and collateral bigger than debt
@@ -165,7 +165,7 @@ describe('LiquidationModule', () => {
       const expectedFlagReward = calcFlagReward(
         ethPrice,
         baseFeePerGas,
-        wei(order1.sizeDelta.abs()),
+        wei(order2.sizeDelta.abs()),
         wei(newMarketOraclePrice),
         wei(newCollateralUsd),
         await PerpMarketProxy.getMarketConfiguration(),
