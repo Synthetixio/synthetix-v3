@@ -37,7 +37,7 @@ import {
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
-import { calcLiquidationKeeperFee, calcTransactionCostInUsd } from '../../calculations';
+import { calcFlagReward, calcLiquidationKeeperFee, calcTransactionCostInUsd } from '../../calculations';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -98,6 +98,126 @@ describe('LiquidationModule', () => {
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${flagKeeperReward}, ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
+    });
+
+    it('should charge correct flagKeeperReward collateral bigger than notional', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()), desiredMarginUsdDepositAmount: 10_000 })
+      );
+      // Create some debt
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      await commitAndSettle(
+        bs,
+        marketId,
+        trader,
+        genOrder(bs, market, collateral, collateralDepositAmount, { desiredSize: order.sizeDelta.mul(-1) })
+      );
+
+      // Create a small order
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(100).div(newMarketOraclePrice).toBN(),
+      });
+
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      const { collateralUsd, debt } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      // 0 debt and collateral bigger than debt
+      assertBn.gt(debt, 0);
+      assertBn.gt(collateralUsd, debt);
+
+      // Calculate the decrease percentage required to get a collateral value just below the debt
+      const decreasePercentage = wei(collateralUsd).sub(debt).div(collateralUsd).add(0.01).toNumber();
+      const collateralPrice = await collateral.getPrice();
+
+      // Decrease collateral price and assert that collateral is smaller than debt and that position is liquidatable.
+      await collateral.setPrice(wei(collateralPrice).mul(wei(1).sub(decreasePercentage)).toBN());
+      const { collateralUsd: newCollateralUsd, position } = await PerpMarketProxy.getAccountDigest(
+        trader.accountId,
+        marketId
+      );
+      assertBn.lt(position.healthFactor, 1);
+
+      assertBn.lt(newCollateralUsd, debt);
+      // Make sure collateral is bigger than size so the flag reward is based on collateral
+      assertBn.gt(newCollateralUsd, wei(position.size).mul(newMarketOraclePrice).toBN());
+
+      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      const flagEvent = findEventSafe(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
+      const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+
+      const expectedFlagReward = calcFlagReward(
+        ethPrice,
+        baseFeePerGas,
+        wei(order1.sizeDelta.abs()),
+        wei(newMarketOraclePrice),
+        wei(newCollateralUsd),
+        await PerpMarketProxy.getMarketConfiguration(),
+        await PerpMarketProxy.getMarketConfigurationById(marketId)
+      );
+
+      assertBn.equal(flagEvent.args.flagKeeperReward, expectedFlagReward.toBN());
+    });
+
+    it('should charge correct flagKeeperReward notional bigger than collateral', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.lte(healthFactor, bn(1));
+
+      // Grab collateral value before flagging so we can use it to calculate the expected flag reward.
+      const { collateralUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      const flagEvent = findEventSafe(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
+      const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+
+      const expectedFlagReward = calcFlagReward(
+        ethPrice,
+        baseFeePerGas,
+        wei(order.sizeDelta.abs()),
+        wei(newMarketOraclePrice),
+        wei(collateralUsd),
+        await PerpMarketProxy.getMarketConfiguration(),
+        await PerpMarketProxy.getMarketConfigurationById(marketId)
+      );
+
+      assertBn.equal(flagEvent.args.flagKeeperReward, expectedFlagReward.toBN());
     });
 
     it('should be able to flag when market is in close only', async () => {
