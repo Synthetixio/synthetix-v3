@@ -30,7 +30,7 @@ interface IMarginModule is IBasePerpMarket {
     event CollateralConfigured(address indexed from, uint256 collaterals);
 
     // @notice Emitted when debt is paid off.
-    event DebtPaid(uint256 oldDebt, uint256 newDebt, uint128 paidFromUsdCollateral);
+    event DebtPaid(uint128 oldDebt, uint128 newDebt, uint128 paidFromUsdCollateral);
 
     // --- Mutations --- //
 
