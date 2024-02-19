@@ -172,7 +172,7 @@ export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketI
 
   // PublishTime is allowed to be between settlement + rand(min, max - 1);
   const publishTimeDelta = genNumber(pythPublishTimeMin, pythPublishTimeMax - 1);
-  const publishTime = settlementTime + publishTimeDelta;
+  const publishTime = commitmentTime + publishTimeDelta;
 
   const expireTime = commitmentTime + config.maxOrderAge.toNumber();
   return { commitmentTime, settlementTime, publishTime, expireTime };
@@ -234,6 +234,15 @@ export const commitAndSettle = async (
       }),
     provider()
   );
+
+  // TODO: Update `withExplicitEvmMine` to stop capturing and discarding errors.
+  //
+  // You can uncomment this if you want to reveal the error `withExplicitEvmMine` swallows.
+  //
+  // const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
+  //   value: updateFee,
+  // });
+  // const receipt = await tx.wait();
 
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
