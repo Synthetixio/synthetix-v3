@@ -429,8 +429,6 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.ZeroAmount();
         }
 
-        // Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_DEBT_PERMISSION);
-        // TODO replace with proper permission when it exists
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
