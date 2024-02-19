@@ -33,6 +33,15 @@ library Margin {
         bool exists;
     }
 
+    // --- Structs --- //
+
+    struct MarginValues {
+        uint256 discountedMarginUsd;
+        uint256 marginUsd;
+        uint256 discountedCollateralUsd;
+        uint256 collateralUsd;
+    }
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -145,9 +154,8 @@ library Margin {
      */
     function getCollateralUsd(
         uint128 accountId,
-        uint128 marketId,
-        bool useDiscountedCollateralPrice
-    ) internal view returns (uint256) {
+        uint128 marketId
+    ) internal view returns (uint256 collateralUsd, uint256 discountedCollateralUsd) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -156,8 +164,9 @@ library Margin {
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
         uint256 available;
-        uint256 collateralUsd;
+
         uint256 collateralPrice;
+        uint256 discountedCollateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
@@ -165,18 +174,20 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralPrice = useDiscountedCollateralPrice
-                    ? getDiscountedCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
-                    : getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                discountedCollateralPrice = getDiscountedPriceFromCollateralPrice(
+                    available,
+                    collateralPrice,
+                    synthMarketId,
+                    globalConfig
+                );
                 collateralUsd += available.mulDecimal(collateralPrice);
+                discountedCollateralUsd += available.mulDecimal(discountedCollateralPrice);
             }
-
             unchecked {
                 ++i;
             }
         }
-
-        return collateralUsd;
     }
 
     /**
@@ -190,29 +201,29 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 marketPrice,
-        bool useDiscountedCollateralPrice
-    ) internal view returns (uint256) {
-        uint256 collateralUsd = getCollateralUsd(accountId, market.id, useDiscountedCollateralPrice);
+        uint256 marketPrice
+    ) internal view returns (MarginValues memory) {
+        (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+        MarginValues memory marginValues;
 
         // Zero position means collateral - debt is the margin.
-        if (position.size == 0) {
-            return MathUtil.max(collateralUsd.toInt() - accountMargin.debtUsd.toInt(), 0).toUint();
-        }
-        return
-            MathUtil
-                .max(
-                    collateralUsd.toInt() +
-                        position.getPnl(marketPrice) +
-                        position.getAccruedFunding(market, marketPrice) -
-                        position.getAccruedUtilization(market, marketPrice).toInt() -
-                        position.accruedFeesUsd.toInt() -
-                        accountMargin.debtUsd.toInt(),
-                    0
-                )
-                .toUint();
+        int256 marginAdjustements = position.size == 0
+            ? -(accountMargin.debtUsd.toInt())
+            : position.getPnl(marketPrice) +
+                position.getAccruedFunding(market, marketPrice) -
+                position.getAccruedUtilization(market, marketPrice).toInt() -
+                position.accruedFeesUsd.toInt() -
+                accountMargin.debtUsd.to256().toInt();
+
+        marginValues.discountedMarginUsd = MathUtil
+            .max(discountedCollateralUsd.toInt() + marginAdjustements, 0)
+            .toUint();
+        marginValues.marginUsd = MathUtil.max(collateralUsd.toInt() + marginAdjustements, 0).toUint();
+        marginValues.discountedCollateralUsd = discountedCollateralUsd;
+        marginValues.collateralUsd = collateralUsd;
+        return marginValues;
     }
 
     // --- Member (views) --- //
@@ -243,21 +254,15 @@ library Margin {
                 : getOracleCollateralPrice(self, synthMarketId, globalConfig);
     }
 
-    /**
-     * @dev Returns the discount adjusted collateral price proportional to `available`, scaled spot market skewScale.
-     */
-    function getDiscountedCollateralPrice(
-        Margin.GlobalData storage self,
+    function getDiscountedPriceFromCollateralPrice(
+        uint256 amountAvailable,
+        uint256 price,
         uint128 synthMarketId,
-        uint256 available,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             return DecimalMath.UNIT;
         }
-
-        // Calculate discount on collateral if this collateral were to be instantly sold on spot.
-        uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
         uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId).mulDecimal(
             globalConfig.spotMarketSkewScaleScalar
         );
@@ -266,7 +271,7 @@ library Margin {
         uint256 discount = skewScale == 0
             ? 0
             : MathUtil.min(
-                MathUtil.max(available.divDecimal(skewScale), globalConfig.minCollateralDiscount),
+                MathUtil.max(amountAvailable.divDecimal(skewScale), globalConfig.minCollateralDiscount),
                 globalConfig.maxCollateralDiscount
             );
 

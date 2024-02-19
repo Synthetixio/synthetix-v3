@@ -48,23 +48,20 @@ contract MarginModule is IMarginModule {
         PerpMarket.Data storage market
     ) private view {
         uint256 oraclePrice = market.getOraclePrice();
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
 
         // We use the discount adjusted price here due to the explicit liquidation check.
-        uint256 marginUsd = Margin.getMarginUsd(
-            accountId,
-            market,
-            oraclePrice,
-            true /* useDiscountedCollateralPrice */
-        );
+        uint256 marginUsd = marginValues.discountedMarginUsd;
+        uint256 collateralUsd = marginValues.collateralUsd;
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
-        if (position.isLiquidatable(market, marginUsd, oraclePrice, marketConfig)) {
+        if (position.isLiquidatable(market, oraclePrice, marketConfig, marginValues)) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, collateralUsd, marketConfig);
         if (marginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
@@ -493,8 +490,11 @@ contract MarginModule is IMarginModule {
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
-        PerpMarket.exists(marketId);
-        return Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        // TODO replaced with a digest
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+
+        return marginValues.collateralUsd;
     }
 
     /**
@@ -503,8 +503,9 @@ contract MarginModule is IMarginModule {
     function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return
-            Margin.getMarginUsd(accountId, market, market.getOraclePrice(), false /* useDiscountedCollateralPrice */);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+        // TODO replaced with a digest
+        return marginValues.discountedMarginUsd;
     }
 
     /**
@@ -513,6 +514,14 @@ contract MarginModule is IMarginModule {
     function getDiscountedCollateralPrice(uint128 synthMarketId, uint256 amount) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        return globalMarginConfig.getDiscountedCollateralPrice(synthMarketId, amount, globalMarketConfig);
+        // TODO replaced with a digest
+
+        return
+            Margin.getDiscountedPriceFromCollateralPrice(
+                amount,
+                globalMarginConfig.getCollateralPrice(synthMarketId, globalMarketConfig),
+                synthMarketId,
+                globalMarketConfig
+            );
     }
 }

@@ -260,15 +260,19 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, runtime.fillPrice);
+        // Eventhough this is only used for the event, we need to grab the values before we recompute utilisation to get accurate utilisation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
             position.entryPrice,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
-            runtime.trade.newMarginUsd,
             runtime.fillPrice,
-            marketConfig
+            marketConfig,
+            // The margins passed here are missing the order fee + keeper fee for this trade. runtime.trade.newMarginUsd would be correct.
+            // But we are only calling getHealthData to get accruedFunding, accruedUtilisation and pnl. So we can use the old margin values.
+            marginValues
         );
 
         market.skew = market.skew + runtime.trade.newPosition.size - position.size;
@@ -284,19 +288,13 @@ contract OrderModule is IOrderModule {
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
-            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            uint256 collateralUsd = Margin.getCollateralUsd(
-                accountId,
-                marketId,
-                false /* useDiscountedCollateralPrice */
-            );
             Margin.Data storage accountMargin = Margin.load(accountId, marketId);
             accountMargin.updateAccountDebtAndCollateral(
                 market,
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
-                runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
+                runtime.trade.newMarginUsd.toInt() - marginValues.collateralUsd.toInt()
             );
 
             runtime.accountDebt = accountMargin.debtUsd;
