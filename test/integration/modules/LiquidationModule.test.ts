@@ -403,7 +403,7 @@ describe('LiquidationModule', () => {
     it('should reset account debt and update total trader debt', async () => {
       const { PerpMarketProxy } = systems();
 
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+      const { trader, market, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
         bs,
         genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) }) // use non-sUSD collateral to make sure we accrue some debt (and don't pay it off with sUSD collateral)
       );
@@ -421,12 +421,19 @@ describe('LiquidationModule', () => {
       const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSize: openOrder.sizeDelta.mul(-1),
       });
-      await commitAndSettle(bs, marketId, trader, closeOrder);
-
+      const { receipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+      const closeEvent = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
+      const debtInCollateralAmount = wei(closeEvent.args.accountDebt).div(collateralPrice).toBN();
       // Execute a new order that will create a position that can be flagged for liquidation.
-      const openFlagOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 9.9,
-      });
+      const openFlagOrder = await genOrder(
+        bs,
+        market,
+        collateral,
+        collateralDepositAmount.sub(debtInCollateralAmount),
+        {
+          desiredLeverage: 9,
+        }
+      );
       await commitAndSettle(bs, marketId, trader, openFlagOrder);
 
       // Price moves 10% and results in a healthFactor of < 1.
