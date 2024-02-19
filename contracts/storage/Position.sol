@@ -472,8 +472,10 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues
     ) internal view returns (Position.HealthData memory healthData) {
+        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+
         healthData.accruedFunding = positionSize.mulDecimal(
-            market.getUnrecordedFunding(price) + market.currentFundingAccruedComputed - positionEntryFundingAccrued
+            unrecordedFunding + market.currentFundingAccruedComputed - positionEntryFundingAccrued
         );
         healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
             market.getUnrecordedUtilization() +

@@ -337,14 +337,6 @@ library PerpMarket {
         unrecordedFunding = avgFundingRate.mulDecimal(getProportionalFundingElapsed(self)).mulDecimal(price.toInt());
     }
 
-    /**
-     * @dev Returns unrecorded funding
-     */
-    function getUnrecordedFunding(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
-        (, int256 unrecordedFunding) = getUnrecordedFundingWithRate(self, price);
-        return unrecordedFunding;
-    }
-
     function getMaxLiquidatableCapacity(
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint128) {
