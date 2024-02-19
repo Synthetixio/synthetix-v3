@@ -183,14 +183,14 @@ export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketI
   const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
   const pythPublishTimeMax = config.pythPublishTimeMax.toNumber();
 
-  // PublishTime is allowed to be between settlement - [0, maxAge - minAge]. For example, `[0, 12 - 8] = [0, 4]`.
-  const publishTimeDelta = genNumber(0, pythPublishTimeMax - pythPublishTimeMin);
-
   // Ensure the settlementTime (and hence publishTime) cannot be lte the current block.timestamp.
   const nowTime = (await provider().getBlock('latest')).timestamp;
   const settlementTime = Math.max(commitmentTime + minOrderAge, nowTime + 1);
 
-  const publishTime = settlementTime - publishTimeDelta;
+  // PublishTime is allowed to be between settlement + rand(min, max - 1);
+  const publishTimeDelta = genNumber(pythPublishTimeMin, pythPublishTimeMax - 1);
+  const publishTime = settlementTime + publishTimeDelta;
+
   const expireTime = commitmentTime + config.maxOrderAge.toNumber();
   return { commitmentTime, settlementTime, publishTime, expireTime };
 };
