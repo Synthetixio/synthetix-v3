@@ -180,7 +180,7 @@ args = ["XXX X", "XXX", "18"]
 depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
-source = "pyth:1.4.1"
+source = "pyth:1.4.2"
 args = [120, 1] # 120s, 1wei
 
 [contract.AggregatorV3Mock]

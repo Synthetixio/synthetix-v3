@@ -139,14 +139,6 @@ library Position {
         uint256 collateralUsd,
         uint256 nextMarginUsd
     ) internal view {
-        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
-        // avoid this completely due to positions at min margin would never be allowed to lower size.
-        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
-            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-
-        if (positionDecreasing) {
-            return;
-        }
         (uint256 im, , ) = getLiquidationMarginUsd(
             newPosition.size,
             newPosition.entryPrice,
@@ -250,10 +242,22 @@ library Position {
         // incurred fees hence get `nextMarginUsd` with fees deducted.
         uint256 nextMarginUsd = getNextMarginUsd(marginValues.discountedMarginUsd, orderFee, keeperFee);
 
-        // Check new position initial margin validations.
-        validateNextPositionIm(marketConfig, currentPosition, newPosition, marginValues.collateralUsd, nextMarginUsd);
-        // Check new position margin validations.
-        validateNextPositionEnoughMargin(marketConfig, market, newPosition, nextMarginUsd);
+        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
+        // avoid this completely due to positions at min margin would never be allowed to lower size.
+        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
+        if (!positionDecreasing) {
+            // Check new position initial margin validations.
+            validateNextPositionIm(
+                marketConfig,
+                currentPosition,
+                newPosition,
+                marginValues.collateralUsd,
+                nextMarginUsd
+            );
+            // Check new position margin validations.
+            validateNextPositionEnoughMargin(marketConfig, market, newPosition, nextMarginUsd);
+        }
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
@@ -456,7 +460,7 @@ library Position {
         );
 
         uint256 iterations = getLiquidationIterations(size, maxLiqCapacity);
-        return MathUtil.min(liquidationFeeInUsd, globalConfig.maxKeeperFeeUsd) * iterations;
+        return MathUtil.min(liquidationFeeInUsd * iterations, globalConfig.maxKeeperFeeUsd);
     }
 
     /**

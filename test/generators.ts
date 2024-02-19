@@ -68,8 +68,8 @@ export const genBootstrap = () => ({
     stakedAmount: bn(500_000),
   },
   global: {
-    pythPublishTimeMin: 8,
-    pythPublishTimeMax: 12,
+    pythPublishTimeMin: 12,
+    pythPublishTimeMax: 60,
     minOrderAge: 12,
     maxOrderAge: 60,
     minKeeperFeeUsd: bn(genNumber(10, 15)),
@@ -82,7 +82,7 @@ export const genBootstrap = () => ({
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Temporary dummy address to be reconfigurd later.
-    spotMarketSkewScaleScalar: bn(1),
+    collateralDiscountScalar: bn(1),
     minCollateralDiscount: bn(0.01),
     maxCollateralDiscount: bn(0.05),
     sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),

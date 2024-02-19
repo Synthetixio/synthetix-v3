@@ -264,15 +264,18 @@ library Margin {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             return DecimalMath.UNIT;
         }
-        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId).mulDecimal(
-            globalConfig.spotMarketSkewScaleScalar
-        );
+
+        // Calculate discount on collateral if this collateral were to be instantly sold on spot.
+        uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
 
         // skewScale _may_ be zero. In this event, do _not_ apply a discount.
         uint256 discount = skewScale == 0
             ? 0
             : MathUtil.min(
-                MathUtil.max(amountAvailable.divDecimal(skewScale), globalConfig.minCollateralDiscount),
+                MathUtil.max(
+                    amountAvailable.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(skewScale),
+                    globalConfig.minCollateralDiscount
+                ),
                 globalConfig.maxCollateralDiscount
             );
 
