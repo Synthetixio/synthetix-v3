@@ -7,7 +7,7 @@ import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 contract PerpsRewardDistributor is IPerpRewardDistributor {
-    string public constant version = "1.0.0";
+    string private constant _version = "1.0.0";
 
     bool private _initialized;
 
@@ -101,6 +101,10 @@ contract PerpsRewardDistributor is IPerpRewardDistributor {
 
     function getPoolId() external view override returns (uint128) {
         return _poolId;
+    }
+
+    function version() external pure virtual override returns (string memory) {
+        return _version;
     }
 
     /**

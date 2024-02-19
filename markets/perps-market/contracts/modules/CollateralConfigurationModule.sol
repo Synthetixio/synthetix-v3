@@ -14,6 +14,8 @@ import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
 import {IPerpRewardDistributor} from "@synthetixio/perps-reward-distributor/contracts/interfaces/IPerpsRewardDistributor.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {Clones} from "../utils/Clones.sol";
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {IDistributorErrors} from "../interfaces/IDistributorErrors.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -134,6 +136,15 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
 
         if (!AddressUtil.isContract(rewardDistributorImplementation)) {
             revert AddressError.NotAContract(rewardDistributorImplementation);
+        }
+
+        if (
+            !ERC165Helper.safeSupportsInterface(
+                rewardDistributorImplementation,
+                type(IPerpRewardDistributor).interfaceId
+            )
+        ) {
+            revert IDistributorErrors.InvalidDistributorContract(rewardDistributorImplementation);
         }
 
         OwnableStorage.onlyOwner();

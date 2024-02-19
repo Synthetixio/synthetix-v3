@@ -8,5 +8,9 @@ import {PerpsRewardDistributor as BasePerpsRewardDistributor} from "@synthetixio
  * See perps-reward-distributor/../PerpsRewardDistributor
  */
 contract MockPerpsRewardDistributorV2 is BasePerpsRewardDistributor {
-    string public constant override version = "2.0.0";
+    string private constant _version = "2.0.0";
+
+    function version() external pure virtual override returns (string memory) {
+        return _version;
+    }
 }

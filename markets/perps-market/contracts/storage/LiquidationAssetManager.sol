@@ -12,6 +12,7 @@ import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUt
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {Clones} from "../utils/Clones.sol";
+import {IDistributorErrors} from "../interfaces/IDistributorErrors.sol";
 
 /**
  * @title LiquidationAssetManager send liquidity to the reward distributor according to each collateral type
@@ -19,16 +20,6 @@ import {Clones} from "../utils/Clones.sol";
 library LiquidationAssetManager {
     using DecimalMath for uint256;
     using Clones for address;
-
-    /**
-     * @notice Thrown when attempting to use a wrong distributor
-     */
-    error InvalidDistributor(uint128 id, address distributor);
-
-    /**
-     * @notice Thrown when attempting to use a wrong distributor
-     */
-    error InvalidDistributorAddress(address distributor);
 
     struct Data {
         /**
@@ -80,7 +71,7 @@ library LiquidationAssetManager {
                     type(IPerpRewardDistributor).interfaceId
                 )
             ) {
-                revert InvalidDistributorAddress(distributor);
+                revert IDistributorErrors.InvalidDistributorContract(distributor);
             }
 
             // Reuse the previous distributor.
@@ -98,7 +89,7 @@ library LiquidationAssetManager {
         IPerpRewardDistributor distributor = IPerpRewardDistributor(self.distributor);
 
         if (distributor.token() != tokenAddres) {
-            revert InvalidDistributor(self.id, tokenAddres);
+            revert IDistributorErrors.InvalidDistributor(self.id, tokenAddres);
         }
 
         uint poolCollateralTypesLength = self.poolDelegatedCollateralTypes.length;
