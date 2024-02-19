@@ -346,11 +346,11 @@ library Position {
     }
 
     /**
-     * @dev Returns the reward for flagging a position given a certian position size, "flagKeeperReward"
-     * Note that size here is a uint so we expect to be passed position.size.abs()
+     * @dev Returns the reward for flagging a position given a certian position size | collateral , "flagKeeperReward"
+     * Note notionalValueUsd  = posSize.abs() * price
      */
     function getLiquidationFlagReward(
-        uint256 positionSizeAbsUsd,
+        uint256 notionalValueUsd,
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
@@ -363,7 +363,7 @@ library Position {
         );
 
         uint256 flagFeeWithRewardInUsd = flagFeeInUsd +
-            MathUtil.max(positionSizeAbsUsd, collateralUsd).mulDecimal(marketConfig.liquidationRewardPercent);
+            MathUtil.max(notionalValueUsd, collateralUsd).mulDecimal(marketConfig.liquidationRewardPercent);
 
         return MathUtil.min(flagFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
     }
