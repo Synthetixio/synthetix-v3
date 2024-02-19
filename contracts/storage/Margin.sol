@@ -36,9 +36,13 @@ library Margin {
     // --- Structs --- //
 
     struct MarginValues {
+        // USD value of deposited collaterals (adjusted collateral price) -fees, -funding, -utilization, +PnL.
         uint256 discountedMarginUsd;
+        // USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, -utilization, +PnL.
         uint256 marginUsd;
+        // USD value of deposited collaterals (adjusted collateral price)
         uint256 discountedCollateralUsd;
+        // USD value of deposited collaterals  (unadjusted collateral price)
         uint256 collateralUsd;
     }
 

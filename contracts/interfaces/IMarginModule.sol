@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
+import {Margin} from "../storage/Margin.sol";
 
 interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
@@ -84,14 +85,11 @@ interface IMarginModule is IBasePerpMarket {
     function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory);
 
     /**
-     * @notice Returns the USD value of deposited collaterals (unadjusted collteral price) for `accountId` and `marketId`.
-     */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
-
-    /**
-     * @notice Returns the USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, +PnL.
-     */
-    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
+     * @notice Returns a margin digest, see Margin.MarginValues for comments about the values.
+     */ function getMarginDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (Margin.MarginValues memory);
 
     /**
      * @notice Returns the discount adjusted oracle price based on `amount` of synth by `synthMarketId`.
