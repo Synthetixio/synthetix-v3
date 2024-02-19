@@ -86,10 +86,8 @@ interface IMarginModule is IBasePerpMarket {
 
     /**
      * @notice Returns a margin digest, see Margin.MarginValues for comments about the values.
-     */ function getMarginDigest(
-        uint128 accountId,
-        uint128 marketId
-    ) external view returns (Margin.MarginValues memory);
+     */
+    function getMarginDigest(uint128 accountId, uint128 marketId) external view returns (Margin.MarginValues memory);
 
     /**
      * @notice Returns the discount adjusted oracle price based on `amount` of synth by `synthMarketId`.
