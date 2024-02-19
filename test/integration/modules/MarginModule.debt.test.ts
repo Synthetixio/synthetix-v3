@@ -126,7 +126,7 @@ describe('MarginModule Debt', async () => {
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()), desiredMarginUsdDepositAmount: 10_000 })
       );
       const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
       const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
@@ -136,6 +136,7 @@ describe('MarginModule Debt', async () => {
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
 
+      await fastForwardBySec(provider(), SECONDS_ONE_DAY);
       const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSize: openOrder.sizeDelta.mul(-1),
       });
@@ -143,6 +144,7 @@ describe('MarginModule Debt', async () => {
 
       const openOrderEvent = findEventSafe(openReceipt, 'OrderSettled', PerpMarketProxy);
       const closeOrderEvent = findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy);
+
       const fees = wei(openOrderEvent?.args.orderFee)
         .add(openOrderEvent?.args.keeperFee)
         .add(closeOrderEvent?.args.orderFee)
@@ -152,11 +154,16 @@ describe('MarginModule Debt', async () => {
       const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
       const expectedChangeUsd = wei(pnl)
         .sub(fees)
-        .add(closeOrderEvent?.args.accruedFunding)
-        .sub(closeOrderEvent?.args.accruedUtilization);
+        .add(closeOrderEvent.args.accruedFunding)
+        .sub(closeOrderEvent.args.accruedUtilization);
       const { debt: debtFromAccountDigest } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      // Make sure we had from funding and utilization accrued.
+      assertBn.notEqual(closeOrderEvent.args.accruedFunding, 0);
+      assertBn.notEqual(closeOrderEvent.args.accruedUtilization, 0);
+      assertBn.equal(debtFromAccountDigest, closeOrderEvent.args.accountDebt);
       // Debt from digest and order settled event should be the same
       assertBn.equal(debtFromAccountDigest, closeOrderEvent.args.accountDebt);
+
       // The account's debt should account for all the fees and pnl.
       assertBn.equal(expectedChangeUsd.abs().toBN(), closeOrderEvent.args.accountDebt);
 
