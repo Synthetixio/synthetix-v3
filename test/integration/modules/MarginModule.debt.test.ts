@@ -8,8 +8,10 @@ import { calcPnl, calcTransactionCostInUsd } from '../../calculations';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
   ADDRESS0,
+  SECONDS_ONE_DAY,
   commitAndSettle,
   depositMargin,
+  fastForwardBySec,
   findEventSafe,
   getSusdCollateral,
   mintAndApprove,
@@ -369,13 +371,15 @@ describe('MarginModule Debt', async () => {
         `AccountNotFound("${invalidAccountId}"`
       );
     });
+
     it('should revert if we have a position', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
       await commitAndSettle(bs, marketId, trader, openOrder);
-      const { size } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.gt(size, 0);
+      const posDigest = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+
+      assertBn.notEqual(posDigest.size, 0);
 
       await assertRevert(
         PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
