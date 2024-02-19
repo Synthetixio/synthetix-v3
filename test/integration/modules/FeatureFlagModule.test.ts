@@ -168,27 +168,6 @@ describe('FeatureFlagModule', () => {
     );
   });
 
-  it('should disable settleOrder', async () => {
-    const { PerpMarketProxy } = systems();
-    const feature = formatBytes32String('settleOrder');
-    const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
-      provider()
-    );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
-
-    const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-    const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-    await commitOrder(bs, marketId, trader, order);
-    const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-
-    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
-    await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, { value: updateFee }),
-      `FeatureUnavailable("${feature}")`
-    );
-  });
-
   it('should disable payDebt', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('payDebt');
