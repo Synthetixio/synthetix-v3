@@ -204,11 +204,10 @@ library Margin {
         uint128 accountId,
         PerpMarket.Data storage market,
         uint256 marketPrice
-    ) internal view returns (MarginValues memory) {
+    ) internal view returns (MarginValues memory marginValues) {
         (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
-        MarginValues memory marginValues;
 
         // Zero position means collateral - debt is the margin.
         int256 marginAdjustements = position.size == 0

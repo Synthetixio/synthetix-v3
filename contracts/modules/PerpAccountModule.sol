@@ -48,12 +48,11 @@ contract PerpAccountModule is IPerpAccountModule {
                 ++i;
             }
         }
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, market.getOraclePrice());
 
         return
             IPerpAccountModule.AccountDigest(
                 depositedCollaterals,
-                marginValues.collateralUsd,
+                Margin.getMarginUsd(accountId, market, market.getOraclePrice()).collateralUsd,
                 accountMargin.debtUsd,
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)

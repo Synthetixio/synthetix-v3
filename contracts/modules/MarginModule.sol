@@ -50,10 +50,6 @@ contract MarginModule is IMarginModule {
         uint256 oraclePrice = market.getOraclePrice();
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
 
-        // We use the discount adjusted price here due to the explicit liquidation check.
-        uint256 marginUsd = marginValues.discountedMarginUsd;
-        uint256 collateralUsd = marginValues.collateralUsd;
-
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
@@ -61,8 +57,15 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, collateralUsd, marketConfig);
-        if (marginUsd < im) {
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+            position.size,
+            oraclePrice,
+            marginValues.collateralUsd,
+            marketConfig
+        );
+        // We use the discount adjusted price here due to the explicit liquidation check.
+
+        if (marginValues.discountedMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
     }
