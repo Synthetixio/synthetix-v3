@@ -41,6 +41,10 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(config.utilizationBreakpointPercent, global.utilizationBreakpointPercent);
       assertBn.equal(config.lowUtilizationSlopePercent, global.lowUtilizationSlopePercent);
       assertBn.equal(config.highUtilizationSlopePercent, global.highUtilizationSlopePercent);
+      assertBn.equal(config.keeperProfitMarginUsd, global.keeperProfitMarginUsd);
+      assert.equal(config.keeperFlagGasUnits, global.keeperFlagGasUnits);
+      assert.equal(config.keeperLiquidationEndorsed, global.keeperLiquidationEndorsed);
+      assert.equal(config.keeperLiquidateMarginGasUnits, global.keeperLiquidateMarginGasUnits);
 
       await assertEvent(receipt, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
     });

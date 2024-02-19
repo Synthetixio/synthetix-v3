@@ -38,6 +38,7 @@ import {
   setMarketConfiguration,
   SECONDS_ONE_DAY,
   setMarketConfigurationById,
+  payDebt,
 } from '../../helpers';
 import { calcDiscountedCollateralPrice, calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -366,11 +367,11 @@ describe('MarginModule', async () => {
         assertBn.equal(positionDigest.size, order.sizeDelta);
 
         // Get predeposit collateralUsd.
-        const collateralUsd1 = await PerpMarketProxy.getCollateralUsd(accountId, marketId);
+        const { collateralUsd: collateralUsd1 } = await PerpMarketProxy.getMarginDigest(accountId, marketId);
 
         // Deposit more margin, verify, and get post deposit collateralUsd.
         const deposit2 = await depositMargin(bs, gTrader);
-        const collateralUsd2 = await PerpMarketProxy.getCollateralUsd(accountId, marketId);
+        const { collateralUsd: collateralUsd2 } = await PerpMarketProxy.getMarginDigest(accountId, marketId);
 
         assertBn.near(collateralUsd2, collateralUsd1.add(deposit2.marginUsdDepositAmount));
       });
@@ -1148,7 +1149,7 @@ describe('MarginModule', async () => {
       it('should withdraw with fees and funding removed when no price changes', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress, collateralPrice } =
-          await depositMargin(bs, genTrader(bs));
+          await depositMargin(bs, genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })); // we exclude sUSD to get consistent debt behavior
 
         // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
         // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
@@ -1172,6 +1173,10 @@ describe('MarginModule', async () => {
         // Get the fees from the open and close order events
         const openOrderEvent = findEventSafe(openReceipt, 'OrderSettled', PerpMarketProxy);
         const closeOrderEvent = findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy);
+
+        // payDebt will mint the sUSD so we don't expect that to affect final balance.
+        await payDebt(bs, marketId, trader);
+
         const fees = wei(openOrderEvent?.args.orderFee)
           .add(openOrderEvent?.args.keeperFee)
           .add(closeOrderEvent?.args.orderFee)
@@ -1183,16 +1188,17 @@ describe('MarginModule', async () => {
           .sub(fees)
           .add(closeOrderEvent?.args.accruedFunding)
           .sub(closeOrderEvent?.args.accruedUtilization);
-        const expectedChange = expectedChangeUsd.div(collateralPrice);
+
+        // The account's debt should account for all the fees and pnl.
+        assertBn.near(expectedChangeUsd.abs().toBN(), closeOrderEvent.args.accountDebt, bn(0.0001));
 
         // Perform the withdrawal.
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
-        assertBn.lt(expectedChange.toBN(), bn(0));
-        const expectedBalance = startingCollateralBalance.add(expectedChange).toBN();
-
-        assertBn.near(expectedBalance, actualBalance, bn(0.0001));
+        // Since we minted sUSD to pay the debt we expect the balance to be the same as the starting balance.
+        assertBn.near(startingCollateralBalance.toBN(), actualBalance, bn(0.0001));
       });
 
       forEach([
@@ -1325,6 +1331,7 @@ describe('MarginModule', async () => {
       // TODO: Remove `.skip`
       //
       // PythMock's `parsePriceFeedUpdatesInternal` doesn't perform a price update so this currently fails.
+      // Also make make sure this takes debt into account.
       //
       // @see: https://github.com/usecannon/pyth-crosschain/blob/main/target_chains/ethereum/sdk/solidity/MockPyth.sol#L80
       it.skip('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {
@@ -1538,6 +1545,26 @@ describe('MarginModule', async () => {
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
           `PositionFound("${trader.accountId}", "${marketId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when trader has debt', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+        await commitAndSettle(bs, marketId, trader, order);
+        const closeOrder = genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: wei(order.sizeDelta).mul(-1).toBN(),
+        });
+        await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `DebtFound("${trader.accountId}", "${marketId}")`,
           PerpMarketProxy
         );
       });
@@ -1961,52 +1988,14 @@ describe('MarginModule', async () => {
     );
   });
 
-  describe('getCollateralUsd', () => {
-    it('should return the usd amount in collateral', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
-
-      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
-
-      assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
-    });
-
-    it('should return usd amount after price of collateral changes (non-usd)', async () => {
-      const { PerpMarketProxy } = systems();
-
-      // We can't use sUSD here because it should alwyas be 1 within the system.
-      const collateral = genOneOf(collateralsWithoutSusd());
-
-      const { trader, marketId, marginUsdDepositAmount, collateralPrice, collateralDepositAmount } =
-        await depositMargin(bs, genTrader(bs, { desiredCollateral: collateral }));
-
-      await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
-
-      assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
-
-      // Change price.
-      const newCollateralPrice = wei(collateralPrice).mul(2).toBN();
-      await collateral.setPrice(newCollateralPrice);
-      const actual = await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId);
-      const expected = wei(collateralDepositAmount).mul(newCollateralPrice).toBN();
-
-      assertBn.equal(actual, expected);
-    });
-
-    it('should return zero when collateral has not been deposited', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId } = await genTrader(bs);
-
-      assertBn.isZero(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId));
-    });
-
+  describe('getMarginDigest', () => {
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const { marketId } = await genTrader(bs);
       const invalidAccountId = 42069;
 
       await assertRevert(
-        PerpMarketProxy.getCollateralUsd(invalidAccountId, marketId),
+        PerpMarketProxy.getMarginDigest(invalidAccountId, marketId),
         `AccountNotFound("${invalidAccountId}")`,
         PerpMarketProxy
       );
@@ -2018,189 +2007,240 @@ describe('MarginModule', async () => {
       const invalidMarketId = 42069;
 
       await assertRevert(
-        PerpMarketProxy.getCollateralUsd(trader.accountId, invalidMarketId),
+        PerpMarketProxy.getMarginDigest(trader.accountId, invalidMarketId),
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
       );
     });
-  });
 
-  describe('getMarginUsd', () => {
-    it('should return marginUsd that reflects value of collateral when no positions opened', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(bs, genTrader(bs));
+    describe('collateralUsd', () => {
+      it('should return the usd amount in collateral', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
 
-      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
-
-      const marginUsd = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).toBN());
-    });
-
-    it('should return zero marginUsd when no collateral has been deposited', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId } = await genTrader(bs);
-      assertBn.isZero(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId));
-    });
-
-    it('should return marginUsd + pnl of position', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
-
-      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
-
-      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
-      const settleEvent = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
-      const keeperFee = settleEvent?.args.keeperFee as BigNumber;
-      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-
-      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
-      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
-        .sub(order.orderFee)
-        .sub(keeperFee)
-        .add(order.keeperFeeBufferUsd)
-        .add(pnl);
-
-      // Assert margin before price change
-      assertBn.near(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN(), bn(0.000001));
-
-      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
-      const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
-      // Update price
-      await market.aggregator().mockSetCurrentPrice(newPrice);
-
-      // Collect some data for expected margin calculation
-      const { accruedFunding, accruedUtilization } = await PerpMarketProxy.getPositionDigest(
-        trader.accountId,
-        marketId
-      );
-      const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
-
-      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-
-      // Calculate expected margin
-      const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
-        .sub(order.orderFee)
-        .sub(keeperFee)
-        .add(order.keeperFeeBufferUsd)
-        .add(newPnl)
-        .add(accruedFunding)
-        .sub(accruedUtilization);
-
-      // Assert marginUSD after price update.
-      assertBn.near(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN(), bn(0.000001));
-    });
-
-    it('should return 0 for underwater position not yet flagged', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 2,
-        desiredSide: -1,
+        await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
+        const { collateralUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
+        assertBn.near(collateralUsd, marginUsdDepositAmount);
       });
 
-      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
+      it('should return usd amount after price of collateral changes (non-usd)', async () => {
+        const { PerpMarketProxy } = systems();
 
-      await commitAndSettle(bs, marketId, trader, order);
+        // We can't use sUSD here because it should always be 1 within the system.
+        const collateral = genOneOf(collateralsWithoutSusd());
 
-      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      assertBn.gt(marginUsdBeforePriceChange, 0);
+        const { trader, marketId, marginUsdDepositAmount, collateralPrice, collateralDepositAmount } =
+          await depositMargin(bs, genTrader(bs, { desiredCollateral: collateral }));
 
-      // Price double, causing our short to be underwater
-      const newPrice = wei(order.oraclePrice).mul(2).toBN();
+        await setMarketConfiguration(bs, { minCollateralDiscount: bn(0), maxCollateralDiscount: bn(0) });
+        const { collateralUsd: collateralUsdBefore } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
 
-      // Update price
-      await market.aggregator().mockSetCurrentPrice(newPrice);
+        assertBn.near(collateralUsdBefore, marginUsdDepositAmount);
 
-      // Load margin again
-      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+        // Change price.
+        const newCollateralPrice = wei(collateralPrice).mul(2).toBN();
+        await collateral.setPrice(newCollateralPrice);
+        const { collateralUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
+        const expected = wei(collateralDepositAmount).mul(newCollateralPrice).toBN();
 
-      // Assert marginUSD is 0 since price change made the position underwater
-      assertBn.isZero(marginUsdAfterPriceChange);
+        assertBn.equal(collateralUsd, expected);
+      });
+
+      it('should return zero when collateral has not been deposited', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId } = await genTrader(bs);
+        const { collateralUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
+
+        assertBn.isZero(collateralUsd);
+      });
     });
 
-    it('should not consider a position in a different market for the same account', async () => {
-      const { PerpMarketProxy } = systems();
+    describe('marginUsd', () => {
+      it('should return marginUsd that reflects value of collateral when no positions opened', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(bs, genTrader(bs));
 
-      const { marketId, trader, collateralDepositAmount, collateralPrice } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredMarket: bs.markets()[0] })
-      );
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
-      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
+        const { marginUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
 
-      // Deposit margin to another market
-      const otherDeposit = await depositMargin(
-        bs,
-        genTrader(bs, { desiredMarket: bs.markets()[1], desiredTrader: trader })
-      );
-      const marginBeforeTradeOnDiffMarket = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+        assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+      });
 
-      assertBn.equal(marginBeforeTradeOnDiffMarket, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+      it('should return zero marginUsd when no collateral has been deposited', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId } = await genTrader(bs);
+        const { marginUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
 
-      // Generate and execute an order for the other market
-      const order = await genOrder(
-        bs,
-        otherDeposit.market,
-        otherDeposit.collateral,
-        otherDeposit.collateralDepositAmount
-      );
-      await commitAndSettle(bs, otherDeposit.marketId, otherDeposit.trader, order);
+        assertBn.isZero(marginUsd);
+      });
 
-      // Assert that collateral is still the same.
-      const marginAfterTradeOnDiffMarket = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      it('should return marginUsd + pnl of position', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
-      // Margin should stay unchanged.
-      assertBn.equal(marginBeforeTradeOnDiffMarket, marginAfterTradeOnDiffMarket);
-    });
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
 
-    it('should reflect collateral price changes (non-usd)', async () => {
-      const { PerpMarketProxy } = systems();
+        const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+        const settleEvent = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
+        const keeperFee = settleEvent?.args.keeperFee as BigNumber;
+        const { marginUsd: marginUsdBeforePriceChange } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
 
-      const collateral = genOneOf(collateralsWithoutSusd());
-      const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredCollateral: collateral })
-      );
+        const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+        const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
+          .sub(order.orderFee)
+          .sub(keeperFee)
+          .add(order.keeperFeeBufferUsd)
+          .add(pnl);
 
-      await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
+        // Assert margin before price change
+        assertBn.near(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN(), bn(0.000001));
 
-      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      assertBn.equal(marginUsdBeforePriceChange, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+        // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+        const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
+        // Update price
+        await market.aggregator().mockSetCurrentPrice(newPrice);
 
-      const newPrice = wei(collateralPrice)
-        .mul(genOneOf([1.1, 0.9]))
-        .toBN();
-      await collateral.setPrice(newPrice);
+        // Collect some data for expected margin calculation
+        const { accruedFunding, accruedUtilization } = await PerpMarketProxy.getPositionDigest(
+          trader.accountId,
+          marketId
+        );
+        const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
 
-      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      assertBn.equal(marginUsdAfterPriceChange, wei(collateralDepositAmount).mul(newPrice).toBN());
-    });
+        const { marginUsd: marginUsdAfterPriceChange } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
 
-    it('should revert when accountId does not exist', async () => {
-      const { PerpMarketProxy } = systems();
-      const { marketId } = await genTrader(bs);
-      const invalidAccountId = bn(genNumber(42069, 50_000));
+        // Calculate expected margin
+        const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
+          .sub(order.orderFee)
+          .sub(keeperFee)
+          .add(order.keeperFeeBufferUsd)
+          .add(newPnl)
+          .add(accruedFunding)
+          .sub(accruedUtilization);
 
-      // Perform withdraw with invalid market.
-      await assertRevert(
-        PerpMarketProxy.getMarginUsd(invalidAccountId, marketId),
-        `AccountNotFound("${invalidAccountId}")`,
-        PerpMarketProxy
-      );
-    });
+        // Assert marginUSD after price update.
+        assertBn.near(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN(), bn(0.000001));
+      });
 
-    it('should revert when marketId does not exist', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader } = await genTrader(bs);
-      const invalidMarketId = bn(genNumber(42069, 50_000));
+      it('should return 0 for underwater position not yet flagged', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: 2,
+          desiredSide: -1,
+        });
 
-      // Perform withdraw with invalid market.
-      await assertRevert(
-        PerpMarketProxy.getMarginUsd(trader.accountId, invalidMarketId),
-        `MarketNotFound("${invalidMarketId}")`,
-        PerpMarketProxy
-      );
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
+
+        await commitAndSettle(bs, marketId, trader, order);
+
+        const { marginUsd: marginUsdBeforePriceChange } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
+        assertBn.gt(marginUsdBeforePriceChange, 0);
+
+        // Price double, causing our short to be underwater
+        const newPrice = wei(order.oraclePrice).mul(2).toBN();
+
+        // Update price
+        await market.aggregator().mockSetCurrentPrice(newPrice);
+
+        // Load margin again
+        const { marginUsd: marginUsdAfterPriceChange } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
+        // Assert marginUSD is 0 since price change made the position underwater
+        assertBn.isZero(marginUsdAfterPriceChange);
+      });
+
+      it('should not consider a position in a different market for the same account', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { marketId, trader, collateralDepositAmount, collateralPrice } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarket: bs.markets()[0] })
+        );
+
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
+
+        // Deposit margin to another market
+        const otherDeposit = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarket: bs.markets()[1], desiredTrader: trader })
+        );
+
+        const { marginUsd: marginBeforeTradeOnDiffMarket } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
+        assertBn.equal(marginBeforeTradeOnDiffMarket, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+
+        // Generate and execute an order for the other market
+        const order = await genOrder(
+          bs,
+          otherDeposit.market,
+          otherDeposit.collateral,
+          otherDeposit.collateralDepositAmount
+        );
+        await commitAndSettle(bs, otherDeposit.marketId, otherDeposit.trader, order);
+
+        // Assert that collateral is still the same.
+        const { marginUsd: marginAfterTradeOnDiffMarket } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
+
+        // Margin should stay unchanged.
+        assertBn.equal(marginBeforeTradeOnDiffMarket, marginAfterTradeOnDiffMarket);
+      });
+
+      it('should reflect collateral price changes (non-usd)', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const collateral = genOneOf(collateralsWithoutSusd());
+        const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredCollateral: collateral })
+        );
+
+        await setMarketConfiguration(bs, { maxCollateralDiscount: bn(0), minCollateralDiscount: bn(0) });
+
+        const { marginUsd: marginUsdBeforePriceChange } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
+        assertBn.equal(marginUsdBeforePriceChange, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+
+        const newPrice = wei(collateralPrice)
+          .mul(genOneOf([1.1, 0.9]))
+          .toBN();
+        await collateral.setPrice(newPrice);
+
+        const { marginUsd: marginUsdAfterPriceChange } = await PerpMarketProxy.getMarginDigest(
+          trader.accountId,
+          marketId
+        );
+        assertBn.equal(marginUsdAfterPriceChange, wei(collateralDepositAmount).mul(newPrice).toBN());
+      });
     });
   });
 

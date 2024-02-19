@@ -78,6 +78,7 @@ export const genBootstrap = () => ({
     keeperProfitMarginPercent: bn(genNumber(0.1, 0.2)),
     keeperSettlementGasUnits: 1_200_000,
     keeperFlagGasUnits: 1_200_000,
+    keeperLiquidateMarginGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Temporary dummy address to be reconfigurd later.

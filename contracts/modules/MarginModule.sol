@@ -26,6 +26,7 @@ contract MarginModule is IMarginModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
+    using Margin for Margin.Data;
 
     // --- Runtime structs --- //
 
@@ -47,24 +48,24 @@ contract MarginModule is IMarginModule {
         PerpMarket.Data storage market
     ) private view {
         uint256 oraclePrice = market.getOraclePrice();
-
-        // We use the discount adjusted price here due to the explicit liquidation check.
-        uint256 marginUsd = Margin.getMarginUsd(
-            accountId,
-            market,
-            oraclePrice,
-            true /* useDiscountedCollateralPrice */
-        );
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
-        if (position.isLiquidatable(market, marginUsd, oraclePrice, marketConfig)) {
+        if (position.isLiquidatable(market, oraclePrice, marketConfig, marginValues)) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
-        if (marginUsd < im) {
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+            position.size,
+            oraclePrice,
+            marginValues.collateralUsd,
+            marketConfig
+        );
+        // We use the discount adjusted price here due to the explicit liquidation check.
+
+        if (marginValues.discountedMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
     }
@@ -160,6 +161,8 @@ contract MarginModule is IMarginModule {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         // Prevent collateral transfers when there's a pending order.
         if (market.orders[accountId].sizeDelta != 0) {
@@ -176,15 +179,17 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+        // Prevent withdraw all when there is unpaid debt owned on the account margin.
+        if (accountMargin.debtUsd != 0) {
+            revert ErrorUtil.DebtFound(accountId, marketId);
+        }
+
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
-
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
@@ -289,7 +294,7 @@ contract MarginModule is IMarginModule {
             // Ensure we perform this _after_ the accounting update so marginUsd uses with post withdrawal
             // collateral amounts.
             Position.Data storage position = market.positions[accountId];
-            if (position.size != 0) {
+            if (position.size != 0 || accountMargin.debtUsd != 0) {
                 validatePositionPostWithdraw(accountId, position, market);
             }
 
@@ -415,6 +420,49 @@ contract MarginModule is IMarginModule {
         emit CollateralConfigured(msg.sender, runtime.lengthAfter);
     }
 
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function payDebt(uint128 accountId, uint128 marketId, uint128 amount) external {
+        FeatureFlag.ensureAccessToFeature(Flags.PAY_DEBT);
+        if (amount == 0) {
+            revert ErrorUtil.ZeroAmount();
+        }
+
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
+        // We're storing debt separately to track the current debt before we pay down.
+        uint128 debt = accountMargin.debtUsd;
+        if (debt == 0) {
+            revert ErrorUtil.NoDebt();
+        }
+        uint128 decreaseDebtAmount = MathUtil.min(amount, debt).to128();
+        uint128 availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID].to128();
+
+        // Infer the amount of sUSD to deduct from margin.
+        uint128 sUsdToDeduct = 0;
+        if (availableSusd != 0) {
+            sUsdToDeduct = MathUtil.min(decreaseDebtAmount, availableSusd).to128();
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= sUsdToDeduct;
+        }
+
+        // Perform account and margin debt updates.
+        accountMargin.debtUsd -= decreaseDebtAmount;
+        market.updateDebtAndCollateral(-decreaseDebtAmount.toInt(), -sUsdToDeduct.toInt());
+
+        // Infer the remaining sUSD to burn from `msg.sender` after attributing sUSD in margin.
+        uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
+        if (amountToBurn > 0) {
+            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountToBurn);
+        }
+
+        emit DebtPaid(debt, accountMargin.debtUsd, sUsdToDeduct);
+    }
+
     // --- Views --- //
 
     /**
@@ -443,20 +491,10 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
-        Account.exists(accountId);
-        PerpMarket.exists(marketId);
-        return Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */);
-    }
-
-    /**
-     * @inheritdoc IMarginModule
-     */
-    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+    function getMarginDigest(uint128 accountId, uint128 marketId) external view returns (Margin.MarginValues memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return
-            Margin.getMarginUsd(accountId, market, market.getOraclePrice(), false /* useDiscountedCollateralPrice */);
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
     }
 
     /**
@@ -465,6 +503,13 @@ contract MarginModule is IMarginModule {
     function getDiscountedCollateralPrice(uint128 synthMarketId, uint256 amount) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        return globalMarginConfig.getDiscountedCollateralPrice(synthMarketId, amount, globalMarketConfig);
+
+        return
+            Margin.getDiscountedPriceFromCollateralPrice(
+                amount,
+                globalMarginConfig.getCollateralPrice(synthMarketId, globalMarketConfig),
+                synthMarketId,
+                globalMarketConfig
+            );
     }
 }

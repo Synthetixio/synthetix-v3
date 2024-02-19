@@ -29,7 +29,8 @@ interface IOrderModule is IBasePerpMarket {
         int256 accruedFunding,
         uint256 accruedUtilization,
         int256 pnl,
-        uint256 fillPrice
+        uint256 fillPrice,
+        uint128 accountDebt
     );
 
     // @notice Emitted after an order is settled with hook(s) and the hook was completely successfully.

@@ -52,7 +52,8 @@ contract PerpAccountModule is IPerpAccountModule {
         return
             IPerpAccountModule.AccountDigest(
                 depositedCollaterals,
-                Margin.getCollateralUsd(accountId, marketId, false /* useDiscountedCollateralPrice */),
+                Margin.getMarginUsd(accountId, market, market.getOraclePrice()).collateralUsd,
+                accountMargin.debtUsd,
                 market.orders[accountId],
                 getPositionDigest(accountId, marketId)
             );
@@ -76,6 +77,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint256 oraclePrice = market.getOraclePrice();
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
 
         Position.HealthData memory healthData = Position.getHealthData(
             market,
@@ -83,17 +85,22 @@ contract PerpAccountModule is IPerpAccountModule {
             position.entryPrice,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
             oraclePrice,
+            marketConfig,
+            marginValues
+        );
+        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(
+            position.size,
+            oraclePrice,
+            marginValues.collateralUsd,
             marketConfig
         );
-        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
 
         return
             IPerpAccountModule.PositionDigest(
                 accountId,
                 marketId,
-                healthData.remainingMarginUsd,
+                marginValues.discountedMarginUsd,
                 healthData.healthFactor,
                 MathUtil.abs(position.size).mulDecimal(oraclePrice), // notionalValueUsd
                 healthData.pnl,

@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {Position} from "./Position.sol";
@@ -16,6 +16,7 @@ library Margin {
     using DecimalMath for int256;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
@@ -32,6 +33,17 @@ library Margin {
         bool exists;
     }
 
+    struct MarginValues {
+        // USD value of deposited collaterals (adjusted collateral price) -fees, -funding, -utilization, +PnL.
+        uint256 discountedMarginUsd;
+        // USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, -utilization, +PnL.
+        uint256 marginUsd;
+        // USD value of deposited collaterals (adjusted collateral price)
+        uint256 discountedCollateralUsd;
+        // USD value of deposited collaterals  (unadjusted collateral price)
+        uint256 collateralUsd;
+    }
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -44,6 +56,8 @@ library Margin {
     struct Data {
         // {synthMarketId: collateralAmount} (amount of collateral deposited into this account).
         mapping(uint128 => uint256) collaterals;
+        // Debt in USD for this account.
+        uint128 debtUsd;
     }
 
     function load() internal pure returns (Margin.GlobalData storage d) {
@@ -60,42 +74,15 @@ library Margin {
         }
     }
 
-    /**
-     * @dev Withdraw `amount` synths from deposits to sell for sUSD and burn for LPs.
-     */
-    function sellNonSusdCollateral(
-        uint128 marketId,
-        uint128 synthMarketId,
-        uint256 amount,
-        uint256 price,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal {
-        globalConfig.synthetix.withdrawMarketCollateral(
-            marketId,
-            globalConfig.spotMarket.getSynth(synthMarketId),
-            amount
-        );
-        uint256 minAmountReceivedUsd = amount.mulDecimal(price).mulDecimal(
-            DecimalMath.UNIT - globalConfig.sellExactInMaxSlippagePercent
-        );
-        (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
-            synthMarketId,
-            amount,
-            minAmountReceivedUsd,
-            address(0)
-        );
-        globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
-    }
-
     // --- Mutations --- //
 
     /**
-     * @dev Reevaluates the collateral in `market` for `accountId` with `amountDeltaUsd`. When amount is negative,
+     * @dev Reevaluates the collateral and debt for `accountId` with `amountDeltaUsd`. When amount is negative,
      * portion of their collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
-     * account.
+     * account. Returns the collateral and debt delta's.
      */
-    function updateAccountCollateral(
-        uint128 accountId,
+    function updateAccountDebtAndCollateral(
+        Margin.Data storage accountMargin,
         PerpMarket.Data storage market,
         int256 amountDeltaUsd
     ) internal {
@@ -105,7 +92,8 @@ library Margin {
         }
 
         // This is invoked when an order is settled and a modification of an existing position needs to be
-        // performed. There are a few scenarios we are trying to capture:
+        // performed, or when and order is cancelled.
+        // There are a few scenarios we are trying to capture:
         //
         // 1. Increasing size for a profitable position
         // 2. Increasing size for a unprofitable position
@@ -117,80 +105,48 @@ library Margin {
         // The commonalities:
         // - There is an existing position
         // - All position modifications involve 'touching' a position which realizes the profit/loss
-        // - All profitable positions are given more sUSD as collateral
+        // - All profitable positions are first paying back any debt and the rest is added as sUSD as collateral
         // - All accounting can be performed within the market (i.e. no need to move tokens around)
-        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
+        // These two ints are passed to market.updateDebtAndCollateral so global debt and collateral tracking can be updated.
+        int128 debtAmountDeltaUsd = 0;
+        int128 sUsdCollateralDelta = 0;
+
+        uint128 absAmountDeltaUsd = MathUtil.abs(amountDeltaUsd).to128();
         // >0 means to add sUSD to this account's margin (realized profit).
         if (amountDeltaUsd > 0) {
-            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += amountDeltaUsd.toUint();
-            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] += amountDeltaUsd.toUint();
-        } else {
-            // <0 means a realized loss and we need to partially deduct from their collateral.
-            Margin.GlobalData storage globalMarginConfig = Margin.load();
-            PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-            // Variable declaration outside of loop to be more gas efficient.
-            uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-            uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
-
-            uint128 synthMarketId;
-            uint256 available;
-            uint256 collateralPrice;
-            uint256 deductionAmount;
-            uint256 deductionAmountUsd;
-
-            for (uint256 i = 0; i < length; ) {
-                synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-                available = accountMargin.collaterals[synthMarketId];
-
-                // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
-                //
-                // NOTE: The invocation to fetch market price relies on an upstream operation to update and store a Pyth
-                // price. This is entirely due the atomic spot sale of non sUSD collateral. As such, any call to `updateAccountCollateral`
-                // must be preceeded with a `parsePythPrice` invocation (assuming the account has zero sUSD or not enough sUSD to
-                // cover costs to pay back negative pnl either via fees, losses, or both).
-                if (available > 0) {
-                    collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
-                    deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(collateralPrice));
-                    deductionAmount = deductionAmountUsd.divDecimal(collateralPrice);
-
-                    // If collateral is _not_ sUSD, withdraw, sell, and deposit as USD then continue update accounting.
-                    if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
-                        sellNonSusdCollateral(market.id, synthMarketId, deductionAmount, collateralPrice, globalConfig);
-                    }
-
-                    // At this point we can just update the accounting.
-                    //
-                    // Non-sUSD collateral has been sold for sUSD and deposited to core system. The
-                    // `amountDeltaUsd` will take order fees, keeper fees and funding into account.
-                    //
-                    // If sUSD is used we can just update the accounting directly.
-                    accountMargin.collaterals[synthMarketId] -= deductionAmount;
-                    market.depositedCollateral[synthMarketId] -= deductionAmount;
-                    amountToDeductUsd -= deductionAmountUsd;
-                }
-
-                // Exit early in the event the first deducted collateral is enough to cover the loss.
-                if (amountToDeductUsd == 0) {
-                    break;
-                }
-
-                unchecked {
-                    ++i;
-                }
+            if (absAmountDeltaUsd > accountMargin.debtUsd) {
+                // Enough profit to cover outstanding debt, this means we can pay off the debt and  increase sUSD collateral with the rest
+                debtAmountDeltaUsd = -accountMargin.debtUsd.toInt(); // Debt should be reduced when position in profit
+                accountMargin.debtUsd = 0;
+                uint128 profitAfterDebt = absAmountDeltaUsd - accountMargin.debtUsd;
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += profitAfterDebt;
+                sUsdCollateralDelta = profitAfterDebt.toInt();
+            } else {
+                // The trader has an outstanding debt larger than the profit, just reduce the debt with all the profits
+                accountMargin.debtUsd -= absAmountDeltaUsd;
+                debtAmountDeltaUsd = -amountDeltaUsd.to128();
             }
-
-            // Not enough remaining margin to deduct from `-amount`.
-            //
-            // NOTE: This is _only_ used within settlement and should revert settlement if the margin is
-            // not enough to cover fees incurred to modify position. However, IM/MM should be configured
-            // well enough to prevent this from ever happening. Additionally, instant liquidation checks
-            // should also prevent this from happening too.
-            if (amountToDeductUsd > 0) {
-                revert ErrorUtil.InsufficientMargin();
+        } else {
+            // <0 means a realized loss and we need to increase their debt or pay with sUSD collateral.
+            uint256 availableUsdCollateral = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+            int256 newDebt = availableUsdCollateral.toInt() + amountDeltaUsd;
+            if (newDebt > 0) {
+                // We have enough sUSD to cover the loss, just deduct from collateral.
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= absAmountDeltaUsd;
+                sUsdCollateralDelta = -absAmountDeltaUsd.toInt();
+                // No changes to debt needed.
+            } else {
+                // We don't have enough sUSD to cover the loss, deduct what we can from the sUSD collateral and increase debt with the rest.
+                uint128 newDebtAbs = MathUtil.abs(newDebt).to128();
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+                sUsdCollateralDelta = -availableUsdCollateral.to128().toInt();
+                // Debt should increase as we're lost money.
+                accountMargin.debtUsd += newDebtAbs;
+                debtAmountDeltaUsd = newDebtAbs.toInt();
             }
         }
+        market.updateDebtAndCollateral(debtAmountDeltaUsd, sUsdCollateralDelta);
     }
 
     // --- Views --- //
@@ -200,9 +156,8 @@ library Margin {
      */
     function getCollateralUsd(
         uint128 accountId,
-        uint128 marketId,
-        bool useDiscountedCollateralPrice
-    ) internal view returns (uint256) {
+        uint128 marketId
+    ) internal view returns (uint256 collateralUsd, uint256 discountedCollateralUsd) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -211,8 +166,9 @@ library Margin {
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
         uint256 available;
-        uint256 collateralUsd;
+
         uint256 collateralPrice;
+        uint256 discountedCollateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
@@ -220,18 +176,20 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralPrice = useDiscountedCollateralPrice
-                    ? getDiscountedCollateralPrice(globalMarginConfig, synthMarketId, available, globalConfig)
-                    : getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                discountedCollateralPrice = getDiscountedPriceFromCollateralPrice(
+                    available,
+                    collateralPrice,
+                    synthMarketId,
+                    globalConfig
+                );
                 collateralUsd += available.mulDecimal(collateralPrice);
+                discountedCollateralUsd += available.mulDecimal(discountedCollateralPrice);
             }
-
             unchecked {
                 ++i;
             }
         }
-
-        return collateralUsd;
     }
 
     /**
@@ -245,27 +203,28 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 marketPrice,
-        bool useDiscountedCollateralPrice
-    ) internal view returns (uint256) {
-        uint256 collateralUsd = getCollateralUsd(accountId, market.id, useDiscountedCollateralPrice);
+        uint256 marketPrice
+    ) internal view returns (MarginValues memory marginValues) {
+        (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
-        // Zero position means that marginUsd eq collateralUsd.
-        if (position.size == 0) {
-            return collateralUsd;
-        }
-        return
-            MathUtil
-                .max(
-                    collateralUsd.toInt() +
-                        position.getPnl(marketPrice) +
-                        position.getAccruedFunding(market, marketPrice) -
-                        position.getAccruedUtilization(market, marketPrice).toInt() -
-                        position.accruedFeesUsd.toInt(),
-                    0
-                )
-                .toUint();
+        // Zero size means there are no running sums to adjust margin by.
+        int256 marginAdjustements = position.size == 0
+            ? -(accountMargin.debtUsd.toInt())
+            : position.getPnl(marketPrice) +
+                position.getAccruedFunding(market, marketPrice) -
+                position.getAccruedUtilization(market, marketPrice).toInt() -
+                position.accruedFeesUsd.toInt() -
+                accountMargin.debtUsd.to256().toInt();
+
+        marginValues.discountedMarginUsd = MathUtil
+            .max(discountedCollateralUsd.toInt() + marginAdjustements, 0)
+            .toUint();
+        marginValues.marginUsd = MathUtil.max(collateralUsd.toInt() + marginAdjustements, 0).toUint();
+        marginValues.discountedCollateralUsd = discountedCollateralUsd;
+        marginValues.collateralUsd = collateralUsd;
+        return marginValues;
     }
 
     // --- Member (views) --- //
@@ -296,13 +255,10 @@ library Margin {
                 : getOracleCollateralPrice(self, synthMarketId, globalConfig);
     }
 
-    /**
-     * @dev Returns the discount adjusted collateral price proportional to `available`, scaled spot market skewScale.
-     */
-    function getDiscountedCollateralPrice(
-        Margin.GlobalData storage self,
+    function getDiscountedPriceFromCollateralPrice(
+        uint256 amountAvailable,
+        uint256 price,
         uint128 synthMarketId,
-        uint256 available,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
@@ -310,14 +266,16 @@ library Margin {
         }
 
         // Calculate discount on collateral if this collateral were to be instantly sold on spot.
-        uint256 price = getOracleCollateralPrice(self, synthMarketId, globalConfig);
         uint256 skewScale = globalConfig.spotMarket.getMarketSkewScale(synthMarketId);
 
         // skewScale _may_ be zero. In this event, do _not_ apply a discount.
         uint256 discount = skewScale == 0
             ? 0
             : MathUtil.min(
-                MathUtil.max(available.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(skewScale), globalConfig.minCollateralDiscount),
+                MathUtil.max(
+                    amountAvailable.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(skewScale),
+                    globalConfig.minCollateralDiscount
+                ),
                 globalConfig.maxCollateralDiscount
             );
 

@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
+import {Margin} from "../storage/Margin.sol";
 
 interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
@@ -28,7 +29,16 @@ interface IMarginModule is IBasePerpMarket {
     // @notice Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
 
+    // @notice Emitted when debt is paid off.
+    event DebtPaid(uint128 oldDebt, uint128 newDebt, uint128 paidFromUsdCollateral);
+
     // --- Mutations --- //
+
+    /**
+     * @notice Pays back debt for `accountId` and `marketId`.
+     * Users can partially pay off their debt and if amount is bigger than the debt, only the debt will be cleared.
+     */
+    function payDebt(uint128 accountId, uint128 marketId, uint128 amount) external;
 
     /**
      * @notice Convenience method to withdraw all collateral for `accountId` and `marketId`.
@@ -75,14 +85,9 @@ interface IMarginModule is IBasePerpMarket {
     function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory);
 
     /**
-     * @notice Returns the USD value of deposited collaterals (unadjusted collteral price) for `accountId` and `marketId`.
+     * @notice Returns a digest of account margin USD values. See `Margin.MarginValues` for specifics.
      */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
-
-    /**
-     * @notice Returns the USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, +PnL.
-     */
-    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
+    function getMarginDigest(uint128 accountId, uint128 marketId) external view returns (Margin.MarginValues memory);
 
     /**
      * @notice Returns the discount adjusted oracle price based on `amount` of synth by `synthMarketId`.

@@ -9,6 +9,23 @@ import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './type
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
 
+const fgReset = '\x1b[0m';
+const fgGreen = '\x1b[32m';
+const fgYellow = '\x1b[33m';
+const fgCyan = '\x1b[36m';
+const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom');
+
+declare module 'ethers' {
+  interface BigNumber {
+    [customInspectSymbol]?: () => string;
+  }
+}
+ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
+  return `${fgCyan}BigNumber( ${fgYellow}${fgGreen}${this.toString()} ${fgYellow}${wei(
+    this
+  ).toNumber()}${fgCyan} )${fgReset}`;
+};
+
 // --- Constants --- //
 
 export const SECONDS_ONE_HR = 60 * 60;
@@ -17,6 +34,7 @@ export const AVERAGE_SECONDS_PER_YEAR = 31556952; // 4 years which includes leap
 
 export const SYNTHETIX_USD_MARKET_ID = BigNumber.from(0);
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
+export const MaxUint128 = BigNumber.from(2).pow(128).sub(1);
 
 // --- Mutation helpers --- //
 
@@ -188,7 +206,7 @@ export const commitOrder = async (
   const { PerpMarketProxy } = systems();
 
   const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await order;
-  await PerpMarketProxy.connect(trader.signer).commitOrder(
+  return await PerpMarketProxy.connect(trader.signer).commitOrder(
     trader.accountId,
     marketId,
     sizeDelta,
@@ -247,6 +265,20 @@ export const commitAndSettle = async (
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
+};
+
+export const payDebt = async (bs: Bs, marketId: BigNumber, trader: Trader) => {
+  const { collaterals, systems } = bs;
+  const { PerpMarketProxy } = systems();
+
+  const sUsdCollateral = getSusdCollateral(collaterals());
+  const { debtUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+  if (debtUsd.eq(0)) return;
+  await mintAndApprove(bs, sUsdCollateral, debtUsd, trader.signer);
+  return withExplicitEvmMine(
+    () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debtUsd),
+    bs.provider()
+  );
 };
 
 /** This is still quite buggy in anvil so use with care */

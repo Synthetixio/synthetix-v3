@@ -26,6 +26,9 @@ interface ILiquidationModule is IBasePerpMarket {
         uint256 flaggedPrice
     );
 
+    // @notice Emitted when margin is liquidated due to debt.
+    event MarginLiquidated(uint128 indexed accountId, uint128 marketId, uint256 keeperReward);
+
     // --- Mutations --- //
 
     /**
@@ -37,6 +40,11 @@ interface ILiquidationModule is IBasePerpMarket {
      * @notice Liquidates a flagged position. A position must be flagged first before it can be liquidated.
      */
     function liquidatePosition(uint128 accountId, uint128 marketId) external;
+
+    /**
+     * @notice Liquidates an account's margin (only) due to debt by.
+     */
+    function liquidateMarginOnly(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 
@@ -59,6 +67,11 @@ interface ILiquidationModule is IBasePerpMarket {
      * @notice Returns whether a position owned by `accountId` can be flagged for liquidated.
      */
     function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool);
+
+    /**
+     * @notice Returns whether an accounts margin can be liquidated.
+     */
+    function isMarginLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool);
 
     /**
      * @notice Returns the IM (initial maintenance) and MM (maintenance margin) for a given account and market.

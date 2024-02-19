@@ -37,7 +37,7 @@ import {
 } from '../../helpers';
 import { Market, Trader } from '../../typed';
 import { assertEvents } from '../../assert';
-import { calcLiquidationKeeperFee, calcTransactionCostInUsd } from '../../calculations';
+import { calcFlagReward, calcLiquidationKeeperFee, calcTransactionCostInUsd } from '../../calculations';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -100,6 +100,126 @@ describe('LiquidationModule', () => {
       );
     });
 
+    it('should charge a flag reward that is larger than the notional value', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()), desiredMarginUsdDepositAmount: 10_000 })
+      );
+      // Create some debt
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(order1.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      await commitAndSettle(
+        bs,
+        marketId,
+        trader,
+        genOrder(bs, market, collateral, collateralDepositAmount, { desiredSize: order1.sizeDelta.mul(-1) })
+      );
+
+      // Create a small order
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(100).div(newMarketOraclePrice).toBN(),
+      });
+
+      await commitAndSettle(bs, marketId, trader, order2);
+
+      const { collateralUsd, debtUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      // 0 debtUsd and collateral bigger than debtUsd
+      assertBn.gt(debtUsd, 0);
+      assertBn.gt(collateralUsd, debtUsd);
+
+      // Calculate the decrease percentage required to get a collateral value just below the debt
+      const decreasePercentage = wei(collateralUsd).sub(debtUsd).div(collateralUsd).add(0.01).toNumber();
+      const collateralPrice = await collateral.getPrice();
+
+      // Decrease collateral price and assert that collateral is smaller than debt and that position is liquidatable.
+      await collateral.setPrice(wei(collateralPrice).mul(wei(1).sub(decreasePercentage)).toBN());
+      const { collateralUsd: newCollateralUsd, position } = await PerpMarketProxy.getAccountDigest(
+        trader.accountId,
+        marketId
+      );
+      assertBn.lt(position.healthFactor, 1);
+
+      assertBn.lt(newCollateralUsd, debtUsd);
+      // Make sure collateral is bigger than size so the flag reward is based on collateral
+      assertBn.gt(newCollateralUsd, wei(position.size).mul(newMarketOraclePrice).toBN());
+
+      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      const flagEvent = findEventSafe(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
+      const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+
+      const expectedFlagReward = calcFlagReward(
+        ethPrice,
+        baseFeePerGas,
+        wei(order2.sizeDelta.abs()),
+        wei(newMarketOraclePrice),
+        wei(newCollateralUsd),
+        await PerpMarketProxy.getMarketConfiguration(),
+        await PerpMarketProxy.getMarketConfigurationById(marketId)
+      );
+
+      assertBn.equal(flagEvent.args.flagKeeperReward, expectedFlagReward.toBN());
+    });
+
+    it('should charge correct flagKeeperReward notional bigger than collateral', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.lte(healthFactor, bn(1));
+
+      // Grab collateral value before flagging so we can use it to calculate the expected flag reward.
+      const { collateralUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+      const flagEvent = findEventSafe(receipt, 'PositionFlaggedLiquidation', PerpMarketProxy);
+      const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+
+      const expectedFlagReward = calcFlagReward(
+        ethPrice,
+        baseFeePerGas,
+        wei(order.sizeDelta.abs()),
+        wei(newMarketOraclePrice),
+        wei(collateralUsd),
+        await PerpMarketProxy.getMarketConfiguration(),
+        await PerpMarketProxy.getMarketConfigurationById(marketId)
+      );
+
+      assertBn.equal(flagEvent.args.flagKeeperReward, expectedFlagReward.toBN());
+    });
+
     it('should be able to flag when market is in close only', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -151,7 +271,9 @@ describe('LiquidationModule', () => {
         desiredLeverage: 0.5,
         desiredSide: orderSide,
       });
-      await commitOrder(bs, marketId, trader, order2);
+
+      await withExplicitEvmMine(() => commitOrder(bs, marketId, trader, order2), provider());
+
       const commitmentTime = await getBlockTimestamp(provider());
 
       // Price moves 10% and results in a healthFactor of < 1.
@@ -276,6 +398,66 @@ describe('LiquidationModule', () => {
       const marketAfter = await PerpMarketProxy.getMarketDigest(marketId);
 
       assertBn.lt(marketBefore.debtCorrection, marketAfter.debtCorrection.sub(flagEvent.args.flagKeeperReward));
+    });
+
+    it('should reset account debt and update total trader debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) }) // use non-sUSD collateral to make sure we accrue some debt (and don't pay it off with sUSD collateral)
+      );
+
+      // Execute two orders to accrue some debt for the trader.
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      const newMarketOraclePrice = wei(openOrder.oraclePrice)
+        .mul(openOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+      const { receipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+      const closeEvent = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
+      const debtInCollateralAmount = wei(closeEvent.args.accountDebt).div(collateralPrice).toBN();
+      // Execute a new order that will create a position that can be flagged for liquidation.
+      const openFlagOrder = await genOrder(
+        bs,
+        market,
+        collateral,
+        collateralDepositAmount.sub(debtInCollateralAmount),
+        {
+          desiredLeverage: 9,
+        }
+      );
+      await commitAndSettle(bs, marketId, trader, openFlagOrder);
+
+      // Price moves 10% and results in a healthFactor of < 1.
+      const newMarketOraclePrice1 = wei(openFlagOrder.oraclePrice)
+        .mul(openFlagOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
+
+      const { debtUsd: accountDebtBefore } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { totalTraderDebtUsd: totalTraderDebtUsdBefore } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.gt(accountDebtBefore, 0);
+      assertBn.gt(totalTraderDebtUsdBefore, 0);
+
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper2()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
+
+      const { debtUsd: accountDebtAfter } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const { totalTraderDebtUsd: totalTraderDebtUsdAfter } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.isZero(accountDebtAfter);
+      assertBn.isZero(totalTraderDebtUsdAfter);
     });
 
     it('should not modify any existing collateral as margin');
@@ -505,9 +687,8 @@ describe('LiquidationModule', () => {
       const desiredKeeper = keeper();
       const keeperAddress = await desiredKeeper.getAddress();
 
-      const { tx, receipt, trader, marketId, newMarketOraclePrice } = await commitAndSettleLiquidatedPosition(
-        desiredKeeper
-      );
+      const { tx, receipt, trader, marketId, newMarketOraclePrice } =
+        await commitAndSettleLiquidatedPosition(desiredKeeper);
 
       const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const positionLiquidatedEventProperties = [
@@ -2049,9 +2230,8 @@ describe('LiquidationModule', () => {
 
         // Verify internal accounting tracks correct liquidation time and amount.
         const block = await provider().getBlock(receipt1.blockNumber);
-        const { lastLiquidationTime, remainingLiquidatableSizeCapacity } = await PerpMarketProxy.getMarketDigest(
-          marketId
-        );
+        const { lastLiquidationTime, remainingLiquidatableSizeCapacity } =
+          await PerpMarketProxy.getMarketDigest(marketId);
         assertBn.equal(lastLiquidationTime, block.timestamp);
         assertBn.equal(capAfter.maxLiquidatableCapacity.sub(remainingLiquidatableSizeCapacity), sizeToLiquidate);
       });

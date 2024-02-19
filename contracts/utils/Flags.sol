@@ -11,4 +11,6 @@ library Flags {
     bytes32 public constant CANCEL_ORDER = "cancelOrder";
     bytes32 public constant FLAG_POSITION = "flagPosition";
     bytes32 public constant LIQUIDATE_POSITION = "liquidatePosition";
+    bytes32 public constant PAY_DEBT = "payDebt";
+    bytes32 public constant LIQUIDATE_MARGIN_ONLY = "liquidateMarginOnly";
 }

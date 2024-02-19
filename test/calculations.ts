@@ -118,6 +118,7 @@ export const calcFlagReward = (
   baseFeePerGas: BigNumber, // in gwei
   sizeAbs: Wei,
   price: Wei,
+  collateralUsd: Wei,
   globalConfig: PerpMarketConfiguration.GlobalDataStructOutput,
   marketConfig: PerpMarketConfiguration.DataStructOutput
 ) => {
@@ -128,15 +129,12 @@ export const calcFlagReward = (
     wei(flagExecutionCostInUsd).add(wei(globalConfig.keeperProfitMarginUsd))
   );
 
-  const flagFeeWithRewardInUsd = flagFeeInUsd.add(sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent));
+  const notional = sizeAbs.mul(price);
+  const flagFeeWithRewardInUsd = flagFeeInUsd.add(
+    Wei.max(notional, collateralUsd).mul(marketConfig.liquidationRewardPercent)
+  );
 
-  return {
-    result: Wei.min(flagFeeWithRewardInUsd, wei(globalConfig.maxKeeperFeeUsd)),
-    flagExecutionCostInUsd,
-    sizeReward: sizeAbs.mul(price).mul(marketConfig.liquidationRewardPercent),
-    flagFeeWithRewardInUsd,
-    flagFeeInUsd,
-  };
+  return Wei.min(flagFeeWithRewardInUsd, wei(globalConfig.maxKeeperFeeUsd));
 };
 
 /** Calculates the liquidation fees in USD given price of ETH, gas, size of position and capacity. */

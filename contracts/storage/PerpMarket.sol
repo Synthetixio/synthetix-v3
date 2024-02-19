@@ -43,6 +43,8 @@ library PerpMarket {
         int128 skew;
         // sum(positions.map(p => abs(p.size))).
         uint128 size;
+        // The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
+        uint128 totalTraderDebtUsd;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
         // The value (in USD) of total market funding accumulated.
@@ -152,6 +154,27 @@ library PerpMarket {
         } else {
             // A new timestamp (block) to be chunked.
             self.pastLiquidations.push([currentTime, liqSize]);
+        }
+    }
+
+    /**
+     * @dev Updates totalTraderDebtUsd and sUSD collateral. It also calls market.updateDebtAndCollateral to update global debt tracking.
+     */
+    function updateDebtAndCollateral(
+        PerpMarket.Data storage self,
+        int128 debtAmountDeltaUsd,
+        int128 sUsdCollateralDelta
+    ) internal {
+        if (debtAmountDeltaUsd != 0) {
+            // debtAmountDeltaUsd is a "delta", so if it's is positive we want to increase the debt.
+            self.totalTraderDebtUsd = debtAmountDeltaUsd > 0
+                ? self.totalTraderDebtUsd + debtAmountDeltaUsd.toUint()
+                : self.totalTraderDebtUsd - MathUtil.abs(debtAmountDeltaUsd).to128();
+        }
+        if (sUsdCollateralDelta != 0) {
+            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUsdCollateralDelta >= 0
+                ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUsdCollateralDelta.toUint()
+                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - MathUtil.abs(sUsdCollateralDelta).to128();
         }
     }
 

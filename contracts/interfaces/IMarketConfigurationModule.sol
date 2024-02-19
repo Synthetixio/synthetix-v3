@@ -23,6 +23,7 @@ interface IMarketConfigurationModule {
         uint128 keeperLiquidationGasUnits;
         uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
+        uint128 keeperLiquidateMarginGasUnits;
         address keeperLiquidationEndorsed;
         uint128 collateralDiscountScalar;
         uint128 minCollateralDiscount;

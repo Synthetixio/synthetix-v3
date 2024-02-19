@@ -31,6 +31,7 @@ contract OrderModule is IOrderModule {
     using Order for Order.Data;
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
+    using Margin for Margin.Data;
 
     // --- Runtime structs --- //
 
@@ -39,6 +40,7 @@ contract OrderModule is IOrderModule {
         int256 accruedFunding;
         int256 pnl;
         uint256 fillPrice;
+        uint128 accountDebt;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
@@ -258,15 +260,20 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, runtime.fillPrice);
+
+        // We call `getHeathData` here to fetch accrued utilisation before utilisation recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
             position.entryPrice,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
-            runtime.trade.newMarginUsd,
-            runtime.pythPrice,
-            marketConfig
+            runtime.fillPrice,
+            marketConfig,
+            // The margins passed here are missing the order fee + keeper fee for this trade. runtime.trade.newMarginUsd would be correct.
+            // But we are only calling getHealthData to get accruedFunding, accruedUtilisation and pnl. So we can use the old margin values.
+            marginValues
         );
 
         market.skew = market.skew + runtime.trade.newPosition.size - position.size;
@@ -282,20 +289,17 @@ contract OrderModule is IOrderModule {
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
-            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
-            uint256 collateralUsd = Margin.getCollateralUsd(
-                accountId,
-                marketId,
-                false /* useDiscountedCollateralPrice */
-            );
-            Margin.updateAccountCollateral(
-                accountId,
+            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+            accountMargin.updateAccountDebtAndCollateral(
                 market,
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
-                runtime.trade.newMarginUsd.toInt() - collateralUsd.toInt()
+                // And We're using collateral and not marginUsd as we dont want price changes to be deducted yet.
+                runtime.trade.newMarginUsd.toInt() - marginValues.collateralUsd.toInt()
             );
+
+            runtime.accountDebt = accountMargin.debtUsd;
         }
 
         if (runtime.trade.newPosition.size == 0) {
@@ -319,7 +323,8 @@ contract OrderModule is IOrderModule {
             healthData.accruedFunding,
             healthData.accruedUtilization,
             healthData.pnl,
-            runtime.fillPrice
+            runtime.fillPrice,
+            runtime.accountDebt
         );
 
         // Validate and perform the hook post settlement execution.
@@ -395,7 +400,8 @@ contract OrderModule is IOrderModule {
 
         uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
         if (keeperFee > 0) {
-            Margin.updateAccountCollateral(accountId, market, keeperFee.toInt() * -1);
+            Margin.load(accountId, marketId).updateAccountDebtAndCollateral(market, -keeperFee.toInt());
+
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 

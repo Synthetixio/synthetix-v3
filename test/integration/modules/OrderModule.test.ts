@@ -34,7 +34,6 @@ import {
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
-  mintAndApprove,
 } from '../../helpers';
 import { BigNumber, ethers } from 'ethers';
 import { calcFillPrice, calcOrderFees } from '../../calculations';
@@ -123,6 +122,49 @@ describe('OrderModule', () => {
           order.limitPrice,
           order.keeperFeeBufferUsd,
           order.hooks
+        ),
+        'InsufficientMargin()',
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert insufficient margin when margin is less than initial margin due to debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount, marginUsdDepositAmount } =
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarginUsdDepositAmount: 100000,
+            desiredCollateral: genOneOf(collateralsWithoutSusd()),
+          })
+        );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 6 });
+      await commitAndSettle(bs, marketId, trader, order);
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const orderExpectedToFail = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 20, // TODO it would be nice to figure out a way to make this more precise, depending on market configuration this might revert even without debt
+      });
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          orderExpectedToFail.sizeDelta,
+          orderExpectedToFail.limitPrice,
+          orderExpectedToFail.keeperFeeBufferUsd,
+          orderExpectedToFail.hooks
         ),
         'InsufficientMargin()',
         PerpMarketProxy
@@ -703,6 +745,7 @@ describe('OrderModule', () => {
         0, // accruedUtilization (zero because no existing open position).
         0, // pnl.
         order.fillPrice,
+        0, // debt.
       ].join(', ');
       await assertEvent(tx, `OrderSettled(${orderSettledEventProperties})`, PerpMarketProxy);
 
@@ -856,6 +899,95 @@ describe('OrderModule', () => {
       const marketDigest = await PerpMarketProxy.getMarketDigest(marketId);
       assertBn.equal(marketDigest.size, order.sizeDelta.abs());
       assertBn.equal(marketDigest.skew, order.sizeDelta);
+    });
+
+    it('should update totalTraderDebtUsd and account debt when settling a winning position', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, marketId, collateralDepositAmount, market, collateral } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredCollateral: genOneOf(collateralsWithoutSusd()),
+          desiredMarginUsdDepositAmount: 50_000,
+        })
+      );
+
+      // Create some debt by opening and closing a position with a price change.
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Price change causing 10% loss.
+      const newPrice = openOrder.sizeDelta.gt(0)
+        ? wei(openOrder.oraclePrice).mul(0.9)
+        : wei(openOrder.oraclePrice).mul(1.1);
+
+      await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+      const closeLossOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+      });
+
+      const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeLossOrder);
+      const closeEvent = findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy);
+      const { totalTraderDebtUsd: totalTraderDebtUsdAfterLoss } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      // Assert that we have some debt.
+      assertBn.gt(closeEvent.args.accountDebt, 0);
+      assertBn.equal(totalTraderDebtUsdAfterLoss, closeEvent.args.accountDebt);
+
+      const { depositedCollaterals } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const usdCollateralBeforeWinningPos = depositedCollaterals.find((c) =>
+        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      );
+
+      // deposit more collateral to avoid liquidation/ insufficient margin
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredTrader: trader,
+          desiredMarginUsdDepositAmount: closeEvent.args.accountDebt,
+        })
+      );
+
+      // Now create a winning position and make sure debt is updated.
+      const winningOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+      });
+      await commitAndSettle(bs, marketId, trader, winningOrder);
+
+      // Price change causing 50% win.
+      const newPrice1 = winningOrder.sizeDelta.gt(0)
+        ? wei(winningOrder.oraclePrice).mul(1.5)
+        : wei(winningOrder.oraclePrice).mul(0.5);
+      await market.aggregator().mockSetCurrentPrice(newPrice1.toBN());
+
+      const closeWinningOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(winningOrder.sizeDelta).mul(-1).toBN(),
+      });
+
+      const { receipt: closeWinningReceipt } = await commitAndSettle(bs, marketId, trader, closeWinningOrder);
+      const closeWinningEvent = findEventSafe(closeWinningReceipt, 'OrderSettled', PerpMarketProxy);
+
+      assertBn.isZero(closeWinningEvent.args.accountDebt);
+
+      const { totalTraderDebtUsd } = await PerpMarketProxy.getMarketDigest(marketId);
+
+      const { depositedCollaterals: depositedCollateralsAfter } = await PerpMarketProxy.getAccountDigest(
+        trader.accountId,
+        marketId
+      );
+      const usdCollateral = depositedCollateralsAfter.find((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID));
+      // The profit is bigger than debt, make sure sUSD collateral gets increased.
+      assertBn.gt(usdCollateral!.available, usdCollateralBeforeWinningPos!.available);
+
+      // Make sure totalTraderDebt and accountDebt are decreased.
+      assertBn.equal(totalTraderDebtUsd, closeWinningEvent.args.accountDebt);
+      assertBn.lt(totalTraderDebtUsd, totalTraderDebtUsdAfterLoss);
     });
 
     it('should settle order when market price moves between commit/settle but next position still safe', async () => {

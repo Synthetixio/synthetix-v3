@@ -26,7 +26,7 @@ contract LiquidationModule is ILiquidationModule {
 
     // --- Runtime structs --- //
 
-    struct Runtime_updateMarketPostFlag {
+    struct Runtime_liquidateCollateral {
         uint256 availableSusd;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
@@ -73,16 +73,15 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Invoked post flag when position is dead and set to liquidate.
+     * @dev Invoked post flag when position is dead and set to liquidate. Or when liquidating margin only due to debt.
      */
-    function updateMarketPostFlag(
+    function liquidateCollateral(
         uint128 accountId,
         uint128 marketId,
         PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
-        Runtime_updateMarketPostFlag memory runtime;
-
+        Runtime_liquidateCollateral memory runtime;
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
 
@@ -90,6 +89,11 @@ contract LiquidationModule is ILiquidationModule {
         if (runtime.availableSusd > 0) {
             market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= runtime.availableSusd;
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+        }
+        // Clear out debt
+        if (accountMargin.debtUsd > 0) {
+            market.totalTraderDebtUsd -= accountMargin.debtUsd;
+            accountMargin.debtUsd = 0;
         }
 
         // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,
@@ -175,14 +179,15 @@ contract LiquidationModule is ILiquidationModule {
         if (position.size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
+        uint256 oraclePrice = market.getOraclePrice();
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
 
         // Cannot flag for liquidation unless they are liquidatable.
-        uint256 oraclePrice = market.getOraclePrice();
         bool isLiquidatable = position.isLiquidatable(
             market,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
             oraclePrice,
-            PerpMarketConfiguration.load(marketId)
+            PerpMarketConfiguration.load(marketId),
+            marginValues
         );
         if (!isLiquidatable) {
             revert ErrorUtil.CannotLiquidatePosition();
@@ -202,8 +207,8 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 flagReward = Position.getLiquidationFlagReward(
-            MathUtil.abs(position.size).to128(),
-            oraclePrice,
+            MathUtil.abs(position.size).mulDecimal(oraclePrice),
+            marginValues.collateralUsd,
             PerpMarketConfiguration.load(marketId),
             globalConfig
         );
@@ -219,7 +224,8 @@ contract LiquidationModule is ILiquidationModule {
 
         // Update position and market accounting.
         position.update(newPosition);
-        updateMarketPostFlag(accountId, marketId, market, globalConfig);
+
+        liquidateCollateral(accountId, marketId, market, globalConfig);
 
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
@@ -269,6 +275,67 @@ contract LiquidationModule is ILiquidationModule {
         emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqKeeperFee, oraclePrice);
     }
 
+    /**
+     * @dev Returns the reward for liquidating margin.
+     */
+    function getMarginLiquidationOnlyReward(
+        uint256 collateralValue,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
+        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(block.basefee * globalConfig.keeperLiquidateMarginGasUnits);
+
+        uint256 liqFeeInUsd = MathUtil.max(
+            liqExecutionCostInUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            liqExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
+        );
+        uint256 liqFeeWithRewardInUsd = liqFeeInUsd + collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
+
+        return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidateMarginOnly(uint128 accountId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN_ONLY);
+
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // Cannot liquidate margin if trader has a position.
+        if (market.positions[accountId].size != 0) {
+            revert ErrorUtil.PositionFound(accountId, marketId);
+        }
+        if (!isMarginLiquidatable(accountId, marketId)) {
+            revert ErrorUtil.CannotLiquidateMargin();
+        }
+
+        // Remove any pending orders that may exist.
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta != 0) {
+            emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
+            delete market.orders[accountId];
+        }
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+
+        uint256 keeperReward = getMarginLiquidationOnlyReward(
+            marginValues.collateralUsd,
+            PerpMarketConfiguration.load(marketId),
+            globalConfig
+        );
+
+        liquidateCollateral(accountId, marketId, market, PerpMarketConfiguration.load());
+
+        // Pay flagger.
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperReward);
+
+        emit MarginLiquidated(accountId, marketId, keeperReward);
+    }
+
     // --- Views --- //
 
     /**
@@ -284,20 +351,22 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        uint128 absSize = MathUtil.abs(market.positions[accountId].size).to128();
+        uint256 absSize = MathUtil.abs(market.positions[accountId].size);
 
         // Return empty when a position does not exist.
         if (absSize == 0) {
             return (0, 0);
         }
+        uint256 oraclePrice = market.getOraclePrice();
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
 
         flagKeeperReward = Position.getLiquidationFlagReward(
-            absSize,
-            market.getOraclePrice(),
+            absSize.mulDecimal(oraclePrice),
+            marginValues.collateralUsd,
             marketConfig,
             globalConfig
         );
-        liqKeeperFee = Position.getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
+        liqKeeperFee = Position.getLiquidationKeeperFee(absSize.to128(), marketConfig, globalConfig);
     }
 
     /**
@@ -320,13 +389,29 @@ contract LiquidationModule is ILiquidationModule {
     function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 oraclePrice = market.getOraclePrice();
+
         return
             market.positions[accountId].isLiquidatable(
                 market,
-                Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
                 oraclePrice,
-                PerpMarketConfiguration.load(marketId)
+                PerpMarketConfiguration.load(marketId),
+                Margin.getMarginUsd(accountId, market, oraclePrice)
             );
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function isMarginLiquidatable(uint128 accountId, uint128 marketId) public view returns (bool) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // Cannot liquidate margin when there is an open position.
+        if (market.positions[accountId].size != 0) {
+            return false;
+        }
+
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd == 0;
     }
 
     /**
@@ -338,9 +423,13 @@ contract LiquidationModule is ILiquidationModule {
     ) external view returns (uint256 im, uint256 mm) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        uint256 oraclePrice = market.getOraclePrice();
+
         (im, mm, ) = Position.getLiquidationMarginUsd(
             market.positions[accountId].size,
-            market.getOraclePrice(),
+            oraclePrice,
+            Margin.getMarginUsd(accountId, market, oraclePrice).collateralUsd,
             marketConfig
         );
     }
@@ -355,15 +444,16 @@ contract LiquidationModule is ILiquidationModule {
         Position.Data storage position = market.positions[accountId];
 
         uint256 oraclePrice = market.getOraclePrice();
+
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
             position.entryPrice,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
-            Margin.getMarginUsd(accountId, market, oraclePrice, true /* useDiscountedCollateralPrice */),
             oraclePrice,
-            PerpMarketConfiguration.load(marketId)
+            PerpMarketConfiguration.load(marketId),
+            Margin.getMarginUsd(accountId, market, oraclePrice)
         );
         return healthData.healthFactor;
     }

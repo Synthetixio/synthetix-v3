@@ -18,7 +18,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('FeatureFlagModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, systems, restore, keeper, provider } = bs;
+  const { markets, collaterals, traders, systems, restore, keeper, provider, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
@@ -168,23 +168,41 @@ describe('FeatureFlagModule', () => {
     );
   });
 
-  it('should disable settleOrder', async () => {
+  it('should disable payDebt', async () => {
     const { PerpMarketProxy } = systems();
-    const feature = formatBytes32String('settleOrder');
+    const feature = formatBytes32String('payDebt');
     const { receipt } = await withExplicitEvmMine(
       () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
     await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
 
-    const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+    const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+    );
     const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-    await commitOrder(bs, marketId, trader, order);
-    const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+    await commitAndSettle(bs, marketId, trader, order);
+    const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSize: order.sizeDelta.mul(-1),
+    });
+    await commitAndSettle(bs, marketId, trader, closeOrder);
+    await assertRevert(PerpMarketProxy.payDebt(trader.accountId, marketId, bn(1)), `FeatureUnavailable("${feature}")`);
+  });
 
-    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+  it('should disable liquidateMarginOnly', async () => {
+    const { PerpMarketProxy } = systems();
+    const feature = formatBytes32String('liquidateMarginOnly');
+    const { receipt } = await withExplicitEvmMine(
+      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+
+    const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, { value: updateFee }),
+      PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
       `FeatureUnavailable("${feature}")`
     );
   });
