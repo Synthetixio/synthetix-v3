@@ -13,13 +13,6 @@ interface IGlobalPerpsMarketModule {
     event InterestRateUpdated(uint128 indexed superMarketId, uint128 interestRate);
 
     /**
-     * @notice Gets fired when max collateral amount for synth for all the markets is set by owner.
-     * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param maxCollateralAmount max amount that was set for the synth
-     */
-    event CollateralConfigurationSet(uint128 indexed synthMarketId, uint256 maxCollateralAmount);
-
-    /**
      * @notice Gets fired when the synth deduction priority is updated by owner.
      * @param newSynthDeductionPriority new synth id priority order for deductions.
      */
@@ -94,25 +87,6 @@ interface IGlobalPerpsMarketModule {
         uint128 lowUtilizationInterestRateGradient,
         uint128 highUtilizationInterestRateGradient
     );
-
-    /**
-     * @notice Sets the max collateral amount for a specific synth market.
-     * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param maxCollateralAmount Max collateral amount to set for the synth market id.
-     */
-    function setCollateralConfiguration(
-        uint128 synthMarketId,
-        uint256 maxCollateralAmount
-    ) external;
-
-    /**
-     * @notice Gets the max collateral amount for a specific synth market.
-     * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @return maxCollateralAmount max collateral amount of the specified synth market id
-     */
-    function getCollateralConfiguration(
-        uint128 synthMarketId
-    ) external view returns (uint256 maxCollateralAmount);
 
     /**
      * @notice Gets the list of supported collaterals.
