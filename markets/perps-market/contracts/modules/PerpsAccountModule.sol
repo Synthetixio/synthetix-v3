@@ -87,13 +87,11 @@ contract PerpsAccountModule is IPerpsAccountModule {
     // 2. look up account and reduce debt by amount
     // 3. transfer synth to sender
     // 3b. quoteUnwrap() -> inchQuote -> returnAmount
-    function payDebt(uint256 accountId, uint256 amount) external override {
+    function payDebt(uint128 accountId, uint256 amount) external override {
         Account.exists(accountId);
-
-        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
 
-        account.payDebt(amount, perpsMarketFactory);
+        account.payDebt(amount);
 
         emit DebtPaid(accountId, amount, ERC2771Context._msgSender());
     }

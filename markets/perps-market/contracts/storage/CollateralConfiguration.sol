@@ -1,12 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
 /**
  * @title Configuration of all multi collateral assets used for trader margin
  */
 library CollateralConfiguration {
+    using DecimalMath for uint256;
+
     struct Data {
         /**
          * @dev Collateral Id (same as synth id)
@@ -84,6 +90,7 @@ library CollateralConfiguration {
         Data storage self,
         uint256 collateralAmount,
         ISpotMarketSystem spotMarket,
+        PerpsPrice.Tolerance stalenessTolerance,
         bool useDiscount
     ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
         uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
