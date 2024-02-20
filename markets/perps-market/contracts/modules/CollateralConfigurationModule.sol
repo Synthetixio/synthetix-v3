@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ICollateralConfigurationModule} from "../interfaces/ICollateralConfigurationModule.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
+import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
 
 /**
  * @title Module for collateral configuration setters/getters.
@@ -11,6 +12,7 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
  */
 contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
 
     /**
      * @inheritdoc ICollateralConfigurationModule
