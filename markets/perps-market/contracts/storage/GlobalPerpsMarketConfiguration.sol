@@ -147,8 +147,8 @@ library GlobalPerpsMarketConfiguration {
         uint256 costOfExecutionInUsd,
         uint256 availableMarginInUsd
     ) internal view returns (uint256) {
-        uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
-        uint maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
+        uint256 minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
+        uint256 maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
         return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
     }
 
@@ -158,7 +158,7 @@ library GlobalPerpsMarketConfiguration {
     ) internal {
         delete self.synthDeductionPriority;
 
-        for (uint i = 0; i < newSynthDeductionPriority.length; i++) {
+        for (uint256 i = 0; i < newSynthDeductionPriority.length; i++) {
             self.synthDeductionPriority.push(newSynthDeductionPriority[i]);
         }
     }
@@ -202,11 +202,10 @@ library GlobalPerpsMarketConfiguration {
         return notionalValue.mulDecimal(self.collateralLiquidateRewardRatioD18);
     }
 
-    // TODO: move this into separate module for collateral configuration
-    function updateCollateral(
+    function updateCollateralMax(
         Data storage self,
         uint128 synthMarketId,
-        uint maxCollateralAmount
+        uint256 maxCollateralAmount
     ) internal {
         CollateralConfiguration.load(synthMarketId).setMax(synthMarketId, maxCollateralAmount);
 

@@ -27,7 +27,7 @@ interface INftModule is IERC721Enumerable {
      * @param to The address to receive the newly minted tokens.
      * @param tokenId The ID of the newly minted token
      */
-    function mint(address to, uint tokenId) external;
+    function mint(address to, uint256 tokenId) external;
 
     /**
      * @notice Allows the owner to mint tokens. Verifies that the receiver can receive the token
@@ -41,14 +41,14 @@ interface INftModule is IERC721Enumerable {
      * @notice Allows the owner to burn tokens.
      * @param tokenId The token to burn
      */
-    function burn(uint tokenId) external;
+    function burn(uint256 tokenId) external;
 
     /**
      * @notice Allows an address that holds tokens to provide allowance to another.
      * @param tokenId The token which should be allowed to spender
      * @param spender The address that is given allowance.
      */
-    function setAllowance(uint tokenId, address spender) external;
+    function setAllowance(uint256 tokenId, address spender) external;
 
     /**
      * @notice Allows the owner to update the base token URI.

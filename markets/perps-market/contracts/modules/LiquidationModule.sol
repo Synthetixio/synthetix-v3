@@ -51,7 +51,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
 
             if (isEligible) {
-                (uint flagCost, uint seizedMarginValue) = account.flagForLiquidation();
+                (uint256 flagCost, uint256 seizedMarginValue) = account.flagForLiquidation();
                 liquidationReward = _liquidateAccount(account, flagCost, seizedMarginValue, true);
             } else {
                 revert NotEligibleForLiquidation(accountId);
@@ -68,7 +68,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         // TODO: ensure no positions
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        bool isEligible = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
+        (bool isEligible, ) = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
         if (isEligible) {
             // margin is sent to liquidation rewards distributor in getMarginLiquidationCostAndSeizeMargin
             (uint marginLiquidateCost, uint seizedMarginValue) = account
@@ -98,12 +98,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts
             .values();
 
-        uint numberOfAccountsToLiquidate = MathUtil.min(
+        uint256 numberOfAccountsToLiquidate = MathUtil.min(
             maxNumberOfAccounts,
             liquidatableAccounts.length
         );
 
-        for (uint i = 0; i < numberOfAccountsToLiquidate; i++) {
+        for (uint256 i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
             liquidationReward += _liquidateAccount(PerpsAccount.load(accountId), 0, 0, false);
         }
@@ -121,7 +121,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .load()
             .liquidatableAccounts;
 
-        for (uint i = 0; i < accountIds.length; i++) {
+        for (uint256 i = 0; i < accountIds.length; i++) {
             uint128 accountId = accountIds[i];
             if (!liquidatableAccounts.contains(accountId)) {
                 continue;
@@ -156,7 +156,11 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         external
         view
         override
-        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp)
+        returns (
+            uint256 capacity,
+            uint256 maxLiquidationInWindow,
+            uint256 latestLiquidationTimestamp
+        )
     {
         return
             PerpsMarket.load(marketId).currentLiquidationCapacity(
@@ -180,8 +184,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      */
     function _liquidateAccount(
         PerpsAccount.Data storage account,
-        uint costOfFlagExecution,
-        uint totalCollateralValue,
+        uint256 costOfFlagExecution,
+        uint256 totalCollateralValue,
         bool positionFlagged
     ) internal returns (uint256 keeperLiquidationReward) {
         LiquidateAccountRuntime memory runtime;

@@ -6,11 +6,11 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 library Ballot {
     struct Data {
         // Total accumulated votes in this ballot (needs evaluation)
-        uint votes;
+        uint256 votes;
         // List of candidates in this ballot
         address[] candidates;
         // Vote power added per voter
-        mapping(address => uint) votesByUser;
+        mapping(address => uint256) votesByUser;
     }
 
     function isInitiated(Data storage self) internal view returns (bool) {

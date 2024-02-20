@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/oracle-manager",
-  "version": "3.3.4",
+  "version": "3.3.9",
   "description": "Core Synthetix Protocol Oracle Manager",
   "publishConfig": {
     "access": "public"
@@ -28,14 +28,13 @@
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/router": "^3.3.0",
+    "@synthetixio/router": "^3.3.2",
     "@synthetixio/wei": "^2.74.4",
-    "@types/node": "^18.18.9",
+    "@types/node": "^20.11.17",
     "ethers": "^5.7.2",
-    "hardhat": "^2.19.0",
+    "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
 }

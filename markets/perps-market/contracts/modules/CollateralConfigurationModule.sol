@@ -18,7 +18,7 @@ import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165He
 import {IDistributorErrors} from "../interfaces/IDistributorErrors.sol";
 
 /**
- * @title Module for global Perps Market settings.
+ * @title Module for collateral configuration setters/getters.
  * @dev See ICollateralConfigurationModule.
  */
 contract CollateralConfigurationModule is ICollateralConfigurationModule {
@@ -27,20 +27,37 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using SetUtil for SetUtil.UintSet;
     using LiquidationAssetManager for LiquidationAssetManager.Data;
     using Clones for address;
-
-    // using KeeperCosts for KeeperCosts.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
 
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
     function setCollateralConfiguration(
         uint128 synthMarketId,
-        uint256 maxCollateralAmount
+        uint256 maxCollateralAmount,
+        uint256 upperLimitDiscount,
+        uint256 lowerLimitDiscount,
+        uint256 discountScalar
     ) external override {
         OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.load().updateCollateral(synthMarketId, maxCollateralAmount);
+        GlobalPerpsMarketConfiguration.load().updateCollateralMax(
+            synthMarketId,
+            maxCollateralAmount
+        );
 
-        emit CollateralConfigurationSet(synthMarketId, maxCollateralAmount);
+        CollateralConfiguration.load(synthMarketId).setDiscounts(
+            upperLimitDiscount,
+            lowerLimitDiscount,
+            discountScalar
+        );
+
+        emit CollateralConfigurationSet(
+            synthMarketId,
+            maxCollateralAmount,
+            upperLimitDiscount,
+            lowerLimitDiscount,
+            discountScalar
+        );
     }
 
     /**
@@ -48,8 +65,18 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      */
     function getCollateralConfiguration(
         uint128 synthMarketId
-    ) external view override returns (uint256 maxCollateralAmount) {
-        maxCollateralAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
+    )
+        external
+        view
+        override
+        returns (
+            uint256 maxCollateralAmount,
+            uint256 upperLimitDiscount,
+            uint256 lowerLimitDiscount,
+            uint256 discountScalar
+        )
+    {
+        return CollateralConfiguration.load(synthMarketId).getConfig();
     }
 
     /**

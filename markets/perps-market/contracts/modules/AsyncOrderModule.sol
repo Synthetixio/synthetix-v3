@@ -30,7 +30,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
+    ) external override returns (AsyncOrder.Data memory retOrder, uint256 fees) {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         PerpsMarket.loadValid(commitment.marketId);
 
@@ -65,7 +65,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         order.updateValid(commitment);
 
-        (, uint feesAccrued, , ) = order.validateRequest(
+        (, uint256 feesAccrued, , ) = order.validateRequest(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
         );

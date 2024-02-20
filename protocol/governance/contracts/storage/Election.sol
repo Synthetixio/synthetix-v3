@@ -16,7 +16,7 @@ library Election {
         // True if NFTs have been re-shuffled in this election
         bool resolved;
         // Number of counted ballots in this election
-        uint numEvaluatedBallots;
+        uint256 numEvaluatedBallots;
         // List of nominated candidates in this election
         SetUtil.AddressSet nominees;
         // List of winners of this election (requires evaluation)
@@ -28,11 +28,11 @@ library Election {
         // Ballot id that each user voted on
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
-        mapping(address => uint) candidateVotes;
+        mapping(address => uint256) candidateVotes;
         ElectionSettings.Data settings;
     }
 
-    function load(uint id) internal pure returns (Data storage election) {
+    function load(uint256 id) internal pure returns (Data storage election) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Election", id));
         assembly {
             election.slot := s

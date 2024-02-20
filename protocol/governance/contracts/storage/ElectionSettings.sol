@@ -18,6 +18,6 @@ library ElectionSettings {
         // Maximum size for tweaking epoch schedules (see tweakEpochSchedule)
         uint64 maxDateAdjustmentTolerance;
         // Default batch size when calling evaluate() with numBallots = 0
-        uint defaultBallotEvaluationBatchSize;
+        uint256 defaultBallotEvaluationBatchSize;
     }
 }

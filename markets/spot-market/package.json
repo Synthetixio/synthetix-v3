@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.3.4",
+  "version": "3.3.9",
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -31,16 +31,15 @@
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "^3.3.0",
+    "@synthetixio/router": "^3.3.2",
     "@synthetixio/wei": "^2.74.4",
-    "@types/node-fetch": "^2.6.9",
+    "@types/node-fetch": "^2.6.11",
     "@usecannon/cli": "2.10.6",
     "ethers": "^5.7.2",
-    "hardhat": "^2.19.0",
+    "hardhat": "^2.19.5",
     "node-fetch": "^2.7.0",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
 }

@@ -113,7 +113,7 @@ args = [
     "Perpetual Futures Account",
     "snxPerpsAcct",
     "",
-    "<%= imports.synthetix.contracts.AccountRouter.address %>"
+    "<%= imports.synthetix.contracts.AccountRouter.address %>",
 ]
 depends = ["invoke.upgrade_proxy"]
 factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
@@ -128,7 +128,7 @@ func = "addToFeatureFlagAllowlist"
 fromCall.func = "owner"
 args = [
     "<%= formatBytes32String('registerMarket') %>",
-    "<%= contracts.PerpsMarketProxy.address %>"
+    "<%= contracts.PerpsMarketProxy.address %>",
 ]
 
 [invoke.addCreateMarketToFeatureFlag]
@@ -142,7 +142,7 @@ target = ["PerpsMarketProxy"]
 func = "initializeFactory"
 args = [
     "<%= imports.synthetix.contracts.CoreProxy.address %>",
-    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"
+    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
 ]
 fromCall.func = "owner"
 extra.superMarketId.event = "FactoryInitialized"

@@ -174,6 +174,21 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    function getPriceData(
+        uint128 synthMarketId
+    )
+        external
+        view
+        override
+        returns (bytes32 buyFeedId, bytes32 sellFeedId, uint256 strictPriceStalenessTolerance)
+    {
+        Price.Data storage price = Price.load(synthMarketId);
+        return (price.buyFeedId, price.sellFeedId, price.strictStalenessTolerance);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function updatePriceData(
         uint128 synthMarketId,
         bytes32 buyFeedId,
@@ -250,6 +265,16 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     ) public view override returns (address marketOwner) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return spotMarketFactory.marketOwners[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function getNominatedMarketOwner(
+        uint128 synthMarketId
+    ) public view override returns (address marketOwner) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        return spotMarketFactory.nominatedMarketOwners[synthMarketId];
     }
 
     /**

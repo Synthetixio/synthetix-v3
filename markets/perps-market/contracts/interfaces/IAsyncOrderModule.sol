@@ -61,7 +61,7 @@ interface IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external returns (AsyncOrder.Data memory retOrder, uint fees);
+    ) external returns (AsyncOrder.Data memory retOrder, uint256 fees);
 
     /**
      * @notice Get async order claim details

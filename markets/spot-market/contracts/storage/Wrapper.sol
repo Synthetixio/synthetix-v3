@@ -64,7 +64,7 @@ library Wrapper {
         Data storage self = load(marketId);
         address configuredCollateralType = self.wrapCollateralType;
 
-        uint currentMarketCollateralAmount = SpotMarketFactory
+        uint256 currentMarketCollateralAmount = SpotMarketFactory
             .load()
             .synthetix
             .getMarketCollateralAmount(marketId, configuredCollateralType);

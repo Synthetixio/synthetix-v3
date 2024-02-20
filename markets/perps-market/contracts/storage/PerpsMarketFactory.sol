@@ -43,6 +43,10 @@ library PerpsMarketFactory {
         ISpotMarketSystem spotMarket;
         uint128 perpsMarketId;
         string name;
+        /**
+         * @dev all liquidated account's assets are sent to this address
+         */
+        address liquidationAssetManager;
     }
 
     function onlyIfInitialized(Data storage self) internal view {

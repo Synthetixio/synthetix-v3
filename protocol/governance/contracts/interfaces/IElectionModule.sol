@@ -48,7 +48,9 @@ interface IElectionModule {
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
 
     /// @notice Determines batch size when evaluate() is called with numBallots = 0
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
+    function setDefaultBallotEvaluationBatchSize(
+        uint256 newDefaultBallotEvaluationBatchSize
+    ) external;
 
     /// @notice Determines the number of council members in the next epoch
     function setNextEpochSeatCount(uint8 newSeatCount) external;
@@ -76,7 +78,7 @@ interface IElectionModule {
     function withdrawVote() external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
-    function evaluate(uint numBallots) external;
+    function evaluate(uint256 numBallots) external;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
     function resolve() external;
@@ -99,7 +101,7 @@ interface IElectionModule {
     function getMaxDateAdjustmenTolerance() external view returns (uint64);
 
     /// @notice Shows the default batch size when calling evaluate() with numBallots = 0
-    function getDefaultBallotEvaluationBatchSize() external view returns (uint);
+    function getDefaultBallotEvaluationBatchSize() external view returns (uint256);
 
     /// @notice Shows the number of council members that the next epoch will have
     function getNextEpochSeatCount() external view returns (uint8);
@@ -108,7 +110,7 @@ interface IElectionModule {
     function getMinimumActiveMembers() external view returns (uint8);
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
-    function getEpochIndex() external view returns (uint);
+    function getEpochIndex() external view returns (uint256);
 
     /// @notice Returns the date in which the current epoch started
     function getEpochStartDate() external view returns (uint64);
@@ -123,7 +125,7 @@ interface IElectionModule {
     function getVotingPeriodStartDate() external view returns (uint64);
 
     /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
-    function getCurrentPeriod() external view returns (uint);
+    function getCurrentPeriod() external view returns (uint256);
 
     /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view returns (bool);
@@ -141,10 +143,10 @@ interface IElectionModule {
     function hasVoted(address user) external view returns (bool);
 
     /// @notice Returns the vote power of user in the current election
-    function getVotePower(address user) external view returns (uint);
+    function getVotePower(address user) external view returns (uint256);
 
     /// @notice Returns the number of votes given to a particular ballot
-    function getBallotVotes(bytes32 ballotId) external view returns (uint);
+    function getBallotVotes(bytes32 ballotId) external view returns (uint256);
 
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
@@ -153,7 +155,7 @@ interface IElectionModule {
     function isElectionEvaluated() external view returns (bool);
 
     /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
-    function getCandidateVotes(address candidate) external view returns (uint);
+    function getCandidateVotes(address candidate) external view returns (uint256);
 
     /// @notice Returns the winners of the current election. Requires the election to be partially or totally evaluated
     function getElectionWinners() external view returns (address[] memory);

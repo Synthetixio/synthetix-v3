@@ -1,6 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {LiquidationAssetManager} from "./LiquidationAssetManager.sol";
 
@@ -8,6 +12,8 @@ import {LiquidationAssetManager} from "./LiquidationAssetManager.sol";
  * @title Configuration of all multi collateral assets used for trader margin
  */
 library CollateralConfiguration {
+    using DecimalMath for uint256;
+
     /**
      * @notice Thrown when attempting to access a not registered id
      */
@@ -79,6 +85,35 @@ library CollateralConfiguration {
         self.maxAmount = maxAmount;
     }
 
+    function setDiscounts(
+        Data storage self,
+        uint256 upperLimitDiscount,
+        uint256 lowerLimitDiscount,
+        uint256 discountScalar
+    ) internal {
+        self.upperLimitDiscount = upperLimitDiscount;
+        self.lowerLimitDiscount = lowerLimitDiscount;
+        self.discountScalar = discountScalar;
+    }
+
+    function getConfig(
+        Data storage self
+    )
+        internal
+        view
+        returns (
+            uint256 maxAmount,
+            uint256 upperLimitDiscount,
+            uint256 lowerLimitDiscount,
+            uint256 discountScalar
+        )
+    {
+        maxAmount = self.maxAmount;
+        upperLimitDiscount = self.upperLimitDiscount;
+        lowerLimitDiscount = self.lowerLimitDiscount;
+        discountScalar = self.discountScalar;
+    }
+
     function isSupported(Data storage self) internal view returns (bool) {
         return self.maxAmount != 0;
     }
@@ -87,6 +122,7 @@ library CollateralConfiguration {
         Data storage self,
         uint256 collateralAmount,
         ISpotMarketSystem spotMarket,
+        PerpsPrice.Tolerance stalenessTolerance,
         bool useDiscount
     ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
         uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
