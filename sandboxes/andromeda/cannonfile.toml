@@ -275,7 +275,10 @@ func = "setCollateralConfiguration"
 args = [
     # 0 - sUSD
     "0",
-    "<%= MaxUint256 %>",
+    "<%= MaxUint256 %>", 
+    "0",
+    "0", 
+    "0",
 ]
 
 [invoke.configure_perps_synth_deduction_priority]
