@@ -83,6 +83,21 @@ contract PerpsAccountModule is IPerpsAccountModule {
         emit CollateralModified(accountId, synthMarketId, amountDelta, ERC2771Context._msgSender());
     }
 
+    // 1. call depositMarketUsd and deposit amount directly to core system
+    // 2. look up account and reduce debt by amount
+    // 3. transfer synth to sender
+    // 3b. quoteUnwrap() -> inchQuote -> returnAmount
+    function payDebt(uint256 accountId, uint256 amount) external override {
+        Account.exists(accountId);
+
+        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+
+        account.payDebt(amount, perpsMarketFactory);
+
+        emit DebtPaid(accountId, amount, ERC2771Context._msgSender());
+    }
+
     /**
      * @inheritdoc IPerpsAccountModule
      */
@@ -153,13 +168,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
-        (uint256 initialRequiredMargin, , uint256 liquidationReward) = account
-            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
-
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
-
-        withdrawableMargin = availableMargin - requiredMargin.toInt();
+        withdrawableMargin = account.getWithdrawableMargin(PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**
