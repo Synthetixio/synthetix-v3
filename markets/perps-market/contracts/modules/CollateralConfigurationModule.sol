@@ -58,5 +58,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
             uint256 lowerLimitDiscount,
             uint256 discountScalar
         )
-    {}
+    {
+        return CollateralConfiguration.load(synthMarketId).getConfig();
+    }
 }
