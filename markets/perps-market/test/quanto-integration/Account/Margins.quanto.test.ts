@@ -9,7 +9,7 @@ import {
 } from '../../integration/helpers/';
 import { ethers } from 'ethers';
 
-describe.only('Account margins test', () => {
+describe('Account margins test', () => {
   // Account and Market Identifiers
   const accountId = 4;
   const usdMarketId = 0;
