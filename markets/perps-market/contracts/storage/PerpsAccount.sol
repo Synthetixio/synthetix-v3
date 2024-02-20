@@ -249,11 +249,8 @@ library PerpsAccount {
         }
     }
 
-    function payDebt(
-        Data storage self,
-        uint256 amount,
-        PerpsMarketFactory.Data storage perpsMarketFactory
-    ) internal {
+    function payDebt(Data storage self, uint256 amount) internal {
+        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
         perpsMarketFactory.synthetix.depositMarketUsd(
             perpsMarketFactory.perpsMarketId,
             ERC2771Context._msgSender(),
@@ -262,7 +259,7 @@ library PerpsAccount {
 
         if (self.debt < amount) {
             self.debt = 0;
-            updateCollateralAmount(self, SNX_USD_MARKET_ID, amount - self.debt);
+            updateCollateralAmount(self, SNX_USD_MARKET_ID, (amount - self.debt).toInt());
         } else {
             self.debt -= amount;
         }
@@ -314,7 +311,7 @@ library PerpsAccount {
     function getWithdrawableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal returns (int256 withdrawableMargin) {
+    ) internal view returns (int256 withdrawableMargin) {
         bool hasActivePositions = self.openPositionMarketIds.length() > 0;
         int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
 
@@ -323,13 +320,13 @@ library PerpsAccount {
                 ? availableMargin
                 : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
         } else {
-            (requiredInitialMargin, , liquidationReward) = getAccountRequiredMargins(
-                self,
-                stalenessTolerance
-            );
-            uint256 requiredMargin = initialRequiredMargin + liquidationReward;
-            // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-            withdrawableMargin = availableMargin.toUint() - requiredMargin;
+            (
+                uint256 requiredInitialMargin,
+                ,
+                uint256 liquidationReward
+            ) = getAccountRequiredMargins(self, stalenessTolerance);
+            uint256 requiredMargin = requiredInitialMargin + liquidationReward;
+            withdrawableMargin = availableMargin - requiredMargin.toInt();
         }
     }
 
