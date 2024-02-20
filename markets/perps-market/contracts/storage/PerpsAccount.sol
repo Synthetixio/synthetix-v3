@@ -228,9 +228,12 @@ library PerpsAccount {
             amount
         );
 
-        // validate amount is lower than debt to pay (or add to snx usd amount)
-
-        self.debt -= amount;
+        if (self.debt < amount) {
+            self.debt = 0;
+            updateCollateralAmount(self, SNX_USD_MARKET_ID, amount - self.debt);
+        } else {
+            self.debt -= amount;
+        }
     }
 
     /**
