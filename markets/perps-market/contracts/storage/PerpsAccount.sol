@@ -314,35 +314,6 @@ library PerpsAccount {
     function getWithdrawableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (int256 withdrawableMargin) {
-        bool hasActivePositions = hasOpenPositions(self);
-
-        if (hasActivePositions) {
-            (
-                uint256 requiredInitialMargin,
-                ,
-                uint256 liquidationReward
-            ) = getAccountRequiredMargins(self, stalenessTolerance);
-            uint256 requiredMargin = requiredInitialMargin + liquidationReward;
-            withdrawableMargin =
-                getAvailableMargin(self, stalenessTolerance) -
-                requiredMargin.toInt();
-        } else {
-            withdrawableMargin = self.debt > 0
-                ? getAvailableMargin(self, stalenessTolerance)
-                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
-        }
-    }
-
-    /**
-     * @notice Withdrawable amount depends on if the account has active positions or not
-     * @dev    If the account has no active positions and no debt, the withdrawable margin is the total collateral value
-     * @dev    If the account has no active positions but has debt, the withdrawable margin is the available margin (which is debt reduced)
-     * @dev    If the account has active positions, the withdrawable margin is the available margin - required margin - potential liquidation reward
-     */
-    function getWithdrawableMargin(
-        Data storage self,
-        PerpsPrice.Tolerance stalenessTolerance
     ) internal returns (int256 withdrawableMargin) {
         bool hasActivePositions = self.openPositionMarketIds.length() > 0;
         int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
