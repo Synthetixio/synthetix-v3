@@ -81,7 +81,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         // TODO: ensure no positions
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        bool isEligible = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
+        (bool isEligible, ) = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
         if (isEligible) {
             // TODO: keeper flag rewards
             // TODO: send margin to liquidation rewards distributor
