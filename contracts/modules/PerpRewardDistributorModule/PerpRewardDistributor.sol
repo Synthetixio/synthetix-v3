@@ -18,7 +18,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
 
     address private _rewardManager;
     address private _perpMarket;
-    address private _token;
+    address private _payoutToken;
     string private _name;
     uint128 private _poolId;
     address[] private _poolCollateralTypes;
@@ -63,14 +63,14 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         address perpMarket,
         uint128 poolId_,
         address[] calldata poolCollateralTypes_,
-        address token_,
+        address payoutToken_,
         string memory name_
     ) external initializer {
         _rewardManager = rewardManager; // CoreProxy
         _perpMarket = perpMarket;
         _poolId = poolId_;
         _poolCollateralTypes = poolCollateralTypes_;
-        _token = token_;
+        _payoutToken = payoutToken_;
         _name = name_;
     }
 
@@ -123,7 +123,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
      * @inheritdoc IRewardDistributor
      */
     function token() public view override returns (address) {
-        return _token;
+        return _payoutToken;
     }
 
     /**
@@ -132,9 +132,9 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     function payout(
         uint128,
         uint128 poolId,
-        address token_,
-        address sender, // msg.sender that called `claimRewards`
-        uint256 amount
+        address,
+        address payoutTarget_, // msg.sender that called `claimRewards`
+        uint256 payoutAmount_
     ) external returns (bool) {
         if (shouldFailPayout) {
             return false;
@@ -142,13 +142,10 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         if (poolId != _poolId) {
             revert ParameterError.InvalidParameter("poolId", "Unexpected poolId");
         }
-        if (token_ != _token) {
-            revert ParameterError.InvalidParameter("token", "Unexpected token");
-        }
 
         onlyRewardManager();
 
-        _token.safeTransfer(sender, amount);
+        _payoutToken.safeTransfer(payoutTarget_, payoutAmount_);
 
         return true;
     }

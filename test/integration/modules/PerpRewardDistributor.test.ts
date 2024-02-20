@@ -113,23 +113,6 @@ describe('PerpRewardDistributor', () => {
       );
     });
 
-    it('should revert when token does not match', async () => {
-      const args = {
-        poolId: pool().id,
-        collateralTypes: [genAddress(), genAddress()],
-        name: genBytes32(),
-        token: genAddress(),
-      };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
-
-      const invalidToken = genAddress();
-      await assertRevert(
-        PerpRewardDistributor.connect(owner()).payout(bn(0), args.poolId, invalidToken, genAddress(), bn(0)),
-        `InvalidParameter("token", "Unexpected token")`,
-        PerpRewardDistributor
-      );
-    });
-
     it('should revert when not reward manager', async () => {
       const args = {
         poolId: pool().id,

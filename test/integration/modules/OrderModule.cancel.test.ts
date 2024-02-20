@@ -2,7 +2,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { wei } from '@synthetixio/wei';
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import { assertEvents } from '../../assert';
