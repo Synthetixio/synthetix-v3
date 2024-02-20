@@ -1,35 +1,92 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../../integration/bootstrap';
+import { ONE_ETHER } from '../../integration/helpers/';
 
 describe('ModifyCollateral', () => {
+  // Account and Market Identifiers
   const accountIds = [10, 20];
   const invalidAccountId = 42069;
-  const oneBTC = bn(1);
+  const ethMarketId = 26;
+  const quantoSynthMarketIndex = 0;
+
+  // Market Prices
   const btcPrice = bn(10_000);
+  const ethPrice = bn(1_000);
+  const linkPrice = bn(5);
+
+  // Skew Scales
+  const ethSkewScale = bn(1000).div(2000);
+
+  // Margin and Funding Parameters
+  const maxFundingVelocity = bn(0);
+  const initialMarginFraction = bn(2);
+  const minimumInitialMarginRatio = bn(0.01);
+  const maintenanceMarginScalar = bn(0.5);
+  const maxLiquidationLimitAccumulationMultiplier = bn(1);
+  const liquidationRewardRatio = bn(0.05);
+  const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
+
+  // Position Margins
+  const ethMinimumPositionMargin = bn(500);
+
+  // Liquidation Parameters
+  const settlementReward = bn(0);
+
+  // Perps Market Config
+  const perpsMarketConfig = [
+    {
+      requestedMarketId: ethMarketId,
+      name: 'Ether',
+      token: 'ETH',
+      price: ethPrice,
+      fundingParams: { skewScale: ethSkewScale, maxFundingVelocity: maxFundingVelocity },
+      liquidationParams: {
+        initialMarginFraction: initialMarginFraction,
+        minimumInitialMarginRatio: minimumInitialMarginRatio,
+        maintenanceMarginScalar: maintenanceMarginScalar,
+        maxLiquidationLimitAccumulationMultiplier: maxLiquidationLimitAccumulationMultiplier,
+        liquidationRewardRatio: liquidationRewardRatio,
+        maxSecondsInLiquidationWindow: maxSecondsInLiquidationWindow,
+        minimumPositionMargin: ethMinimumPositionMargin,
+      },
+      settlementStrategy: {
+        settlementReward: settlementReward,
+      },
+      quanto: {
+        name: 'Ether',
+        token: 'ETH',
+        price: ethPrice,
+        quantoSynthMarketIndex: quantoSynthMarketIndex,
+      },
+    },
+  ];
+
+  // Spot Market Config
+  const spotMarketConfig = [
+    {
+      name: 'Bitcoin',
+      token: 'snxBTC',
+      buyPrice: btcPrice,
+      sellPrice: btcPrice,
+    },
+    {
+      name: 'Ether',
+      token: 'snxETH',
+      buyPrice: ethPrice,
+      sellPrice: ethPrice,
+    },
+    {
+      name: 'Link',
+      token: 'snxLink',
+      buyPrice: linkPrice,
+      sellPrice: linkPrice,
+    },
+  ];
 
   const { systems, owner, synthMarkets, trader1, trader2 } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: btcPrice,
-        sellPrice: btcPrice,
-      },
-      {
-        name: 'Ether',
-        token: 'snxETH',
-        buyPrice: bn(1_000),
-        sellPrice: bn(1_000),
-      },
-      {
-        name: 'Link',
-        token: 'snxLink',
-        buyPrice: bn(5),
-        sellPrice: bn(5),
-      },
-    ],
-    perpsMarkets: [],
+    synthMarkets: spotMarketConfig,
+    perpsMarkets: perpsMarketConfig,
     traderAccountIds: accountIds,
   });
 
@@ -51,11 +108,13 @@ describe('ModifyCollateral', () => {
       .PerpsMarket.connect(owner())
       .setCollateralConfiguration(synthBTCMarketId, bn(1));
   });
+
   before('set setCollateralConfiguration to 0 link', async () => {
     await systems()
       .PerpsMarket.connect(owner())
       .setCollateralConfiguration(synthLINKMarketId, bn(0));
   });
+
   before('trader1 buys 100 snxLink', async () => {
     const usdAmount = bn(100);
     const minAmountReceived = bn(20);
@@ -70,7 +129,7 @@ describe('ModifyCollateral', () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader2())
-          .modifyCollateral(invalidAccountId, synthBTCMarketId, oneBTC),
+          .modifyCollateral(invalidAccountId, synthBTCMarketId, ONE_ETHER),
         `AccountNotFound("${invalidAccountId}"`
       );
     });
@@ -79,7 +138,7 @@ describe('ModifyCollateral', () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(owner())
-          .modifyCollateral(accountIds[1], synthBTCMarketId, oneBTC),
+          .modifyCollateral(accountIds[1], synthBTCMarketId, ONE_ETHER),
         `PermissionDenied("${
           accountIds[1]
         }", "${PERPS_MODIFY_COLLATERAL_PERMISSION_NAME}", "${await owner().getAddress()}")`
@@ -126,31 +185,31 @@ describe('ModifyCollateral', () => {
     it('reverts if the trader does not have enough allowance', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(synthETHMarketId, oneBTC);
+        .setCollateralConfiguration(synthETHMarketId, ONE_ETHER);
 
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(accountIds[0], synthETHMarketId, oneBTC),
-        `InsufficientAllowance("${oneBTC}", "0")`
+          .modifyCollateral(accountIds[0], synthETHMarketId, ONE_ETHER),
+        `InsufficientAllowance("${ONE_ETHER}", "0")`
       );
     });
 
     it('reverts if the trader does not have enough spot balance', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(synthBTCMarketId, oneBTC);
+        .setCollateralConfiguration(synthBTCMarketId, ONE_ETHER);
 
       await synthMarkets()[0]
         .synth()
         .connect(trader1())
-        .approve(systems().PerpsMarket.address, oneBTC);
+        .approve(systems().PerpsMarket.address, ONE_ETHER);
 
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(accountIds[0], synthBTCMarketId, oneBTC),
-        `InsufficientBalance("${oneBTC}", "0")`
+          .modifyCollateral(accountIds[0], synthBTCMarketId, ONE_ETHER),
+        `InsufficientBalance("${ONE_ETHER}", "0")`
       );
     });
   });
