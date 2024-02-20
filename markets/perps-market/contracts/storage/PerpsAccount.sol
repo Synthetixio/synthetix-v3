@@ -249,6 +249,22 @@ library PerpsAccount {
         }
     }
 
+    function payDebt(
+        Data storage self,
+        uint256 amount,
+        PerpsMarketFactory.Data storage perpsMarketFactory
+    ) internal {
+        perpsMarketFactory.synthetix.depositMarketUsd(
+            perpsMarketFactory.perpsMarketId,
+            ERC2771Context._msgSender(),
+            amount
+        );
+
+        // validate amount is lower than debt to pay (or add to snx usd amount)
+
+        self.debt -= amount;
+    }
+
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
@@ -312,6 +328,34 @@ library PerpsAccount {
             withdrawableMargin = self.debt > 0
                 ? getAvailableMargin(self, stalenessTolerance)
                 : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
+        }
+    }
+
+    /**
+     * @notice Withdrawable amount depends on if the account has active positions or not
+     * @dev    If the account has no active positions and no debt, the withdrawable margin is the total collateral value
+     * @dev    If the account has no active positions but has debt, the withdrawable margin is the available margin (which is debt reduced)
+     * @dev    If the account has active positions, the withdrawable margin is the available margin - required margin - potential liquidation reward
+     */
+    function getWithdrawableMargin(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal returns (int256 withdrawableMargin) {
+        bool hasActivePositions = self.openPositionMarketIds.length() > 0;
+        int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
+
+        if (hasActivePositions) {
+            withdrawableMargin = self.debt > 0
+                ? availableMargin
+                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
+        } else {
+            (requiredInitialMargin, , liquidationReward) = getAccountRequiredMargins(
+                self,
+                stalenessTolerance
+            );
+            uint256 requiredMargin = initialRequiredMargin + liquidationReward;
+            // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
+            withdrawableMargin = availableMargin.toUint() - requiredMargin;
         }
     }
 
