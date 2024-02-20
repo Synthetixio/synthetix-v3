@@ -16,6 +16,4 @@ interface ISynthetixSystem is
     IUtilsModule,
     ICollateralConfigurationModule,
     IVaultModule
-{
-
-}
+{}

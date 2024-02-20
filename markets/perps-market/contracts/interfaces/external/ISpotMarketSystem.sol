@@ -10,6 +10,4 @@ interface ISpotMarketSystem is
     IAtomicOrderModule,
     ISpotMarketFactoryModule,
     IMarketConfigurationModule
-{
-
-}
+{}

@@ -142,7 +142,7 @@ library CollateralConfiguration {
         (collateralValueInUsd, ) = spotMarket.quoteSellExactIn(
             self.id,
             discountedCollateralAmount,
-            Price.Tolerance(uint(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
+            Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
         );
     }
 }

@@ -92,7 +92,7 @@ library LiquidationAssetManager {
             revert IDistributorErrors.InvalidDistributor(self.id, tokenAddres);
         }
 
-        uint poolCollateralTypesLength = self.poolDelegatedCollateralTypes.length;
+        uint256 poolCollateralTypesLength = self.poolDelegatedCollateralTypes.length;
         ISynthetixSystem synthetix = PerpsMarketFactory.load().synthetix;
 
         // Transfer collateral to the distributor

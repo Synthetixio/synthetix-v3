@@ -7,6 +7,4 @@ import {PerpsRewardDistributor as BasePerpsRewardDistributor} from "@synthetixio
  * @title Mocked PerpsRewardDistributor.
  * See perps-reward-distributor/../PerpsRewardDistributor
  */
-contract MockPerpsRewardDistributor is BasePerpsRewardDistributor {
-
-}
+contract MockPerpsRewardDistributor is BasePerpsRewardDistributor {}

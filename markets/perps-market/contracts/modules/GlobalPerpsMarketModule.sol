@@ -20,6 +20,8 @@ import {KeeperCosts} from "../storage/KeeperCosts.sol";
  * @dev See IGlobalPerpsMarketModule.
  */
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
+    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SetUtil for SetUtil.UintSet;
     using KeeperCosts for KeeperCosts.Data;
 
