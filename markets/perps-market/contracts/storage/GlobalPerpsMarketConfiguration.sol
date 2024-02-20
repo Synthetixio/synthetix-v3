@@ -187,8 +187,7 @@ library GlobalPerpsMarketConfiguration {
         return (referralFees, feeCollectorQuote);
     }
 
-    // TODO: move this into separate module for collateral configuration
-    function updateCollateral(
+    function updateCollateralMax(
         Data storage self,
         uint128 synthMarketId,
         uint256 maxCollateralAmount

@@ -51,7 +51,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
 
             if (isEligible) {
-                (uint flagCost, uint seizedMarginValue) = account.flagForLiquidation();
+                (uint256 flagCost, uint256 seizedMarginValue) = account.flagForLiquidation();
                 liquidationReward = _liquidateAccount(account, flagCost, seizedMarginValue, true);
             } else {
                 revert NotEligibleForLiquidation(accountId);

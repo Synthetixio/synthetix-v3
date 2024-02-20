@@ -47,6 +47,17 @@ library CollateralConfiguration {
         self.maxAmount = maxAmount;
     }
 
+    function setDiscounts(
+        Data storage self,
+        uint256 upperLimitDiscount,
+        uint256 lowerLimitDiscount,
+        uint256 discountScalar
+    ) internal {
+        self.upperLimitDiscount = upperLimitDiscount;
+        self.lowerLimitDiscount = lowerLimitDiscount;
+        self.discountScalar = discountScalar;
+    }
+
     function isSupported(Data storage self) internal view returns (bool) {
         return self.maxAmount != 0;
     }
