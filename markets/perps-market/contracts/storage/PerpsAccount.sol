@@ -71,6 +71,8 @@ library PerpsAccount {
 
     error AccountLiquidatable(uint128 accountId);
 
+    error AccountMarginLiquidatable(uint128 accountId);
+
     error MaxPositionsPerAccountReached(uint128 maxPositionsPerAccount);
 
     error MaxCollateralsPerAccountReached(uint128 maxCollateralsPerAccount);
@@ -215,6 +217,22 @@ library PerpsAccount {
         GlobalPerpsMarket.load().updateCollateralAmount(synthMarketId, amountDelta);
     }
 
+    function payDebt(
+        Data storage self,
+        uint256 amount,
+        PerpsMarketFactory.Data storage perpsMarketFactory
+    ) internal {
+        perpsMarketFactory.synthetix.depositMarketUsd(
+            perpsMarketFactory.perpsMarketId,
+            ERC2771Context._msgSender(),
+            amount
+        );
+
+        // validate amount is lower than debt to pay (or add to snx usd amount)
+
+        self.debt -= amount;
+    }
+
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
@@ -226,55 +244,13 @@ library PerpsAccount {
         uint128 synthMarketId,
         uint256 amountToWithdraw,
         ISpotMarketSystem spotMarket
-    ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
-        bool hasActivePositions = openPositionMarketIds.length() > 0;
-
+    ) internal view {
         uint256 collateralAmount = self.collateralAmounts[synthMarketId];
         if (collateralAmount < amountToWithdraw) {
             revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
         }
 
-        __validateWithdrawalLimitWithOpenPositions();
-    }
-
-    function _validateWithdrawalLimitWithNoPositions(uint256 synthMarketId) private {
-        uint256 amountToWithdrawUsd;
-        if (synthMarketId == SNX_USD_MARKET_ID) {
-            amountToWithdrawUsd = amountToWithdraw;
-        } else {
-            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
-                synthMarketId,
-                amountToWithdraw,
-                Price.Tolerance.DEFAULT
-            );
-        }
-
-        if (
-            amountToWithdrawUsd > getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false)
-        ) {
-            revert InsufficientCollateralAvailableForWithdraw(
-                getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false),
-                amountToWithdrawUsd
-            );
-        }
-    }
-
-    function _validateWithdrawalLimitWithOpenPositions(uint256 synthMarketId) private {
-        (
-            bool isEligible,
-            int256 availableMargin,
-            uint256 initialRequiredMargin,
-            ,
-            uint256 liquidationReward
-        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.STRICT);
-
-        if (isEligible) {
-            revert AccountLiquidatable(self.id);
-        }
-
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
-        // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
+        int256 withdrawableMarginUsd = getWithdrawableMargin(self, Price.Tolerance.STRICT);
 
         uint256 amountToWithdrawUsd;
         if (synthMarketId == SNX_USD_MARKET_ID) {
@@ -283,15 +259,43 @@ library PerpsAccount {
             (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
                 synthMarketId,
                 amountToWithdraw,
-                Price.Tolerance.DEFAULT
+                Price.Tolerance.STRICT
             );
         }
 
-        if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
+        if (amountToWithdrawUsd.toInt() > withdrawableMarginUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
-                availableWithdrawableCollateralUsd,
+                withdrawableMarginUsd,
                 amountToWithdrawUsd
             );
+        }
+    }
+
+    /**
+     * @notice Withdrawable amount depends on if the account has active positions or not
+     * @dev    If the account has no active positions and no debt, the withdrawable margin is the total collateral value
+     * @dev    If the account has no active positions but has debt, the withdrawable margin is the available margin (which is debt reduced)
+     * @dev    If the account has active positions, the withdrawable margin is the available margin - required margin - potential liquidation reward
+     */
+    function getWithdrawableMargin(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal returns (int256 withdrawableMargin) {
+        bool hasActivePositions = self.openPositionMarketIds.length() > 0;
+        int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
+
+        if (hasActivePositions) {
+            withdrawableMargin = self.debt > 0
+                ? availableMargin
+                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
+        } else {
+            (requiredInitialMargin, , liquidationReward) = getAccountRequiredMargins(
+                self,
+                stalenessTolerance
+            );
+            uint256 requiredMargin = initialRequiredMargin + liquidationReward;
+            // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
+            withdrawableMargin = availableMargin.toUint() - requiredMargin;
         }
     }
 
