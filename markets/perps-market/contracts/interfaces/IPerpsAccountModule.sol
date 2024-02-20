@@ -135,4 +135,11 @@ interface IPerpsAccountModule {
             uint256 requiredMaintenanceMargin,
             uint256 maxLiquidationReward
         );
+
+    /**
+     * @notice Allows anyone to pay an account's debt
+     * @param accountId Id of the account.
+     * @param amount debt amount to pay off
+     */
+    function payDebt(uint256 accountId, uint256 amount) external;
 }
