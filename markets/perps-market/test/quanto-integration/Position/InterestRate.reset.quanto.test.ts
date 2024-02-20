@@ -27,7 +27,7 @@ const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR)
 
 // This test ensures interest accrued is accurately reflected even if the interest rate is turned off
 // at a later time.
-describe.only('Position - interest rates - reset', () => {
+describe('Position - interest rates - reset', () => {
   const { systems, perpsMarkets, synthMarkets, superMarketId, provider, trader1, keeper, owner } =
     bootstrapMarkets({
       interestRateParams: {
