@@ -19,6 +19,8 @@ interface IPerpsAccountModule {
         address indexed sender
     );
 
+    event DebtPaid(uint128 indexed accountId, uint256 amount, address indexed sender);
+
     /**
      * @notice Gets thrown when the amount delta is zero.
      */

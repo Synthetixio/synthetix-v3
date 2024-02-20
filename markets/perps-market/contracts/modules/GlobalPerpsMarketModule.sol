@@ -34,7 +34,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint256 maxCollateralAmount
     ) external override {
         OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.load().updateCollateral(synthMarketId, maxCollateralAmount);
+        GlobalPerpsMarketConfiguration.load().updateCollateralMax(
+            synthMarketId,
+            maxCollateralAmount
+        );
 
         emit CollateralConfigurationSet(synthMarketId, maxCollateralAmount);
     }
