@@ -275,9 +275,9 @@ func = "setCollateralConfiguration"
 args = [
     # 0 - sUSD
     "0",
-    "<%= MaxUint256 %>", 
+    "<%= MaxUint256 %>",
     "0",
-    "0", 
+    "0",
     "0",
 ]
 
