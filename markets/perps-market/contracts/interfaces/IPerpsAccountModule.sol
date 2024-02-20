@@ -143,5 +143,5 @@ interface IPerpsAccountModule {
      * @param accountId Id of the account.
      * @param amount debt amount to pay off
      */
-    function payDebt(uint256 accountId, uint256 amount) external;
+    function payDebt(uint128 accountId, uint256 amount) external;
 }
