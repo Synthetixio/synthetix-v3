@@ -111,6 +111,18 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
+    function totalGlobalCollateralValue()
+        external
+        view
+        override
+        returns (uint256 totalCollateralValue)
+    {
+        return GlobalPerpsMarket.load().totalCollateralValue();
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
     function setFeeCollector(address feeCollector) external override {
         OwnableStorage.onlyOwner();
         if (feeCollector != address(0)) {

@@ -82,40 +82,6 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
-    function getSupportedCollaterals()
-        external
-        view
-        override
-        returns (uint256[] memory supportedCollaterals)
-    {
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        supportedCollaterals = store.supportedCollateralTypes.values();
-    }
-
-    /**
-     * @inheritdoc ICollateralConfigurationModule
-     */
-    function setSynthDeductionPriority(
-        uint128[] memory newSynthDeductionPriority
-    ) external override {
-        OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.load().updateSynthDeductionPriority(
-            newSynthDeductionPriority
-        );
-
-        emit SynthDeductionPrioritySet(newSynthDeductionPriority);
-    }
-
-    /**
-     * @inheritdoc ICollateralConfigurationModule
-     */
-    function getSynthDeductionPriority() external view override returns (uint128[] memory) {
-        return GlobalPerpsMarketConfiguration.load().synthDeductionPriority;
-    }
-
-    /**
-     * @inheritdoc ICollateralConfigurationModule
-     */
     function setCollateralLiquidateRewardRatio(
         uint128 collateralLiquidateRewardRatioD18
     ) external override {
@@ -137,18 +103,6 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         returns (uint128 collateralLiquidateRewardRatioD18)
     {
         return GlobalPerpsMarketConfiguration.load().collateralLiquidateRewardRatioD18;
-    }
-
-    /**
-     * @inheritdoc ICollateralConfigurationModule
-     */
-    function totalGlobalCollateralValue()
-        external
-        view
-        override
-        returns (uint256 totalCollateralValue)
-    {
-        return GlobalPerpsMarket.load().totalCollateralValue();
     }
 
     /**
