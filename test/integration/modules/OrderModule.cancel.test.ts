@@ -20,7 +20,6 @@ import {
   depositMargin,
   findEventSafe,
   getFastForwardTimestamp,
-  getPythPriceData,
   getPythPriceDataByMarketId,
   isSusdCollateral,
   setMarketConfiguration,

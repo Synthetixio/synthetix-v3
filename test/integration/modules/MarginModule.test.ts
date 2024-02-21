@@ -5,7 +5,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import assert from 'assert';
-import { shuffle, times } from 'lodash';
+import { shuffle } from 'lodash';
 import forEach from 'mocha-each';
 import { PerpCollateral, bootstrap } from '../../bootstrap';
 import {

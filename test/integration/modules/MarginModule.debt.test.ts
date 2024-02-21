@@ -2,7 +2,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import Wei, { wei } from '@synthetixio/wei';
-import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { calcPnl, calcTransactionCostInUsd } from '../../calculations';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
