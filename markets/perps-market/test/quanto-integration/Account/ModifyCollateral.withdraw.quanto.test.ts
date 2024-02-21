@@ -15,7 +15,7 @@ import {
 
 describe.only('ModifyCollateral Withdraw', () => {
   // Account and Market Identifiers
-  const accountIds = [10, 20];
+  const accountIds = [10, 20, 69];
   const usdMarketId = 0;
   const btcMarketId = 25;
   const btcMarketIdBn = bn(btcMarketId).div(ONE_ETHER);
@@ -125,18 +125,27 @@ describe.only('ModifyCollateral Withdraw', () => {
   ];
 
   // Bootstrap Markets, Systems, and Accounts
-  const { systems, owner, provider, trader1, trader2, superMarketId, perpsMarkets, synthMarkets } =
-    bootstrapMarkets({
-      synthMarkets: spotMarketConfig,
-      perpsMarkets: perpsMarketConfig,
-      traderAccountIds: accountIds,
-      liquidationGuards: {
-        minLiquidationReward: minLiquidationReward,
-        minKeeperProfitRatioD18: minKeeperProfitRatioD18,
-        maxLiquidationReward: maxLiquidationReward,
-        maxKeeperScalingRatioD18: maxKeeperScalingRatioD18,
-      },
-    });
+  const {
+    systems,
+    owner,
+    provider,
+    trader1,
+    trader2,
+    trader3,
+    superMarketId,
+    perpsMarkets,
+    synthMarkets,
+  } = bootstrapMarkets({
+    synthMarkets: spotMarketConfig,
+    perpsMarkets: perpsMarketConfig,
+    traderAccountIds: accountIds,
+    liquidationGuards: {
+      minLiquidationReward: minLiquidationReward,
+      minKeeperProfitRatioD18: minKeeperProfitRatioD18,
+      maxLiquidationReward: maxLiquidationReward,
+      maxKeeperScalingRatioD18: maxKeeperScalingRatioD18,
+    },
+  });
 
   let synthBTCMarketId: ethers.BigNumber;
   let synthETHMarketId: ethers.BigNumber;
@@ -283,7 +292,7 @@ describe.only('ModifyCollateral Withdraw', () => {
 
   describe('withdraw with open positions', () => {
     // Account and Market Identifiers
-    const accountId = accountIds[0];
+    const accountId = accountIds[2];
 
     // Position Margins
     const initialAccountMargin = bn(100_000);
@@ -312,28 +321,28 @@ describe.only('ModifyCollateral Withdraw', () => {
 
       await synthMarkets()[1]
         .synth()
-        .connect(trader1())
+        .connect(trader3())
         .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
 
       await systems()
-        .SpotMarket.connect(trader1())
+        .SpotMarket.connect(trader3())
         .buy(synthETHMarketId, usdAmount, minAmountReceived, referrer);
     });
 
     before('add some sETH collateral to margin', async () => {
       await synthMarkets()[0]
         .synth()
-        .connect(trader1())
+        .connect(trader3())
         .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
 
       await systems()
-        .PerpsMarket.connect(trader1())
+        .PerpsMarket.connect(trader3())
         .modifyCollateral(accountId, synthETHMarketId, initialAccountEthMargin);
     });
 
     before('add some sUSD collateral to margin', async () => {
       await systems()
-        .PerpsMarket.connect(trader1())
+        .PerpsMarket.connect(trader3())
         .modifyCollateral(accountId, usdMarketId, initialAccountUsdMargin);
     });
 
@@ -354,9 +363,9 @@ describe.only('ModifyCollateral Withdraw', () => {
       await openPosition({
         systems,
         provider,
-        trader: trader1(),
+        trader: trader3(),
         accountId: accountId,
-        keeper: trader1(),
+        keeper: trader3(),
         marketId: btcMarketIdBn,
         sizeDelta: quantoPositionSizeBtcMarket,
         settlementStrategyId: perpsMarkets()[0].strategyId(),
@@ -381,9 +390,9 @@ describe.only('ModifyCollateral Withdraw', () => {
       await openPosition({
         systems,
         provider,
-        trader: trader1(),
+        trader: trader3(),
         accountId: accountId,
-        keeper: trader1(),
+        keeper: trader3(),
         marketId: ethMarketIdBn,
         sizeDelta: quantoPositionSizeEthMarket,
         settlementStrategyId: perpsMarkets()[1].strategyId(),
@@ -393,11 +402,13 @@ describe.only('ModifyCollateral Withdraw', () => {
 
     describe('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
+
       let initialMarginReq: ethers.BigNumber;
+      let withdrawableMargin: ethers.BigNumber;
 
       before('withdraw allowed amount', async () => {
         [initialMarginReq] = await systems()
-          .PerpsMarket.connect(trader1())
+          .PerpsMarket.connect(trader3())
           .getRequiredMargins(accountId);
 
         const btcPnl = getQuantoPnl({
@@ -419,20 +430,26 @@ describe.only('ModifyCollateral Withdraw', () => {
         // initialPnl is denominated in quanto asset (snxETH)
         initialPnl = btcPnl.add(ethPnl).mul(ethPrice).div(ONE_ETHER);
 
-        const withdrawAmt = initialAccountMargin
-          .add(initialPnl.mul(ethPrice).div(ONE_ETHER))
-          .sub(initialMarginReq)
-          .mul(-1);
+        withdrawableMargin = (
+          await systems().PerpsMarket.connect(trader3()).getWithdrawableMargin(accountId)
+        ).mul(-1);
 
         await systems()
-          .PerpsMarket.connect(trader1())
-          .modifyCollateral(accountId, usdMarketId, withdrawAmt);
+          .PerpsMarket.connect(trader3())
+          .modifyCollateral(accountId, usdMarketId, withdrawableMargin);
       });
 
+      // why restore "after" - and after what?
       after(restore);
 
-      it.skip('has correct available margin', async () => {
-        assertBn.equal(await systems().PerpsMarket.getAvailableMargin(accountId), initialMarginReq);
+      // what is the point of this?
+      it('has correct available margin', async () => {
+        const availableMargin = await systems().PerpsMarket.getAvailableMargin(accountId);
+        const expectedAvailableMargin = initialAccountMargin
+          .add(initialPnl)
+          .add(withdrawableMargin);
+
+        assertBn.equal(availableMargin, expectedAvailableMargin);
       });
     });
 
