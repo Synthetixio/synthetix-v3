@@ -3129,21 +3129,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@npm:^3.3.6":
-  version: 3.3.6
-  resolution: "@synthetixio/router@npm:3.3.6"
-  dependencies:
-    "@ethersproject/keccak256": "npm:^5.7.0"
-    debug: "npm:^4.3.4"
-    mustache: "npm:^4.2.0"
-  peerDependencies:
-    hardhat: ^2.0.0
-    solc: ^0.8.17
-  checksum: 10/c93df33920e9862694d418255cf66431a1d587481a828482fcffae524ea7331a2b7b2c46b92543c7b8ede12bde63dda5216449ea3b8789d019d1e200ceb1a81e
-  languageName: node
-  linkType: hard
-
-"@synthetixio/router@npm:^3.3.7":
+"@synthetixio/router@npm:^3.3.6, @synthetixio/router@npm:^3.3.7":
   version: 3.3.7
   resolution: "@synthetixio/router@npm:3.3.7"
   dependencies:
