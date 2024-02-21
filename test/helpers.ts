@@ -9,6 +9,10 @@ import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './type
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
 
+const DISABLE_EXPLICIT_EVM_MINE = ['true', '1', 'True', 'yes'].includes(
+  process.env.DISABLE_EXPLICIT_EVM_MINE as string
+);
+
 const fgReset = '\x1b[0m';
 const fgGreen = '\x1b[32m';
 const fgYellow = '\x1b[33m';
@@ -252,16 +256,6 @@ export const commitAndSettle = async (
       }),
     provider()
   );
-
-  // TODO: Update `withExplicitEvmMine` to stop capturing and discarding errors.
-  //
-  // You can uncomment this if you want to reveal the error `withExplicitEvmMine` swallows.
-  //
-  // const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
-  //   value: updateFee,
-  // });
-  // const receipt = await tx.wait();
-
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
   return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
@@ -339,6 +333,11 @@ export const withExplicitEvmMine = async (
   f: () => Promise<ethers.ContractTransaction>,
   provider: ethers.providers.JsonRpcProvider
 ) => {
+  if (DISABLE_EXPLICIT_EVM_MINE) {
+    const tx = await f();
+    return { tx, receipt: await tx.wait() };
+  }
+
   await provider.send('evm_setAutomine', [false]);
 
   const tx = await f();
