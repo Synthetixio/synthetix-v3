@@ -696,6 +696,11 @@ library Vault {
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
     }
+    struct PositionSelector {
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
+    }
 }
 
 // @custom:artifact contracts/storage/VaultEpoch.sol:VaultEpoch
