@@ -385,5 +385,13 @@ describe('Account margins test', () => {
 
       assertBn.equal(expectedMaintenanceMargin, maintenanceMargin.sub(maxLiquidationReward));
     });
+
+    it('has correct open interest', async () => {
+      const btcOiAbs = perpPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
+      const ethOiAbs = perpPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
+      const expectedOi = btcOiAbs.add(ethOiAbs);
+
+      assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(accountId), expectedOi);
+    });
   });
 });
