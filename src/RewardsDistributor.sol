@@ -10,6 +10,9 @@ import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.so
 import {ISynthetixCore} from "./interfaces/ISynthetixCore.sol";
 
 contract RewardsDistributor is IRewardDistributor {
+    error NotEnoughRewardsLeft(uint256 amountRequested, uint256 amountLeft);
+    error NotEnoughBalance(uint256 amountRequested, uint256 currentBalance);
+
     using ERC20Helper for address;
 
     address public rewardManager;
@@ -22,6 +25,9 @@ contract RewardsDistributor is IRewardDistributor {
     uint256 public constant SYSTEM_PRECISION = 10 ** 18;
 
     bool public shouldFailPayout;
+
+    // Internal tracking for the remaining rewards, it keeps value in payoutToken precision
+    uint256 public rewardsAmount = 0;
 
     constructor(
         address rewardManager_,
@@ -78,7 +84,14 @@ contract RewardsDistributor is IRewardDistributor {
 
         // payoutAmount_ is always in 18 decimals precision, adjust actual payout amount to match payout token decimals
         uint256 adjustedAmount = (payoutAmount_ * precision) / SYSTEM_PRECISION;
+
+        if (adjustedAmount > rewardsAmount) {
+            revert NotEnoughRewardsLeft(adjustedAmount, rewardsAmount);
+        }
+        rewardsAmount = rewardsAmount - adjustedAmount;
+
         payoutToken.safeTransfer(payoutTarget_, adjustedAmount);
+
         return true;
     }
 
@@ -103,6 +116,12 @@ contract RewardsDistributor is IRewardDistributor {
                 "collateralType",
                 "Collateral does not match the rewards token"
             );
+        }
+
+        rewardsAmount = rewardsAmount + amount_;
+        uint256 balance = IERC20(payoutToken).balanceOf(address(this));
+        if (rewardsAmount > balance) {
+            revert NotEnoughBalance(amount_, balance);
         }
 
         // amount_ is in payout token decimals precision, adjust actual distribution amount to 18 decimals that core is making its calculations in

@@ -2,13 +2,10 @@
 pragma solidity ^0.8.21;
 
 import {Test} from "forge-std/Test.sol";
-import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {RewardsDistributor} from "../src/RewardsDistributor.sol";
-import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
 import {MintableToken} from "./MintableToken.sol";
 
@@ -161,12 +158,7 @@ contract RewardsDistributorTest is Test {
 
     function test_payout_underflow() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20Helper.FailedTransfer.selector,
-                address(rewardsDistributor),
-                BOB,
-                10e18
-            )
+            abi.encodeWithSelector(RewardsDistributor.NotEnoughRewardsLeft.selector, 10e18, 0)
         );
 
         vm.startPrank(address(rewardsManager));
@@ -188,6 +180,12 @@ contract RewardsDistributorTest is Test {
 
     function test_payout() public {
         SNX.mint(address(rewardsDistributor), 1000e18);
+
+        uint256 amount = 100e18;
+
+        vm.startPrank(BOSS);
+        rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
+        vm.stopPrank();
 
         vm.startPrank(address(rewardsManager));
         assertTrue(rewardsDistributor.payout(accountId, poolId, collateralType, BOB, 10e18));
@@ -238,7 +236,23 @@ contract RewardsDistributorTest is Test {
         vm.stopPrank();
     }
 
+    function test_distributeRewards_NotEnoughBalance() public {
+        SNX.mint(address(rewardsDistributor), 1_000e18);
+
+        uint256 amount = 2_000e18; // try distributing 2_000 SNX, while having only 1_000 on balance
+
+        vm.expectRevert(
+            abi.encodeWithSelector(RewardsDistributor.NotEnoughBalance.selector, 2_000e18, 1_000e18)
+        );
+
+        vm.startPrank(BOSS);
+        rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
+        vm.stopPrank();
+    }
+
     function test_distributeRewards() public {
+        SNX.mint(address(rewardsDistributor), 1_000e18);
+
         uint256 amount = 100e18;
 
         vm.startPrank(BOSS);
