@@ -74,7 +74,7 @@ contract OpGasPriceOracle is IExternalNode {
     ) internal view returns (uint256 costOfExecutionGrossEth) {
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);
 
-        uint256 gasPriceL2 = block.basefee;
+        uint256 gasPriceL2 = ovmGasPriceOracle.baseFee();
         uint256 baseFeeScalar = ovmGasPriceOracle.baseFeeScalar();
         uint256 l1BaseFee = ovmGasPriceOracle.baseFee();
         uint256 blobBaseFeeScalar = ovmGasPriceOracle.blobBaseFeeScalar();
