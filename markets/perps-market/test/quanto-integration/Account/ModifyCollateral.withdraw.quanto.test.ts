@@ -292,7 +292,7 @@ describe.only('ModifyCollateral Withdraw', () => {
 
   describe('withdraw with open positions', () => {
     // Account and Market Identifiers
-    const accountId = accountIds[2];
+    const trader3AccountId = accountIds[2];
 
     // Position Margins
     const initialAccountMargin = bn(100_000);
@@ -306,10 +306,6 @@ describe.only('ModifyCollateral Withdraw', () => {
     // Quanto Position Sizes (adjusted for quanto)
     let quantoPositionSizeBtcMarket: ethers.BigNumber;
     let quantoPositionSizeEthMarket: ethers.BigNumber;
-
-    // Position Fill Prices
-    let btcFillPrice: ethers.BigNumber;
-    let ethFillPrice: ethers.BigNumber;
 
     // Initial Profit and Loss
     let initialPnl: ethers.BigNumber;
@@ -337,13 +333,13 @@ describe.only('ModifyCollateral Withdraw', () => {
 
       await systems()
         .PerpsMarket.connect(trader3())
-        .modifyCollateral(accountId, synthETHMarketId, initialAccountEthMargin);
+        .modifyCollateral(trader3AccountId, synthETHMarketId, initialAccountEthMargin);
     });
 
     before('add some sUSD collateral to margin', async () => {
       await systems()
         .PerpsMarket.connect(trader3())
-        .modifyCollateral(accountId, usdMarketId, initialAccountUsdMargin);
+        .modifyCollateral(trader3AccountId, usdMarketId, initialAccountUsdMargin);
     });
 
     before('open BTC position', async () => {
@@ -352,19 +348,11 @@ describe.only('ModifyCollateral Withdraw', () => {
         quantoAssetPrice: ethPrice,
       });
 
-      // must record prior to opening position otherwise
-      // accurate system state is not achieved
-      btcFillPrice = await systems().PerpsMarket.fillPrice(
-        bn(btcMarketId).div(ONE_ETHER),
-        quantoPositionSizeBtcMarket,
-        btcPrice
-      );
-
       await openPosition({
         systems,
         provider,
         trader: trader3(),
-        accountId: accountId,
+        accountId: trader3AccountId,
         keeper: trader3(),
         marketId: btcMarketIdBn,
         sizeDelta: quantoPositionSizeBtcMarket,
@@ -379,19 +367,11 @@ describe.only('ModifyCollateral Withdraw', () => {
         quantoAssetPrice: ethPrice,
       });
 
-      // must record prior to opening position otherwise
-      // accurate system state is not achieved
-      ethFillPrice = await systems().PerpsMarket.fillPrice(
-        bn(ethMarketId).div(ONE_ETHER),
-        quantoPositionSizeEthMarket,
-        ethPrice
-      );
-
       await openPosition({
         systems,
         provider,
         trader: trader3(),
-        accountId: accountId,
+        accountId: trader3AccountId,
         keeper: trader3(),
         marketId: ethMarketIdBn,
         sizeDelta: quantoPositionSizeEthMarket,
@@ -403,40 +383,49 @@ describe.only('ModifyCollateral Withdraw', () => {
     describe('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
-      let initialMarginReq: ethers.BigNumber;
       let withdrawableMargin: ethers.BigNumber;
 
       before('withdraw allowed amount', async () => {
-        [initialMarginReq] = await systems()
+        const [requiredInitialMargin, , maxLiquidationReward] = await systems()
           .PerpsMarket.connect(trader3())
-          .getRequiredMargins(accountId);
+          .getRequiredMargins(trader3AccountId);
 
-        const btcPnl = getQuantoPnl({
-          baseAssetStartPrice: btcFillPrice,
-          baseAssetEndPrice: btcPrice,
-          quantoAssetStartPrice: ethPrice,
-          quantoAssetEndPrice: ethPrice,
-          quantoSizeDelta: quantoPositionSizeBtcMarket,
-        });
+        const availableMargin = await systems()
+          .PerpsMarket.connect(trader3())
+          .getAvailableMargin(trader3AccountId);
 
-        const ethPnl = getQuantoPnl({
-          baseAssetStartPrice: ethFillPrice,
-          baseAssetEndPrice: ethPrice,
-          quantoAssetStartPrice: ethPrice,
-          quantoAssetEndPrice: ethPrice,
-          quantoSizeDelta: quantoPositionSizeEthMarket,
-        });
+        /**
+         * per the contract:
+         * availableWithdrawableCollateralUsd = availableMargin - (initialRequiredMargin + liquidationReward)
+         */
 
-        // initialPnl is denominated in quanto asset (snxETH)
-        initialPnl = btcPnl.add(ethPnl).mul(ethPrice).div(ONE_ETHER);
+        // results to 97492500000000000000000 * -1
+        withdrawableMargin = availableMargin
+          .sub(requiredInitialMargin.add(maxLiquidationReward))
+          .mul(-1);
 
-        withdrawableMargin = (
-          await systems().PerpsMarket.connect(trader3()).getWithdrawableMargin(accountId)
-        ).mul(-1);
+        // results to 97495000000000000000000
+        const actualWithdrawableMargin = await systems()
+          .PerpsMarket.connect(trader3())
+          .getWithdrawableMargin(trader3AccountId);
 
+        /**
+         * two issues:
+         * 1) `withdrawableMargin` != `actualWithdrawableMargin`; looking at contracts, getAccountRequiredMargins() is used to fetch
+         *    initialRequiredMargin and liquidationReward in both cases.
+         *    However, calling getWithdrawableMargin() directly excutes this logic: `withdrawableMargin = availableMargin - requiredMargin.toInt()`
+         *    but when attempting to withdraw collateral, the system calculates margin via this logic:
+         *    availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin. Why discrepency?
+         *
+         * 2) `withdrawableMargin` nor `actualWithdrawableMargin` are even close to `availableUsdDenominated` value thrown
+         *    by the InsufficientCollateral custom error (which is 80000000000000000000000 and is calculate internally
+         *    via getAvailableMargin() and getAccountRequiredMargins())
+         */
+
+        // 🚨 system throws stating max collateral available to withdraw is 80000000000000000000000
         await systems()
           .PerpsMarket.connect(trader3())
-          .modifyCollateral(accountId, usdMarketId, withdrawableMargin);
+          .modifyCollateral(trader3AccountId, usdMarketId, withdrawableMargin);
       });
 
       // why restore "after" - and after what?
@@ -444,7 +433,7 @@ describe.only('ModifyCollateral Withdraw', () => {
 
       // what is the point of this?
       it('has correct available margin', async () => {
-        const availableMargin = await systems().PerpsMarket.getAvailableMargin(accountId);
+        const availableMargin = await systems().PerpsMarket.getAvailableMargin(trader3AccountId);
         const expectedAvailableMargin = initialAccountMargin
           .add(initialPnl)
           .add(withdrawableMargin);
@@ -458,7 +447,7 @@ describe.only('ModifyCollateral Withdraw', () => {
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader1())
-            .modifyCollateral(accountId, usdMarketId, bn(-18_001)),
+            .modifyCollateral(trader3AccountId, usdMarketId, bn(-18_001)),
           `InsufficientCollateral("${usdMarketId}", "${bn(18_000)}", "${bn(18_001)}")`
         );
       });
@@ -475,7 +464,7 @@ describe.only('ModifyCollateral Withdraw', () => {
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader1())
-            .modifyCollateral(accountId, usdMarketId, bn(-18000)),
+            .modifyCollateral(trader3AccountId, usdMarketId, bn(-18000)),
           `InsufficientCollateralAvailableForWithdraw("${bn(14000).sub(
             liquidationRewards.toBN()
           )}", "${bn(18000)}")`
@@ -491,8 +480,8 @@ describe.only('ModifyCollateral Withdraw', () => {
           await assertRevert(
             systems()
               .PerpsMarket.connect(trader1())
-              .modifyCollateral(accountId, usdMarketId, bn(-100)),
-            `AccountLiquidatable("${accountId}")`
+              .modifyCollateral(trader3AccountId, usdMarketId, bn(-100)),
+            `AccountLiquidatable("${trader3AccountId}")`
           );
         });
       });
