@@ -89,6 +89,8 @@ export const bootstrapPerpsMarkets = (
       contracts.Core.address,
       contracts.SpotMarket.address
     );
+
+    await contracts.PerpsMarket.connect(r.owner()).setPerpsMarketName('SuperMarket');
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
       {
         marketId: superMarketId,
