@@ -77,13 +77,13 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions;
+        mapping(bytes32 => uint256) _positions;
     }
 }
 
 // @custom:artifact @synthetixio/core-modules/contracts/modules/DecayTokenModule.sol:DecayTokenModule
 contract DecayTokenModule {
-    uint private constant SECONDS_PER_YEAR = 31536000;
+    uint256 private constant SECONDS_PER_YEAR = 31536000;
 }
 
 // @custom:artifact @synthetixio/core-modules/contracts/modules/TokenModule.sol:TokenModule
@@ -161,7 +161,7 @@ contract PythStructs {
         int64 price;
         uint64 conf;
         int32 expo;
-        uint publishTime;
+        uint256 publishTime;
     }
     struct PriceFeed {
         bytes32 id;
