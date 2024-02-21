@@ -2799,7 +2799,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
@@ -2820,7 +2820,7 @@ __metadata:
     "@typechain/hardhat": "npm:^9.1.0"
     dotenv: "npm:^16.4.3"
     hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.10.6"
+    hardhat-cannon: "npm:2.11.6"
     hardhat-contract-sizer: "npm:^2.10.0"
     hardhat-gas-reporter: "npm:^1.0.10"
     hardhat-ignore-warnings: "npm:^0.2.9"
@@ -2848,7 +2848,7 @@ __metadata:
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
   languageName: unknown
@@ -2860,7 +2860,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.11.6"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -2874,7 +2874,7 @@ __metadata:
     "@ethersproject/abi": "npm:^5.7.0"
     "@istanbuljs/nyc-config-typescript": "npm:^1.0.2"
     "@types/prompts": "npm:^2.4.9"
-    "@usecannon/builder": "npm:2.10.6"
+    "@usecannon/builder": "npm:2.11.6"
     chalk: "npm:^4.1.2"
     ethereumjs-util: "npm:^7.1.5"
     ethers: "npm:^5.7.2"
@@ -2936,7 +2936,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
   languageName: unknown
@@ -2982,7 +2982,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
@@ -3016,7 +3016,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node": "npm:^20.11.17"
     ethers: "npm:^5.7.2"
@@ -3033,7 +3033,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.11.6"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3051,10 +3051,10 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.11.6"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
@@ -3078,18 +3078,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@npm:^3.3.0, @synthetixio/router@npm:^3.3.2":
-  version: 3.3.2
-  resolution: "@synthetixio/router@npm:3.3.2"
+"@synthetixio/router@npm:^3.3.0, @synthetixio/router@npm:^3.3.6":
+  version: 3.3.7
+  resolution: "@synthetixio/router@npm:3.3.7"
   dependencies:
     "@ethersproject/keccak256": "npm:^5.7.0"
     debug: "npm:^4.3.4"
     mustache: "npm:^4.2.0"
   peerDependencies:
-    "@usecannon/builder": ^2.0.0
     hardhat: ^2.0.0
     solc: ^0.8.17
-  checksum: 10/8630a6947970132b21b7c6b40a52fbe9d269a5e84585cf96516f2b1ffca162a69d295d42743b933c44be68eafa0573f3d56e76648999028f713c95fb71ae9a68
+  checksum: 10/f79d119b249c556ca083e4654ca633c179085f9948933ecbb9aaadced83a5fae74dd6b7c91ac7edd702895fe98d65a7d397d7635d2ce6a059a413101c46e2ecb
   languageName: node
   linkType: hard
 
@@ -3102,10 +3101,10 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.10.6"
+    hardhat-cannon: "npm:2.11.6"
     solidity-coverage: "npm:^0.8.7"
   languageName: unknown
   linkType: soft
@@ -3131,7 +3130,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.11.6"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3149,10 +3148,10 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.2"
+    "@synthetixio/router": "npm:^3.3.6"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node-fetch": "npm:^2.6.11"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.11.6"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     node-fetch: "npm:^2.7.0"
@@ -15398,7 +15397,7 @@ __metadata:
     "@types/node": "npm:^20.11.17"
     "@typescript-eslint/eslint-plugin": "npm:^7.0.1"
     "@typescript-eslint/parser": "npm:^7.0.1"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.11.6"
     eslint: "npm:^8.56.0"
     eslint-plugin-no-only-tests: "npm:^3.1.0"
     lint-staged: "npm:^15.2.2"
