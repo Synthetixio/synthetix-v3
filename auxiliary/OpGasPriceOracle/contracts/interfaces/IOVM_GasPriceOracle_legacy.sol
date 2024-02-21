@@ -19,7 +19,7 @@ pragma solidity >=0.8.11 <0.9.0;
  *
  * see https://community.optimism.io/docs/useful-tools/oracles/#types-of-oracles
  */
-interface IOVM_GasPriceOracle {
+interface IOVM_GasPriceOracle_legacy {
     /**
      * @notice Number of decimals used in the scalar.
      */
@@ -41,37 +41,35 @@ interface IOVM_GasPriceOracle {
      *
      * @return Current L2 gas price (base fee).
      */
-    function gasPrice() external view returns (uint256); //ss
+    function gasPrice() external view returns (uint256);
 
     /**
      * @notice Retrieves the current base fee.
      *
      * @return Current L2 base fee.
      */
-    function baseFee() external view returns (uint256); // sss
+    function baseFee() external view returns (uint256);
 
     /**
      * @notice Retrieves the current fee overhead.
-     * @notice deprecated
      *
      * @return Current fee overhead.
      */
-    function overhead() external view returns (uint256); // sss
+    function overhead() external view returns (uint256);
 
     /**
      * @notice Retrieves the current fee scalar.
-     * @notice deprecated
      *
      * @return Current fee scalar.
      */
-    function scalar() external view returns (uint256); // sss
+    function scalar() external view returns (uint256);
 
     /**
      * @notice Retrieves the latest known L1 base fee.
      *
      * @return Latest known L1 base fee.
      */
-    function l1BaseFee() external view returns (uint256); //ss
+    function l1BaseFee() external view returns (uint256);
 
     /**
      * @custom:legacy
@@ -79,7 +77,7 @@ interface IOVM_GasPriceOracle {
      *
      * @return Number of decimals used in the scalar.
      */
-    function decimals() external pure returns (uint256); //ss
+    function decimals() external pure returns (uint256);
 
     /**
      * @notice Computes the amount of L1 gas used for a transaction. Adds the overhead which
@@ -91,26 +89,5 @@ interface IOVM_GasPriceOracle {
      *
      * @return Amount of L1 gas used to publish the transaction.
      */
-    function getL1GasUsed(bytes memory _data) external view returns (uint256); //ss
-
-    /// @notice Set chain to be Ecotone chain (callable by depositor account)
-    function setEcotone() external;
-
-    /// @notice Indicates whether the network has gone through the Ecotone upgrade.
-    function isEcotone() external view returns (bool);
-
-    /// @notice Semantic version.
-    function version() external view returns (string memory);
-
-    /// @notice Retrieves the current blob base fee.
-    /// @return Current blob base fee.
-    function blobBaseFee() external view returns (uint256);
-
-    /// @notice Retrieves the current base fee scalar.
-    /// @return Current base fee scalar.
-    function baseFeeScalar() external view returns (uint32);
-
-    /// @notice Retrieves the current blob base fee scalar.
-    /// @return Current blob base fee scalar.
-    function blobBaseFeeScalar() external view returns (uint32);
+    function getL1GasUsed(bytes memory _data) external view returns (uint256);
 }

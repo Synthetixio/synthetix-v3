@@ -74,16 +74,19 @@ contract OpGasPriceOracle is IExternalNode {
     ) internal view returns (uint256 costOfExecutionGrossEth) {
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);
 
-        uint256 gasPriceL2 = ovmGasPriceOracle.gasPrice();
-        uint256 overhead = ovmGasPriceOracle.overhead();
-        uint256 l1BaseFee = ovmGasPriceOracle.l1BaseFee();
+        uint256 gasPriceL2 = block.basefee;
+        uint256 baseFeeScalar = ovmGasPriceOracle.baseFeeScalar();
+        uint256 l1BaseFee = ovmGasPriceOracle.baseFee();
+        uint256 blobBaseFeeScalar = ovmGasPriceOracle.blobBaseFeeScalar();
+        uint256 blobBaseFee = ovmGasPriceOracle.blobBaseFee();
         uint256 decimals = ovmGasPriceOracle.decimals();
-        uint256 scalar = ovmGasPriceOracle.scalar();
 
         (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
 
-        costOfExecutionGrossEth = ((((gasUnitsL1 + overhead) * l1BaseFee * scalar) /
-            10 ** decimals) + (gasUnitsL2 * gasPriceL2));
+        uint256 l1GasPrice = (baseFeeScalar * l1BaseFee * 16 + blobBaseFeeScalar * blobBaseFee) /
+            (16 * 10 ** decimals);
+
+        costOfExecutionGrossEth = ((gasUnitsL1 * l1GasPrice) + (gasUnitsL2 * gasPriceL2));
     }
 
     function getGasUnits(
