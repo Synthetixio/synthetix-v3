@@ -1,13 +1,13 @@
-import { ethers as Ethers, constants, ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import assert from 'assert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import { SynthRouter } from './generated/typechain';
+import { assertAddressEqual } from '@synthetixio/core-utils/utils/assertions/assert-address';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
-
+import assert from 'assert';
+import { constants, ethers } from 'ethers';
 import { ISynthTokenModule__factory } from '../typechain-types/index';
+import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
+import { SynthRouter } from './generated/typechain';
 
 describe('SpotMarketFactory', () => {
   const { systems, signers, marketId, aggregator, restore } = bootstrapTraders(
@@ -15,7 +15,7 @@ describe('SpotMarketFactory', () => {
   ); // creates traders with USD
 
   let registerTxn: ethers.providers.TransactionResponse, synthMarketId: ethers.BigNumber;
-  let marketOwner: Ethers.Signer, user1: Ethers.Signer, newMarketOwner: Ethers.Signer;
+  let marketOwner: ethers.Signer, user1: ethers.Signer, newMarketOwner: ethers.Signer;
   let synth: SynthRouter;
 
   before('identify actors', async () => {
@@ -34,7 +34,7 @@ describe('SpotMarketFactory', () => {
     describe('with zero address for synth owner', () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().SpotMarket.createSynth(tokenName, 'sBTC', Ethers.constants.AddressZero),
+          systems().SpotMarket.createSynth(tokenName, 'sBTC', ethers.constants.AddressZero),
           'InvalidMarketOwner'
         );
       });
@@ -99,8 +99,8 @@ describe('SpotMarketFactory', () => {
   });
 
   describe('price data', () => {
-    let tx: Ethers.providers.TransactionResponse | Ethers.providers.TransactionReceipt;
-    let nodeId100: Ethers.utils.BytesLike, nodeId200: Ethers.utils.BytesLike;
+    let tx: ethers.providers.TransactionResponse | ethers.providers.TransactionReceipt;
+    let nodeId100: ethers.utils.BytesLike, nodeId200: ethers.utils.BytesLike;
     const priceTolerance = 100;
 
     before('create dummy nodes', async () => {
@@ -144,6 +144,7 @@ describe('SpotMarketFactory', () => {
 
     describe('when upgraded impl is set', () => {
       let tx: ethers.providers.TransactionResponse;
+
       before(async () => {
         // just set it to USD for testing purposes
         await systems().SpotMarket.setSynthImplementation(systems().USDRouter.address);
@@ -151,7 +152,7 @@ describe('SpotMarketFactory', () => {
       });
 
       it('has upgraded impl address', async () => {
-        assert.equal(
+        assertAddressEqual(
           await systems().SpotMarket.getSynthImpl(marketId()),
           systems().USDRouter.address
         );
@@ -243,7 +244,7 @@ describe('SpotMarketFactory', () => {
       await systems().USD.connect(user1).approve(systems().SpotMarket.address, bn(2000));
       await systems()
         .SpotMarket.connect(user1)
-        .buy(marketId(), bn(2000), bn(2), Ethers.constants.AddressZero);
+        .buy(marketId(), bn(2000), bn(2), ethers.constants.AddressZero);
     });
 
     it('market reported debt should be 1800 = 2 * 900 (with 18decimals)', async () => {
@@ -254,7 +255,7 @@ describe('SpotMarketFactory', () => {
       await synth.connect(user1).approve(systems().SpotMarket.address, bn(1));
       await systems()
         .SpotMarket.connect(user1)
-        .sell(marketId(), bn(1), bn(900), Ethers.constants.AddressZero);
+        .sell(marketId(), bn(1), bn(900), ethers.constants.AddressZero);
     });
 
     it('market reported debt should be 900 = 1 * 900 (with 18decimals)', async () => {
@@ -277,7 +278,7 @@ describe('SpotMarketFactory', () => {
       await systems().USD.connect(user1).approve(systems().SpotMarket.address, bn(10000));
       await systems()
         .SpotMarket.connect(user1)
-        .buy(marketId(), bn(10000), bn(10), Ethers.constants.AddressZero);
+        .buy(marketId(), bn(10000), bn(10), ethers.constants.AddressZero);
     });
 
     describe('when collateral leverage is zero', () => {
