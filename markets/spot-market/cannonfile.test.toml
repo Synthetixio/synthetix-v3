@@ -63,7 +63,7 @@ contracts = [
     "AsyncOrderConfigurationModule",
     "WrapperModule",
     "MarketConfigurationModule",
-    "FeatureFlagModule"
+    "FeatureFlagModule",
 ]
 
 [invoke.upgrade_spot_market_proxy]
@@ -98,7 +98,7 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = [
     "0x72656769737465724d61726b6574000000000000000000000000000000000000",
-    "<%= contracts.SpotMarketProxy.address %>"
+    "<%= contracts.SpotMarketProxy.address %>",
 ] # formatBytes32String("registerMarket")
 
 [invoke.addCreateSynthToFeatureFlag]
@@ -107,7 +107,7 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = [
     "0x63726561746553796e7468000000000000000000000000000000000000000000",
-    "<%= settings.owner %>"
+    "<%= settings.owner %>",
 ] # formatBytes32String("createSynth")
 
 [contract.FeeCollectorMock]

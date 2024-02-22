@@ -30,8 +30,7 @@ interface IPerpsMarketFactoryModule is IMarket {
      */
     function initializeFactory(
         ISynthetixSystem synthetix,
-        ISpotMarketSystem spotMarket,
-        string memory marketName
+        ISpotMarketSystem spotMarket
     ) external returns (uint128);
 
     /**

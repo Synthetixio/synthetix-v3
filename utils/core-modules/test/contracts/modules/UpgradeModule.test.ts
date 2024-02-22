@@ -1,5 +1,5 @@
+import { assertAddressEqual } from '@synthetixio/core-utils/utils/assertions/assert-address';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { UpgradeModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
@@ -39,7 +39,7 @@ describe('UpgradeModule', function () {
     });
 
     it('sets a new implementation using the owner address', async function () {
-      assert.equal(await UpgradeModule.getImplementation(), NewImplementation.address);
+      assertAddressEqual(await UpgradeModule.getImplementation(), NewImplementation.address);
     });
   });
 });

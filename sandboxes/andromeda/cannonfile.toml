@@ -52,7 +52,7 @@ func = "setConfig"
 args = [
     "<%= formatBytes32String('accountTimeoutWithdraw') %>",
     # seconds
-    "<%= hexZeroPad(hexlify(0), 32) %>"
+    "<%= hexZeroPad(hexlify(0), 32) %>",
 ]
 
 #
@@ -96,8 +96,8 @@ func = "setPoolConfiguration"
 args = [
     "<%= extras.spartan_council_pool_id %>",
     [
-        { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" }
-    ]
+        { marketId = "<%= imports.perps_factory.extras.superMarketId %>", weightD18 = 1, maxDebtShareValueD18 = "<%= parseEther('1') %>" },
+    ],
 ]
 
 #
@@ -139,7 +139,8 @@ func = "registerNode"
 args = [
     8, # 8 = constant
     "<%= defaultAbiCoder.encode(['int256'], [parseEther('1')]) %>", # 1 parameter: price, always $1
-    []
+    [
+    ],
 ]
 extra.usdc_oracle_id.event = "NodeRegistered"
 extra.usdc_oracle_id.arg = 0
@@ -154,7 +155,7 @@ args = [
     "<%= extras.usdc_oracle_id %>",
     "<%= extras.usdc_oracle_id %>",
     # staleness tolerance
-    "3600"
+    "3600",
 ]
 
 [setting.max_market_collateral_for_synth_usdc]
@@ -167,7 +168,7 @@ func = "configureMaximumMarketCollateral"
 args = [
     "<%= extras.synth_usdc_market_id %>",
     "<%= imports.usdc_token.contracts.MintableToken.address %>",
-    "<%= parseEther(settings.max_market_collateral_for_synth_usdc) %>"
+    "<%= parseEther(settings.max_market_collateral_for_synth_usdc) %>",
 ]
 
 [invoke.initialise_synth_usdc_wrapper_with_unlimited_cap]
@@ -178,13 +179,13 @@ func = "setWrapper"
 args = [
     "<%= extras.synth_usdc_market_id %>",
     "<%= imports.usdc_token.contracts.MintableToken.address %>",
-    "<%= parseEther(settings.max_market_collateral_for_synth_usdc) %>"
+    "<%= parseEther(settings.max_market_collateral_for_synth_usdc) %>",
 ]
 
 [invoke.configure_usdc_token_as_collateral_with_disabled_deposits]
 target = ["synthetix.CoreProxy"]
 fromCall.func = "owner"
-func = "configureCollateral" # "args" see below
+func = "configureCollateral"     # "args" see below
 
 [[invoke.configure_usdc_token_as_collateral_with_disabled_deposits.args]]
 tokenAddress = "<%= imports.usdc_token.contracts.MintableToken.address %>"
@@ -198,7 +199,7 @@ depositingEnabled = false
 [invoke.configure_synth_usdc_collateral]
 target = ["synthetix.CoreProxy"]
 fromCall.func = "owner"
-func = "configureCollateral" # "args" see below
+func = "configureCollateral"     # "args" see below
 
 [[invoke.configure_synth_usdc_collateral.args]]
 tokenAddress = "<%= extras.synth_usdc_token_address %>"
@@ -220,7 +221,8 @@ func = "registerNode"
 args = [
     8, # 8 = constant
     "<%= defaultAbiCoder.encode(['int256'], [parseEther('0.1')]) %>", # 1 parameter: price, always 10c
-    []
+    [
+    ],
 ]
 extra.perps_keeper_cost_usd_oracle_id.event = "NodeRegistered"
 extra.perps_keeper_cost_usd_oracle_id.arg = 0
@@ -263,7 +265,7 @@ args = [
     # uint256 maxKeeperRewardUsd
     "<%= parseEther('500') %>",
     # uint256 maxKeeperScalingRatioD18
-    "<%= parseEther('1') %>"
+    "<%= parseEther('1') %>",
 ]
 
 [invoke.configure_perps_max_collateral_for_susd]
@@ -273,7 +275,7 @@ func = "setCollateralConfiguration"
 args = [
     # 0 - sUSD
     "0",
-    "<%= MaxUint256 %>"
+    "<%= MaxUint256 %>",
 ]
 
 [invoke.configure_perps_synth_deduction_priority]
@@ -283,8 +285,8 @@ func = "setSynthDeductionPriority"
 args = [
     [
         # 0 - sUSD
-        "0"
-    ]
+        "0",
+    ],
 ]
 
 [invoke.configure_per_account_caps_perps]
@@ -295,7 +297,7 @@ args = [
     # uint128 maxPositionsPerAccount,
     "5",
     # uint128 maxCollateralsPerAccount
-    "3"
+    "3",
 ]
 
 [invoke.configure_perps_market_keeper_cost_node_id]
@@ -345,7 +347,7 @@ extra.perps_eth_market_id.event = "MarketCreated"
 extra.perps_eth_market_id.arg = 0
 depends = [
     'invoke.permit_owner_to_register_markets',
-    'invoke.permit_everyone_to_use_perps'
+    'invoke.permit_everyone_to_use_perps',
 ]
 
 [invoke.register_eth_oracle_node_with_constant_price]
@@ -354,7 +356,8 @@ func = "registerNode"
 args = [
     8, # 8 = constant
     "<%= defaultAbiCoder.encode(['int256'], [parseEther('1000')]) %>", # 1 parameter: price
-    []
+    [
+    ],
 ]
 extra.eth_oracle_id.event = "NodeRegistered"
 extra.eth_oracle_id.arg = 0
@@ -367,7 +370,7 @@ args = [
     "<%= extras.perps_eth_market_id %>",
     "<%= extras.eth_oracle_id %>",
     # big_cap_strict_staleness_tolerance
-    "3600"
+    "3600",
 ]
 
 [invoke.configure_settlement_strategy_for_perps_eth]
@@ -377,7 +380,7 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_eth_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_eth_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false }
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_eth_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false },
 ]
 extra.synth_eth_settlement_strategy.event = "SettlementStrategyAdded"
 extra.synth_eth_settlement_strategy.arg = 1
@@ -392,7 +395,7 @@ args = [
     # uint256 skewScale
     "<%= parseEther('1000000') %>",
     # uint256 maxFundingVelocity
-    "<%= parseEther('9') %>"
+    "<%= parseEther('9') %>",
 ]
 
 [invoke.configure_order_fees_for_perps_eth]
@@ -405,7 +408,7 @@ args = [
     # uint256 makerFeeRatio
     "<%= parseEther('0.0002') %>",
     # uint256 takerFeeRatio
-    "<%= parseEther('0.0005') %>"
+    "<%= parseEther('0.0005') %>",
 ]
 
 [invoke.configure_max_market_size_for_perps_eth]
@@ -416,7 +419,7 @@ args = [
     # uint128 marketId
     "<%= extras.perps_eth_market_id %>",
     # uint256 maxMarketSize
-    "<%= parseEther(String(100_000)) %>"
+    "<%= parseEther(String(100_000)) %>",
 ]
 
 [invoke.configure_max_liquidation_parameters_for_perps_eth]
@@ -433,7 +436,7 @@ args = [
     # uint256 maxLiquidationPd
     "<%= parseEther('0.0016') %>",
     # address endorsedLiquidator
-    "0x0000000000000000000000000000000000000000"
+    "0x0000000000000000000000000000000000000000",
 ]
 
 [invoke.configure_liquidation_parameters_for_perps_eth]
@@ -452,7 +455,7 @@ args = [
     # uint256 flagRewardRatioD18
     "<%= parseEther('0.01') %>",
     # uint256 minimumPositionMargin
-    "<%= parseEther('0') %>"
+    "<%= parseEther('0') %>",
 ]
 
 [invoke.configure_locked_oi_ratio_for_perps_eth]
@@ -463,7 +466,7 @@ args = [
     # uint128 marketId
     "<%= extras.perps_eth_market_id %>",
     # uint256 lockedOiRatioD18
-    "<%= parseEther('0.5') %>"
+    "<%= parseEther('0.5') %>",
 ]
 
 #
@@ -507,7 +510,7 @@ extra.perps_btc_market_id.event = "MarketCreated"
 extra.perps_btc_market_id.arg = 0
 depends = [
     'invoke.permit_owner_to_register_markets',
-    'invoke.permit_everyone_to_use_perps'
+    'invoke.permit_everyone_to_use_perps',
 ]
 
 [invoke.register_btc_oracle_node_with_constant_price]
@@ -516,7 +519,8 @@ func = "registerNode"
 args = [
     8, # 8 = constant
     "<%= defaultAbiCoder.encode(['int256'], [parseEther(String(30_000))]) %>", # 1 parameter: price
-    []
+    [
+    ],
 ]
 extra.btc_oracle_id.event = "NodeRegistered"
 extra.btc_oracle_id.arg = 0
@@ -529,7 +533,7 @@ args = [
     "<%= extras.perps_btc_market_id %>",
     "<%= extras.btc_oracle_id %>",
     # big_cap_strict_staleness_tolerance
-    "3600"
+    "3600",
 ]
 
 [invoke.configure_settlement_strategy_for_perps_btc]
@@ -539,7 +543,7 @@ func = "addSettlementStrategy"
 args = [
     "<%= extras.perps_btc_market_id %>",
     # strategyType = 0 (pyth)
-    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_btc_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false }
+    { strategyType = "0", settlementDelay = "15", settlementWindowDuration = "60", priceVerificationContract = "<%= imports.pyth_erc7412_wrapper.contracts.PythERC7412Wrapper.address %>", feedId = "<%= settings.pyth_btc_feed_id %>", settlementReward = "<%= parseEther('0.1') %>", disabled = false },
 ]
 extra.btc_pyth_settlement_strategy.event = "SettlementStrategyAdded"
 extra.btc_pyth_settlement_strategy.arg = 2
@@ -554,7 +558,7 @@ args = [
     # uint256 skewScale
     "<%= parseEther('1000000') %>",
     # uint256 maxFundingVelocity
-    "<%= parseEther('9') %>"
+    "<%= parseEther('9') %>",
 ]
 
 [invoke.configure_order_fees_for_perps_btc]
@@ -567,7 +571,7 @@ args = [
     # uint256 makerFeeRatio
     "<%= parseEther('0.0007') %>",
     # uint256 takerFeeRatio
-    "<%= parseEther('0.0003') %>"
+    "<%= parseEther('0.0003') %>",
 ]
 
 [invoke.configure_max_market_size_for_perps_btc]
@@ -578,7 +582,7 @@ args = [
     # uint128 marketId
     "<%= extras.perps_btc_market_id %>",
     # uint256 maxMarketSize
-    "<%= parseEther(String(30)) %>"
+    "<%= parseEther(String(30)) %>",
 ]
 
 [invoke.configure_max_liquidation_parameters_for_perps_btc]
@@ -595,7 +599,7 @@ args = [
     # uint256 maxLiquidationPd
     "<%= parseEther('0.0016') %>",
     # address endorsedLiquidator
-    "0x0000000000000000000000000000000000000000"
+    "0x0000000000000000000000000000000000000000",
 ]
 
 [invoke.configure_liquidation_parameters_for_perps_btc]
@@ -614,7 +618,7 @@ args = [
     # uint256 flagRewardRatioD18
     "<%= parseEther('0.01') %>",
     # uint256 minimumPositionMargin
-    "<%= parseEther('0') %>"
+    "<%= parseEther('0') %>",
 ]
 
 [invoke.configure_locked_oi_ratio_for_perps_btc]
@@ -625,5 +629,5 @@ args = [
     # uint128 marketId
     "<%= extras.perps_btc_market_id %>",
     # uint256 lockedOiRatioD18
-    "<%= parseEther('0.5') %>"
+    "<%= parseEther('0.5') %>",
 ]

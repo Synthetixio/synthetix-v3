@@ -18,6 +18,7 @@ import {
   PragmaDirective,
   StructDefinition,
   UnaryOperation,
+  BinaryOperation,
   UserDefinedTypeName,
   VariableDeclaration,
   VariableDeclarationStatement,
@@ -242,6 +243,10 @@ const _render = {
 
   UnaryOperation(node: UnaryOperation): string {
     return `${node.operator}${render(node.subExpression)}`;
+  },
+
+  BinaryOperation(node: BinaryOperation): string {
+    return `${render(node.leftExpression)} ${node.operator} ${render(node.rightExpression)}`;
   },
 };
 

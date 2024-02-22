@@ -13,9 +13,9 @@ library Council {
         // Council member addresses
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
-        mapping(address => uint) councilTokenIds;
+        mapping(address => uint256) councilTokenIds;
         // id of the last election
-        uint lastElectionId;
+        uint256 lastElectionId;
         ElectionSettings.Data nextElectionSettings;
     }
 
@@ -37,7 +37,7 @@ library Council {
         }
     }
 
-    function newElection(Data storage self) internal returns (uint) {
+    function newElection(Data storage self) internal returns (uint256) {
         return ++self.lastElectionId;
     }
 

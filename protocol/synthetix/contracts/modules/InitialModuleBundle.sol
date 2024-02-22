@@ -9,6 +9,4 @@ import "./common/UpgradeModule.sol";
 // In the future on live networks, we may want to find some way to hardcode the owner address here to prevent grieving
 
 // solhint-disable-next-line no-empty-blocks
-contract InitialModuleBundle is OwnerModule, UpgradeModule {
-
-}
+contract InitialModuleBundle is OwnerModule, UpgradeModule {}

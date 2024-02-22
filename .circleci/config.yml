@@ -141,14 +141,14 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
 
@@ -180,12 +180,32 @@ jobs:
             - "protocol/oracle-manager/artifacts"
             - "protocol/oracle-manager/cache"
             - "protocol/oracle-manager/typechain-types"
+
             - "markets/perps-market/artifacts"
             - "markets/perps-market/cache"
             - "markets/perps-market/typechain-types"
             - "markets/spot-market/artifacts"
             - "markets/spot-market/cache"
             - "markets/spot-market/typechain-types"
+            - "markets/legacy-market/artifacts"
+            - "markets/legacy-market/cache"
+            - "markets/legacy-market/typechain-types"
+
+            - "auxiliary/BuybackSnx/artifacts"
+            - "auxiliary/BuybackSnx/cache"
+            - "auxiliary/BuybackSnx/typechain-types"
+            - "auxiliary/OpGasPriceOracle/artifacts"
+            - "auxiliary/OpGasPriceOracle/cache"
+            - "auxiliary/OpGasPriceOracle/typechain-types"
+            - "auxiliary/PythERC7412Wrapper/artifacts"
+            - "auxiliary/PythERC7412Wrapper/cache"
+            - "auxiliary/PythERC7412Wrapper/typechain-types"
+            - "auxiliary/SpotMarketOracle/artifacts"
+            - "auxiliary/SpotMarketOracle/cache"
+            - "auxiliary/SpotMarketOracle/typechain-types"
+            - "auxiliary/TrustedMulticallForwarder/artifacts"
+            - "auxiliary/TrustedMulticallForwarder/cache"
+            - "auxiliary/TrustedMulticallForwarder/typechain-types"
 
       - run: yarn workspaces foreach --all --verbose run check:storage
 
@@ -208,14 +228,14 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: << parameters.parallelism >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - restore_cache:
           keys:
@@ -290,14 +310,14 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - restore_cache:
           keys:
@@ -415,14 +435,14 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
       - restore_cache:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
@@ -460,8 +480,8 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      - GIT_PAGER: cat
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
       - add_ssh_keys:
@@ -475,10 +495,10 @@ jobs:
 
       - checkout
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - run:
           name: "Build TS"
@@ -517,8 +537,8 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      - GIT_PAGER: cat
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
       - run:
@@ -532,10 +552,10 @@ jobs:
             git checkout $CIRCLE_SHA1
 
       - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
+      #- install-ipfs
+      #- run-ipfs-daemon
       - yarn-install
-      - wait-for-ipfs
+      #- wait-for-ipfs
 
       - run:
           name: "Generate updated subgraph code"
@@ -594,7 +614,7 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 7
+          parallelism: 8
 
       #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"

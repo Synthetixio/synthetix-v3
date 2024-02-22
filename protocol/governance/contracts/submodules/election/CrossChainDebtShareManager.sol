@@ -11,10 +11,10 @@ contract CrossChainDebtShareManager is ElectionBase {
     error InvalidMerkleProof();
     error CrossChainDebtShareAlreadyDeclared();
 
-    event CrossChainDebtShareMerkleRootSet(bytes32 merkleRoot, uint blocknumber, uint epoch);
-    event CrossChainDebtShareDeclared(address user, uint debtShare);
+    event CrossChainDebtShareMerkleRootSet(bytes32 merkleRoot, uint256 blocknumber, uint256 epoch);
+    event CrossChainDebtShareDeclared(address user, uint256 debtShare);
 
-    function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
+    function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint256 blocknumber) internal {
         CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
             Council.load().lastElectionId
         ];
@@ -61,7 +61,7 @@ contract CrossChainDebtShareManager is ElectionBase {
         return debtShareData.merkleRoot;
     }
 
-    function _getCrossChainDebtShareMerkleRootBlockNumber() internal view returns (uint) {
+    function _getCrossChainDebtShareMerkleRootBlockNumber() internal view returns (uint256) {
         CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
             Council.load().lastElectionId
         ];
@@ -73,7 +73,7 @@ contract CrossChainDebtShareManager is ElectionBase {
         return debtShareData.merkleRootBlockNumber;
     }
 
-    function _getDeclaredCrossChainDebtShare(address user) internal view returns (uint) {
+    function _getDeclaredCrossChainDebtShare(address user) internal view returns (uint256) {
         CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
             Council.load().lastElectionId
         ];

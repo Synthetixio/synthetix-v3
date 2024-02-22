@@ -49,7 +49,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert ExceedsMaxUsdAmount(maxUsdAmount, usdAmountCharged);
         }
 
-        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount, Price.Tolerance.STRICT);
+        (uint256 sellUsd, ) = quoteSellExactIn(marketId, synthAmount, Price.Tolerance.STRICT);
         if (sellUsd > usdAmountCharged) {
             revert InvalidPrices();
         }
@@ -126,7 +126,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, synthAmount);
         }
 
-        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount, Price.Tolerance.STRICT);
+        (uint256 sellUsd, ) = quoteSellExactIn(marketId, synthAmount, Price.Tolerance.STRICT);
         if (sellUsd > usdAmount) {
             revert InvalidPrices();
         }
@@ -266,7 +266,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
         }
 
-        (uint buySynths, ) = quoteBuyExactIn(marketId, returnAmount, Price.Tolerance.STRICT);
+        (uint256 buySynths, ) = quoteBuyExactIn(marketId, returnAmount, Price.Tolerance.STRICT);
         if (buySynths > synthAmount) {
             revert InvalidPrices();
         }
@@ -323,7 +323,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert ExceedsMaxSynthAmount(maxSynthAmount, synthToBurn);
         }
 
-        (uint buySynths, ) = quoteBuyExactIn(marketId, usdAmount, Price.Tolerance.STRICT);
+        (uint256 buySynths, ) = quoteBuyExactIn(marketId, usdAmount, Price.Tolerance.STRICT);
         if (buySynths > synthToBurn) {
             revert InvalidPrices();
         }

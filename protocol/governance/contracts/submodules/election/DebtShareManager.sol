@@ -17,18 +17,18 @@ contract DebtShareManager is ElectionBase {
     error DebtShareSnapshotIdNotSet();
 
     event DebtShareContractSet(address contractAddress);
-    event DebtShareSnapshotIdSet(uint snapshotId);
+    event DebtShareSnapshotIdSet(uint256 snapshotId);
 
-    function _setDebtShareSnapshotId(uint snapshotId) internal {
+    function _setDebtShareSnapshotId(uint256 snapshotId) internal {
         DebtShare.Data storage store = DebtShare.load();
 
-        uint currentEpochIndex = Council.load().lastElectionId;
+        uint256 currentEpochIndex = Council.load().lastElectionId;
         store.debtShareIds[currentEpochIndex] = snapshotId.to128();
 
         emit DebtShareSnapshotIdSet(snapshotId);
     }
 
-    function _getDebtShareSnapshotId() internal view returns (uint) {
+    function _getDebtShareSnapshotId() internal view returns (uint256) {
         DebtShare.Data storage store = DebtShare.load();
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
@@ -57,7 +57,7 @@ contract DebtShareManager is ElectionBase {
         store.debtShareContract = IDebtShare(newDebtShareContractAddress);
     }
 
-    function _getDebtShare(address user) internal view returns (uint) {
+    function _getDebtShare(address user) internal view returns (uint256) {
         DebtShare.Data storage store = DebtShare.load();
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];

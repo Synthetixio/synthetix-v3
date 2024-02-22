@@ -81,7 +81,7 @@ args = [
     "Synthetix Governance Token",
     "SNXGOV",
     "https://synthetix.io",
-    "<%= contracts.CouncilTokenRouter.address %>"
+    "<%= contracts.CouncilTokenRouter.address %>",
 ]
 depends = ["invoke.upgrade_core_proxy", "router.CouncilTokenRouter"]
 factory.AccountProxy.abiOf = ["CouncilTokenRouter"]
@@ -92,7 +92,9 @@ factory.AccountProxy.arg = 2
 target = ["CoreProxy"]
 func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address)"
 args = [
-    ["<%= settings.init_council_member %>"],
+    [
+        "<%= settings.init_council_member %>",
+    ],
     "1",
     "<%= settings.epoch_start %>",
     "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",

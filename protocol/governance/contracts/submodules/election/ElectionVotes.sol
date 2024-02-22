@@ -16,7 +16,7 @@ contract ElectionVotes is ElectionBase {
     using Ballot for Ballot.Data;
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
-        uint length = candidates.length;
+        uint256 length = candidates.length;
 
         if (length == 0) {
             revert NoCandidates();
@@ -24,7 +24,7 @@ contract ElectionVotes is ElectionBase {
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        for (uint i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             address candidate = candidates[i];
 
             // Reject candidates that are not nominated.
@@ -34,7 +34,7 @@ contract ElectionVotes is ElectionBase {
 
             // Reject duplicate candidates.
             if (i < length - 1) {
-                for (uint j = i + 1; j < length; j++) {
+                for (uint256 j = i + 1; j < length; j++) {
                     address otherCandidate = candidates[j];
 
                     if (candidate == otherCandidate) {
@@ -47,7 +47,7 @@ contract ElectionVotes is ElectionBase {
 
     function _recordVote(
         address user,
-        uint votePower,
+        uint256 votePower,
         address[] calldata candidates
     ) internal virtual returns (bytes32 ballotId) {
         Election.Data storage election = Council.load().getCurrentElection();
@@ -73,7 +73,7 @@ contract ElectionVotes is ElectionBase {
 
     function _withdrawVote(
         address user,
-        uint votePower
+        uint256 votePower
     ) internal virtual returns (bytes32 ballotId) {
         Election.Data storage election = Council.load().getCurrentElection();
 
@@ -87,15 +87,15 @@ contract ElectionVotes is ElectionBase {
         return ballotId;
     }
 
-    function _withdrawCastedVote(address user, uint epochIndex) internal virtual {
-        uint castedVotePower = _getCastedVotePower(user);
+    function _withdrawCastedVote(address user, uint256 epochIndex) internal virtual {
+        uint256 castedVotePower = _getCastedVotePower(user);
 
         bytes32 ballotId = _withdrawVote(user, castedVotePower);
 
         emit VoteWithdrawn(user, ballotId, epochIndex, castedVotePower);
     }
 
-    function _getCastedVotePower(address user) internal virtual returns (uint votePower) {
+    function _getCastedVotePower(address user) internal virtual returns (uint256 votePower) {
         Election.Data storage election = Council.load().getCurrentElection();
 
         bytes32 ballotId = election.ballotIdsByAddress[user];
@@ -104,7 +104,7 @@ contract ElectionVotes is ElectionBase {
         return ballot.votesByUser[user];
     }
 
-    function _getVotePower(address) internal view virtual returns (uint) {
+    function _getVotePower(address) internal view virtual returns (uint256) {
         return 1;
     }
 }

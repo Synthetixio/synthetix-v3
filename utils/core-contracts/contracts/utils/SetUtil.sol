@@ -16,37 +16,37 @@ library SetUtil {
         Bytes32Set raw;
     }
 
-    function add(UintSet storage set, uint value) internal {
+    function add(UintSet storage set, uint256 value) internal {
         add(set.raw, value.toBytes32());
     }
 
-    function remove(UintSet storage set, uint value) internal {
+    function remove(UintSet storage set, uint256 value) internal {
         remove(set.raw, value.toBytes32());
     }
 
-    function replace(UintSet storage set, uint value, uint newValue) internal {
+    function replace(UintSet storage set, uint256 value, uint256 newValue) internal {
         replace(set.raw, value.toBytes32(), newValue.toBytes32());
     }
 
-    function contains(UintSet storage set, uint value) internal view returns (bool) {
+    function contains(UintSet storage set, uint256 value) internal view returns (bool) {
         return contains(set.raw, value.toBytes32());
     }
 
-    function length(UintSet storage set) internal view returns (uint) {
+    function length(UintSet storage set) internal view returns (uint256) {
         return length(set.raw);
     }
 
-    function valueAt(UintSet storage set, uint position) internal view returns (uint) {
+    function valueAt(UintSet storage set, uint256 position) internal view returns (uint256) {
         return valueAt(set.raw, position).toUint();
     }
 
-    function positionOf(UintSet storage set, uint value) internal view returns (uint) {
+    function positionOf(UintSet storage set, uint256 value) internal view returns (uint256) {
         return positionOf(set.raw, value.toBytes32());
     }
 
-    function values(UintSet storage set) internal view returns (uint[] memory) {
+    function values(UintSet storage set) internal view returns (uint256[] memory) {
         bytes32[] memory store = values(set.raw);
-        uint[] memory result;
+        uint256[] memory result;
 
         assembly {
             result := store
@@ -79,15 +79,15 @@ library SetUtil {
         return contains(set.raw, value.toBytes32());
     }
 
-    function length(AddressSet storage set) internal view returns (uint) {
+    function length(AddressSet storage set) internal view returns (uint256) {
         return length(set.raw);
     }
 
-    function valueAt(AddressSet storage set, uint position) internal view returns (address) {
+    function valueAt(AddressSet storage set, uint256 position) internal view returns (address) {
         return valueAt(set.raw, position).toAddress();
     }
 
-    function positionOf(AddressSet storage set, address value) internal view returns (uint) {
+    function positionOf(AddressSet storage set, address value) internal view returns (uint256) {
         return positionOf(set.raw, value.toBytes32());
     }
 
@@ -112,7 +112,7 @@ library SetUtil {
 
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions; // Position zero is never used.
+        mapping(bytes32 => uint256) _positions; // Position zero is never used.
     }
 
     function add(Bytes32Set storage set, bytes32 value) internal {
@@ -125,13 +125,13 @@ library SetUtil {
     }
 
     function remove(Bytes32Set storage set, bytes32 value) internal {
-        uint position = set._positions[value];
+        uint256 position = set._positions[value];
         if (position == 0) {
             revert ValueNotInSet();
         }
 
-        uint index = position - 1;
-        uint lastIndex = set._values.length - 1;
+        uint256 index = position - 1;
+        uint256 lastIndex = set._values.length - 1;
 
         // If the element being deleted is not the last in the values,
         // move the last element to its position.
@@ -156,10 +156,10 @@ library SetUtil {
             revert ValueAlreadyInSet();
         }
 
-        uint position = set._positions[value];
+        uint256 position = set._positions[value];
         delete set._positions[value];
 
-        uint index = position - 1;
+        uint256 index = position - 1;
 
         set._values[index] = newValue;
         set._positions[newValue] = position;
@@ -169,21 +169,21 @@ library SetUtil {
         return set._positions[value] != 0;
     }
 
-    function length(Bytes32Set storage set) internal view returns (uint) {
+    function length(Bytes32Set storage set) internal view returns (uint256) {
         return set._values.length;
     }
 
-    function valueAt(Bytes32Set storage set, uint position) internal view returns (bytes32) {
+    function valueAt(Bytes32Set storage set, uint256 position) internal view returns (bytes32) {
         if (position == 0 || position > set._values.length) {
             revert PositionOutOfBounds();
         }
 
-        uint index = position - 1;
+        uint256 index = position - 1;
 
         return set._values[index];
     }
 
-    function positionOf(Bytes32Set storage set, bytes32 value) internal view returns (uint) {
+    function positionOf(Bytes32Set storage set, bytes32 value) internal view returns (uint256) {
         if (!contains(set, value)) {
             revert ValueNotInSet();
         }

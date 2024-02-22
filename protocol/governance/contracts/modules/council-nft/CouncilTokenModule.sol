@@ -11,6 +11,4 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
  * @dev See IAccountTokenModule.
  */
 // solhint-disable-next-line no-empty-blocks
-contract CouncilTokenModule is ICouncilTokenModule, NftModule {
-
-}
+contract CouncilTokenModule is ICouncilTokenModule, NftModule {}

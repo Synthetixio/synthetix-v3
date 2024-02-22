@@ -10,8 +10,8 @@ import {MockPyth as BaseMockPyth} from "@synthetixio/oracle-manager/contracts/mo
 contract MockPyth is BaseMockPyth {
     // solhint-disable no-empty-blocks
     constructor(
-        uint _validTimePeriod,
-        uint _singleUpdateFeeInWei
+        uint256 _validTimePeriod,
+        uint256 _singleUpdateFeeInWei
     ) BaseMockPyth(_validTimePeriod, _singleUpdateFeeInWei) {}
     // solhint-enable no-empty-blocks
 }
