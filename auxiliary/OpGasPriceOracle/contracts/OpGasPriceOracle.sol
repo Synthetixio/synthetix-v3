@@ -76,7 +76,7 @@ contract OpGasPriceOracle is IExternalNode {
 
         uint256 gasPriceL2 = ovmGasPriceOracle.baseFee();
         uint256 baseFeeScalar = ovmGasPriceOracle.baseFeeScalar();
-        uint256 l1BaseFee = ovmGasPriceOracle.baseFee();
+        uint256 l1BaseFee = ovmGasPriceOracle.l1BaseFee();
         uint256 blobBaseFeeScalar = ovmGasPriceOracle.blobBaseFeeScalar();
         uint256 blobBaseFee = ovmGasPriceOracle.blobBaseFee();
         uint256 decimals = ovmGasPriceOracle.decimals();
