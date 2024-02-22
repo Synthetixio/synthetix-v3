@@ -41,14 +41,14 @@ interface IOVM_GasPriceOracle {
      *
      * @return Current L2 gas price (base fee).
      */
-    function gasPrice() external view returns (uint256); //ss
+    function gasPrice() external view returns (uint256);
 
     /**
      * @notice Retrieves the current base fee.
      *
      * @return Current L2 base fee.
      */
-    function baseFee() external view returns (uint256); // sss
+    function baseFee() external view returns (uint256);
 
     /**
      * @notice Retrieves the current fee overhead.
@@ -56,7 +56,7 @@ interface IOVM_GasPriceOracle {
      *
      * @return Current fee overhead.
      */
-    function overhead() external view returns (uint256); // sss
+    function overhead() external view returns (uint256);
 
     /**
      * @notice Retrieves the current fee scalar.
@@ -64,14 +64,14 @@ interface IOVM_GasPriceOracle {
      *
      * @return Current fee scalar.
      */
-    function scalar() external view returns (uint256); // sss
+    function scalar() external view returns (uint256);
 
     /**
      * @notice Retrieves the latest known L1 base fee.
      *
      * @return Latest known L1 base fee.
      */
-    function l1BaseFee() external view returns (uint256); //ss
+    function l1BaseFee() external view returns (uint256);
 
     /**
      * @custom:legacy
@@ -79,7 +79,7 @@ interface IOVM_GasPriceOracle {
      *
      * @return Number of decimals used in the scalar.
      */
-    function decimals() external pure returns (uint256); //ss
+    function decimals() external pure returns (uint256);
 
     /**
      * @notice Computes the amount of L1 gas used for a transaction. Adds the overhead which
@@ -91,7 +91,7 @@ interface IOVM_GasPriceOracle {
      *
      * @return Amount of L1 gas used to publish the transaction.
      */
-    function getL1GasUsed(bytes memory _data) external view returns (uint256); //ss
+    function getL1GasUsed(bytes memory _data) external view returns (uint256);
 
     /// @notice Set chain to be Ecotone chain (callable by depositor account)
     function setEcotone() external;
