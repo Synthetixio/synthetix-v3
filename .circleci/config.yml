@@ -748,25 +748,23 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "spot-market--base-mainnet-andromeda"
-      #    workspace: "@synthetixio/spot-market"
-      #    cannonPackage: "synthetix-spot-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialSpotMarketProxy"
+      - simulate-release:
+          name: "spot-market--base-mainnet-andromeda"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "spot-market--base-sepolia-andromeda"
-      #    workspace: "@synthetixio/spot-market"
-      #    cannonPackage: "synthetix-spot-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-sepolia"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialSpotMarketProxy"
+      - simulate-release:
+          name: "spot-market--base-sepolia-andromeda"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
 
       - simulate-release:
           name: "spot-market--optimism-mainnet"
@@ -786,25 +784,23 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialSpotMarketProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "perps-market--base-mainnet-andromeda"
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
+      - simulate-release:
+          name: "perps-market--base-mainnet-andromeda"
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "perps-market--base-sepolia-andromeda"
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-sepolia"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
+      - simulate-release:
+          name: "perps-market--base-sepolia-andromeda"
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
 
       # TODO: Uncomment when deployed
       #- simulate-release:
