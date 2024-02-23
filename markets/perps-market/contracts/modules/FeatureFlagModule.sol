@@ -9,6 +9,4 @@ import {FeatureFlagModule as BaseFeatureFlagModule} from "@synthetixio/core-modu
  * Users will not be able to interact with certain functions associated to disabled features.
  */
 // solhint-disable-next-line no-empty-blocks
-contract FeatureFlagModule is BaseFeatureFlagModule {
-
-}
+contract FeatureFlagModule is BaseFeatureFlagModule {}
