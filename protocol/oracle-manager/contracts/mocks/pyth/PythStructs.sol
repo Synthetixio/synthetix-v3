@@ -18,7 +18,7 @@ contract PythStructs {
         // Price exponent
         int32 expo;
         // Unix timestamp describing when the price was published
-        uint publishTime;
+        uint256 publishTime;
     }
 
     // PriceFeed represents a current aggregate price from pyth publisher feeds.

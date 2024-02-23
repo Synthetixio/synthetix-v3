@@ -92,20 +92,12 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 **Each step is necessary, do not skip any steps.**
 
-- Confirm you are on the `release` branch and that there are no git changes `git diff --exit-code .`
+- Confirm you are on the `main` branch and that there are no git changes `git diff --exit-code .` and you have write access to `main` branch
   ```sh
   git fetch --all
-  git checkout release
+  git checkout main
   git pull
   git diff --exit-code .
-  ```
-- Merge any changes from `main` to the `release` branch. It is essential that `release` branch has merge commits from `main` and not squashed updates or anything. Please do **NOT** use GitHub UI for this to avoid squashing.
-  ```sh
-  git merge origin/main
-  ```
-- In case of any conflicts - resolve them and push to upstream. It is essential that `release` branch is pushed to the upstream
-  ```sh
-  git push
   ```
 - If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
 - Publish the release with `yarn publish:release`

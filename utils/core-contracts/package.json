@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-contracts",
-  "version": "3.3.4",
+  "version": "3.3.10",
   "publishConfig": {
     "access": "public"
   },
@@ -32,7 +32,6 @@
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec",
   "depcheck": {
     "ignoreMatches": [
       "@ethersproject/abi",

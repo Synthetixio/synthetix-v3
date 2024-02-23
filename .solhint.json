@@ -25,7 +25,7 @@
     "meta-transactions/no-msg-data": "error",
     "numcast/safe-cast": "error",
 
-    "explicit-types": "off",
+    "explicit-types": "error",
     "no-global-import": "off"
   }
 }

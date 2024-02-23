@@ -63,5 +63,5 @@ interface IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount, OrderFees.Data memory);
+    ) external returns (uint256 finalOrderAmount, OrderFees.Data memory);
 }

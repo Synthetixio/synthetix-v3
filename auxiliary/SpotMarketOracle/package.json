@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market-oracle",
-  "version": "3.3.4",
+  "version": "3.3.10",
   "description": "Spot market quoting oracle (used in synthetix core contracts",
   "publishConfig": {
     "access": "public"
@@ -31,6 +31,5 @@
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  }
 }

@@ -100,7 +100,10 @@ interface IGlobalPerpsMarketModule {
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param maxCollateralAmount Max collateral amount to set for the synth market id.
      */
-    function setCollateralConfiguration(uint128 synthMarketId, uint maxCollateralAmount) external;
+    function setCollateralConfiguration(
+        uint128 synthMarketId,
+        uint256 maxCollateralAmount
+    ) external;
 
     /**
      * @notice Gets the max collateral amount for a specific synth market.
@@ -162,7 +165,7 @@ interface IGlobalPerpsMarketModule {
             uint256 minKeeperRewardUsd,
             uint256 minKeeperProfitRatioD18,
             uint256 maxKeeperRewardUsd,
-            uint maxKeeperScalingRatioD18
+            uint256 maxKeeperScalingRatioD18
         );
 
     /**

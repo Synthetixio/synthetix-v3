@@ -40,11 +40,11 @@ contract HeapUtilMock {
         return data.getById(id);
     }
 
-    function getByIndex(uint i) public view returns (HeapUtil.Node memory) {
+    function getByIndex(uint256 i) public view returns (HeapUtil.Node memory) {
         return data.getByIndex(i);
     }
 
-    function size() public view returns (uint) {
+    function size() public view returns (uint256) {
         return data.size();
     }
 
@@ -52,7 +52,7 @@ contract HeapUtilMock {
         return data.idCount;
     }
 
-    function indices(uint128 id) public view returns (uint) {
+    function indices(uint128 id) public view returns (uint256) {
         return data.indices[id];
     }
 }

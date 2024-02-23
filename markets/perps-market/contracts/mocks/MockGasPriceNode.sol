@@ -10,13 +10,13 @@ contract MockGasPriceNode is IExternalNode {
     uint256 public constant KIND_FLAG = 1;
     uint256 public constant KIND_LIQUIDATE = 2;
 
-    uint public settlementCost;
-    uint public flagCost;
-    uint public liquidateCost;
+    uint256 public settlementCost;
+    uint256 public flagCost;
+    uint256 public liquidateCost;
 
     constructor() {}
 
-    function setCosts(uint _settlementCost, uint _flagCost, uint _liquidateCost) external {
+    function setCosts(uint256 _settlementCost, uint256 _flagCost, uint256 _liquidateCost) external {
         settlementCost = _settlementCost;
         flagCost = _flagCost;
         liquidateCost = _liquidateCost;
@@ -44,11 +44,11 @@ contract MockGasPriceNode is IExternalNode {
         }
 
         if (executionKind == KIND_SETTLEMENT) {
-            theOutput.price = int(settlementCost);
+            theOutput.price = int256(settlementCost);
         } else if (executionKind == KIND_FLAG) {
-            theOutput.price = int(flagCost * numberOfUpdatedFeeds);
+            theOutput.price = int256(flagCost * numberOfUpdatedFeeds);
         } else if (executionKind == KIND_LIQUIDATE) {
-            theOutput.price = int(liquidateCost);
+            theOutput.price = int256(liquidateCost);
         } else {
             revert("Invalid execution kind");
         }

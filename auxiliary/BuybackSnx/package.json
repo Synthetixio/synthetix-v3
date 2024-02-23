@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/buyback-snx",
-  "version": "3.3.4",
+  "version": "3.3.10",
   "description": "Market buys and burns SNX",
   "publishConfig": {
     "access": "public"
@@ -28,13 +28,12 @@
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/router": "^3.3.2",
+    "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  }
 }

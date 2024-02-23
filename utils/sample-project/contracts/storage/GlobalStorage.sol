@@ -6,8 +6,8 @@ contract GlobalStorage {
         keccak256(abi.encode("io.synthetix.sample-project.Global"));
 
     struct GlobalStore {
-        uint value;
-        uint someValue;
+        uint256 value;
+        uint256 someValue;
     }
 
     function _globalStore() internal pure returns (GlobalStore storage store) {

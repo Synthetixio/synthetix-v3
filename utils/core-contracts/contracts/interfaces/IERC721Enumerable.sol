@@ -12,7 +12,7 @@ interface IERC721Enumerable is IERC721 {
      * @param requestedIndex The index requested by the caller
      * @param length The length of the list that is being iterated, making the max index queryable length - 1
      */
-    error IndexOverrun(uint requestedIndex, uint length);
+    error IndexOverrun(uint256 requestedIndex, uint256 length);
 
     /**
      * @dev Returns the total amount of tokens stored by the contract.

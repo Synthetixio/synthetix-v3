@@ -6,12 +6,12 @@ import "../storage/SettingsStorage.sol";
 import "../interfaces/ISettingsModule.sol";
 
 contract SettingsModule is SettingsStorage, ISettingsModule {
-    function setASettingValue(uint newSettingValue) public override {
+    function setASettingValue(uint256 newSettingValue) public override {
         OwnableStorage.onlyOwner();
         _settingsStore().aSettingValue = newSettingValue;
     }
 
-    function getASettingValue() public view override returns (uint) {
+    function getASettingValue() public view override returns (uint256) {
         return _settingsStore().aSettingValue;
     }
 }
