@@ -88,6 +88,20 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 43113,
     },
+    ['base-mainnet']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://base-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 8453,
+    },
+    ['base-sepolia']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://base-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 84532,
+    },
   },
   gasReporter: {
     enabled: !!process.env.REPORT_GAS,
