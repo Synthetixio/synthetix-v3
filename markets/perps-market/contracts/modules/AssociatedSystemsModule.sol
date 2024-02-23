@@ -8,4 +8,6 @@ import {AssociatedSystemsModule as BaseAssociatedSystemsModule} from "@synthetix
  * See core-modules/../AssociatedSystemsModule
  */
 // solhint-disable-next-line no-empty-blocks
-contract AssociatedSystemsModule is BaseAssociatedSystemsModule {}
+contract AssociatedSystemsModule is BaseAssociatedSystemsModule {
+
+}

@@ -5,4 +5,6 @@ import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 
 /// @title Effective interface for the oracle manager
 // solhint-disable-next-line no-empty-blocks
-interface IOracleManager is INodeModule {}
+interface IOracleManager is INodeModule {
+
+}

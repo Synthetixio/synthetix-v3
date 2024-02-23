@@ -12,5 +12,7 @@ interface ISynthetixSystem is
     IMarketCollateralModule,
     IMarketManagerModule,
     IUtilsModule
-{}
+{
+
+}
 // solhint-enable no-empty-blocks

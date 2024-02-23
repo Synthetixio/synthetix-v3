@@ -5,4 +5,6 @@ import {IAtomicOrderModule} from "@synthetixio/spot-market/contracts/interfaces/
 import {ISpotMarketFactoryModule} from "@synthetixio/spot-market/contracts/interfaces/ISpotMarketFactoryModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
-interface ISpotMarketSystem is IAtomicOrderModule, ISpotMarketFactoryModule {}
+interface ISpotMarketSystem is IAtomicOrderModule, ISpotMarketFactoryModule {
+
+}
