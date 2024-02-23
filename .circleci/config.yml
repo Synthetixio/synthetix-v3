@@ -141,7 +141,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_IPFS_URL: "https://ipfs.synthetix.io"
     steps:
       - checkout
       - install-foundry
@@ -228,7 +228,7 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: << parameters.parallelism >>
     environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_IPFS_URL: "https://ipfs.synthetix.io"
     steps:
       - checkout
       - install-foundry
@@ -314,7 +314,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_IPFS_URL: "https://ipfs.synthetix.io"
     steps:
       - checkout
       - install-foundry
@@ -445,7 +445,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_IPFS_URL: "https://ipfs.synthetix.io"
     steps:
       - checkout
       - install-foundry
@@ -484,7 +484,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_IPFS_URL: "https://ipfs.synthetix.io"
       GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
@@ -541,7 +541,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_IPFS_URL: "https://ipfs.synthetix.io"
       GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
