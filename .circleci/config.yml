@@ -432,6 +432,7 @@ jobs:
       - run:
           name: "Simulate release and test for Proxy change"
           command: |
+            set -eo pipefail
             export CHAINS="<< parameters.chains >>" 
             for CHAIN in $CHAINS; do
               echo
