@@ -406,11 +406,13 @@ jobs:
         type: string
       cannonPackage:
         type: string
+      cannonPreset:
+        type: string
+      hardhatNetwork:
+        type: string
       impersonate:
         type: string
       proxy:
-        type: string
-      chains:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
@@ -433,29 +435,22 @@ jobs:
           name: "Simulate release and test for Proxy change"
           command: |
             set -eo pipefail
-            export CHAINS="<< parameters.chains >>" 
-            for CHAIN in $CHAINS; do
-              echo
-              echo
-              echo
-              echo "...Checking << parameters.workspace >> on $CHAIN"
-
-              yarn workspace "<< parameters.workspace >>" exec \
-                hardhat cannon:build \
-                  --dry-run \
-                  --network $CHAIN \
-                  --upgrade-from << parameters.cannonPackage >>:latest \
-                  --impersonate << parameters.impersonate >> | tee deployment.log
+            yarn workspace "<< parameters.workspace >>" exec \
+              hardhat cannon:build \
+                --preset << parameters.cannonPreset >> \
+                --dry-run \
+                --network "<< parameters.hardhatNetwork >>" \
+                --upgrade-from << parameters.cannonPackage >>@<< parameters.cannonPreset >> \
+                --impersonate << parameters.impersonate >> | tee deployment.log
               
-              echo "grep '💥' deployment.log" 
-              grep '💥' deployment.log
+            echo "grep '💥' deployment.log" 
+            grep '💥' deployment.log
               
-              echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log" 
-              if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
-                echo "Proxy << parameters.proxy >> was modified"
-                exit 1
-              fi
-            done
+            echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log" 
+            if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
+              echo "Proxy << parameters.proxy >> was modified"
+              exit 1
+            fi
 
   docgen-contracts:
     docker:
@@ -627,20 +622,180 @@ workflows:
           workspace: "@synthetixio/perps-market-subgraph"
 
       - simulate-release:
-          name: "simulate-release-main"
+          name: "synthetix--base-mainnet-andromeda"
           workspace: "@synthetixio/main"
-          cannonPackage: "synthetix"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialCoreProxy"
-          chains: "base-mainnet base-sepolia mainnet optimistic-mainnet goerli optimistic-goerli"
 
       - simulate-release:
-          name: "simulate-release-oracle-manager"
+          name: "synthetix--base-sepolia-andromeda"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--optimism-mainnet"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--mainnet"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--goerli"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "oracle-manager--base-mainnet-andromeda"
           workspace: "@synthetixio/oracle-manager"
-          cannonPackage: "oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
+          hardhatNetwork: "base-mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
-          chains: "base-mainnet base-sepolia mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      - simulate-release:
+          name: "oracle-manager--base-sepolia-andromeda"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--optimism-mainnet"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--optimism-goerli"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--mainnet"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--goerli"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "spot-market--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/spot-market"
+      #    cannonPackage: "synthetix-spot-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialSpotMarketProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "spot-market--base-sepolia-andromeda"
+      #    workspace: "@synthetixio/spot-market"
+      #    cannonPackage: "synthetix-spot-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-sepolia"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialSpotMarketProxy"
+
+      - simulate-release:
+          name: "spot-market--optimism-mainnet"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
+
+      - simulate-release:
+          name: "spot-market--optimism-goerli"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "perps-market--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "perps-market--base-sepolia-andromeda"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-sepolia"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+
+      # TODO: Uncomment when deployed
+      #- simulate-release:
+      #    name: "perps-market--optimism-mainnet"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "main"
+      #    hardhatNetwork: "optimistic-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "perps-market--optimism-goerli"
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
 
       #- simulate-release: TODO: enable after deployed
       #    name: "simulate-release-governance"
@@ -657,22 +812,6 @@ workflows:
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
       #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
-
-      - simulate-release:
-          name: "simulate-release-spot-market"
-          workspace: "@synthetixio/spot-market"
-          cannonPackage: "synthetix-spot-market"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialSpotMarketProxy"
-          chains: "base-mainnet base-sepolia optimistic-mainnet optimistic-goerli"
-
-      - simulate-release:
-          name: "simulate-release-perps-market"
-          workspace: "@synthetixio/perps-market"
-          cannonPackage: "synthetix-perps-market"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
-          chains: "base-mainnet base-sepolia optimistic-mainnet optimistic-goerli"
 
   docgen-contracts:
     unless:
