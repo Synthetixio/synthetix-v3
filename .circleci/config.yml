@@ -666,13 +666,13 @@ workflows:
           proxy: "contract.InitialSpotMarketProxy"
           chains: "optimistic-mainnet optimistic-goerli"
 
-      #- simulate-release: TODO: enable after deployed
-      #    name: "simulate-release-perps-market"
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
-      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+      - simulate-release:
+          name: "simulate-release-perps-market"
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+          chains: "optimistic-mainnet optimistic-goerli"
 
   docgen-contracts:
     unless:
