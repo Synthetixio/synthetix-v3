@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.3.12",
+  "version": "3.3.13",
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",

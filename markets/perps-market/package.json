@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.3.12",
+  "version": "3.3.13",
   "description": "Perps Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
