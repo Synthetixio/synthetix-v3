@@ -267,7 +267,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 0 --timeout 120000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -299,7 +299,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 0 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -343,7 +343,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 0 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -383,7 +383,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 0 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
