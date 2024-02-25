@@ -537,7 +537,18 @@ jobs:
           branch_base: en
           commit_message: "Update Smart Contracts"
 
-  update-subgraphs:
+  subgraph:
+    parameters:
+      workspace:
+        type: string
+      package:
+        type: string
+      preset:
+        type: string
+      namespace:
+        type: string
+      chainId:
+        type: integer
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
@@ -556,24 +567,39 @@ jobs:
             git checkout $CIRCLE_SHA1
 
       - install-foundry
-      #- install-ipfs
-      #- run-ipfs-daemon
       - yarn-install
-      #- wait-for-ipfs
 
       - run:
-          name: "Generate updated subgraph code"
+          name: "cannon inspect << parameters.package >>@<< parameters.preset >> --chain-id << parameters.chainId >>"
           command: |
             export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
             export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
-            yarn subgraphgen
+            yarn cannon inspect << parameters.package >>@<< parameters.preset >> \
+              --chain-id << parameters.chainId >> \
+              --write-deployments ./<< parameters.namespace >>/deployments
+
+      - run:
+          name: "graph codegen subgraph.<< parameters.namespace >>.yaml"
+          command: |
+            cd $(yarn workspace << parameters.namespace >> exec pwd)
+            yarn graph codegen subgraph.<< parameters.namespace >>.yaml \
+              --output-dir << parameters.namespace >>/generated
+            yarn prettier --write << parameters.namespace >>/generated
+
+      - run:
+          name: "yarn graph build subgraph.<< parameters.namespace >>.yaml"
+          command: |
+            cd $(yarn workspace << parameters.namespace >> exec pwd)
+            yarn graph build subgraph.<< parameters.namespace >>.yaml \
+              --output-dir ./build/<< parameters.namespace >>
+            yarn prettier --write subgraph.<< parameters.namespace >>.yaml
 
       - github-pr:
           working_directory: "~/synthetix-v3"
           repo_slug: "Synthetixio/synthetix-v3"
-          branch_head: subgraph-updates
-          branch_base: main
-          commit_message: "Update Subgraphs"
+          branch_head: "subgraph-updates-<< parameters.namespace >>"
+          branch_base: "main"
+          commit_message: "Update Subgraphs << parameters.namespace >>"
 
 workflows:
   version: 2.1
@@ -581,7 +607,7 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
@@ -841,6 +867,30 @@ workflows:
       #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
+  subgraphs:
+    when:
+      or:
+        - and:
+            - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+            - equal: ["Check deploys", << pipeline.schedule.name >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
+    jobs:
+      - subgraph:
+          name: "subgraph-synthetix-base-sepolia-andromeda"
+          workspace: "@synthetixio/core-subgraph"
+          package: "synthetix-omnibus:latest"
+          preset: "andromeda"
+          namespace: "base-sepolia-andromeda"
+          chainId: 84532
+
+      - subgraph:
+          name: "subgraph-synthetix-base-mainnet-andromeda"
+          workspace: "@synthetixio/core-subgraph"
+          package: "synthetix-omnibus:latest"
+          preset: "andromeda"
+          namespace: "base-mainnet-andromeda"
+          chainId: 8453
+
   docgen-contracts:
     unless:
       or:
@@ -853,24 +903,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-
-  update-subgraphs:
-    when:
-      and:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-        - equal: ["Check deploys", << pipeline.schedule.name >>]
-    jobs:
-      - update-subgraphs
-
-  dev-update-subgraphs:
-    unless:
-      or:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-    jobs:
-      - update-subgraphs:
-          filters:
-            branches:
-              only: /update-subgraphs/
 
   dev-docgen-contracts:
     unless:
