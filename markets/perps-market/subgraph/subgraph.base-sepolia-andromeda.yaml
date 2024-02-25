@@ -3,12 +3,12 @@ schema:
   file: ./base-sepolia-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-testnet
+    network: base-sepolia
     name: PerpsMarketProxy
     source:
       abi: PerpsMarketProxy
       address: "0xE6C5f05C415126E6b81FCc3619f65Db2fCAd58D0"
-      startBlock: 11920560
+      startBlock: 4548969
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
