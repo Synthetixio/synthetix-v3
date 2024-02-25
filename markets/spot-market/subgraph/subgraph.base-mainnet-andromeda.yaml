@@ -3,12 +3,12 @@ schema:
   file: ./base-mainnet-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-testnet
+    network: base
     name: SpotMarketProxy
     source:
       abi: SpotMarketProxy
       address: "0x18141523403e2595D31b22604AcB8Fc06a4CaA61"
-      startBlock: 11920499
+      startBlock: 7889322
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

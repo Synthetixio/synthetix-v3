@@ -3,12 +3,12 @@ schema:
   file: ./base-sepolia-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-testnet
+    network: base-sepolia
     name: SpotMarketProxy
     source:
       abi: SpotMarketProxy
       address: "0xA4fE63F8ea9657990eA8E05Ebfa5C19a7D4d7337"
-      startBlock: 11920499
+      startBlock: 4548870
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
