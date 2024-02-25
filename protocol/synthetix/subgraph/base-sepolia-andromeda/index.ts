@@ -1,5 +1,5 @@
-// base-goerli has exactly same deployments as mainnet (in theory lol), so we reuse all the handlers
-// If some handlers need to be different - we copy-paste them into base-goerli folder and make adjustments. Later when aligned with mainnet -- revert import
+// base-sepolia has exactly same deployments as mainnet (in theory lol), so we reuse all the handlers
+// If some handlers need to be different - we copy-paste them into base-sepolia folder and make adjustments. Later when aligned with mainnet -- revert import
 export * from '../mainnet/getISOWeekNumber';
 export * from '../mainnet/handleAccountCreated';
 export * from '../mainnet/handleCollateralConfigured';

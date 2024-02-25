@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./base-goerli-competition/schema.graphql
+  file: ./base-sepolia-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
     network: base-testnet
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0xa53346A1684DAB73EFfd048fA40Fb1fA9327fDe9"
-      startBlock: 9243584
+      address: "0xF4Df9Dd327Fd30695d478c3c8a2fffAddcdD0d31"
+      startBlock: 11920399
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./base-goerli-competition/index.ts
+      file: ./base-sepolia-andromeda/index.ts
       abis:
         - name: CoreProxy
-          file: ./base-goerli-competition/deployments/system/CoreProxy.json
+          file: ./base-sepolia-andromeda/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
@@ -52,13 +52,9 @@ dataSources:
           handler: handlePoolConfigurationSet
         - event: MarketRegistered(indexed address,indexed uint128,indexed address)
           handler: handleMarketCreated
-        - event:
-            MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed
-            address)
+        - event: MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed address,int128,int128,uint256,uint256)
           handler: handleMarketUsdDeposited
-        - event:
-            MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed
-            address)
+        - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address,int128,int128,uint256,uint256)
           handler: handleMarketUsdWithdrawn
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleCollateralDeposited
