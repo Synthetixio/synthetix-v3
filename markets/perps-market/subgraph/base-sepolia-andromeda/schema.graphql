@@ -63,14 +63,13 @@ type SettlementStrategy @entity {
   marketId: BigInt!
   enabled: Boolean
   strategyType: Int
-  settlementDelay: BigInt
   settlementWindowDuration: BigInt
   priceVerificationContract: String
   feedId: Bytes
-  url: String
   settlementReward: BigInt
   minimumUsdExchangeAmount: BigInt
   maxRoundingLoss: BigInt
+  commitmentPriceDelay: BigInt
 }
 
 type ReferrerShare @entity {

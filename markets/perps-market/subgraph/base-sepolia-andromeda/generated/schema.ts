@@ -942,23 +942,6 @@ export class SettlementStrategy extends Entity {
     this.set('strategyType', Value.fromI32(value));
   }
 
-  get settlementDelay(): BigInt | null {
-    let value = this.get('settlementDelay');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigInt();
-    }
-  }
-
-  set settlementDelay(value: BigInt | null) {
-    if (!value) {
-      this.unset('settlementDelay');
-    } else {
-      this.set('settlementDelay', Value.fromBigInt(<BigInt>value));
-    }
-  }
-
   get settlementWindowDuration(): BigInt | null {
     let value = this.get('settlementWindowDuration');
     if (!value || value.kind == ValueKind.NULL) {
@@ -1010,23 +993,6 @@ export class SettlementStrategy extends Entity {
     }
   }
 
-  get url(): string | null {
-    let value = this.get('url');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toString();
-    }
-  }
-
-  set url(value: string | null) {
-    if (!value) {
-      this.unset('url');
-    } else {
-      this.set('url', Value.fromString(<string>value));
-    }
-  }
-
   get settlementReward(): BigInt | null {
     let value = this.get('settlementReward');
     if (!value || value.kind == ValueKind.NULL) {
@@ -1075,6 +1041,23 @@ export class SettlementStrategy extends Entity {
       this.unset('maxRoundingLoss');
     } else {
       this.set('maxRoundingLoss', Value.fromBigInt(<BigInt>value));
+    }
+  }
+
+  get commitmentPriceDelay(): BigInt | null {
+    let value = this.get('commitmentPriceDelay');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set commitmentPriceDelay(value: BigInt | null) {
+    if (!value) {
+      this.unset('commitmentPriceDelay');
+    } else {
+      this.set('commitmentPriceDelay', Value.fromBigInt(<BigInt>value));
     }
   }
 }

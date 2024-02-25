@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleSettlementStrategyAdded } from '../../base-goerli-competition';
+import { handleSettlementStrategyAdded } from '../../base-mainnet-andromeda';
 import { createSettlementStrategyAddedEvent } from './event-factories/createSettlementStrategyAddedEvent';
 
 export default function test(): void {
