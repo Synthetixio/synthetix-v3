@@ -3,12 +3,12 @@ schema:
   file: ./base-mainnet-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-testnet
+    network: base
     name: PerpsMarketProxy
     source:
       abi: PerpsMarketProxy
       address: "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce"
-      startBlock: 11920560
+      startBlock: 7889389
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

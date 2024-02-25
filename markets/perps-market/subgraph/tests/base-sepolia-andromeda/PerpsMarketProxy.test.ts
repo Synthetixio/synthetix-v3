@@ -2,7 +2,7 @@ import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'mat
 
 import handleSettlementStrategyAdded from './handleSettlementStrategyAdded';
 
-describe('PerpsMarketProxy (base-sepolia-competition)', () => {
+describe('PerpsMarketProxy (base-sepolia-andromeda)', () => {
   beforeEach(() => {
     clearStore();
   });
