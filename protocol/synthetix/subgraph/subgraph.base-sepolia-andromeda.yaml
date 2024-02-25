@@ -3,12 +3,12 @@ schema:
   file: ./base-sepolia-andromeda/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-testnet
+    network: base-sepolia
     name: CoreProxy
     source:
       abi: CoreProxy
       address: "0xF4Df9Dd327Fd30695d478c3c8a2fffAddcdD0d31"
-      startBlock: 11920399
+      startBlock: 4548677
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
