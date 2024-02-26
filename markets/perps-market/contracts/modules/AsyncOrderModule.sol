@@ -167,8 +167,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 account,
                 marketConfig,
                 marketId,
-                oldPosition.size,
-                oldPosition.size + sizeDelta,
+                oldPosition.size.unwrap(),
+                oldPosition.size.unwrap() + sizeDelta,
                 fillPrice,
                 currentInitialMargin
             ) + orderFees;
