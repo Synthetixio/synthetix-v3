@@ -51,13 +51,14 @@ describe('Position - funding', () => {
     });
 
   let ethMarket: PerpsMarket;
+  let btcSpotMarketId: ethers.BigNumber;
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
+    btcSpotMarketId = synthMarkets()[0].marketId();
   });
 
   const trader1BTCMargin = bn(2.5);
   before('trader1 buys 2.5 sBTC', async () => {
-    const btcSpotMarketId = synthMarkets()[0].marketId();
     const usdAmount = _BTC_PRICE.mul(trader1BTCMargin).div(ONE_ETHER);
     const minAmountReceived = trader1BTCMargin;
     const referrer = ethers.constants.AddressZero;
@@ -68,7 +69,6 @@ describe('Position - funding', () => {
 
   const trader2BTCMargin = bn(50);
   before('trader2 buys 50 sBTC', async () => {
-    const btcSpotMarketId = synthMarkets()[0].marketId();
     const usdAmount = _BTC_PRICE.mul(trader2BTCMargin).div(ONE_ETHER);
     const minAmountReceived = trader2BTCMargin;
     const referrer = ethers.constants.AddressZero;
@@ -78,7 +78,6 @@ describe('Position - funding', () => {
   });
 
   before('add sBTC collateral to margin', async () => {
-    const btcSpotMarketId = synthMarkets()[0].marketId();
     // approve amount of collateral to be transfered to the market
     await synthMarkets()[0]
       .synth()
