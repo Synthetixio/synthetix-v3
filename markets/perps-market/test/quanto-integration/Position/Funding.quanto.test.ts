@@ -185,7 +185,7 @@ describe('Position - funding', () => {
         .add(prevAccruedFunding);
       // END ACCRUED QUANTO FUNDING CALC -------------------------------------------
 
-      // ACCRUED Classic FUNDING CALC ----------------------------------------------
+      // ACCRUED QUANTO FUNDING CALC ----------------------------------------------
       const currentSkewClassic = prevSkewClassic.add(newOrderSize);
       const frVelocityClassic = wei(currentSkewClassic).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
       const fundingRateClassic = prevFrVelocityClassic.mul(daysElapsed).add(prevFundingRateClassic);
@@ -197,7 +197,7 @@ describe('Position - funding', () => {
         .mul(_ETH_PRICE)
         .mul(daysElapsed)
         .add(prevAccruedFundingClassic);
-      // END Classic QUANTO FUNDING CALC -------------------------------------------
+      // END QUANTO FUNDING CALC -------------------------------------------
 
       describe(`after ${daysElapsed} days`, () => {
         before('move time', async () => {
