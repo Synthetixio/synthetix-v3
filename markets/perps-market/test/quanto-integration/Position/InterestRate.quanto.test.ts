@@ -3,6 +3,7 @@ import {
   calculateInterestRate,
   openPosition,
   getQuantoPositionSize,
+  ONE_ETHER
 } from '../../integration/helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
@@ -319,7 +320,7 @@ describe('Position - interest rates', () => {
           1,
           systems().CollateralMock.address,
           wei(currentCollateralAmount).mul(wei(0.9)).toBN(),
-          ethers.utils.parseEther('1')
+          ONE_ETHER
         );
     });
 

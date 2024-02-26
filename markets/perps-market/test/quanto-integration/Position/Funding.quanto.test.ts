@@ -5,7 +5,7 @@ import {
   bn,
   bootstrapMarkets,
 } from '../../integration/bootstrap';
-import { openPosition, getQuantoPositionSize } from '../../integration/helpers';
+import { openPosition, getQuantoPositionSize, ONE_ETHER } from '../../integration/helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -58,7 +58,7 @@ describe('Position - funding', () => {
   const trader1BTCMargin = bn(2.5);
   before('trader1 buys 2.5 sBTC', async () => {
     const btcSpotMarketId = synthMarkets()[0].marketId();
-    const usdAmount = _BTC_PRICE.mul(trader1BTCMargin).div(ethers.utils.parseEther('1'));
+    const usdAmount = _BTC_PRICE.mul(trader1BTCMargin).div(ONE_ETHER);
     const minAmountReceived = trader1BTCMargin;
     const referrer = ethers.constants.AddressZero;
     await systems()
@@ -69,7 +69,7 @@ describe('Position - funding', () => {
   const trader2BTCMargin = bn(50);
   before('trader2 buys 50 sBTC', async () => {
     const btcSpotMarketId = synthMarkets()[0].marketId();
-    const usdAmount = _BTC_PRICE.mul(trader2BTCMargin).div(ethers.utils.parseEther('1'));
+    const usdAmount = _BTC_PRICE.mul(trader2BTCMargin).div(ONE_ETHER);
     const minAmountReceived = trader2BTCMargin;
     const referrer = ethers.constants.AddressZero;
     await systems()
