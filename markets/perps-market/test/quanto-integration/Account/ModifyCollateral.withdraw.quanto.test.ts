@@ -5,15 +5,9 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { wei } from '@synthetixio/wei';
-import {
-  OpenPositionData,
-  openPosition,
-  ONE_ETHER,
-  getQuantoPositionSize,
-  getQuantoPnl,
-} from '../../integration/helpers';
+import { openPosition, ONE_ETHER, getQuantoPositionSize } from '../../integration/helpers';
 
-describe.only('ModifyCollateral Withdraw', () => {
+describe('ModifyCollateral Withdraw', () => {
   // Account and Market Identifiers
   const accountIds = [10, 20, 69];
   const usdMarketId = 0;
@@ -380,7 +374,7 @@ describe.only('ModifyCollateral Withdraw', () => {
       });
     });
 
-    describe('allow withdraw when its less than collateral available for withdraw', () => {
+    describe.skip('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
       let withdrawableMargin: ethers.BigNumber;
@@ -443,12 +437,14 @@ describe.only('ModifyCollateral Withdraw', () => {
     });
 
     describe('failures', () => {
-      it.skip('reverts when withdrawing more than collateral', async () => {
+      it('reverts when withdrawing more than collateral', async () => {
+        const amountToWithdraw = initialAccountUsdMargin.add(1);
+
         await assertRevert(
           systems()
-            .PerpsMarket.connect(trader1())
-            .modifyCollateral(trader3AccountId, usdMarketId, bn(-18_001)),
-          `InsufficientCollateral("${usdMarketId}", "${bn(18_000)}", "${bn(18_001)}")`
+            .PerpsMarket.connect(trader3())
+            .modifyCollateral(trader3AccountId, usdMarketId, amountToWithdraw.mul(-1)),
+          `InsufficientCollateral("${usdMarketId}", "${initialAccountUsdMargin}", "${amountToWithdraw}")`
         );
       });
 
@@ -463,7 +459,7 @@ describe.only('ModifyCollateral Withdraw', () => {
 
         await assertRevert(
           systems()
-            .PerpsMarket.connect(trader1())
+            .PerpsMarket.connect(trader3())
             .modifyCollateral(trader3AccountId, usdMarketId, bn(-18000)),
           `InsufficientCollateralAvailableForWithdraw("${bn(14000).sub(
             liquidationRewards.toBN()
@@ -472,14 +468,33 @@ describe.only('ModifyCollateral Withdraw', () => {
       });
 
       describe('account liquidatable', () => {
-        before('eth dumps making our account liquidatable', async () => {
-          await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(5));
+        before('increase eth position leverage', async () => {
+          quantoPositionSizeEthMarket = getQuantoPositionSize({
+            sizeInBaseAsset: perpPositionSizeEthMarket.mul(10),
+            quantoAssetPrice: ethPrice,
+          });
+
+          await openPosition({
+            systems,
+            provider,
+            trader: trader3(),
+            accountId: trader3AccountId,
+            keeper: trader3(),
+            marketId: ethMarketIdBn,
+            sizeDelta: quantoPositionSizeEthMarket,
+            settlementStrategyId: perpsMarkets()[1].strategyId(),
+            price: ethPrice,
+          });
         });
 
-        it.skip('reverts when withdrawing due to position liquidatable', async () => {
+        before('eth dumps making our account liquidatable', async () => {
+          await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(0));
+        });
+
+        it('reverts when withdrawing due to position liquidatable', async () => {
           await assertRevert(
             systems()
-              .PerpsMarket.connect(trader1())
+              .PerpsMarket.connect(trader3())
               .modifyCollateral(trader3AccountId, usdMarketId, bn(-100)),
             `AccountLiquidatable("${trader3AccountId}")`
           );
