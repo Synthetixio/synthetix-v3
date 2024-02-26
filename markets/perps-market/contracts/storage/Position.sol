@@ -95,10 +95,10 @@ library Position {
         uint price
     ) internal view returns (uint256 chargedInterest) {
         uint nextInterestAccrued = InterestRate.load().calculateNextInterest();
-        uint netInterestPerDollar = nextInterestAccrued - self.latestInterestAccrued;
+        uint netInterestPerQuantoUnit = nextInterestAccrued - self.latestInterestAccrued;
 
         // The interest is charged pro-rata on this position's contribution to the locked OI requirement
-        chargedInterest = getLockedNotionalValue(self, price).mulDecimal(netInterestPerDollar);
+        chargedInterest = getLockedNotionalValue(self, price).mulDecimal(netInterestPerQuantoUnit);
     }
 
     function getLockedNotionalValue(
