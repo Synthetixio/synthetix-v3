@@ -114,7 +114,7 @@ describe('Position - funding', () => {
       systems,
       provider,
       trader: trader1(),
-      accountId: 2,
+      accountId: trader1AccountId,
       keeper: keeper(),
       marketId: ethMarket.marketId(),
       sizeDelta: positionSize,
@@ -214,7 +214,7 @@ describe('Position - funding', () => {
             systems,
             provider,
             trader: trader2(),
-            accountId: 3,
+            accountId: trader2AccountId,
             keeper: trader2(),
             marketId: ethMarket.marketId(),
             sizeDelta: newQuantoOrderSize,
@@ -226,7 +226,7 @@ describe('Position - funding', () => {
 
         it('funding accrued is correct', async () => {
           const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
-            2,
+            trader1AccountId,
             ethMarket.marketId()
           );
           const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(20_000);
