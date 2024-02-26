@@ -53,7 +53,9 @@ export interface GetQuantoPnlArgs {
   quantoAssetStartPrice: ethers.BigNumber;
   quantoAssetEndPrice: ethers.BigNumber;
   quantoSizeDelta: ethers.BigNumber;
-}
+};
+
+export const ONE_ETHER = ethers.utils.parseEther('1');
 
 /**
  * Calculates the PnL of a quanto position given the start
