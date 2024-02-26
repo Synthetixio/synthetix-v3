@@ -139,7 +139,7 @@ export const bootstrapPerpsMarkets = (
       });
 
       before('set max market value', async () => {
-        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSizes(
+        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
           marketId,
           maxMarketSize ? maxMarketSize : bn(10_000_000),
           maxMarketValue ? maxMarketValue : 0
