@@ -229,7 +229,7 @@ describe('Position - funding', () => {
             trader1AccountId,
             ethMarket.marketId()
           );
-          const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(20_000);
+          const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(_BTC_PRICE).div(ONE_ETHER);
 
           // Check the expected value of the quanto funding in USD is equal to the classic funding
           // for this skewScale. This is because we have set skewScale to skewScale.div(BTC_PRICE)
