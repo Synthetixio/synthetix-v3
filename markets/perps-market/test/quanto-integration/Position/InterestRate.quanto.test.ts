@@ -37,7 +37,13 @@ const interestRateParams = {
 
 const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR);
 
+const TOLERANCE = bn(0.0001);
+
 describe('Position - interest rates', () => {
+  const traderAccountIds = [2, 3];
+  const trader1AccountId = traderAccountIds[0];
+  const trader2AccountId = traderAccountIds[1];
+
   const {
     systems,
     perpsMarkets,
@@ -92,7 +98,7 @@ describe('Position - interest rates', () => {
         },
       },
     ],
-    traderAccountIds: [2, 3],
+    traderAccountIds
   });
 
   let ethMarket: PerpsMarket, btcMarket: PerpsMarket;
@@ -101,12 +107,13 @@ describe('Position - interest rates', () => {
   // as this test includes a synth market, the creditCapacityD18 is split between the two markets
   // halving the amount of credit available to the perps market, which effects the expected interest
   before('stake some extra collateral in the core pool', async () => {
+    const delegateAmount = bn(1000);
     await stake(
       { Core: systems().Core, CollateralMock: systems().CollateralMock },
       poolId,
-      2,
+      trader1AccountId,
       trader3(),
-      bn(1000)
+      delegateAmount
     );
   });
 
@@ -141,12 +148,12 @@ describe('Position - interest rates', () => {
       .synth()
       .connect(trader1())
       .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
-    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, ethSpotMarketId, bn(25));
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(trader1AccountId, ethSpotMarketId, bn(25));
     await synthMarkets()[0]
       .synth()
       .connect(trader2())
       .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, ethSpotMarketId, bn(100));
+    await systems().PerpsMarket.connect(trader2()).modifyCollateral(trader2AccountId, ethSpotMarketId, bn(100));
   });
 
   const checkMarketInterestRate = () => {
@@ -162,10 +169,10 @@ describe('Position - interest rates', () => {
       assertBn.near(
         await systems().PerpsMarket.interestRate(),
         currentInterestRate.toBN(),
-        bn(0.0001)
+        TOLERANCE
       );
       const { rate: expectedUtilizationRate } = await systems().PerpsMarket.utilizationRate();
-      assertBn.near(expectedUtilizationRate, utilRate.toBN(), bn(0.0001));
+      assertBn.near(expectedUtilizationRate, utilRate.toBN(), TOLERANCE);
     });
 
     return {
@@ -180,7 +187,7 @@ describe('Position - interest rates', () => {
       systems,
       provider,
       trader: trader1(),
-      accountId: 2,
+      accountId: trader1AccountId,
       keeper: keeper(),
       marketId: ethMarket.marketId(),
       sizeDelta: _TRADER_SIZE.toBN(),
@@ -202,7 +209,7 @@ describe('Position - interest rates', () => {
     describe('check trader 1 interest', () => {
       it('has correct interest rate', async () => {
         const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
-          2,
+          trader1AccountId,
           ethMarket.marketId()
         );
         const expectedInterest = _TRADER1_LOCKED_OI
@@ -210,7 +217,7 @@ describe('Position - interest rates', () => {
           .mul(proportionalTime(_SECONDS_IN_DAY));
         trader1InterestAccumulated = trader1InterestAccumulated.add(owedInterest);
         lastTimeInterestAccrued = trader1OpenPositionTime + _SECONDS_IN_DAY;
-        assertBn.near(owedInterest, expectedInterest.toBN(), bn(0.0001));
+        assertBn.near(owedInterest, expectedInterest.toBN(), TOLERANCE);
       });
     });
   });
@@ -273,7 +280,7 @@ describe('Position - interest rates', () => {
 
       it('accrued correct interest for trader 1', async () => {
         const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
-          2,
+          trader1AccountId,
           ethMarket.marketId()
         );
 
@@ -281,12 +288,12 @@ describe('Position - interest rates', () => {
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(normalizedTime);
         trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
-        assertBn.near(owedInterest, trader1InterestAccumulated.toBN(), bn(0.0001));
+        assertBn.near(owedInterest, trader1InterestAccumulated.toBN(), TOLERANCE);
       });
 
       it('accrued correct interest for trader 2', async () => {
         const { owedInterest } = await systems().PerpsMarket.getOpenPosition(
-          3,
+          trader2AccountId,
           btcMarket.marketId()
         );
 
@@ -295,7 +302,7 @@ describe('Position - interest rates', () => {
         const expectedTrader2Interest = trader2Oi
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(normalizedTime);
-        assertBn.near(owedInterest, expectedTrader2Interest.toBN(), bn(0.00001));
+        assertBn.near(owedInterest, expectedTrader2Interest.toBN(), TOLERANCE.div(10));
       });
     });
   });
@@ -372,7 +379,7 @@ describe('Position - interest rates', () => {
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(normalizedTime);
         trader1InterestAccumulated = trader1InterestAccumulated.add(newInterestAccrued);
-        assertBn.near(owedInterest, trader1InterestAccumulated.toBN(), bn(0.0001));
+        assertBn.near(owedInterest, trader1InterestAccumulated.toBN(), TOLERANCE);
       });
     });
   });
