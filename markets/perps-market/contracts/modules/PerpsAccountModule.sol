@@ -117,7 +117,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         (, totalPnl, , owedInterest, accruedFunding, , ) = position.getPositionData(
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
-        return (totalPnl, accruedFunding, position.size, owedInterest);
+        return (totalPnl, accruedFunding, position.size.unwrap(), owedInterest);
     }
 
     /**

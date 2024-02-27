@@ -18,6 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -90,7 +91,7 @@ library PerpsAccount {
     }
 
     function validateMaxPositions(uint128 accountId, uint128 marketId) internal view {
-        if (PerpsMarket.accountPosition(marketId, accountId).size == 0) {
+        if (PerpsMarket.accountPosition(marketId, accountId).size.unwrap() == 0) {
             uint128 maxPositionsPerAccount = GlobalPerpsMarketConfiguration
                 .load()
                 .maxPositionsPerAccount;
@@ -330,7 +331,7 @@ library PerpsAccount {
             );
             (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin) = marketConfig
                 .calculateRequiredMargins(
-                    position.size,
+                    position.size.unwrap(),
                     PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
                 );
 
@@ -365,11 +366,11 @@ library PerpsAccount {
             );
 
             uint numberOfWindows = marketConfig.numberOfLiquidationWindows(
-                MathUtil.abs(position.size)
+                MathUtil.abs(position.size.unwrap())
             );
 
             uint256 flagReward = marketConfig.calculateFlagReward(
-                MathUtil.abs(position.size).mulDecimal(
+                MathUtil.abs(position.size.unwrap()).mulDecimal(
                     PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 )
             );
@@ -541,7 +542,7 @@ library PerpsAccount {
 
         perpsMarket.recomputeFunding(price);
 
-        int128 oldPositionSize = position.size;
+        int128 oldPositionSize = position.size.unwrap();
         oldPositionAbsSize = MathUtil.abs128(oldPositionSize);
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(oldPositionAbsSize);
 
@@ -563,7 +564,7 @@ library PerpsAccount {
                 latestInteractionPrice: price.to128(),
                 latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
                 latestInterestAccrued: 0,
-                size: newPositionSize
+                size: BaseQuantoPerUSDInt128.wrap(newPositionSize)
             });
         }
 
