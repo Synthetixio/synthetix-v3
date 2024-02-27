@@ -212,7 +212,7 @@ describe('Quanto', () => {
           baseAssetEndPrice: bn(40_000),
           quantoAssetStartPrice: bn(2_000),
           quantoAssetEndPrice: bn(4_000),
-          quantoSizeDelta: bn(2),
+          baseAssetSize: bn(2),
         });
 
         const expectedMargin = expectedCollateral.add(quantoPnl);
@@ -259,7 +259,7 @@ describe('Quanto', () => {
           baseAssetEndPrice: bn(40_000),
           quantoAssetStartPrice: bn(2_000),
           quantoAssetEndPrice: bn(4_000),
-          quantoSizeDelta: bn(2),
+          baseAssetSize: bn(2),
         });
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
         const withdrawAmt = expectedCollateral.add(quantoPnl).div(4_000).mul(-1);

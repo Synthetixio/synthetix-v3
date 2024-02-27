@@ -52,7 +52,7 @@ export interface GetQuantoPnlArgs {
   baseAssetEndPrice: ethers.BigNumber;
   quantoAssetStartPrice: ethers.BigNumber;
   quantoAssetEndPrice: ethers.BigNumber;
-  quantoSizeDelta: ethers.BigNumber;
+  baseAssetSize: ethers.BigNumber;
 };
 
 export const ONE_ETHER = ethers.utils.parseEther('1');
@@ -70,9 +70,9 @@ export const getQuantoPnl = ({
   baseAssetEndPrice,
   quantoAssetStartPrice,
   quantoAssetEndPrice,
-  quantoSizeDelta,
+  baseAssetSize
 }: GetQuantoPnlArgs): ethers.BigNumber => {
   const baseAssetPriceChange = baseAssetEndPrice.sub(baseAssetStartPrice);
   const quantoMultiplier = quantoAssetEndPrice.mul(ONE_ETHER).div(quantoAssetStartPrice);
-  return baseAssetPriceChange.mul(quantoSizeDelta).mul(quantoMultiplier).div(ONE_ETHER.pow(2));
+  return baseAssetPriceChange.mul(baseAssetSize).mul(quantoMultiplier).div(ONE_ETHER.pow(2));
 };

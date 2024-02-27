@@ -299,14 +299,14 @@ describe('Account margins test', () => {
         baseAssetEndPrice: btcPrice,
         quantoAssetStartPrice: ethPrice,
         quantoAssetEndPrice: ethPrice,
-        quantoSizeDelta: quantoPositionSizeBtcMarket,
+        baseAssetSize: quantoPositionSizeBtcMarket,
       });
       const ethPnl = getQuantoPnl({
         baseAssetStartPrice: ethFillPrice,
         baseAssetEndPrice: ethPrice,
         quantoAssetStartPrice: ethPrice,
         quantoAssetEndPrice: ethPrice,
-        quantoSizeDelta: quantoPositionSizeEthMarket,
+        baseAssetSize: quantoPositionSizeEthMarket,
       });
 
       initialPnl = btcPnl.add(ethPnl).mul(ethPrice).div(ONE_ETHER);
