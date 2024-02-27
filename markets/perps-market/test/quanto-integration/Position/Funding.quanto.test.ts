@@ -52,6 +52,7 @@ describe('Position - funding', () => {
 
   let ethMarket: PerpsMarket;
   let btcSpotMarketId: ethers.BigNumber;
+  
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
     btcSpotMarketId = synthMarkets()[0].marketId();

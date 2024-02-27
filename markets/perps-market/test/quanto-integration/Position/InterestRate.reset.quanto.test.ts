@@ -19,6 +19,7 @@ const _TRADER_SIZE = wei(
     quantoAssetPrice: bn(20_000),
   })
 );
+
 const _ETH_PRICE = wei(2000);
 const _ETH_LOCKED_OI_RATIO = wei(1);
 
@@ -180,6 +181,7 @@ describe('Position - interest rates - reset', () => {
           2,
           ethMarket.marketId()
         );
+
         const expectedInterestBTC = _TRADER1_LOCKED_OI
           .mul(wei(await systems().PerpsMarket.interestRate()))
           .mul(proportionalTime(_SECONDS_IN_DAY));

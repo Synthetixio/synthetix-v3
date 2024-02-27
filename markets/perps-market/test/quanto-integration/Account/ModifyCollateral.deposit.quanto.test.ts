@@ -3,30 +3,89 @@ import { bn, bootstrapMarkets } from '../../integration/bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { deepEqual } from 'assert/strict';
+import { ONE_ETHER } from '../../integration/helpers/';
 
 describe('ModifyCollateral Deposit', () => {
+  // Account and Market Identifiers
   const accountIds = [10, 20];
-  const oneBTC = bn(1);
+  const ethMarketId = 26;
+  const quantoSynthMarketIndex = 0;
+
+  // Market Prices
+  const btcPrice = bn(10_000);
+  const ethPrice = bn(1_000);
+
+  // Skew Scales
+  const ethSkewScale = bn(1000).div(2000);
+
+  // Margin and Funding Parameters
+  const maxFundingVelocity = bn(0);
+  const initialMarginFraction = bn(2);
+  const minimumInitialMarginRatio = bn(0.01);
+  const maintenanceMarginScalar = bn(0.5);
+  const maxLiquidationLimitAccumulationMultiplier = bn(1);
+  const liquidationRewardRatio = bn(0.05);
+  const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
+
+  // Position Margins
+  const ethMinimumPositionMargin = bn(500);
   const marginAmount = bn(10_000);
 
-  const { systems, owner, superMarketId, synthMarkets, trader1 } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: bn(10_000),
-        sellPrice: bn(10_000),
+  // Liquidation Parameters
+  const settlementReward = bn(0);
+
+  // Perps Market Config
+  const perpsMarketConfig = [
+    {
+      requestedMarketId: ethMarketId,
+      name: 'Ether',
+      token: 'ETH',
+      price: ethPrice,
+      fundingParams: { skewScale: ethSkewScale, maxFundingVelocity: maxFundingVelocity },
+      liquidationParams: {
+        initialMarginFraction: initialMarginFraction,
+        minimumInitialMarginRatio: minimumInitialMarginRatio,
+        maintenanceMarginScalar: maintenanceMarginScalar,
+        maxLiquidationLimitAccumulationMultiplier: maxLiquidationLimitAccumulationMultiplier,
+        liquidationRewardRatio: liquidationRewardRatio,
+        maxSecondsInLiquidationWindow: maxSecondsInLiquidationWindow,
+        minimumPositionMargin: ethMinimumPositionMargin,
       },
-      {
+      settlementStrategy: {
+        settlementReward: settlementReward,
+      },
+      quanto: {
         name: 'Ether',
-        token: 'snxETH',
-        buyPrice: bn(1_000),
-        sellPrice: bn(1_000),
+        token: 'ETH',
+        price: ethPrice,
+        quantoSynthMarketIndex: quantoSynthMarketIndex,
       },
-    ],
-    perpsMarkets: [],
+    },
+  ];
+
+  // Spot Market Config
+  const spotMarketConfig = [
+    {
+      name: 'Bitcoin',
+      token: 'snxBTC',
+      buyPrice: btcPrice,
+      sellPrice: btcPrice,
+    },
+    {
+      name: 'Ether',
+      token: 'snxETH',
+      buyPrice: ethPrice,
+      sellPrice: ethPrice,
+    },
+  ];
+
+  // Bootstrap Markets, Systems, and Accounts
+  const { systems, owner, superMarketId, synthMarkets, trader1 } = bootstrapMarkets({
+    synthMarkets: spotMarketConfig,
+    perpsMarkets: perpsMarketConfig,
     traderAccountIds: accountIds,
   });
+
   let synthBTCMarketId: ethers.BigNumber;
   let synthETHMarketId: ethers.BigNumber;
 
@@ -48,13 +107,13 @@ describe('ModifyCollateral Deposit', () => {
     before('trader1 buys 1 snxBTC', async () => {
       await systems()
         .SpotMarket.connect(trader1())
-        .buy(synthBTCMarketId, marginAmount, oneBTC, ethers.constants.AddressZero);
+        .buy(synthBTCMarketId, marginAmount, ONE_ETHER, ethers.constants.AddressZero);
     });
 
     before('trader1 buys 1 snxETH', async () => {
       await systems()
         .SpotMarket.connect(trader1())
-        .buy(synthETHMarketId, marginAmount, oneBTC, ethers.constants.AddressZero);
+        .buy(synthETHMarketId, marginAmount, ONE_ETHER, ethers.constants.AddressZero);
     });
 
     before('record balances', async () => {
@@ -68,18 +127,18 @@ describe('ModifyCollateral Deposit', () => {
       await synthMarkets()[0]
         .synth()
         .connect(trader1())
-        .approve(systems().PerpsMarket.address, oneBTC);
+        .approve(systems().PerpsMarket.address, ONE_ETHER);
 
       await synthMarkets()[1]
         .synth()
         .connect(trader1())
-        .approve(systems().PerpsMarket.address, oneBTC);
+        .approve(systems().PerpsMarket.address, ONE_ETHER);
     });
 
     before('trader1 adds collateral', async () => {
       modifyCollateralTxn = await systems()
         .PerpsMarket.connect(trader1())
-        .modifyCollateral(accountIds[0], synthBTCMarketId, oneBTC);
+        .modifyCollateral(accountIds[0], synthBTCMarketId, ONE_ETHER);
     });
 
     it('properly reflects the total collateral value', async () => {
@@ -97,7 +156,7 @@ describe('ModifyCollateral Deposit', () => {
         .synth()
         .connect(trader1())
         .balanceOf(await trader1().getAddress());
-      assertBn.equal(spotBalanceAfter, spotBalanceBefore.sub(oneBTC));
+      assertBn.equal(spotBalanceAfter, spotBalanceBefore.sub(ONE_ETHER));
     });
 
     it('properly reflects core system collateral balance', async () => {
@@ -106,7 +165,7 @@ describe('ModifyCollateral Deposit', () => {
         synthMarkets()[0].synthAddress()
       );
 
-      assertBn.equal(btcCollateralValue, oneBTC);
+      assertBn.equal(btcCollateralValue, ONE_ETHER);
     });
 
     it('emits correct event with the expected values', async () => {
@@ -136,7 +195,7 @@ describe('ModifyCollateral Deposit', () => {
     it('trader1 adds snxETH collateral', async () => {
       await systems()
         .PerpsMarket.connect(trader1())
-        .modifyCollateral(accountIds[0], synthETHMarketId, oneBTC);
+        .modifyCollateral(accountIds[0], synthETHMarketId, ONE_ETHER);
     });
 
     it('returns the correct list of active collaterals', async () => {

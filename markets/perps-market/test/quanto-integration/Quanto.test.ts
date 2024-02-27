@@ -68,7 +68,7 @@ describe('Quanto', () => {
         .SpotMarket.connect(trader1())
         .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
     });
-    before('add some stop ETH collateral to margin', async () => {
+    before('add some ETH collateral to margin', async () => {
       const ethSpotMarketId = synthMarkets()[0].marketId();
       // approve amount of collateral to be transfered to the market
       await synthMarkets()[0]
@@ -212,7 +212,7 @@ describe('Quanto', () => {
           baseAssetEndPrice: bn(40_000),
           quantoAssetStartPrice: bn(2_000),
           quantoAssetEndPrice: bn(4_000),
-          baseAssetSizeDelta: bn(2),
+          baseAssetSize: bn(2),
         });
 
         const expectedMargin = expectedCollateral.add(quantoPnl);
@@ -259,7 +259,7 @@ describe('Quanto', () => {
           baseAssetEndPrice: bn(40_000),
           quantoAssetStartPrice: bn(2_000),
           quantoAssetEndPrice: bn(4_000),
-          baseAssetSizeDelta: bn(2),
+          baseAssetSize: bn(2),
         });
         const expectedCollateral = bn(4_000).mul(10); // $40k collateral
         const withdrawAmt = expectedCollateral.add(quantoPnl).div(4_000).mul(-1);
