@@ -73,14 +73,14 @@ library GlobalPerpsMarket {
         Data storage self
     ) internal view returns (uint128 rate, uint256 delegatedCollateralValue, uint256 lockedCredit) {
         uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
-        int256 delegatedCollateralValueAsInt = withdrawableUsd.toInt() -
+        int256 delegatedCollateralValueInt = withdrawableUsd.toInt() -
             totalCollateralValue(self).toInt();
         lockedCredit = minimumCredit(self);
-        if (delegatedCollateralValueAsInt <= 0) {
-            return (0, 0, lockedCredit);
+        if (delegatedCollateralValueInt <= 0) {
+            return (DecimalMath.UNIT_UINT128, 0, lockedCredit);
         }
 
-        rate = lockedCredit.divDecimal(delegatedCollateralValueAsInt.toUint()).to128();
+        rate = lockedCredit.divDecimal(delegatedCollateralValueInt.toUint()).to128();
     }
 
     function minimumCredit(
