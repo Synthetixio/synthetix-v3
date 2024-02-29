@@ -101,7 +101,7 @@ contract OpGasPriceOracle is IExternalNode {
             costOfExecutionGrossEth = ((gasUnitsL1 * l1GasPrice) + (gasUnitsL2 * gasPriceL2));
         } else {
             // If it's not an ecotone, use the legacy formula and interface
-            uint256 gasPriceL2 = ovmGasPriceOracle.gasPrice();
+            uint256 gasPriceL2 = ovmGasPriceOracle.baseFee(); // baseFee and gasPrice are the same in the legacy contract. Both return block.basefee
             uint256 overhead = ovmGasPriceOracle.overhead();
             uint256 l1BaseFee = ovmGasPriceOracle.l1BaseFee();
             uint256 decimals = ovmGasPriceOracle.decimals();
