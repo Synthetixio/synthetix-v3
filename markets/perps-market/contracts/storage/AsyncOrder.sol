@@ -12,6 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
+import {BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -95,6 +96,8 @@ library AsyncOrder {
         uint128 accountId;
         /**
          * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
+         * @dev For quanto this is in (base * quanto / usd) in decimal 18 digits. It can be positive or negative.
+         * @dev When passing the sizeDelta into the order for commitOrder, specify the value in base units, and the module will convert it to (base * quanto / usd) for you.
          */
         int128 sizeDelta;
         /**
@@ -314,7 +317,7 @@ library AsyncOrder {
             strategy.settlementReward;
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
+        runtime.newPositionSize = oldPosition.size.unwrap() + runtime.sizeDelta;
 
         // only account for negative pnl
         runtime.currentAvailableMargin += MathUtil.min(
@@ -331,7 +334,7 @@ library AsyncOrder {
             marketConfig.maxMarketSize,
             marketConfig.maxMarketValue,
             orderPrice,
-            oldPosition.size,
+            oldPosition.size.unwrap(),
             runtime.newPositionSize
         );
 
@@ -340,7 +343,7 @@ library AsyncOrder {
                 account,
                 marketConfig,
                 runtime.marketId,
-                oldPosition.size,
+                oldPosition.size.unwrap(),
                 runtime.newPositionSize,
                 runtime.fillPrice,
                 runtime.requiredInitialMargin
@@ -356,7 +359,7 @@ library AsyncOrder {
             latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             latestInterestAccrued: 0,
-            size: runtime.newPositionSize
+            size: BaseQuantoPerUSDInt128.wrap(runtime.newPositionSize)
         });
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }

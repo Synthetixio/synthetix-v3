@@ -3108,6 +3108,7 @@ __metadata:
     "@usecannon/cli": "npm:2.11.16"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
+    quanto-dimensions: "npm:^1.0.6"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
@@ -13542,6 +13543,13 @@ __metadata:
   version: 6.5.3
   resolution: "qs@npm:6.5.3"
   checksum: 10/485c990fba7ad17671e16c92715fb064c1600337738f5d140024eb33a49fbc1ed31890d3db850117c760caeb9c9cc9f4ba22a15c20dd119968e41e3d3fe60b28
+  languageName: node
+  linkType: hard
+
+"quanto-dimensions@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "quanto-dimensions@npm:1.0.6"
+  checksum: 10/47cbca7a88f807b649dec082257d2852e8a04259381fd928c5e54dc7c3d221dfd4e280a5d31992768b9759ef665b51364b6e1da6db05e0aff3420e0ed884bb8c
   languageName: node
   linkType: hard
 

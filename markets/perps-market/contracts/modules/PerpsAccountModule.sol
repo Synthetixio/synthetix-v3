@@ -2,11 +2,13 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
@@ -115,7 +117,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         (, totalPnl, , owedInterest, accruedFunding, , ) = position.getPositionData(
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
-        return (totalPnl, accruedFunding, position.size, owedInterest);
+        return (totalPnl, accruedFunding, position.size.unwrap(), owedInterest);
     }
 
     /**
@@ -238,15 +240,58 @@ contract PerpsAccountModule is IPerpsAccountModule {
                 amount
             );
         } else {
+            ISpotMarketSystem spotMarket = perpsMarketFactory.spotMarket;
             ITokenModule synth = ITokenModule(
-                perpsMarketFactory.spotMarket.getSynth(synthMarketId)
+                spotMarket.getSynth(synthMarketId)
             );
-            // withdrawing from a synth market
-            perpsMarketFactory.synthetix.withdrawMarketCollateral(
+
+            uint256 collateralAmount = perpsMarketFactory.synthetix.getMarketCollateralAmount(
                 perpsMarketId,
-                address(synth),
-                amount
+                address(synth)
             );
+
+            // can withdraw all the payout from the markets collateral directly
+            if (collateralAmount >= amount) {
+                // withdraw this markets trader deposited synth collateral
+                perpsMarketFactory.synthetix.withdrawMarketCollateral(
+                    perpsMarketId,
+                    address(synth),
+                    amount
+                );
+            } else {
+                // TODO: potentially move this logic to the position settlement, instead of withdrawal time
+                // withdraw all available market collateral
+                perpsMarketFactory.synthetix.withdrawMarketCollateral(
+                    perpsMarketId,
+                    address(synth),
+                    collateralAmount
+                );
+
+                // workout how much sUSD is needed to buy the remaining synths
+                uint256 amountOfSynthToBuy = amount - collateralAmount;
+                (uint256 costOfSynthInUSD, ) = spotMarket.quoteBuyExactOut(
+                    synthMarketId,
+                    amountOfSynthToBuy,
+                    Price.Tolerance.DEFAULT // TODO: check correct price tolerance
+                );
+
+                // borrow sUSD from the pool to buy the remaining synths
+                perpsMarketFactory.synthetix.withdrawMarketUsd(
+                    perpsMarketId,
+                    address(this),
+                    costOfSynthInUSD
+                );
+
+                // buy the remaining synths needed to payout the trader
+                perpsMarketFactory.usdToken.approve(address(spotMarket), costOfSynthInUSD);
+                spotMarket.buyExactOut(
+                    synthMarketId,
+                    amountOfSynthToBuy,
+                    costOfSynthInUSD,
+                    address(0) // TODO: change refferer to KWENTA?
+                );
+            }
+
             synth.transfer(ERC2771Context._msgSender(), amount);
         }
     }

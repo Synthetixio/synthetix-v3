@@ -79,6 +79,10 @@ library PerpsMarketConfiguration {
          * @dev If set to zero then there is no cap with value, just units
          */
         uint256 maxMarketValue;
+        /**
+         * @dev The Synth Market Id for the quanto asset for this market
+         */
+        uint128 quantoSynthMarketId;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {

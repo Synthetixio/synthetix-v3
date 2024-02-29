@@ -243,14 +243,14 @@ library PerpsMarket {
         Position.Data storage oldPosition = self.positions[accountId];
 
         self.size =
-            (self.size + MathUtil.abs128(newPosition.size)) -
-            MathUtil.abs128(oldPosition.size);
-        self.skew += newPosition.size - oldPosition.size;
+            (self.size + MathUtil.abs128(newPosition.size.unwrap())) -
+            MathUtil.abs128(oldPosition.size.unwrap());
+        self.skew += newPosition.size.unwrap() - oldPosition.size.unwrap();
 
         runtime.currentPrice = newPosition.latestInteractionPrice;
         (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
-        runtime.sizeDelta = newPosition.size - oldPosition.size;
+        runtime.sizeDelta = newPosition.size.unwrap() - oldPosition.size.unwrap();
         runtime.fundingDelta = calculateNextFunding(self, runtime.currentPrice).mulDecimal(
             runtime.sizeDelta
         );
@@ -429,6 +429,7 @@ library PerpsMarket {
                 .load(marketId)
                 .size
                 .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
                 .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 
