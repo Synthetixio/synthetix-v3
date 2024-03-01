@@ -58,7 +58,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 order.request.marketId,
                 order.request.accountId,
                 order.request.sizeDelta.unwrap(),
-                order.request.acceptablePrice,
+                order.request.acceptablePrice.unwrap(),
                 order.commitmentTime,
                 order.request.trackingCode
             );
@@ -76,7 +76,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.accountId,
             strategy.strategyType,
             commitment.sizeDelta.unwrap(),
-            commitment.acceptablePrice,
+            commitment.acceptablePrice.unwrap(),
             order.commitmentTime,
             order.commitmentTime + strategy.commitmentPriceDelay,
             order.commitmentTime + strategy.settlementDelay,

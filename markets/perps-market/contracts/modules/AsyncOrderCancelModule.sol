@@ -59,7 +59,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         // Get the current data before resetting the order
         runtime.accountId = asyncOrder.request.accountId;
         runtime.marketId = asyncOrder.request.marketId;
-        runtime.acceptablePrice = asyncOrder.request.acceptablePrice;
+        runtime.acceptablePrice = asyncOrder.request.acceptablePrice.unwrap();
         runtime.settlementReward = settlementStrategy.settlementReward;
         runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
 

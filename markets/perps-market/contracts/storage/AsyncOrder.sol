@@ -105,7 +105,7 @@ library AsyncOrder {
         /**
          * @dev Acceptable price set at submission.
          */
-        uint256 acceptablePrice;
+        USDPerBaseUint256 acceptablePrice;
         /**
          * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
          */
@@ -303,7 +303,7 @@ library AsyncOrder {
         ));
 
         if (acceptablePriceExceeded(order, runtime.fillPrice.unwrap())) {
-            revert AcceptablePriceExceeded(runtime.fillPrice.unwrap(), order.request.acceptablePrice);
+            revert AcceptablePriceExceeded(runtime.fillPrice.unwrap(), order.request.acceptablePrice.unwrap());
         }
 
         runtime.orderFees =
@@ -397,7 +397,7 @@ library AsyncOrder {
 
         // check if fill price exceeded acceptable price
         if (!acceptablePriceExceeded(order, fillPrice)) {
-            revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice);
+            revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice.unwrap());
         }
     }
 
@@ -590,7 +590,7 @@ library AsyncOrder {
         uint256 fillPrice
     ) internal view returns (bool exceeded) {
         return
-            (order.request.sizeDelta.unwrap() > 0 && fillPrice > order.request.acceptablePrice) ||
-            (order.request.sizeDelta.unwrap() < 0 && fillPrice < order.request.acceptablePrice);
+            (order.request.sizeDelta.unwrap() > 0 && fillPrice > order.request.acceptablePrice.unwrap()) ||
+            (order.request.sizeDelta.unwrap() < 0 && fillPrice < order.request.acceptablePrice.unwrap());
     }
 }
