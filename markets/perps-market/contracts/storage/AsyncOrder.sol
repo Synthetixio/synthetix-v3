@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -233,7 +233,7 @@ library AsyncOrder {
         BaseQuantoPerUSDInt128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
-        uint256 fillPrice;
+        USDPerBaseUint256 fillPrice;
         uint256 orderFees;
         uint256 availableMargin;
         uint256 currentLiquidationMargin;
@@ -295,21 +295,21 @@ library AsyncOrder {
             runtime.marketId
         );
 
-        runtime.fillPrice = calculateFillPrice(
+        runtime.fillPrice = USDPerBaseUint256.wrap(calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
             runtime.sizeDelta.unwrap(),
             orderPrice
-        );
+        ));
 
-        if (acceptablePriceExceeded(order, runtime.fillPrice)) {
-            revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
+        if (acceptablePriceExceeded(order, runtime.fillPrice.unwrap())) {
+            revert AcceptablePriceExceeded(runtime.fillPrice.unwrap(), order.request.acceptablePrice);
         }
 
         runtime.orderFees =
             calculateOrderFee(
                 runtime.sizeDelta.unwrap(),
-                runtime.fillPrice,
+                runtime.fillPrice.unwrap(),
                 perpsMarketData.skew,
                 marketConfig.orderFees
             ) +
@@ -321,7 +321,7 @@ library AsyncOrder {
 
         // only account for negative pnl
         runtime.currentAvailableMargin += MathUtil.min(
-            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize.unwrap()),
+            calculateStartingPnl(runtime.fillPrice.unwrap(), orderPrice, runtime.newPositionSize.unwrap()),
             0
         );
 
@@ -346,7 +346,7 @@ library AsyncOrder {
                 runtime.marketId,
                 oldPosition.size.unwrap(),
                 runtime.newPositionSize.unwrap(),
-                runtime.fillPrice,
+                runtime.fillPrice.unwrap(),
                 runtime.requiredInitialMargin
             ) +
             runtime.orderFees;
@@ -357,12 +357,12 @@ library AsyncOrder {
 
         runtime.newPosition = Position.Data({
             marketId: runtime.marketId,
-            latestInteractionPrice: runtime.fillPrice.to128(),
+            latestInteractionPrice: runtime.fillPrice.unwrap().to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             latestInterestAccrued: 0,
             size: runtime.newPositionSize
         });
-        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
+        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice.unwrap(), oldPosition);
     }
 
     /**
