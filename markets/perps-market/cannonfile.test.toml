@@ -76,7 +76,7 @@ contracts = [
     "FeatureFlagModule",
     "LiquidationModule",
     "MarketConfigurationModule",
-    "GlobalPerpsMarketModule"
+    "GlobalPerpsMarketModule",
 ]
 
 [invoke.upgrade_proxy]
@@ -97,7 +97,7 @@ args = [
     "Perpetual Futures Account",
     "snxPerpsAcct",
     "",
-    "<%= imports.synthetix.contracts.AccountRouter.address %>"
+    "<%= imports.synthetix.contracts.AccountRouter.address %>",
 ]
 depends = ["invoke.upgrade_proxy"]
 factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
@@ -111,7 +111,7 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = [
     "<%= formatBytes32String('registerMarket') %>",
-    "<%= contracts.PerpsMarketProxy.address %>"
+    "<%= contracts.PerpsMarketProxy.address %>",
 ]
 
 [invoke.addCreateMarketToFeatureFlag]

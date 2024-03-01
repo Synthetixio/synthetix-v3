@@ -63,7 +63,7 @@ from = "<%= settings.owner %>"
 func = "setSystemAddresses"
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
-    "<%= imports.v3.contracts.CoreProxy.address %>"
+    "<%= imports.v3.contracts.CoreProxy.address %>",
 ]
 
 # add pool owner to pool feature flag allow list
@@ -72,7 +72,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
     "0x637265617465506f6f6c00000000000000000000000000000000000000000000",
-    "<%= settings.pool_owner %>"
+    "<%= settings.pool_owner %>",
 ] # formatBytes32String("createPool")
 fromCall.func = "owner"
 
@@ -81,7 +81,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
     "0x72656769737465724d61726b6574000000000000000000000000000000000000",
-    "<%= contracts.Proxy.address %>"
+    "<%= contracts.Proxy.address %>",
 ] # formatBytes32String("registerMarket")
 fromCall.func = "owner"
 
@@ -90,7 +90,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
     "0x6173736f63696174654465627400000000000000000000000000000000000000",
-    "<%= contracts.Proxy.address %>"
+    "<%= contracts.Proxy.address %>",
 ] # formatBytes32String("associateDebt")
 fromCall.func = "owner"
 
@@ -109,7 +109,8 @@ func = "registerNode"
 args = [
     3, # Type for Chainlink aggregator
     "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [imports.fakeOracle.contracts.MockV3Aggregator.address, 0, 18]) %>",
-    []
+    [
+    ],
 ]
 extra.snx_oracle_id.event = "NodeRegistered"
 extra.snx_oracle_id.arg = 0
@@ -118,7 +119,7 @@ extra.snx_oracle_id.arg = 0
 target = ["v3.CoreProxy"]
 func = "configureCollateral"
 args = [
-    { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= extras.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true }
+    { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= extras.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true },
 ]
 fromCall.func = "owner"
 
@@ -129,7 +130,7 @@ func = "importAddresses"
 args = [
     ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
     # TODO nested interpolation
-    ["<%= contracts.Proxy.address %>"]
+    ["<%= contracts.Proxy.address %>"],
     #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
 fromCall.func = "owner"
@@ -156,7 +157,7 @@ args = [
     "<%= settings.sc_pool_id %>",
     [
         { marketId = "<%= extras.marketId %>", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
-    ]
+    ],
 ]
 depends = ["invoke.createPool"]
 

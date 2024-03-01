@@ -22,7 +22,7 @@ interface IPerpsAccountModule {
     /**
      * @notice Gets thrown when the amount delta is zero.
      */
-    error InvalidAmountDelta(int amountDelta);
+    error InvalidAmountDelta(int256 amountDelta);
 
     /**
      * @notice Modify the collateral delegated to the account.
@@ -30,7 +30,11 @@ interface IPerpsAccountModule {
      * @param synthMarketId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
      * @param amountDelta requested change in amount of collateral delegated to the account.
      */
-    function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;
+    function modifyCollateral(
+        uint128 accountId,
+        uint128 synthMarketId,
+        int256 amountDelta
+    ) external;
 
     /**
      * @notice Gets the account's collateral value for a specific collateral.
@@ -60,14 +64,14 @@ interface IPerpsAccountModule {
      * @param accountId Id of the account.
      * @return collateralValue total collateral value of the account. USD denominated.
      */
-    function totalCollateralValue(uint128 accountId) external view returns (uint);
+    function totalCollateralValue(uint128 accountId) external view returns (uint256);
 
     /**
      * @notice Gets the account's total open interest value.
      * @param accountId Id of the account.
      * @return openInterestValue total open interest value of the account.
      */
-    function totalAccountOpenInterest(uint128 accountId) external view returns (uint);
+    function totalAccountOpenInterest(uint128 accountId) external view returns (uint256);
 
     /**
      * @notice Gets the details of an open position.

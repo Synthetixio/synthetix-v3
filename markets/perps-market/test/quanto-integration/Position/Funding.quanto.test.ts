@@ -5,7 +5,7 @@ import {
   bn,
   bootstrapMarkets,
 } from '../../integration/bootstrap';
-import { openPosition, getQuantoPositionSize } from '../../integration/helpers';
+import { openPosition, getQuantoPositionSize, ONE_ETHER } from '../../integration/helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -51,14 +51,16 @@ describe('Position - funding', () => {
     });
 
   let ethMarket: PerpsMarket;
+  let btcSpotMarketId: ethers.BigNumber;
+  
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
+    btcSpotMarketId = synthMarkets()[0].marketId();
   });
 
   const trader1BTCMargin = bn(2.5);
   before('trader1 buys 2.5 sBTC', async () => {
-    const btcSpotMarketId = synthMarkets()[0].marketId();
-    const usdAmount = _BTC_PRICE.mul(trader1BTCMargin).div(ethers.utils.parseEther('1'));
+    const usdAmount = _BTC_PRICE.mul(trader1BTCMargin).div(ONE_ETHER);
     const minAmountReceived = trader1BTCMargin;
     const referrer = ethers.constants.AddressZero;
     await systems()
@@ -68,8 +70,7 @@ describe('Position - funding', () => {
 
   const trader2BTCMargin = bn(50);
   before('trader2 buys 50 sBTC', async () => {
-    const btcSpotMarketId = synthMarkets()[0].marketId();
-    const usdAmount = _BTC_PRICE.mul(trader2BTCMargin).div(ethers.utils.parseEther('1'));
+    const usdAmount = _BTC_PRICE.mul(trader2BTCMargin).div(ONE_ETHER);
     const minAmountReceived = trader2BTCMargin;
     const referrer = ethers.constants.AddressZero;
     await systems()
@@ -78,7 +79,6 @@ describe('Position - funding', () => {
   });
 
   before('add sBTC collateral to margin', async () => {
-    const btcSpotMarketId = synthMarkets()[0].marketId();
     // approve amount of collateral to be transfered to the market
     await synthMarkets()[0]
       .synth()
@@ -115,7 +115,7 @@ describe('Position - funding', () => {
       systems,
       provider,
       trader: trader1(),
-      accountId: 2,
+      accountId: trader1AccountId,
       keeper: keeper(),
       marketId: ethMarket.marketId(),
       sizeDelta: positionSize,
@@ -185,7 +185,7 @@ describe('Position - funding', () => {
         .add(prevAccruedFunding);
       // END ACCRUED QUANTO FUNDING CALC -------------------------------------------
 
-      // ACCRUED Classic FUNDING CALC ----------------------------------------------
+      // ACCRUED QUANTO FUNDING CALC ----------------------------------------------
       const currentSkewClassic = prevSkewClassic.add(newOrderSize);
       const frVelocityClassic = wei(currentSkewClassic).div(_SKEW_SCALE).mul(_MAX_FUNDING_VELOCITY);
       const fundingRateClassic = prevFrVelocityClassic.mul(daysElapsed).add(prevFundingRateClassic);
@@ -197,7 +197,7 @@ describe('Position - funding', () => {
         .mul(_ETH_PRICE)
         .mul(daysElapsed)
         .add(prevAccruedFundingClassic);
-      // END Classic QUANTO FUNDING CALC -------------------------------------------
+      // END QUANTO FUNDING CALC -------------------------------------------
 
       describe(`after ${daysElapsed} days`, () => {
         before('move time', async () => {
@@ -215,7 +215,7 @@ describe('Position - funding', () => {
             systems,
             provider,
             trader: trader2(),
-            accountId: 3,
+            accountId: trader2AccountId,
             keeper: trader2(),
             marketId: ethMarket.marketId(),
             sizeDelta: newQuantoOrderSize,
@@ -227,10 +227,10 @@ describe('Position - funding', () => {
 
         it('funding accrued is correct', async () => {
           const { accruedFunding } = await systems().PerpsMarket.getOpenPosition(
-            2,
+            trader1AccountId,
             ethMarket.marketId()
           );
-          const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(20_000);
+          const expectedAccruedFundingInUSD = expectedAccruedFunding.mul(_BTC_PRICE).div(ONE_ETHER);
 
           // Check the expected value of the quanto funding in USD is equal to the classic funding
           // for this skewScale. This is because we have set skewScale to skewScale.div(BTC_PRICE)

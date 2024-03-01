@@ -24,15 +24,15 @@ contract Bytes32SetMock {
         return _set.contains(value);
     }
 
-    function length() external view returns (uint) {
+    function length() external view returns (uint256) {
         return _set.length();
     }
 
-    function valueAt(uint position) external view returns (bytes32) {
+    function valueAt(uint256 position) external view returns (bytes32) {
         return _set.valueAt(position);
     }
 
-    function positionOf(bytes32 value) external view returns (uint) {
+    function positionOf(bytes32 value) external view returns (uint256) {
         return _set.positionOf(value);
     }
 
@@ -62,15 +62,15 @@ contract AddressSetMock {
         return _set.contains(value);
     }
 
-    function length() external view returns (uint) {
+    function length() external view returns (uint256) {
         return _set.length();
     }
 
-    function valueAt(uint position) external view returns (address) {
+    function valueAt(uint256 position) external view returns (address) {
         return _set.valueAt(position);
     }
 
-    function positionOf(address value) external view returns (uint) {
+    function positionOf(address value) external view returns (uint256) {
         return _set.positionOf(value);
     }
 
@@ -84,35 +84,35 @@ contract UintSetMock {
 
     SetUtil.UintSet private _set;
 
-    function add(uint value) external {
+    function add(uint256 value) external {
         _set.add(value);
     }
 
-    function remove(uint value) external {
+    function remove(uint256 value) external {
         _set.remove(value);
     }
 
-    function replace(uint value, uint newValue) external {
+    function replace(uint256 value, uint256 newValue) external {
         _set.replace(value, newValue);
     }
 
-    function contains(uint value) external view returns (bool) {
+    function contains(uint256 value) external view returns (bool) {
         return _set.contains(value);
     }
 
-    function length() external view returns (uint) {
+    function length() external view returns (uint256) {
         return _set.length();
     }
 
-    function valueAt(uint position) external view returns (uint) {
+    function valueAt(uint256 position) external view returns (uint256) {
         return _set.valueAt(position);
     }
 
-    function positionOf(uint value) external view returns (uint) {
+    function positionOf(uint256 value) external view returns (uint256) {
         return _set.positionOf(value);
     }
 
-    function values() external view returns (uint[] memory) {
+    function values() external view returns (uint256[] memory) {
         return _set.values();
     }
 }

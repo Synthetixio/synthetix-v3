@@ -32,7 +32,8 @@ export default async function assertRevert(
     );
   }
 
-  let errorMessage = formatErrorMessage(error);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let errorMessage = (error as any)?.error?.reason || formatErrorMessage(error);
   if (errorMessage.includes(expectedMessage)) {
     return; // Expected message found.
   }

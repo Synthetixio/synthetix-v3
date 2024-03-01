@@ -44,14 +44,14 @@ library PerpsPrice {
     function getCurrentPrice(
         uint128 marketId,
         Tolerance priceTolerance
-    ) internal view returns (uint price) {
+    ) internal view returns (uint256 price) {
         return _getCurrentPrice(marketId, priceTolerance, false);
     }
 
     function getCurrentQuantoPrice(
         uint128 marketId,
         Tolerance priceTolerance
-    ) internal view returns (uint price) {
+    ) internal view returns (uint256 price) {
         return _getCurrentPrice(marketId, priceTolerance, true);
     }
 
@@ -59,7 +59,7 @@ library PerpsPrice {
         uint128 marketId,
         Tolerance priceTolerance,
         bool isQuanto
-    ) internal view returns (uint price) {
+    ) internal view returns (uint256 price) {
         Data storage self = load(marketId);
         bytes32 feedId = isQuanto ? self.quantoFeedId : self.feedId;
         // TODO: check - are we certain this always works?

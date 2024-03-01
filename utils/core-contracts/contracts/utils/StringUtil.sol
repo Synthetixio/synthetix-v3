@@ -7,7 +7,7 @@ pragma solidity >=0.8.11 <0.9.0;
 */
 
 library StringUtil {
-    function uintToString(uint value) internal pure returns (string memory) {
+    function uintToString(uint256 value) internal pure returns (string memory) {
         if (value == 0) {
             return "0";
         }

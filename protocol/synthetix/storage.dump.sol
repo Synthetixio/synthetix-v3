@@ -106,11 +106,11 @@ library ERC2771Context {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
-    uint private constant _ROOT_INDEX = 1;
+    uint256 private constant _ROOT_INDEX = 1;
     struct Data {
         uint128 idCount;
         Node[] nodes;
-        mapping(uint128 => uint) indices;
+        mapping(uint128 => uint256) indices;
     }
     struct Node {
         uint128 id;
@@ -128,7 +128,7 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions;
+        mapping(bytes32 => uint256) _positions;
     }
 }
 
@@ -191,7 +191,7 @@ contract PythStructs {
         int64 price;
         uint64 conf;
         int32 expo;
-        uint publishTime;
+        uint256 publishTime;
     }
     struct PriceFeed {
         bytes32 id;
@@ -695,6 +695,11 @@ library Vault {
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
+    }
+    struct PositionSelector {
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
     }
 }
 

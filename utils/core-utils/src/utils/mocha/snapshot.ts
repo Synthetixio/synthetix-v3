@@ -1,9 +1,6 @@
-import { CannonWrapperGenericProvider } from '@usecannon/builder';
 import { ethers } from 'ethers';
 
-export function snapshotCheckpoint(
-  provider: () => ethers.providers.JsonRpcProvider | CannonWrapperGenericProvider
-) {
+export function snapshotCheckpoint(provider: () => ethers.providers.JsonRpcProvider) {
   let snapshotId: number;
 
   const snapshot = async () => {

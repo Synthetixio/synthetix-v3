@@ -16,15 +16,15 @@ library MathUtil {
         return x >= 0 ? x.toUint() : (-x).toUint();
     }
 
-    function max(int x, int y) internal pure returns (int) {
+    function max(int256 x, int256 y) internal pure returns (int256) {
         return x < y ? y : x;
     }
 
-    function max(uint x, uint y) internal pure returns (uint) {
+    function max(uint256 x, uint256 y) internal pure returns (uint256) {
         return x < y ? y : x;
     }
 
-    function min(int x, int y) internal pure returns (int) {
+    function min(int256 x, int256 y) internal pure returns (int256) {
         return x < y ? x : y;
     }
 
@@ -32,7 +32,7 @@ library MathUtil {
         return x < y ? x : y;
     }
 
-    function min(uint x, uint y) internal pure returns (uint) {
+    function min(uint256 x, uint256 y) internal pure returns (uint256) {
         return x < y ? x : y;
     }
 
@@ -40,11 +40,15 @@ library MathUtil {
         return x < y ? x : y;
     }
 
-    function sameSide(int a, int b) internal pure returns (bool) {
+    function sameSide(int256 a, int256 b) internal pure returns (bool) {
         return (a == 0) || (b == 0) || (a > 0) == (b > 0);
     }
 
-    function ceilDivide(uint a, uint b) internal pure returns (uint) {
+    function isSameSideReducing(int128 a, int128 b) internal pure returns (bool) {
+        return sameSide(a, b) && abs(b) < abs(a);
+    }
+
+    function ceilDivide(uint256 a, uint256 b) internal pure returns (uint256) {
         if (b == 0) return 0;
         return a / b + (a % b == 0 ? 0 : 1);
     }

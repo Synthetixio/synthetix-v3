@@ -52,6 +52,7 @@ interface IOVM_GasPriceOracle {
 
     /**
      * @notice Retrieves the current fee overhead.
+     * @notice deprecated
      *
      * @return Current fee overhead.
      */
@@ -59,6 +60,7 @@ interface IOVM_GasPriceOracle {
 
     /**
      * @notice Retrieves the current fee scalar.
+     * @notice deprecated
      *
      * @return Current fee scalar.
      */
@@ -90,4 +92,25 @@ interface IOVM_GasPriceOracle {
      * @return Amount of L1 gas used to publish the transaction.
      */
     function getL1GasUsed(bytes memory _data) external view returns (uint256);
+
+    /// @notice Set chain to be Ecotone chain (callable by depositor account)
+    function setEcotone() external;
+
+    /// @notice Indicates whether the network has gone through the Ecotone upgrade.
+    function isEcotone() external view returns (bool);
+
+    /// @notice Semantic version.
+    function version() external view returns (string memory);
+
+    /// @notice Retrieves the current blob base fee.
+    /// @return Current blob base fee.
+    function blobBaseFee() external view returns (uint256);
+
+    /// @notice Retrieves the current base fee scalar.
+    /// @return Current base fee scalar.
+    function baseFeeScalar() external view returns (uint32);
+
+    /// @notice Retrieves the current blob base fee scalar.
+    /// @return Current blob base fee scalar.
+    function blobBaseFeeScalar() external view returns (uint32);
 }

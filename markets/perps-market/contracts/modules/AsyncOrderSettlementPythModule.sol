@@ -105,7 +105,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.accountId,
             runtime.newPosition
         );
-        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPosition.size);
+        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPosition.size.unwrap());
 
         emit MarketUpdated(
             runtime.updateData.marketId,
@@ -169,7 +169,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.pnl,
             runtime.accruedFunding,
             runtime.sizeDelta,
-            runtime.newPosition.size,
+            runtime.newPosition.size.unwrap(),
             runtime.totalFees,
             runtime.referralFees,
             runtime.feeCollectorFees,
