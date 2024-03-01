@@ -51,12 +51,12 @@ library AsyncOrder {
     /**
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
-    error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
+    error AcceptablePriceExceeded(USDPerBaseUint256 fillPrice, USDPerBaseUint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
      */
-    error AcceptablePriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
+    error AcceptablePriceNotExceeded(USDPerBaseUint256 fillPrice, USDPerBaseUint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
@@ -303,7 +303,7 @@ library AsyncOrder {
         ));
 
         if (acceptablePriceExceeded(order, runtime.fillPrice.unwrap())) {
-            revert AcceptablePriceExceeded(runtime.fillPrice.unwrap(), order.request.acceptablePrice.unwrap());
+            revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
         runtime.orderFees =
@@ -397,7 +397,7 @@ library AsyncOrder {
 
         // check if fill price exceeded acceptable price
         if (!acceptablePriceExceeded(order, fillPrice)) {
-            revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice.unwrap());
+            revert AcceptablePriceNotExceeded(USDPerBaseUint256.wrap(fillPrice), order.request.acceptablePrice);
         }
     }
 
