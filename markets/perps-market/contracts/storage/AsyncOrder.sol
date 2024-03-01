@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -229,6 +229,7 @@ library AsyncOrder {
      * @dev Struct used internally in validateOrder() to prevent stack too deep error.
      */
     // TODO: check to be sure commented out types can definitely be deleted safely
+    // TODO: if they can be deleted safely, delete them
     struct SimulateDataRuntime {
         bool isEligible;
         BaseQuantoPerUSDInt128 sizeDelta;
@@ -243,7 +244,7 @@ library AsyncOrder {
         BaseQuantoPerUSDInt128 newPositionSize;
         // uint256 newNotionalValue;
         QuantoInt256 currentAvailableMargin;
-        uint256 requiredInitialMargin;
+        QuantoUint256 requiredInitialMargin;
         uint256 initialRequiredMargin;
         uint256 totalRequiredMargin;
         Position.Data newPosition;
@@ -348,7 +349,7 @@ library AsyncOrder {
                 oldPosition.size.unwrap(),
                 runtime.newPositionSize.unwrap(),
                 runtime.fillPrice.unwrap(),
-                runtime.requiredInitialMargin
+                runtime.requiredInitialMargin.unwrap()
             ) +
             runtime.orderFees;
 

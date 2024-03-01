@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+
 /**
  * @title Account module
  */
@@ -120,7 +122,7 @@ interface IPerpsAccountModule {
         external
         view
         returns (
-            uint256 requiredInitialMargin,
+            QuantoUint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
             uint256 maxLiquidationReward
         );

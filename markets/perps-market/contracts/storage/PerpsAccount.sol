@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, QuantoUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -123,7 +123,7 @@ library PerpsAccount {
         returns (
             bool isEligible,
             QuantoInt256 availableMargin,
-            uint256 requiredInitialMargin,
+            QuantoUint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
             uint256 liquidationReward
         )
@@ -204,7 +204,7 @@ library PerpsAccount {
         (
             bool isEligible,
             QuantoInt256 availableMargin,
-            uint256 initialRequiredMargin,
+            QuantoUint256 initialRequiredMargin,
             ,
             uint256 liquidationReward
         ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.STRICT);
@@ -213,7 +213,7 @@ library PerpsAccount {
             revert AccountLiquidatable(self.id);
         }
 
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
+        uint256 requiredMargin = initialRequiredMargin.unwrap() + liquidationReward;
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
         availableWithdrawableCollateralUsd = availableMargin.unwrap().toUint() - requiredMargin;
 
@@ -324,14 +324,14 @@ library PerpsAccount {
         internal
         view
         returns (
-            uint256 initialMargin,
+            QuantoUint256 initialMargin,
             uint256 maintenanceMargin,
             uint256 possibleLiquidationReward
         )
     {
         uint256 openPositionMarketIdsLength = self.openPositionMarketIds.length();
         if (openPositionMarketIdsLength == 0) {
-            return (0, 0, 0);
+            return (QuantoUint256.wrap(0), 0, 0);
         }
 
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
@@ -349,7 +349,7 @@ library PerpsAccount {
 
             uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
             maintenanceMargin += positionMaintenanceMargin.mulDecimal(quantoPrice);
-            initialMargin += positionInitialMargin.mulDecimal(quantoPrice);
+            initialMargin = initialMargin + QuantoUint256.wrap(positionInitialMargin.mulDecimal(quantoPrice));
         }
 
         (

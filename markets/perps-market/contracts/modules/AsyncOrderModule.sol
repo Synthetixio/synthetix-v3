@@ -15,6 +15,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Flags} from "../utils/Flags.sol";
+import {QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for committing async orders.
@@ -157,7 +158,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (uint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
+        (QuantoUint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
             PerpsPrice.Tolerance.DEFAULT
         );
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
@@ -170,7 +171,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 oldPosition.size.unwrap(),
                 oldPosition.size.unwrap() + sizeDelta,
                 fillPrice,
-                currentInitialMargin
+                currentInitialMargin.unwrap()
             ) + orderFees;
     }
 
