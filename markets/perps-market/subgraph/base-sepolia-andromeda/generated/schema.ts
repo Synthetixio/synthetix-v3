@@ -942,6 +942,23 @@ export class SettlementStrategy extends Entity {
     this.set('strategyType', Value.fromI32(value));
   }
 
+  get settlementDelay(): BigInt | null {
+    let value = this.get('settlementDelay');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set settlementDelay(value: BigInt | null) {
+    if (!value) {
+      this.unset('settlementDelay');
+    } else {
+      this.set('settlementDelay', Value.fromBigInt(<BigInt>value));
+    }
+  }
+
   get settlementWindowDuration(): BigInt | null {
     let value = this.get('settlementWindowDuration');
     if (!value || value.kind == ValueKind.NULL) {

@@ -9,6 +9,7 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
   strategy.marketId = event.params.marketId;
 
   strategy.strategyType = event.params.strategy.strategyType;
+  strategy.settlementDelay = event.params.strategy.settlementDelay;
   strategy.settlementWindowDuration = event.params.strategy.settlementWindowDuration;
   strategy.priceVerificationContract =
     event.params.strategy.priceVerificationContract.toHexString();
