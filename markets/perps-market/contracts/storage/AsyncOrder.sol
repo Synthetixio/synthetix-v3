@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -228,6 +228,7 @@ library AsyncOrder {
     /**
      * @dev Struct used internally in validateOrder() to prevent stack too deep error.
      */
+    // TODO: check to be sure commented out types can definitely be deleted safely
     struct SimulateDataRuntime {
         bool isEligible;
         BaseQuantoPerUSDInt128 sizeDelta;
@@ -235,13 +236,13 @@ library AsyncOrder {
         uint128 marketId;
         USDPerBaseUint256 fillPrice;
         uint256 orderFees;
-        uint256 availableMargin;
-        uint256 currentLiquidationMargin;
+        // uint256 availableMargin;
+        // uint256 currentLiquidationMargin;
         uint256 accumulatedLiquidationRewards;
         uint256 currentLiquidationReward;
         BaseQuantoPerUSDInt128 newPositionSize;
-        uint256 newNotionalValue;
-        int256 currentAvailableMargin;
+        // uint256 newNotionalValue;
+        QuantoInt256 currentAvailableMargin;
         uint256 requiredInitialMargin;
         uint256 initialRequiredMargin;
         uint256 totalRequiredMargin;
@@ -320,14 +321,14 @@ library AsyncOrder {
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         // only account for negative pnl
-        runtime.currentAvailableMargin += MathUtil.min(
+        runtime.currentAvailableMargin = runtime.currentAvailableMargin + QuantoInt256.wrap(MathUtil.min(
             calculateStartingPnl(runtime.fillPrice.unwrap(), orderPrice, runtime.newPositionSize.unwrap()),
             0
-        );
+        ));
 
-        if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
+        if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.toInt()) {
             // TODO: fix error here. test: OffchainAsyncOrder.settle.quanto.test.ts - reverts with invalid pyth price timestamp (after time)
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
+            revert InsufficientMargin(runtime.currentAvailableMargin.unwrap(), runtime.orderFees);
         }
 
         PerpsMarket.validatePositionSize(
@@ -351,8 +352,8 @@ library AsyncOrder {
             ) +
             runtime.orderFees;
 
-        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
+        if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.toInt()) {
+            revert InsufficientMargin(runtime.currentAvailableMargin.unwrap(), runtime.totalRequiredMargin);
         }
 
         runtime.newPosition = Position.Data({

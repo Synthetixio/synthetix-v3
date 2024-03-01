@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -122,20 +122,20 @@ library PerpsAccount {
         view
         returns (
             bool isEligible,
-            int256 availableMargin,
+            QuantoInt256 availableMargin,
             uint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
             uint256 liquidationReward
         )
     {
-        availableMargin = getAvailableMargin(self, stalenessTolerance);
+        availableMargin = QuantoInt256.wrap(getAvailableMargin(self, stalenessTolerance));
 
         (
             requiredInitialMargin,
             requiredMaintenanceMargin,
             liquidationReward
         ) = getAccountRequiredMargins(self, stalenessTolerance);
-        isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
+        isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin.unwrap();
     }
 
     function flagForLiquidation(
@@ -203,7 +203,7 @@ library PerpsAccount {
 
         (
             bool isEligible,
-            int256 availableMargin,
+            QuantoInt256 availableMargin,
             uint256 initialRequiredMargin,
             ,
             uint256 liquidationReward
@@ -215,7 +215,7 @@ library PerpsAccount {
 
         uint256 requiredMargin = initialRequiredMargin + liquidationReward;
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
+        availableWithdrawableCollateralUsd = availableMargin.unwrap().toUint() - requiredMargin;
 
         uint256 amountToWithdrawUsd;
         if (synthMarketId == SNX_USD_MARKET_ID) {
