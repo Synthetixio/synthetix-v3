@@ -72,7 +72,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
      */
-    error InsufficientMargin(int256 availableMargin, uint256 minMargin);
+    error InsufficientMargin(QuantoInt256 availableMargin, QuantoUint256 minMargin);
 
     struct Data {
         /**
@@ -327,7 +327,7 @@ library AsyncOrder {
 
         if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.toInt()) {
             // TODO: fix error here. test: OffchainAsyncOrder.settle.quanto.test.ts - reverts with invalid pyth price timestamp (after time)
-            revert InsufficientMargin(runtime.currentAvailableMargin.unwrap(), runtime.orderFees);
+            revert InsufficientMargin(runtime.currentAvailableMargin, QuantoUint256.wrap(runtime.orderFees));
         }
 
         PerpsMarket.validatePositionSize(
@@ -352,7 +352,7 @@ library AsyncOrder {
             runtime.orderFees);
 
         if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.unwrap().toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin.unwrap(), runtime.totalRequiredMargin.unwrap());
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
 
         runtime.newPosition = Position.Data({
