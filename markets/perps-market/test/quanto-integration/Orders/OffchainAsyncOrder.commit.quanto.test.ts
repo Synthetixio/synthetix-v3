@@ -226,7 +226,6 @@ describe('Quanto Commit Offchain Async Order test', () => {
   ];
 
   for (let idx = 0; idx < testCases.length; idx++) {
-  // for (let idx = 0; idx < 1; idx++) {
     const testCase = testCases[idx];
     describe(`Using ${testCase.name} as collateral`, () => {
       let tx: ethers.ContractTransaction;
