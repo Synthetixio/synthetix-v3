@@ -230,7 +230,7 @@ library AsyncOrder {
      */
     struct SimulateDataRuntime {
         bool isEligible;
-        int128 sizeDelta;
+        BaseQuantoPerUSDInt128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
         uint256 fillPrice;
@@ -239,7 +239,7 @@ library AsyncOrder {
         uint256 currentLiquidationMargin;
         uint256 accumulatedLiquidationRewards;
         uint256 currentLiquidationReward;
-        int128 newPositionSize;
+        BaseQuantoPerUSDInt128 newPositionSize;
         uint256 newNotionalValue;
         int256 currentAvailableMargin;
         uint256 requiredInitialMargin;
@@ -266,11 +266,11 @@ library AsyncOrder {
         uint256 orderPrice
     ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
-        runtime.sizeDelta = order.request.sizeDelta;
+        runtime.sizeDelta = BaseQuantoPerUSDInt128.wrap(order.request.sizeDelta);
         runtime.accountId = order.request.accountId;
         runtime.marketId = order.request.marketId;
 
-        if (runtime.sizeDelta == 0) {
+        if (runtime.sizeDelta.unwrap() == 0) {
             revert ZeroSizeOrder();
         }
 
@@ -298,7 +298,7 @@ library AsyncOrder {
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
-            runtime.sizeDelta,
+            runtime.sizeDelta.unwrap(),
             orderPrice
         );
 
@@ -308,7 +308,7 @@ library AsyncOrder {
 
         runtime.orderFees =
             calculateOrderFee(
-                runtime.sizeDelta,
+                runtime.sizeDelta.unwrap(),
                 runtime.fillPrice,
                 perpsMarketData.skew,
                 marketConfig.orderFees
@@ -317,15 +317,16 @@ library AsyncOrder {
             strategy.settlementReward;
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
-        runtime.newPositionSize = oldPosition.size.unwrap() + runtime.sizeDelta;
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         // only account for negative pnl
         runtime.currentAvailableMargin += MathUtil.min(
-            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize),
+            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize.unwrap()),
             0
         );
 
         if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
+            // TODO: fix error here. test: OffchainAsyncOrder.settle.quanto.test.ts - reverts with invalid pyth price timestamp (after time)
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
@@ -335,7 +336,7 @@ library AsyncOrder {
             marketConfig.maxMarketValue,
             orderPrice,
             oldPosition.size.unwrap(),
-            runtime.newPositionSize
+            runtime.newPositionSize.unwrap()
         );
 
         runtime.totalRequiredMargin =
@@ -344,7 +345,7 @@ library AsyncOrder {
                 marketConfig,
                 runtime.marketId,
                 oldPosition.size.unwrap(),
-                runtime.newPositionSize,
+                runtime.newPositionSize.unwrap(),
                 runtime.fillPrice,
                 runtime.requiredInitialMargin
             ) +
@@ -359,7 +360,7 @@ library AsyncOrder {
             latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             latestInterestAccrued: 0,
-            size: BaseQuantoPerUSDInt128.wrap(runtime.newPositionSize)
+            size: runtime.newPositionSize
         });
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
