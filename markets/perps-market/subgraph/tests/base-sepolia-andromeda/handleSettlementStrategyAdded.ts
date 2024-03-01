@@ -33,7 +33,7 @@ export default function test(): void {
       feedId,
       settlementReward,
       disabled,
-      settlementReward,
+      commitmentPriceDelay,
       strategyId,
       timestamp,
       blockNumber,
