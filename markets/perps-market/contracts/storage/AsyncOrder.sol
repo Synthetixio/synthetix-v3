@@ -245,8 +245,8 @@ library AsyncOrder {
         // uint256 newNotionalValue;
         QuantoInt256 currentAvailableMargin;
         QuantoUint256 requiredInitialMargin;
-        uint256 initialRequiredMargin;
-        uint256 totalRequiredMargin;
+        // uint256 initialRequiredMargin;
+        QuantoUint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
     }
@@ -342,7 +342,7 @@ library AsyncOrder {
         );
 
         runtime.totalRequiredMargin =
-            getRequiredMarginWithNewPosition(
+            QuantoUint256.wrap(getRequiredMarginWithNewPosition(
                 account,
                 marketConfig,
                 runtime.marketId,
@@ -351,10 +351,10 @@ library AsyncOrder {
                 runtime.fillPrice.unwrap(),
                 runtime.requiredInitialMargin.unwrap()
             ) +
-            runtime.orderFees;
+            runtime.orderFees);
 
-        if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin.unwrap(), runtime.totalRequiredMargin);
+        if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.unwrap().toInt()) {
+            revert InsufficientMargin(runtime.currentAvailableMargin.unwrap(), runtime.totalRequiredMargin.unwrap());
         }
 
         runtime.newPosition = Position.Data({
