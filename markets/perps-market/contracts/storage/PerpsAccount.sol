@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, QuantoUint256, QuantoInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -261,11 +261,10 @@ library PerpsAccount {
         return USDUint256.wrap(totalCollateralValue);
     }
 
-    /// @dev returns USD
     function getAccountPnl(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (int256 totalPnl) {
+    ) internal view returns (USDInt256 totalPnl) {
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
@@ -275,9 +274,9 @@ library PerpsAccount {
             );
 
             uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
-            int usdPnl = pnl.mulDecimal(quantoPrice.toInt());
+            USDInt256 usdPnl = USDInt256.wrap(pnl.mulDecimal(quantoPrice.toInt()));
 
-            totalPnl += usdPnl;
+            totalPnl = totalPnl + usdPnl;
         }
     }
 
@@ -287,9 +286,9 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256) {
         USDUint256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance);
-        int256 accountPnl = getAccountPnl(self, stalenessTolerance);
+        USDInt256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
-        return totalCollateralValue.unwrap().toInt() + accountPnl;
+        return totalCollateralValue.unwrap().toInt() + accountPnl.unwrap();
     }
 
     function getTotalNotionalOpenInterest(
