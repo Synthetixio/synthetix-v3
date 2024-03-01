@@ -77,6 +77,7 @@ contract RewardsDistributorTest is Test {
             poolId,
             collateralType,
             payoutToken,
+            SNX.decimals(),
             name
         );
     }

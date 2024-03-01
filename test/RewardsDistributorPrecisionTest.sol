@@ -58,6 +58,7 @@ contract RewardsDistributorPrecisionTest is Test {
             poolId,
             collateralType,
             address(T6D),
+            T6D.decimals(),
             "6 Decimals token payouts"
         );
         T6D.mint(address(rewardsDistributor), 1_000e6); // 1000 T6D tokens
@@ -102,6 +103,7 @@ contract RewardsDistributorPrecisionTest is Test {
             poolId,
             collateralType,
             address(T33D),
+            T33D.decimals(),
             "33 Decimals token payouts"
         );
         T33D.mint(address(rewardsDistributor), 1_000e33); // 1000 T33D tokens
@@ -146,6 +148,7 @@ contract RewardsDistributorPrecisionTest is Test {
             poolId,
             collateralType,
             address(T6D),
+            T6D.decimals(),
             "6 Decimals token payouts"
         );
         T6D.mint(address(rewardsDistributor), 1_000e6); // 1000 T6D tokens
@@ -184,6 +187,7 @@ contract RewardsDistributorPrecisionTest is Test {
             poolId,
             collateralType,
             address(T33D),
+            T33D.decimals(),
             "33 Decimals token payouts"
         );
         T33D.mint(address(rewardsDistributor), 1_000e33); // 1000 T33D tokens
