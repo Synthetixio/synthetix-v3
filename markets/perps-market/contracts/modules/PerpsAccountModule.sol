@@ -20,7 +20,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {QuantoUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module to manage accounts
@@ -126,7 +126,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
      */
     function getAvailableMargin(
         uint128 accountId
-    ) external view override returns (int256 availableMargin) {
+    ) external view override returns (USDInt256 availableMargin) {
         availableMargin = PerpsAccount.load(accountId).getAvailableMargin(
             PerpsPrice.Tolerance.DEFAULT
         );
@@ -139,13 +139,13 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
+        USDInt256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
         (QuantoUint256 initialRequiredMargin, , uint256 liquidationReward) = account
             .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
         uint256 requiredMargin = initialRequiredMargin.unwrap() + liquidationReward;
 
-        withdrawableMargin = availableMargin - requiredMargin.toInt();
+        withdrawableMargin = availableMargin.unwrap() - requiredMargin.toInt();
     }
 
     /**

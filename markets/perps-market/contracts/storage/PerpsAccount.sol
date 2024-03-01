@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -122,13 +122,13 @@ library PerpsAccount {
         view
         returns (
             bool isEligible,
-            QuantoInt256 availableMargin,
+            USDInt256 availableMargin,
             QuantoUint256 requiredInitialMargin,
             uint256 requiredMaintenanceMargin,
             uint256 liquidationReward
         )
     {
-        availableMargin = QuantoInt256.wrap(getAvailableMargin(self, stalenessTolerance));
+        availableMargin = getAvailableMargin(self, stalenessTolerance);
 
         (
             requiredInitialMargin,
@@ -203,7 +203,7 @@ library PerpsAccount {
 
         (
             bool isEligible,
-            QuantoInt256 availableMargin,
+            USDInt256 availableMargin,
             QuantoUint256 initialRequiredMargin,
             ,
             uint256 liquidationReward
@@ -280,15 +280,14 @@ library PerpsAccount {
         }
     }
 
-    /// @dev returns USD
     function getAvailableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (int256) {
+    ) internal view returns (USDInt256) {
         USDUint256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance);
         USDInt256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
-        return totalCollateralValue.unwrap().toInt() + accountPnl.unwrap();
+        return USDInt256.wrap(totalCollateralValue.unwrap().toInt()) + accountPnl;
     }
 
     function getTotalNotionalOpenInterest(
@@ -339,15 +338,15 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin) = marketConfig
+            (, , QuantoUint256 positionInitialMargin, QuantoUint256 positionMaintenanceMargin) = marketConfig
                 .calculateRequiredMargins(
-                    position.size.unwrap(),
-                    PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
+                    position.size,
+                    USDPerBaseUint256.wrap(PerpsPrice.getCurrentPrice(marketId, stalenessTolerance))
                 );
 
             uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
-            maintenanceMargin += positionMaintenanceMargin.mulDecimal(quantoPrice);
-            initialMargin = initialMargin + QuantoUint256.wrap(positionInitialMargin.mulDecimal(quantoPrice));
+            maintenanceMargin += positionMaintenanceMargin.unwrap().mulDecimal(quantoPrice);
+            initialMargin = initialMargin + QuantoUint256.wrap(positionInitialMargin.unwrap().mulDecimal(quantoPrice));
         }
 
         (

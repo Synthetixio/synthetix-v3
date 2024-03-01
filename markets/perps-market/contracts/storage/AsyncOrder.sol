@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -72,7 +72,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
      */
-    error InsufficientMargin(QuantoInt256 availableMargin, QuantoUint256 minMargin);
+    error InsufficientMargin(USDInt256 availableMargin, uint256 minMargin);
 
     struct Data {
         /**
@@ -241,7 +241,7 @@ library AsyncOrder {
         uint256 currentLiquidationReward;
         BaseQuantoPerUSDInt128 newPositionSize;
         // uint256 newNotionalValue;
-        QuantoInt256 currentAvailableMargin;
+        USDInt256 currentAvailableMargin;
         QuantoUint256 requiredInitialMargin;
         // uint256 initialRequiredMargin;
         QuantoUint256 totalRequiredMargin;
@@ -320,14 +320,14 @@ library AsyncOrder {
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         // only account for negative pnl
-        runtime.currentAvailableMargin = runtime.currentAvailableMargin + QuantoInt256.wrap(MathUtil.min(
+        runtime.currentAvailableMargin = runtime.currentAvailableMargin + USDInt256.wrap(MathUtil.min(
             calculateStartingPnl(runtime.fillPrice.unwrap(), orderPrice, runtime.newPositionSize.unwrap()),
             0
         ));
 
         if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.toInt()) {
             // TODO: fix error here. test: OffchainAsyncOrder.settle.quanto.test.ts - reverts with invalid pyth price timestamp (after time)
-            revert InsufficientMargin(runtime.currentAvailableMargin, QuantoUint256.wrap(runtime.orderFees));
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
         PerpsMarket.validatePositionSize(
@@ -352,7 +352,7 @@ library AsyncOrder {
             runtime.orderFees);
 
         if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.unwrap().toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin.unwrap());
         }
 
         runtime.newPosition = Position.Data({
@@ -501,8 +501,8 @@ library AsyncOrder {
     }
 
     struct RequiredMarginWithNewPositionRuntime {
-        uint256 newRequiredMargin;
-        uint256 oldRequiredMargin;
+        QuantoUint256 newRequiredMargin;
+        QuantoUint256 oldRequiredMargin;
         uint256 requiredMarginForNewPosition;
         uint256 accumulatedLiquidationRewards;
         uint256 maxNumberOfWindows;
@@ -543,22 +543,22 @@ library AsyncOrder {
 
         // get initial margin requirement for the new position
         (, , runtime.newRequiredMargin, ) = marketConfig.calculateRequiredMargins(
-            newPositionSize,
-            fillPrice
+            BaseQuantoPerUSDInt128.wrap(newPositionSize),
+            USDPerBaseUint256.wrap(fillPrice)
         );
 
         // get initial margin of old position
         (, , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
-            oldPositionSize,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            BaseQuantoPerUSDInt128.wrap(oldPositionSize),
+            USDPerBaseUint256.wrap(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
         );
 
         // remove the old initial margin and add the new initial margin requirement
         // this gets us our total required margin for new position
         runtime.requiredMarginForNewPosition =
             currentTotalInitialMargin +
-            runtime.newRequiredMargin -
-            runtime.oldRequiredMargin;
+            runtime.newRequiredMargin.unwrap() -
+            runtime.oldRequiredMargin.unwrap();
 
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
             .getKeeperRewardsAndCosts(marketId);
