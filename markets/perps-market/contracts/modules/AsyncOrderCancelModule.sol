@@ -61,7 +61,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         runtime.marketId = asyncOrder.request.marketId;
         runtime.acceptablePrice = asyncOrder.request.acceptablePrice;
         runtime.settlementReward = settlementStrategy.settlementReward;
-        runtime.sizeDelta = asyncOrder.request.sizeDelta;
+        runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
 
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);

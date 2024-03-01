@@ -95,11 +95,9 @@ library AsyncOrder {
          */
         uint128 accountId;
         /**
-         * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
-         * @dev For quanto this is in (base * quanto / usd) in decimal 18 digits. It can be positive or negative.
-         * @dev When passing the sizeDelta into the order for commitOrder, specify the value in base units, and the module will convert it to (base * quanto / usd) for you.
+         * @dev Order size delta (of base*quanto/usd units expressed in decimal 18 digits). It can be positive or negative.
          */
-        int128 sizeDelta;
+        BaseQuantoPerUSDInt128 sizeDelta;
         /**
          * @dev Settlement strategy used for the order.
          */
@@ -137,7 +135,7 @@ library AsyncOrder {
         uint128 accountId
     ) internal view returns (Data storage order, SettlementStrategy.Data storage strategy) {
         order = load(accountId);
-        if (order.request.sizeDelta == 0) {
+        if (order.request.sizeDelta.unwrap() == 0) {
             revert OrderNotValid();
         }
 
@@ -170,7 +168,7 @@ library AsyncOrder {
     function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
         order = load(accountId);
 
-        if (order.request.sizeDelta != 0) {
+        if (order.request.sizeDelta.unwrap() != 0) {
             SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
                 .load(order.request.marketId)
                 .settlementStrategies[order.request.settlementStrategyId];
@@ -188,7 +186,7 @@ library AsyncOrder {
      * @dev The rest of the fields will be updated on the next commitment. Not doing it here is more gas efficient.
      */
     function reset(Data storage self) internal {
-        self.request.sizeDelta = 0;
+        self.request.sizeDelta = BaseQuantoPerUSDInt128.wrap(0);
     }
 
     /**
@@ -268,7 +266,7 @@ library AsyncOrder {
         uint256 orderPrice
     ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
-        runtime.sizeDelta = BaseQuantoPerUSDInt128.wrap(order.request.sizeDelta);
+        runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
         runtime.marketId = order.request.marketId;
 
@@ -393,7 +391,7 @@ library AsyncOrder {
         fillPrice = calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
-            order.request.sizeDelta,
+            order.request.sizeDelta.unwrap(),
             orderPrice
         );
 
@@ -592,7 +590,7 @@ library AsyncOrder {
         uint256 fillPrice
     ) internal view returns (bool exceeded) {
         return
-            (order.request.sizeDelta > 0 && fillPrice > order.request.acceptablePrice) ||
-            (order.request.sizeDelta < 0 && fillPrice < order.request.acceptablePrice);
+            (order.request.sizeDelta.unwrap() > 0 && fillPrice > order.request.acceptablePrice) ||
+            (order.request.sizeDelta.unwrap() < 0 && fillPrice < order.request.acceptablePrice);
     }
 }

@@ -80,7 +80,7 @@ contract AsyncOrderSettlementPythModule is
             .validateRequest(settlementStrategy, price);
 
         runtime.amountToDeduct = runtime.totalFees;
-        runtime.sizeDelta = asyncOrder.request.sizeDelta;
+        runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
