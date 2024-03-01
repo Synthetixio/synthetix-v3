@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, QuantoUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, QuantoUint256, QuantoInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -236,11 +236,10 @@ library PerpsAccount {
         }
     }
 
-    /// @dev returns USD
     function getTotalCollateralValue(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (uint256) {
+    ) internal view returns (USDUint256) {
         uint256 totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint256 i = 1; i <= self.activeCollateralTypes.length(); i++) {
@@ -259,7 +258,7 @@ library PerpsAccount {
             }
             totalCollateralValue += amountToAdd;
         }
-        return totalCollateralValue;
+        return USDUint256.wrap(totalCollateralValue);
     }
 
     /// @dev returns USD
@@ -287,10 +286,10 @@ library PerpsAccount {
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256) {
-        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance).toInt();
+        USDUint256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance);
         int256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
-        return totalCollateralValue + accountPnl;
+        return totalCollateralValue.unwrap().toInt() + accountPnl;
     }
 
     function getTotalNotionalOpenInterest(
@@ -408,7 +407,7 @@ library PerpsAccount {
         uint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
             costOfFlagging,
-            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT)
+            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT).unwrap()
         );
         uint256 liquidateWindowsCosts = numOfWindows == 0
             ? 0
