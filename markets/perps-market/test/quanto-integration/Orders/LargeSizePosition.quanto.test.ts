@@ -6,7 +6,7 @@ import { wei } from '@synthetixio/wei';
 
 const PRICE = bn(0.00000001);
 const NOTIONAL = bn(10_000_000); // sizeDelta = 1_000_000_000_000_000 (1e15)
-describe('Large Size Position', () => {
+describe('Quanto Large Size Position', () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
