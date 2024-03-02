@@ -46,12 +46,25 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , , , ) = account.isEligibleForLiquidation(
-                PerpsPrice.Tolerance.STRICT
-            );
+            (
+                bool isEligible,
+                int256 availableMargin,
+                ,
+                uint256 requiredMaintenaceMargin,
+                uint256 expectedLiquidationReward
+            ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.STRICT);
 
             if (isEligible) {
                 (uint256 flagCost, uint256 marginCollected) = account.flagForLiquidation();
+
+                emit AccountFlaggedForLiquidation(
+                    accountId,
+                    availableMargin,
+                    requiredMaintenaceMargin,
+                    expectedLiquidationReward,
+                    flagCost
+                );
+
                 liquidationReward = _liquidateAccount(account, flagCost, marginCollected, true);
             } else {
                 revert NotEligibleForLiquidation(accountId);
