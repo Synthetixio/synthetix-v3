@@ -1967,7 +1967,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nomiclabs/hardhat-ethers@npm:^2.2.3":
+"@nomiclabs/hardhat-ethers@npm:2.2.3, @nomiclabs/hardhat-ethers@npm:^2.2.3":
   version: 2.2.3
   resolution: "@nomiclabs/hardhat-ethers@npm:2.2.3"
   peerDependencies:
@@ -2397,13 +2397,6 @@ __metadata:
   dependencies:
     "@octokit/openapi-types": "npm:^19.1.0"
   checksum: 10/b0a893e31fed59a919c2072ae67b671aa5f21e00ee3dee689af325f09f12ddd9175ce07c590b835d183bcb1cd2a2da908e02391b2fc33071881561366b2a35e7
-  languageName: node
-  linkType: hard
-
-"@openzeppelin/contracts@npm:4.9.3":
-  version: 4.9.3
-  resolution: "@openzeppelin/contracts@npm:4.9.3"
-  checksum: 10/ce0a16a56a39b62d72370ac702bce1917096492442ff05de88521beda2c3f3935b93ee2b9a184614dd543a6181f2f0be10243f5a629be87aab284ade68c18320
   languageName: node
   linkType: hard
 
@@ -2852,7 +2845,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/bfp-market@workspace:markets/bfp-market"
   dependencies:
-    "@openzeppelin/contracts": "npm:4.9.3"
+    "@ethersproject/logger": "npm:^5.7.0"
+    "@nomiclabs/hardhat-ethers": "npm:2.2.3"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
@@ -2865,11 +2859,10 @@ __metadata:
     "@typechain/hardhat": "npm:6.1.6"
     "@types/lodash": "npm:^4.14.199"
     "@types/mocha-each": "npm:2.0.1"
-    "@usecannon/builder": "npm:2.11.6"
-    "@usecannon/cli": "npm:2.11.9"
+    "@usecannon/builder": "npm:2.11.15"
     ethers: "npm:5.7.2"
     hardhat: "npm:2.19.5"
-    hardhat-cannon: "npm:2.11.9"
+    hardhat-cannon: "npm:2.11.16"
     hardhat-contract-sizer: "npm:2.10.0"
     hardhat-gas-reporter: "npm:1.0.9"
     lodash: "npm:4.17.21"
@@ -3169,7 +3162,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@npm:3.3.7, @synthetixio/router@npm:^3.3.6, @synthetixio/router@npm:^3.3.7":
+"@synthetixio/router@npm:3.3.7, @synthetixio/router@npm:^3.3.7":
   version: 3.3.7
   resolution: "@synthetixio/router@npm:3.3.7"
   dependencies:
@@ -3925,46 +3918,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.11.6":
-  version: 2.11.6
-  resolution: "@usecannon/builder@npm:2.11.6"
-  dependencies:
-    "@synthetixio/router": "npm:^3.3.6"
-    axios: "npm:^1.6.2"
-    buffer: "npm:^6.0.3"
-    debug: "npm:^4.3.4"
-    form-data: "npm:^4.0.0"
-    lodash: "npm:^4.17.21"
-    pako: "npm:^2.1.0"
-    promise-events: "npm:^0.2.4"
-    typedoc-plugin-markdown: "npm:^3.17.1"
-    typestub-ipfs-only-hash: "npm:^4.0.0"
-    viem: "npm:^2.6.1"
-    zod: "npm:^3.22.4"
-  checksum: 10/ed926878fe1c7625bc9288f12a234129abc2c4ca5610c4f8afb0852d8ec082ace21dbe08c73f2d640d018066907249de8662a5dc514746da5b3426fa2907e518
-  languageName: node
-  linkType: hard
-
-"@usecannon/builder@npm:2.11.9":
-  version: 2.11.9
-  resolution: "@usecannon/builder@npm:2.11.9"
-  dependencies:
-    "@synthetixio/router": "npm:^3.3.7"
-    axios: "npm:^1.6.2"
-    buffer: "npm:^6.0.3"
-    debug: "npm:^4.3.4"
-    form-data: "npm:^4.0.0"
-    lodash: "npm:^4.17.21"
-    pako: "npm:^2.1.0"
-    promise-events: "npm:^0.2.4"
-    typedoc-plugin-markdown: "npm:^3.17.1"
-    typestub-ipfs-only-hash: "npm:^4.0.0"
-    viem: "npm:^2.6.1"
-    zod: "npm:^3.22.4"
-  checksum: 10/1aab6b2d0c3a6209838d01b383d517851342faf87a3521813381b8af9e27d4d96e131690f754e133f3b6781d37a7e1f3087c5e6f0a2719cf8ed0c41e3f0d1656
-  languageName: node
-  linkType: hard
-
 "@usecannon/cli@npm:2.11.16":
   version: 2.11.16
   resolution: "@usecannon/cli@npm:2.11.16"
@@ -3991,35 +3944,6 @@ __metadata:
   bin:
     cannon: bin/cannon.js
   checksum: 10/db283953a40feed2037c16ff937907e90c801f402c8c5939f4eefad32e1602ab5b9cf92b5925c9670461ee48ac545836b9607f6b8f3c77743d128c8fadbaad3c
-  languageName: node
-  linkType: hard
-
-"@usecannon/cli@npm:2.11.9":
-  version: 2.11.9
-  resolution: "@usecannon/cli@npm:2.11.9"
-  dependencies:
-    "@iarna/toml": "npm:^3.0.0"
-    "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:2.11.9"
-    chalk: "npm:^4.1.2"
-    commander: "npm:^9.5.0"
-    debug: "npm:^4.3.4"
-    eth-provider: "npm:^0.13.6"
-    fastq: "npm:^1.15.0"
-    fs-extra: "npm:^10.1.0"
-    lodash: "npm:^4.17.21"
-    promise-timeout: "npm:^1.3.0"
-    prompts: "npm:^2.4.2"
-    semver: "npm:^7.3.7"
-    table: "npm:^6.8.0"
-    tildify: "npm:2.0.0"
-    untildify: "npm:^4.0.0"
-    viem: "npm:^2.6.1"
-    znv: "npm:^0.4.0"
-    zod: "npm:^3.22.4"
-  bin:
-    cannon: bin/cannon.js
-  checksum: 10/eba71cb090e4090339832bea0c58e2d0b7a8f978ce609aa445a145a157b24c01e85e5dfa479c579649d30fb5aebb6c07c27afe39977bd250d192c725d45e7ab2
   languageName: node
   linkType: hard
 
@@ -8815,23 +8739,6 @@ __metadata:
   peerDependencies:
     hardhat: ">=2.0.0"
   checksum: 10/1da293c5c56994c989452755ed36cda2e543399726e1de1dde5811f1a6f47dd460a513fbbdc112e35a879d84dd2ccc8eae6b349291f7d5308ea9f0cd0b97445f
-  languageName: node
-  linkType: hard
-
-"hardhat-cannon@npm:2.11.9":
-  version: 2.11.9
-  resolution: "hardhat-cannon@npm:2.11.9"
-  dependencies:
-    "@iarna/toml": "npm:^3.0.0"
-    "@usecannon/builder": "npm:2.11.9"
-    "@usecannon/cli": "npm:2.11.9"
-    chalk: "npm:^4.1.2"
-    debug: "npm:^4.3.3"
-    fs-extra: "npm:^10.0.1"
-    viem: "npm:^2.6.1"
-  peerDependencies:
-    hardhat: ">=2.0.0"
-  checksum: 10/62027f766b9577f66682ba5f210c8d39cf5163dcfa031b2e8dc865fafa8097af3ca94c17859092c364b020c53248089b7c6f2cc70f6457ef2b8141884ce65b50
   languageName: node
   linkType: hard
 
