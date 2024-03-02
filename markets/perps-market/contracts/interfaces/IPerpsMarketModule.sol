@@ -89,6 +89,17 @@ interface IPerpsMarketModule {
     ) external view returns (uint256);
 
     /**
+     * @notice Gets the settlement cost to including keeper rewards and costs.
+     * @param marketId Id of the market.
+     * @param settlementStrategyId Order size.
+     * @return settlement cost.
+     */
+    function getSettlementRewardCost(
+        uint128 marketId,
+        uint128 settlementStrategyId
+    ) external view returns (uint256);
+
+    /**
      * @notice Given a marketId return a market's summary details in one call.
      * @param marketId Id of the market.
      * @return summary Market summary (see MarketSummary).
