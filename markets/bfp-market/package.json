@@ -35,6 +35,7 @@
     "typechain": "^8.3.2"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "4.9.3",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",

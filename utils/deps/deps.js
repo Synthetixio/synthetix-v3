@@ -35,6 +35,7 @@ const options = {
     'webpack-dev-server',
     '@synthetixio/core-contracts',
     '@synthetixio/core-modules',
+    '@openzeppelin/contracts',
   ],
   parsers: {
     '**/*.js': [depcheck.parser.es6, depcheck.parser.jsx],
