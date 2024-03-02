@@ -400,7 +400,7 @@ library PerpMarket {
         //                         = 80
         return
             // solhint-disable-next-line numcast/safe-cast
-            int128(marketConfig.makerFee + marketConfig.takerFee)
+            uint128(marketConfig.makerFee + marketConfig.takerFee)
                 .mulDecimal(marketConfig.skewScale)
                 .mulDecimal(marketConfig.liquidationLimitScalar)
                 .to128();
