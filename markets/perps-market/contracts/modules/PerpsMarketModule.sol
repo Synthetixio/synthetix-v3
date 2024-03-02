@@ -86,19 +86,6 @@ contract PerpsMarketModule is IPerpsMarketModule {
     /**
      * @inheritdoc IPerpsMarketModule
      */
-    function getSettlementRewardCost(
-        uint128 marketId,
-        uint128 settlementStrategyId
-    ) external view override returns (uint256) {
-        return
-            AsyncOrder.settlementReward(
-                PerpsMarketConfiguration.loadValidSettlementStrategy(marketId, settlementStrategyId)
-            );
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketModule
-     */
     function getMarketSummary(
         uint128 marketId
     ) external view override returns (MarketSummary memory summary) {
