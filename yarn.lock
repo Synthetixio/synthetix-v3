@@ -1967,7 +1967,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nomiclabs/hardhat-ethers@npm:2.2.3, @nomiclabs/hardhat-ethers@npm:^2.2.3":
+"@nomiclabs/hardhat-ethers@npm:^2.2.3":
   version: 2.2.3
   resolution: "@nomiclabs/hardhat-ethers@npm:2.2.3"
   peerDependencies:
@@ -2846,7 +2846,7 @@ __metadata:
   resolution: "@synthetixio/bfp-market@workspace:markets/bfp-market"
   dependencies:
     "@ethersproject/logger": "npm:^5.7.0"
-    "@nomiclabs/hardhat-ethers": "npm:2.2.3"
+    "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
