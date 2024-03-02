@@ -9,6 +9,8 @@ import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
+/* solhint-disable meta-transactions/no-msg-sender */
+
 contract SettlementHookModule is ISettlementHookModule {
     // --- Mutations --- //
 

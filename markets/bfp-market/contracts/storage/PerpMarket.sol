@@ -399,7 +399,8 @@ library PerpMarket {
         // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 1
         //                         = 80
         return
-            uint128(marketConfig.makerFee + marketConfig.takerFee)
+            // solhint-disable-next-line numcast/safe-cast
+            int128(marketConfig.makerFee + marketConfig.takerFee)
                 .mulDecimal(marketConfig.skewScale)
                 .mulDecimal(marketConfig.liquidationLimitScalar)
                 .to128();

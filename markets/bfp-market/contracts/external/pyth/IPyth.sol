@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import "./PythStructs.sol";
 import "./IPythEvents.sol";
 
+/* solhint-disable explicit-types */
+
 /// @title Consume prices from the Pyth Network (https://pyth.network/).
 /// @dev Please refer to the guidance at https://docs.pyth.network/documentation/pythnet-price-feeds/best-practices for how to consume prices safely.
 /// @author Pyth Data Association

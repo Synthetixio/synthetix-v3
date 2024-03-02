@@ -6,6 +6,8 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 
+/* solhint-disable meta-transactions/no-msg-sender */
+
 contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule

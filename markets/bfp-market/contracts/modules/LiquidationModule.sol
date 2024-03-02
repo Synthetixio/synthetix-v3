@@ -5,6 +5,7 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
 import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -14,8 +15,9 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint256;

@@ -19,6 +19,8 @@ import {PythUtil} from "../utils/PythUtil.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
 
+/* solhint-disable meta-transactions/no-msg-sender */
+
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
     using DecimalMath for int128;

@@ -11,6 +11,8 @@ import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
+/* solhint-disable meta-transactions/no-msg-sender */
+
 library Position {
     using DecimalMath for uint256;
     using DecimalMath for int256;

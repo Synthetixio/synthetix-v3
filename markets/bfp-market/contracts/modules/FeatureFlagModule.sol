@@ -2,10 +2,12 @@
 pragma solidity 0.8.19;
 
 import {FeatureFlagModule as BaseFeatureFlagModule} from "@synthetixio/core-modules/contracts/modules/FeatureFlagModule.sol";
-import {IFeatureFlagModule} from "../interfaces/IFeatureFlagModule.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {IFeatureFlagModule} from "../interfaces/IFeatureFlagModule.sol";
 import {Flags} from "../utils/Flags.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
     using FeatureFlag for FeatureFlag.Data;
