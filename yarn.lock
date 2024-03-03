@@ -2852,9 +2852,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/bfp-market@workspace:markets/bfp-market"
   dependencies:
-    "@ethersproject/logger": "npm:^5.7.0"
-    "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@openzeppelin/contracts": "npm:4.9.3"
+    "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
@@ -2863,20 +2862,12 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
-    "@typechain/hardhat": "npm:^9.1.0"
     "@types/lodash": "npm:^4.14.199"
     "@types/mocha-each": "npm:2.0.1"
-    "@usecannon/builder": "npm:2.11.15"
     ethers: "npm:^5.7.2"
-    hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.11.16"
-    hardhat-contract-sizer: "npm:^2.10.0"
-    hardhat-gas-reporter: "npm:^1.0.10"
     lodash: "npm:4.17.21"
     mocha-each: "npm:2.0.1"
-    solidity-coverage: "npm:^0.8.7"
     ts-node: "npm:^10.9.2"
-    typechain: "npm:^8.3.2"
   languageName: unknown
   linkType: soft
 

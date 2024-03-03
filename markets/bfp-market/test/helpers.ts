@@ -1,5 +1,4 @@
 import { BigNumber, Contract, ContractReceipt, ethers, utils, providers, Signer } from 'ethers';
-import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { genNumber, raise } from './generators';
 import Wei, { wei } from '@synthetixio/wei';
@@ -312,14 +311,12 @@ export const setBaseFeePerGas = async (
 
 /** Updates the provided `contract` with more ABI details. */
 export const extendContractAbi = (contract: Contract, abi: string[]) => {
-  utils.Logger.setLogLevel(LogLevel.OFF); // Silence ethers duplicated event warnings
   const contractAbi = contract.interface.format(utils.FormatTypes.full) as string[];
   const newContract = new Contract(
     contract.address,
     uniq(contractAbi.concat(abi)),
     contract.provider || contract.signer
   );
-  utils.Logger.setLogLevel(LogLevel.WARNING); // enable default logging again
   return newContract;
 };
 

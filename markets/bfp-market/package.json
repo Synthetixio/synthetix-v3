@@ -15,24 +15,15 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@ethersproject/logger": "^5.7.0",
-    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@synthetixio/common-config": "workspace:*",
     "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
-    "@typechain/hardhat": "^9.1.0",
     "@types/lodash": "^4.14.199",
     "@types/mocha-each": "2.0.1",
-    "@usecannon/builder": "2.11.15",
     "ethers": "^5.7.2",
-    "hardhat": "^2.19.5",
-    "hardhat-cannon": "2.11.16",
-    "hardhat-contract-sizer": "^2.10.0",
-    "hardhat-gas-reporter": "^1.0.10",
     "lodash": "4.17.21",
     "mocha-each": "2.0.1",
-    "solidity-coverage": "^0.8.7",
-    "ts-node": "^10.9.2",
-    "typechain": "^8.3.2"
+    "ts-node": "^10.9.2"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.3",
