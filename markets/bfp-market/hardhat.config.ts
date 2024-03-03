@@ -22,6 +22,17 @@ const config = {
   mocha: {
     timeout: 30_000,
   },
+  storage: {
+    contracts: [
+      'contracts/**',
+      '!contracts/routers/**',
+      '!contracts/generated/**',
+      '!contracts/mocks/**',
+      '!contracts/Router.sol',
+      '!contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol',
+      '!contracts/external/**/*',
+    ],
+  },
 };
 
 export default config;

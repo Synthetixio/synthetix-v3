@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
-import {IPyth} from "../external/pyth/IPyth.sol";
 
 // @dev A static uint128 of the sUSD marketId.
 uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
@@ -115,7 +115,7 @@ library PerpMarketConfiguration {
     }
 
     function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
         assembly {
             d.slot := s
         }

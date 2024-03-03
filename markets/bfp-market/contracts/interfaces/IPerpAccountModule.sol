@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
