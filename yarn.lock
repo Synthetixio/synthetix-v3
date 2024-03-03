@@ -2864,12 +2864,11 @@ __metadata:
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/lodash": "npm:^4.14.199"
-    "@types/mocha-each": "npm:2.0.1"
-    "@usecannon/builder": "npm:2.11.15"
+    "@types/mocha-each": "npm:^2.0.1"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    lodash: "npm:4.17.21"
-    mocha-each: "npm:2.0.1"
+    lodash: "npm:^4.17.21"
+    mocha-each: "npm:^2.0.1"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
@@ -3570,12 +3569,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mocha-each@npm:2.0.1":
-  version: 2.0.1
-  resolution: "@types/mocha-each@npm:2.0.1"
+"@types/mocha-each@npm:^2.0.1":
+  version: 2.0.4
+  resolution: "@types/mocha-each@npm:2.0.4"
   dependencies:
     "@types/mocha": "npm:*"
-  checksum: 10/483dc267e03f165fccffab36ae7c7944484b816cf5d1381d134b7641f71bc21ea10284e35d5b38b933e8477b622f8a773e94427ea915e3e37dcedfc51030d8fd
+  checksum: 10/2588284db079e2d0a17735c8fb5c12cba9feabf2de55c9ab49e1f3b38cc522691d30ed3abb1bcb21c087b27f373e3f4123ef7bd8d9a4f95cef38f6c8045c71f3
   languageName: node
   linkType: hard
 
@@ -11233,7 +11232,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4.17.11, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.21":
+"lodash@npm:^4.17.11, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: 10/c08619c038846ea6ac754abd6dd29d2568aa705feb69339e836dfa8d8b09abbb2f859371e86863eda41848221f9af43714491467b5b0299122431e202bb0c532
@@ -11860,7 +11859,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mocha-each@npm:2.0.1":
+"mocha-each@npm:^2.0.1":
   version: 2.0.1
   resolution: "mocha-each@npm:2.0.1"
   dependencies:
