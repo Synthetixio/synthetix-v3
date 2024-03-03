@@ -2857,6 +2857,7 @@ __metadata:
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": "npm:3.3.7"
@@ -2864,10 +2865,14 @@ __metadata:
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/lodash": "npm:^4.14.199"
     "@types/mocha-each": "npm:2.0.1"
+    "@usecannon/builder": "npm:2.11.15"
     ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
     lodash: "npm:4.17.21"
     mocha-each: "npm:2.0.1"
+    solidity-docgen: "npm:0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.3.3"
   languageName: unknown
   linkType: soft
 
@@ -14956,7 +14961,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solidity-docgen@npm:^0.6.0-beta.36":
+"solidity-docgen@npm:0.6.0-beta.36, solidity-docgen@npm:^0.6.0-beta.36":
   version: 0.6.0-beta.36
   resolution: "solidity-docgen@npm:0.6.0-beta.36"
   dependencies:
