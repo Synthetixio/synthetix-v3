@@ -2868,7 +2868,7 @@ __metadata:
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     lodash: "npm:^4.17.21"
-    mocha-each: "npm:^2.0.1"
+    mocha-each: "npm:2.0.1"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
@@ -11859,7 +11859,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mocha-each@npm:^2.0.1":
+"mocha-each@npm:2.0.1":
   version: 2.0.1
   resolution: "mocha-each@npm:2.0.1"
   dependencies:
