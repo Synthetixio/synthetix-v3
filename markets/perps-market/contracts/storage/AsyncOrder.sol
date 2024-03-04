@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -310,7 +310,7 @@ library AsyncOrder {
             calculateOrderFee(
                 runtime.sizeDelta,
                 runtime.fillPrice,
-                perpsMarketData.skew.unwrap(),
+                perpsMarketData.skew,
                 marketConfig.orderFees
             ) +
             KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
@@ -407,19 +407,19 @@ library AsyncOrder {
     function calculateOrderFee(
         BaseQuantoPerUSDInt128 sizeDelta,
         USDPerBaseUint256 fillPrice,
-        int256 marketSkew,
+        BaseQuantoPerUSDInt256 marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint256) {
         int256 notionalDiff = sizeDelta.unwrap().mulDecimal(fillPrice.unwrap().toInt());
 
         // does this trade keep the skew on one side?
-        if (MathUtil.sameSide(marketSkew + sizeDelta.unwrap(), marketSkew)) {
+        if (MathUtil.sameSide(marketSkew.unwrap() + sizeDelta.unwrap(), marketSkew.unwrap())) {
             // use a flat maker/taker fee for the entire size depending on whether the skew is increased or reduced.
             //
             // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
 
-            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
+            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew.unwrap())
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
             return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
@@ -437,11 +437,11 @@ library AsyncOrder {
         //
         // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
 
-        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice.unwrap()).mulDecimal(
+        uint256 makerFee = MathUtil.abs(marketSkew.unwrap()).mulDecimal(fillPrice.unwrap()).mulDecimal(
             orderFeeData.makerFee
         );
 
-        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta.unwrap()).mulDecimal(fillPrice.unwrap()).mulDecimal(
+        uint256 takerFee = MathUtil.abs(marketSkew.unwrap() + sizeDelta.unwrap()).mulDecimal(fillPrice.unwrap()).mulDecimal(
             orderFeeData.takerFee
         );
 

@@ -15,7 +15,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Flags} from "../utils/Flags.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for committing async orders.
@@ -180,12 +180,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         int128 sizeDelta,
         uint256 orderPrice
     ) private view returns (uint256 orderFees, uint256 fillPrice) {
-        int256 skew = PerpsMarket.load(marketId).skew.unwrap();
+        BaseQuantoPerUSDInt256 skew = PerpsMarket.load(marketId).skew;
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
         fillPrice = AsyncOrder.calculateFillPrice(
-            skew,
+            skew.unwrap(),
             marketConfig.skewScale,
             sizeDelta,
             orderPrice
