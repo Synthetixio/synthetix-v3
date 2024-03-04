@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+
 /**
  * @title Account module
  */
@@ -95,7 +97,7 @@ interface IPerpsAccountModule {
      * @param accountId Id of the account.
      * @return availableMargin available margin of the position.
      */
-    function getAvailableMargin(uint128 accountId) external view returns (int256 availableMargin);
+    function getAvailableMargin(uint128 accountId) external view returns (USDInt256 availableMargin);
 
     /**
      * @notice Gets the exact withdrawable amount a trader has available from this account while holding the account's current positions.
@@ -104,7 +106,7 @@ interface IPerpsAccountModule {
      */
     function getWithdrawableMargin(
         uint128 accountId
-    ) external view returns (int256 withdrawableMargin);
+    ) external view returns (USDInt256 withdrawableMargin);
 
     /**
      * @notice Gets the initial/maintenance margins across all positions that an account has open.
@@ -120,8 +122,8 @@ interface IPerpsAccountModule {
         external
         view
         returns (
-            uint256 requiredInitialMargin,
-            uint256 requiredMaintenanceMargin,
-            uint256 maxLiquidationReward
+            USDUint256 requiredInitialMargin,
+            USDUint256 requiredMaintenanceMargin,
+            USDUint256 maxLiquidationReward
         );
 }

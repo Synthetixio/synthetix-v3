@@ -6,6 +6,7 @@ import {SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {OrderFee} from "./OrderFee.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {BaseQuantoPerUSDUint256, BaseQuantoPerUSDInt128, USDPerBaseUint256, BaseQuantoPerUSDUint128, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 library PerpsMarketConfiguration {
     using DecimalMath for int256;
@@ -58,7 +59,7 @@ library PerpsMarketConfiguration {
          */
         uint256 flagRewardRatioD18;
         /**
-         * @dev minimum position value in USD, this is a constant value added to position margin requirements (initial/maintenance)
+         * @dev minimum position value in the quanto asset, this is a constant value added to position margin requirements (initial/maintenance)
          */
         uint256 minimumPositionMargin;
         /**
@@ -111,42 +112,42 @@ library PerpsMarketConfiguration {
 
     function calculateFlagReward(
         Data storage self,
-        uint256 notionalValue
-    ) internal view returns (uint256) {
+        QuantoUint256 notionalValue
+    ) internal view returns (QuantoUint256) {
         return notionalValue.mulDecimal(self.flagRewardRatioD18);
     }
 
     function calculateRequiredMargins(
         Data storage self,
-        int128 size,
-        uint256 price
+        BaseQuantoPerUSDInt128 size,
+        USDPerBaseUint256 price
     )
         internal
         view
         returns (
             uint256 initialMarginRatio,
             uint256 maintenanceMarginRatio,
-            uint256 initialMargin,
-            uint256 maintenanceMargin
+            QuantoUint256 initialMargin,
+            QuantoUint256 maintenanceMargin
         )
     {
-        if (size == 0) {
-            return (0, 0, 0, 0);
+        if (size.unwrap() == 0) {
+            return (0, 0, QuantoUint256.wrap(0), QuantoUint256.wrap(0));
         }
-        uint256 sizeAbs = MathUtil.abs(size.to256());
-        uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
+        BaseQuantoPerUSDUint256 sizeAbs = BaseQuantoPerUSDUint256.wrap(MathUtil.abs(size.unwrap().to256()));
+        uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.unwrap().divDecimal(self.skewScale);
 
         initialMarginRatio =
             impactOnSkew.mulDecimal(self.initialMarginRatioD18) +
             self.minimumInitialMarginRatioD18;
         maintenanceMarginRatio = initialMarginRatio.mulDecimal(self.maintenanceMarginScalarD18);
 
-        uint256 notional = sizeAbs.mulDecimal(price);
+        QuantoUint256 notional = sizeAbs.mulDecimalToQuanto(price);
 
-        initialMargin = notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
+        initialMargin = notional.mulDecimal(initialMarginRatio) + QuantoUint256.wrap(self.minimumPositionMargin);
         maintenanceMargin =
             notional.mulDecimal(maintenanceMarginRatio) +
-            self.minimumPositionMargin;
+            QuantoUint256.wrap(self.minimumPositionMargin);
     }
 
     /**

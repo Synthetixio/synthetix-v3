@@ -7,6 +7,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -41,7 +42,7 @@ library KeeperCosts {
     function getSettlementKeeperCosts(
         Data storage self,
         uint128 accountId
-    ) internal view returns (uint256 sUSDCost) {
+    ) internal view returns (USDUint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         accountId; // unused for now, but will be used to calculate rewards based on account collaterals in the future
@@ -52,7 +53,7 @@ library KeeperCosts {
     function getFlagKeeperCosts(
         Data storage self,
         uint128 accountId
-    ) internal view returns (uint256 sUSDCost) {
+    ) internal view returns (USDUint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
@@ -70,7 +71,7 @@ library KeeperCosts {
         );
     }
 
-    function getLiquidateKeeperCosts(Data storage self) internal view returns (uint256 sUSDCost) {
+    function getLiquidateKeeperCosts(Data storage self) internal view returns (USDUint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_LIQUIDATE);
@@ -81,7 +82,7 @@ library KeeperCosts {
         PerpsMarketFactory.Data storage factory,
         uint256 numberOfUpdatedFeeds,
         uint256 executionKind
-    ) private view returns (uint256 sUSDCost) {
+    ) private view returns (USDUint256 sUSDCost) {
         bytes32[] memory runtimeKeys = new bytes32[](4);
         bytes32[] memory runtimeValues = new bytes32[](4);
         runtimeKeys[0] = bytes32("numberOfUpdatedFeeds");
@@ -89,9 +90,9 @@ library KeeperCosts {
         runtimeValues[0] = bytes32(numberOfUpdatedFeeds);
         runtimeValues[1] = bytes32(executionKind);
 
-        sUSDCost = INodeModule(factory.oracle)
+        sUSDCost = USDUint256.wrap(INodeModule(factory.oracle)
             .processWithRuntime(keeperCostNodeId, runtimeKeys, runtimeValues)
             .price
-            .toUint();
+            .toUint());
     }
 }

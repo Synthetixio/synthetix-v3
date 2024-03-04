@@ -15,6 +15,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Flags} from "../utils/Flags.sol";
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for committing async orders.
@@ -51,13 +52,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.Data storage order = AsyncOrder.load(commitment.accountId);
 
         // if order (previous) sizeDelta is not zero and didn't revert while checking, it means the previous order expired
-        if (order.request.sizeDelta != 0) {
+        if (order.request.sizeDelta.unwrap() != 0) {
             // @notice not including the expiration time since it requires the previous settlement strategy to be loaded and enabled, otherwise loading it will revert and will prevent new orders to be committed
             emit PreviousOrderExpired(
                 order.request.marketId,
                 order.request.accountId,
-                order.request.sizeDelta,
-                order.request.acceptablePrice,
+                order.request.sizeDelta.unwrap(),
+                order.request.acceptablePrice.unwrap(),
                 order.commitmentTime,
                 order.request.trackingCode
             );
@@ -74,8 +75,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.marketId,
             commitment.accountId,
             strategy.strategyType,
-            commitment.sizeDelta,
-            commitment.acceptablePrice,
+            commitment.sizeDelta.unwrap(),
+            commitment.acceptablePrice.unwrap(),
             order.commitmentTime,
             order.commitmentTime + strategy.commitmentPriceDelay,
             order.commitmentTime + strategy.settlementDelay,
@@ -107,7 +108,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         (orderFees, fillPrice) = _computeOrderFees(
             marketId,
             sizeDelta,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
         );
     }
 
@@ -132,7 +133,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 accountId,
                 marketId,
                 sizeDelta,
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
             );
     }
 
@@ -157,7 +158,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (uint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
+        (USDUint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
             PerpsPrice.Tolerance.DEFAULT
         );
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
@@ -167,11 +168,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 account,
                 marketConfig,
                 marketId,
-                oldPosition.size.unwrap(),
-                oldPosition.size.unwrap() + sizeDelta,
-                fillPrice,
+                oldPosition.size,
+                BaseQuantoPerUSDInt128.wrap(oldPosition.size.unwrap() + sizeDelta),
+                USDPerBaseUint256.wrap(fillPrice),
                 currentInitialMargin
-            ) + orderFees;
+            ).unwrap() + orderFees;
     }
 
     function _computeOrderFees(
@@ -179,22 +180,22 @@ contract AsyncOrderModule is IAsyncOrderModule {
         int128 sizeDelta,
         uint256 orderPrice
     ) private view returns (uint256 orderFees, uint256 fillPrice) {
-        int256 skew = PerpsMarket.load(marketId).skew;
+        BaseQuantoPerUSDInt256 skew = PerpsMarket.load(marketId).skew;
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
         fillPrice = AsyncOrder.calculateFillPrice(
-            skew,
+            skew.unwrap(),
             marketConfig.skewScale,
             sizeDelta,
             orderPrice
         );
 
         orderFees = AsyncOrder.calculateOrderFee(
-            sizeDelta,
-            fillPrice,
+            BaseQuantoPerUSDInt128.wrap(sizeDelta),
+            USDPerBaseUint256.wrap(fillPrice),
             skew,
             marketConfig.orderFees
-        );
+        ).unwrap();
     }
 }

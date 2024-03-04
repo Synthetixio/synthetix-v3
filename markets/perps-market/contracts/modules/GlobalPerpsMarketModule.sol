@@ -14,6 +14,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for global Perps Market settings.
@@ -86,9 +87,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      * @inheritdoc IGlobalPerpsMarketModule
      */
     function setKeeperRewardGuards(
-        uint256 minKeeperRewardUsd,
+        USDUint256 minKeeperRewardUsd,
         uint256 minKeeperProfitRatioD18,
-        uint256 maxKeeperRewardUsd,
+        USDUint256 maxKeeperRewardUsd,
         uint256 maxKeeperScalingRatioD18
     ) external override {
         OwnableStorage.onlyOwner();
@@ -103,9 +104,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         store.maxKeeperScalingRatioD18 = maxKeeperScalingRatioD18;
 
         emit KeeperRewardGuardsSet(
-            minKeeperRewardUsd,
+            minKeeperRewardUsd.unwrap(),
             minKeeperProfitRatioD18,
-            maxKeeperRewardUsd,
+            maxKeeperRewardUsd.unwrap(),
             maxKeeperScalingRatioD18
         );
     }
@@ -125,9 +126,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         )
     {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        minKeeperRewardUsd = store.minKeeperRewardUsd;
+        minKeeperRewardUsd = store.minKeeperRewardUsd.unwrap();
         minKeeperProfitRatioD18 = store.minKeeperProfitRatioD18;
-        maxKeeperRewardUsd = store.maxKeeperRewardUsd;
+        maxKeeperRewardUsd = store.maxKeeperRewardUsd.unwrap();
         maxKeeperScalingRatioD18 = store.maxKeeperScalingRatioD18;
     }
 

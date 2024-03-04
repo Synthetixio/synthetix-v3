@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
+import {USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for global Perps Market settings.
@@ -145,9 +146,9 @@ interface IGlobalPerpsMarketModule {
      * @param maxKeeperScalingRatioD18 Scaling used to calculate the Maximum keeper reward together with maxKeeperRewardUsd.
      */
     function setKeeperRewardGuards(
-        uint256 minKeeperRewardUsd,
+        USDUint256 minKeeperRewardUsd,
         uint256 minKeeperProfitRatioD18,
-        uint256 maxKeeperRewardUsd,
+        USDUint256 maxKeeperRewardUsd,
         uint256 maxKeeperScalingRatioD18
     ) external;
 

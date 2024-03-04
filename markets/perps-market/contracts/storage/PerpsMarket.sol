@@ -13,6 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
 import {InterestRate} from "./InterestRate.sol";
+import {BaseQuantoPerUSDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Data for a single perps market
@@ -45,7 +46,7 @@ library PerpsMarket {
         string name;
         string symbol;
         uint128 id;
-        int256 skew;
+        BaseQuantoPerUSDInt256 skew;
         uint256 size;
         int256 lastFundingRate;
         int256 lastFundingValue;
@@ -155,7 +156,7 @@ library PerpsMarket {
                 if capacity is at 0, but the market is under configured liquidation p/d,
                 another block of liquidation becomes allowable.
              */
-            uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
+            uint256 currentPd = MathUtil.abs(self.skew.unwrap()).divDecimal(marketConfig.skewScale);
             if (currentPd < maxLiquidationPd) {
                 liquidatableAmount = MathUtil.min128(
                     maxLiquidationInWindow.to128(),
@@ -245,7 +246,7 @@ library PerpsMarket {
         self.size =
             (self.size + MathUtil.abs128(newPosition.size.unwrap())) -
             MathUtil.abs128(oldPosition.size.unwrap());
-        self.skew += newPosition.size.unwrap() - oldPosition.size.unwrap();
+        self.skew = BaseQuantoPerUSDInt256.wrap(self.skew.unwrap() + newPosition.size.unwrap() - oldPosition.size.unwrap());
 
         runtime.currentPrice = newPosition.latestInteractionPrice;
         (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
@@ -274,7 +275,7 @@ library PerpsMarket {
             MarketUpdate.Data(
                 self.id,
                 interestRate,
-                self.skew,
+                self.skew.unwrap(),
                 self.size,
                 self.lastFundingRate,
                 currentFundingVelocity(self)
@@ -345,7 +346,7 @@ library PerpsMarket {
             return 0;
         }
         // Ensures the proportionalSkew is between -1 and 1.
-        int256 pSkew = self.skew.divDecimal(skewScale);
+        int256 pSkew = self.skew.unwrap().divDecimal(skewScale);
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
@@ -369,7 +370,7 @@ library PerpsMarket {
         // Allow users to reduce an order no matter the market conditions.
         bool isReducingInterest = MathUtil.isSameSideReducing(oldSize, newSize);
         if (!isReducingInterest) {
-            int256 newSkew = self.skew - oldSize + newSize;
+            int256 newSkew = self.skew.unwrap() - oldSize + newSize;
 
             int256 newMarketSize = self.size.toInt() -
                 MathUtil.abs(oldSize).toInt() +
@@ -417,8 +418,8 @@ library PerpsMarket {
     function marketDebt(Data storage self, uint256 price) internal view returns (int256) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-        int256 positionPnl = self.skew.mulDecimal(price.toInt());
-        int256 fundingPnl = self.skew.mulDecimal(calculateNextFunding(self, price));
+        int256 positionPnl = self.skew.unwrap().mulDecimal(price.toInt());
+        int256 fundingPnl = self.skew.unwrap().mulDecimal(calculateNextFunding(self, price));
 
         return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
     }
@@ -428,8 +429,8 @@ library PerpsMarket {
             PerpsMarket
                 .load(marketId)
                 .size
-                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
-                .mulDecimal(PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap())
+                .mulDecimal(PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap())
                 .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 

@@ -14,6 +14,7 @@ import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for cancelling async orders.
@@ -59,9 +60,9 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         // Get the current data before resetting the order
         runtime.accountId = asyncOrder.request.accountId;
         runtime.marketId = asyncOrder.request.marketId;
-        runtime.acceptablePrice = asyncOrder.request.acceptablePrice;
+        runtime.acceptablePrice = asyncOrder.request.acceptablePrice.unwrap();
         runtime.settlementReward = settlementStrategy.settlementReward;
-        runtime.sizeDelta = asyncOrder.request.sizeDelta;
+        runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
 
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
@@ -85,7 +86,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
             // pay keeper
             PerpsMarketFactory.load().withdrawMarketUsd(
                 ERC2771Context._msgSender(),
-                runtime.settlementReward
+                USDUint256.wrap(runtime.settlementReward)
             );
         }
 
