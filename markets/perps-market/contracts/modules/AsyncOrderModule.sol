@@ -68,7 +68,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         (, uint256 feesAccrued, , ) = order.validateRequest(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+            PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
         emit OrderCommitted(

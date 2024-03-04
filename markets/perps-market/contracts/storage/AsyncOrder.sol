@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -248,6 +248,8 @@ library AsyncOrder {
         USDUint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
+        USDPerQuantoUint256 quantoPrice;
+        USDInt256 startingPnl;
     }
 
     /**
@@ -264,7 +266,7 @@ library AsyncOrder {
     function validateRequest(
         Data storage order,
         SettlementStrategy.Data storage strategy,
-        uint256 orderPrice
+        USDPerBaseUint256 orderPrice
     ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
         runtime.sizeDelta = order.request.sizeDelta;
@@ -290,7 +292,7 @@ library AsyncOrder {
         }
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
-        perpsMarketData.recomputeFunding(orderPrice);
+        perpsMarketData.recomputeFunding(orderPrice.unwrap());
 
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             runtime.marketId
@@ -300,14 +302,14 @@ library AsyncOrder {
             perpsMarketData.skew.unwrap(),
             marketConfig.skewScale,
             runtime.sizeDelta.unwrap(),
-            orderPrice
+            orderPrice.unwrap()
         ));
 
         if (acceptablePriceExceeded(order, runtime.fillPrice.unwrap())) {
             revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
-        USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(runtime.marketId, PerpsPrice.Tolerance.DEFAULT);
+        runtime.quantoPrice = PerpsPrice.getCurrentQuantoPrice(runtime.marketId, PerpsPrice.Tolerance.DEFAULT);
 
         runtime.orderFees =
             calculateOrderFee(
@@ -315,21 +317,26 @@ library AsyncOrder {
                 runtime.fillPrice,
                 perpsMarketData.skew,
                 marketConfig.orderFees
-            ).mulDecimalToUSD(quantoPrice) +
+            ).mulDecimalToUSD(runtime.quantoPrice) +
             KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
             USDUint256.wrap(strategy.settlementReward);
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
+        runtime.startingPnl = calculateStartingPnl(
+            runtime.fillPrice,
+            orderPrice,
+            runtime.newPositionSize
+        ).mulDecimalToUSD(USDPerQuantoInt256.wrap(runtime.quantoPrice.unwrap().toInt()));
+
         // only account for negative pnl
         runtime.currentAvailableMargin = runtime.currentAvailableMargin + USDInt256.wrap(MathUtil.min(
-            calculateStartingPnl(runtime.fillPrice.unwrap(), orderPrice, runtime.newPositionSize.unwrap()),
+            runtime.startingPnl.unwrap(),
             0
         ));
 
         if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.unwrap().toInt()) {
-            // TODO: fix error here. test: OffchainAsyncOrder.settle.quanto.test.ts - reverts with invalid pyth price timestamp (after time)
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees.unwrap());
         }
 
@@ -337,7 +344,7 @@ library AsyncOrder {
             perpsMarketData,
             marketConfig.maxMarketSize,
             marketConfig.maxMarketValue,
-            orderPrice,
+            orderPrice.unwrap(),
             oldPosition.size.unwrap(),
             runtime.newPositionSize.unwrap()
         );
@@ -517,11 +524,11 @@ library AsyncOrder {
      * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
      */
     function calculateStartingPnl(
-        uint256 fillPrice,
-        uint256 marketPrice,
-        int128 size
-    ) internal pure returns (int256) {
-        return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
+        USDPerBaseUint256 fillPrice,
+        USDPerBaseUint256 marketPrice,
+        BaseQuantoPerUSDInt128 size
+    ) internal pure returns (QuantoInt256) {
+        return BaseQuantoPerUSDInt256.wrap(size.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(marketPrice.unwrap().toInt() - fillPrice.unwrap().toInt()));
     }
 
     /**

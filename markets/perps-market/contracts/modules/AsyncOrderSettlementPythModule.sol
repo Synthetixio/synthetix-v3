@@ -20,7 +20,7 @@ import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for settling async orders using pyth as price feed.
@@ -78,7 +78,7 @@ contract AsyncOrderSettlementPythModule is
 
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
-            .validateRequest(settlementStrategy, price);
+            .validateRequest(settlementStrategy, USDPerBaseUint256.wrap(price));
 
         runtime.amountToDeduct = runtime.totalFees;
         runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
