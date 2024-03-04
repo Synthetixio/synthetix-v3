@@ -309,7 +309,7 @@ library AsyncOrder {
         runtime.orderFees =
             calculateOrderFee(
                 runtime.sizeDelta,
-                runtime.fillPrice.unwrap(),
+                runtime.fillPrice,
                 perpsMarketData.skew,
                 marketConfig.orderFees
             ) +
@@ -406,11 +406,11 @@ library AsyncOrder {
      */
     function calculateOrderFee(
         BaseQuantoPerUSDInt128 sizeDelta,
-        uint256 fillPrice,
+        USDPerBaseUint256 fillPrice,
         int256 marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint256) {
-        int256 notionalDiff = sizeDelta.unwrap().mulDecimal(fillPrice.toInt());
+        int256 notionalDiff = sizeDelta.unwrap().mulDecimal(fillPrice.unwrap().toInt());
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew + sizeDelta.unwrap(), marketSkew)) {
@@ -437,11 +437,11 @@ library AsyncOrder {
         //
         // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
 
-        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
+        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice.unwrap()).mulDecimal(
             orderFeeData.makerFee
         );
 
-        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta.unwrap()).mulDecimal(fillPrice).mulDecimal(
+        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta.unwrap()).mulDecimal(fillPrice.unwrap()).mulDecimal(
             orderFeeData.takerFee
         );
 
