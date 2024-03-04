@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -21,6 +21,7 @@ library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint256;
+    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
@@ -410,7 +411,7 @@ library AsyncOrder {
         BaseQuantoPerUSDInt256 marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint256) {
-        int256 notionalDiff = sizeDelta.unwrap().mulDecimal(fillPrice.unwrap().toInt());
+        QuantoInt256 notionalDiff = BaseQuantoPerUSDInt256.wrap(sizeDelta.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(fillPrice.unwrap().toInt()));
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew.unwrap() + sizeDelta.unwrap(), marketSkew.unwrap())) {
@@ -419,10 +420,10 @@ library AsyncOrder {
             // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
 
-            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew.unwrap())
+            uint256 staticRate = MathUtil.sameSide(notionalDiff.unwrap(), marketSkew.unwrap())
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
-            return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
+            return MathUtil.abs(notionalDiff.unwrap().mulDecimal(staticRate.toInt()));
         }
 
         // this trade flips the skew.
