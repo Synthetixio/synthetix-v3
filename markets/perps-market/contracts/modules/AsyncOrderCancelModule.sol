@@ -14,6 +14,7 @@ import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for cancelling async orders.
@@ -85,7 +86,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
             // pay keeper
             PerpsMarketFactory.load().withdrawMarketUsd(
                 ERC2771Context._msgSender(),
-                runtime.settlementReward
+                USDUint256.wrap(runtime.settlementReward)
             );
         }
 

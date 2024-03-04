@@ -59,7 +59,7 @@ library PerpsMarketConfiguration {
          */
         uint256 flagRewardRatioD18;
         /**
-         * @dev minimum position value in USD, this is a constant value added to position margin requirements (initial/maintenance)
+         * @dev minimum position value in the quanto asset, this is a constant value added to position margin requirements (initial/maintenance)
          */
         uint256 minimumPositionMargin;
         /**
@@ -112,8 +112,8 @@ library PerpsMarketConfiguration {
 
     function calculateFlagReward(
         Data storage self,
-        uint256 notionalValue
-    ) internal view returns (uint256) {
+        QuantoUint256 notionalValue
+    ) internal view returns (QuantoUint256) {
         return notionalValue.mulDecimal(self.flagRewardRatioD18);
     }
 

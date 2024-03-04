@@ -15,7 +15,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Flags} from "../utils/Flags.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for committing async orders.
@@ -68,7 +68,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         (, uint256 feesAccrued, , ) = order.validateRequest(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
+            PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
         );
 
         emit OrderCommitted(
@@ -108,7 +108,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         (orderFees, fillPrice) = _computeOrderFees(
             marketId,
             sizeDelta,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
         );
     }
 
@@ -133,7 +133,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 accountId,
                 marketId,
                 sizeDelta,
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
             );
     }
 
@@ -158,7 +158,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (QuantoUint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
+        (USDUint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
             PerpsPrice.Tolerance.DEFAULT
         );
         (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
@@ -168,11 +168,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 account,
                 marketConfig,
                 marketId,
-                oldPosition.size.unwrap(),
-                oldPosition.size.unwrap() + sizeDelta,
-                fillPrice,
-                currentInitialMargin.unwrap()
-            ) + orderFees;
+                oldPosition.size,
+                BaseQuantoPerUSDInt128.wrap(oldPosition.size.unwrap() + sizeDelta),
+                USDPerBaseUint256.wrap(fillPrice),
+                currentInitialMargin
+            ).unwrap() + orderFees;
     }
 
     function _computeOrderFees(

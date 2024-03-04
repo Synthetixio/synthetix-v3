@@ -11,6 +11,7 @@ import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutp
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
@@ -93,12 +94,12 @@ library PerpsMarketFactory {
         self.synthetix.depositMarketCollateral(self.perpsMarketId, address(collateral), amount);
     }
 
-    function depositMarketUsd(Data storage self, uint256 amount) internal {
-        self.usdToken.approve(address(this), amount);
-        self.synthetix.depositMarketUsd(self.perpsMarketId, address(this), amount);
+    function depositMarketUsd(Data storage self, USDUint256 amount) internal {
+        self.usdToken.approve(address(this), amount.unwrap());
+        self.synthetix.depositMarketUsd(self.perpsMarketId, address(this), amount.unwrap());
     }
 
-    function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
-        self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
+    function withdrawMarketUsd(Data storage self, address to, USDUint256 amount) internal {
+        self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount.unwrap());
     }
 }
