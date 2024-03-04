@@ -91,37 +91,37 @@ describe('Quanto Settle Offchain Async Order test', () => {
         ],
       },
     },
-    // {
-    //   name: 'only snxBTC',
-    //   collateralData: {
-    //     systems,
-    //     trader: trader1,
-    //     accountId: () => 2,
-    //     collaterals: [
-    //       {
-    //         synthMarket: () => btcSynth,
-    //         snxUSDAmount: () => bn(10_000),
-    //       },
-    //     ],
-    //   },
-    // },
-    // {
-    //   name: 'snxUSD and snxBTC',
-    //   collateralData: {
-    //     systems,
-    //     trader: trader1,
-    //     accountId: () => 2,
-    //     collaterals: [
-    //       {
-    //         snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
-    //       },
-    //       {
-    //         synthMarket: () => btcSynth,
-    //         snxUSDAmount: () => bn(10_000),
-    //       },
-    //     ],
-    //   },
-    // },
+    {
+      name: 'only snxBTC',
+      collateralData: {
+        systems,
+        trader: trader1,
+        accountId: () => 2,
+        collaterals: [
+          {
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(10_000),
+          },
+        ],
+      },
+    },
+    {
+      name: 'snxUSD and snxBTC',
+      collateralData: {
+        systems,
+        trader: trader1,
+        accountId: () => 2,
+        collaterals: [
+          {
+            snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
+          },
+          {
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(10_000),
+          },
+        ],
+      },
+    },
   ];
 
   for (let idx = 0; idx < testCases.length; idx++) {
@@ -232,9 +232,16 @@ describe('Quanto Settle Offchain Async Order test', () => {
           }
 
           const currentSkew = await systems().PerpsMarket.skew(ethMarketId);
-          const startingPnl = calculatePricePnl(wei(currentSkew), wei(100_000), wei(1).div(10_000), wei(1000));
+          const startingPnlQuanto = calculatePricePnl(wei(currentSkew), wei(100_000).div(10_000), wei(1).div(10_000), wei(1000));
+
+          // NOTE: this value is different in the quanto tests because the collateral type is snxBTC
+          // as we just updated the quanto asset price from 10_000 to 0.1, the pnl is reduced by a factor of 100_000
+          const startingPnlUSD = startingPnlQuanto.mul(wei(0.1));
+
+          // NOTE: the difference in startingPnlUSD for the quanto market effects availableCollateral too,
+          // making this value also different in the quanto tests than in the normal tests
           const availableCollateral = (testCase.name === 'only snxBTC' ? wei(0.1) : wei(2.1)).add(
-            startingPnl
+            startingPnlUSD
           );
 
           await assertRevert(
