@@ -42,11 +42,13 @@
     "docgen:contracts": "yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
     "docgen:abis": "yarn workspace @synthetixio/docgen run docgen:abis",
     "subgraphgen": "yarn workspaces foreach --all --verbose run subgraphgen",
-    "check-staged": "lint-staged"
+    "check-staged": "lint-staged",
+    "changed": "lerna changed --long"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
+    "@lerna-lite/changed": "^3.3.0",
     "@lerna-lite/cli": "^3.3.0",
     "@lerna-lite/exec": "^3.3.0",
     "@lerna-lite/publish": "^3.3.0",
