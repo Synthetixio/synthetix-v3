@@ -196,6 +196,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             USDPerBaseUint256.wrap(fillPrice),
             skew,
             marketConfig.orderFees
-        );
+        ).unwrap();
     }
 }

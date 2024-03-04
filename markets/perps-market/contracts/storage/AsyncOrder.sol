@@ -235,7 +235,7 @@ library AsyncOrder {
         uint128 accountId;
         uint128 marketId;
         USDPerBaseUint256 fillPrice;
-        uint256 orderFees;
+        QuantoUint256 orderFees;
         // uint256 availableMargin;
         // uint256 currentLiquidationMargin;
         uint256 accumulatedLiquidationRewards;
@@ -326,7 +326,7 @@ library AsyncOrder {
             0
         ));
 
-        if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.toInt()) {
+        if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.unwrap().toInt()) {
             // TODO: fix error here. test: OffchainAsyncOrder.settle.quanto.test.ts - reverts with invalid pyth price timestamp (after time)
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
@@ -410,7 +410,7 @@ library AsyncOrder {
         USDPerBaseUint256 fillPrice,
         BaseQuantoPerUSDInt256 marketSkew,
         OrderFee.Data storage orderFeeData
-    ) internal view returns (uint256) {
+    ) internal view returns (QuantoUint256) {
         QuantoInt256 notionalDiff = BaseQuantoPerUSDInt256.wrap(sizeDelta.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(fillPrice.unwrap().toInt()));
 
         // does this trade keep the skew on one side?
@@ -423,7 +423,7 @@ library AsyncOrder {
             uint256 staticRate = MathUtil.sameSide(notionalDiff.unwrap(), marketSkew.unwrap())
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
-            return MathUtil.abs(notionalDiff.unwrap().mulDecimal(staticRate.toInt()));
+            return QuantoUint256.wrap(MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()).unwrap()));
         }
 
         // this trade flips the skew.
@@ -446,7 +446,7 @@ library AsyncOrder {
             orderFeeData.takerFee
         );
 
-        return takerFee + makerFee;
+        return QuantoUint256.wrap(takerFee + makerFee);
     }
 
     /**
