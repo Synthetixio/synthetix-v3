@@ -296,7 +296,7 @@ library AsyncOrder {
         );
 
         runtime.fillPrice = USDPerBaseUint256.wrap(calculateFillPrice(
-            perpsMarketData.skew,
+            perpsMarketData.skew.unwrap(),
             marketConfig.skewScale,
             runtime.sizeDelta.unwrap(),
             orderPrice
@@ -310,7 +310,7 @@ library AsyncOrder {
             calculateOrderFee(
                 runtime.sizeDelta,
                 runtime.fillPrice,
-                perpsMarketData.skew,
+                perpsMarketData.skew.unwrap(),
                 marketConfig.orderFees
             ) +
             KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
@@ -389,7 +389,7 @@ library AsyncOrder {
         );
 
         fillPrice = calculateFillPrice(
-            perpsMarketData.skew,
+            perpsMarketData.skew.unwrap(),
             marketConfig.skewScale,
             order.request.sizeDelta.unwrap(),
             orderPrice

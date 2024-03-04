@@ -28,7 +28,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
      * @inheritdoc IPerpsMarketModule
      */
     function skew(uint128 marketId) external view override returns (int256) {
-        return PerpsMarket.load(marketId).skew;
+        return PerpsMarket.load(marketId).skew.unwrap();
     }
 
     /**
@@ -76,7 +76,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
     ) external view override returns (uint256) {
         return
             AsyncOrder.calculateFillPrice(
-                PerpsMarket.load(marketId).skew,
+                PerpsMarket.load(marketId).skew.unwrap(),
                 PerpsMarketConfiguration.load(marketId).skewScale,
                 orderSize,
                 price
@@ -92,7 +92,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
         PerpsMarket.Data storage market = PerpsMarket.load(marketId);
         return
             MarketSummary({
-                skew: market.skew,
+                skew: market.skew.unwrap(),
                 size: market.size,
                 maxOpenInterest: this.maxOpenInterest(marketId),
                 currentFundingRate: market.currentFundingRate(),

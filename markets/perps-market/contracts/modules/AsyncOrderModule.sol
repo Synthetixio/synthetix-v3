@@ -180,7 +180,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         int128 sizeDelta,
         uint256 orderPrice
     ) private view returns (uint256 orderFees, uint256 fillPrice) {
-        int256 skew = PerpsMarket.load(marketId).skew;
+        int256 skew = PerpsMarket.load(marketId).skew.unwrap();
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
