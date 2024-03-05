@@ -491,10 +491,15 @@ contract OrderModule is IOrderModule {
     ) external view returns (IOrderModule.OrderDigest memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Order.Data storage order = market.orders[accountId];
+
+        // no-op rather than revert.
+        if (order.sizeDelta == 0) {
+            IOrderModule.OrderDigest memory emptyOrderDigest;
+            return emptyOrderDigest;
+        }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        Order.Data storage order = market.orders[accountId];
         uint256 commitmentTime = order.commitmentTime;
 
         return
