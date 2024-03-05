@@ -10,6 +10,7 @@ import {
   depositCollateral,
   openPosition,
   settleOrder,
+  ONE_ETHER
 } from '../../integration/helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
@@ -21,6 +22,7 @@ describe('Quanto Offchain Async Order test - fees', () => {
     takerFee: wei(0.0008), // 8bps
   };
   const ethPrice = bn(1000);
+  const btcPrice1e18 = wei(10_000).div(ONE_ETHER);
 
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [
@@ -141,7 +143,7 @@ describe('Quanto Offchain Async Order test - fees', () => {
 
         before('get fill price', async () => {
           fillPrice = wei(await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice));
-          feesPaidOnSettle = computeFees(wei(0), wei(sizeDelta), fillPrice, orderFees);
+          feesPaidOnSettle = computeFees(wei(0), wei(sizeDelta), fillPrice, orderFees, btcPrice1e18);
         });
 
         before('commit the order', async () => {
@@ -169,7 +171,8 @@ describe('Quanto Offchain Async Order test - fees', () => {
             wei(0),
             wei(sizeDelta),
             wei(tentativePrice),
-            orderFees
+            orderFees,
+            btcPrice1e18
           );
           [tentativeOrderFees] = await systems().PerpsMarket.computeOrderFeesWithPrice(
             ethMarketId,
@@ -184,7 +187,8 @@ describe('Quanto Offchain Async Order test - fees', () => {
             wei(0),
             wei(sizeDelta),
             wei(tentativePrice),
-            orderFees
+            orderFees,
+            btcPrice1e18
           );
           [tentativeOrderFees] = await systems().PerpsMarket.computeOrderFeesWithPrice(
             ethMarketId,
@@ -199,7 +203,8 @@ describe('Quanto Offchain Async Order test - fees', () => {
             wei(0),
             wei(sizeDelta),
             wei(tentativePrice),
-            orderFees
+            orderFees,
+            btcPrice1e18
           );
           [tentativeOrderFees] = await systems().PerpsMarket.computeOrderFeesWithPrice(
             ethMarketId,
@@ -241,9 +246,11 @@ describe('Quanto Offchain Async Order test - fees', () => {
           it('validate fees paid on settle', async () => {
             const { traderBalance, keeperBalance } = await getBalances();
 
+            const expectedTraderBalance = balancesBeforeLong.traderBalance.sub(feesPaidOnSettle.totalFees);
+
             assertBn.equal(
               traderBalance,
-              balancesBeforeLong.traderBalance.sub(feesPaidOnSettle.totalFees)
+              expectedTraderBalance
             );
 
             assertBn.equal(
@@ -295,7 +302,8 @@ describe('Quanto Offchain Async Order test - fees', () => {
             wei(0),
             wei(initialLongSize),
             wei(await systems().PerpsMarket.fillPrice(ethMarketId, initialLongSize, ethPrice)),
-            orderFees
+            orderFees,
+            btcPrice1e18
           );
 
           await openPosition({
@@ -333,7 +341,8 @@ describe('Quanto Offchain Async Order test - fees', () => {
               wei(initialLongSize),
               wei(sizeDelta),
               wei(await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)),
-              orderFees
+              orderFees,
+              btcPrice1e18
             );
 
             await openPosition({
@@ -370,7 +379,8 @@ describe('Quanto Offchain Async Order test - fees', () => {
               wei(initialLongSize),
               wei(sizeDelta),
               wei(await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)),
-              orderFees
+              orderFees,
+              btcPrice1e18
             );
 
             await openPosition({
