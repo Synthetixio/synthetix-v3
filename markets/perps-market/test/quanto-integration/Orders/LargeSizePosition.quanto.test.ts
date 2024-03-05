@@ -106,8 +106,6 @@ describe('Quanto Large Size Position', () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(PRICE.div(100));
     });
     before('call liquidate', async () => {
-      const res = await systems().PerpsMarket.getRequiredMargins(2);
-      console.log('quanto res :', res);
       await systems().PerpsMarket.connect(keeper()).liquidate(2);
     });
 
