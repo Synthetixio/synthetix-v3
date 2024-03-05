@@ -194,6 +194,8 @@ describe('OrderModule Cancelations', () => {
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assert.equal(orderDigestBefore.isOrderStale, true);
+
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
       const signer = genOneOf([trader.signer, keeper()]);
       const { receipt } = await withExplicitEvmMine(
@@ -203,8 +205,10 @@ describe('OrderModule Cancelations', () => {
           }),
         provider()
       );
+
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.isZero(orderDigestAfter.sizeDelta);
+      assert.equal(orderDigestAfter.isOrderStale, false);
 
       await assertEvents(
         receipt,

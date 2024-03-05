@@ -45,5 +45,10 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.3"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@openzeppelin/contracts"
+    ]
   }
 }
