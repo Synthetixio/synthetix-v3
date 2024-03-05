@@ -192,30 +192,29 @@ describe('Liquidation - margin', () => {
   });
 
   describe('prices changes', () => {
-    it('should', async () => {
-      let pnl;
-
+    it('should have the correct position pnl', async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(28000)); // btc
       await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(1900)); // eth
       await perpsMarkets()[2].aggregator().mockSetCurrentPrice(bn(4.6)); // link
       await perpsMarkets()[3].aggregator().mockSetCurrentPrice(bn(1.9)); // arb
       await perpsMarkets()[4].aggregator().mockSetCurrentPrice(bn(1.8)); // op
 
-      // should have the correct position pnl
+      let pnl;
+
       [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[0].marketId());
-      assertBn.equal(pnl, bn(1850));
+      assertBn.equal(pnl, bn(1850)); // btc
 
       [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[1].marketId());
-      assertBn.equal(pnl, bn(-2400));
+      assertBn.equal(pnl, bn(-2400)); // eth
 
       [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[2].marketId());
-      assertBn.equal(pnl, bn(-900));
+      assertBn.equal(pnl, bn(-900)); // link
 
       [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[3].marketId());
-      assertBn.equal(pnl, bn(-750));
+      assertBn.equal(pnl, bn(-750)); // arb
 
       [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[4].marketId());
-      assertBn.equal(pnl, bn(-1250));
+      assertBn.equal(pnl, bn(-1250)); // op
 
       // has correct available margin
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(16_550));
@@ -230,34 +229,31 @@ describe('Liquidation - margin', () => {
   });
 
   describe('price change - available margin 0 ', () => {
-    [
-      bn(31000), // btc
-      bn(1775), // eth
-      bn(3), // link
-      bn(1), // arb
-      bn(1.13), // op
-    ].forEach((price, i) => {
-      before(`change ${perpsMarketConfigs[i].token} price`, async () => {
-        await perpsMarkets()[i].aggregator().mockSetCurrentPrice(price);
-      });
-    });
+    it('should have correct position pnl', async () => {
+      await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(31000)); // btc
+      await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(1775)); // eth
+      await perpsMarkets()[2].aggregator().mockSetCurrentPrice(bn(3)); // link
+      await perpsMarkets()[3].aggregator().mockSetCurrentPrice(bn(1)); // arb
+      await perpsMarkets()[4].aggregator().mockSetCurrentPrice(bn(1.13)); // op
 
-    [
-      bn(-1150), // btc
-      bn(-4900), // eth
-      bn(-4100), // link
-      bn(-5250), // arb
-      bn(-4600), // op
-    ].forEach((pnl, i) => {
-      it(`should have correct position pnl for ${perpsMarketConfigs[i].token}`, async () => {
-        const [positionPnl] = await systems().PerpsMarket.getOpenPosition(
-          2,
-          perpsMarkets()[i].marketId()
-        );
-        assertBn.equal(positionPnl, pnl);
-      });
-    });
-    it('has correct available margin', async () => {
+      let pnl;
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[0].marketId());
+      assertBn.equal(pnl, bn(-1150)); // btc
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[1].marketId());
+      assertBn.equal(pnl, bn(-4900)); // eth
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[2].marketId());
+      assertBn.equal(pnl, bn(-4100)); // link
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[3].marketId());
+      assertBn.equal(pnl, bn(-5250)); // arb
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[4].marketId());
+      assertBn.equal(pnl, bn(-4600)); // op
+
+      // has correct available margin
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(0));
     });
   });
@@ -315,32 +311,29 @@ describe('Liquidation - margin', () => {
   });
 
   describe('price change - eligible for liquidation', () => {
-    [
-      bn(31000), // btc
-      bn(1820), // eth
-      bn(3), // link
-      bn(1), // arb
-      bn(1), // op, the only one that has a price change
-    ].forEach((price, i) => {
-      before(`change ${perpsMarketConfigs[i].token} price`, async () => {
-        await perpsMarkets()[i].aggregator().mockSetCurrentPrice(price);
-      });
-    });
+    it('should have correct position pnl', async () => {
+      await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(31000)); // btc
+      await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(1820)); // eth
+      await perpsMarkets()[2].aggregator().mockSetCurrentPrice(bn(3)); // link
+      await perpsMarkets()[3].aggregator().mockSetCurrentPrice(bn(1)); // arb
+      await perpsMarkets()[4].aggregator().mockSetCurrentPrice(bn(1)); // op, the only one that has a price change
 
-    [
-      bn(-1150), // btc
-      bn(-4000), // eth
-      bn(-4100), // link
-      bn(-5250), // arb
-      bn(-5250), // op
-    ].forEach((pnl, i) => {
-      it(`should have correct position pnl for ${perpsMarketConfigs[i].token}`, async () => {
-        const [positionPnl] = await systems().PerpsMarket.getOpenPosition(
-          2,
-          perpsMarkets()[i].marketId()
-        );
-        assertBn.equal(positionPnl, pnl);
-      });
+      let pnl;
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[0].marketId());
+      assertBn.equal(bn(-1150), pnl); // btc
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[1].marketId());
+      assertBn.equal(bn(-4000), pnl); // eth
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[2].marketId());
+      assertBn.equal(bn(-4100), pnl); // link
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[3].marketId());
+      assertBn.equal(bn(-5250), pnl); // arb
+
+      [pnl] = await systems().PerpsMarket.getOpenPosition(2, perpsMarkets()[4].marketId());
+      assertBn.equal(bn(-5250), pnl); // op
     });
 
     it('has correct available margin', async () => {
