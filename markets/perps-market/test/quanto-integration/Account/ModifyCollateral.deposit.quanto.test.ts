@@ -14,6 +14,7 @@ describe('ModifyCollateral Deposit', () => {
   // Market Prices
   const btcPrice = bn(10_000);
   const ethPrice = bn(1_000);
+  const ethPrice1e18 = 1_000;
 
   // Skew Scales
   const ethSkewScale = bn(1000).div(2000);
@@ -28,7 +29,7 @@ describe('ModifyCollateral Deposit', () => {
   const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
 
   // Position Margins
-  const ethMinimumPositionMargin = bn(500);
+  const ethMinimumPositionMargin = bn(500).div(ethPrice1e18);
   const marginAmount = bn(10_000);
 
   // Liquidation Parameters
