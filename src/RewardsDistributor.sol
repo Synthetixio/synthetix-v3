@@ -43,7 +43,7 @@ contract RewardsDistributor is IRewardDistributor {
         payoutToken = payoutToken_;
         name = name_;
 
-        (bool success, bytes memory data) = payoutToken_.call(
+        (bool success, bytes memory data) = payoutToken_.staticcall(
             abi.encodeWithSignature("decimals()")
         );
 
