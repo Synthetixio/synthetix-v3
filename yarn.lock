@@ -2854,8 +2854,6 @@ __metadata:
   dependencies:
     "@openzeppelin/contracts": "npm:4.9.3"
     "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
