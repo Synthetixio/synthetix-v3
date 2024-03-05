@@ -307,6 +307,7 @@ describe('Quanto Commit Offchain Async Order test', () => {
           });
         });
 
+        // NOTE: this test seems to be flakey 😭
         it('check position is live', async () => {
           const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(2, ethMarketId);
           assertBn.equal(pnl, bn(-0.005).div(10_000));
