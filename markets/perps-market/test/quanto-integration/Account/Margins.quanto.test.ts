@@ -9,7 +9,7 @@ import {
 } from '../../integration/helpers/';
 import { ethers } from 'ethers';
 
-describe('Account margins test', () => {
+describe('Quanto Account margins test', () => {
   // Account and Market Identifiers
   const accountId = 4;
   const usdMarketId = 0;
@@ -37,8 +37,8 @@ describe('Account margins test', () => {
   const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
 
   // Position Margins
-  const btcMinimumPositionMargin = bn(1000);
-  const ethMinimumPositionMargin = bn(500);
+  const btcMinimumPositionMargin = bn(1000).div(2_000);
+  const ethMinimumPositionMargin = bn(500).div(2_000);
   const initialAccountMargin = bn(100_000);
   const initialAccountEthMargin = bn(10);
   const initialAccountUsdMargin = bn(80_000);
@@ -129,8 +129,8 @@ describe('Account margins test', () => {
 
   before('buy sETH via spot market', async () => {
     const ethSpotMarketId = synthMarkets()[0].marketId();
-    const usdAmount = initialAccountMargin.div(5);
-    const minAmountReceived = initialAccountEthMargin;
+    const usdAmount = initialAccountMargin.div(5); // 100_000 / 5 = 20_000
+    const minAmountReceived = initialAccountEthMargin; // 10
     const referrer = ethers.constants.AddressZero;
 
     await systems()
@@ -154,7 +154,7 @@ describe('Account margins test', () => {
   before('add some sUSD collateral to margin', async () => {
     await systems()
       .PerpsMarket.connect(trader1())
-      .modifyCollateral(accountId, usdMarketId, initialAccountUsdMargin);
+      .modifyCollateral(accountId, usdMarketId, initialAccountUsdMargin); // 80_000
   });
 
   describe('before open positions', () => {
@@ -224,7 +224,7 @@ describe('Account margins test', () => {
       // accurate system state is not achieved
       btcFillPrice = await systems().PerpsMarket.fillPrice(
         bn(btcMarketId).div(ONE_ETHER),
-        quantoPositionSizeBtcMarket,
+        quantoPositionSizeBtcMarket, // -2
         btcPrice
       );
 
@@ -352,11 +352,11 @@ describe('Account margins test', () => {
     it('has correct withdrawable margin', async () => {
       const expectedWithdrawableMargin = initialAccountMargin
         .add(initialPnl)
-        .sub(btcInitialPositionMargin)
-        .sub(ethInitialPositionMargin)
-        .sub(ethLiqMargin)
-        .sub(btcLiqMargin)
-        .sub(minimumPositionMargin);
+        .sub(btcInitialPositionMargin.mul(ethPrice).div(ONE_ETHER))
+        .sub(ethInitialPositionMargin.mul(ethPrice).div(ONE_ETHER))
+        .sub(ethLiqMargin.mul(ethPrice).div(ONE_ETHER))
+        .sub(btcLiqMargin.mul(ethPrice).div(ONE_ETHER))
+        .sub(minimumPositionMargin.mul(ethPrice).div(ONE_ETHER));
 
       assertBn.equal(
         expectedWithdrawableMargin,
@@ -368,9 +368,9 @@ describe('Account margins test', () => {
       const [initialMargin, , maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
 
-      const expectedInitialMargin = btcInitialPositionMargin
-        .add(ethInitialPositionMargin)
-        .add(minimumPositionMargin);
+      const expectedInitialMargin = btcInitialPositionMargin.mul(ethPrice).div(ONE_ETHER)
+        .add(ethInitialPositionMargin.mul(ethPrice).div(ONE_ETHER))
+        .add(minimumPositionMargin.mul(ethPrice).div(ONE_ETHER));
 
       assertBn.equal(expectedInitialMargin, initialMargin.sub(maxLiquidationReward));
     });
@@ -379,9 +379,9 @@ describe('Account margins test', () => {
       const [, maintenanceMargin, maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
 
-      const expectedMaintenanceMargin = btcMaintenanceMargin
-        .add(ethMaintenanceMargin)
-        .add(minimumPositionMargin);
+      const expectedMaintenanceMargin = btcMaintenanceMargin.mul(ethPrice).div(ONE_ETHER)
+        .add(ethMaintenanceMargin.mul(ethPrice).div(ONE_ETHER))
+        .add(minimumPositionMargin.mul(ethPrice).div(ONE_ETHER));
 
       assertBn.equal(expectedMaintenanceMargin, maintenanceMargin.sub(maxLiquidationReward));
     });
