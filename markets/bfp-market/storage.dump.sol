@@ -585,6 +585,19 @@ interface IMarketConfigurationModule {
     }
 }
 
+// @custom:artifact contracts/interfaces/IOrderModule.sol:IOrderModule
+interface IOrderModule {
+    struct OrderDigest {
+        int128 sizeDelta;
+        uint256 commitmentTime;
+        uint256 limitPrice;
+        uint256 keeperFeeBufferUsd;
+        address[] hooks;
+        bool isOrderStale;
+        bool isOrderReady;
+    }
+}
+
 // @custom:artifact contracts/interfaces/IPerpAccountModule.sol:IPerpAccountModule
 interface IPerpAccountModule {
     struct DepositedCollateral {
@@ -596,7 +609,6 @@ interface IPerpAccountModule {
         IPerpAccountModule.DepositedCollateral[] depositedCollaterals;
         uint256 collateralUsd;
         uint128 debtUsd;
-        Order.Data order;
         PositionDigest position;
     }
     struct PositionDigest {

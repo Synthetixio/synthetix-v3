@@ -5,6 +5,7 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -16,7 +17,6 @@ import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
@@ -66,15 +66,21 @@ contract OrderModule is IOrderModule {
     /**
      * @dev A stale order is one where time passed is max age or older (>=).
      */
-    function isOrderStale(uint256 commitmentTime, uint256 maxOrderAge) private view returns (bool) {
-        return block.timestamp - commitmentTime >= maxOrderAge;
+    function isOrderStale(
+        uint256 commitmentTime,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private view returns (bool) {
+        return block.timestamp - commitmentTime >= globalConfig.maxOrderAge;
     }
 
     /**
      * @dev Amount of time that has passed must be at least the minimum order age (>=).
      */
-    function isOrderReady(uint256 commitmentTime, uint256 minOrderAge) private view returns (bool) {
-        return block.timestamp - commitmentTime >= minOrderAge;
+    function isOrderReady(
+        uint256 commitmentTime,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private view returns (bool) {
+        return block.timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
 
     /**
@@ -85,10 +91,10 @@ contract OrderModule is IOrderModule {
         uint256 commitmentTime,
         Position.TradeParams memory params
     ) private view {
-        if (isOrderStale(commitmentTime, globalConfig.maxOrderAge)) {
+        if (isOrderStale(commitmentTime, globalConfig)) {
             revert ErrorUtil.OrderStale();
         }
-        if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
+        if (!isOrderReady(commitmentTime, globalConfig)) {
             revert ErrorUtil.OrderNotReady();
         }
 
@@ -399,7 +405,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        if (!isOrderStale(order.commitmentTime, PerpMarketConfiguration.load().maxOrderAge)) {
+        if (!isOrderStale(order.commitmentTime, PerpMarketConfiguration.load())) {
             revert ErrorUtil.OrderNotStale();
         }
 
@@ -428,13 +434,13 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        if (!isOrderReady(order.commitmentTime, globalConfig.minOrderAge)) {
+        if (!isOrderReady(order.commitmentTime, globalConfig)) {
             revert ErrorUtil.OrderNotReady();
         }
         bool isAccountOwner = msg.sender == account.rbac.owner;
 
         // Only do the price divergence check for non stale orders. All stale orders are allowed to be canceled.
-        if (!isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
+        if (!isOrderStale(order.commitmentTime, globalConfig)) {
             // Order is within settlement window. Check if price tolerance has exceeded.
             uint256 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
@@ -482,10 +488,25 @@ contract OrderModule is IOrderModule {
     function getOrderDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (Order.Data memory) {
+    ) external view returns (IOrderModule.OrderDigest memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return market.orders[accountId];
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        Order.Data storage order = market.orders[accountId];
+        uint256 commitmentTime = order.commitmentTime;
+
+        return
+            IOrderModule.OrderDigest(
+                order.sizeDelta,
+                commitmentTime,
+                order.limitPrice,
+                order.keeperFeeBufferUsd,
+                order.hooks,
+                isOrderStale(commitmentTime, globalConfig),
+                isOrderReady(commitmentTime, globalConfig)
+            );
     }
 
     /**
