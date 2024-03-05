@@ -267,7 +267,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -299,7 +299,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -343,7 +343,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -383,7 +383,7 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "TEST_FILES:"
             echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -568,6 +568,10 @@ jobs:
             export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
             yarn subgraphgen
 
+      - run: yarn workspace @synthetixio/core-subgraph test
+      - run: yarn workspace @synthetixio/spot-market-subgraph test
+      - run: yarn workspace @synthetixio/perps-market-subgraph test
+
       - github-pr:
           working_directory: "~/synthetix-v3"
           repo_slug: "Synthetixio/synthetix-v3"
@@ -581,7 +585,7 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
@@ -841,6 +845,16 @@ workflows:
       #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
+  update-subgraphs:
+    when:
+      or:
+        - and:
+            - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+            - equal: ["Check deploys", << pipeline.schedule.name >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
+    jobs:
+      - update-subgraphs
+
   docgen-contracts:
     unless:
       or:
@@ -853,24 +867,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-
-  update-subgraphs:
-    when:
-      and:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-        - equal: ["Check deploys", << pipeline.schedule.name >>]
-    jobs:
-      - update-subgraphs
-
-  dev-update-subgraphs:
-    unless:
-      or:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-    jobs:
-      - update-subgraphs:
-          filters:
-            branches:
-              only: /update-subgraphs/
 
   dev-docgen-contracts:
     unless:

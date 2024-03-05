@@ -39,7 +39,6 @@ interface IMarketManagerModule {
      * @param creditCapacity Updated credit capacity of the market after depositing.
      * @param netIssuance Updated net issuance.
      * @param depositedCollateralValue Updated deposited collateral value of the market.
-     * @param reportedDebt Updated reported debt of the market after depositing.
      */
     event MarketUsdDeposited(
         uint128 indexed marketId,
@@ -48,8 +47,7 @@ interface IMarketManagerModule {
         address indexed market,
         int128 creditCapacity,
         int128 netIssuance,
-        uint256 depositedCollateralValue,
-        uint256 reportedDebt
+        uint256 depositedCollateralValue
     );
 
     /**
@@ -60,8 +58,7 @@ interface IMarketManagerModule {
      * @param market The address of the external market that is withdrawing.
      * @param creditCapacity Updated credit capacity of the market after withdrawing.
      * @param netIssuance Updated net issuance.
-     * @param depositedCollateralValue Updated deposited collateral value of the market.
-     * @param reportedDebt Updated reported debt of the market after withdrawal.
+     * @param depositedCollateralValue Updated deposited collateral value of the market
      */
     event MarketUsdWithdrawn(
         uint128 indexed marketId,
@@ -70,8 +67,7 @@ interface IMarketManagerModule {
         address indexed market,
         int128 creditCapacity,
         int128 netIssuance,
-        uint256 depositedCollateralValue,
-        uint256 reportedDebt
+        uint256 depositedCollateralValue
     );
 
     event MarketSystemFeePaid(uint128 indexed marketId, uint256 feeAmount);

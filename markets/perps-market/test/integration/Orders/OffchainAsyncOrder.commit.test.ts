@@ -308,6 +308,11 @@ describe('Commit Offchain Async Order test', () => {
           assertBn.equal(size, bn(1));
         });
 
+        it('check position size', async () => {
+          const size = await systems().PerpsMarket.getOpenPositionSize(2, ethMarketId);
+          assertBn.equal(size, bn(1));
+        });
+
         describe('can commit another order after settlement', () => {
           before('commit the order', async () => {
             tx = await systems()
