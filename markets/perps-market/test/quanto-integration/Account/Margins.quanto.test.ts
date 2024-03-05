@@ -22,6 +22,8 @@ describe('Quanto Account margins test', () => {
   // Market Prices
   const btcPrice = bn(30_000);
   const ethPrice = bn(2_000);
+  const btcPrice1e18 = 30_000;
+  const ethPrice1e18 = 2_000;
 
   // Skew Scales
   const btcSkewScale = bn(100).div(2000);
@@ -309,10 +311,10 @@ describe('Quanto Account margins test', () => {
         baseAssetSize: quantoPositionSizeEthMarket,
       });
 
-      initialPnl = btcPnl.add(ethPnl).mul(ethPrice).div(ONE_ETHER);
+      initialPnl = btcPnl.add(ethPnl).mul(ethPrice1e18);
 
-      const absNotionalBtcValue = quantoPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
-      const absNotionalEthValue = quantoPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
+      const absNotionalBtcValue = quantoPositionSizeBtcMarket.mul(btcPrice1e18).abs();
+      const absNotionalEthValue = quantoPositionSizeEthMarket.mul(ethPrice1e18).abs();
 
       const btcInitialMarginRatio = quantoPositionSizeBtcMarket
         .abs()
@@ -352,11 +354,11 @@ describe('Quanto Account margins test', () => {
     it('has correct withdrawable margin', async () => {
       const expectedWithdrawableMargin = initialAccountMargin
         .add(initialPnl)
-        .sub(btcInitialPositionMargin.mul(ethPrice).div(ONE_ETHER))
-        .sub(ethInitialPositionMargin.mul(ethPrice).div(ONE_ETHER))
-        .sub(ethLiqMargin.mul(ethPrice).div(ONE_ETHER))
-        .sub(btcLiqMargin.mul(ethPrice).div(ONE_ETHER))
-        .sub(minimumPositionMargin.mul(ethPrice).div(ONE_ETHER));
+        .sub(btcInitialPositionMargin.mul(ethPrice1e18))
+        .sub(ethInitialPositionMargin.mul(ethPrice1e18))
+        .sub(ethLiqMargin.mul(ethPrice1e18))
+        .sub(btcLiqMargin.mul(ethPrice1e18))
+        .sub(minimumPositionMargin.mul(ethPrice1e18));
 
       assertBn.equal(
         expectedWithdrawableMargin,
@@ -368,9 +370,9 @@ describe('Quanto Account margins test', () => {
       const [initialMargin, , maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
 
-      const expectedInitialMargin = btcInitialPositionMargin.mul(ethPrice).div(ONE_ETHER)
-        .add(ethInitialPositionMargin.mul(ethPrice).div(ONE_ETHER))
-        .add(minimumPositionMargin.mul(ethPrice).div(ONE_ETHER));
+      const expectedInitialMargin = btcInitialPositionMargin.mul(ethPrice1e18)
+        .add(ethInitialPositionMargin.mul(ethPrice1e18))
+        .add(minimumPositionMargin.mul(ethPrice1e18));
 
       assertBn.equal(expectedInitialMargin, initialMargin.sub(maxLiquidationReward));
     });
@@ -379,16 +381,16 @@ describe('Quanto Account margins test', () => {
       const [, maintenanceMargin, maxLiquidationReward] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
 
-      const expectedMaintenanceMargin = btcMaintenanceMargin.mul(ethPrice).div(ONE_ETHER)
-        .add(ethMaintenanceMargin.mul(ethPrice).div(ONE_ETHER))
-        .add(minimumPositionMargin.mul(ethPrice).div(ONE_ETHER));
+      const expectedMaintenanceMargin = btcMaintenanceMargin.mul(ethPrice1e18)
+        .add(ethMaintenanceMargin.mul(ethPrice1e18))
+        .add(minimumPositionMargin.mul(ethPrice1e18));
 
       assertBn.equal(expectedMaintenanceMargin, maintenanceMargin.sub(maxLiquidationReward));
     });
 
     it('has correct open interest', async () => {
-      const btcOiAbs = perpPositionSizeBtcMarket.mul(btcPrice).div(ONE_ETHER).abs();
-      const ethOiAbs = perpPositionSizeEthMarket.mul(ethPrice).div(ONE_ETHER).abs();
+      const btcOiAbs = perpPositionSizeBtcMarket.mul(btcPrice1e18).abs();
+      const ethOiAbs = perpPositionSizeEthMarket.mul(ethPrice1e18).abs();
       const expectedOi = btcOiAbs.add(ethOiAbs);
 
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(accountId), expectedOi);
