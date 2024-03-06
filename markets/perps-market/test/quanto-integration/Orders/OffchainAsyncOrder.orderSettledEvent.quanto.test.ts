@@ -15,6 +15,7 @@ const _ORDER_FEES = {
 };
 
 describe('Quanto Offchain Async Order - OrderSettled event with funding', () => {
+  const btcPrice1e18 = 10_000;
   const { systems, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
@@ -52,7 +53,7 @@ describe('Quanto Offchain Async Order - OrderSettled event with funding', () => 
   const accountId = 2;
   const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
   const trackingCode = `"${ethers.constants.HashZero}"`;
-  const initialPositionSize = bn(20).div(10_000);
+  const initialPositionSize = bn(20).div(btcPrice1e18);
 
   before('identify actors', async () => {
     ethMarket = perpsMarkets()[0];
@@ -119,7 +120,7 @@ describe('Quanto Offchain Async Order - OrderSettled event with funding', () => 
       expectedFundingBN, // accruedFunding
       sizeDelta, // sizeDelta
       initialPositionSize, // newPositionSize
-      orderFees.add(settlementReward), // total fees
+      orderFees.mul(btcPrice1e18).add(settlementReward), // total fees
       0, // referral fees
       0, // collected fees
       settlementReward, // settlement reward
@@ -132,7 +133,7 @@ describe('Quanto Offchain Async Order - OrderSettled event with funding', () => 
 
   describe('after some time modify the position', () => {
     const daysElapsed = 2;
-    const sizeDelta = bn(10).div(10_000);
+    const sizeDelta = bn(10).div(btcPrice1e18);
 
     before('move time', async () => {
       await fastForwardTo(
@@ -184,7 +185,7 @@ describe('Quanto Offchain Async Order - OrderSettled event with funding', () => 
         expectedFundingBN, // accruedFunding THIS ONE
         sizeDelta, // sizeDelta
         sizeDelta.add(initialPositionSize), // newPositionSize
-        orderFees.add(settlementReward), // total fees
+        orderFees.mul(btcPrice1e18).add(settlementReward), // total fees
         0, // referral fees
         0, // collected fees
         settlementReward, // settlement reward
