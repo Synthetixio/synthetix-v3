@@ -580,9 +580,23 @@ jobs:
 workflows:
   version: 2.1
 
+  bfp:
+    when:
+      or:
+        - equal: ["feature/the-bfp-merge", << pipeline.git.branch >>]
+    jobs:
+      - lint
+      - build-testable
+      - test-contracts:
+          name: "test-bfp-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/bfp-market"
+          parallelism: 8
+
   tests:
     unless:
       or:
+        - equal: ["feature/the-bfp-merge", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
