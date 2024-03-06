@@ -169,8 +169,6 @@ jobs:
           name: "Build testable contracts"
           command: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
 
-      - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
-
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
           paths:
