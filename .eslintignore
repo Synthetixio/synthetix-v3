@@ -21,6 +21,3 @@ protocol/synthetix/contracts/modules/common/UpgradeModule.sol
 protocol/synthetix/contracts/modules/InitialModuleBundle.sol
 utils/core-modules/contracts/interfaces/IOwnerModule.sol
 utils/core-modules/contracts/modules/CoreModule.sol
-
-# temporary
-markets/bfp-market
