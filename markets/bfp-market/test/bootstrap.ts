@@ -104,8 +104,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
-      // ts-expect-error
-      Synth: (address: string) => getContract('spotMarket.SynthRouter', address), // Misaligned types from spotMarket type compilation.
+      Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
       // Difference between this and `Collateral{2}Mock`?
       //
       // `Collateral{2}Mock` is defined by a `cannon.test.toml` which isn't available here. Both mocks below

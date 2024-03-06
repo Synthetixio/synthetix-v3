@@ -44,8 +44,7 @@ export const assertEvents = async (
       throw new Error(
         `Failed to parse log at index: ${i} \n${spaces}List of parsed events:\n${spaces}${seenEvents.join(
           `\n${spaces}`
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )} \n${spaces}Ethers error: ${(error as any).message}`
+        )} \n${spaces}Ethers error: ${(error as Error).message}`
       );
     }
   });
