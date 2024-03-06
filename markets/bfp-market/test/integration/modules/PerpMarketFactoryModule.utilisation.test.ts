@@ -181,12 +181,14 @@ describe('PerpMarketFactoryModule Utilization', () => {
         const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
 
         const leverage = genNumber(1, 5);
+
         // Calculate target notional amount based on the utilization we're targeting
         const targetNotional = delegatedAmountUsd
           .mul(targetUtilizationPercent)
           .mul(marketConfig.minCreditPercent);
 
         const { answer: marketPrice } = await market.aggregator().latestRoundData();
+
         // Make sure OI is large enough to support the target notional
         await setMarketConfigurationById(bs, market.marketId(), {
           maxMarketSize: targetNotional.div(marketPrice).add(10).toBN(),

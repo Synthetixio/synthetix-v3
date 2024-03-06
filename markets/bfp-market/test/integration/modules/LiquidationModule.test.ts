@@ -2334,10 +2334,17 @@ describe('LiquidationModule', () => {
 
         // Flag and liquidate it all.
         for (const trader of tradersToUse) {
-          await PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
-          await PerpMarketProxy.connect(liquidationKeeper).liquidatePosition(
-            trader.accountId,
-            marketId
+          await withExplicitEvmMine(
+            () => PerpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId),
+            provider()
+          );
+          await withExplicitEvmMine(
+            () =>
+              PerpMarketProxy.connect(liquidationKeeper).liquidatePosition(
+                trader.accountId,
+                marketId
+              ),
+            provider()
           );
         }
 

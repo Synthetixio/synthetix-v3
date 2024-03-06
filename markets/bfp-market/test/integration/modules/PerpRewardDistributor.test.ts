@@ -13,7 +13,7 @@ import {
 } from '../../generators';
 import { withExplicitEvmMine } from '../../helpers';
 import { IPerpRewardDistributorFactoryModule } from '../../../typechain-types/contracts/interfaces/IPerpRewardDistributorFactoryModule';
-import { IPerpRewardDistributor__factory } from '../../../typechain-types';
+import { IPerpRewardDistributor__factory } from '../../../typechain-types/factories/contracts/interfaces/IPerpRewardDistributor__factory';
 
 describe('PerpRewardDistributor', () => {
   const bs = bootstrap(genBootstrap());
