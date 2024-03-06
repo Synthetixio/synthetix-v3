@@ -19,7 +19,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
-import {QuantoUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {QuantoUint256, USDUint256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for liquidating accounts.
@@ -151,7 +151,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
-        uint256 price;
+        USDPerBaseUint256 price;
         uint128 positionMarketId;
         uint256 loopIterator; // stack too deep to the extreme
     }
@@ -178,7 +178,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             runtime.price = PerpsPrice.getCurrentPrice(
                 runtime.positionMarketId,
                 PerpsPrice.Tolerance.STRICT
-            ).unwrap();
+            );
 
             (
                 uint256 amountLiquidated,
@@ -196,7 +196,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 // using oldPositionAbsSize to calculate flag reward
                 runtime.totalFlaggingRewards += PerpsMarketConfiguration
                     .load(runtime.positionMarketId)
-                    .calculateFlagReward(QuantoUint256.wrap(oldPositionAbsSize.mulDecimal(runtime.price))).unwrap();
+                    .calculateFlagReward(QuantoUint256.wrap(oldPositionAbsSize.mulDecimal(runtime.price.unwrap()))).unwrap();
             }
 
             if (amountLiquidated == 0) {
@@ -207,7 +207,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
             emit MarketUpdated(
                 runtime.positionMarketId,
-                runtime.price,
+                runtime.price.unwrap(),
                 marketUpdateData.skew,
                 marketUpdateData.size,
                 sizeDelta,

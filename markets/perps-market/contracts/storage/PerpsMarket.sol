@@ -13,7 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
 import {InterestRate} from "./InterestRate.sol";
-import {BaseQuantoPerUSDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Data for a single perps market
@@ -224,7 +224,7 @@ library PerpsMarket {
     }
 
     struct PositionDataRuntime {
-        uint256 currentPrice;
+        USDPerBaseUint256 currentPrice;
         int256 sizeDelta;
         int256 fundingDelta;
         int256 notionalDelta;
@@ -248,14 +248,14 @@ library PerpsMarket {
             MathUtil.abs128(oldPosition.size.unwrap());
         self.skew = BaseQuantoPerUSDInt256.wrap(self.skew.unwrap() + newPosition.size.unwrap() - oldPosition.size.unwrap());
 
-        runtime.currentPrice = newPosition.latestInteractionPrice;
+        runtime.currentPrice = USDPerBaseUint256.wrap(newPosition.latestInteractionPrice);
         (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
         runtime.sizeDelta = newPosition.size.unwrap() - oldPosition.size.unwrap();
         runtime.fundingDelta = calculateNextFunding(self, runtime.currentPrice).mulDecimal(
             runtime.sizeDelta
         );
-        runtime.notionalDelta = runtime.currentPrice.toInt().mulDecimal(runtime.sizeDelta);
+        runtime.notionalDelta = runtime.currentPrice.unwrap().toInt().mulDecimal(runtime.sizeDelta);
 
         // update the market debt correction accumulator before losing oldPosition details
         // by adding the new updated notional (old - new size) plus old position pnl
@@ -284,7 +284,7 @@ library PerpsMarket {
 
     function recomputeFunding(
         Data storage self,
-        uint256 price
+        USDPerBaseUint256 price
     ) internal returns (int256 fundingRate, int256 fundingValue) {
         fundingRate = currentFundingRate(self);
         fundingValue = calculateNextFunding(self, price);
@@ -298,19 +298,19 @@ library PerpsMarket {
 
     function calculateNextFunding(
         Data storage self,
-        uint256 price
+        USDPerBaseUint256 price
     ) internal view returns (int256 nextFunding) {
         nextFunding = self.lastFundingValue + unrecordedFunding(self, price);
     }
 
-    function unrecordedFunding(Data storage self, uint256 price) internal view returns (int256) {
+    function unrecordedFunding(Data storage self, USDPerBaseUint256 price) internal view returns (int256) {
         int256 fundingRate = currentFundingRate(self);
         // note the minus sign: funding flows in the opposite direction to the skew.
         int256 avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
 
-        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
+        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.unwrap().toInt());
     }
 
     function currentFundingRate(Data storage self) internal view returns (int256) {
@@ -415,10 +415,10 @@ library PerpsMarket {
      * @dev Returns the market debt incurred by all positions
      * @notice  Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
      */
-    function marketDebt(Data storage self, uint256 price) internal view returns (int256) {
+    function marketDebt(Data storage self, USDPerBaseUint256 price) internal view returns (int256) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-        int256 positionPnl = self.skew.unwrap().mulDecimal(price.toInt());
+        int256 positionPnl = self.skew.unwrap().mulDecimal(price.unwrap().toInt());
         int256 fundingPnl = self.skew.unwrap().mulDecimal(calculateNextFunding(self, price));
 
         return positionPnl + fundingPnl - self.debtCorrectionAccumulator;

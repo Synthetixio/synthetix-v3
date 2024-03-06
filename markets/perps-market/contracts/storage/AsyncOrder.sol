@@ -267,7 +267,7 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         USDPerBaseUint256 orderPrice
-    ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
+    ) internal returns (Position.Data memory, USDUint256, USDPerBaseUint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
         runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
@@ -292,20 +292,20 @@ library AsyncOrder {
         }
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
-        perpsMarketData.recomputeFunding(orderPrice.unwrap());
+        perpsMarketData.recomputeFunding(orderPrice);
 
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             runtime.marketId
         );
 
-        runtime.fillPrice = USDPerBaseUint256.wrap(calculateFillPrice(
-            perpsMarketData.skew.unwrap(),
+        runtime.fillPrice = calculateFillPrice(
+            perpsMarketData.skew,
             marketConfig.skewScale,
-            runtime.sizeDelta.unwrap(),
-            orderPrice.unwrap()
-        ));
+            runtime.sizeDelta,
+            orderPrice
+        );
 
-        if (acceptablePriceExceeded(order, runtime.fillPrice.unwrap())) {
+        if (acceptablePriceExceeded(order, runtime.fillPrice)) {
             revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
@@ -372,7 +372,7 @@ library AsyncOrder {
             latestInterestAccrued: 0,
             size: runtime.newPositionSize
         });
-        return (runtime.newPosition, runtime.orderFees.unwrap(), runtime.fillPrice.unwrap(), oldPosition);
+        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
 
     /**
@@ -388,8 +388,8 @@ library AsyncOrder {
     function validateCancellation(
         Data storage order,
         SettlementStrategy.Data storage strategy,
-        uint256 orderPrice
-    ) internal view returns (uint256 fillPrice) {
+        USDPerBaseUint256 orderPrice
+    ) internal view returns (USDPerBaseUint256 fillPrice) {
         checkWithinSettlementWindow(order, strategy);
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
@@ -399,15 +399,15 @@ library AsyncOrder {
         );
 
         fillPrice = calculateFillPrice(
-            perpsMarketData.skew.unwrap(),
+            perpsMarketData.skew,
             marketConfig.skewScale,
-            order.request.sizeDelta.unwrap(),
+            order.request.sizeDelta,
             orderPrice
         );
 
         // check if fill price exceeded acceptable price
         if (!acceptablePriceExceeded(order, fillPrice)) {
-            revert AcceptablePriceNotExceeded(USDPerBaseUint256.wrap(fillPrice), order.request.acceptablePrice);
+            revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice);
         }
     }
 
@@ -462,11 +462,11 @@ library AsyncOrder {
      * @notice Calculates the fill price for an order.
      */
     function calculateFillPrice(
-        int256 skew,
+        BaseQuantoPerUSDInt256 skew,
         uint256 skewScale,
-        int128 size,
-        uint256 price
-    ) internal pure returns (uint256) {
+        BaseQuantoPerUSDInt128 size,
+        USDPerBaseUint256 price
+    ) internal pure returns (USDPerBaseUint256) {
         // How is the p/d-adjusted price calculated using an example:
         //
         // price      = $1200 USD (oracle)
@@ -498,16 +498,16 @@ library AsyncOrder {
             return price;
         }
         // calculate pd (premium/discount) before and after trade
-        int256 pdBefore = skew.divDecimal(skewScale.toInt());
-        int256 newSkew = skew + size;
+        int256 pdBefore = skew.unwrap().divDecimal(skewScale.toInt());
+        int256 newSkew = skew.unwrap() + size.unwrap();
         int256 pdAfter = newSkew.divDecimal(skewScale.toInt());
 
         // calculate price before and after trade with pd applied
-        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+        int256 priceBefore = price.unwrap().toInt() + (price.unwrap().toInt().mulDecimal(pdBefore));
+        int256 priceAfter = price.unwrap().toInt() + (price.unwrap().toInt().mulDecimal(pdAfter));
 
         // the fill price is the average of those prices
-        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+        return USDPerBaseUint256.wrap((priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2));
     }
 
     struct RequiredMarginWithNewPositionRuntime {
@@ -600,10 +600,10 @@ library AsyncOrder {
      */
     function acceptablePriceExceeded(
         Data storage order,
-        uint256 fillPrice
+        USDPerBaseUint256 fillPrice
     ) internal view returns (bool exceeded) {
         return
-            (order.request.sizeDelta.unwrap() > 0 && fillPrice > order.request.acceptablePrice.unwrap()) ||
-            (order.request.sizeDelta.unwrap() < 0 && fillPrice < order.request.acceptablePrice.unwrap());
+            (order.request.sizeDelta.unwrap() > 0 && fillPrice > order.request.acceptablePrice) ||
+            (order.request.sizeDelta.unwrap() < 0 && fillPrice < order.request.acceptablePrice);
     }
 }

@@ -14,7 +14,7 @@ import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for cancelling async orders.
@@ -45,14 +45,14 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
                 (asyncOrder.commitmentTime + settlementStrategy.commitmentPriceDelay).to64()
             );
 
-        _cancelOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
+        _cancelOrder(USDPerBaseUint256.wrap(offchainPrice.toUint()), asyncOrder, settlementStrategy);
     }
 
     /**
      * @dev used for canceling an order.
      */
     function _cancelOrder(
-        uint256 price,
+        USDPerBaseUint256 price,
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
@@ -60,9 +60,9 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         // Get the current data before resetting the order
         runtime.accountId = asyncOrder.request.accountId;
         runtime.marketId = asyncOrder.request.marketId;
-        runtime.acceptablePrice = asyncOrder.request.acceptablePrice.unwrap();
+        runtime.acceptablePrice = asyncOrder.request.acceptablePrice;
         runtime.settlementReward = settlementStrategy.settlementReward;
-        runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
+        runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
@@ -97,9 +97,9 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         emit OrderCancelled(
             runtime.marketId,
             runtime.accountId,
-            runtime.acceptablePrice,
-            runtime.fillPrice,
-            runtime.sizeDelta,
+            runtime.acceptablePrice.unwrap(),
+            runtime.fillPrice.unwrap(),
+            runtime.sizeDelta.unwrap(),
             runtime.settlementReward,
             asyncOrder.request.trackingCode,
             ERC2771Context._msgSender()

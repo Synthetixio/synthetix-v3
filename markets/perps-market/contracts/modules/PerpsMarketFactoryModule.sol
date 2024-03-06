@@ -125,7 +125,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             for (uint256 i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
                 totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
-                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 );
             }
 

@@ -270,7 +270,7 @@ library PerpsAccount {
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             (int256 pnl, , , , , ) = position.getPnl(
-                PerpsPrice.getCurrentPrice(marketId, stalenessTolerance).unwrap()
+                PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
 
             USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
@@ -298,7 +298,7 @@ library PerpsAccount {
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
             uint256 openInterest = position.getNotionalValue(
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
 
             USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
@@ -538,7 +538,7 @@ library PerpsAccount {
     function liquidatePosition(
         Data storage self,
         uint128 marketId,
-        uint256 price
+        USDPerBaseUint256 price
     )
         internal
         returns (
@@ -573,7 +573,7 @@ library PerpsAccount {
         if (newPositionSize != 0) {
             newPosition = Position.Data({
                 marketId: marketId,
-                latestInteractionPrice: price.to128(),
+                latestInteractionPrice: price.unwrap().to128(),
                 latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
                 latestInterestAccrued: 0,
                 size: BaseQuantoPerUSDInt128.wrap(newPositionSize)

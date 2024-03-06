@@ -59,14 +59,14 @@ contract AsyncOrderSettlementPythModule is
                 (asyncOrder.commitmentTime + settlementStrategy.commitmentPriceDelay).to64()
             );
 
-        _settleOrder(offchainPrice.toUint(), asyncOrder, settlementStrategy);
+        _settleOrder(USDPerBaseUint256.wrap(offchainPrice.toUint()), asyncOrder, settlementStrategy);
     }
 
     /**
      * @dev used for settleing an order.
      */
     function _settleOrder(
-        uint256 price,
+        USDPerBaseUint256 price,
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
@@ -78,9 +78,9 @@ contract AsyncOrderSettlementPythModule is
 
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
-            .validateRequest(settlementStrategy, USDPerBaseUint256.wrap(price));
+            .validateRequest(settlementStrategy, price);
 
-        runtime.amountToDeduct = runtime.totalFees;
+        runtime.amountToDeduct = runtime.totalFees.unwrap();
         runtime.sizeDelta = asyncOrder.request.sizeDelta.unwrap();
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
@@ -110,7 +110,7 @@ contract AsyncOrderSettlementPythModule is
 
         emit MarketUpdated(
             runtime.updateData.marketId,
-            price,
+            price.unwrap(),
             runtime.updateData.skew,
             runtime.updateData.size,
             runtime.sizeDelta,
@@ -151,7 +151,7 @@ contract AsyncOrderSettlementPythModule is
         (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
             .load()
             .collectFees(
-                runtime.totalFees - runtime.settlementReward, // totalFees includes settlement reward so we remove it
+                runtime.totalFees.unwrap() - runtime.settlementReward, // totalFees includes settlement reward so we remove it
                 asyncOrder.request.referrer,
                 factory
             );
@@ -166,12 +166,12 @@ contract AsyncOrderSettlementPythModule is
         emit OrderSettled(
             runtime.marketId,
             runtime.accountId,
-            runtime.fillPrice,
+            runtime.fillPrice.unwrap(),
             runtime.pnl,
             runtime.accruedFunding,
             runtime.sizeDelta,
             runtime.newPosition.size.unwrap(),
-            runtime.totalFees,
+            runtime.totalFees.unwrap(),
             runtime.referralFees,
             runtime.feeCollectorFees,
             runtime.settlementReward,

@@ -6,6 +6,7 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for getting perps market information.
@@ -71,12 +72,12 @@ contract PerpsMarketModule is IPerpsMarketModule {
      */
     function fillPrice(
         uint128 marketId,
-        int128 orderSize,
-        uint256 price
-    ) external view override returns (uint256) {
+        BaseQuantoPerUSDInt128 orderSize,
+        USDPerBaseUint256 price
+    ) external view override returns (USDPerBaseUint256) {
         return
             AsyncOrder.calculateFillPrice(
-                PerpsMarket.load(marketId).skew.unwrap(),
+                PerpsMarket.load(marketId).skew,
                 PerpsMarketConfiguration.load(marketId).skewScale,
                 orderSize,
                 price

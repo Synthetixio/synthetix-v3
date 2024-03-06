@@ -15,7 +15,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Flags} from "../utils/Flags.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerQuantoUint256, QuantoUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for committing async orders.
@@ -31,7 +31,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external override returns (AsyncOrder.Data memory retOrder, uint256 fees) {
+    ) external override returns (AsyncOrder.Data memory retOrder, USDUint256 fees) {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         PerpsMarket.loadValid(commitment.marketId);
 
@@ -66,7 +66,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         order.updateValid(commitment);
 
-        (, uint256 feesAccrued, , ) = order.validateRequest(
+        (, USDUint256 feesAccrued, , ) = order.validateRequest(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
         );
@@ -103,12 +103,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function computeOrderFees(
         uint128 marketId,
-        int128 sizeDelta
-    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        BaseQuantoPerUSDInt128 sizeDelta
+    ) external view override returns (QuantoUint256 orderFees, USDPerBaseUint256 fillPrice) {
         (orderFees, fillPrice) = _computeOrderFees(
             marketId,
             sizeDelta,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
     }
 
@@ -117,41 +117,41 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function computeOrderFeesWithPrice(
         uint128 marketId,
-        int128 sizeDelta,
-        uint256 price
-    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        BaseQuantoPerUSDInt128 sizeDelta,
+        USDPerBaseUint256 price
+    ) external view override returns (QuantoUint256 orderFees, USDPerBaseUint256 fillPrice) {
         (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta, price);
     }
 
     function requiredMarginForOrder(
         uint128 accountId,
         uint128 marketId,
-        int128 sizeDelta
-    ) external view override returns (uint256 requiredMargin) {
+        BaseQuantoPerUSDInt128 sizeDelta
+    ) external view override returns (USDUint256 requiredMargin) {
         return
             _requiredMarginForOrder(
                 accountId,
                 marketId,
                 sizeDelta,
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
     }
 
     function requiredMarginForOrderWithPrice(
         uint128 accountId,
         uint128 marketId,
-        int128 sizeDelta,
-        uint256 price
-    ) external view override returns (uint256 requiredMargin) {
+        BaseQuantoPerUSDInt128 sizeDelta,
+        USDPerBaseUint256 price
+    ) external view override returns (USDUint256 requiredMargin) {
         return _requiredMarginForOrder(accountId, marketId, sizeDelta, price);
     }
 
     function _requiredMarginForOrder(
         uint128 accountId,
         uint128 marketId,
-        int128 sizeDelta,
-        uint256 orderPrice
-    ) internal view returns (uint256 requiredMargin) {
+        BaseQuantoPerUSDInt128 sizeDelta,
+        USDPerBaseUint256 orderPrice
+    ) internal view returns (USDUint256 requiredMargin) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
@@ -161,41 +161,41 @@ contract AsyncOrderModule is IAsyncOrderModule {
         (USDUint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
             PerpsPrice.Tolerance.DEFAULT
         );
-        (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
-
+        (QuantoUint256 orderFees, USDPerBaseUint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
+        BaseQuantoPerUSDInt128 newPositionSize = oldPosition.size + sizeDelta;
         return
             AsyncOrder.getRequiredMarginWithNewPosition(
                 account,
                 marketConfig,
                 marketId,
                 oldPosition.size,
-                BaseQuantoPerUSDInt128.wrap(oldPosition.size.unwrap() + sizeDelta),
-                USDPerBaseUint256.wrap(fillPrice),
+                newPositionSize,
+                fillPrice,
                 currentInitialMargin
-            ).unwrap() + orderFees;
+            ) + orderFees.mulDecimalToUSD(PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT));
     }
 
     function _computeOrderFees(
         uint128 marketId,
-        int128 sizeDelta,
-        uint256 orderPrice
-    ) private view returns (uint256 orderFees, uint256 fillPrice) {
+        BaseQuantoPerUSDInt128 sizeDelta,
+        USDPerBaseUint256 orderPrice
+    ) private view returns (QuantoUint256 orderFees, USDPerBaseUint256 fillPrice) {
         BaseQuantoPerUSDInt256 skew = PerpsMarket.load(marketId).skew;
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
         fillPrice = AsyncOrder.calculateFillPrice(
-            skew.unwrap(),
+            skew,
             marketConfig.skewScale,
             sizeDelta,
             orderPrice
         );
 
         orderFees = AsyncOrder.calculateOrderFee(
-            BaseQuantoPerUSDInt128.wrap(sizeDelta),
-            USDPerBaseUint256.wrap(fillPrice),
+            sizeDelta,
+            fillPrice,
             skew,
             marketConfig.orderFees
-        ).unwrap();
+        );
     }
 }

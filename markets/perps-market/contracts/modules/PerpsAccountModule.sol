@@ -116,7 +116,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         Position.Data storage position = perpsMarket.positions[accountId];
 
         (, totalPnl, , owedInterest, accruedFunding, , ) = position.getPositionData(
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
         return (totalPnl, accruedFunding, position.size.unwrap(), owedInterest);
     }
