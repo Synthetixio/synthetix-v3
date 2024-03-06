@@ -953,7 +953,10 @@ describe('LiquidationModule', () => {
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
 
       // Attempt the liquidate. This should complete successfully.
-      await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
 
       const d2 = await PerpMarketProxy.getMarketDigest(marketId);
 
