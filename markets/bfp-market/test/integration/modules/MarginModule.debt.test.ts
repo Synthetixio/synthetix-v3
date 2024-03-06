@@ -250,7 +250,6 @@ describe('MarginModule Debt', async () => {
       );
       assertBn.isZero(debtAfter);
     });
-
     it('should remove debt using sUSD collateral when user have some', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -330,7 +329,6 @@ describe('MarginModule Debt', async () => {
       assertBn.equal(sUSDBalanceAfter, extraSUSDBalance);
     });
   });
-
   describe('isMarginLiquidatable', () => {
     it('should revert on invalid market id', async () => {
       const { PerpMarketProxy } = systems();
@@ -419,7 +417,6 @@ describe('MarginModule Debt', async () => {
       assert.equal(isMarginLiquidatableAfter, true);
     });
   });
-
   describe('liquidateMarginOnly', () => {
     it('should revert on invalid market id', async () => {
       const { PerpMarketProxy } = systems();

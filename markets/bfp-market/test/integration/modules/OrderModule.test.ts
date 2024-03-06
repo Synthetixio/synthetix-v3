@@ -1309,7 +1309,6 @@ describe('OrderModule', () => {
       const { receipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
       const { accruedFunding } =
         findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args ?? {};
-
       // Funding should not be zero.
       assertBn.lt(accruedFunding, bn(0));
       // Assert that we paid a lot of funding, due to holding our position open for a day.

@@ -93,6 +93,12 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 **Each step is necessary, do not skip any steps.**
 
+- Verify what has changed since the last release
+
+  ```sh
+  yarn changed
+  ```
+
 - Confirm you are on the `main` branch and that there are no git changes `git diff --exit-code .` and you have write access to `main` branch
   ```sh
   git fetch --all

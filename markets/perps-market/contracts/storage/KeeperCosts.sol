@@ -38,13 +38,8 @@ library KeeperCosts {
         self.keeperCostNodeId = keeperCostNodeId;
     }
 
-    function getSettlementKeeperCosts(
-        Data storage self,
-        uint128 accountId
-    ) internal view returns (uint256 sUSDCost) {
+    function getSettlementKeeperCosts(Data storage self) internal view returns (uint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-
-        accountId; // unused for now, but will be used to calculate rewards based on account collaterals in the future
 
         sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_SETTLEMENT);
     }

@@ -373,6 +373,11 @@ describe('Settle Offchain Async Order test', () => {
             assertBn.equal(size, bn(1));
           });
 
+          it('check position size', async () => {
+            const size = await systems().PerpsMarket.getOpenPositionSize(2, ethMarketId);
+            assertBn.equal(size, bn(1));
+          });
+
           it('check account open position market ids', async () => {
             const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
             deepEqual(positions, [ethMarketId]);
