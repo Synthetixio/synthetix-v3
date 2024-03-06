@@ -114,31 +114,30 @@ export const bootstrapPerpsMarkets = (
       lockedOiRatioD18,
       settlementStrategy,
     }) => {
-      let oracleNodeId: string, aggregator: MockPythExternalNode;
-      before('create perps price nodes', async () => {
-        const results = await createPythNode(r.owner(), price, contracts.OracleManager);
-        oracleNodeId = results.oracleNodeId;
-        aggregator = results.aggregator;
-      });
+      let aggregator: MockPythExternalNode;
+      let strategyId: ethers.BigNumber;
 
-      before(`create perps market ${name}`, async () => {
+      before(async () => {
+        // create perps price nodes
+        const results = await createPythNode(r.owner(), price, contracts.OracleManager);
+        aggregator = results.aggregator;
+
+        // create perps market
         await contracts.PerpsMarket.createMarket(marketId, name, token);
         await contracts.PerpsMarket.connect(r.owner()).updatePriceData(
           marketId,
-          oracleNodeId,
+          results.oracleNodeId,
           STRICT_PRICE_TOLERANCE
         );
-      });
 
-      before('set funding parameters', async () => {
+        // set funding parameters
         await contracts.PerpsMarket.connect(r.owner()).setFundingParameters(
           marketId,
           fundingParams ? fundingParams.skewScale : bn(1_000_000),
           fundingParams ? fundingParams.maxFundingVelocity : 0
         );
-      });
 
-      before('set max market value', async () => {
+        // set max market value
         await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
           marketId,
           maxMarketSize ? maxMarketSize : bn(10_000_000)
@@ -147,20 +146,18 @@ export const bootstrapPerpsMarkets = (
           marketId,
           maxMarketValue ? maxMarketValue : 0
         );
-      });
 
-      if (orderFees) {
-        before('set fees', async () => {
+        // set fees
+        if (orderFees) {
           await contracts.PerpsMarket.connect(r.owner()).setOrderFees(
             marketId,
             orderFees.makerFee,
             orderFees.takerFee
           );
-        });
-      }
+        }
 
-      if (liquidationParams) {
-        before('set liquidation parameters', async () => {
+        if (liquidationParams) {
+          // 'set liquidation parameters
           await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
             marketId,
             liquidationParams.initialMarginFraction,
@@ -177,21 +174,17 @@ export const bootstrapPerpsMarkets = (
             liquidationParams.maxLiquidationPd ?? 0,
             liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
           );
-        });
-      }
+        }
 
-      if (lockedOiRatioD18) {
-        before('set locked oi percent', async () => {
+        if (lockedOiRatioD18) {
+          // set locked oi percent
           await contracts.PerpsMarket.connect(r.owner()).setLockedOiRatio(
             marketId,
             lockedOiRatioD18
           );
-        });
-      }
+        }
 
-      let strategyId: ethers.BigNumber;
-      // create default settlement strategy
-      before('create default settlement strategy', async () => {
+        // create default settlement strategy
         const strategy = {
           ...DEFAULT_SETTLEMENT_STRATEGY,
           ...(settlementStrategy ?? {}),
