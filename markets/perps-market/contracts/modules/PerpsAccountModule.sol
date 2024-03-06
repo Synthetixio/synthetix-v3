@@ -129,7 +129,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     ) external view override returns (int128 positionSize) {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
-        positionSize = perpsMarket.positions[accountId].size;
+        positionSize = perpsMarket.positions[accountId].size.unwrap();
     }
 
     /**
