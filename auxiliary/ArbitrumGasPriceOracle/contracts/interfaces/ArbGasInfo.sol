@@ -8,6 +8,7 @@ pragma solidity >=0.4.21 <0.9.0;
 /// @notice These methods have been adjusted to account for Nitro's heavy use of calldata compression.
 /// Of note to end-users, we no longer make a distinction between non-zero and zero-valued calldata bytes.
 /// Precompiled contract that exists in every Arbitrum chain at 0x000000000000000000000000000000000000006c.
+/// @custom:reference https://github.com/OffchainLabs/nitro-contracts/blob/main/src/precompiles/ArbGasInfo.sol
 interface ArbGasInfo {
     /// @notice Get gas prices for a provided aggregator
     /// @return return gas prices in wei
