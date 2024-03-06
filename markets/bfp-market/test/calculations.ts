@@ -2,7 +2,6 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { bn } from './generators';
 
 // --- Primitives --- //
 
@@ -14,7 +13,8 @@ const divDecimalAndCeil = (a: Wei, b: Wei) => {
 // --- Domain --- //
 
 /** Calculates whether two numbers are the same sign. */
-export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) => a.eq(0) || b.eq(0) || a.gt(0) == b.gt(0);
+export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) =>
+  a.eq(0) || b.eq(0) || a.gt(0) == b.gt(0);
 
 // --- Calcs --- //
 
@@ -23,7 +23,12 @@ export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice:
   wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
 
 /** Calculates the fillPrice (pd adjusted market price) given market params and the size of next order. */
-export const calcFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) => {
+export const calcFillPrice = (
+  skew: BigNumber,
+  skewScale: BigNumber,
+  size: BigNumber,
+  price: BigNumber
+) => {
   const calcPD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
   const calcAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
 
@@ -76,7 +81,11 @@ export const calcOrderFees = async (
   }
 
   const notional = wei(sizeDelta).abs().mul(fillPrice);
-  const orderFee = notional.mul(takerSizeRatio).mul(takerFee).add(notional.mul(makerSizeRatio).mul(makerFee)).toBN();
+  const orderFee = notional
+    .mul(takerSizeRatio)
+    .mul(takerFee)
+    .add(notional.mul(makerSizeRatio).mul(makerFee))
+    .toBN();
 
   // Get the current ETH price.
   const { answer: ethPrice } = await ethOracleNode().agg.latestRoundData();
@@ -86,10 +95,14 @@ export const calcOrderFees = async (
 
   const calcKeeperOrderSettlementFee = (blockBaseFeePerGas: BigNumber) => {
     // Perform calc bounding by min/max to prevent going over/under.
-    const baseKeeperFeeUsd = wei(keeperSettlementGasUnits.mul(blockBaseFeePerGas)).mul(1e9).mul(ethPrice);
+    const baseKeeperFeeUsd = wei(keeperSettlementGasUnits.mul(blockBaseFeePerGas))
+      .mul(1e9)
+      .mul(ethPrice);
 
     // Base keeperFee + profit margin and asmall user specified buffer.
-    const baseKeeperFeePlusProfit = baseKeeperFeeUsd.mul(wei(1).add(keeperProfitMarginPercent).add(keeperFeeBufferUsd));
+    const baseKeeperFeePlusProfit = baseKeeperFeeUsd.mul(
+      wei(1).add(keeperProfitMarginPercent).add(keeperFeeBufferUsd)
+    );
 
     // Ensure keeper fee doesn't exceed min/max bounds.
     const boundedKeeperFeeUsd = Wei.min(
@@ -122,7 +135,11 @@ export const calcFlagReward = (
   globalConfig: PerpMarketConfiguration.GlobalDataStructOutput,
   marketConfig: PerpMarketConfiguration.DataStructOutput
 ) => {
-  const flagExecutionCostInUsd = calcTransactionCostInUsd(baseFeePerGas, globalConfig.keeperFlagGasUnits, ethPrice);
+  const flagExecutionCostInUsd = calcTransactionCostInUsd(
+    baseFeePerGas,
+    globalConfig.keeperFlagGasUnits,
+    ethPrice
+  );
 
   const flagFeeInUsd = Wei.max(
     wei(flagExecutionCostInUsd).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
@@ -149,7 +166,11 @@ export const calcLiquidationKeeperFee = (
   const iterations = divDecimalAndCeil(sizeAbs, maxLiqCapacity);
 
   const totalGasUnitsToLiquidate = wei(globalConfig.keeperLiquidationGasUnits).toBN();
-  const flagExecutionCostInUsd = calcTransactionCostInUsd(baseFeePerGas, totalGasUnitsToLiquidate, ethPrice);
+  const flagExecutionCostInUsd = calcTransactionCostInUsd(
+    baseFeePerGas,
+    totalGasUnitsToLiquidate,
+    ethPrice
+  );
 
   const liquidationFeeInUsd = Wei.max(
     wei(flagExecutionCostInUsd).mul(wei(1).add(globalConfig.keeperProfitMarginPercent)),
@@ -176,6 +197,9 @@ export const calcDiscountedCollateralPrice = (
   const w_max = wei(max);
 
   // price = oraclePrice * (1 - min(max(size / (skewScale * skewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
-  const discount = Wei.min(Wei.max(w_amount.mul(w_collateralDiscountScalar).div(w_spotMarketSkewScale), w_min), w_max);
+  const discount = Wei.min(
+    Wei.max(w_amount.mul(w_collateralDiscountScalar).div(w_spotMarketSkewScale), w_min),
+    w_max
+  );
   return w_collateralPrice.mul(wei(1).sub(discount)).toBN();
 };

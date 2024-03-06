@@ -74,7 +74,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */
-    function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128) {
+    function createMarket(
+        IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
+    ) external returns (uint128) {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -103,7 +105,12 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        emit FundingRecomputed(
+            marketId,
+            market.skew,
+            fundingRate,
+            market.getCurrentFundingVelocity()
+        );
     }
 
     // --- Required functions to be IMarket compatible --- //
@@ -146,14 +153,21 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        return market.size.mulDecimal(market.getOraclePrice()).mulDecimal(marketConfig.minCreditPercent);
+        return
+            market.size.mulDecimal(market.getOraclePrice()).mulDecimal(
+                marketConfig.minCreditPercent
+            );
     }
 
     /**
      * @inheritdoc IERC165
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IMarket).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IMarket).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 
     // --- Views --- //
@@ -168,16 +182,18 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */
-    function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
+    function getMarketDigest(
+        uint128 marketId
+    ) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market.getRemainingLiquidatableSizeCapacity(
-            marketConfig
-        );
+        (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market
+            .getRemainingLiquidatableSizeCapacity(marketConfig);
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        IPerpMarketFactoryModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
+        IPerpMarketFactoryModule.DepositedCollateral[]
+            memory depositedCollaterals = new DepositedCollateral[](length);
         uint128 synthMarketId;
 
         for (uint256 i = 0; i < length; ) {

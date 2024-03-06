@@ -2,7 +2,15 @@ import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrap } from '../../bootstrap';
-import { bn, genAddress, genBoolean, genBootstrap, genBytes32, genNumber, genOneOf } from '../../generators';
+import {
+  bn,
+  genAddress,
+  genBoolean,
+  genBootstrap,
+  genBytes32,
+  genNumber,
+  genOneOf,
+} from '../../generators';
 import { withExplicitEvmMine } from '../../helpers';
 import { IPerpRewardDistributorFactoryModule } from '../../../typechain-types/contracts/interfaces/IPerpRewardDistributorFactoryModule';
 import { IPerpRewardDistributor__factory } from '../../../typechain-types';
@@ -17,8 +25,12 @@ describe('PerpRewardDistributor', () => {
     args: IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParametersStruct
   ) => {
     const { PerpMarketProxy } = systems();
-    const distributor = await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
-    await withExplicitEvmMine(() => PerpMarketProxy.connect(owner()).createRewardDistributor(args), provider());
+    const distributor =
+      await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
+    await withExplicitEvmMine(
+      () => PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+      provider()
+    );
     return IPerpRewardDistributor__factory.connect(distributor, provider());
   };
 
@@ -107,7 +119,13 @@ describe('PerpRewardDistributor', () => {
 
       const invalidPoolId = genNumber(69420, 69999);
       await assertRevert(
-        PerpRewardDistributor.connect(owner()).payout(bn(0), invalidPoolId, args.token, genAddress(), bn(0)),
+        PerpRewardDistributor.connect(owner()).payout(
+          bn(0),
+          invalidPoolId,
+          args.token,
+          genAddress(),
+          bn(0)
+        ),
         `InvalidParameter("poolId", "Unexpected poolId")`,
         PerpRewardDistributor
       );
@@ -124,7 +142,13 @@ describe('PerpRewardDistributor', () => {
 
       const from = genOneOf(traders());
       await assertRevert(
-        PerpRewardDistributor.connect(from.signer).payout(bn(0), args.poolId, args.token, genAddress(), bn(0)),
+        PerpRewardDistributor.connect(from.signer).payout(
+          bn(0),
+          args.poolId,
+          args.token,
+          genAddress(),
+          bn(0)
+        ),
         `Unauthorized("${await from.signer.getAddress()}")`,
         PerpRewardDistributor
       );

@@ -3,7 +3,12 @@ import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import { PerpMarketProxy, PerpAccountProxy, AggregatorV3Mock, PythMock } from './generated/typechain';
+import {
+  PerpMarketProxy,
+  PerpAccountProxy,
+  AggregatorV3Mock,
+  PythMock,
+} from './generated/typechain';
 import { CollateralMock, SettlementHookMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
@@ -72,7 +77,9 @@ export interface PerpCollateral {
   max: BigNumber;
   contract:
     | Systems['USD']
-    | ReturnType<ReturnType<ReturnType<typeof bootstrapSynthMarkets>['synthMarkets']>[number]['synth']>;
+    | ReturnType<
+        ReturnType<ReturnType<typeof bootstrapSynthMarkets>['synthMarkets']>[number]['synth']
+      >;
   synthMarketId: () => BigNumber;
   synthAddress: () => string;
   oracleNodeId: () => string;
@@ -97,7 +104,6 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
-      // @ts-ignore
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address), // Misaligned types from spotMarket type compilation.
       // Difference between this and `Collateral{2}Mock`?
       //
@@ -125,7 +131,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   };
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
-  const stakedPool = createStakedPool(core, args.pool.stakedCollateralPrice, args.pool.stakedAmount);
+  const stakedPool = createStakedPool(
+    core,
+    args.pool.stakedCollateralPrice,
+    args.pool.stakedAmount
+  );
 
   // Configure spot market synths
   const _COLLATERALS_TO_CONFIGURE = [
@@ -158,11 +168,15 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   });
 
   const getConfiguredSynths = () =>
-    _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({ ...collateral, synthMarket: spotMarket.synthMarkets()[i] }));
+    _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({
+      ...collateral,
+      synthMarket: spotMarket.synthMarkets()[i],
+    }));
 
   before(
     'configure global market',
-    async () => await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global)
+    async () =>
+      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global)
   );
 
   let ethOracleNodeId: string;
@@ -278,12 +292,17 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         collateralTypes: [stakedPool.collateralAddress()],
       };
 
-      const distributor = await PerpMarketProxy.connect(getOwner()).callStatic.createRewardDistributor(createArgs);
+      const distributor =
+        await PerpMarketProxy.connect(getOwner()).callStatic.createRewardDistributor(createArgs);
       await PerpMarketProxy.connect(getOwner()).createRewardDistributor(createArgs);
 
       // After creation, register the RewardDistributor with each pool collateral.
       for (const collateralType of poolCollateralTypes) {
-        await Core.connect(getOwner()).registerRewardsDistributor(createArgs.poolId, collateralType, distributor);
+        await Core.connect(getOwner()).registerRewardsDistributor(
+          createArgs.poolId,
+          collateralType,
+          distributor
+        );
       }
       rewardDistributors.push(distributor);
     }
@@ -326,7 +345,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     //
     // NOTE: The system recognises sUSD as $1 so this sUsdAggregator is really just a stub but will never
     // be used in any capacity.
-    const { aggregator: sUsdAggregator } = await createOracleNode(getOwner(), bn(1), systems.OracleManager);
+    const { aggregator: sUsdAggregator } = await createOracleNode(
+      getOwner(),
+      bn(1),
+      systems.OracleManager
+    );
     const sUsdCollateral: PerpCollateral = {
       name: 'sUSD',
       initialPrice: bn(1),
@@ -380,8 +403,17 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // 4 = trader
     // 5 = trader
     // 6 = keeper (no funds)
-    const [trader1, trader2, trader3, trader4, trader5, _keeper, _keeper2, _keeper3, _endorsedKeeper] =
-      getSigners().slice(3);
+    const [
+      trader1,
+      trader2,
+      trader3,
+      trader4,
+      trader5,
+      _keeper,
+      _keeper2,
+      _keeper3,
+      _endorsedKeeper,
+    ] = getSigners().slice(3);
     keeper = _keeper;
     keeper2 = _keeper2;
     keeper3 = _keeper3;

@@ -38,7 +38,11 @@ contract SettlementHookMock is ISettlementHook {
         emit Settled();
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(ISettlementHook).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(ISettlementHook).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

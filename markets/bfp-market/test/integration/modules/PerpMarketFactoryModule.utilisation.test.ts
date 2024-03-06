@@ -3,7 +3,12 @@ import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
-import { commitAndSettle, depositMargin, setMarketConfiguration, setMarketConfigurationById } from '../../helpers';
+import {
+  commitAndSettle,
+  depositMargin,
+  setMarketConfiguration,
+  setMarketConfigurationById,
+} from '../../helpers';
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
@@ -22,7 +27,10 @@ describe('PerpMarketFactoryModule Utilization', () => {
     it('should handle utilization config set to 0', async () => {
       const { PerpMarketProxy } = systems();
 
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, order);
 
@@ -67,12 +75,16 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
         // Get delegated usd amount
         const withdrawable = await Core.getWithdrawableMarketUsd(market.marketId());
-        const { totalCollateralValueUsd } = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const { totalCollateralValueUsd } = await PerpMarketProxy.getMarketDigest(
+          market.marketId()
+        );
         const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
 
         const leverage = genNumber(1, 5);
         // Calculate target notional amount based on the utilization we're targeting
-        const targetNotional = delegatedAmountUsd.mul(targetUtilizationPercent).mul(marketConfig.minCreditPercent);
+        const targetNotional = delegatedAmountUsd
+          .mul(targetUtilizationPercent)
+          .mul(marketConfig.minCreditPercent);
 
         const { answer: marketPrice } = await market.aggregator().latestRoundData();
         // Make sure OI is large enough to support the target notional
@@ -84,7 +96,10 @@ describe('PerpMarketFactoryModule Utilization', () => {
         const depositAmountUsd = wei(targetNotional).div(leverage);
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
           bs,
-          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: depositAmountUsd.toNumber() })
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: depositAmountUsd.toNumber(),
+          })
         );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredLeverage: leverage,
@@ -94,7 +109,9 @@ describe('PerpMarketFactoryModule Utilization', () => {
         // assert the utilization rate
         const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
         if (variant === 'lowUtilization') {
-          const expectedRate = wei(lowUtilizationSlopePercent).mul(targetUtilizationPercent).mul(100);
+          const expectedRate = wei(lowUtilizationSlopePercent)
+            .mul(targetUtilizationPercent)
+            .mul(100);
           assertBn.near(expectedRate.toBN(), marketDigest.utilizationRate, bn(0.0001));
         } else {
           const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);

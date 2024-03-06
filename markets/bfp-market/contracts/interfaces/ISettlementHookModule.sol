@@ -22,14 +22,19 @@ interface ISettlementHookModule {
     /**
      * @notice Configures settlement hook parameters applied globally.
      */
-    function setSettlementHookConfiguration(ISettlementHookModule.ConfigureParameters memory data) external;
+    function setSettlementHookConfiguration(
+        ISettlementHookModule.ConfigureParameters memory data
+    ) external;
 
     // --- Views --- //
 
     /**
      * @notice Returns configured global settlement hook parameters.
      */
-    function getSettlementHookConfiguration() external view returns (ISettlementHookModule.ConfigureParameters memory);
+    function getSettlementHookConfiguration()
+        external
+        view
+        returns (ISettlementHookModule.ConfigureParameters memory);
 
     /**
      * @notice Returns whether the specified hook is whitelisted.

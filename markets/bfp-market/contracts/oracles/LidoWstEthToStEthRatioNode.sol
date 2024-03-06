@@ -49,6 +49,8 @@ contract LidoWstEthToStEthRatioNode is IExternalNode {
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IExternalNode).interfaceId || interfaceId == this.supportsInterface.selector;
+        return
+            interfaceId == type(IExternalNode).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

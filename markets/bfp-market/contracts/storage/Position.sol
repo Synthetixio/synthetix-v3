@@ -87,14 +87,18 @@ library Position {
         int256 newSize
     ) internal pure {
         // Allow users to reduce an order no matter the market conditions.
-        if (MathUtil.sameSide(currentSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(currentSize)) {
+        if (
+            MathUtil.sameSide(currentSize, newSize) &&
+            MathUtil.abs(newSize) <= MathUtil.abs(currentSize)
+        ) {
             return;
         }
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
         // we check that the side of the market their order is on would not break the limit.
         int256 newSkew = marketSkew - currentSize + newSize;
-        int256 newMarketSize = (marketSize - MathUtil.abs(currentSize) + MathUtil.abs(newSize)).toInt();
+        int256 newMarketSize = (marketSize - MathUtil.abs(currentSize) + MathUtil.abs(newSize))
+            .toInt();
 
         int256 newSideSize;
         if (0 < newSize) {
@@ -122,7 +126,11 @@ library Position {
      * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
      * This is important as it helps avoid instant liquidations immediately after settlement.
      */
-    function getNextMarginUsd(uint256 marginUsd, uint256 orderFee, uint256 keeperFee) internal pure returns (uint256) {
+    function getNextMarginUsd(
+        uint256 marginUsd,
+        uint256 orderFee,
+        uint256 keeperFee
+    ) internal pure returns (uint256) {
         return MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
     }
 
@@ -176,7 +184,12 @@ library Position {
         );
         uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
 
-        (, uint256 mm, ) = getLiquidationMarginUsd(newPosition.size, onchainPrice, nextMarginUsd, marketConfig);
+        (, uint256 mm, ) = getLiquidationMarginUsd(
+            newPosition.size,
+            onchainPrice,
+            nextMarginUsd,
+            marketConfig
+        );
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
 
         if (healthFactor <= DecimalMath.UNIT) {
@@ -201,7 +214,11 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // --- Existing position validation --- //
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, params.fillPrice);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            params.fillPrice
+        );
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
         if (currentPosition.size != 0) {
@@ -211,7 +228,15 @@ library Position {
             }
 
             // Detearmine if the current (previous) position can be immediately liquidated.
-            if (isLiquidatable(currentPosition, market, params.oraclePrice, marketConfig, marginValues)) {
+            if (
+                isLiquidatable(
+                    currentPosition,
+                    market,
+                    params.oraclePrice,
+                    marketConfig,
+                    marginValues
+                )
+            ) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         }
@@ -239,7 +264,11 @@ library Position {
         // We care about discount as as we're verifying for liquidation.
         // NOTE: marginUsd looks at the current position's overall PnL but it does not consider the post settled
         // incurred fees hence get `nextMarginUsd` with fees deducted.
-        uint256 nextMarginUsd = getNextMarginUsd(marginValues.discountedMarginUsd, orderFee, keeperFee);
+        uint256 nextMarginUsd = getNextMarginUsd(
+            marginValues.discountedMarginUsd,
+            orderFee,
+            keeperFee
+        );
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
@@ -247,13 +276,24 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
             // Check new position initial margin validations.
-            validateNextPositionIm(marketConfig, newPosition, marginValues.collateralUsd, nextMarginUsd);
+            validateNextPositionIm(
+                marketConfig,
+                newPosition,
+                marginValues.collateralUsd,
+                nextMarginUsd
+            );
             // Check new position margin validations.
             validateNextPositionEnoughMargin(marketConfig, market, newPosition, nextMarginUsd);
         }
 
         // Check the new position hasn't hit max OI on either side.
-        validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
+        validateMaxOi(
+            marketConfig.maxMarketSize,
+            market.skew,
+            market.size,
+            currentPosition.size,
+            newPosition.size
+        );
 
         return
             Position.ValidatedTrade(
@@ -300,10 +340,15 @@ library Position {
         }
 
         // Fetch the available capacity then alter iff zero AND the caller is a whitelisted endorsed liquidation keeper.
-        (runtime.maxLiquidatableCapacity, runtime.remainingCapacity, runtime.lastLiquidationTime) = market
-            .getRemainingLiquidatableSizeCapacity(marketConfig);
+        (
+            runtime.maxLiquidatableCapacity,
+            runtime.remainingCapacity,
+            runtime.lastLiquidationTime
+        ) = market.getRemainingLiquidatableSizeCapacity(marketConfig);
 
-        if (msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0) {
+        if (
+            msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0
+        ) {
             runtime.remainingCapacity = runtime.oldPositionSizeAbs;
         }
 
@@ -320,7 +365,8 @@ library Position {
                 runtime.lastLiquidationTime != block.timestamp &&
                 MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd
             ) {
-                runtime.remainingCapacity = runtime.oldPositionSizeAbs > runtime.maxLiquidatableCapacity
+                runtime.remainingCapacity = runtime.oldPositionSizeAbs >
+                    runtime.maxLiquidatableCapacity
                     ? runtime.maxLiquidatableCapacity
                     : runtime.oldPositionSizeAbs;
             } else {
@@ -333,7 +379,9 @@ library Position {
         liqSize = MathUtil.min(runtime.remainingCapacity, runtime.oldPositionSizeAbs).to128();
         liqKeeperFee = getLiquidationKeeperFee(liqSize, marketConfig, globalConfig);
         newPosition = Position.Data(
-            oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
+            oldPosition.size > 0
+                ? oldPosition.size - liqSize.toInt()
+                : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryUtilizationAccrued,
             oldPosition.entryPrice,
@@ -352,15 +400,25 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 flagExecutionCostInUsd = ethPrice.mulDecimal(block.basefee * globalConfig.keeperFlagGasUnits);
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 flagExecutionCostInUsd = ethPrice.mulDecimal(
+            block.basefee * globalConfig.keeperFlagGasUnits
+        );
         uint256 flagFeeInUsd = MathUtil.max(
-            flagExecutionCostInUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            flagExecutionCostInUsd.mulDecimal(
+                DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+            ),
             flagExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
         );
 
         uint256 flagFeeWithRewardInUsd = flagFeeInUsd +
-            MathUtil.max(notionalValueUsd, collateralUsd).mulDecimal(marketConfig.liquidationRewardPercent);
+            MathUtil.max(notionalValueUsd, collateralUsd).mulDecimal(
+                marketConfig.liquidationRewardPercent
+            );
 
         return MathUtil.min(flagFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
     }
@@ -387,11 +445,17 @@ library Position {
         uint128 absSize = MathUtil.abs(positionSize).to128();
         uint256 notional = absSize.mulDecimal(price);
 
-        uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(marketConfig.incrementalMarginScalar) +
-            marketConfig.minMarginRatio;
+        uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(
+            marketConfig.incrementalMarginScalar
+        ) + marketConfig.minMarginRatio;
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
-        liqFlagReward = getLiquidationFlagReward(notional, collateralUsd, marketConfig, globalConfig);
+        liqFlagReward = getLiquidationFlagReward(
+            notional,
+            collateralUsd,
+            marketConfig,
+            globalConfig
+        );
 
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
         mm =
@@ -407,14 +471,22 @@ library Position {
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
-        (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, collateralUsd, marketConfig);
+        (, uint256 mm, ) = getLiquidationMarginUsd(
+            positionSize,
+            price,
+            collateralUsd,
+            marketConfig
+        );
         return mm;
     }
 
     /**
      * @dev Returns the number of partial liquidations required given liquidation size and mac liquidation capacity.
      */
-    function getLiquidationIterations(uint256 liqSize, uint256 maxLiqCapacity) internal pure returns (uint256) {
+    function getLiquidationIterations(
+        uint256 liqSize,
+        uint256 maxLiqCapacity
+    ) internal pure returns (uint256) {
         if (maxLiqCapacity == 0) {
             return 0;
         }
@@ -440,7 +512,11 @@ library Position {
             return 0;
         }
 
-        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
         uint256 maxLiqCapacity = PerpMarket.getMaxLiquidatableCapacity(marketConfig);
 
         uint256 liquidationExecutionCostUsd = ethPrice.mulDecimal(
@@ -448,7 +524,9 @@ library Position {
         );
 
         uint256 liquidationFeeInUsd = MathUtil.max(
-            liquidationExecutionCostUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            liquidationExecutionCostUsd.mulDecimal(
+                DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+            ),
             liquidationExecutionCostUsd + globalConfig.keeperProfitMarginUsd
         );
 
@@ -545,7 +623,9 @@ library Position {
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
         return
-            self.size.mulDecimal(unrecordedFunding + market.currentFundingAccruedComputed - self.entryFundingAccrued);
+            self.size.mulDecimal(
+                unrecordedFunding + market.currentFundingAccruedComputed - self.entryFundingAccrued
+            );
     }
 
     /**
@@ -564,7 +644,9 @@ library Position {
         uint256 notional = MathUtil.abs(self.size).mulDecimal(price);
         return
             notional.mulDecimal(
-                unrecordedUtilization + market.currentUtilizationAccruedComputed - self.entryUtilizationAccrued
+                unrecordedUtilization +
+                    market.currentUtilizationAccruedComputed -
+                    self.entryUtilizationAccrued
             );
     }
 

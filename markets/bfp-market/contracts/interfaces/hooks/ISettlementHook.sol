@@ -13,5 +13,11 @@ interface ISettlementHook is IERC165 {
      * NOTE: `onSettle` is invoked _after_ a position is updated but _before_ the settled order has been deleted. This
      * means you can call `getOrderDigest` to retrieve the order for additional information.
      */
-    function onSettle(uint128 accountId, uint128 marketId, int128 sizeDelta, int128 size, uint256 fillPrice) external;
+    function onSettle(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta,
+        int128 size,
+        uint256 fillPrice
+    ) external;
 }

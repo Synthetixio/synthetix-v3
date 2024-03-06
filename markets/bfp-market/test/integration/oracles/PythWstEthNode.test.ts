@@ -11,7 +11,10 @@ describe('PythWstEthNode', () => {
   beforeEach(restore);
 
   describe('process', () => {
-    const configureExchangeRatios = async (desiredWstEthToEth?: number, desiredStEthToEth?: number) => {
+    const configureExchangeRatios = async (
+      desiredWstEthToEth?: number,
+      desiredStEthToEth?: number
+    ) => {
       const { WstETHMock, StEthToEthMock } = systems();
 
       const wstEthToEth = bn(desiredWstEthToEth ?? genNumber(1.1, 1.2));
@@ -28,7 +31,8 @@ describe('PythWstEthNode', () => {
 
       const market = markets()[1]; // ETHPERP.
       const marketId = market.marketId();
-      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
+      const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId))
+        .pythPriceFeedId;
 
       return { market, marketId, priceFeedId };
     };

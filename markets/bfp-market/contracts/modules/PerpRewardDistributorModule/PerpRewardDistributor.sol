@@ -158,7 +158,11 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     /**
      * @inheritdoc IERC165
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IRewardDistributor).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IRewardDistributor).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

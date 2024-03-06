@@ -21,10 +21,20 @@ interface IMarginModule is IBasePerpMarket {
     // --- Events --- //
 
     // @notice Emitted when margin is deposited from user to market.
-    event MarginDeposit(address indexed from, address indexed to, uint256 value, uint128 synthMarketId);
+    event MarginDeposit(
+        address indexed from,
+        address indexed to,
+        uint256 value,
+        uint128 synthMarketId
+    );
 
     // @notice Emitted when margin is withdrawn from market to user.
-    event MarginWithdraw(address indexed from, address indexed to, uint256 value, uint128 synthMarketId);
+    event MarginWithdraw(
+        address indexed from,
+        address indexed to,
+        uint256 value,
+        uint128 synthMarketId
+    );
 
     // @notice Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
@@ -57,7 +67,12 @@ interface IMarginModule is IBasePerpMarket {
      *
      * There are no fees associated with the transfer of collateral.
      */
-    function modifyCollateral(uint128 accountId, uint128 marketId, uint128 synthMarketId, int256 amountDelta) external;
+    function modifyCollateral(
+        uint128 accountId,
+        uint128 marketId,
+        uint128 synthMarketId,
+        int256 amountDelta
+    ) external;
 
     /**
      * @notice Configure with collateral types (synth ids), their max allowables (deposits), and more.
@@ -82,15 +97,24 @@ interface IMarginModule is IBasePerpMarket {
     /**
      * @notice Returns the configured collaterals useable for margin.
      */
-    function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory);
+    function getMarginCollateralConfiguration()
+        external
+        view
+        returns (ConfiguredCollateral[] memory);
 
     /**
      * @notice Returns a digest of account margin USD values. See `Margin.MarginValues` for specifics.
      */
-    function getMarginDigest(uint128 accountId, uint128 marketId) external view returns (Margin.MarginValues memory);
+    function getMarginDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (Margin.MarginValues memory);
 
     /**
      * @notice Returns the discount adjusted oracle price based on `amount` of synth by `synthMarketId`.
      */
-    function getDiscountedCollateralPrice(uint128 synthMarketId, uint256 amount) external view returns (uint256);
+    function getDiscountedCollateralPrice(
+        uint128 synthMarketId,
+        uint256 amount
+    ) external view returns (uint256);
 }

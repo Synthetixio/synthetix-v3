@@ -48,7 +48,11 @@ contract MarginModule is IMarginModule {
         PerpMarket.Data storage market
     ) private view {
         uint256 oraclePrice = market.getOraclePrice();
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice
+        );
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
@@ -158,7 +162,10 @@ contract MarginModule is IMarginModule {
      */
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+        );
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -186,7 +193,12 @@ contract MarginModule is IMarginModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        emit FundingRecomputed(
+            marketId,
+            market.skew,
+            fundingRate,
+            market.getCurrentFundingVelocity()
+        );
 
         (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
@@ -224,13 +236,21 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function modifyCollateral(uint128 accountId, uint128 marketId, uint128 synthMarketId, int256 amountDelta) external {
+    function modifyCollateral(
+        uint128 accountId,
+        uint128 marketId,
+        uint128 synthMarketId,
+        int256 amountDelta
+    ) external {
         // Revert on zero amount operations rather than no-op.
         if (amountDelta == 0) {
             revert ErrorUtil.ZeroAmount();
         }
 
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+        );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -257,7 +277,12 @@ contract MarginModule is IMarginModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        emit FundingRecomputed(
+            marketId,
+            market.skew,
+            fundingRate,
+            market.getCurrentFundingVelocity()
+        );
 
         (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
@@ -334,7 +359,8 @@ contract MarginModule is IMarginModule {
     ) external {
         OwnableStorage.onlyOwner();
 
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration
+            .load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         Runtime_setMarginCollateralConfiguration memory runtime;
@@ -383,7 +409,12 @@ contract MarginModule is IMarginModule {
                 // non-sUSD collateral must have a compatible reward distributor.
                 //
                 // NOTE: The comparison with `IRewardDistributor` here and not `IPerpRewardDistributor`.
-                if (!ERC165Helper.safeSupportsInterface(distributor, type(IRewardDistributor).interfaceId)) {
+                if (
+                    !ERC165Helper.safeSupportsInterface(
+                        distributor,
+                        type(IRewardDistributor).interfaceId
+                    )
+                ) {
                     revert ErrorUtil.InvalidRewardDistributor(distributor);
                 }
             }
@@ -408,7 +439,10 @@ contract MarginModule is IMarginModule {
             // Removing a collateral with a non-zero deposit amount is _not_ allowed. To wind down a collateral,
             // the market owner can set `maxAllowable=0` to disable deposits but to ensure traders can always withdraw
             // their deposited collateral, we cannot remove the collateral if deposits still remain.
-            if (isCollateralDeposited(synthMarketId) && !globalMarginConfig.supported[synthMarketId].exists) {
+            if (
+                isCollateralDeposited(synthMarketId) &&
+                !globalMarginConfig.supported[synthMarketId].exists
+            ) {
                 revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
             }
 
@@ -429,7 +463,10 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.ZeroAmount();
         }
 
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+        );
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -468,7 +505,11 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getMarginCollateralConfiguration() external view returns (ConfiguredCollateral[] memory) {
+    function getMarginCollateralConfiguration()
+        external
+        view
+        returns (ConfiguredCollateral[] memory)
+    {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
@@ -478,7 +519,12 @@ contract MarginModule is IMarginModule {
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             Margin.CollateralType storage c = globalMarginConfig.supported[synthMarketId];
-            collaterals[i] = ConfiguredCollateral(synthMarketId, c.oracleNodeId, c.maxAllowable, c.rewardDistributor);
+            collaterals[i] = ConfiguredCollateral(
+                synthMarketId,
+                c.oracleNodeId,
+                c.maxAllowable,
+                c.rewardDistributor
+            );
 
             unchecked {
                 ++i;
@@ -491,7 +537,10 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getMarginDigest(uint128 accountId, uint128 marketId) external view returns (Margin.MarginValues memory) {
+    function getMarginDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (Margin.MarginValues memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
@@ -500,9 +549,13 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getDiscountedCollateralPrice(uint128 synthMarketId, uint256 amount) external view returns (uint256) {
+    function getDiscountedCollateralPrice(
+        uint128 synthMarketId,
+        uint256 amount
+    ) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration
+            .load();
 
         return
             Margin.getDiscountedPriceFromCollateralPrice(

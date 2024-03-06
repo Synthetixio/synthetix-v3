@@ -30,7 +30,12 @@ library Order {
     /**
      * @dev See IOrderModule.fillPrice for more details.
      */
-    function getFillPrice(int128 skew, uint128 skewScale, int128 size, uint256 price) internal pure returns (uint256) {
+    function getFillPrice(
+        int128 skew,
+        uint128 skewScale,
+        int128 size,
+        uint256 price
+    ) internal pure returns (uint256) {
         int256 ss = skewScale.toInt();
         int256 p = price.toInt();
 
@@ -101,8 +106,14 @@ library Order {
     function getSettlementKeeperFee(uint256 keeperFeeBufferUsd) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal((globalConfig.keeperSettlementGasUnits * block.basefee * 1e9));
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
+            (globalConfig.keeperSettlementGasUnits * block.basefee * 1e9)
+        );
         uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
             DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
         ) + keeperFeeBufferUsd;

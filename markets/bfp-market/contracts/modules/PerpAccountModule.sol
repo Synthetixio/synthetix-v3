@@ -31,7 +31,8 @@ contract PerpAccountModule is IPerpAccountModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        IPerpAccountModule.DepositedCollateral[] memory depositedCollaterals = new DepositedCollateral[](length);
+        IPerpAccountModule.DepositedCollateral[]
+            memory depositedCollaterals = new DepositedCollateral[](length);
         uint128 synthMarketId;
         uint256 collateralPrice;
 
@@ -77,7 +78,11 @@ contract PerpAccountModule is IPerpAccountModule {
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint256 oraclePrice = market.getOraclePrice();
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice
+        );
 
         Position.HealthData memory healthData = Position.getHealthData(
             market,

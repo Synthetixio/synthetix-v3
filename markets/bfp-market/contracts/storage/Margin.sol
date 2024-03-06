@@ -67,7 +67,10 @@ library Margin {
         }
     }
 
-    function load(uint128 accountId, uint128 marketId) internal pure returns (Margin.Data storage d) {
+    function load(
+        uint128 accountId,
+        uint128 marketId
+    ) internal pure returns (Margin.Data storage d) {
         bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.Margin", accountId, marketId));
         assembly {
             d.slot := s
@@ -176,7 +179,11 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                collateralPrice = getCollateralPrice(globalMarginConfig, synthMarketId, globalConfig);
+                collateralPrice = getCollateralPrice(
+                    globalMarginConfig,
+                    synthMarketId,
+                    globalConfig
+                );
                 discountedCollateralPrice = getDiscountedPriceFromCollateralPrice(
                     available,
                     collateralPrice,
@@ -205,7 +212,10 @@ library Margin {
         PerpMarket.Data storage market,
         uint256 marketPrice
     ) internal view returns (MarginValues memory marginValues) {
-        (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(accountId, market.id);
+        (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(
+            accountId,
+            market.id
+        );
         Position.Data storage position = market.positions[accountId];
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
@@ -221,7 +231,9 @@ library Margin {
         marginValues.discountedMarginUsd = MathUtil
             .max(discountedCollateralUsd.toInt() + marginAdjustements, 0)
             .toUint();
-        marginValues.marginUsd = MathUtil.max(collateralUsd.toInt() + marginAdjustements, 0).toUint();
+        marginValues.marginUsd = MathUtil
+            .max(collateralUsd.toInt() + marginAdjustements, 0)
+            .toUint();
         marginValues.discountedCollateralUsd = discountedCollateralUsd;
         marginValues.collateralUsd = collateralUsd;
         return marginValues;
@@ -238,7 +250,12 @@ library Margin {
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        return globalConfig.oracleManager.process(self.supported[synthMarketId].oracleNodeId).price.toUint();
+        return
+            globalConfig
+                .oracleManager
+                .process(self.supported[synthMarketId].oracleNodeId)
+                .price
+                .toUint();
     }
 
     /**
@@ -273,7 +290,9 @@ library Margin {
             ? 0
             : MathUtil.min(
                 MathUtil.max(
-                    amountAvailable.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(skewScale),
+                    amountAvailable.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(
+                        skewScale
+                    ),
                     globalConfig.minCollateralDiscount
                 ),
                 globalConfig.maxCollateralDiscount

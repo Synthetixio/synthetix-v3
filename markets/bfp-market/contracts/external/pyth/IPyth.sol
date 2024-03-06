@@ -38,7 +38,10 @@ interface IPyth is IPythEvents {
     /// applications that require a sufficiently-recent price. Reverts if the price wasn't updated sufficiently
     /// recently.
     /// @return price - please read the documentation of PythStructs.Price to understand how to use this safely.
-    function getPriceNoOlderThan(bytes32 id, uint age) external view returns (PythStructs.Price memory price);
+    function getPriceNoOlderThan(
+        bytes32 id,
+        uint age
+    ) external view returns (PythStructs.Price memory price);
 
     /// @notice Returns the exponentially-weighted moving average price of a price feed without any sanity checks.
     /// @dev This function returns the same price as `getEmaPrice` in the case where the price is available.
@@ -59,7 +62,10 @@ interface IPyth is IPythEvents {
     /// applications that require a sufficiently-recent price. Reverts if the price wasn't updated sufficiently
     /// recently.
     /// @return price - please read the documentation of PythStructs.Price to understand how to use this safely.
-    function getEmaPriceNoOlderThan(bytes32 id, uint age) external view returns (PythStructs.Price memory price);
+    function getEmaPriceNoOlderThan(
+        bytes32 id,
+        uint age
+    ) external view returns (PythStructs.Price memory price);
 
     /// @notice Update price feeds with given update messages.
     /// This method requires the caller to pay a fee in wei; the required fee can be computed by calling

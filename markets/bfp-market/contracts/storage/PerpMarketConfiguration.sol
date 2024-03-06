@@ -122,7 +122,9 @@ library PerpMarketConfiguration {
     }
 
     function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId));
+        bytes32 s = keccak256(
+            abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId)
+        );
         assembly {
             d.slot := s
         }

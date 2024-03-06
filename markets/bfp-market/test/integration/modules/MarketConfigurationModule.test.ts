@@ -46,7 +46,11 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperLiquidationEndorsed, global.keeperLiquidationEndorsed);
       assert.equal(config.keeperLiquidateMarginGasUnits, global.keeperLiquidateMarginGasUnits);
 
-      await assertEvent(receipt, `ConfigurationUpdated("${await from.getAddress()}")`, PerpMarketProxy);
+      await assertEvent(
+        receipt,
+        `ConfigurationUpdated("${await from.getAddress()}")`,
+        PerpMarketProxy
+      );
     });
 
     it('should revert when non-owner', async () => {

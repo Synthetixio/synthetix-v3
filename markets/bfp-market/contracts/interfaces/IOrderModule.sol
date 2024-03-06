@@ -53,7 +53,11 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @notice Settles a previously committed order by `accountId` and `marketId`.
      */
-    function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable;
+    function settleOrder(
+        uint128 accountId,
+        uint128 marketId,
+        bytes calldata priceUpdateData
+    ) external payable;
 
     /**
      * @notice Cancel a previously committed order by `accountId` and `marketId`.
@@ -61,7 +65,11 @@ interface IOrderModule is IBasePerpMarket {
      * This can only happen after an order is ready and a keeper can prove price tolerance has been exceeded.
      * If the order is stale only the owner is allowed to cancel
      */
-    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable;
+    function cancelOrder(
+        uint128 accountId,
+        uint128 marketId,
+        bytes calldata priceUpdateData
+    ) external payable;
 
     /**
      * @notice Cancels a previously committed order that has gone stale by `accountId` and `marketId`.
@@ -76,7 +84,10 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @notice Returns an order belonging to `accountId` in `marketId`.
      */
-    function getOrderDigest(uint128 accountId, uint128 marketId) external view returns (Order.Data memory);
+    function getOrderDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (Order.Data memory);
 
     /**
      * @notice Returns fees charged to open/close an order (along with a dynamic keeper fee).
