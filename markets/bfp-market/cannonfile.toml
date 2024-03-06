@@ -1,9 +1,7 @@
 name = "bfp-market"
 version = "<%= package.version %>"
 description = "bfp market for Synthetix v3"
-include = [
-  "tomls/oracles.toml",
-]
+include = ["tomls/oracles.toml"]
 
 # TODO: Replace this owner '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
 [setting.owner]
@@ -96,31 +94,31 @@ depends = ["contract.CoreModule"]
 
 [router.Router]
 contracts = [
-  "synthetix.AccountModule",
-  "synthetix.AssociatedSystemsModule",
-  "CoreModule",
-  "FeatureFlagModule",
-  "PerpMarketFactoryModule",
-  "MarketConfigurationModule",
-  "PerpAccountModule",
-  "MarginModule",
-  "OrderModule",
-  "LiquidationModule",
-  "PerpRewardDistributorFactoryModule",
-  "SettlementHookModule"
+    "synthetix.AccountModule",
+    "synthetix.AssociatedSystemsModule",
+    "CoreModule",
+    "FeatureFlagModule",
+    "PerpMarketFactoryModule",
+    "MarketConfigurationModule",
+    "PerpAccountModule",
+    "MarginModule",
+    "OrderModule",
+    "LiquidationModule",
+    "PerpRewardDistributorFactoryModule",
+    "SettlementHookModule",
 ]
 depends = [
-  "import.synthetix",
-  "contract.CoreModule",
-  "contract.FeatureFlagModule",
-  "contract.PerpMarketFactoryModule",
-  "contract.MarketConfigurationModule",
-  "contract.PerpAccountModule",
-  "contract.MarginModule",
-  "contract.OrderModule",
-  "contract.LiquidationModule",
-  "contract.PerpRewardDistributorFactoryModule",
-  "contract.SettlementHookModule"
+    "import.synthetix",
+    "contract.CoreModule",
+    "contract.FeatureFlagModule",
+    "contract.PerpMarketFactoryModule",
+    "contract.MarketConfigurationModule",
+    "contract.PerpAccountModule",
+    "contract.MarginModule",
+    "contract.OrderModule",
+    "contract.LiquidationModule",
+    "contract.PerpRewardDistributorFactoryModule",
+    "contract.SettlementHookModule",
 ]
 
 # --- Proxy Post Deployment --- #
@@ -144,11 +142,11 @@ target = ["PerpMarketProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
-  "<%= formatBytes32String('accountNft') %>",
-  "Synthetix V3: BF Perp Account NFT",
-  "SNX-V3-BFP-ACC",
-  "",
-  "<%= imports.synthetix.contracts.AccountRouter.address %>",
+    "<%= formatBytes32String('accountNft') %>",
+    "Synthetix V3: BF Perp Account NFT",
+    "SNX-V3-BFP-ACC",
+    "",
+    "<%= imports.synthetix.contracts.AccountRouter.address %>",
 ]
 depends = ["invoke.upgradeProxy"]
 factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
@@ -181,7 +179,7 @@ depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
 source = "pyth:1.4.2"
-args = [120, 1] # 120s, 1wei
+args = [120, 1]       # 120s, 1wei
 
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
@@ -226,9 +224,7 @@ depends = ["invoke.upgradeProxy", "import.pyth"]
 target = ["PerpMarketProxy"]
 fromCall.func = "owner"
 func = "setRewardDistributorImplementation"
-args = [
-  "<%= contracts.PerpRewardDistributor.address %>",
-]
+args = ["<%= contracts.PerpRewardDistributor.address %>"]
 depends = ["invoke.upgradeProxy", "contract.PerpRewardDistributor"]
 
 # --- Feature Flags --- #
@@ -238,8 +234,8 @@ target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = [
-  "<%= formatBytes32String('registerMarket') %>",
-  "<%= contracts.PerpMarketProxy.address %>",
+    "<%= formatBytes32String('registerMarket') %>",
+    "<%= contracts.PerpMarketProxy.address %>",
 ]
 depends = ['invoke.upgradeProxy']
 
@@ -248,8 +244,8 @@ target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = [
-  "<%= formatBytes32String('claimRewards') %>",
-  "<%= contracts.PerpMarketProxy.address %>",
+    "<%= formatBytes32String('claimRewards') %>",
+    "<%= contracts.PerpMarketProxy.address %>",
 ]
 depends = ['invoke.upgradeProxy']
 

@@ -174,7 +174,8 @@ library PerpMarket {
         if (sUsdCollateralDelta != 0) {
             self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUsdCollateralDelta >= 0
                 ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUsdCollateralDelta.toUint()
-                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] - MathUtil.abs(sUsdCollateralDelta).to128();
+                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -
+                    MathUtil.abs(sUsdCollateralDelta).to128();
         }
     }
 
@@ -186,7 +187,9 @@ library PerpMarket {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
         uint256 delegatedCollateralValueUsd = withdrawableUsd - getTotalCollateralValueUsd(self);
-        uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent.to256());
+        uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(
+            marketConfig.minCreditPercent.to256()
+        );
         return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd).to128();
     }
 
@@ -203,8 +206,9 @@ library PerpMarket {
             return lowUtilizationSlopePercent.mulDecimalUint128(utilization) * 100;
         } else {
             uint128 highUtilizationRate = utilization - utilizationBreakpointPercent;
-            uint128 highUtilizationRateInterest = highUtilizationSlopePercent.mulDecimalUint128(highUtilizationRate) *
-                100;
+            uint128 highUtilizationRateInterest = highUtilizationSlopePercent.mulDecimalUint128(
+                highUtilizationRate
+            ) * 100;
             uint128 lowUtilizationRateInterest = lowUtilizationSlopePercent.mulDecimalUint128(
                 utilizationBreakpointPercent
             ) * 100;
@@ -213,8 +217,11 @@ library PerpMarket {
         }
     }
 
-    function getUnrecordedUtilization(PerpMarket.Data storage self) internal view returns (uint256) {
-        return self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
+    function getUnrecordedUtilization(
+        PerpMarket.Data storage self
+    ) internal view returns (uint256) {
+        return
+            self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
     }
 
     function recomputeUtilization(
@@ -222,7 +229,10 @@ library PerpMarket {
         uint256 price
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        utilizationRate = getCurrentUtilizationRate(getUtilization(self, price, globalConfig), globalConfig);
+        utilizationRate = getCurrentUtilizationRate(
+            getUtilization(self, price, globalConfig),
+            globalConfig
+        );
         unrecordedUtilization = getUnrecordedUtilization(self);
 
         self.currentUtilizationRateComputed = utilizationRate;
@@ -258,7 +268,9 @@ library PerpMarket {
     /**
      * @dev Returns the rate of funding rate change.
      */
-    function getCurrentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
+    function getCurrentFundingVelocity(
+        PerpMarket.Data storage self
+    ) internal view returns (int256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         int128 skewScale = marketConfig.skewScale.toInt();
 
@@ -283,14 +295,18 @@ library PerpMarket {
     /**
      * @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
      */
-    function getProportionalFundingElapsed(PerpMarket.Data storage self) internal view returns (int256) {
+    function getProportionalFundingElapsed(
+        PerpMarket.Data storage self
+    ) internal view returns (int256) {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
     /**
      * @dev Returns the proportional time elapsed since last utilization.
      */
-    function getProportionalUtilizationElapsed(PerpMarket.Data storage self) internal view returns (uint256) {
+    function getProportionalUtilizationElapsed(
+        PerpMarket.Data storage self
+    ) internal view returns (uint256) {
         // 4 years which includes leap
         uint256 AVERAGE_SECONDS_PER_YEAR = 31556952;
         return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
@@ -334,7 +350,9 @@ library PerpMarket {
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
-        unrecordedFunding = avgFundingRate.mulDecimal(getProportionalFundingElapsed(self)).mulDecimal(price.toInt());
+        unrecordedFunding = avgFundingRate
+            .mulDecimal(getProportionalFundingElapsed(self))
+            .mulDecimal(price.toInt());
     }
 
     function getMaxLiquidatableCapacity(
@@ -364,7 +382,15 @@ library PerpMarket {
     function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTime) {
+    )
+        internal
+        view
+        returns (
+            uint128 maxLiquidatableCapacity,
+            uint128 remainingCapacity,
+            uint128 lastLiquidationTime
+        )
+    {
         maxLiquidatableCapacity = getMaxLiquidatableCapacity(marketConfig);
 
         // How is the liquidation cap inferred?
@@ -410,7 +436,8 @@ library PerpMarket {
         uint256 capacityUtilized;
 
         // Infer the _rolling_ window start time by reading the current block.timestamp.
-        uint128 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to128();
+        uint128 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration)
+            .to128();
 
         // Starting from the end until we reach the beginning or until block.timestamp is no longer within window.
         while (self.pastLiquidations[idx][0] > windowStartTime) {
@@ -436,7 +463,9 @@ library PerpMarket {
     /**
      * @dev Returns the total USD value of all collaterals if we were to spot sell everything.
      */
-    function getTotalCollateralValueUsd(PerpMarket.Data storage self) internal view returns (uint256) {
+    function getTotalCollateralValueUsd(
+        PerpMarket.Data storage self
+    ) internal view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
@@ -451,7 +480,10 @@ library PerpMarket {
             collateralAvailable = self.depositedCollateral[synthMarketId];
 
             if (collateralAvailable > 0) {
-                collateralPrice = globalMarginConfig.getCollateralPrice(synthMarketId, globalConfig);
+                collateralPrice = globalMarginConfig.getCollateralPrice(
+                    synthMarketId,
+                    globalConfig
+                );
                 totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);
             }
 

@@ -3,7 +3,16 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
-import { bn, genAddress, genBootstrap, genBytes32, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import {
+  bn,
+  genAddress,
+  genBootstrap,
+  genBytes32,
+  genOneOf,
+  genOrder,
+  genSide,
+  genTrader,
+} from '../../generators';
 import {
   ADDRESS0,
   commitAndSettle,
@@ -29,13 +38,18 @@ describe('PerpRewardDistributorFactoryModule', () => {
         name: genBytes32(),
         token: genAddress(),
       };
-      const distributor = await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
+      const distributor =
+        await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
 
       const { receipt } = await withExplicitEvmMine(
         () => PerpMarketProxy.connect(owner()).createRewardDistributor(args),
         provider()
       );
-      const rewardDistributorCreatedEvent = findEventSafe(receipt, 'RewardDistributorCreated', PerpMarketProxy);
+      const rewardDistributorCreatedEvent = findEventSafe(
+        receipt,
+        'RewardDistributorCreated',
+        PerpMarketProxy
+      );
 
       assert.equal(distributor, rewardDistributorCreatedEvent.args.distributor);
     });
@@ -136,7 +150,9 @@ describe('PerpRewardDistributorFactoryModule', () => {
       const transferEvent = findEventSafe(
         flagReceipt,
         'Transfer',
-        extendContractAbi(PerpMarketProxy, ['event Transfer(address indexed from, address indexed to, uint256 value)'])
+        extendContractAbi(PerpMarketProxy, [
+          'event Transfer(address indexed from, address indexed to, uint256 value)',
+        ])
       );
       const amountTransferedForDistribution = transferEvent.args.value;
 

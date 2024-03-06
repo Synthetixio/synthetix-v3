@@ -17,7 +17,8 @@ const formatDecodedArg = (value: LogDescription['args'][number]): string => {
 
   return value.toString();
 };
-const formatDecodedArgs = (values: LogDescription['args']) => values.map((x) => formatDecodedArg(x)).join(', ');
+const formatDecodedArgs = (values: LogDescription['args']) =>
+  values.map((x) => formatDecodedArg(x)).join(', ');
 
 // --- Public --- //
 
@@ -32,7 +33,7 @@ export const assertEvents = async (
   const spaces = ' '.repeat(6); // Used to align with assert output.
 
   const { logs } = receipt;
-  let seenEvents: string[] = [];
+  const seenEvents: string[] = [];
   const parsedLogs = logs.map((log, i) => {
     try {
       const parsed = contract.interface.parseLog(log);
@@ -43,7 +44,7 @@ export const assertEvents = async (
       throw new Error(
         `Failed to parse log at index: ${i} \n${spaces}List of parsed events:\n${spaces}${seenEvents.join(
           `\n${spaces}`
-        )} \n${spaces}Ethers error: ${(error as any).message}`
+        )} \n${spaces}Ethers error: ${(error as Error).message}`
       );
     }
   });
@@ -56,7 +57,9 @@ export const assertEvents = async (
 
   parsedLogs.forEach((event, i) => {
     const expectedAtIndex = expected[i];
-    if (typeof expectedAtIndex === 'string' ? event === expectedAtIndex : event.match(expectedAtIndex)) {
+    if (
+      typeof expectedAtIndex === 'string' ? event === expectedAtIndex : event.match(expectedAtIndex)
+    ) {
       return;
     } else {
       const allEvents = parsedLogs.join(`\n${spaces}`);

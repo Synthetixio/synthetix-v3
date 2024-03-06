@@ -46,9 +46,21 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market,
         uint256 oraclePrice,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private returns (Position.Data storage oldPosition, Position.Data memory newPosition, uint256 liqKeeperFee) {
+    )
+        private
+        returns (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint256 liqKeeperFee
+        )
+    {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        emit FundingRecomputed(
+            marketId,
+            market.skew,
+            fundingRate,
+            market.getCurrentFundingVelocity()
+        );
         (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
@@ -109,18 +121,27 @@ contract LiquidationModule is ILiquidationModule {
             // Found a deposited collateral that must be distributed.
             if (runtime.availableAccountCollateral > 0) {
                 address synth = globalConfig.spotMarket.getSynth(runtime.synthMarketId);
-                globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, runtime.availableAccountCollateral);
+                globalConfig.synthetix.withdrawMarketCollateral(
+                    marketId,
+                    synth,
+                    runtime.availableAccountCollateral
+                );
                 IPerpRewardDistributor distributor = IPerpRewardDistributor(
                     globalMarginConfig.supported[runtime.synthMarketId].rewardDistributor
                 );
-                ITokenModule(synth).transfer(address(distributor), runtime.availableAccountCollateral);
+                ITokenModule(synth).transfer(
+                    address(distributor),
+                    runtime.availableAccountCollateral
+                );
 
                 runtime.poolId = distributor.getPoolId();
                 address[] memory poolCollateralTypes = distributor.getPoolCollateralTypes();
                 runtime.poolCollateralTypesLength = poolCollateralTypes.length;
 
                 // Calculate the USD value of each collateral delegated to pool.
-                uint256[] memory collateralValuesUsd = new uint256[](runtime.poolCollateralTypesLength);
+                uint256[] memory collateralValuesUsd = new uint256[](
+                    runtime.poolCollateralTypesLength
+                );
                 uint256 totalCollateralValueUsd;
                 for (uint256 j = 0; j < runtime.poolCollateralTypesLength; ) {
                     (, uint256 collateralValueUsd) = globalConfig.synthetix.getVaultCollateral(
@@ -140,7 +161,10 @@ contract LiquidationModule is ILiquidationModule {
                 for (uint256 k = 0; k < runtime.poolCollateralTypesLength; ) {
                     // Ensure total amounts fully distributed, the last collateral receives the remainder.
                     if (k == runtime.poolCollateralTypesLength - 1) {
-                        distributor.distributeRewards(poolCollateralTypes[k], remainingAmountToDistribute);
+                        distributor.distributeRewards(
+                            poolCollateralTypes[k],
+                            remainingAmountToDistribute
+                        );
                     } else {
                         uint256 amountToDistribute = runtime.availableAccountCollateral.mulDecimal(
                             collateralValuesUsd[k].divDecimal(totalCollateralValueUsd)
@@ -155,7 +179,8 @@ contract LiquidationModule is ILiquidationModule {
                 }
 
                 // Clear out non-sUSD collateral associated with the account of the liquidated position.
-                market.depositedCollateral[runtime.synthMarketId] -= runtime.availableAccountCollateral;
+                market.depositedCollateral[runtime.synthMarketId] -= runtime
+                    .availableAccountCollateral;
                 accountMargin.collaterals[runtime.synthMarketId] = 0;
             }
 
@@ -180,7 +205,11 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.PositionNotFound();
         }
         uint256 oraclePrice = market.getOraclePrice();
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice
+        );
 
         // Cannot flag for liquidation unless they are liquidatable.
         bool isLiquidatable = position.isLiquidatable(
@@ -272,7 +301,15 @@ contract LiquidationModule is ILiquidationModule {
         // Pay the keeper
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
 
-        emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqKeeperFee, oraclePrice);
+        emit PositionLiquidated(
+            accountId,
+            marketId,
+            newPosition.size,
+            msg.sender,
+            flagger,
+            liqKeeperFee,
+            oraclePrice
+        );
     }
 
     /**
@@ -283,14 +320,23 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(block.basefee * globalConfig.keeperLiquidateMarginGasUnits);
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(
+            block.basefee * globalConfig.keeperLiquidateMarginGasUnits
+        );
 
         uint256 liqFeeInUsd = MathUtil.max(
-            liqExecutionCostInUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            liqExecutionCostInUsd.mulDecimal(
+                DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+            ),
             liqExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
         );
-        uint256 liqFeeWithRewardInUsd = liqFeeInUsd + collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
+        uint256 liqFeeWithRewardInUsd = liqFeeInUsd +
+            collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
 
         return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
     }
@@ -320,7 +366,11 @@ contract LiquidationModule is ILiquidationModule {
         }
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            market.getOraclePrice()
+        );
 
         uint256 keeperReward = getMarginLiquidationOnlyReward(
             marginValues.collateralUsd,
@@ -358,7 +408,11 @@ contract LiquidationModule is ILiquidationModule {
             return (0, 0);
         }
         uint256 oraclePrice = market.getOraclePrice();
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, oraclePrice);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice
+        );
 
         flagKeeperReward = Position.getLiquidationFlagReward(
             absSize.mulDecimal(oraclePrice),
@@ -366,7 +420,11 @@ contract LiquidationModule is ILiquidationModule {
             marketConfig,
             globalConfig
         );
-        liqKeeperFee = Position.getLiquidationKeeperFee(absSize.to128(), marketConfig, globalConfig);
+        liqKeeperFee = Position.getLiquidationKeeperFee(
+            absSize.to128(),
+            marketConfig,
+            globalConfig
+        );
     }
 
     /**
@@ -377,7 +435,11 @@ contract LiquidationModule is ILiquidationModule {
     )
         external
         view
-        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTimestamp)
+        returns (
+            uint128 maxLiquidatableCapacity,
+            uint128 remainingCapacity,
+            uint128 lastLiquidationTimestamp
+        )
     {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
@@ -386,7 +448,10 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {
+    function isPositionLiquidatable(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (bool) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 oraclePrice = market.getOraclePrice();
 
@@ -411,7 +476,9 @@ contract LiquidationModule is ILiquidationModule {
             return false;
         }
 
-        return Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd == 0;
+        return
+            Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd ==
+            0;
     }
 
     /**

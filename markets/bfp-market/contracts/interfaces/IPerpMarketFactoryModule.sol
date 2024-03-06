@@ -87,14 +87,18 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     /**
      * @notice Registers a new PerpMarket with Synthetix and initializes storage.
      */
-    function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
+    function createMarket(
+        IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
+    ) external returns (uint128);
 
     // --- Views --- //
 
     /**
      * @notice Returns a digest of an existing market given the `marketId`.
      */
-    function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
+    function getMarketDigest(
+        uint128 marketId
+    ) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
 
     /**
      * @notice Returns all market ids in the system

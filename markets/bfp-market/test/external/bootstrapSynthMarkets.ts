@@ -35,7 +35,10 @@ export type BootstrapSynthArgs = {
   skewScale: ethers.BigNumber;
 }[];
 
-export function bootstrapSynthMarkets(data: BootstrapSynthArgs, r: ReturnType<typeof createStakedPool>) {
+export function bootstrapSynthMarkets(
+  data: BootstrapSynthArgs,
+  r: ReturnType<typeof createStakedPool>
+) {
   let contracts: Systems, marketOwner: ethers.Signer;
 
   before('identify actors', async () => {
@@ -43,70 +46,89 @@ export function bootstrapSynthMarkets(data: BootstrapSynthArgs, r: ReturnType<ty
     [, , marketOwner] = r.signers();
   });
 
-  const synthMarkets: SynthMarket[] = data.map(({ name, token, buyPrice, sellPrice, skewScale }) => {
-    let marketId: ethers.BigNumber,
-      buyNodeId: string,
-      buyAggregator: AggregatorV3Mock,
-      sellNodeId: string,
-      sellAggregator: AggregatorV3Mock,
-      synthAddress: string,
-      synth: SynthRouter;
+  const synthMarkets: SynthMarket[] = data.map(
+    ({ name, token, buyPrice, sellPrice, skewScale }) => {
+      let marketId: ethers.BigNumber,
+        buyNodeId: string,
+        buyAggregator: AggregatorV3Mock,
+        sellNodeId: string,
+        sellAggregator: AggregatorV3Mock,
+        synthAddress: string,
+        synth: SynthRouter;
 
-    before('create price nodes', async () => {
-      const buyPriceNodeResult = await createOracleNode(r.signers()[0], buyPrice, contracts.OracleManager);
-      const sellPriceNodeResult = await createOracleNode(r.signers()[0], sellPrice, contracts.OracleManager);
-      buyNodeId = buyPriceNodeResult.oracleNodeId;
-      buyAggregator = buyPriceNodeResult.aggregator;
-      sellNodeId = sellPriceNodeResult.oracleNodeId;
-      sellAggregator = sellPriceNodeResult.aggregator;
-    });
+      before('create price nodes', async () => {
+        const buyPriceNodeResult = await createOracleNode(
+          r.signers()[0],
+          buyPrice,
+          contracts.OracleManager
+        );
+        const sellPriceNodeResult = await createOracleNode(
+          r.signers()[0],
+          sellPrice,
+          contracts.OracleManager
+        );
+        buyNodeId = buyPriceNodeResult.oracleNodeId;
+        buyAggregator = buyPriceNodeResult.aggregator;
+        sellNodeId = sellPriceNodeResult.oracleNodeId;
+        sellAggregator = sellPriceNodeResult.aggregator;
+      });
 
-    before('register synth', async () => {
-      marketId = await contracts.SpotMarket.callStatic.createSynth(name, token, await marketOwner.getAddress());
-      await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
-      await contracts.SpotMarket.connect(marketOwner).updatePriceData(marketId, buyNodeId, sellNodeId, bn(60));
-      await contracts.SpotMarket.connect(marketOwner).setMarketSkewScale(marketId, skewScale);
-
-      synthAddress = await contracts.SpotMarket.getSynth(marketId);
-      synth = contracts.Synth(synthAddress);
-    });
-
-    before('delegate collateral to market from pool', async () => {
-      await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
-        {
+      before('register synth', async () => {
+        marketId = await contracts.SpotMarket.callStatic.createSynth(
+          name,
+          token,
+          await marketOwner.getAddress()
+        );
+        await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
+        await contracts.SpotMarket.connect(marketOwner).updatePriceData(
           marketId,
-          weightD18: bn(1),
-          maxDebtShareValueD18: bn(1),
-        },
-      ]);
-    });
+          buyNodeId,
+          sellNodeId,
+          bn(60)
+        );
+        await contracts.SpotMarket.connect(marketOwner).setMarketSkewScale(marketId, skewScale);
 
-    before('allow synth as collateral in system', async () => {
-      const tokenAddress = await contracts.SpotMarket.getSynth(marketId);
-      await r
-        .systems()
-        .Core.connect(r.owner())
-        .configureCollateral({
-          tokenAddress,
-          oracleNodeId: buyNodeId,
-          issuanceRatioD18: bn(5).toString(),
-          liquidationRatioD18: bn(1.5).toString(),
-          liquidationRewardD18: bn(20).toString(),
-          minDelegationD18: bn(20).toString(),
-          depositingEnabled: false,
-        });
-    });
+        synthAddress = await contracts.SpotMarket.getSynth(marketId);
+        synth = contracts.Synth(synthAddress);
+      });
 
-    return {
-      marketId: () => marketId,
-      buyAggregator: () => buyAggregator,
-      buyNodeId: () => buyNodeId,
-      sellAggregator: () => sellAggregator,
-      sellNodeId: () => sellNodeId,
-      synth: () => synth,
-      synthAddress: () => synthAddress,
-    };
-  });
+      before('delegate collateral to market from pool', async () => {
+        await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
+          {
+            marketId,
+            weightD18: bn(1),
+            maxDebtShareValueD18: bn(1),
+          },
+        ]);
+      });
+
+      before('allow synth as collateral in system', async () => {
+        const tokenAddress = await contracts.SpotMarket.getSynth(marketId);
+        await r
+          .systems()
+          .Core.connect(r.owner())
+          .configureCollateral({
+            tokenAddress,
+            oracleNodeId: buyNodeId,
+            issuanceRatioD18: bn(5).toString(),
+            liquidationRatioD18: bn(1.5).toString(),
+            liquidationRewardD18: bn(20).toString(),
+            minDelegationD18: bn(20).toString(),
+            depositingEnabled: false,
+          });
+      });
+
+      return {
+        marketId: () => marketId,
+        buyAggregator: () => buyAggregator,
+        buyNodeId: () => buyNodeId,
+        sellAggregator: () => sellAggregator,
+        sellNodeId: () => sellNodeId,
+        synth: () => synth,
+        synthAddress: () => synthAddress,
+      };
+    }
+  );
 
   const restore = snapshotCheckpoint(r.provider);
 

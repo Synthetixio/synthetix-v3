@@ -68,7 +68,9 @@ interface IMarketConfigurationModule {
     /**
      * @notice Configures market parameters applied globally.
      */
-    function setMarketConfiguration(IMarketConfigurationModule.ConfigureParameters memory data) external;
+    function setMarketConfiguration(
+        IMarketConfigurationModule.ConfigureParameters memory data
+    ) external;
 
     /**
      * @notice Configures a market specific parameters applied to the `marketId`.
@@ -83,10 +85,15 @@ interface IMarketConfigurationModule {
     /**
      * @notice Returns configured global market parameters.
      */
-    function getMarketConfiguration() external view returns (PerpMarketConfiguration.GlobalData memory);
+    function getMarketConfiguration()
+        external
+        view
+        returns (PerpMarketConfiguration.GlobalData memory);
 
     /**
      * @notice Returns configured market specific parameters.
      */
-    function getMarketConfigurationById(uint128 marketId) external view returns (PerpMarketConfiguration.Data memory);
+    function getMarketConfigurationById(
+        uint128 marketId
+    ) external view returns (PerpMarketConfiguration.Data memory);
 }

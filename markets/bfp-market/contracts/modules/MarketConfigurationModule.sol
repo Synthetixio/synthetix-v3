@@ -10,7 +10,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMarketConfiguration(IMarketConfigurationModule.ConfigureParameters memory data) external {
+    function setMarketConfiguration(
+        IMarketConfigurationModule.ConfigureParameters memory data
+    ) external {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage config = PerpMarketConfiguration.load();
@@ -80,14 +82,20 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getMarketConfiguration() external pure returns (PerpMarketConfiguration.GlobalData memory) {
+    function getMarketConfiguration()
+        external
+        pure
+        returns (PerpMarketConfiguration.GlobalData memory)
+    {
         return PerpMarketConfiguration.load();
     }
 
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getMarketConfigurationById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
+    function getMarketConfigurationById(
+        uint128 marketId
+    ) external pure returns (PerpMarketConfiguration.Data memory) {
         return PerpMarketConfiguration.load(marketId);
     }
 }

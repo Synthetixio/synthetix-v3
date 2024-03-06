@@ -32,9 +32,8 @@ library PythUtil {
         // gt (not gte) `now + minTime`.
         //
         // `parsePrice` also performs an update to store new price if necessary.
-        PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth).parsePriceFeedUpdatesUnique{
-            value: msg.value
-        }(
+        PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth)
+            .parsePriceFeedUpdatesUnique{value: msg.value}(
             updateData,
             priceIds,
             commitmentTime.to64() + globalConfig.pythPublishTimeMin,
@@ -50,6 +49,8 @@ library PythUtil {
      */
     function getScaledPrice(int64 price, int32 expo) private pure returns (uint256) {
         int256 factor = 18 + expo;
-        return (factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint())).toUint();
+        return
+            (factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint()))
+                .toUint();
     }
 }

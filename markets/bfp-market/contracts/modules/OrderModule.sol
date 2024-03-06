@@ -55,7 +55,8 @@ contract OrderModule is IOrderModule {
         uint256 fillPrice,
         uint256 limitPrice
     ) private pure returns (bool) {
-        return (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
+        return
+            (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
     }
 
     /**
@@ -92,7 +93,11 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.InvalidPrice();
         }
         if (isPriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice)) {
-            revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
+            revert ErrorUtil.PriceToleranceExceeded(
+                params.sizeDelta,
+                params.fillPrice,
+                params.limitPrice
+            );
         }
     }
 
@@ -141,7 +146,13 @@ contract OrderModule is IOrderModule {
         for (uint256 i = 0; i < length; ) {
             address hook = order.hooks[i];
 
-            ISettlementHook(hook).onSettle(accountId, marketId, order.sizeDelta, newPosition.size, fillPrice);
+            ISettlementHook(hook).onSettle(
+                accountId,
+                marketId,
+                order.sizeDelta,
+                newPosition.size,
+                fillPrice
+            );
             emit OrderSettlementHookExecuted(accountId, marketId, hook);
 
             unchecked {
@@ -163,7 +174,12 @@ contract OrderModule is IOrderModule {
      */
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
         (int256 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        emit FundingRecomputed(
+            market.id,
+            market.skew,
+            fundingRate,
+            market.getCurrentFundingVelocity()
+        );
     }
 
     // --- Mutations --- //
@@ -181,7 +197,10 @@ contract OrderModule is IOrderModule {
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
 
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
+        );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
@@ -214,14 +233,27 @@ contract OrderModule is IOrderModule {
             )
         );
 
-        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks));
-        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
+        market.orders[accountId].update(
+            Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
+        );
+        emit OrderCommitted(
+            accountId,
+            marketId,
+            block.timestamp,
+            sizeDelta,
+            trade.orderFee,
+            trade.keeperFee
+        );
     }
 
     /**
      * @inheritdoc IOrderModule
      */
-    function settleOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+    function settleOrder(
+        uint128 accountId,
+        uint128 marketId,
+        bytes calldata priceUpdateData
+    ) external payable {
         FeatureFlag.ensureAccessToFeature(Flags.SETTLE_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
@@ -241,9 +273,19 @@ contract OrderModule is IOrderModule {
         //
         // There are downstream operations both within this market but also in other markets (that share the same oracle)
         // which rely on the most recent price available for access.
-        runtime.pythPrice = PythUtil.parsePythPrice(globalConfig, marketConfig, order.commitmentTime, priceUpdateData);
+        runtime.pythPrice = PythUtil.parsePythPrice(
+            globalConfig,
+            marketConfig,
+            order.commitmentTime,
+            priceUpdateData
+        );
 
-        runtime.fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, runtime.pythPrice);
+        runtime.fillPrice = Order.getFillPrice(
+            market.skew,
+            marketConfig.skewScale,
+            order.sizeDelta,
+            runtime.pythPrice
+        );
         runtime.params = Position.TradeParams(
             order.sizeDelta,
             runtime.pythPrice,
@@ -260,7 +302,11 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, runtime.fillPrice);
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            runtime.fillPrice
+        );
 
         // We call `getHeathData` here to fetch accrued utilisation before utilisation recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
@@ -277,8 +323,9 @@ contract OrderModule is IOrderModule {
         );
 
         market.skew = market.skew + runtime.trade.newPosition.size - position.size;
-        market.size = (market.size.to256() + MathUtil.abs(runtime.trade.newPosition.size) - MathUtil.abs(position.size))
-            .to128();
+        market.size = (market.size.to256() +
+            MathUtil.abs(runtime.trade.newPosition.size) -
+            MathUtil.abs(position.size)).to128();
 
         // We want to validateTrade and update market size before we recompute utilisation
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilisation rate up to this point
@@ -358,7 +405,11 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function cancelOrder(uint128 accountId, uint128 marketId, bytes calldata priceUpdateData) external payable {
+    function cancelOrder(
+        uint128 accountId,
+        uint128 marketId,
+        bytes calldata priceUpdateData
+    ) external payable {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
@@ -391,16 +442,30 @@ contract OrderModule is IOrderModule {
                 order.commitmentTime,
                 priceUpdateData
             );
-            uint256 fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice);
+            uint256 fillPrice = Order.getFillPrice(
+                market.skew,
+                marketConfig.skewScale,
+                order.sizeDelta,
+                pythPrice
+            );
 
             if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
-                revert ErrorUtil.PriceToleranceNotExceeded(order.sizeDelta, fillPrice, order.limitPrice);
+                revert ErrorUtil.PriceToleranceNotExceeded(
+                    order.sizeDelta,
+                    fillPrice,
+                    order.limitPrice
+                );
             }
         }
 
-        uint256 keeperFee = isAccountOwner ? 0 : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+        uint256 keeperFee = isAccountOwner
+            ? 0
+            : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
         if (keeperFee > 0) {
-            Margin.load(accountId, marketId).updateAccountDebtAndCollateral(market, -keeperFee.toInt());
+            Margin.load(accountId, marketId).updateAccountDebtAndCollateral(
+                market,
+                -keeperFee.toInt()
+            );
 
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
@@ -414,7 +479,10 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function getOrderDigest(uint128 accountId, uint128 marketId) external view returns (Order.Data memory) {
+    function getOrderDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (Order.Data memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.orders[accountId];
@@ -433,7 +501,12 @@ contract OrderModule is IOrderModule {
 
         orderFee = Order.getOrderFee(
             sizeDelta,
-            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice()),
+            Order.getFillPrice(
+                market.skew,
+                marketConfig.skewScale,
+                sizeDelta,
+                market.getOraclePrice()
+            ),
             market.skew,
             marketConfig.makerFee,
             marketConfig.takerFee

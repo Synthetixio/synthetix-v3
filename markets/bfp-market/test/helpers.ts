@@ -61,7 +61,12 @@ export const withImpersonate = async (
 };
 
 /** A generalised mint/approve without accepting a generated trader. */
-export const mintAndApprove = async (bs: Bs, collateral: Collateral, amount: BigNumber, to: ethers.Signer) => {
+export const mintAndApprove = async (
+  bs: Bs,
+  collateral: Collateral,
+  amount: BigNumber,
+  to: ethers.Signer
+) => {
   const { systems, provider } = bs;
   const { PerpMarketProxy, SpotMarket } = systems();
 
@@ -69,9 +74,12 @@ export const mintAndApprove = async (bs: Bs, collateral: Collateral, amount: Big
   const synth = collateral.contract;
   const synthOwnerAddress = await synth.owner();
 
-  return withImpersonate(bs, synthOwnerAddress, async (owner: Signer) => {
+  return withImpersonate(bs, synthOwnerAddress, async () => {
     const synthOwner = provider().getSigner(synthOwnerAddress);
-    await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
+    await provider().send('hardhat_setBalance', [
+      await synthOwner.getAddress(),
+      `0x${(1e22).toString(16)}`,
+    ]);
 
     await synth.connect(synthOwner).mint(to.getAddress(), amount);
     await synth.connect(to).approve(PerpMarketProxy.address, amount);
@@ -93,7 +101,10 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   const { PerpMarketProxy } = bs.systems();
 
   // Provision collateral and approve for access.
-  const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(bs, gTrader);
+  const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(
+    bs,
+    gTrader
+  );
   await withExplicitEvmMine(
     () =>
       // Perform the deposit.
@@ -117,7 +128,10 @@ export const setMarketConfigurationById = async (
 ) => {
   const { PerpMarketProxy } = systems();
   const data = await PerpMarketProxy.getMarketConfigurationById(marketId);
-  await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, { ...data, ...params });
+  await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
+    ...data,
+    ...params,
+  });
   return PerpMarketProxy.getMarketConfigurationById(marketId);
 };
 
@@ -170,15 +184,18 @@ export const getPythPriceData = async (
     pythPrice,
     priceConfidence,
     publishTime ?? Math.floor(Date.now() / 1000),
-    // @ts-ignore
-    0 // Misaligned types due to PythMock types not having compiled.
+    0 // Misaligned types due to PythMock types not having been compiled.
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };
 };
 
-/** Returns a reasonable timestamp and publishTime to fast forward to for settlements. */
-export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketId: BigNumber, trader: Trader) => {
+/** Returns a reasonable timestamp and publishTime to fast-forward to for settlements. */
+export const getFastForwardTimestamp = async (
+  { systems, provider }: Bs,
+  marketId: BigNumber,
+  trader: Trader
+) => {
   const { PerpMarketProxy } = systems();
 
   const order = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
@@ -251,9 +268,14 @@ export const commitAndSettle = async (
 
   const { tx, receipt } = await withExplicitEvmMine(
     () =>
-      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
-        value: updateFee,
-      }),
+      PerpMarketProxy.connect(settlementKeeper).settleOrder(
+        trader.accountId,
+        marketId,
+        updateData,
+        {
+          value: updateFee,
+        }
+      ),
     provider()
   );
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
@@ -276,8 +298,13 @@ export const payDebt = async (bs: Bs, marketId: BigNumber, trader: Trader) => {
 };
 
 /** This is still quite buggy in anvil so use with care */
-export const setBaseFeePerGas = async (amountInGwei: number, provider: providers.JsonRpcProvider) => {
-  await provider.send('anvil_setNextBlockBaseFeePerGas', ['0x' + (amountInGwei * 1e9).toString(16)]);
+export const setBaseFeePerGas = async (
+  amountInGwei: number,
+  provider: providers.JsonRpcProvider
+) => {
+  await provider.send('anvil_setNextBlockBaseFeePerGas', [
+    '0x' + (amountInGwei * 1e9).toString(16),
+  ]);
   return parseUnits(`${amountInGwei}`, 'gwei');
 };
 
@@ -299,8 +326,10 @@ export const getBlockTimestamp = async (provider: ethers.providers.JsonRpcProvid
   (await provider.getBlock('latest')).timestamp;
 
 /** Fastforward block.timestamp by `seconds` (Replacement for `evm_increaseTime`, using `evm_setNextBlockTimestamp` instead). */
-export const fastForwardBySec = async (provider: ethers.providers.JsonRpcProvider, seconds: number) =>
-  await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);
+export const fastForwardBySec = async (
+  provider: ethers.providers.JsonRpcProvider,
+  seconds: number
+) => await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);
 
 /** Search for events in `receipt.logs` in a non-throw (safe) way. */
 export const findEventSafe = (receipt: ContractReceipt, eventName: string, contract: Contract) => {
@@ -350,20 +379,24 @@ export const withExplicitEvmMine = async (
 };
 
 export const getSusdCollateral = (collaterals: PerpCollateral[]) => {
-  const sUsdCollateral = collaterals.filter((c) => c.synthMarketId() === SYNTHETIX_USD_MARKET_ID)[0];
+  const sUsdCollateral = collaterals.filter(
+    (c) => c.synthMarketId() === SYNTHETIX_USD_MARKET_ID
+  )[0];
   return !sUsdCollateral
     ? raise('sUSD collateral not found. Did you mistakenly use collatealsWithoutSusd()?')
     : sUsdCollateral;
 };
 
-export const isSusdCollateral = (collateral: PerpCollateral) => collateral.synthMarketId() === SYNTHETIX_USD_MARKET_ID;
+export const isSusdCollateral = (collateral: PerpCollateral) =>
+  collateral.synthMarketId() === SYNTHETIX_USD_MARKET_ID;
 
 export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
   const found = l.find(p);
   return found ? found : raise('Cannot find in l');
 };
 
-export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(() => resolve(), ms));
+export const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(() => resolve(), ms));
 
 export const logNumber = (label = '', x: BigNumber | Wei) => {
   console.log(label, `: ${wei(x).toNumber()}`);

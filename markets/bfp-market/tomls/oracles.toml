@@ -21,11 +21,16 @@ args = [
     2,
     # contract
     "<%= defaultAbiCoder.encode(['address'], [contracts.LidoWstEthToStEthRatioNode.address]) %>",
-    []
+    [
+    ],
 ]
 extra.lidoWstEthToStEthRatioNodeId.event = "NodeRegistered"
 extra.lidoWstEthToStEthRatioNodeId.arg = 0
-depends = ["import.synthetix", "contract.WstETHMock", "contract.LidoWstEthToStEthRatioNode"]
+depends = [
+    "import.synthetix",
+    "contract.WstETHMock",
+    "contract.LidoWstEthToStEthRatioNode",
+]
 
 # --- Chainlink stETH <> ETH Ratio Oracle --- #
 
@@ -41,7 +46,8 @@ args = [
     3,
     # contract, twap, decimals
     "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [contracts.StEthToEthMock.address, 0, 18]) %>",
-    [],
+    [
+    ],
 ]
 extra.stEthToEthNodeId.event = "NodeRegistered"
 extra.stEthToEthNodeId.arg = 0
@@ -57,7 +63,8 @@ args = [
     5,
     # pyth verifier, price feedId, useEma
     "<%= defaultAbiCoder.encode(['address', 'bytes32', 'bool'], [imports.pyth.contracts.Pyth.address, settings.pythEthFeedId, false]) %>",
-    [],
+    [
+    ],
 ]
 extra.pythEthNodeId.event = "NodeRegistered"
 extra.pythEthNodeId.arg = 0
@@ -75,7 +82,10 @@ args = [
     # mulDecimal
     "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
     # wstETH<>stEth ratio, stEth<>Eth ratio
-    ["<%= extras.lidoWstEthToStEthRatioNodeId %>", "<%= extras.stEthToEthNodeId %>"],
+    [
+        "<%= extras.lidoWstEthToStEthRatioNodeId %>",
+        "<%= extras.stEthToEthNodeId %>",
+    ],
 ]
 extra.wstEthToEthNodeId.event = "NodeRegistered"
 extra.wstEthToEthNodeId.arg = 0
@@ -121,7 +131,8 @@ args = [
     3,
     # contract, twap, decimals
     "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [contracts.StEthMock.address, 0, 18]) %>",
-    [],
+    [
+    ],
 ]
 extra.stEthNodeId.event = "NodeRegistered"
 extra.stEthNodeId.arg = 0

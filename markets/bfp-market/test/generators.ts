@@ -30,7 +30,8 @@ export const genOneOf = <A>(l: A[]): A => {
   return isNil(a) ? raise('oneOf found invalid sequence') : a;
 };
 
-export const genOption = <A>(f: () => A): A | undefined => (genOneOf([true, false]) ? f() : undefined);
+export const genOption = <A>(f: () => A): A | undefined =>
+  genOneOf([true, false]) ? f() : undefined;
 
 export const genListOf = <A>(n: number, f: (n?: number) => A): A[] =>
   n <= 0 ? raise('listOf found invalid n') : genTimes(n, f);
@@ -50,7 +51,8 @@ export const genString = (
   }, '');
 export const genAddress = () => ethers.Wallet.createRandom().address;
 export const genMarketName = () => genString(3, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') + 'PERP';
-export const genBytes32 = () => ethers.utils.formatBytes32String(crypto.randomBytes(8).toString('hex'));
+export const genBytes32 = () =>
+  ethers.utils.formatBytes32String(crypto.randomBytes(8).toString('hex'));
 export const genNumber = (min = 0, max = 1) => random(min, max);
 export const genBoolean = () => genOneOf([true, false]);
 
@@ -228,7 +230,11 @@ export const genOrder = async (
     desiredPriceImpactPercentage: options?.desiredPriceImpactPercentage,
   });
   const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
-  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
+  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(
+    market.marketId(),
+    sizeDelta,
+    keeperFeeBufferUsd
+  );
 
   return {
     keeperFeeBufferUsd,
@@ -265,7 +271,11 @@ export const genOrderFromSizeDelta = async (
     desiredPriceImpactPercentage: options?.desiredPriceImpactPercentage,
   });
   const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
-  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
+  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(
+    market.marketId(),
+    sizeDelta,
+    keeperFeeBufferUsd
+  );
 
   return {
     marginUsd: bn(0),

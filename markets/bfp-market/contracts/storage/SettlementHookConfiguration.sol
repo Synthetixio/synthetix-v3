@@ -4,7 +4,8 @@ pragma solidity 0.8.19;
 library SettlementHookConfiguration {
     // --- Constants --- //
 
-    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
+    bytes32 private constant SLOT_NAME =
+        keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
 
     // --- Storage --- //
 

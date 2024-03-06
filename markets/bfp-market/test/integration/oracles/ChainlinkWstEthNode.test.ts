@@ -10,7 +10,10 @@ describe('ChainlinkWstEthNode', () => {
   beforeEach(restore);
 
   describe('process', () => {
-    const configureOracleNodes = async (options?: { desiredStEthPrice?: number; desiredStEthToWstEth?: number }) => {
+    const configureOracleNodes = async (options?: {
+      desiredStEthPrice?: number;
+      desiredStEthToWstEth?: number;
+    }) => {
       const { WstETHMock, StEthMock } = systems();
 
       const stEthPrice = bn(options?.desiredStEthPrice ?? genNumber(2500, 3000));
@@ -50,7 +53,9 @@ describe('ChainlinkWstEthNode', () => {
       const { OracleManager } = systems();
       const { chainlinkWstEthNodeId } = extras();
 
-      const { stEthPrice, stEthToWstEth } = await configureOracleNodes({ desiredStEthPrice: genNumber(1800, 10_000) });
+      const { stEthPrice, stEthToWstEth } = await configureOracleNodes({
+        desiredStEthPrice: genNumber(1800, 10_000),
+      });
 
       const { price } = await OracleManager.process(chainlinkWstEthNodeId);
       const expectedPrice = wei(stEthPrice).mul(stEthToWstEth).toBN();

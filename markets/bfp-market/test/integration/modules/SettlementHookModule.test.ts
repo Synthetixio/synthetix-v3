@@ -86,7 +86,10 @@ describe('SettlementHookModule', () => {
       });
 
       const configAfter = await PerpMarketProxy.getSettlementHookConfiguration();
-      assert.deepEqual(configAfter.whitelistedHookAddresses, [SettlementHookMock.address, SettlementHook2Mock.address]);
+      assert.deepEqual(configAfter.whitelistedHookAddresses, [
+        SettlementHookMock.address,
+        SettlementHook2Mock.address,
+      ]);
     });
 
     it('should remove an existing without changing other configured hooks', async () => {

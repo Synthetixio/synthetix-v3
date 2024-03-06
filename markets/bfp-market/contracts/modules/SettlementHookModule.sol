@@ -15,7 +15,9 @@ contract SettlementHookModule is ISettlementHookModule {
     /**
      * @inheritdoc ISettlementHookModule
      */
-    function setSettlementHookConfiguration(ISettlementHookModule.ConfigureParameters memory data) external {
+    function setSettlementHookConfiguration(
+        ISettlementHookModule.ConfigureParameters memory data
+    ) external {
         OwnableStorage.onlyOwner();
 
         SettlementHookConfiguration.GlobalData storage config = SettlementHookConfiguration.load();
@@ -37,7 +39,9 @@ contract SettlementHookModule is ISettlementHookModule {
 
         for (uint256 i = 0; i < hooksLengthAfter; ) {
             currentHook = data.whitelistedHookAddresses[i];
-            if (!ERC165Helper.safeSupportsInterface(currentHook, type(ISettlementHook).interfaceId)) {
+            if (
+                !ERC165Helper.safeSupportsInterface(currentHook, type(ISettlementHook).interfaceId)
+            ) {
                 revert ErrorUtil.InvalidHook(currentHook);
             }
             config.whitelisted[data.whitelistedHookAddresses[i]] = true;
@@ -56,9 +60,17 @@ contract SettlementHookModule is ISettlementHookModule {
     /**
      * @inheritdoc ISettlementHookModule
      */
-    function getSettlementHookConfiguration() external view returns (ISettlementHookModule.ConfigureParameters memory) {
+    function getSettlementHookConfiguration()
+        external
+        view
+        returns (ISettlementHookModule.ConfigureParameters memory)
+    {
         SettlementHookConfiguration.GlobalData storage d = SettlementHookConfiguration.load();
-        return ISettlementHookModule.ConfigureParameters(d.whitelistedHookAddresses, d.maxHooksPerOrder);
+        return
+            ISettlementHookModule.ConfigureParameters(
+                d.whitelistedHookAddresses,
+                d.maxHooksPerOrder
+            );
     }
 
     /**
