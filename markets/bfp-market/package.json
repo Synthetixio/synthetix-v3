@@ -1,0 +1,28 @@
+{
+  "name": "bfp-market",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:synthetixio/bfp-market.git"
+  },
+  "devDependencies": {
+    "@ethersproject/logger": "^5.7.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/main": "workspace:*",
+    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/router": "3.3.7",
+    "@synthetixio/spot-market": "workspace:*",
+    "@synthetixio/wei": "^2.74.4",
+    "@typechain/hardhat": "^9.1.0",
+    "@usecannon/builder": "2.11.18",
+    "ethers": "^5.7.2",
+    "hardhat-cannon": "2.11.18",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-gas-reporter": "^1.0.10",
+    "lodash": "^4.17.21",
+    "mocha-each": "^2.0.1",
+    "solidity-coverage": "^0.8.7"
+  }
+}

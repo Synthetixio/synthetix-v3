@@ -93,6 +93,17 @@ interface IPerpsAccountModule {
         returns (int256 totalPnl, int256 accruedFunding, int128 positionSize, uint256 owedInterest);
 
     /**
+     * @notice Gets an account open position data for a given account id and market id
+     * @notice this function doesn't have any price staleness requirement
+     * @param accountId Id of the account.
+     * @param marketId Id of the position market.
+     */
+    function getOpenPositionSize(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (int128 positionSize);
+
+    /**
      * @notice Gets the available margin of an account. It can be negative due to pnl.
      * @param accountId Id of the account.
      * @return availableMargin available margin of the position.

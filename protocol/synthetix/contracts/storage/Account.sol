@@ -5,6 +5,8 @@ import "./AccountRBAC.sol";
 import "./Collateral.sol";
 import "./Pool.sol";
 
+import "../interfaces/ICollateralModule.sol";
+
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
@@ -30,11 +32,6 @@ library Account {
      * @dev Thrown when an account cannot be found.
      */
     error AccountNotFound(uint128 accountId);
-
-    /**
-     * @dev Thrown when an account does not have sufficient collateral for a particular operation in the system.
-     */
-    error InsufficientAccountCollateral(uint256 requestedAmount);
 
     /**
      * @dev Thrown when the requested operation requires an activity timeout before the
@@ -207,7 +204,7 @@ library Account {
             Account.load(accountId).collaterals[collateralType].amountAvailableForDelegationD18 <
             amountD18
         ) {
-            revert InsufficientAccountCollateral(amountD18);
+            revert ICollateralModule.InsufficientAccountCollateral(amountD18);
         }
     }
 }

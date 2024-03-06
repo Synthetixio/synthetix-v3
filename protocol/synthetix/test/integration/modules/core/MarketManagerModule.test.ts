@@ -155,7 +155,6 @@ describe('MarketManagerModule', function () {
           const creditCapacity = bn(1001).toString();
           const netIssuance = bn(-1).toString();
           const depositedCollateralValue = bn(0).toString();
-          const reportedDebt = bn(1).toString();
           await assertEvent(
             txn,
             `MarketUsdDeposited(${[
@@ -166,7 +165,6 @@ describe('MarketManagerModule', function () {
               creditCapacity,
               netIssuance,
               depositedCollateralValue,
-              reportedDebt,
             ].join(', ')})`,
             systems().Core
           );
@@ -315,7 +313,6 @@ describe('MarketManagerModule', function () {
           const creditCapacity = bn(1000.5).toString();
           const netIssuance = bn(-0.5).toString();
           const depositedCollateralValue = bn(0).toString();
-          const reportedDebt = bn(0.5).toString();
           await assertEvent(
             txn,
             `MarketUsdWithdrawn(${[
@@ -326,7 +323,6 @@ describe('MarketManagerModule', function () {
               creditCapacity,
               netIssuance,
               depositedCollateralValue,
-              reportedDebt,
             ].join(', ')})`,
             systems().Core
           );
@@ -357,7 +353,6 @@ describe('MarketManagerModule', function () {
             const creditCapacity = bn(1000).toString();
             const netIssuance = bn(0).toString();
             const depositedCollateralValue = bn(0).toString();
-            const reportedDebt = bn(0).toString();
             await assertEvent(
               txn,
               `MarketUsdWithdrawn(${[
@@ -368,7 +363,6 @@ describe('MarketManagerModule', function () {
                 creditCapacity,
                 netIssuance,
                 depositedCollateralValue,
-                reportedDebt,
               ].join(', ')})`,
               systems().Core
             );

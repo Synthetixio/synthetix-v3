@@ -317,9 +317,7 @@ library AsyncOrder {
                 runtime.fillPrice,
                 perpsMarketData.skew,
                 marketConfig.orderFees
-            ).mulDecimalToUSD(runtime.quantoPrice) +
-            KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
-            USDUint256.wrap(strategy.settlementReward);
+            ).mulDecimalToUSD(runtime.quantoPrice) + settlementRewardCost(strategy);
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
@@ -409,6 +407,15 @@ library AsyncOrder {
         if (!acceptablePriceExceeded(order, fillPrice)) {
             revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice);
         }
+    }
+
+    /**
+     * @notice Calculates the settlement rewards.
+     */
+    function settlementRewardCost(
+        SettlementStrategy.Data storage strategy
+    ) internal view returns (uint256) {
+        return KeeperCosts.load().getSettlementKeeperCosts() + strategy.settlementReward;
     }
 
     /**

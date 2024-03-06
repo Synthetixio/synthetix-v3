@@ -1,4 +1,5 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, openPosition } from '../helpers';
 import { ethers } from 'ethers';
@@ -71,11 +72,27 @@ describe('Large Size Position', () => {
   });
 
   describe('can liquidate the position', () => {
+    let liquidateTxn: ethers.providers.TransactionResponse,
+      availableMargin: ethers.BigNumber,
+      requiredMaintenanceMargin: ethers.BigNumber,
+      liquidationReward: ethers.BigNumber;
+
     before('lower price to liquidation', async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(PRICE.div(100));
     });
     before('call liquidate', async () => {
-      await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      availableMargin = await systems().PerpsMarket.getAvailableMargin(2);
+      ({ requiredMaintenanceMargin, maxLiquidationReward: liquidationReward } =
+        await systems().PerpsMarket.getRequiredMargins(2));
+      liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    });
+
+    it('emitted an account flagged event', async () => {
+      await assertEvent(
+        liquidateTxn,
+        `AccountFlaggedForLiquidation(2, ${availableMargin.sub(liquidationReward)}, ${requiredMaintenanceMargin.sub(liquidationReward)}, ${liquidationReward}, 0)`,
+        systems().PerpsMarket
+      );
     });
 
     it('liquidated the position', async () => {

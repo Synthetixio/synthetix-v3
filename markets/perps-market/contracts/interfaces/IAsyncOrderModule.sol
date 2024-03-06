@@ -100,6 +100,17 @@ interface IAsyncOrderModule {
     ) external view returns (QuantoUint256 orderFees, USDPerBaseUint256 fillPrice);
 
     /**
+     * @notice Gets the settlement cost including keeper rewards and keeper costs.
+     * @param marketId Id of the market.
+     * @param settlementStrategyId Order size.
+     * @return settlement cost.
+     */
+    function getSettlementRewardCost(
+        uint128 marketId,
+        uint128 settlementStrategyId
+    ) external view returns (uint256);
+
+    /**
      * @notice For a given market, account id, and a position size, returns the required total account margin for this order to succeed
      * @dev    Useful for integrators to determine if an order will succeed or fail
      * @param marketId id of the market.

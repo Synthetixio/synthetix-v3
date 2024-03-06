@@ -124,6 +124,18 @@ contract PerpsAccountModule is IPerpsAccountModule {
     /**
      * @inheritdoc IPerpsAccountModule
      */
+    function getOpenPositionSize(
+        uint128 accountId,
+        uint128 marketId
+    ) external view override returns (int128 positionSize) {
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
+
+        positionSize = perpsMarket.positions[accountId].size.unwrap();
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
     function getAvailableMargin(
         uint128 accountId
     ) external view override returns (USDInt256 availableMargin) {

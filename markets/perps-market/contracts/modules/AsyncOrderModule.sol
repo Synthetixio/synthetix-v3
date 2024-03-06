@@ -123,6 +123,19 @@ contract AsyncOrderModule is IAsyncOrderModule {
         (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta, price);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
+    function getSettlementRewardCost(
+        uint128 marketId,
+        uint128 settlementStrategyId
+    ) external view override returns (uint256) {
+        return
+            AsyncOrder.settlementRewardCost(
+                PerpsMarketConfiguration.loadValidSettlementStrategy(marketId, settlementStrategyId)
+            );
+    }
+
     function requiredMarginForOrder(
         uint128 accountId,
         uint128 marketId,

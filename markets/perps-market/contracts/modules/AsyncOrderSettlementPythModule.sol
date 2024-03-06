@@ -141,7 +141,7 @@ contract AsyncOrderSettlementPythModule is
         }
         runtime.settlementReward =
             settlementStrategy.settlementReward +
-            KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId).unwrap();
+            KeeperCosts.load().getSettlementKeeperCosts().unwrap();
 
         if (runtime.settlementReward > 0) {
             // pay keeper
