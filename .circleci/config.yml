@@ -189,6 +189,9 @@ jobs:
             - "markets/legacy-market/cache"
             - "markets/legacy-market/typechain-types"
 
+            - "auxiliary/ArbitrumGasPriceOracle/artifacts"
+            - "auxiliary/ArbitrumGasPriceOracle/cache"
+            - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
             - "auxiliary/BuybackSnx/artifacts"
             - "auxiliary/BuybackSnx/cache"
             - "auxiliary/BuybackSnx/typechain-types"

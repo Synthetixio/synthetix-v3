@@ -2876,6 +2876,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio/arbitrum-gas-price-oracle@workspace:auxiliary/ArbitrumGasPriceOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/arbitrum-gas-price-oracle@workspace:auxiliary/ArbitrumGasPriceOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/buyback-snx@workspace:auxiliary/BuybackSnx":
   version: 0.0.0-use.local
   resolution: "@synthetixio/buyback-snx@workspace:auxiliary/BuybackSnx"
