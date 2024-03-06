@@ -115,14 +115,21 @@ describe('Keeper Rewards - Settlement', () => {
     settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
   });
 
+  let settlementReward: ethers.BigNumber;
+  before('get settlement rewards', async () => {
+    settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward.add(KeeperCosts.settlementCost);
+  });
+
+  it('settlement rewards are ok', async () => {
+    assertBn.equal(
+      await systems().PerpsMarket.getSettlementRewardCost(ethMarketId, 0),
+      settlementReward
+    );
+  });
+
   it('keeper gets paid', async () => {
     const keeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
-    assertBn.equal(
-      keeperBalance,
-      initialKeeperBalance
-        .add(DEFAULT_SETTLEMENT_STRATEGY.settlementReward)
-        .add(KeeperCosts.settlementCost)
-    );
+    assertBn.equal(keeperBalance, initialKeeperBalance.add(settlementReward));
   });
 
   it('emits settle event', async () => {
@@ -131,9 +138,7 @@ describe('Keeper Rewards - Settlement', () => {
     const sizeDelta = bn(1);
     const newPositionSize = bn(1);
     const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward.add(KeeperCosts.settlementCost);
-    const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward.add(
-      KeeperCosts.settlementCost
-    );
+
     const trackingCode = `"${ethers.constants.HashZero}"`;
     const msgSender = `"${await keeper().getAddress()}"`;
     const params = [

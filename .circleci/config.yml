@@ -169,8 +169,6 @@ jobs:
           name: "Build testable contracts"
           command: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
 
-      - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
-
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -568,6 +566,10 @@ jobs:
             export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
             yarn subgraphgen
 
+      - run: yarn workspace @synthetixio/core-subgraph test
+      - run: yarn workspace @synthetixio/spot-market-subgraph test
+      - run: yarn workspace @synthetixio/perps-market-subgraph test
+
       - github-pr:
           working_directory: "~/synthetix-v3"
           repo_slug: "Synthetixio/synthetix-v3"
@@ -581,7 +583,7 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
@@ -841,6 +843,16 @@ workflows:
       #    proxy: "contract.InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
+  update-subgraphs:
+    when:
+      or:
+        - and:
+            - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+            - equal: ["Check deploys", << pipeline.schedule.name >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
+    jobs:
+      - update-subgraphs
+
   docgen-contracts:
     unless:
       or:
@@ -853,24 +865,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-
-  update-subgraphs:
-    when:
-      and:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-        - equal: ["Check deploys", << pipeline.schedule.name >>]
-    jobs:
-      - update-subgraphs
-
-  dev-update-subgraphs:
-    unless:
-      or:
-        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-    jobs:
-      - update-subgraphs:
-          filters:
-            branches:
-              only: /update-subgraphs/
 
   dev-docgen-contracts:
     unless:

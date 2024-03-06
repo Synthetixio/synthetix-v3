@@ -107,11 +107,7 @@ interface IMarketConfigurationModule {
      * @param maxMarketSize the max market value in units.
      * @param maxMarketValue the max market value USD denominated.
      */
-    event MaxMarketSizesSet(
-        uint128 indexed marketId,
-        uint256 maxMarketSize,
-        uint256 maxMarketValue
-    );
+    event MaxMarketSizeSet(uint128 indexed marketId, uint256 maxMarketSize, uint256 maxMarketValue);
 
     /**
      * @notice Gets fired when locked oi ratio is updated.
@@ -232,7 +228,7 @@ interface IMarketConfigurationModule {
      * @param maxMarketSize the max market size in market asset units.
      * @param maxMarketValue the max market size in market USD value.
      */
-    function setMaxMarketSizes(
+    function setMaxMarketSize(
         uint128 marketId,
         uint256 maxMarketSize,
         uint256 maxMarketValue
@@ -326,7 +322,7 @@ interface IMarketConfigurationModule {
      * @return maxMarketSize the max market size in market asset units.
      * @return maxMarketValue the max market size in market USD value.
      */
-    function getMaxMarketSizes(
+    function getMaxMarketSize(
         uint128 marketId
     ) external view returns (uint256 maxMarketSize, uint256 maxMarketValue);
 
