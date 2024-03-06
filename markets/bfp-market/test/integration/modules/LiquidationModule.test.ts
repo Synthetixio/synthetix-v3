@@ -944,7 +944,11 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
 
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
 
@@ -1039,7 +1043,11 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        provider()
+      );
 
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
 

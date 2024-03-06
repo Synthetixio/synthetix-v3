@@ -43,10 +43,11 @@ describe('PerpAccountModule', () => {
       const trader = genOneOf(traders());
       const market = genOneOf(markets());
 
-      const digest = await PerpMarketProxy.getAccountDigest(trader.accountId, market.marketId());
-
-      assertBn.isZero(digest.order.sizeDelta);
-      assertBn.isZero(digest.position.size);
+      const { position } = await PerpMarketProxy.getAccountDigest(
+        trader.accountId,
+        market.marketId()
+      );
+      assertBn.isZero(position.size);
     });
   });
 
