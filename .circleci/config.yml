@@ -130,7 +130,7 @@ commands:
                 https://api.github.com/repos/<< parameters.repo_slug >>/pulls \
                 -d '{
                   "title": "<< parameters.commit_message >>",
-                  "head": "<< parameters.branch_head >>", 
+                  "head": "<< parameters.branch_head >>",
                   "base": "<< parameters.branch_base >>"
                 }'
             else
@@ -470,11 +470,11 @@ jobs:
                 --network "<< parameters.hardhatNetwork >>" \
                 --upgrade-from << parameters.cannonPackage >>@<< parameters.cannonPreset >> \
                 --impersonate << parameters.impersonate >> | tee deployment.log
-              
-            echo "grep '💥' deployment.log" 
+
+            echo "grep '💥' deployment.log"
             grep '💥' deployment.log
-              
-            echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log" 
+
+            echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log"
             if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
               echo "Proxy << parameters.proxy >> was modified"
               exit 1
@@ -622,6 +622,12 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
+          parallelism: 8
+
+      - test-contracts:
+          name: "test-bfp-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/bfp-market"
           parallelism: 8
 
       #- test-contracts: TODO: enable when tests are fixed
