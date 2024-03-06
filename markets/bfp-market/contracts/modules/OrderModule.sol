@@ -64,23 +64,18 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev A stale order is one where time passed is max age or older (>=).
+     * @dev Returns true/false for both order staleness and readiness.
+     *
+     * A stale order is one where time passed is max age or older (>=).
+     * A ready order is one where time that has passed must be at least the minimum order age (>=).
      */
-    function isOrderStale(
+    function isOrderStaleOrReady(
         uint256 commitmentTime,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private view returns (bool) {
-        return block.timestamp - commitmentTime >= globalConfig.maxOrderAge;
-    }
-
-    /**
-     * @dev Amount of time that has passed must be at least the minimum order age (>=).
-     */
-    function isOrderReady(
-        uint256 commitmentTime,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private view returns (bool) {
-        return block.timestamp - commitmentTime >= globalConfig.minOrderAge;
+    ) private view returns (bool isStale, bool isReady) {
+        uint256 timestamp = block.timestamp;
+        isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
+        isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
 
     /**
@@ -91,14 +86,13 @@ contract OrderModule is IOrderModule {
         uint256 commitmentTime,
         Position.TradeParams memory params
     ) private view {
-        if (isOrderStale(commitmentTime, globalConfig)) {
+        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
+        if (isStale) {
             revert ErrorUtil.OrderStale();
         }
-        if (!isOrderReady(commitmentTime, globalConfig)) {
+        if (!isReady) {
             revert ErrorUtil.OrderNotReady();
         }
-
-        // Do not accept zero prices.
         if (params.oraclePrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
@@ -399,17 +393,20 @@ contract OrderModule is IOrderModule {
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
         Order.Data storage order = market.orders[accountId];
+
         if (order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound();
         }
 
-        if (!isOrderStale(order.commitmentTime, PerpMarketConfiguration.load())) {
+        uint256 commitmentTime = order.commitmentTime;
+        (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
+
+        if (!isStale) {
             revert ErrorUtil.OrderNotStale();
         }
 
-        emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, 0, commitmentTime);
         delete market.orders[accountId];
     }
 
@@ -424,28 +421,33 @@ contract OrderModule is IOrderModule {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
-
         Order.Data storage order = market.orders[accountId];
 
         // No order available to settle.
         if (order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound();
         }
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        if (!isOrderReady(order.commitmentTime, globalConfig)) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 commitmentTime = order.commitmentTime;
+        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
+
+        if (!isReady) {
             revert ErrorUtil.OrderNotReady();
         }
-        bool isAccountOwner = msg.sender == account.rbac.owner;
 
         // Only do the price divergence check for non stale orders. All stale orders are allowed to be canceled.
-        if (!isOrderStale(order.commitmentTime, globalConfig)) {
+        if (!isStale) {
+            PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(
+                marketId
+            );
+
             // Order is within settlement window. Check if price tolerance has exceeded.
             uint256 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
                 marketConfig,
-                order.commitmentTime,
+                commitmentTime,
                 priceUpdateData
             );
             uint256 fillPrice = Order.getFillPrice(
@@ -464,19 +466,20 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        uint256 keeperFee = isAccountOwner
+        // If `isAccountOwner` then 0 else chargeFee.
+        uint256 keeperFee = msg.sender == account.rbac.owner
             ? 0
             : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).updateAccountDebtAndCollateral(
                 market,
                 -keeperFee.toInt()
             );
-
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit OrderCanceled(accountId, marketId, keeperFee, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, keeperFee, commitmentTime);
         delete market.orders[accountId];
     }
 
@@ -500,7 +503,9 @@ contract OrderModule is IOrderModule {
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
         uint256 commitmentTime = order.commitmentTime;
+        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         return
             IOrderModule.OrderDigest(
@@ -509,8 +514,8 @@ contract OrderModule is IOrderModule {
                 order.limitPrice,
                 order.keeperFeeBufferUsd,
                 order.hooks,
-                isOrderStale(commitmentTime, globalConfig),
-                isOrderReady(commitmentTime, globalConfig)
+                isStale,
+                isReady
             );
     }
 
