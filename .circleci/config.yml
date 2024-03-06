@@ -188,6 +188,9 @@ jobs:
             - "markets/legacy-market/artifacts"
             - "markets/legacy-market/cache"
             - "markets/legacy-market/typechain-types"
+            - "markets/bfp-market/artifacts"
+            - "markets/bfp-market/cache"
+            - "markets/bfp-market/typechain-types"
 
             - "auxiliary/BuybackSnx/artifacts"
             - "auxiliary/BuybackSnx/cache"
