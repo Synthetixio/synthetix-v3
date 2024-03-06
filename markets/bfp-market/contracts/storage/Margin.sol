@@ -174,6 +174,28 @@ library Margin {
     }
 
     /**
+     * @dev Returns the debt, price pnl, funding, util, and fee adjusted PnL.
+     */
+    function getPnlAdjustmentUsd(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (int256) {
+        Position.Data storage position = market.positions[accountId];
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+
+        // Zero size means there are no running sums to adjust margin by.
+        return
+            position.size == 0
+                ? -(accountMargin.debtUsd.toInt())
+                : position.getPricePnl(price) +
+                    position.getAccruedFunding(market, price) -
+                    position.getAccruedUtilization(market, price).toInt() -
+                    position.accruedFeesUsd.toInt() -
+                    accountMargin.debtUsd.to256().toInt();
+    }
+
+    /**
      * @dev Returns the margin value in usd given the account, market, and market price.
      *
      * Margin is effectively the discounted value of the deposited collateral, accounting for the funding accrued,
@@ -184,33 +206,35 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 marketPrice
+        uint256 price
     ) internal view returns (MarginValues memory marginValues) {
         (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(
             accountId,
             market.id
         );
-        Position.Data storage position = market.positions[accountId];
-        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
-
-        // Zero size means there are no running sums to adjust margin by.
-        int256 marginAdjustements = position.size == 0
-            ? -(accountMargin.debtUsd.toInt())
-            : position.getPnl(marketPrice) +
-                position.getAccruedFunding(market, marketPrice) -
-                position.getAccruedUtilization(market, marketPrice).toInt() -
-                position.accruedFeesUsd.toInt() -
-                accountMargin.debtUsd.to256().toInt();
+        int256 adjustment = getPnlAdjustmentUsd(accountId, market, price);
 
         marginValues.discountedMarginUsd = MathUtil
-            .max(discountedCollateralUsd.toInt() + marginAdjustements, 0)
+            .max(discountedCollateralUsd.toInt() + adjustment, 0)
             .toUint();
-        marginValues.marginUsd = MathUtil
-            .max(collateralUsd.toInt() + marginAdjustements, 0)
-            .toUint();
+        marginValues.marginUsd = MathUtil.max(collateralUsd.toInt() + adjustment, 0).toUint();
         marginValues.discountedCollateralUsd = discountedCollateralUsd;
         marginValues.collateralUsd = collateralUsd;
-        return marginValues;
+    }
+
+    /**
+     * @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
+     */
+    function getNetAssetValue(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (uint256) {
+        (uint256 collateralUsd, ) = getCollateralUsd(accountId, market.id);
+        return
+            MathUtil
+                .max(collateralUsd.toInt() + getPnlAdjustmentUsd(accountId, market, price), 0)
+                .toUint();
     }
 
     // --- Member (views) --- //

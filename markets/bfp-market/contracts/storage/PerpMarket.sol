@@ -131,7 +131,7 @@ library PerpMarket {
         int256 sizeDelta = newPosition.size - oldPosition.size;
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
-        int256 totalPositionPnl = oldPosition.getPnl(newPosition.entryPrice) +
+        int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
             oldPosition.getAccruedFunding(self, newPosition.entryPrice) +
             newPosition.accruedFeesUsd.toInt();
 
@@ -211,7 +211,9 @@ library PerpMarket {
         return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()).to128();
     }
 
-    /** @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate). */
+    /**
+     * @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).
+     */
     function getCurrentUtilizationRate(
         uint128 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig

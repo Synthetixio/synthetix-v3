@@ -604,7 +604,7 @@ library Position {
     /**
      * @dev Returns the notional profit or loss based on current price and entry price.
      */
-    function getPnl(Position.Data storage self, uint256 price) internal view returns (int256) {
+    function getPricePnl(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {
             return 0;
         }

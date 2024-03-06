@@ -2520,6 +2520,30 @@ describe('MarginModule', async () => {
     });
   });
 
+  describe('getNetAssetValueWithPrice', () => {
+    it('should eq marginUsd from getMarginDigest', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1.1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const { marginUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
+      const netAssetValue = await PerpMarketProxy.getNetAssetValueWithPrice(
+        trader.accountId,
+        marketId,
+        order.oraclePrice
+      );
+
+      assertBn.equal(netAssetValue, marginUsd);
+    });
+  });
+
   describe('getMarginCollateralConfiguration', () => {
     it('should return empty when there are no configured collaterals', async () => {
       const { PerpMarketProxy } = systems();
