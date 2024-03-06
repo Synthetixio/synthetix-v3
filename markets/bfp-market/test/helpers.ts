@@ -219,21 +219,24 @@ export const getFastForwardTimestamp = async (
 
 /** Commits a generated `order` for `trader` on `marketId` */
 export const commitOrder = async (
-  { systems }: Pick<Bs, 'systems'>,
+  { systems, provider }: Pick<Bs, 'systems' | 'provider'>,
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>
 ) => {
   const { PerpMarketProxy } = systems();
-
   const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await order;
-  return await PerpMarketProxy.connect(trader.signer).commitOrder(
-    trader.accountId,
-    marketId,
-    sizeDelta,
-    limitPrice,
-    keeperFeeBufferUsd,
-    hooks
+  return withExplicitEvmMine(
+    () =>
+      PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        sizeDelta,
+        limitPrice,
+        keeperFeeBufferUsd,
+        hooks
+      ),
+    provider()
   );
 };
 

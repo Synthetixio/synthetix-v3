@@ -303,7 +303,7 @@ describe('LiquidationModule', () => {
         desiredSide: orderSide,
       });
 
-      await withExplicitEvmMine(() => commitOrder(bs, marketId, trader, order2), provider());
+      await commitOrder(bs, marketId, trader, order2);
 
       const commitmentTime = await getBlockTimestamp(provider());
 

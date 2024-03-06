@@ -68,18 +68,7 @@ describe('OrderModule', () => {
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      const { receipt } = await withExplicitEvmMine(
-        () =>
-          PerpMarketProxy.connect(trader.signer).commitOrder(
-            trader.accountId,
-            marketId,
-            order.sizeDelta,
-            order.limitPrice,
-            order.keeperFeeBufferUsd,
-            order.hooks
-          ),
-        provider()
-      );
+      const { receipt } = await commitOrder(bs, marketId, trader, order);
 
       const block = await provider().getBlock(receipt.blockNumber);
       const timestamp = block.timestamp;
@@ -199,14 +188,7 @@ describe('OrderModule', () => {
         desiredLeverage: 1,
       });
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order1.sizeDelta,
-        order1.limitPrice,
-        order1.keeperFeeBufferUsd,
-        []
-      );
+      await commitOrder(bs, marketId, trader, order1);
 
       // Perform another commitment but expect fail as order already exists.
       const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
@@ -631,24 +613,16 @@ describe('OrderModule', () => {
           whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
           maxHooksPerOrder,
         });
+
         const hooks = genSubListOf(
           [SettlementHookMock.address, SettlementHook2Mock.address],
           genNumber(1, 2)
         );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredHooks: hooks,
+        });
+        const { receipt } = await commitOrder(bs, marketId, trader, order);
 
-        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-        const { receipt } = await withExplicitEvmMine(
-          () =>
-            PerpMarketProxy.connect(trader.signer).commitOrder(
-              trader.accountId,
-              marketId,
-              order.sizeDelta,
-              order.limitPrice,
-              order.keeperFeeBufferUsd,
-              hooks
-            ),
-          provider()
-        );
         await assertEvent(receipt, 'OrderCommitted', PerpMarketProxy);
       });
 
@@ -656,20 +630,12 @@ describe('OrderModule', () => {
         const { PerpMarketProxy } = systems();
         const { trader, market, marketId, collateral, collateralDepositAmount } =
           await depositMargin(bs, genTrader(bs));
-        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-        const { receipt } = await withExplicitEvmMine(
-          () =>
-            PerpMarketProxy.connect(trader.signer).commitOrder(
-              trader.accountId,
-              marketId,
-              order.sizeDelta,
-              order.limitPrice,
-              order.keeperFeeBufferUsd,
-              []
-            ),
-          provider()
-        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredHooks: [],
+        });
+        const { receipt } = await commitOrder(bs, marketId, trader, order);
+
         await assertEvent(receipt, 'OrderCommitted', PerpMarketProxy);
       });
 
@@ -757,16 +723,10 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
+
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
@@ -1680,16 +1640,9 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
@@ -1712,16 +1665,9 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
@@ -1749,16 +1695,9 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
@@ -1786,16 +1725,9 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
@@ -1837,18 +1769,11 @@ describe('OrderModule', () => {
         const orderSide = side === 'long' ? 1 : -1;
         const { trader, market, marketId, collateral, collateralDepositAmount } =
           await depositMargin(bs, genTrader(bs));
+
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: orderSide,
         });
-
-        await PerpMarketProxy.connect(trader.signer).commitOrder(
-          trader.accountId,
-          marketId,
-          order.sizeDelta,
-          order.limitPrice,
-          order.keeperFeeBufferUsd,
-          order.hooks
-        );
+        await commitOrder(bs, marketId, trader, order);
 
         // Move price past limitPrice (+/- 30%).
         const newMarketOraclePrice = wei(order.oraclePrice)
@@ -1994,16 +1919,10 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
+
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
@@ -2091,14 +2010,7 @@ describe('OrderModule', () => {
 
         await SettlementHookMock.mockSetShouldRevertOnSettlement(true);
 
-        await PerpMarketProxy.connect(trader.signer).commitOrder(
-          trader.accountId,
-          marketId,
-          order.sizeDelta,
-          order.limitPrice,
-          order.keeperFeeBufferUsd,
-          order.hooks
-        );
+        await commitOrder(bs, marketId, trader, order);
 
         const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
         const { updateData, updateFee } = await getPythPriceDataByMarketId(
@@ -2134,14 +2046,7 @@ describe('OrderModule', () => {
           desiredHooks: hooks,
         });
 
-        await PerpMarketProxy.connect(trader.signer).commitOrder(
-          trader.accountId,
-          marketId,
-          order.sizeDelta,
-          order.limitPrice,
-          order.keeperFeeBufferUsd,
-          order.hooks
-        );
+        await commitOrder(bs, marketId, trader, order);
 
         // Remove the original hook in commit from whitelist.
         await PerpMarketProxy.setSettlementHookConfiguration({

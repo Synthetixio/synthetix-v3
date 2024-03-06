@@ -71,14 +71,7 @@ describe('MarginModule', async () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       // Commit an order for this trader.
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      await commitOrder(bs, marketId, trader, order);
 
       // Verify that an order exists.
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
@@ -169,18 +162,7 @@ describe('MarginModule', async () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       // Commit an order for this trader.
-      await withExplicitEvmMine(
-        () =>
-          PerpMarketProxy.connect(trader.signer).commitOrder(
-            trader.accountId,
-            marketId,
-            order.sizeDelta,
-            order.limitPrice,
-            order.keeperFeeBufferUsd,
-            order.hooks
-          ),
-        provider()
-      );
+      await commitOrder(bs, marketId, trader, order);
 
       // Verify that an order exists.
       const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
@@ -1262,9 +1244,10 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy } = systems();
         const { collateral, market, marketId, collateralDepositAmount, trader } =
           await depositMargin(bs, genTrader(bs));
-        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
         await commitOrder(bs, marketId, trader, order);
+
         // Make the order expired
         const { expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
         await fastForwardTo(expireTime + 10, provider());
@@ -1699,6 +1682,7 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, market, collateralDepositAmount } =
           await depositMargin(bs, genTrader(bs));
+
         await commitOrder(
           bs,
           marketId,
