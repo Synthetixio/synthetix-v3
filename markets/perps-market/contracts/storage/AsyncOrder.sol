@@ -414,8 +414,8 @@ library AsyncOrder {
      */
     function settlementRewardCost(
         SettlementStrategy.Data storage strategy
-    ) internal view returns (uint256) {
-        return KeeperCosts.load().getSettlementKeeperCosts() + strategy.settlementReward;
+    ) internal view returns (USDUint256) {
+        return KeeperCosts.load().getSettlementKeeperCosts() + USDUint256.wrap(strategy.settlementReward);
     }
 
     /**

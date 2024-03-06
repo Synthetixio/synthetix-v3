@@ -108,7 +108,7 @@ interface IAsyncOrderModule {
     function getSettlementRewardCost(
         uint128 marketId,
         uint128 settlementStrategyId
-    ) external view returns (uint256);
+    ) external view returns (USDUint256);
 
     /**
      * @notice For a given market, account id, and a position size, returns the required total account margin for this order to succeed

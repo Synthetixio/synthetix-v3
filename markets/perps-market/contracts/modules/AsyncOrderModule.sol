@@ -129,7 +129,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getSettlementRewardCost(
         uint128 marketId,
         uint128 settlementStrategyId
-    ) external view override returns (uint256) {
+    ) external view override returns (USDUint256) {
         return
             AsyncOrder.settlementRewardCost(
                 PerpsMarketConfiguration.loadValidSettlementStrategy(marketId, settlementStrategyId)

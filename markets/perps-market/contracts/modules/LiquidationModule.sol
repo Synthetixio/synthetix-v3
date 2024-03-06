@@ -19,7 +19,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
-import {QuantoUint256, USDUint256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {QuantoUint256, USDUint256, USDInt256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for liquidating accounts.
@@ -49,10 +49,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         if (!liquidatableAccounts.contains(accountId)) {
             (
                 bool isEligible,
-                int256 availableMargin,
+                USDInt256 availableMargin,
                 ,
-                uint256 requiredMaintenaceMargin,
-                uint256 expectedLiquidationReward
+                USDUint256 requiredMaintenaceMargin,
+                USDUint256 expectedLiquidationReward
             ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.STRICT);
 
             if (isEligible) {
@@ -60,9 +60,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
                 emit AccountFlaggedForLiquidation(
                     accountId,
-                    availableMargin,
-                    requiredMaintenaceMargin,
-                    expectedLiquidationReward,
+                    availableMargin.unwrap(),
+                    requiredMaintenaceMargin.unwrap(),
+                    expectedLiquidationReward.unwrap(),
                     flagCost
                 );
 
