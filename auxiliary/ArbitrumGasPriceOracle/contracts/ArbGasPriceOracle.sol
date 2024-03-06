@@ -17,10 +17,10 @@ contract ArbGasPriceOracle is IExternalNode {
                                CONSTANTS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice identifies resources consumed via async order settlement 
+    /// @notice identifies resources consumed via async order settlement
     uint256 public constant KIND_SETTLEMENT = 0;
 
-`   /// @notice identifies resources consumed via account flagged for liquidation
+    /// @notice identifies resources consumed via account flagged for liquidation
     uint256 public constant KIND_FLAG = 1;
 
     /// @notice identifies resources consumed via account liquidation
@@ -37,7 +37,7 @@ contract ArbGasPriceOracle is IExternalNode {
                                  TYPES
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice runtime parameters for the cost of resources consumed 
+    /// @notice runtime parameters for the cost of resources consumed
     /// during execution on L1 and L2
     struct RuntimeParams {
         // Order execution
@@ -79,10 +79,10 @@ contract ArbGasPriceOracle is IExternalNode {
     /// @param parameters the parameters for the cost of execution calculation
     /// @param runtimeKeys the runtime keys for the cost of execution calculation
     /// @param runtimeValues the runtime values for the cost of execution calculation
-    /// @return nodeOutput the cost of execution in ETH and timestamp 
+    /// @return nodeOutput the cost of execution in ETH and timestamp
     /// when the cost was calculated (other fields are not used in this implementation)
     function process(
-        /* NodeOutput.Data[] memory */,
+        NodeOutput.Data[] memory,
         bytes memory parameters,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
@@ -137,12 +137,17 @@ contract ArbGasPriceOracle is IExternalNode {
             runtimeParams.l2LiquidateGasUnits
         ) = abi.decode(nodeDefinition.parameters, (address, uint256, uint256, uint256, uint256, uint256, uint256));
 
-        // verify the oracle can be called; if not, the oracle is invalid
-        try precompile.getPricesInWei(runtimeParams) {
-            return true;
-        } catch {
+        // verify the oracle can be properly called
+        try precompile.getPricesInWei() {}
+        catch {
             return false;
         }
+        try precompile.getL1BaseFeeEstimate() {}
+        catch {
+            return false;
+        }
+
+        return true;
     }
 
     /// @notice check if the contract supports the given interface
@@ -178,16 +183,16 @@ contract ArbGasPriceOracle is IExternalNode {
         /// the transaction will still be processed, but the arbitrum nitro mechanism will
         /// amortize the deficit/surplus over subsequent users of the chain
         /// (i.e. lowering/raising the L1 base fee for a period of time)
-        l1BaseFee = precompile.getL1BaseFeeEstimate();
+        uint256 l1BaseFee = precompile.getL1BaseFeeEstimate();
 
         // fetch & define gas units consumed on L1 and L2 for the given execution kind
         (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
 
         // calculate the cost of resources consumed on L1
-        l1GasCost = (l1BaseFee * gasUnitsL1) / perArbGasTotal;
+        uint256 l1GasCost = (l1BaseFee * gasUnitsL1) / perArbGasTotal;
 
         // calculate the cost of resources consumed on L2
-        l2GasCost = gasUnitsL2 * perArbGasTotal;
+        uint256 l2GasCost = gasUnitsL2 * perArbGasTotal;
 
         // calculate the total cost of execution in ETH
         costOfExecutionGrossEth = l1GasCost + l2GasCost;
@@ -214,7 +219,7 @@ contract ArbGasPriceOracle is IExternalNode {
             gasUnitsL1 = runtimeParams.l1LiquidateGasUnits;
             gasUnitsL2 = runtimeParams.l2LiquidateGasUnits;
         } else {
-            revert("Invalid execution kind");
+            revert ArbGasPriceOracleInvalidExecutionKind();
         }
     }
 }
