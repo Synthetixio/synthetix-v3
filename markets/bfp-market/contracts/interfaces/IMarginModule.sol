@@ -111,6 +111,15 @@ interface IMarginModule is IBasePerpMarket {
     ) external view returns (Margin.MarginValues memory);
 
     /**
+     * @notice Returns the NAV of `account` and `marketId` given a `price`.
+     */
+    function getNetAssetValueWithPrice(
+        uint128 accountId,
+        uint128 marketId,
+        uint256 price
+    ) external view returns (uint256);
+
+    /**
      * @notice Returns the discount adjusted oracle price based on `amount` of synth by `synthMarketId`.
      */
     function getDiscountedCollateralPrice(
