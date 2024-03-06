@@ -1,6 +1,6 @@
 {
-    "extends": "../../utils/common-config/tsconfig.json",
-    "compilerOptions": {
-        "noEmit": true
-    }
+  "extends": "../../utils/common-config/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  }
 }
