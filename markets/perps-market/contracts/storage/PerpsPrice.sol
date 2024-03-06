@@ -5,6 +5,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
+import {USDPerBaseUint256, USDPerQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Price storage for a specific synth market.
@@ -44,15 +45,15 @@ library PerpsPrice {
     function getCurrentPrice(
         uint128 marketId,
         Tolerance priceTolerance
-    ) internal view returns (uint256 price) {
-        return _getCurrentPrice(marketId, priceTolerance, false);
+    ) internal view returns (USDPerBaseUint256 price) {
+        return USDPerBaseUint256.wrap(_getCurrentPrice(marketId, priceTolerance, false));
     }
 
     function getCurrentQuantoPrice(
         uint128 marketId,
         Tolerance priceTolerance
-    ) internal view returns (uint256 price) {
-        return _getCurrentPrice(marketId, priceTolerance, true);
+    ) internal view returns (USDPerQuantoUint256 price) {
+        return USDPerQuantoUint256.wrap(_getCurrentPrice(marketId, priceTolerance, true));
     }
 
     function _getCurrentPrice(

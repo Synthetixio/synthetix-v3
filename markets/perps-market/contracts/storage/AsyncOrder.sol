@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -21,6 +21,7 @@ library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint256;
+    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
@@ -51,12 +52,12 @@ library AsyncOrder {
     /**
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
-    error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
+    error AcceptablePriceExceeded(USDPerBaseUint256 fillPrice, USDPerBaseUint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when attempting to cancel an order and price does not exceeds acceptable price.
      */
-    error AcceptablePriceNotExceeded(uint256 fillPrice, uint256 acceptablePrice);
+    error AcceptablePriceNotExceeded(USDPerBaseUint256 fillPrice, USDPerBaseUint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
@@ -72,7 +73,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
      */
-    error InsufficientMargin(int256 availableMargin, uint256 minMargin);
+    error InsufficientMargin(USDInt256 availableMargin, uint256 minMargin);
 
     struct Data {
         /**
@@ -95,11 +96,9 @@ library AsyncOrder {
          */
         uint128 accountId;
         /**
-         * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
-         * @dev For quanto this is in (base * quanto / usd) in decimal 18 digits. It can be positive or negative.
-         * @dev When passing the sizeDelta into the order for commitOrder, specify the value in base units, and the module will convert it to (base * quanto / usd) for you.
+         * @dev Order size delta (of base*quanto/usd units expressed in decimal 18 digits). It can be positive or negative.
          */
-        int128 sizeDelta;
+        BaseQuantoPerUSDInt128 sizeDelta;
         /**
          * @dev Settlement strategy used for the order.
          */
@@ -107,7 +106,7 @@ library AsyncOrder {
         /**
          * @dev Acceptable price set at submission.
          */
-        uint256 acceptablePrice;
+        USDPerBaseUint256 acceptablePrice;
         /**
          * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
          */
@@ -137,7 +136,7 @@ library AsyncOrder {
         uint128 accountId
     ) internal view returns (Data storage order, SettlementStrategy.Data storage strategy) {
         order = load(accountId);
-        if (order.request.sizeDelta == 0) {
+        if (order.request.sizeDelta.unwrap() == 0) {
             revert OrderNotValid();
         }
 
@@ -170,7 +169,7 @@ library AsyncOrder {
     function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
         order = load(accountId);
 
-        if (order.request.sizeDelta != 0) {
+        if (order.request.sizeDelta.unwrap() != 0) {
             SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
                 .load(order.request.marketId)
                 .settlementStrategies[order.request.settlementStrategyId];
@@ -188,7 +187,7 @@ library AsyncOrder {
      * @dev The rest of the fields will be updated on the next commitment. Not doing it here is more gas efficient.
      */
     function reset(Data storage self) internal {
-        self.request.sizeDelta = 0;
+        self.request.sizeDelta = BaseQuantoPerUSDInt128.wrap(0);
     }
 
     /**
@@ -228,25 +227,29 @@ library AsyncOrder {
     /**
      * @dev Struct used internally in validateOrder() to prevent stack too deep error.
      */
+    // TODO: check to be sure commented out types can definitely be deleted safely
+    // TODO: if they can be deleted safely, delete them
     struct SimulateDataRuntime {
         bool isEligible;
-        int128 sizeDelta;
+        BaseQuantoPerUSDInt128 sizeDelta;
         uint128 accountId;
         uint128 marketId;
-        uint256 fillPrice;
-        uint256 orderFees;
-        uint256 availableMargin;
-        uint256 currentLiquidationMargin;
+        USDPerBaseUint256 fillPrice;
+        USDUint256 orderFees;
+        // uint256 availableMargin;
+        // uint256 currentLiquidationMargin;
         uint256 accumulatedLiquidationRewards;
-        uint256 currentLiquidationReward;
-        int128 newPositionSize;
-        uint256 newNotionalValue;
-        int256 currentAvailableMargin;
-        uint256 requiredInitialMargin;
-        uint256 initialRequiredMargin;
-        uint256 totalRequiredMargin;
+        USDUint256 currentLiquidationReward;
+        BaseQuantoPerUSDInt128 newPositionSize;
+        // uint256 newNotionalValue;
+        USDInt256 currentAvailableMargin;
+        USDUint256 requiredInitialMargin;
+        // uint256 initialRequiredMargin;
+        USDUint256 totalRequiredMargin;
         Position.Data newPosition;
         bytes32 trackingCode;
+        USDPerQuantoUint256 quantoPrice;
+        USDInt256 startingPnl;
     }
 
     /**
@@ -263,14 +266,14 @@ library AsyncOrder {
     function validateRequest(
         Data storage order,
         SettlementStrategy.Data storage strategy,
-        uint256 orderPrice
-    ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
+        USDPerBaseUint256 orderPrice
+    ) internal returns (Position.Data memory, USDUint256, USDPerBaseUint256, Position.Data storage oldPosition) {
         SimulateDataRuntime memory runtime;
         runtime.sizeDelta = order.request.sizeDelta;
         runtime.accountId = order.request.accountId;
         runtime.marketId = order.request.marketId;
 
-        if (runtime.sizeDelta == 0) {
+        if (runtime.sizeDelta.unwrap() == 0) {
             revert ZeroSizeOrder();
         }
 
@@ -306,35 +309,42 @@ library AsyncOrder {
             revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
+        runtime.quantoPrice = PerpsPrice.getCurrentQuantoPrice(runtime.marketId, PerpsPrice.Tolerance.DEFAULT);
+
         runtime.orderFees =
             calculateOrderFee(
                 runtime.sizeDelta,
                 runtime.fillPrice,
                 perpsMarketData.skew,
                 marketConfig.orderFees
-            ) +
-            settlementRewardCost(strategy);
+            ).mulDecimalToUSD(runtime.quantoPrice) + settlementRewardCost(strategy);
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
-        runtime.newPositionSize = oldPosition.size.unwrap() + runtime.sizeDelta;
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
+
+        runtime.startingPnl = calculateStartingPnl(
+            runtime.fillPrice,
+            orderPrice,
+            runtime.newPositionSize
+        ).mulDecimalToUSD(USDPerQuantoInt256.wrap(runtime.quantoPrice.unwrap().toInt()));
 
         // only account for negative pnl
-        runtime.currentAvailableMargin += MathUtil.min(
-            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize),
+        runtime.currentAvailableMargin = runtime.currentAvailableMargin + USDInt256.wrap(MathUtil.min(
+            runtime.startingPnl.unwrap(),
             0
-        );
+        ));
 
-        if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
+        if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.unwrap().toInt()) {
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees.unwrap());
         }
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
             marketConfig.maxMarketSize,
             marketConfig.maxMarketValue,
-            orderPrice,
+            orderPrice.unwrap(),
             oldPosition.size.unwrap(),
-            runtime.newPositionSize
+            runtime.newPositionSize.unwrap()
         );
 
         runtime.totalRequiredMargin =
@@ -342,23 +352,23 @@ library AsyncOrder {
                 account,
                 marketConfig,
                 runtime.marketId,
-                oldPosition.size.unwrap(),
+                oldPosition.size,
                 runtime.newPositionSize,
                 runtime.fillPrice,
                 runtime.requiredInitialMargin
             ) +
             runtime.orderFees;
 
-        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
+        if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.unwrap().toInt()) {
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin.unwrap());
         }
 
         runtime.newPosition = Position.Data({
             marketId: runtime.marketId,
-            latestInteractionPrice: runtime.fillPrice.to128(),
+            latestInteractionPrice: runtime.fillPrice.unwrap().to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             latestInterestAccrued: 0,
-            size: BaseQuantoPerUSDInt128.wrap(runtime.newPositionSize)
+            size: runtime.newPositionSize
         });
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
@@ -376,8 +386,8 @@ library AsyncOrder {
     function validateCancellation(
         Data storage order,
         SettlementStrategy.Data storage strategy,
-        uint256 orderPrice
-    ) internal view returns (uint256 fillPrice) {
+        USDPerBaseUint256 orderPrice
+    ) internal view returns (USDPerBaseUint256 fillPrice) {
         checkWithinSettlementWindow(order, strategy);
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
@@ -404,32 +414,32 @@ library AsyncOrder {
      */
     function settlementRewardCost(
         SettlementStrategy.Data storage strategy
-    ) internal view returns (uint256) {
-        return KeeperCosts.load().getSettlementKeeperCosts() + strategy.settlementReward;
+    ) internal view returns (USDUint256) {
+        return KeeperCosts.load().getSettlementKeeperCosts() + USDUint256.wrap(strategy.settlementReward);
     }
 
     /**
      * @notice Calculates the order fees.
      */
     function calculateOrderFee(
-        int128 sizeDelta,
-        uint256 fillPrice,
-        int256 marketSkew,
+        BaseQuantoPerUSDInt128 sizeDelta,
+        USDPerBaseUint256 fillPrice,
+        BaseQuantoPerUSDInt256 marketSkew,
         OrderFee.Data storage orderFeeData
-    ) internal view returns (uint256) {
-        int256 notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
+    ) internal view returns (QuantoUint256) {
+        QuantoInt256 notionalDiff = BaseQuantoPerUSDInt256.wrap(sizeDelta.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(fillPrice.unwrap().toInt()));
 
         // does this trade keep the skew on one side?
-        if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
+        if (MathUtil.sameSide(marketSkew.unwrap() + sizeDelta.unwrap(), marketSkew.unwrap())) {
             // use a flat maker/taker fee for the entire size depending on whether the skew is increased or reduced.
             //
             // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
 
-            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
+            uint256 staticRate = MathUtil.sameSide(notionalDiff.unwrap(), marketSkew.unwrap())
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
-            return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
+            return QuantoUint256.wrap(MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()).unwrap()));
         }
 
         // this trade flips the skew.
@@ -444,26 +454,26 @@ library AsyncOrder {
         //
         // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
 
-        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
+        uint256 makerFee = MathUtil.abs(marketSkew.unwrap()).mulDecimal(fillPrice.unwrap()).mulDecimal(
             orderFeeData.makerFee
         );
 
-        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+        uint256 takerFee = MathUtil.abs(marketSkew.unwrap() + sizeDelta.unwrap()).mulDecimal(fillPrice.unwrap()).mulDecimal(
             orderFeeData.takerFee
         );
 
-        return takerFee + makerFee;
+        return QuantoUint256.wrap(takerFee + makerFee);
     }
 
     /**
      * @notice Calculates the fill price for an order.
      */
     function calculateFillPrice(
-        int256 skew,
+        BaseQuantoPerUSDInt256 skew,
         uint256 skewScale,
-        int128 size,
-        uint256 price
-    ) internal pure returns (uint256) {
+        BaseQuantoPerUSDInt128 size,
+        USDPerBaseUint256 price
+    ) internal pure returns (USDPerBaseUint256) {
         // How is the p/d-adjusted price calculated using an example:
         //
         // price      = $1200 USD (oracle)
@@ -495,37 +505,37 @@ library AsyncOrder {
             return price;
         }
         // calculate pd (premium/discount) before and after trade
-        int256 pdBefore = skew.divDecimal(skewScale.toInt());
-        int256 newSkew = skew + size;
+        int256 pdBefore = skew.unwrap().divDecimal(skewScale.toInt());
+        int256 newSkew = skew.unwrap() + size.unwrap();
         int256 pdAfter = newSkew.divDecimal(skewScale.toInt());
 
         // calculate price before and after trade with pd applied
-        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+        int256 priceBefore = price.unwrap().toInt() + (price.unwrap().toInt().mulDecimal(pdBefore));
+        int256 priceAfter = price.unwrap().toInt() + (price.unwrap().toInt().mulDecimal(pdAfter));
 
         // the fill price is the average of those prices
-        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+        return USDPerBaseUint256.wrap((priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2));
     }
 
     struct RequiredMarginWithNewPositionRuntime {
-        uint256 newRequiredMargin;
-        uint256 oldRequiredMargin;
-        uint256 requiredMarginForNewPosition;
-        uint256 accumulatedLiquidationRewards;
+        QuantoUint256 newRequiredMargin;
+        QuantoUint256 oldRequiredMargin;
+        USDUint256 requiredMarginForNewPosition;
+        USDUint256 accumulatedLiquidationRewards;
         uint256 maxNumberOfWindows;
         uint256 numberOfWindows;
-        uint256 requiredRewardMargin;
+        USDUint256 requiredRewardMargin;
     }
 
     /**
      * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
      */
     function calculateStartingPnl(
-        uint256 fillPrice,
-        uint256 marketPrice,
-        int128 size
-    ) internal pure returns (int256) {
-        return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
+        USDPerBaseUint256 fillPrice,
+        USDPerBaseUint256 marketPrice,
+        BaseQuantoPerUSDInt128 size
+    ) internal pure returns (QuantoInt256) {
+        return BaseQuantoPerUSDInt256.wrap(size.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(marketPrice.unwrap().toInt() - fillPrice.unwrap().toInt()));
     }
 
     /**
@@ -537,15 +547,15 @@ library AsyncOrder {
         PerpsAccount.Data storage account,
         PerpsMarketConfiguration.Data storage marketConfig,
         uint128 marketId,
-        int128 oldPositionSize,
-        int128 newPositionSize,
-        uint256 fillPrice,
-        uint256 currentTotalInitialMargin
-    ) internal view returns (uint256) {
+        BaseQuantoPerUSDInt128 oldPositionSize,
+        BaseQuantoPerUSDInt128 newPositionSize,
+        USDPerBaseUint256 fillPrice,
+        USDUint256 currentTotalInitialMargin
+    ) internal view returns (USDUint256) {
         RequiredMarginWithNewPositionRuntime memory runtime;
 
-        if (MathUtil.isSameSideReducing(oldPositionSize, newPositionSize)) {
-            return 0;
+        if (MathUtil.isSameSideReducing(oldPositionSize.unwrap(), newPositionSize.unwrap())) {
+            return USDUint256.wrap(0);
         }
 
         // get initial margin requirement for the new position
@@ -560,20 +570,23 @@ library AsyncOrder {
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
 
+        USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
+
         // remove the old initial margin and add the new initial margin requirement
         // this gets us our total required margin for new position
         runtime.requiredMarginForNewPosition =
             currentTotalInitialMargin +
-            runtime.newRequiredMargin -
-            runtime.oldRequiredMargin;
+            runtime.newRequiredMargin.mulDecimalToUSD(quantoPrice) -
+            runtime.oldRequiredMargin.mulDecimalToUSD(quantoPrice);
 
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
             .getKeeperRewardsAndCosts(marketId);
-        runtime.accumulatedLiquidationRewards += marketConfig.calculateFlagReward(
-            MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
-        );
+        runtime.accumulatedLiquidationRewards = runtime.accumulatedLiquidationRewards + marketConfig.calculateFlagReward(
+            QuantoUint256.wrap(MathUtil.abs(newPositionSize.unwrap()).mulDecimal(fillPrice.unwrap()))
+        ).mulDecimalToUSD(quantoPrice);
+
         runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
-            MathUtil.abs(newPositionSize)
+            MathUtil.abs(newPositionSize.unwrap())
         );
         runtime.maxNumberOfWindows = MathUtil.max(
             runtime.numberOfWindows,
@@ -594,10 +607,10 @@ library AsyncOrder {
      */
     function acceptablePriceExceeded(
         Data storage order,
-        uint256 fillPrice
+        USDPerBaseUint256 fillPrice
     ) internal view returns (bool exceeded) {
         return
-            (order.request.sizeDelta > 0 && fillPrice > order.request.acceptablePrice) ||
-            (order.request.sizeDelta < 0 && fillPrice < order.request.acceptablePrice);
+            (order.request.sizeDelta.unwrap() > 0 && fillPrice > order.request.acceptablePrice) ||
+            (order.request.sizeDelta.unwrap() < 0 && fillPrice < order.request.acceptablePrice);
     }
 }

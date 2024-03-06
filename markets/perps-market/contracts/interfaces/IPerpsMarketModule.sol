@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Perps market module
@@ -84,9 +85,9 @@ interface IPerpsMarketModule {
      */
     function fillPrice(
         uint128 marketId,
-        int128 orderSize,
-        uint256 price
-    ) external view returns (uint256);
+        BaseQuantoPerUSDInt128 orderSize,
+        USDPerBaseUint256 price
+    ) external view returns (USDPerBaseUint256);
 
     /**
      * @notice Given a marketId return a market's summary details in one call.

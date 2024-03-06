@@ -17,8 +17,9 @@ export const computeFees: (
   sizeBefore: Wei,
   sizeDelta: Wei,
   price: Wei,
-  orderFees: OrderFees
-) => Fees = (sizeBefore, sizeDelta, price, orderFees) => {
+  orderFees: OrderFees,
+  quantoPrice?: Wei
+) => Fees = (sizeBefore, sizeDelta, price, orderFees, quantoPrice) => {
   let makerSize = wei(0),
     takerSize = wei(0);
 
@@ -41,8 +42,10 @@ export const computeFees: (
 
   const keeperFee = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
 
+  const quantoPriceEffective = quantoPrice || 1;
+
   return {
-    totalFees: perpsMarketFee.add(keeperFee).toBN(),
+    totalFees: perpsMarketFee.mul(quantoPriceEffective).add(keeperFee).toBN(),
     perpsMarketFee: perpsMarketFee.toBN(),
     keeperFee,
   };

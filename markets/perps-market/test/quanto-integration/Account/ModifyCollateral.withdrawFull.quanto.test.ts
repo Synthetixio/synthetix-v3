@@ -11,6 +11,7 @@ describe('ModifyCollateral Withdraw Deposit/Withdraw', () => {
   // Market Prices
   const btcPrice = bn(30_000);
   const ethPrice = bn(2_000);
+  const ethPrice1e18 = 2_000;
 
   // Skew Scales
   const btcSkewScale = bn(100).div(2000);
@@ -25,7 +26,7 @@ describe('ModifyCollateral Withdraw Deposit/Withdraw', () => {
   const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
 
   // Position Margins
-  const btcMinimumPositionMargin = bn(1000);
+  const btcMinimumPositionMargin = bn(1000).div(ethPrice1e18);
 
   // Liquidation Parameters
   const settlementReward = bn(0);

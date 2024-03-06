@@ -19,6 +19,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {QuantoUint256, USDUint256, USDInt256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for liquidating accounts.
@@ -48,10 +49,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         if (!liquidatableAccounts.contains(accountId)) {
             (
                 bool isEligible,
-                int256 availableMargin,
+                USDInt256 availableMargin,
                 ,
-                uint256 requiredMaintenaceMargin,
-                uint256 expectedLiquidationReward
+                USDUint256 requiredMaintenaceMargin,
+                USDUint256 expectedLiquidationReward
             ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.STRICT);
 
             if (isEligible) {
@@ -59,9 +60,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
                 emit AccountFlaggedForLiquidation(
                     accountId,
-                    availableMargin,
-                    requiredMaintenaceMargin,
-                    expectedLiquidationReward,
+                    availableMargin.unwrap(),
+                    requiredMaintenaceMargin.unwrap(),
+                    expectedLiquidationReward.unwrap(),
                     flagCost
                 );
 
@@ -163,7 +164,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
-        uint256 price;
+        USDPerBaseUint256 price;
         uint128 positionMarketId;
         uint256 loopIterator; // stack too deep to the extreme
     }
@@ -208,7 +209,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 // using oldPositionAbsSize to calculate flag reward
                 runtime.totalFlaggingRewards += PerpsMarketConfiguration
                     .load(runtime.positionMarketId)
-                    .calculateFlagReward(oldPositionAbsSize.mulDecimal(runtime.price));
+                    .calculateFlagReward(QuantoUint256.wrap(oldPositionAbsSize.mulDecimal(runtime.price.unwrap()))).unwrap();
             }
 
             if (amountLiquidated == 0) {
@@ -219,7 +220,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
             emit MarketUpdated(
                 runtime.positionMarketId,
-                runtime.price,
+                runtime.price.unwrap(),
                 marketUpdateData.skew,
                 marketUpdateData.size,
                 sizeDelta,
@@ -237,14 +238,14 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         }
 
         runtime.totalLiquidationCost =
-            KeeperCosts.load().getLiquidateKeeperCosts() +
+            KeeperCosts.load().getLiquidateKeeperCosts().unwrap() +
             costOfFlagExecution;
         if (positionFlagged || runtime.totalLiquidated > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
-                positionFlagged ? runtime.totalFlaggingRewards : 0,
-                runtime.totalLiquidationCost,
-                totalCollateralValue
-            );
+                USDUint256.wrap(positionFlagged ? runtime.totalFlaggingRewards : 0),
+                USDUint256.wrap(runtime.totalLiquidationCost),
+                USDUint256.wrap(totalCollateralValue)
+            ).unwrap();
             runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
             if (runtime.accountFullyLiquidated) {
                 GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
@@ -262,12 +263,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @dev process the accumulated liquidation rewards
      */
     function _processLiquidationRewards(
-        uint256 keeperRewards,
-        uint256 costOfExecutionInUsd,
-        uint256 availableMarginInUsd
-    ) private returns (uint256 reward) {
-        if ((keeperRewards + costOfExecutionInUsd) == 0) {
-            return 0;
+        USDUint256 keeperRewards,
+        USDUint256 costOfExecutionInUsd,
+        USDUint256 availableMarginInUsd
+    ) private returns (USDUint256 reward) {
+        if ((keeperRewards + costOfExecutionInUsd).unwrap() == 0) {
+            return USDUint256.wrap(0);
         }
         // pay out liquidation rewards
         reward = GlobalPerpsMarketConfiguration.load().keeperReward(
@@ -275,7 +276,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             costOfExecutionInUsd,
             availableMarginInUsd
         );
-        if (reward > 0) {
+        if (reward.unwrap() > 0) {
             PerpsMarketFactory.load().withdrawMarketUsd(ERC2771Context._msgSender(), reward);
         }
     }

@@ -4,6 +4,7 @@ import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 interface IAsyncOrderCancelModule {
     /**
@@ -32,10 +33,10 @@ interface IAsyncOrderCancelModule {
     struct CancelOrderRuntime {
         uint128 marketId;
         uint128 accountId;
-        int128 sizeDelta;
+        BaseQuantoPerUSDInt128 sizeDelta;
         uint256 settlementReward;
-        uint256 fillPrice;
-        uint256 acceptablePrice;
+        USDPerBaseUint256 fillPrice;
+        USDPerBaseUint256 acceptablePrice;
     }
 
     /**

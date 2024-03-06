@@ -13,6 +13,7 @@ describe('ModifyCollateral', () => {
   // Market Prices
   const btcPrice = bn(10_000);
   const ethPrice = bn(1_000);
+  const ethPrice1e18 = 1_000;
   const linkPrice = bn(5);
 
   // Skew Scales
@@ -28,7 +29,7 @@ describe('ModifyCollateral', () => {
   const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
 
   // Position Margins
-  const ethMinimumPositionMargin = bn(500);
+  const ethMinimumPositionMargin = bn(500).div(ethPrice1e18);
 
   // Liquidation Parameters
   const settlementReward = bn(0);

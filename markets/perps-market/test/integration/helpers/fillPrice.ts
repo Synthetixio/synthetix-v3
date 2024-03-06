@@ -18,6 +18,7 @@ export function calculateFillPrice(skew: Wei, skewScale: Wei, size: Wei, price: 
   return priceBefore.add(priceAfter).div(2);
 }
 
+// return value is in quanto asset unit
 export function calculatePricePnl(
   startingSkew: Wei,
   skewScale: Wei,

@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -122,10 +122,10 @@ library PerpsAccount {
         view
         returns (
             bool isEligible,
-            int256 availableMargin,
-            uint256 requiredInitialMargin,
-            uint256 requiredMaintenanceMargin,
-            uint256 liquidationReward
+            USDInt256 availableMargin,
+            USDUint256 requiredInitialMargin,
+            USDUint256 requiredMaintenanceMargin,
+            USDUint256 liquidationReward
         )
     {
         availableMargin = getAvailableMargin(self, stalenessTolerance);
@@ -135,7 +135,7 @@ library PerpsAccount {
             requiredMaintenanceMargin,
             liquidationReward
         ) = getAccountRequiredMargins(self, stalenessTolerance);
-        isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
+        isEligible = (requiredMaintenanceMargin + liquidationReward).unwrap().toInt() > availableMargin.unwrap();
     }
 
     function flagForLiquidation(
@@ -146,7 +146,7 @@ library PerpsAccount {
             .liquidatableAccounts;
 
         if (!liquidatableAccounts.contains(self.id)) {
-            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
+            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id).unwrap();
             liquidatableAccounts.add(self.id);
             marginCollected = convertAllCollateralToUsd(self);
             AsyncOrder.load(self.id).reset();
@@ -203,19 +203,19 @@ library PerpsAccount {
 
         (
             bool isEligible,
-            int256 availableMargin,
-            uint256 initialRequiredMargin,
+            USDInt256 availableMargin,
+            USDUint256 initialRequiredMargin,
             ,
-            uint256 liquidationReward
+            USDUint256 liquidationReward
         ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.STRICT);
 
         if (isEligible) {
             revert AccountLiquidatable(self.id);
         }
 
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
+        USDUint256 requiredMargin = initialRequiredMargin + liquidationReward;
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
+        availableWithdrawableCollateralUsd = availableMargin.unwrap().toUint() - requiredMargin.unwrap();
 
         uint256 amountToWithdrawUsd;
         if (synthMarketId == SNX_USD_MARKET_ID) {
@@ -239,7 +239,7 @@ library PerpsAccount {
     function getTotalCollateralValue(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (uint256) {
+    ) internal view returns (USDUint256) {
         uint256 totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint256 i = 1; i <= self.activeCollateralTypes.length(); i++) {
@@ -258,13 +258,13 @@ library PerpsAccount {
             }
             totalCollateralValue += amountToAdd;
         }
-        return totalCollateralValue;
+        return USDUint256.wrap(totalCollateralValue);
     }
 
     function getAccountPnl(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (int256 totalPnl) {
+    ) internal view returns (USDInt256 totalPnl) {
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
@@ -273,21 +273,21 @@ library PerpsAccount {
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
 
-            uint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
-            int usdPnl = pnl.mulDecimal(quantoPrice.toInt());
+            USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
+            USDInt256 usdPnl = USDInt256.wrap(pnl.mulDecimal(quantoPrice.unwrap().toInt()));
 
-            totalPnl += usdPnl;
+            totalPnl = totalPnl + usdPnl;
         }
     }
 
     function getAvailableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
-    ) internal view returns (int256) {
-        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance).toInt();
-        int256 accountPnl = getAccountPnl(self, stalenessTolerance);
+    ) internal view returns (USDInt256) {
+        USDUint256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance);
+        USDInt256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
-        return totalCollateralValue + accountPnl;
+        return USDInt256.wrap(totalCollateralValue.unwrap().toInt()) + accountPnl;
     }
 
     function getTotalNotionalOpenInterest(
@@ -301,8 +301,8 @@ library PerpsAccount {
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
 
-            uint quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
-            uint usdValue = openInterest.mulDecimal(quantoPrice);
+            USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
+            uint usdValue = openInterest.mulDecimal(quantoPrice.unwrap());
 
             totalAccountOpenInterest += usdValue;
         }
@@ -312,6 +312,7 @@ library PerpsAccount {
      * @notice  This function returns the required margins for an account
      * @dev The initial required margin is used to determine withdrawal amount and when opening positions
      * @dev The maintenance margin is used to determine when to liquidate a position
+     * @dev Returns USD
      */
     function getAccountRequiredMargins(
         Data storage self,
@@ -320,14 +321,14 @@ library PerpsAccount {
         internal
         view
         returns (
-            uint256 initialMargin,
-            uint256 maintenanceMargin,
-            uint256 possibleLiquidationReward
+            USDUint256 initialMargin,
+            USDUint256 maintenanceMargin,
+            USDUint256 possibleLiquidationReward
         )
     {
         uint256 openPositionMarketIdsLength = self.openPositionMarketIds.length();
         if (openPositionMarketIdsLength == 0) {
-            return (0, 0, 0);
+            return (USDUint256.wrap(0), USDUint256.wrap(0), USDUint256.wrap(0));
         }
 
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
@@ -337,18 +338,19 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin) = marketConfig
+            (, , QuantoUint256 positionInitialMargin, QuantoUint256 positionMaintenanceMargin) = marketConfig
                 .calculateRequiredMargins(
-                    position.size.unwrap(),
+                    position.size,
                     PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
                 );
 
-            maintenanceMargin += positionMaintenanceMargin;
-            initialMargin += positionInitialMargin;
+            USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
+            maintenanceMargin = maintenanceMargin + positionMaintenanceMargin.mulDecimalToUSD(quantoPrice);
+            initialMargin = initialMargin + positionInitialMargin.mulDecimalToUSD(quantoPrice);
         }
 
         (
-            uint256 accumulatedLiquidationRewards,
+            USDUint256 accumulatedLiquidationRewards,
             uint256 maxNumberOfWindows
         ) = getKeeperRewardsAndCosts(self, 0);
         possibleLiquidationReward = getPossibleLiquidationReward(
@@ -360,10 +362,11 @@ library PerpsAccount {
         return (initialMargin, maintenanceMargin, possibleLiquidationReward);
     }
 
+    /// @dev Returns USD
     function getKeeperRewardsAndCosts(
         Data storage self,
         uint128 skipMarketId
-    ) internal view returns (uint256 accumulatedLiquidationRewards, uint256 maxNumberOfWindows) {
+    ) internal view returns (USDUint256 accumulatedLiquidationRewards, uint256 maxNumberOfWindows) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
@@ -377,12 +380,13 @@ library PerpsAccount {
                 MathUtil.abs(position.size.unwrap())
             );
 
-            uint256 flagReward = marketConfig.calculateFlagReward(
-                MathUtil.abs(position.size.unwrap()).mulDecimal(
-                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-                )
+            QuantoUint256 flagReward = marketConfig.calculateFlagReward(
+                QuantoUint256.wrap(MathUtil.abs(position.size.unwrap()).mulDecimal(
+                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
+                ))
             );
-            accumulatedLiquidationRewards += flagReward;
+            USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
+            accumulatedLiquidationRewards = accumulatedLiquidationRewards + flagReward.mulDecimalToUSD(quantoPrice);
 
             maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }
@@ -390,22 +394,22 @@ library PerpsAccount {
 
     function getPossibleLiquidationReward(
         Data storage self,
-        uint256 accumulatedLiquidationRewards,
+        USDUint256 accumulatedLiquidationRewards,
         uint256 numOfWindows
-    ) internal view returns (uint256 possibleLiquidationReward) {
+    ) internal view returns (USDUint256 possibleLiquidationReward) {
         GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
             .load();
         KeeperCosts.Data storage keeperCosts = KeeperCosts.load();
-        uint256 costOfFlagging = keeperCosts.getFlagKeeperCosts(self.id);
-        uint256 costOfLiquidation = keeperCosts.getLiquidateKeeperCosts();
-        uint256 liquidateAndFlagCost = globalConfig.keeperReward(
+        USDUint256 costOfFlagging = keeperCosts.getFlagKeeperCosts(self.id);
+        USDUint256 costOfLiquidation = keeperCosts.getLiquidateKeeperCosts();
+        USDUint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
             costOfFlagging,
             getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT)
         );
-        uint256 liquidateWindowsCosts = numOfWindows == 0
-            ? 0
-            : globalConfig.keeperReward(0, costOfLiquidation, 0) * (numOfWindows - 1);
+        USDUint256 liquidateWindowsCosts = numOfWindows == 0
+            ? USDUint256.wrap(0)
+            : globalConfig.keeperReward(USDUint256.wrap(0), costOfLiquidation, USDUint256.wrap(0)).mul(numOfWindows - 1);
 
         possibleLiquidationReward = liquidateAndFlagCost + liquidateWindowsCosts;
     }
@@ -497,7 +501,7 @@ library PerpsAccount {
                         address(0)
                     );
 
-                    factory.depositMarketUsd(leftoverAmount);
+                    factory.depositMarketUsd(USDUint256.wrap(leftoverAmount));
 
                     deductedAmount[i] = amountToDeduct;
                     updateCollateralAmount(self, synthMarketId, -(amountToDeduct.toInt()));
@@ -517,7 +521,7 @@ library PerpsAccount {
                         address(0)
                     );
 
-                    factory.depositMarketUsd(amountToDeductUsd);
+                    factory.depositMarketUsd(USDUint256.wrap(amountToDeductUsd));
 
                     deductedAmount[i] = availableAmount;
                     updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
@@ -534,7 +538,7 @@ library PerpsAccount {
     function liquidatePosition(
         Data storage self,
         uint128 marketId,
-        uint256 price
+        USDPerBaseUint256 price
     )
         internal
         returns (
@@ -569,7 +573,7 @@ library PerpsAccount {
         if (newPositionSize != 0) {
             newPosition = Position.Data({
                 marketId: marketId,
-                latestInteractionPrice: price.to128(),
+                latestInteractionPrice: price.unwrap().to128(),
                 latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
                 latestInterestAccrued: 0,
                 size: BaseQuantoPerUSDInt128.wrap(newPositionSize)
@@ -613,7 +617,7 @@ library PerpsAccount {
         );
 
         // 3. deposit snxUSD into market manager
-        factory.depositMarketUsd(amountUsd);
+        factory.depositMarketUsd(USDUint256.wrap(amountUsd));
 
         // 4. update account collateral amount
         updateCollateralAmount(self, synthMarketId, -(amount.toInt()));

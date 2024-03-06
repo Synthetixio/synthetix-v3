@@ -20,6 +20,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {QuantoUint256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module to manage accounts
@@ -88,7 +89,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
      * @inheritdoc IPerpsAccountModule
      */
     function totalCollateralValue(uint128 accountId) external view override returns (uint256) {
-        return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
+        return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT).unwrap();
     }
 
     /**
@@ -137,7 +138,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
      */
     function getAvailableMargin(
         uint128 accountId
-    ) external view override returns (int256 availableMargin) {
+    ) external view override returns (USDInt256 availableMargin) {
         availableMargin = PerpsAccount.load(accountId).getAvailableMargin(
             PerpsPrice.Tolerance.DEFAULT
         );
@@ -148,15 +149,15 @@ contract PerpsAccountModule is IPerpsAccountModule {
      */
     function getWithdrawableMargin(
         uint128 accountId
-    ) external view override returns (int256 withdrawableMargin) {
+    ) external view override returns (USDInt256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
-        (uint256 initialRequiredMargin, , uint256 liquidationReward) = account
+        USDInt256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
+        (USDUint256 initialRequiredMargin, , USDUint256 liquidationReward) = account
             .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
+        USDUint256 requiredMargin = initialRequiredMargin + liquidationReward;
 
-        withdrawableMargin = availableMargin - requiredMargin.toInt();
+        withdrawableMargin = availableMargin - USDInt256.wrap(requiredMargin.unwrap().toInt());
     }
 
     /**
@@ -169,22 +170,22 @@ contract PerpsAccountModule is IPerpsAccountModule {
         view
         override
         returns (
-            uint256 requiredInitialMargin,
-            uint256 requiredMaintenanceMargin,
-            uint256 maxLiquidationReward
+            USDUint256 requiredInitialMargin,
+            USDUint256 requiredMaintenanceMargin,
+            USDUint256 maxLiquidationReward
         )
     {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (account.openPositionMarketIds.length() == 0) {
-            return (0, 0, 0);
+            return (USDUint256.wrap(0), USDUint256.wrap(0), USDUint256.wrap(0));
         }
 
         (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = account
             .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
 
         // Include liquidation rewards to required initial margin and required maintenance margin
-        requiredInitialMargin += maxLiquidationReward;
-        requiredMaintenanceMargin += maxLiquidationReward;
+        requiredInitialMargin = requiredInitialMargin + maxLiquidationReward;
+        requiredMaintenanceMargin = requiredMaintenanceMargin + maxLiquidationReward;
     }
 
     /**
