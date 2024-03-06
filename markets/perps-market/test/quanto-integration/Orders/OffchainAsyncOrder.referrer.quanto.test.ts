@@ -7,6 +7,8 @@ import Wei, { wei } from '@synthetixio/wei';
 
 describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
   const _ETH_PRICE = bn(2000);
+  const _BTC_PRICE = bn(10_000);
+  const btcPrice1e18 = 10_000;
   const {
     systems,
     superMarketId,
@@ -22,8 +24,8 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
       {
         name: 'Bitcoin',
         token: 'snxBTC',
-        buyPrice: bn(10_000),
-        sellPrice: bn(10_000),
+        buyPrice: _BTC_PRICE,
+        sellPrice: _BTC_PRICE,
       },
     ],
     perpsMarkets: [
@@ -33,7 +35,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
         token: 'snxETH',
         price: _ETH_PRICE,
         // setting to 0 to avoid funding and p/d price change affecting pnl
-        fundingParams: { skewScale: bn(10_000).div(10_000), maxFundingVelocity: bn(0) },
+        fundingParams: { skewScale: bn(10_000).div(btcPrice1e18), maxFundingVelocity: bn(0) },
         orderFees: {
           makerFee: bn(0.0003), // 3bps
           takerFee: bn(0.0008), // 8bps
@@ -41,7 +43,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
         quanto: {
           name: 'Bitcoin',
           token: 'snxBTC',
-          price: bn(10_000),
+          price: _BTC_PRICE,
           quantoSynthMarketIndex: 0,
         },
       },
@@ -82,7 +84,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
       expectedToFeeCollector: Wei,
       expectedToReferrer: Wei,
       beforeWithdrawableUsd: Wei;
-    const sizeDelta = bn(100).div(10_000);
+    const sizeDelta = bn(100).div(btcPrice1e18);
     before('identify data', async () => {
       beforeWithdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       // NOTE: expected fees here does not include settlement reward
@@ -90,7 +92,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
         perpsMarkets()[0].marketId(),
         sizeDelta
       );
-      expectedFees = wei(fees);
+      expectedFees = wei(fees.mul(btcPrice1e18));
       expectedToReferrer = expectedFees.mul(referrerRatio);
       expectedToFeeCollector = expectedFees.sub(expectedToReferrer).mul(feeCollectorRatio);
     });
@@ -146,7 +148,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
   describe('with only fee collector set', () => {
     let expectedToFeeCollector: Wei, previousReferrerBalance: Wei;
 
-    const sizeDelta = bn(-50).div(10_000);
+    const sizeDelta = bn(-50).div(btcPrice1e18);
     before('identify data', async () => {
       previousReferrerBalance = wei(await systems().USD.balanceOf(await referrer.getAddress()));
       // NOTE: expected fees here does not include settlement reward
@@ -154,7 +156,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
         perpsMarkets()[0].marketId(),
         sizeDelta
       );
-      const expectedFees = wei(fees);
+      const expectedFees = wei(fees.mul(btcPrice1e18));
       const currentFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
       );
@@ -197,7 +199,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
     });
 
     let expectedToReferrer: Wei, previousFeeCollectorBalance: Wei;
-    const sizeDelta = bn(20).div(10_000);
+    const sizeDelta = bn(20).div(btcPrice1e18);
     before('identify data', async () => {
       previousFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
@@ -207,7 +209,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
         sizeDelta
       );
       // NOTE: expected fees here does not include settlement reward
-      const expectedFees = wei(orderFees);
+      const expectedFees = wei(orderFees.mul(btcPrice1e18));
       const currentReferrerBalance = wei(
         await systems().USD.balanceOf(await referrer.getAddress())
       );
@@ -250,14 +252,14 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
     });
 
     let expectedToReferrer: Wei, expectedToFeeCollector: Wei;
-    const sizeDelta = bn(25).div(10_000);
+    const sizeDelta = bn(25).div(btcPrice1e18);
     before('identify data', async () => {
       const [orderFees] = await systems().PerpsMarket.computeOrderFees(
         perpsMarkets()[0].marketId(),
         sizeDelta
       );
       // NOTE: expected fees here does not include settlement reward
-      const expectedFees = wei(orderFees);
+      const expectedFees = wei(orderFees.mul(btcPrice1e18));
       const currentFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
       );
@@ -307,7 +309,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
     });
 
     let expectedToReferrer: Wei, previousFeeCollectorBalance: Wei;
-    const sizeDelta = bn(75).div(10_000);
+    const sizeDelta = bn(75).div(btcPrice1e18);
     before('identify data', async () => {
       previousFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
@@ -317,7 +319,7 @@ describe('Quanto OffchainAsyncOrder - feeCollector - referrer', () => {
         perpsMarkets()[0].marketId(),
         sizeDelta
       );
-      const expectedFees = wei(fees);
+      const expectedFees = wei(fees.mul(btcPrice1e18));
       const currentReferrerBalance = wei(
         await systems().USD.balanceOf(await referrer.getAddress())
       );
