@@ -2906,7 +2906,7 @@ __metadata:
     "@typechain/hardhat": "npm:^9.1.0"
     dotenv: "npm:^16.4.3"
     hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.11.16"
+    hardhat-cannon: "npm:2.11.18"
     hardhat-contract-sizer: "npm:^2.10.0"
     hardhat-gas-reporter: "npm:^1.0.10"
     hardhat-ignore-warnings: "npm:^0.2.9"
@@ -2946,7 +2946,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.11.16"
+    "@usecannon/cli": "npm:2.11.18"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -2960,7 +2960,7 @@ __metadata:
     "@ethersproject/abi": "npm:^5.7.0"
     "@istanbuljs/nyc-config-typescript": "npm:^1.0.2"
     "@types/prompts": "npm:^2.4.9"
-    "@usecannon/builder": "npm:2.11.15"
+    "@usecannon/builder": "npm:2.11.18"
     chalk: "npm:^4.1.2"
     ethereumjs-util: "npm:^7.1.5"
     ethers: "npm:^5.7.2"
@@ -3119,7 +3119,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.11.16"
+    "@usecannon/cli": "npm:2.11.18"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3140,7 +3140,7 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
-    "@usecannon/cli": "npm:2.11.16"
+    "@usecannon/cli": "npm:2.11.18"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
@@ -3190,7 +3190,7 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.11.16"
+    hardhat-cannon: "npm:2.11.18"
     solidity-coverage: "npm:^0.8.7"
   languageName: unknown
   linkType: soft
@@ -3216,7 +3216,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.11.16"
+    "@usecannon/cli": "npm:2.11.18"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3237,7 +3237,7 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node-fetch": "npm:^2.6.11"
-    "@usecannon/cli": "npm:2.11.16"
+    "@usecannon/cli": "npm:2.11.18"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     node-fetch: "npm:^2.7.0"
@@ -3852,9 +3852,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.11.15":
-  version: 2.11.15
-  resolution: "@usecannon/builder@npm:2.11.15"
+"@usecannon/builder@npm:2.11.18":
+  version: 2.11.18
+  resolution: "@usecannon/builder@npm:2.11.18"
   dependencies:
     "@synthetixio/router": "npm:^3.3.7"
     axios: "npm:^1.6.2"
@@ -3868,17 +3868,18 @@ __metadata:
     typestub-ipfs-only-hash: "npm:^4.0.0"
     viem: "npm:^2.6.1"
     zod: "npm:^3.22.4"
-  checksum: 10/81102b096ab4c465e92983a39ae50737cc266676dd4901594934838334aaaabd9d06a1b7db57feee32167f588436fd2d279c8b4b29f4aecf29443e95a61ced56
+  checksum: 10/3eca2331ac451c38a5179279d983110278292b328b021b4994ac5dea5ac3362cdebfafd03464cd8836b56c588f37dfa0551b33bdcd89872b785c95b63d7aa8ff
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:2.11.16":
-  version: 2.11.16
-  resolution: "@usecannon/cli@npm:2.11.16"
+"@usecannon/cli@npm:2.11.18":
+  version: 2.11.18
+  resolution: "@usecannon/cli@npm:2.11.18"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
     "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:2.11.15"
+    "@usecannon/builder": "npm:2.11.18"
+    abitype: "npm:^1.0.0"
     chalk: "npm:^4.1.2"
     commander: "npm:^9.5.0"
     debug: "npm:^4.3.4"
@@ -3897,7 +3898,7 @@ __metadata:
     zod: "npm:^3.22.4"
   bin:
     cannon: bin/cannon.js
-  checksum: 10/db283953a40feed2037c16ff937907e90c801f402c8c5939f4eefad32e1602ab5b9cf92b5925c9670461ee48ac545836b9607f6b8f3c77743d128c8fadbaad3c
+  checksum: 10/79a22affd87b16da1b0275f48260ce8db087a02d15d595a3e02540d3cce3040660dd3674258f761b142e3037e793ad31f3d1dfc6ef5844080ba5a52a1059301e
   languageName: node
   linkType: hard
 
@@ -4049,7 +4050,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"abitype@npm:1.0.0":
+"abitype@npm:1.0.0, abitype@npm:^1.0.0":
   version: 1.0.0
   resolution: "abitype@npm:1.0.0"
   peerDependencies:
@@ -8683,20 +8684,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:2.11.16":
-  version: 2.11.16
-  resolution: "hardhat-cannon@npm:2.11.16"
+"hardhat-cannon@npm:2.11.18":
+  version: 2.11.18
+  resolution: "hardhat-cannon@npm:2.11.18"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
-    "@usecannon/builder": "npm:2.11.15"
-    "@usecannon/cli": "npm:2.11.16"
+    "@usecannon/builder": "npm:2.11.18"
+    "@usecannon/cli": "npm:2.11.18"
     chalk: "npm:^4.1.2"
     debug: "npm:^4.3.3"
     fs-extra: "npm:^10.0.1"
     viem: "npm:^2.6.1"
   peerDependencies:
     hardhat: ">=2.0.0"
-  checksum: 10/1da293c5c56994c989452755ed36cda2e543399726e1de1dde5811f1a6f47dd460a513fbbdc112e35a879d84dd2ccc8eae6b349291f7d5308ea9f0cd0b97445f
+  checksum: 10/ba76196f96ace5a2837000d879090b146408f4200578e85f0d0ef8fa1f0c7847ad763b598e7cf8d8faf174bdb83e8907c82d1a3a95fd533a6b37250c6f4080ae
   languageName: node
   linkType: hard
 
