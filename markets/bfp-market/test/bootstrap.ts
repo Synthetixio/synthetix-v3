@@ -183,21 +183,31 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   let collaterals: PerpCollateral[];
   let collateralsWithoutSusd: PerpCollateral[];
 
-  before('spot market bootstrap', async () => {
+  let keeper: Signer;
+  let keeper2: Signer;
+  let keeper3: Signer;
+  let endorsedKeeper: Signer;
+  const traders: { signer: Signer; accountId: number }[] = [];
+
+  before('perp market bootstrap', async () => {
+    const { Core, PerpMarketProxy, SettlementHookMock, SettlementHook2Mock, OracleManager, USD } =
+      systems;
+
     // Configure global markets.
-    await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
+    await PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
 
     // Configure ETH/USD price oracle node.
     const { oracleNodeId, aggregator } = await createOracleNode(
       getOwner(),
       args.initialEthPrice,
-      systems.OracleManager
+      OracleManager
     );
-    await systems.PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
+    await PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
 
     ethOracleNodeId = oracleNodeId;
     ethOracleAgg = aggregator;
 
+    // Configure markets and their nodes.
     for (const market of args.markets) {
       const { name, initialPrice, specific } = market;
 
@@ -207,15 +217,15 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       const { oracleNodeId, aggregator } = await createOracleNode(
         getOwner(),
         initialPrice,
-        systems.OracleManager
+        OracleManager
       );
 
       // Create market.
-      const marketId = await systems.PerpMarketProxy.callStatic.createMarket({ name });
-      await systems.PerpMarketProxy.createMarket({ name });
+      const marketId = await PerpMarketProxy.callStatic.createMarket({ name });
+      await PerpMarketProxy.createMarket({ name });
 
       // Configure market.
-      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+      await PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
         ...specific,
         // Override the generic supplied oracleNodeId with the one that was just created.
         oracleNodeId,
@@ -228,7 +238,6 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     }
 
     // Configure settlement hooks.
-    const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems;
     await PerpMarketProxy.setSettlementHookConfiguration({
       whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
       maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
@@ -254,14 +263,12 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       weightD18: utils.parseEther('1'),
       maxDebtShareValueD18: utils.parseEther('1'),
     }));
-    await systems.Core.connect(getOwner()).setPoolConfiguration(
+    await Core.connect(getOwner()).setPoolConfiguration(
       stakedPool.poolId,
       spotMarketPoolConfig.concat(perpMarketPoolConfig)
     );
-  });
 
-  before('configure margin collaterals & prices', async () => {
-    const { Core, PerpMarketProxy } = systems;
+    // Configure margin collaterals and their prices.
     const synths = getConfiguredSynths();
 
     // Collaterals we want to configure for the perp market - prepended with sUSD configuration.
@@ -340,18 +347,14 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     //
     // NOTE: The system recognises sUSD as $1 so this sUsdAggregator is really just a stub but will never
     // be used in any capacity.
-    const { aggregator: sUsdAggregator } = await createOracleNode(
-      getOwner(),
-      bn(1),
-      systems.OracleManager
-    );
+    const { aggregator: sUsdAggregator } = await createOracleNode(getOwner(), bn(1), OracleManager);
     const sUsdCollateral: PerpCollateral = {
       name: 'sUSD',
       initialPrice: bn(1),
       max: sUsdMaxDepositAllowance,
-      contract: systems.USD,
+      contract: USD,
       synthMarketId: () => SYNTHETIX_USD_MARKET_ID,
-      synthAddress: () => systems.USD.address,
+      synthAddress: () => USD.address,
       oracleNodeId: () => formatBytes32String(''),
       rewardDistributorAddress: () => rewardDistributors[0],
       getPrice: () => Promise.resolve(bn(1)),
@@ -365,7 +368,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // Ensure core system has enough capacity to deposit this collateral for perp market x.
     for (const collateral of allCollaterals) {
       for (const market of markets) {
-        await systems.Core.connect(getOwner()).configureMaximumMarketCollateral(
+        await Core.connect(getOwner()).configureMaximumMarketCollateral(
           market.marketId(),
           collateral.synthAddress(),
           constants.MaxUint256
@@ -375,16 +378,9 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     collaterals = allCollaterals;
     collateralsWithoutSusd = nonSusdCollaterals;
-  });
 
-  let keeper: Signer;
-  let keeper2: Signer;
-  let keeper3: Signer;
-  let endorsedKeeper: Signer;
-  const traders: { signer: Signer; accountId: number }[] = [];
+    // Configure keepers and traders.
 
-  before('configure traders & keepers', async () => {
-    const { PerpMarketProxy } = systems;
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
     // always reserved as the owner but everything else is free game.
     //
@@ -422,7 +418,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     }
 
     // Reconfigure global market - keeper
-    await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration({
+    await PerpMarketProxy.connect(getOwner()).setMarketConfiguration({
       ...args.global,
       // Replace the mocked endorsedKeeper with a real designated endorsed keeper.
       keeperLiquidationEndorsed: await endorsedKeeper.getAddress(),
