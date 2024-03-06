@@ -2,7 +2,7 @@
 // For license information, see https://github.com/OffchainLabs/nitro-contracts/blob/main/LICENSE
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity >=0.4.21 <0.9.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 /// @title Provides insight into the cost of using the chain.
 /// @notice These methods have been adjusted to account for Nitro's heavy use of calldata compression.
@@ -20,10 +20,9 @@ interface ArbGasInfo {
     ///            per ArbGas congestion,
     ///            per ArbGas total
     ///        )
-    function getPricesInWeiWithAggregator(address aggregator)
-        external
-        view
-        returns (uint256, uint256, uint256, uint256, uint256, uint256);
+    function getPricesInWeiWithAggregator(
+        address aggregator
+    ) external view returns (uint256, uint256, uint256, uint256, uint256, uint256);
 
     /// @notice Get gas prices. Uses the caller's preferred aggregator, or the default if
     /// the caller doesn't have a preferred one.
@@ -36,11 +35,16 @@ interface ArbGasInfo {
     ///            per ArbGas congestion,
     ///            per ArbGas total
     ///        )
-    function getPricesInWei() external view returns (uint256, uint256, uint256, uint256, uint256, uint256);
+    function getPricesInWei()
+        external
+        view
+        returns (uint256, uint256, uint256, uint256, uint256, uint256);
 
     /// @notice Get prices in ArbGas for the supplied aggregator
     /// @return (per L2 tx, per L1 calldata byte, per storage allocation)
-    function getPricesInArbGasWithAggregator(address aggregator) external view returns (uint256, uint256, uint256);
+    function getPricesInArbGasWithAggregator(
+        address aggregator
+    ) external view returns (uint256, uint256, uint256);
 
     /// @notice Get prices in ArbGas. Assumes the callers preferred validator, or the default
     /// if caller doesn't have a preferred one.
