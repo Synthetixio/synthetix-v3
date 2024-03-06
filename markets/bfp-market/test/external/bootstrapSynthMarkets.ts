@@ -56,7 +56,8 @@ export function bootstrapSynthMarkets(
         synthAddress: string,
         synth: SynthRouter;
 
-      before('create price nodes', async () => {
+      before('spot market bootstrap', async () => {
+        // create price nodes
         const buyPriceNodeResult = await createOracleNode(
           r.signers()[0],
           buyPrice,
@@ -71,9 +72,8 @@ export function bootstrapSynthMarkets(
         buyAggregator = buyPriceNodeResult.aggregator;
         sellNodeId = sellPriceNodeResult.oracleNodeId;
         sellAggregator = sellPriceNodeResult.aggregator;
-      });
 
-      before('register synth', async () => {
+        // register synth
         marketId = await contracts.SpotMarket.callStatic.createSynth(
           name,
           token,
@@ -90,9 +90,8 @@ export function bootstrapSynthMarkets(
 
         synthAddress = await contracts.SpotMarket.getSynth(marketId);
         synth = contracts.Synth(synthAddress);
-      });
 
-      before('delegate collateral to market from pool', async () => {
+        // delegate collateral to market from pool.
         await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
           {
             marketId,
@@ -100,9 +99,8 @@ export function bootstrapSynthMarkets(
             maxDebtShareValueD18: bn(1),
           },
         ]);
-      });
 
-      before('allow synth as collateral in system', async () => {
+        // allow synth as collateral in system.
         const tokenAddress = await contracts.SpotMarket.getSynth(marketId);
         await r
           .systems()

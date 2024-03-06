@@ -104,7 +104,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     extras: () => getExtras(),
   };
 
-  before('load contracts', () => {
+  before('load core and perp contracts', () => {
     systems = {
       Account: getContract('PerpAccountProxy'),
       PerpMarketProxy: getContract('PerpMarketProxy'),
@@ -183,7 +183,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   let collaterals: PerpCollateral[];
   let collateralsWithoutSusd: PerpCollateral[];
 
-  before('initial bootstrap', async () => {
+  before('spot market bootstrap', async () => {
     // Configure global markets.
     await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
 
@@ -260,7 +260,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     );
   });
 
-  before('configure margin collaterals and their prices', async () => {
+  before('configure margin collaterals & prices', async () => {
     const { Core, PerpMarketProxy } = systems;
     const synths = getConfiguredSynths();
 
