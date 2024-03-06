@@ -186,7 +186,7 @@ library Margin {
 
         // Zero size means there are no running sums to adjust margin by.
         return
-            marginAdjustements = position.size == 0
+            position.size == 0
                 ? -(accountMargin.debtUsd.toInt())
                 : position.getPricePnl(price) +
                     position.getAccruedFunding(market, price) -
