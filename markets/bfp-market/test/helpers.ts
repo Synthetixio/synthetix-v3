@@ -184,8 +184,7 @@ export const getPythPriceData = async (
     pythPrice,
     priceConfidence,
     publishTime ?? Math.floor(Date.now() / 1000),
-    // ts-expect-error
-    0 // Misaligned types due to PythMock types not having compiled.
+    0
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };
