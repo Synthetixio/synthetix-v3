@@ -1,23 +1,45 @@
-name = "rewards-dsitributor"
-version = "<%= package.version %>"
+name = "synthetix-rewards-distributor"
+version = "0.0.2"
 description = "Rewards distributor for Core Synthetix v3"
-keywords = ["rewards", "synthetix"]
 
 [setting.salt]
 defaultValue = "rewards"
 
 [setting.rewardManager]
-defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-description = "Initialization value for the reward manager (core proxy)"
+# CoreProxy
+defaultValue = "0x32C222A9A159782aFD7529c87FA34b96CA72C696"
+description = "Reward manager address"
 
-[setting.token]
-defaultValue = "0x2E5ED97596a8368EB9E44B1f3F25B2E813845303"
-description = "Address of the distributed token"
+[setting.poolId]
+# Spartan Council pool on Base Mainnet
+defaultValue = "1"
+description = "Associated Pool ID"
 
-[setting.distributorName]
+[setting.collateralType]
+# USDC on Base Mainnet
+defaultValue = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+description = "Token address of the pool collateral"
+
+[setting.payoutToken]
+# SNX on Base Mainnet
+defaultValue = "0x22e6966B799c4D5B13BE962E1D117b56327FDa66"
+description = "Rewards token address"
+
+[setting.payoutTokenDecimals]
+defaultValue = "18"
+description = "Decimals of the payout token"
+
+[setting.name]
 defaultValue = "Rewards Distributor V3"
-description = "Initialization value for the rewards distributor"
+description = "Rewards distributor name"
 
 [contract.RewardsDistributor]
 artifact = "RewardsDistributor"
-args = ["<%= settings.rewardManager %>", "<%= settings.token %>", "<%= settings.distributorName %>"]
+args = [
+    "<%= settings.rewardManager %>",
+    "<%= settings.poolId %>",
+    "<%= settings.collateralType %>",
+    "<%= settings.payoutToken %>",
+    "<%= settings.payoutTokenDecimals %>",
+    "<%= settings.name %>",
+]
