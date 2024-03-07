@@ -209,6 +209,9 @@ jobs:
             - "markets/bfp-market/cache"
             - "markets/bfp-market/typechain-types"
 
+            - "auxiliary/ArbitrumGasPriceOracle/artifacts"
+            - "auxiliary/ArbitrumGasPriceOracle/cache"
+            - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
             - "auxiliary/BuybackSnx/artifacts"
             - "auxiliary/BuybackSnx/cache"
             - "auxiliary/BuybackSnx/typechain-types"
