@@ -100,111 +100,114 @@ export const bootstrapPerpsMarkets = (
     ]);
   });
 
-  const perpsMarkets: PerpsMarkets = data.map(
-    ({
-      requestedMarketId: marketId,
-      name,
-      token,
-      price,
-      orderFees,
-      fundingParams,
-      liquidationParams,
-      maxMarketSize,
-      maxMarketValue,
-      lockedOiRatioD18,
-      settlementStrategy,
-    }) => {
+  let perpsMarkets: PerpsMarkets;
+
+  before(async () => {
+    perpsMarkets = [];
+
+    for await (const item of data) {
+      const {
+        requestedMarketId: marketId,
+        name,
+        token,
+        price,
+        orderFees,
+        fundingParams,
+        liquidationParams,
+        maxMarketSize,
+        maxMarketValue,
+        lockedOiRatioD18,
+        settlementStrategy,
+      } = item;
+
       let aggregator: MockPythExternalNode;
       let strategyId: ethers.BigNumber;
 
-      before(async () => {
-        // create perps price nodes
-        const results = await createPythNode(r.owner(), price, contracts.OracleManager);
-        aggregator = results.aggregator;
+      // create perps price nodes
+      const results = await createPythNode(r.owner(), price, contracts.OracleManager);
+      aggregator = results.aggregator;
 
-        // create perps market
-        await contracts.PerpsMarket.createMarket(marketId, name, token);
-        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(
-          marketId,
-          results.oracleNodeId,
-          STRICT_PRICE_TOLERANCE
-        );
+      // create perps market
+      await contracts.PerpsMarket.createMarket(marketId, name, token);
+      await contracts.PerpsMarket.connect(r.owner()).updatePriceData(
+        marketId,
+        results.oracleNodeId,
+        STRICT_PRICE_TOLERANCE
+      );
 
-        // set funding parameters
-        await contracts.PerpsMarket.connect(r.owner()).setFundingParameters(
-          marketId,
-          fundingParams ? fundingParams.skewScale : bn(1_000_000),
-          fundingParams ? fundingParams.maxFundingVelocity : 0
-        );
+      // set funding parameters
+      await contracts.PerpsMarket.connect(r.owner()).setFundingParameters(
+        marketId,
+        fundingParams ? fundingParams.skewScale : bn(1_000_000),
+        fundingParams ? fundingParams.maxFundingVelocity : 0
+      );
 
-        // set max market value
-        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
-          marketId,
+      // set max market value
+      await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
+        marketId,
           maxMarketSize ? maxMarketSize : bn(10_000_000)
         );
         await contracts.PerpsMarket.connect(r.owner()).setMaxMarketValue(
           marketId,
-          maxMarketValue ? maxMarketValue : 0
+        maxMarketValue ? maxMarketValue : 0
+      );
+
+      // set fees
+      if (orderFees) {
+        await contracts.PerpsMarket.connect(r.owner()).setOrderFees(
+          marketId,
+          orderFees.makerFee,
+          orderFees.takerFee
+        );
+      }
+
+      if (liquidationParams) {
+        // 'set liquidation parameters
+        await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
+          marketId,
+          liquidationParams.initialMarginFraction,
+          liquidationParams.minimumInitialMarginRatio,
+          liquidationParams.maintenanceMarginScalar,
+          liquidationParams.liquidationRewardRatio,
+          liquidationParams.minimumPositionMargin
         );
 
-        // set fees
-        if (orderFees) {
-          await contracts.PerpsMarket.connect(r.owner()).setOrderFees(
-            marketId,
-            orderFees.makerFee,
-            orderFees.takerFee
-          );
-        }
+        await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
+          marketId,
+          liquidationParams.maxLiquidationLimitAccumulationMultiplier,
+          liquidationParams.maxSecondsInLiquidationWindow,
+          liquidationParams.maxLiquidationPd ?? 0,
+          liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
+        );
+      }
 
-        if (liquidationParams) {
-          // 'set liquidation parameters
-          await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
-            marketId,
-            liquidationParams.initialMarginFraction,
-            liquidationParams.minimumInitialMarginRatio,
-            liquidationParams.maintenanceMarginScalar,
-            liquidationParams.liquidationRewardRatio,
-            liquidationParams.minimumPositionMargin
-          );
+      if (lockedOiRatioD18) {
+        // set locked oi percent
+        await contracts.PerpsMarket.connect(r.owner()).setLockedOiRatio(marketId, lockedOiRatioD18);
+      }
 
-          await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
-            marketId,
-            liquidationParams.maxLiquidationLimitAccumulationMultiplier,
-            liquidationParams.maxSecondsInLiquidationWindow,
-            liquidationParams.maxLiquidationPd ?? 0,
-            liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
-          );
-        }
+      // create default settlement strategy
+      const strategy = {
+        ...DEFAULT_SETTLEMENT_STRATEGY,
+        ...(settlementStrategy ?? {}),
+        priceVerificationContract: contracts.MockPythERC7412Wrapper.address,
+      };
 
-        if (lockedOiRatioD18) {
-          // set locked oi percent
-          await contracts.PerpsMarket.connect(r.owner()).setLockedOiRatio(
-            marketId,
-            lockedOiRatioD18
-          );
-        }
+      // the first call is static to get strategyId
+      strategyId = await contracts.PerpsMarket.connect(r.owner()).callStatic.addSettlementStrategy(
+        marketId,
+        strategy
+      );
 
-        // create default settlement strategy
-        const strategy = {
-          ...DEFAULT_SETTLEMENT_STRATEGY,
-          ...(settlementStrategy ?? {}),
-          priceVerificationContract: contracts.MockPythERC7412Wrapper.address,
-        };
-        // first call is static to get strategyId
-        strategyId = await contracts.PerpsMarket.connect(
-          r.owner()
-        ).callStatic.addSettlementStrategy(marketId, strategy);
+      await contracts.PerpsMarket.connect(r.owner()).addSettlementStrategy(marketId, strategy);
 
-        await contracts.PerpsMarket.connect(r.owner()).addSettlementStrategy(marketId, strategy);
-      });
-
-      return {
+      perpsMarkets.push({
         marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
         aggregator: () => aggregator,
         strategyId: () => strategyId,
-      };
+      });
     }
-  );
+  });
 
   return {
     ...r,
