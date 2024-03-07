@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
-import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 

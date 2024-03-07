@@ -1,23 +1,24 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
-import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -433,7 +434,7 @@ contract MarginModule is IMarginModule {
         }
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
 
-        for (uint i = 0; i < runtime.lengthBefore; ) {
+        for (uint256 i = 0; i < runtime.lengthBefore; ) {
             uint128 synthMarketId = runtime.previousSupportedSynthMarketIds[i];
 
             // Removing a collateral with a non-zero deposit amount is _not_ allowed. To wind down a collateral,
@@ -544,6 +545,19 @@ contract MarginModule is IMarginModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function getNetAssetValueWithPrice(
+        uint128 accountId,
+        uint128 marketId,
+        uint256 price
+    ) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return Margin.getNetAssetValue(accountId, market, price);
     }
 
     /**

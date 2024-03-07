@@ -1,10 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -16,8 +17,9 @@ import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -41,6 +43,8 @@ contract OrderModule is IOrderModule {
         int256 pnl;
         uint256 fillPrice;
         uint128 accountDebt;
+        uint128 updatedMarketSize;
+        int128 updatedMarketSkew;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
@@ -60,17 +64,18 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev A stale order is one where time passed is max age or older (>=).
+     * @dev Returns true/false for both order staleness and readiness.
+     *
+     * A stale order is one where time passed is max age or older (>=).
+     * A ready order is one where time that has passed must be at least the minimum order age (>=).
      */
-    function isOrderStale(uint256 commitmentTime, uint256 maxOrderAge) private view returns (bool) {
-        return block.timestamp - commitmentTime >= maxOrderAge;
-    }
-
-    /**
-     * @dev Amount of time that has passed must be at least the minimum order age (>=).
-     */
-    function isOrderReady(uint256 commitmentTime, uint256 minOrderAge) private view returns (bool) {
-        return block.timestamp - commitmentTime >= minOrderAge;
+    function isOrderStaleOrReady(
+        uint256 commitmentTime,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private view returns (bool isStale, bool isReady) {
+        uint256 timestamp = block.timestamp;
+        isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
+        isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
 
     /**
@@ -81,14 +86,13 @@ contract OrderModule is IOrderModule {
         uint256 commitmentTime,
         Position.TradeParams memory params
     ) private view {
-        if (isOrderStale(commitmentTime, globalConfig.maxOrderAge)) {
+        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
+        if (isStale) {
             revert ErrorUtil.OrderStale();
         }
-        if (!isOrderReady(commitmentTime, globalConfig.minOrderAge)) {
+        if (!isReady) {
             revert ErrorUtil.OrderNotReady();
         }
-
-        // Do not accept zero prices.
         if (params.oraclePrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
@@ -269,17 +273,12 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        // NOTE: It's critical this step to parse and update Pyth prices is performed at the beginning of settlement.
-        //
-        // There are downstream operations both within this market but also in other markets (that share the same oracle)
-        // which rely on the most recent price available for access.
         runtime.pythPrice = PythUtil.parsePythPrice(
             globalConfig,
             marketConfig,
             order.commitmentTime,
             priceUpdateData
         );
-
         runtime.fillPrice = Order.getFillPrice(
             market.skew,
             marketConfig.skewScale,
@@ -297,7 +296,6 @@ contract OrderModule is IOrderModule {
         );
 
         validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.params);
-
         recomputeFunding(market, runtime.pythPrice);
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
@@ -322,10 +320,12 @@ contract OrderModule is IOrderModule {
             marginValues
         );
 
-        market.skew = market.skew + runtime.trade.newPosition.size - position.size;
-        market.size = (market.size.to256() +
+        runtime.updatedMarketSize = (market.size.to256() +
             MathUtil.abs(runtime.trade.newPosition.size) -
             MathUtil.abs(position.size)).to128();
+        runtime.updatedMarketSkew = market.skew + runtime.trade.newPosition.size - position.size;
+        market.skew = runtime.updatedMarketSkew;
+        market.size = runtime.updatedMarketSize;
 
         // We want to validateTrade and update market size before we recompute utilisation
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilisation rate up to this point
@@ -341,8 +341,11 @@ contract OrderModule is IOrderModule {
                 market,
                 // What is `newMarginUsd`?
                 //
-                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding, accruedUtilisation and prev fees taken into account.
-                // And We're using collateral and not marginUsd as we dont want price changes to be deducted yet.
+                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl (from entry price changes), accruedFunding,
+                // accruedUtilisation, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
+                // as we dont want price impact to be deducted yet.
+                //
+                // TLDR; This is basically the `total realised PnL` for this position.
                 runtime.trade.newMarginUsd.toInt() - marginValues.collateralUsd.toInt()
             );
 
@@ -374,6 +377,8 @@ contract OrderModule is IOrderModule {
             runtime.accountDebt
         );
 
+        emit MarketSizeUpdated(marketId, runtime.updatedMarketSize, runtime.updatedMarketSkew);
+
         // Validate and perform the hook post settlement execution.
         validateOrderHooks(order.hooks);
         executeOrderHooks(accountId, marketId, order, runtime.trade.newPosition, runtime.fillPrice);
@@ -388,17 +393,20 @@ contract OrderModule is IOrderModule {
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
         Order.Data storage order = market.orders[accountId];
+
         if (order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound();
         }
 
-        if (!isOrderStale(order.commitmentTime, PerpMarketConfiguration.load().maxOrderAge)) {
+        uint256 commitmentTime = order.commitmentTime;
+        (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
+
+        if (!isStale) {
             revert ErrorUtil.OrderNotStale();
         }
 
-        emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, 0, commitmentTime);
         delete market.orders[accountId];
     }
 
@@ -413,33 +421,33 @@ contract OrderModule is IOrderModule {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
-
         Order.Data storage order = market.orders[accountId];
 
         // No order available to settle.
         if (order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound();
         }
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        if (!isOrderReady(order.commitmentTime, globalConfig.minOrderAge)) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 commitmentTime = order.commitmentTime;
+        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
+
+        if (!isReady) {
             revert ErrorUtil.OrderNotReady();
         }
-        bool isAccountOwner = msg.sender == account.rbac.owner;
 
-        // If order is stale allow cancelation from owner regardless of price.
-        if (isOrderStale(order.commitmentTime, globalConfig.maxOrderAge)) {
-            // Only allow owner to clear stale orders
-            if (!isAccountOwner) {
-                revert ErrorUtil.OrderStale();
-            }
-        } else {
+        // Only do the price divergence check for non stale orders. All stale orders are allowed to be canceled.
+        if (!isStale) {
+            PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(
+                marketId
+            );
+
             // Order is within settlement window. Check if price tolerance has exceeded.
             uint256 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
                 marketConfig,
-                order.commitmentTime,
+                commitmentTime,
                 priceUpdateData
             );
             uint256 fillPrice = Order.getFillPrice(
@@ -458,19 +466,20 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        uint256 keeperFee = isAccountOwner
+        // If `isAccountOwner` then 0 else chargeFee.
+        uint256 keeperFee = msg.sender == account.rbac.owner
             ? 0
             : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).updateAccountDebtAndCollateral(
                 market,
                 -keeperFee.toInt()
             );
-
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit OrderCanceled(accountId, marketId, keeperFee, order.commitmentTime);
+        emit OrderCanceled(accountId, marketId, keeperFee, commitmentTime);
         delete market.orders[accountId];
     }
 
@@ -482,10 +491,32 @@ contract OrderModule is IOrderModule {
     function getOrderDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (Order.Data memory) {
+    ) external view returns (IOrderModule.OrderDigest memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return market.orders[accountId];
+        Order.Data storage order = market.orders[accountId];
+
+        // no-op rather than revert.
+        if (order.sizeDelta == 0) {
+            IOrderModule.OrderDigest memory emptyOrderDigest;
+            return emptyOrderDigest;
+        }
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 commitmentTime = order.commitmentTime;
+        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
+
+        return
+            IOrderModule.OrderDigest(
+                order.sizeDelta,
+                commitmentTime,
+                order.limitPrice,
+                order.keeperFeeBufferUsd,
+                order.hooks,
+                isStale,
+                isReady
+            );
     }
 
     /**

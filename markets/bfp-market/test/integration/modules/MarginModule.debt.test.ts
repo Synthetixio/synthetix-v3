@@ -1,6 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert';
 import Wei, { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
 import { calcPnl, calcTransactionCostInUsd } from '../../calculations';
@@ -18,7 +19,6 @@ import {
   setBaseFeePerGas,
   withExplicitEvmMine,
 } from '../../helpers';
-import assert from 'assert';
 
 describe('MarginModule Debt', async () => {
   const bs = bootstrap(genBootstrap());
@@ -30,7 +30,7 @@ describe('MarginModule Debt', async () => {
     it('should revert when 0 amount', async () => {
       const { PerpMarketProxy } = systems();
 
-      await assertRevert(PerpMarketProxy.payDebt(1, 2, 0), 'ZeroAmount');
+      await assertRevert(PerpMarketProxy.payDebt(1, 2, 0), 'ZeroAmount', PerpMarketProxy);
     });
 
     it('should revert if account does not exists or missing permission', async () => {
@@ -38,7 +38,8 @@ describe('MarginModule Debt', async () => {
       const invalidAccountId = genNumber(42069, 50000);
       await assertRevert(
         PerpMarketProxy.payDebt(invalidAccountId, 2, 1),
-        `PermissionDenied("${invalidAccountId}"`
+        `PermissionDenied("${invalidAccountId}"`,
+        PerpMarketProxy
       );
     });
 
@@ -49,7 +50,8 @@ describe('MarginModule Debt', async () => {
       const invalidMarketId = genNumber(42069, 50000);
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, invalidMarketId, 1),
-        `MarketNotFound("${invalidMarketId}")`
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
       );
     });
 
@@ -59,7 +61,8 @@ describe('MarginModule Debt', async () => {
       const { trader, marketId } = await depositMargin(bs, genTrader(bs));
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, bn(100)),
-        'NoDebt()'
+        'NoDebt()',
+        PerpMarketProxy
       );
     });
 
@@ -84,7 +87,8 @@ describe('MarginModule Debt', async () => {
       await commitAndSettle(bs, marketId, trader, closeOrder);
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, MaxUint128),
-        'InsufficientAllowance'
+        'InsufficientAllowance',
+        PerpMarketProxy
       );
     });
 
@@ -128,7 +132,8 @@ describe('MarginModule Debt', async () => {
           marketId,
           closeOrderEvent.args.accountDebt
         ),
-        'InsufficientBalance'
+        'InsufficientBalance',
+        PerpMarketProxy
       );
     });
 
@@ -335,15 +340,18 @@ describe('MarginModule Debt', async () => {
           trader.accountId,
           invalidMarketId
         ),
-        `MarketNotFound("${invalidMarketId}")`
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
       );
     });
+
     it('should revert on invalid account id', async () => {
       const { PerpMarketProxy } = systems();
       const invalidAccountId = genNumber(42069, 50000);
       await assertRevert(
         PerpMarketProxy.isMarginLiquidatable(invalidAccountId, 2),
-        `AccountNotFound("${invalidAccountId}"`
+        `AccountNotFound("${invalidAccountId}"`,
+        PerpMarketProxy
       );
     });
 
@@ -420,15 +428,18 @@ describe('MarginModule Debt', async () => {
           trader.accountId,
           invalidMarketId
         ),
-        `MarketNotFound("${invalidMarketId}")`
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
       );
     });
+
     it('should revert on invalid account id', async () => {
       const { PerpMarketProxy } = systems();
       const invalidAccountId = genNumber(42069, 50000);
       await assertRevert(
         PerpMarketProxy.liquidateMarginOnly(invalidAccountId, 2),
-        `AccountNotFound("${invalidAccountId}"`
+        `AccountNotFound("${invalidAccountId}"`,
+        PerpMarketProxy
       );
     });
 
@@ -448,9 +459,11 @@ describe('MarginModule Debt', async () => {
 
       await assertRevert(
         PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
-        `PositionFound("${trader.accountId}", "${marketId}")`
+        `PositionFound("${trader.accountId}", "${marketId}")`,
+        PerpMarketProxy
       );
     });
+
     it('should revert if margin cant be liquidated', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -473,7 +486,8 @@ describe('MarginModule Debt', async () => {
 
       await assertRevert(
         PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
-        `CannotLiquidateMargin()`
+        `CannotLiquidateMargin()`,
+        PerpMarketProxy
       );
     });
 

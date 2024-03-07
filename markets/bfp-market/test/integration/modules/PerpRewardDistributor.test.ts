@@ -13,7 +13,7 @@ import {
 } from '../../generators';
 import { withExplicitEvmMine } from '../../helpers';
 import { IPerpRewardDistributorFactoryModule } from '../../../typechain-types/contracts/interfaces/IPerpRewardDistributorFactoryModule';
-import { IPerpRewardDistributor__factory } from '../../../typechain-types';
+import { IPerpRewardDistributor__factory } from '../../../typechain-types/factories/contracts/interfaces/IPerpRewardDistributor__factory';
 
 describe('PerpRewardDistributor', () => {
   const bs = bootstrap(genBootstrap());
@@ -86,7 +86,8 @@ describe('PerpRewardDistributor', () => {
       const from = traders()[0].signer;
       await assertRevert(
         PerpRewardDistributor.connect(from).setShouldFailPayout(genBoolean()),
-        `Unauthorized("${await from.getAddress()}")`
+        `Unauthorized("${await from.getAddress()}")`,
+        systems().Core
       );
     });
   });
@@ -127,11 +128,12 @@ describe('PerpRewardDistributor', () => {
           bn(0)
         ),
         `InvalidParameter("poolId", "Unexpected poolId")`,
-        PerpRewardDistributor
+        pool().collateral()
       );
     });
 
     it('should revert when not reward manager', async () => {
+      const { Core } = systems();
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
@@ -150,7 +152,7 @@ describe('PerpRewardDistributor', () => {
           bn(0)
         ),
         `Unauthorized("${await from.signer.getAddress()}")`,
-        PerpRewardDistributor
+        Core
       );
     });
   });

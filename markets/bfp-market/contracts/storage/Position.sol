@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
-import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Order} from "./Order.sol";
@@ -10,6 +9,8 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 library Position {
     using DecimalMath for uint256;
@@ -69,7 +70,7 @@ library Position {
         uint256 entryUtilizationAccrued;
         // The fill price at which this position was settled with.
         uint256 entryPrice;
-        // Accured static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
+        // Accrued static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
         uint256 accruedFeesUsd;
     }
 
@@ -227,7 +228,7 @@ library Position {
                 revert ErrorUtil.PositionFlagged();
             }
 
-            // Detearmine if the current (previous) position can be immediately liquidated.
+            // Determine if the current (previous) position can be immediately liquidated.
             if (
                 isLiquidatable(
                     currentPosition,
@@ -261,20 +262,21 @@ library Position {
             orderFee + keeperFee
         );
 
-        // We care about discount as as we're verifying for liquidation.
-        // NOTE: marginUsd looks at the current position's overall PnL but it does not consider the post settled
-        // incurred fees hence get `nextMarginUsd` with fees deducted.
-        uint256 nextMarginUsd = getNextMarginUsd(
-            marginValues.discountedMarginUsd,
-            orderFee,
-            keeperFee
-        );
-
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
+            // We need discounted collateral as as we're verifying for liquidation here.
+            //
+            // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
+            // incurred fees hence get `getNextMarginUsd` -fees.
+            uint256 nextMarginUsd = getNextMarginUsd(
+                marginValues.discountedMarginUsd,
+                orderFee,
+                keeperFee
+            );
+
             // Check new position initial margin validations.
             validateNextPositionIm(
                 marketConfig,
@@ -300,8 +302,7 @@ library Position {
                 newPosition,
                 orderFee,
                 keeperFee,
-                // For everything else, we actually need to use the unadjusted marginUsd as the collateral discount is only
-                // applicable for liquidation related checks.
+                // NOTE: Notice the lack of discounted margin.
                 getNextMarginUsd(marginValues.marginUsd, orderFee, keeperFee)
             );
     }
@@ -601,7 +602,7 @@ library Position {
     /**
      * @dev Returns the notional profit or loss based on current price and entry price.
      */
-    function getPnl(Position.Data storage self, uint256 price) internal view returns (int256) {
+    function getPricePnl(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {
             return 0;
         }

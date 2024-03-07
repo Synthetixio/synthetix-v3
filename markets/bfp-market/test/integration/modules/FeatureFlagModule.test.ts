@@ -40,7 +40,8 @@ describe('FeatureFlagModule', () => {
     );
     await assertRevert(
       PerpMarketProxy['createAccount()'](),
-      `FeatureUnavailable("${formatBytes32String('createAccount')}")`
+      `FeatureUnavailable("${formatBytes32String('createAccount')}")`,
+      PerpMarketProxy
     );
     await assertEvent(
       await PerpMarketProxy.enableAllFeatures(),
@@ -59,7 +60,11 @@ describe('FeatureFlagModule', () => {
       provider()
     );
     await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
-    await assertRevert(PerpMarketProxy['createAccount()'](), `FeatureUnavailable("${feature}")`);
+    await assertRevert(
+      PerpMarketProxy['createAccount()'](),
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
+    );
   });
 
   it('should disable deposit', async () => {
@@ -85,7 +90,8 @@ describe('FeatureFlagModule', () => {
         collateral.synthMarketId(),
         amountDelta
       ),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -110,14 +116,16 @@ describe('FeatureFlagModule', () => {
         collateral.synthMarketId(),
         collateralDepositAmount.mul(-1)
       ),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
     await assertRevert(
       PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
         trader.accountId,
         market.marketId()
       ),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -144,7 +152,8 @@ describe('FeatureFlagModule', () => {
         order.keeperFeeBufferUsd,
         [ADDRESS0]
       ),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -170,7 +179,8 @@ describe('FeatureFlagModule', () => {
       PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
         value: updateFee,
       }),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -196,11 +206,13 @@ describe('FeatureFlagModule', () => {
       PerpMarketProxy.connect(trader.signer).cancelOrder(trader.accountId, marketId, updateData, {
         value: updateFee,
       }),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
     await assertRevert(
       PerpMarketProxy.connect(trader.signer).cancelStaleOrder(trader.accountId, marketId),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -225,7 +237,8 @@ describe('FeatureFlagModule', () => {
     await commitAndSettle(bs, marketId, trader, closeOrder);
     await assertRevert(
       PerpMarketProxy.payDebt(trader.accountId, marketId, bn(1)),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -242,7 +255,8 @@ describe('FeatureFlagModule', () => {
 
     await assertRevert(
       PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -275,7 +289,8 @@ describe('FeatureFlagModule', () => {
 
     await assertRevert(
       PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 
@@ -308,7 +323,8 @@ describe('FeatureFlagModule', () => {
     await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
     await assertRevert(
       PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
-      `FeatureUnavailable("${feature}")`
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
     );
   });
 });

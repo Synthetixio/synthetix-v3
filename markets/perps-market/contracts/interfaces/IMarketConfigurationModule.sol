@@ -320,11 +320,15 @@ interface IMarketConfigurationModule {
      * @notice Gets the max size of an specific market.
      * @param marketId id of the market.
      * @return maxMarketSize the max market size in market asset units.
+     */
+    function getMaxMarketSize(uint128 marketId) external view returns (uint256 maxMarketSize);
+
+    /**
+     * @notice Gets the max size (in value) of an specific market.
+     * @param marketId id of the market.
      * @return maxMarketValue the max market size in market USD value.
      */
-    function getMaxMarketSize(
-        uint128 marketId
-    ) external view returns (uint256 maxMarketSize, uint256 maxMarketValue);
+    function getMaxMarketValue(uint128 marketId) external view returns (uint256 maxMarketValue);
 
     /**
      * @notice Gets the order fees of a market.

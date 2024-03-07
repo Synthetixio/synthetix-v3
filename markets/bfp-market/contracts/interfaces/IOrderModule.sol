@@ -1,11 +1,23 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Order} from "../storage/Order.sol";
 
 interface IOrderModule is IBasePerpMarket {
+    // --- Structs --- //
+
+    struct OrderDigest {
+        int128 sizeDelta;
+        uint256 commitmentTime;
+        uint256 limitPrice;
+        uint256 keeperFeeBufferUsd;
+        address[] hooks;
+        bool isStale;
+        bool isReady;
+    }
+
     // --- Events --- //
 
     // @notice Emitted when an order is committed.
@@ -87,7 +99,7 @@ interface IOrderModule is IBasePerpMarket {
     function getOrderDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (Order.Data memory);
+    ) external view returns (IOrderModule.OrderDigest memory);
 
     /**
      * @notice Returns fees charged to open/close an order (along with a dynamic keeper fee).

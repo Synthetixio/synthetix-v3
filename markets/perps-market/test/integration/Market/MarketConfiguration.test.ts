@@ -415,8 +415,13 @@ describe('MarketConfiguration', () => {
   });
 
   it('get maxMarketSize', async () => {
-    const maxMarketSizes = await systems().PerpsMarket.getMaxMarketSize(marketId);
-    assertBn.equal(maxMarketSizes[0], fixture.maxMarketSize);
+    const maxMarketSize = await systems().PerpsMarket.getMaxMarketSize(marketId);
+    assertBn.equal(maxMarketSize, fixture.maxMarketSize);
+  });
+
+  it('get maxMarketValue', async () => {
+    const maxMarketValue = await systems().PerpsMarket.getMaxMarketValue(marketId);
+    assertBn.equal(maxMarketValue, fixture.maxMarketValue);
   });
 
   it('get orderFees', async () => {

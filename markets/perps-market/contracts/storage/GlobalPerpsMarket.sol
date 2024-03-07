@@ -80,7 +80,9 @@ library GlobalPerpsMarket {
             return (DecimalMath.UNIT_UINT128, 0, lockedCredit);
         }
 
-        rate = lockedCredit.divDecimal(delegatedCollateralValueInt.toUint()).to128();
+        delegatedCollateralValue = delegatedCollateralValueInt.toUint();
+
+        rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
     }
 
     function minimumCredit(

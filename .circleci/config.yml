@@ -130,7 +130,7 @@ commands:
                 https://api.github.com/repos/<< parameters.repo_slug >>/pulls \
                 -d '{
                   "title": "<< parameters.commit_message >>",
-                  "head": "<< parameters.branch_head >>", 
+                  "head": "<< parameters.branch_head >>",
                   "base": "<< parameters.branch_base >>"
                 }'
             else
@@ -156,6 +156,21 @@ jobs:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
 
+      - restore_cache:
+          keys:
+            - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
+            - testable-hardhat-cache-
+
+      - restore_cache:
+          keys:
+            - generated-testable-{{ .Environment.CIRCLE_SHA1 }}
+            - generated-testable-
+
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
+            - cannon-
+
       - run:
           name: "Generate testable contracts sources"
           command: yarn workspaces foreach --all --topological-dev --verbose run generate-testable
@@ -167,7 +182,9 @@ jobs:
 
       - run:
           name: "Build testable contracts"
-          command: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable
+          environment:
+            CANNON_REGISTRY_PRIORITY: "local"
+          command: yarn workspaces foreach --all --topological-dev --verbose run build-testable
 
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -188,7 +205,13 @@ jobs:
             - "markets/legacy-market/artifacts"
             - "markets/legacy-market/cache"
             - "markets/legacy-market/typechain-types"
+            - "markets/bfp-market/artifacts"
+            - "markets/bfp-market/cache"
+            - "markets/bfp-market/typechain-types"
 
+            - "auxiliary/ArbitrumGasPriceOracle/artifacts"
+            - "auxiliary/ArbitrumGasPriceOracle/cache"
+            - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
             - "auxiliary/BuybackSnx/artifacts"
             - "auxiliary/BuybackSnx/cache"
             - "auxiliary/BuybackSnx/typechain-types"
@@ -468,11 +491,11 @@ jobs:
                 --network "<< parameters.hardhatNetwork >>" \
                 --upgrade-from << parameters.cannonPackage >>@<< parameters.cannonPreset >> \
                 --impersonate << parameters.impersonate >> | tee deployment.log
-              
-            echo "grep '💥' deployment.log" 
+
+            echo "grep '💥' deployment.log"
             grep '💥' deployment.log
-              
-            echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log" 
+
+            echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log"
             if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
               echo "Proxy << parameters.proxy >> was modified"
               exit 1
@@ -580,9 +603,23 @@ jobs:
 workflows:
   version: 2.1
 
+  bfp:
+    when:
+      or:
+        - equal: ["bfp", << pipeline.git.branch >>]
+    jobs:
+      - lint
+      - build-testable
+      - test-contracts:
+          name: "test-bfp-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/bfp-market"
+          parallelism: 8
+
   tests:
     unless:
       or:
+        - equal: ["bfp", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
@@ -620,6 +657,12 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
+          parallelism: 8
+
+      - test-contracts:
+          name: "test-bfp-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/bfp-market"
           parallelism: 8
 
       #- test-contracts: TODO: enable when tests are fixed

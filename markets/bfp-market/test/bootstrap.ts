@@ -12,7 +12,7 @@ import {
 import { CollateralMock, SettlementHookMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
-import { ADDRESS0, SYNTHETIX_USD_MARKET_ID, sleep } from './helpers';
+import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
 import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
 import { GeneratedBootstrap } from './typed';
@@ -94,7 +94,17 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   before(restoreSnapshot);
 
   let systems: Systems;
-  before('load contracts', () => {
+
+  const getOwner = () => getSigners()[0];
+  const core = {
+    provider: () => getProvider(),
+    signers: () => getSigners(),
+    owner: () => getOwner(),
+    systems: () => systems,
+    extras: () => getExtras(),
+  };
+
+  before('load core and perp contracts', () => {
     systems = {
       Account: getContract('PerpAccountProxy'),
       PerpMarketProxy: getContract('PerpMarketProxy'),
@@ -104,7 +114,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
-      Synth: (address: string) => getContract('spotMarket.SynthRouter', address), // Misaligned types from spotMarket type compilation.
+      Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
       // Difference between this and `Collateral{2}Mock`?
       //
       // `Collateral{2}Mock` is defined by a `cannon.test.toml` which isn't available here. Both mocks below
@@ -120,15 +130,6 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       SettlementHook2Mock: getContract('SettlementHook2Mock'),
     };
   });
-
-  const getOwner = () => getSigners()[0];
-  const core = {
-    provider: () => getProvider(),
-    signers: () => getSigners(),
-    owner: () => getOwner(),
-    systems: () => systems,
-    extras: () => getExtras(),
-  };
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
   const stakedPool = createStakedPool(
@@ -152,6 +153,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       skewScale: bn(1_000_000),
     },
   ];
+
   const spotMarket = bootstrapSynthMarkets(
     _COLLATERALS_TO_CONFIGURE.map(({ initialPrice, name, skewScale }) => ({
       name,
@@ -163,82 +165,86 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     stakedPool
   );
 
-  before('wait for core bootstrap, pools, and synth markets...', async () => {
-    await sleep(1000);
-  });
-
   const getConfiguredSynths = () =>
     _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({
       ...collateral,
       synthMarket: spotMarket.synthMarkets()[i],
     }));
 
-  before(
-    'configure global market',
-    async () =>
-      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global)
-  );
-
   let ethOracleNodeId: string;
   let ethOracleAgg: AggregatorV3Mock;
-  before('configure eth/usd price oracle node', async () => {
+
+  const markets: {
+    oracleNodeId: () => BigNumber;
+    aggregator: () => AggregatorV3Mock;
+    marketId: () => BigNumber;
+  }[] = [];
+
+  let collaterals: PerpCollateral[];
+  let collateralsWithoutSusd: PerpCollateral[];
+
+  let keeper: Signer;
+  let keeper2: Signer;
+  let keeper3: Signer;
+  let endorsedKeeper: Signer;
+  const traders: { signer: Signer; accountId: number }[] = [];
+
+  before('perp market bootstrap', async () => {
+    const { Core, PerpMarketProxy, SettlementHookMock, SettlementHook2Mock, OracleManager, USD } =
+      systems;
+
+    // Configure global markets.
+    await PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
+
+    // Configure ETH/USD price oracle node.
     const { oracleNodeId, aggregator } = await createOracleNode(
       getOwner(),
       args.initialEthPrice,
-      systems.OracleManager
+      OracleManager
     );
-    await systems.PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
+    await PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
 
     ethOracleNodeId = oracleNodeId;
     ethOracleAgg = aggregator;
-  });
 
-  const markets = args.markets.map(({ name, initialPrice, specific }) => {
-    const readableName = utils.parseBytes32String(name);
-    let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
+    // Configure markets and their nodes.
+    for (const market of args.markets) {
+      const { name, initialPrice, specific } = market;
 
-    before(`provision market price oracle nodes - ${readableName}`, async () => {
       // The market has its own price e.g. ETH/USD. This oracle node is for that.
       //
       // NOTE: For testing simplicity, every market's oracle node is a Chainlink aggregator.
-      const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
+      const { oracleNodeId, aggregator } = await createOracleNode(
         getOwner(),
         initialPrice,
-        systems.OracleManager
+        OracleManager
       );
-      oracleNodeId = nodeId;
-      aggregator = agg as AggregatorV3Mock;
-    });
 
-    before(`provision market - ${readableName}`, async () => {
-      marketId = await systems.PerpMarketProxy.callStatic.createMarket({ name });
-      await systems.PerpMarketProxy.createMarket({ name });
-    });
+      // Create market.
+      const marketId = await PerpMarketProxy.callStatic.createMarket({ name });
+      await PerpMarketProxy.createMarket({ name });
 
-    before(`configure market - ${readableName}`, async () => {
-      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+      // Configure market.
+      await PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
         ...specific,
         // Override the generic supplied oracleNodeId with the one that was just created.
         oracleNodeId,
       });
-    });
+      markets.push({
+        oracleNodeId: () => oracleNodeId,
+        aggregator: () => aggregator,
+        marketId: () => marketId,
+      });
+    }
 
-    return {
-      oracleNodeId: () => oracleNodeId,
-      aggregator: () => aggregator,
-      marketId: () => marketId,
-    };
-  });
-
-  before('configure settlment hooks', async () => {
-    const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems;
+    // Configure settlement hooks.
     await PerpMarketProxy.setSettlementHookConfiguration({
       whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
       maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
     });
-  });
 
-  before(`delegate pool collateral to all markets equally`, async () => {
+    // Delegate pool collateral to all markets equally.
+    //
     // Spot market is configured incorrectly, only the last market gets delegated collateral.
     //
     // TODO: We should fix this in bootstrapSynthMarkets when merging into monorepo.
@@ -257,16 +263,12 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       weightD18: utils.parseEther('1'),
       maxDebtShareValueD18: utils.parseEther('1'),
     }));
-    await systems.Core.connect(getOwner()).setPoolConfiguration(
+    await Core.connect(getOwner()).setPoolConfiguration(
       stakedPool.poolId,
       spotMarketPoolConfig.concat(perpMarketPoolConfig)
     );
-  });
 
-  let collaterals: PerpCollateral[];
-  let collateralsWithoutSusd: PerpCollateral[];
-  before('configure margin collaterals and their prices', async () => {
-    const { Core, PerpMarketProxy } = systems;
+    // Configure margin collaterals and their prices.
     const synths = getConfiguredSynths();
 
     // Collaterals we want to configure for the perp market - prepended with sUSD configuration.
@@ -345,18 +347,14 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     //
     // NOTE: The system recognises sUSD as $1 so this sUsdAggregator is really just a stub but will never
     // be used in any capacity.
-    const { aggregator: sUsdAggregator } = await createOracleNode(
-      getOwner(),
-      bn(1),
-      systems.OracleManager
-    );
+    const { aggregator: sUsdAggregator } = await createOracleNode(getOwner(), bn(1), OracleManager);
     const sUsdCollateral: PerpCollateral = {
       name: 'sUSD',
       initialPrice: bn(1),
       max: sUsdMaxDepositAllowance,
-      contract: systems.USD,
+      contract: USD,
       synthMarketId: () => SYNTHETIX_USD_MARKET_ID,
-      synthAddress: () => systems.USD.address,
+      synthAddress: () => USD.address,
       oracleNodeId: () => formatBytes32String(''),
       rewardDistributorAddress: () => rewardDistributors[0],
       getPrice: () => Promise.resolve(bn(1)),
@@ -370,7 +368,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // Ensure core system has enough capacity to deposit this collateral for perp market x.
     for (const collateral of allCollaterals) {
       for (const market of markets) {
-        await systems.Core.connect(getOwner()).configureMaximumMarketCollateral(
+        await Core.connect(getOwner()).configureMaximumMarketCollateral(
           market.marketId(),
           collateral.synthAddress(),
           constants.MaxUint256
@@ -380,16 +378,9 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     collaterals = allCollaterals;
     collateralsWithoutSusd = nonSusdCollaterals;
-  });
 
-  let keeper: Signer;
-  let keeper2: Signer;
-  let keeper3: Signer;
-  let endorsedKeeper: Signer;
-  const traders: { signer: Signer; accountId: number }[] = [];
+    // Configure keepers and traders.
 
-  before('configure traders', async () => {
-    const { PerpMarketProxy } = systems;
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
     // always reserved as the owner but everything else is free game.
     //
@@ -425,17 +416,14 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
       traders.push({ signer, accountId });
     }
-  });
 
-  before(
-    'reconfigure global market - keeper',
-    async () =>
-      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration({
-        ...args.global,
-        // Replace the mocked endorsedKeeper with a real designated endorsed keeper.
-        keeperLiquidationEndorsed: await endorsedKeeper.getAddress(),
-      })
-  );
+    // Reconfigure global market - keeper
+    await PerpMarketProxy.connect(getOwner()).setMarketConfiguration({
+      ...args.global,
+      // Replace the mocked endorsedKeeper with a real designated endorsed keeper.
+      keeperLiquidationEndorsed: await endorsedKeeper.getAddress(),
+    });
+  });
 
   const restore = snapshotCheckpoint(core.provider);
 

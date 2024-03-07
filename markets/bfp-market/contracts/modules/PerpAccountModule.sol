@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
@@ -55,7 +55,6 @@ contract PerpAccountModule is IPerpAccountModule {
                 depositedCollaterals,
                 Margin.getMarginUsd(accountId, market, market.getOraclePrice()).collateralUsd,
                 accountMargin.debtUsd,
-                market.orders[accountId],
                 getPositionDigest(accountId, marketId)
             );
     }
