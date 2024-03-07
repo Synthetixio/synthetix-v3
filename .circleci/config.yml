@@ -606,7 +606,7 @@ workflows:
   bfp:
     when:
       or:
-        - equal: ["feature/the-bfp-merge", << pipeline.git.branch >>]
+        - equal: ["bfp", << pipeline.git.branch >>]
     jobs:
       - lint
       - build-testable
@@ -619,7 +619,7 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["feature/the-bfp-merge", << pipeline.git.branch >>]
+        - equal: ["bfp", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
