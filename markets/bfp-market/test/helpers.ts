@@ -120,6 +120,19 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   return gTrader;
 };
 
+export const withdrawAllCollateral = async (bs: Bs, trader: Trader, marketId: BigNumber) => {
+  const { systems, provider } = bs;
+  const { PerpMarketProxy } = systems();
+  const { collateralUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+  if (collateralUsd.gt(0)) {
+    await withExplicitEvmMine(
+      () =>
+        PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+      provider()
+    );
+  }
+};
+
 /** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
   { systems, owner }: Pick<Bs, 'systems' | 'owner'>,

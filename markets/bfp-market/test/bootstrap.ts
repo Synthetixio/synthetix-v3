@@ -27,6 +27,7 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   CollateralMockD8: CollateralMock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
+  Account: PerpAccountProxy;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
