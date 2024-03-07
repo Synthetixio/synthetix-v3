@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -109,6 +109,15 @@ interface IMarginModule is IBasePerpMarket {
         uint128 accountId,
         uint128 marketId
     ) external view returns (Margin.MarginValues memory);
+
+    /**
+     * @notice Returns the NAV of `account` and `marketId` given a `price`.
+     */
+    function getNetAssetValueWithPrice(
+        uint128 accountId,
+        uint128 marketId,
+        uint256 price
+    ) external view returns (uint256);
 
     /**
      * @notice Returns the discount adjusted oracle price based on `amount` of synth by `synthMarketId`.

@@ -23,6 +23,7 @@ This is a monorepo with the following folder structure and packages:
 │   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
 │   └── perps-market             // Market extension for perps.
 │   └── spot-market              // Market extension for spot synths.
+│   └── bfp-market               // Market extension for eth l1 perp.
 │
 ├── protocol                     // Core Synthetix protocol projects.
 │   ├── governance               // Governance contracts for on chain voting.

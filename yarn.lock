@@ -2435,6 +2435,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openzeppelin/contracts@npm:4.9.3":
+  version: 4.9.3
+  resolution: "@openzeppelin/contracts@npm:4.9.3"
+  checksum: 10/ce0a16a56a39b62d72370ac702bce1917096492442ff05de88521beda2c3f3935b93ee2b9a184614dd543a6181f2f0be10243f5a629be87aab284ade68c18320
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.6":
   version: 2.3.6
   resolution: "@peculiar/asn1-schema@npm:2.3.6"
@@ -2885,6 +2892,31 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/bfp-market@workspace:markets/bfp-market":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/bfp-market@workspace:markets/bfp-market"
+  dependencies:
+    "@openzeppelin/contracts": "npm:4.9.3"
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/main": "workspace:*"
+    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/router": "npm:3.3.7"
+    "@synthetixio/spot-market": "workspace:*"
+    "@synthetixio/wei": "npm:^2.74.4"
+    "@types/lodash": "npm:^4.14.199"
+    "@types/mocha-each": "npm:2.0.1"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
+    lodash: "npm:^4.17.21"
+    mocha-each: "npm:2.0.1"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
@@ -3543,6 +3575,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash@npm:^4.14.199":
+  version: 4.14.202
+  resolution: "@types/lodash@npm:4.14.202"
+  checksum: 10/1bb9760a5b1dda120132c4b987330d67979c95dbc22612678682cd61b00302e190f4207228f3728580059cdab5582362262e3819aea59960c1017bd2b9fb26f6
+  languageName: node
+  linkType: hard
+
 "@types/long@npm:^4.0.1":
   version: 4.0.2
   resolution: "@types/long@npm:4.0.2"
@@ -3578,7 +3617,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mocha@npm:^10.0.6":
+"@types/mocha-each@npm:2.0.1":
+  version: 2.0.1
+  resolution: "@types/mocha-each@npm:2.0.1"
+  dependencies:
+    "@types/mocha": "npm:*"
+  checksum: 10/483dc267e03f165fccffab36ae7c7944484b816cf5d1381d134b7641f71bc21ea10284e35d5b38b933e8477b622f8a773e94427ea915e3e37dcedfc51030d8fd
+  languageName: node
+  linkType: hard
+
+"@types/mocha@npm:*, @types/mocha@npm:^10.0.6":
   version: 10.0.6
   resolution: "@types/mocha@npm:10.0.6"
   checksum: 10/fc73626e81e89c32d06b7ff9b72c4177b46d579cdd932f796614adc026852d84cb849d743473ba572cb4d9ea6d8c04e3749552d326c26495ec1c4b46e6e0a0c0
@@ -4853,30 +4901,6 @@ __metadata:
   checksum: 10/e676f769dbc4abcf4b3317db2fd2badb4a92c0710e0a7da12cf14b59c3482d4febf835ad7de7874499060fd4e13adf0191628e504728b3c5bb4ec7a878c09940
   languageName: node
   linkType: hard
-
-"bfp-market@workspace:markets/bfp-market":
-  version: 0.0.0-use.local
-  resolution: "bfp-market@workspace:markets/bfp-market"
-  dependencies:
-    "@ethersproject/logger": "npm:^5.7.0"
-    "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/main": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
-    "@synthetixio/spot-market": "workspace:*"
-    "@synthetixio/wei": "npm:^2.74.4"
-    "@typechain/hardhat": "npm:^9.1.0"
-    "@usecannon/builder": "npm:2.11.18"
-    ethers: "npm:^5.7.2"
-    hardhat-cannon: "npm:2.11.18"
-    hardhat-contract-sizer: "npm:^2.10.0"
-    hardhat-gas-reporter: "npm:^1.0.10"
-    lodash: "npm:^4.17.21"
-    mocha-each: "npm:^2.0.1"
-    solidity-coverage: "npm:^0.8.7"
-  languageName: unknown
-  linkType: soft
 
 "big.js@npm:^6.1.1":
   version: 6.2.1
@@ -11884,7 +11908,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mocha-each@npm:^2.0.1":
+"mocha-each@npm:2.0.1":
   version: 2.0.1
   resolution: "mocha-each@npm:2.0.1"
   dependencies:

@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -61,7 +61,7 @@ library Margin {
     }
 
     function load() internal pure returns (Margin.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.Margin"));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
         assembly {
             d.slot := s
         }
@@ -82,7 +82,9 @@ library Margin {
     /**
      * @dev Reevaluates the collateral and debt for `accountId` with `amountDeltaUsd`. When amount is negative,
      * portion of their collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
-     * account. Returns the collateral and debt delta's.
+     * account.
+     *
+     * NOTE: If `amountDeltaUsd` is margin then expected to include previous debt.
      */
     function updateAccountDebtAndCollateral(
         Margin.Data storage accountMargin,
@@ -94,62 +96,34 @@ library Margin {
             return;
         }
 
-        // This is invoked when an order is settled and a modification of an existing position needs to be
-        // performed, or when and order is cancelled.
-        // There are a few scenarios we are trying to capture:
-        //
-        // 1. Increasing size for a profitable position
-        // 2. Increasing size for a unprofitable position
-        // 3. Decreasing size for an profitable position (partial close)
-        // 4. Decreasing size for an unprofitable position (partial close)
-        // 5. Closing a profitable position (full close)
-        // 6. Closing an unprofitable position (full close)
-        //
-        // The commonalities:
-        // - There is an existing position
-        // - All position modifications involve 'touching' a position which realizes the profit/loss
-        // - All profitable positions are first paying back any debt and the rest is added as sUSD as collateral
-        // - All accounting can be performed within the market (i.e. no need to move tokens around)
+        uint256 availableUsdCollateral = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+        uint128 previousDebt = accountMargin.debtUsd;
 
-        // These two ints are passed to market.updateDebtAndCollateral so global debt and collateral tracking can be updated.
-        int128 debtAmountDeltaUsd = 0;
-        int128 sUsdCollateralDelta = 0;
-
-        uint128 absAmountDeltaUsd = MathUtil.abs(amountDeltaUsd).to128();
-        // >0 means to add sUSD to this account's margin (realized profit).
-        if (amountDeltaUsd > 0) {
-            if (absAmountDeltaUsd > accountMargin.debtUsd) {
-                // Enough profit to cover outstanding debt, this means we can pay off the debt and  increase sUSD collateral with the rest
-                debtAmountDeltaUsd = -accountMargin.debtUsd.toInt(); // Debt should be reduced when position in profit
-                accountMargin.debtUsd = 0;
-                uint128 profitAfterDebt = absAmountDeltaUsd - accountMargin.debtUsd;
-                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += profitAfterDebt;
-                sUsdCollateralDelta = profitAfterDebt.toInt();
-            } else {
-                // The trader has an outstanding debt larger than the profit, just reduce the debt with all the profits
-                accountMargin.debtUsd -= absAmountDeltaUsd;
-                debtAmountDeltaUsd = -amountDeltaUsd.to128();
-            }
+        if (amountDeltaUsd >= 0) {
+            // >0 means profitable position, including the outstanding debt.
+            accountMargin.debtUsd = 0;
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += MathUtil
+                .abs(amountDeltaUsd)
+                .to128();
         } else {
-            // <0 means a realized loss and we need to increase their debt or pay with sUSD collateral.
-            uint256 availableUsdCollateral = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
-            int256 newDebt = availableUsdCollateral.toInt() + amountDeltaUsd;
-            if (newDebt > 0) {
-                // We have enough sUSD to cover the loss, just deduct from collateral.
-                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= absAmountDeltaUsd;
-                sUsdCollateralDelta = -absAmountDeltaUsd.toInt();
-                // No changes to debt needed.
+            // <0 means losing position (trade might have been profitable, but previous debt was larger).
+            int256 usdCollateralAfterDebtPayment = availableUsdCollateral.toInt() + amountDeltaUsd;
+            if (usdCollateralAfterDebtPayment >= 0) {
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = usdCollateralAfterDebtPayment
+                    .toUint();
+                accountMargin.debtUsd = 0;
             } else {
-                // We don't have enough sUSD to cover the loss, deduct what we can from the sUSD collateral and increase debt with the rest.
-                uint128 newDebtAbs = MathUtil.abs(newDebt).to128();
                 accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
-                sUsdCollateralDelta = -availableUsdCollateral.to128().toInt();
-                // Debt should increase as we're lost money.
-                accountMargin.debtUsd += newDebtAbs;
-                debtAmountDeltaUsd = newDebtAbs.toInt();
+                accountMargin.debtUsd = MathUtil.abs(usdCollateralAfterDebtPayment).to128();
             }
         }
-        market.updateDebtAndCollateral(debtAmountDeltaUsd, sUsdCollateralDelta);
+
+        int128 debtAmountDeltaUsd = accountMargin.debtUsd.toInt() - previousDebt.toInt();
+        int128 usdCollateralDelta = accountMargin
+            .collaterals[SYNTHETIX_USD_MARKET_ID]
+            .toInt()
+            .to128() - availableUsdCollateral.toInt().to128();
+        market.updateDebtAndCollateral(debtAmountDeltaUsd, usdCollateralDelta);
     }
 
     // --- Views --- //
@@ -200,6 +174,28 @@ library Margin {
     }
 
     /**
+     * @dev Returns the debt, price pnl, funding, util, and fee adjusted PnL.
+     */
+    function getPnlAdjustmentUsd(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (int256) {
+        Position.Data storage position = market.positions[accountId];
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+
+        // Zero size means there are no running sums to adjust margin by.
+        return
+            position.size == 0
+                ? -(accountMargin.debtUsd.toInt())
+                : position.getPricePnl(price) +
+                    position.getAccruedFunding(market, price) -
+                    position.getAccruedUtilization(market, price).toInt() -
+                    position.accruedFeesUsd.toInt() -
+                    accountMargin.debtUsd.to256().toInt();
+    }
+
+    /**
      * @dev Returns the margin value in usd given the account, market, and market price.
      *
      * Margin is effectively the discounted value of the deposited collateral, accounting for the funding accrued,
@@ -210,33 +206,35 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 marketPrice
+        uint256 price
     ) internal view returns (MarginValues memory marginValues) {
         (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(
             accountId,
             market.id
         );
-        Position.Data storage position = market.positions[accountId];
-        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
-
-        // Zero size means there are no running sums to adjust margin by.
-        int256 marginAdjustements = position.size == 0
-            ? -(accountMargin.debtUsd.toInt())
-            : position.getPnl(marketPrice) +
-                position.getAccruedFunding(market, marketPrice) -
-                position.getAccruedUtilization(market, marketPrice).toInt() -
-                position.accruedFeesUsd.toInt() -
-                accountMargin.debtUsd.to256().toInt();
+        int256 adjustment = getPnlAdjustmentUsd(accountId, market, price);
 
         marginValues.discountedMarginUsd = MathUtil
-            .max(discountedCollateralUsd.toInt() + marginAdjustements, 0)
+            .max(discountedCollateralUsd.toInt() + adjustment, 0)
             .toUint();
-        marginValues.marginUsd = MathUtil
-            .max(collateralUsd.toInt() + marginAdjustements, 0)
-            .toUint();
+        marginValues.marginUsd = MathUtil.max(collateralUsd.toInt() + adjustment, 0).toUint();
         marginValues.discountedCollateralUsd = discountedCollateralUsd;
         marginValues.collateralUsd = collateralUsd;
-        return marginValues;
+    }
+
+    /**
+     * @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
+     */
+    function getNetAssetValue(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (uint256) {
+        (uint256 collateralUsd, ) = getCollateralUsd(accountId, market.id);
+        return
+            MathUtil
+                .max(collateralUsd.toInt() + getPnlAdjustmentUsd(accountId, market, price), 0)
+                .toUint();
     }
 
     // --- Member (views) --- //

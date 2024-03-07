@@ -1,14 +1,13 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
-import {IPyth} from "../external/pyth/IPyth.sol";
-import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -75,7 +74,7 @@ library PerpMarket {
     }
 
     function load() internal pure returns (GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket"));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
         assembly {
             d.slot := s
         }
@@ -132,7 +131,7 @@ library PerpMarket {
         int256 sizeDelta = newPosition.size - oldPosition.size;
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
-        int256 totalPositionPnl = oldPosition.getPnl(newPosition.entryPrice) +
+        int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
             oldPosition.getAccruedFunding(self, newPosition.entryPrice) +
             newPosition.accruedFeesUsd.toInt();
 
@@ -179,20 +178,42 @@ library PerpMarket {
         }
     }
 
+    /**
+     * @dev Returns the collateral utilisation bounded by 0 and 1.
+     */
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
-        uint256 delegatedCollateralValueUsd = withdrawableUsd - getTotalCollateralValueUsd(self);
+
         uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(
             marketConfig.minCreditPercent.to256()
         );
-        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd).to128();
+        if (lockedCollateralUsd == 0) {
+            // If we dont have any postions open, we're at 0% utilisation.
+            return 0;
+        }
+
+        // This is our market's `creditCapacity + all deposited collateral`.
+        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
+
+        // If we remove collateral deposited from traders we get the delegatedCollateral value.
+        //
+        // NOTE: When < 0 then from the market's POV we're _above_ full utilisation and LPs can be liquidated.
+        int256 delegatedCollateralValueUsd = withdrawableUsd.toInt() -
+            getTotalCollateralValueUsd(self).toInt();
+        if (delegatedCollateralValueUsd < 0) {
+            return DecimalMath.UNIT.to128();
+        }
+
+        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()).to128();
     }
 
+    /**
+     * @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).
+     */
     function getCurrentUtilizationRate(
         uint128 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig
@@ -217,6 +238,9 @@ library PerpMarket {
         }
     }
 
+    /**
+     * @dev Returns the next market collateral utilization value.
+     */
     function getUnrecordedUtilization(
         PerpMarket.Data storage self
     ) internal view returns (uint256) {
@@ -224,6 +248,9 @@ library PerpMarket {
             self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
     }
 
+    /**
+     * @dev Recompute and store utilization rate given current market conditions.
+     */
     function recomputeUtilization(
         PerpMarket.Data storage self,
         uint256 price
@@ -355,6 +382,9 @@ library PerpMarket {
             .mulDecimal(price.toInt());
     }
 
+    /**
+     * @dev Returns the maximum amount of size that can be liquidated (excluding current cap usage).
+     */
     function getMaxLiquidatableCapacity(
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint128) {
@@ -370,6 +400,7 @@ library PerpMarket {
         // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 1
         //                         = 80
         return
+            // solhint-disable-next-line numcast/safe-cast
             uint128(marketConfig.makerFee + marketConfig.takerFee)
                 .mulDecimal(marketConfig.skewScale)
                 .mulDecimal(marketConfig.liquidationLimitScalar)

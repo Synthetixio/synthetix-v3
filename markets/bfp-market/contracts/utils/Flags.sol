@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 library Flags {
     // @dev This flag needs to match the create account in `core-modules/contracts/storage/FeatureFlag.sol`.

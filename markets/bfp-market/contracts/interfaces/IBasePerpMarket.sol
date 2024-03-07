@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 interface IBasePerpMarket {
     // --- Shared Events --- //
@@ -22,4 +22,7 @@ interface IBasePerpMarket {
         uint256 keeperFee,
         uint256 commitmentTime
     );
+
+    // @notice Emitted when the market's size is updated either due to orders or liquidations.
+    event MarketSizeUpdated(uint128 marketId, uint128 size, int128 skew);
 }

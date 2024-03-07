@@ -1,10 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
 import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -14,8 +15,9 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint256;
@@ -77,8 +79,12 @@ contract LiquidationModule is ILiquidationModule {
         market.updateAccumulatedLiquidation(liqSize);
 
         // Update market to reflect state of liquidated position.
-        market.skew = market.skew - oldPosition.size + newPosition.size;
-        market.size -= liqSize;
+        uint128 updatedMarketSize = market.size - liqSize;
+        int128 updatedMarketSkew = market.skew - oldPosition.size + newPosition.size;
+        market.skew = updatedMarketSkew;
+        market.size = updatedMarketSize;
+
+        emit MarketSizeUpdated(marketId, updatedMarketSize, updatedMarketSkew);
 
         // Update market debt relative to the keeperFee incurred.
         market.updateDebtCorrection(market.positions[accountId], newPosition);
@@ -486,15 +492,17 @@ contract LiquidationModule is ILiquidationModule {
      */
     function getLiquidationMarginUsd(
         uint128 accountId,
-        uint128 marketId
+        uint128 marketId,
+        int128 sizeDelta
     ) external view returns (uint256 im, uint256 mm) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Account.exists(accountId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         uint256 oraclePrice = market.getOraclePrice();
 
         (im, mm, ) = Position.getLiquidationMarginUsd(
-            market.positions[accountId].size,
+            market.positions[accountId].size + sizeDelta,
             oraclePrice,
             Margin.getMarginUsd(accountId, market, oraclePrice).collateralUsd,
             marketConfig
