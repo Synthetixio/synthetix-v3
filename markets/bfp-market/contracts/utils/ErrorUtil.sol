@@ -106,4 +106,7 @@ library ErrorUtil {
 
     // @notice Thrown when there are too many hooks specified.
     error MaxHooksExceeded();
+
+    // @notice Thrown when calling mergeAccounts with a sportMarketId / marketId where we expected matching oracle nodes.
+    error OracleNodeMismatch();
 }

@@ -1,10 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 
-interface IPerpAccountModule {
+interface IPerpAccountModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct DepositedCollateral {
@@ -73,4 +74,16 @@ interface IPerpAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (IPerpAccountModule.PositionDigest memory);
+
+    /**
+     * @notice Marges two accounts together.
+     * Requires that both accounts have an open position collateralised by the same asset.
+     * @dev Account permmisions from the "from account" wont be treansfered.
+     */
+    function mergeAccounts(
+        uint128 fromId,
+        uint128 toId,
+        uint128 marketId,
+        uint128 synthMarketId
+    ) external;
 }
