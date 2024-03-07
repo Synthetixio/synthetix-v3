@@ -74,13 +74,16 @@ export const bootstrapPerpsMarkets = (
   chainState: IncomingChainState | undefined
 ) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(2000));
-  let contracts: Systems, superMarketId: ethers.BigNumber;
 
-  before('identify contracts', () => {
+  let contracts: Systems;
+  let superMarketId: ethers.BigNumber;
+  let perpsMarkets: PerpsMarkets;
+
+  before(async () => {
+    // identify contracts
     contracts = r.systems() as Systems;
-  });
 
-  before('create super market', async () => {
+    // create super market
     superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
       contracts.Core.address,
       contracts.SpotMarket.address
@@ -98,11 +101,8 @@ export const bootstrapPerpsMarkets = (
         maxDebtShareValueD18: ethers.utils.parseEther('1'),
       },
     ]);
-  });
 
-  let perpsMarkets: PerpsMarkets;
-
-  before(async () => {
+    // Create perps markets
     perpsMarkets = [];
 
     for await (const item of data) {
@@ -120,12 +120,9 @@ export const bootstrapPerpsMarkets = (
         settlementStrategy,
       } = item;
 
-      let aggregator: MockPythExternalNode;
-      let strategyId: ethers.BigNumber;
-
       // create perps price nodes
       const results = await createPythNode(r.owner(), price, contracts.OracleManager);
-      aggregator = results.aggregator;
+      const aggregator: MockPythExternalNode = results.aggregator;
 
       // create perps market
       await contracts.PerpsMarket.createMarket(marketId, name, token);
@@ -194,10 +191,9 @@ export const bootstrapPerpsMarkets = (
       };
 
       // the first call is static to get strategyId
-      strategyId = await contracts.PerpsMarket.connect(r.owner()).callStatic.addSettlementStrategy(
-        marketId,
-        strategy
-      );
+      const strategyId: ethers.BigNumber = await contracts.PerpsMarket.connect(
+        r.owner()
+      ).callStatic.addSettlementStrategy(marketId, strategy);
 
       await contracts.PerpsMarket.connect(r.owner()).addSettlementStrategy(marketId, strategy);
 
