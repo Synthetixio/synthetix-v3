@@ -14,8 +14,8 @@ interface IOrderModule is IBasePerpMarket {
         uint256 limitPrice;
         uint256 keeperFeeBufferUsd;
         address[] hooks;
-        bool isOrderStale;
-        bool isOrderReady;
+        bool isStale;
+        bool isReady;
     }
 
     // --- Events --- //
