@@ -1,5 +1,4 @@
 import { BigNumber, Contract, ContractReceipt, ethers, utils, providers, Signer } from 'ethers';
-import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { genNumber, raise } from './generators';
 import Wei, { wei } from '@synthetixio/wei';
@@ -98,7 +97,8 @@ export const mintAndApproveWithTrader = async (bs: Bs, gTrader: GeneratedTrader)
 
 /** Returns a generated trader with collateral and market details. */
 export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
-  const { PerpMarketProxy } = bs.systems();
+  const { systems, provider } = bs;
+  const { PerpMarketProxy } = systems();
 
   // Provision collateral and approve for access.
   const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(
@@ -114,7 +114,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
         collateral.synthMarketId(),
         collateralDepositAmount
       ),
-    bs.provider()
+    provider()
   );
 
   return gTrader;
@@ -184,13 +184,13 @@ export const getPythPriceData = async (
     pythPrice,
     priceConfidence,
     publishTime ?? Math.floor(Date.now() / 1000),
-    0 // Misaligned types due to PythMock types not having been compiled.
+    0
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
   return { updateData, updateFee };
 };
 
-/** Returns a reasonable timestamp and publishTime to fast-forward to for settlements. */
+/** Returns a reasonable timestamp and publishTime to fast forward to for settlements. */
 export const getFastForwardTimestamp = async (
   { systems, provider }: Bs,
   marketId: BigNumber,
@@ -219,21 +219,24 @@ export const getFastForwardTimestamp = async (
 
 /** Commits a generated `order` for `trader` on `marketId` */
 export const commitOrder = async (
-  { systems }: Pick<Bs, 'systems'>,
+  { systems, provider }: Pick<Bs, 'systems' | 'provider'>,
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>
 ) => {
   const { PerpMarketProxy } = systems();
-
   const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await order;
-  return await PerpMarketProxy.connect(trader.signer).commitOrder(
-    trader.accountId,
-    marketId,
-    sizeDelta,
-    limitPrice,
-    keeperFeeBufferUsd,
-    hooks
+  return withExplicitEvmMine(
+    () =>
+      PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        sizeDelta,
+        limitPrice,
+        keeperFeeBufferUsd,
+        hooks
+      ),
+    provider()
   );
 };
 
@@ -310,14 +313,12 @@ export const setBaseFeePerGas = async (
 
 /** Updates the provided `contract` with more ABI details. */
 export const extendContractAbi = (contract: Contract, abi: string[]) => {
-  utils.Logger.setLogLevel(LogLevel.OFF); // Silence ethers duplicated event warnings
   const contractAbi = contract.interface.format(utils.FormatTypes.full) as string[];
   const newContract = new Contract(
     contract.address,
     uniq(contractAbi.concat(abi)),
     contract.provider || contract.signer
   );
-  utils.Logger.setLogLevel(LogLevel.WARNING); // enable default logging again
   return newContract;
 };
 

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
@@ -8,6 +8,8 @@ import {ISettlementHookModule} from "../interfaces/ISettlementHookModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract SettlementHookModule is ISettlementHookModule {
     // --- Mutations --- //

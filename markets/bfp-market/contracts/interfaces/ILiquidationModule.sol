@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
@@ -84,11 +84,13 @@ interface ILiquidationModule is IBasePerpMarket {
     function isMarginLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool);
 
     /**
-     * @notice Returns the IM (initial maintenance) and MM (maintenance margin) for a given account and market.
+     * @notice Returns the IM (initial maintenance) and MM (maintenance margin) for a given account, market, and sizeDelta.
+     * Specify a sizeDelta of 0 for the current IM/MM of an existing position.
      */
     function getLiquidationMarginUsd(
         uint128 accountId,
-        uint128 marketId
+        uint128 marketId,
+        int128 sizeDelta
     ) external view returns (uint256 im, uint256 mm);
 
     /**

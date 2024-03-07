@@ -12,10 +12,10 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "main"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
+defaultValue = "synthetix:<%= package.version %>"
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
+defaultValue = "synthetix-spot-market:<%= package.version %>"
 
 # What is salt?
 #

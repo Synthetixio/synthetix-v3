@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.11 <0.9.0;
 
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
@@ -23,8 +23,6 @@ interface IPerpAccountModule {
         uint256 collateralUsd;
         // Debt of account in USD.
         uint128 debtUsd;
-        // Struct of order if one is pending, default values if none.
-        Order.Data order;
         // Struct of `PositionDigest` if a position is open, default values if none.
         PositionDigest position;
     }

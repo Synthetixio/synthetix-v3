@@ -9,7 +9,6 @@ import { bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
-  genNumber,
   genOneOf,
   genOrder,
   genSide,
@@ -17,6 +16,7 @@ import {
   toRoundRobinGenerators,
 } from '../../generators';
 import {
+  commitOrder,
   depositMargin,
   findEventSafe,
   getFastForwardTimestamp,
@@ -42,14 +42,7 @@ describe('OrderModule Cancelations', () => {
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      await commitOrder(bs, marketId, trader, order);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
@@ -60,7 +53,8 @@ describe('OrderModule Cancelations', () => {
 
       await assertRevert(
         PerpMarketProxy.cancelOrder(trader.accountId, invalidMarketId, updateData),
-        `MarketNotFound("${invalidMarketId}")`
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
       );
     });
 
@@ -73,14 +67,7 @@ describe('OrderModule Cancelations', () => {
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      await commitOrder(bs, marketId, trader, order);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
@@ -91,7 +78,8 @@ describe('OrderModule Cancelations', () => {
 
       await assertRevert(
         PerpMarketProxy.cancelOrder(invalidAccountId, marketId, updateData),
-        `AccountNotFound("${invalidAccountId}")`
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
       );
     });
 
@@ -105,7 +93,8 @@ describe('OrderModule Cancelations', () => {
 
       await assertRevert(
         PerpMarketProxy.cancelOrder(trader.accountId, marketId, updateData),
-        `OrderNotFound()`
+        `OrderNotFound()`,
+        PerpMarketProxy
       );
     });
 
@@ -118,57 +107,19 @@ describe('OrderModule Cancelations', () => {
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
-      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      await commitOrder(bs, marketId, trader, order);
 
+      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       await assertRevert(
         PerpMarketProxy.cancelOrder(trader.accountId, marketId, updateData),
-        `OrderNotReady()`
+        `OrderNotReady()`,
+        PerpMarketProxy
       );
     });
 
     it('should revert when price update from pyth is invalid');
-
-    it('should revert if stale order is canceled by non owner', async () => {
-      const { PerpMarketProxy } = systems();
-      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
-
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredTrader: tradersGenerator.next().value })
-      );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
-      const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      await fastForwardTo(genNumber(expireTime, expireTime * 2), provider());
-      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
-
-      await assertRevert(
-        PerpMarketProxy.connect(tradersGenerator.next().value.signer).cancelOrder(
-          trader.accountId,
-          marketId,
-          updateData
-        ),
-        `OrderStale()`
-      );
-    });
 
     it('should revert if price tolerance not exceeded', async () => {
       const { PerpMarketProxy } = systems();
@@ -179,27 +130,24 @@ describe('OrderModule Cancelations', () => {
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      await commitOrder(bs, marketId, trader, order);
+
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
+
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
       const fillPrice = await PerpMarketProxy.getFillPrice(marketId, order.sizeDelta);
+
       await assertRevert(
         PerpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData, {
           value: updateFee,
         }),
-        `PriceToleranceNotExceeded("${order.sizeDelta}", "${fillPrice}", "${order.limitPrice}")`
+        `PriceToleranceNotExceeded("${order.sizeDelta}", "${fillPrice}", "${order.limitPrice}")`,
+        PerpMarketProxy
       );
     });
 
-    it('should cancel order if order is stale and caller is trader', async () => {
+    it('should allow anyone to cancel a stale order', async () => {
       const { PerpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
@@ -209,34 +157,27 @@ describe('OrderModule Cancelations', () => {
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      await commitOrder(bs, marketId, trader, order);
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());
       const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assert.equal(orderDigestBefore.isStale, true);
+
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
+      const signer = genOneOf([trader.signer, keeper()]);
       const { receipt } = await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(trader.signer).cancelOrder(
-            trader.accountId,
-            marketId,
-            updateData,
-            {
-              value: updateFee,
-            }
-          ),
+          PerpMarketProxy.connect(signer).cancelOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
         provider()
       );
+
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.isZero(orderDigestAfter.sizeDelta);
+      assert.equal(orderDigestAfter.isStale, false);
 
       await assertEvents(
         receipt,
@@ -271,14 +212,7 @@ describe('OrderModule Cancelations', () => {
         desiredKeeperFeeBufferUsd: 0,
       });
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      await commitOrder(bs, marketId, trader, order);
 
       // Update market price to be outside of tolerance.
       await market
@@ -326,7 +260,8 @@ describe('OrderModule Cancelations', () => {
 
       // Make sure accounting for trader reflect the keeper fee.
       assertBn.near(
-        accountDigestBefore.collateralUsd.sub(keeperFee),
+        // If trader using non sUSD collateral the user will get debt rather than a decrease in collateral.
+        accountDigestBefore.collateralUsd.sub(keeperFee).add(accountDigestAfter.debtUsd),
         accountDigestAfter.collateralUsd,
         bn(0.0000001)
       );
@@ -343,22 +278,15 @@ describe('OrderModule Cancelations', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       const invalidMarketId = bn(42069);
-
       await assertRevert(
         PerpMarketProxy.cancelStaleOrder(trader.accountId, invalidMarketId),
-        `MarketNotFound("${invalidMarketId}")`
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
       );
     });
 
@@ -369,22 +297,15 @@ describe('OrderModule Cancelations', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       const invalidAccountId = bn(42069);
-
       await assertRevert(
         PerpMarketProxy.cancelStaleOrder(invalidAccountId, marketId),
-        `OrderNotFound()`
+        `OrderNotFound()`,
+        PerpMarketProxy
       );
     });
 
@@ -395,7 +316,8 @@ describe('OrderModule Cancelations', () => {
 
       await assertRevert(
         PerpMarketProxy.cancelStaleOrder(trader.accountId, marketId),
-        `OrderNotFound()`
+        `OrderNotFound()`,
+        PerpMarketProxy
       );
     });
 
@@ -406,20 +328,14 @@ describe('OrderModule Cancelations', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
 
       await assertRevert(
         PerpMarketProxy.cancelStaleOrder(trader.accountId, marketId),
-        `OrderNotStale()`
+        `OrderNotStale()`,
+        PerpMarketProxy
       );
     });
 
@@ -431,16 +347,10 @@ describe('OrderModule Cancelations', () => {
         bs,
         genTrader(bs, { desiredTrader: tradersGenerator.next().value })
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
+
       const { settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
 
@@ -449,7 +359,8 @@ describe('OrderModule Cancelations', () => {
           trader.accountId,
           marketId
         ),
-        `OrderNotStale()`
+        `OrderNotStale()`,
+        PerpMarketProxy
       );
     });
 
@@ -460,20 +371,16 @@ describe('OrderModule Cancelations', () => {
         bs,
         genTrader(bs)
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-      await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks
-      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
+
       const { expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(expireTime, provider());
+
       const orderDigestBefore = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(orderDigestBefore.sizeDelta, order.sizeDelta);
+
       const { receipt } = await withExplicitEvmMine(
         () =>
           PerpMarketProxy.connect(genOneOf(traders()).signer).cancelStaleOrder(
@@ -482,8 +389,10 @@ describe('OrderModule Cancelations', () => {
           ),
         provider()
       );
+
       const orderDigestAfter = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.isZero(orderDigestAfter.sizeDelta);
+
       await assertEvents(
         receipt,
         [`OrderCanceled(${trader.accountId}, ${marketId}, 0, ${orderDigestBefore.commitmentTime})`],
