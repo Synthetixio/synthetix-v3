@@ -7,7 +7,7 @@ import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {InterestRate} from "./InterestRate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerBaseUint128} from 'quanto-dimensions/src/UnitTypes.sol';
 
 library Position {
     using SafeCastU256 for uint256;
@@ -20,7 +20,7 @@ library Position {
     struct Data {
         uint128 marketId;
         BaseQuantoPerUSDInt128 size;
-        uint128 latestInteractionPrice;
+        USDPerBaseUint128 latestInteractionPrice;
         uint256 latestInterestAccrued;
         int128 latestInteractionFunding;
     }
@@ -83,7 +83,7 @@ library Position {
         netFundingPerUnit = nextFunding - self.latestInteractionFunding;
         accruedFunding = self.size.unwrap().mulDecimal(netFundingPerUnit);
 
-        int256 priceShift = price.unwrap().toInt() - self.latestInteractionPrice.toInt();
+        int256 priceShift = price.unwrap().toInt() - self.latestInteractionPrice.unwrap().toInt();
         pricePnl = self.size.unwrap().mulDecimal(priceShift);
 
         chargedInterest = interestAccrued(self, price);

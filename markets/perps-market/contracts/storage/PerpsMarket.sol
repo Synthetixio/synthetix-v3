@@ -248,7 +248,7 @@ library PerpsMarket {
             MathUtil.abs128(oldPosition.size.unwrap());
         self.skew = BaseQuantoPerUSDInt256.wrap(self.skew.unwrap() + newPosition.size.unwrap() - oldPosition.size.unwrap());
 
-        runtime.currentPrice = USDPerBaseUint256.wrap(newPosition.latestInteractionPrice);
+        runtime.currentPrice = USDPerBaseUint256.wrap(newPosition.latestInteractionPrice.unwrap().to256());
         (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
         runtime.sizeDelta = newPosition.size.unwrap() - oldPosition.size.unwrap();

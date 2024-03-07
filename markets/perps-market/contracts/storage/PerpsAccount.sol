@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -573,7 +573,7 @@ library PerpsAccount {
         if (newPositionSize != 0) {
             newPosition = Position.Data({
                 marketId: marketId,
-                latestInteractionPrice: price.unwrap().to128(),
+                latestInteractionPrice: USDPerBaseUint128.wrap(price.unwrap().to128()),
                 latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
                 latestInterestAccrued: 0,
                 size: BaseQuantoPerUSDInt128.wrap(newPositionSize)
