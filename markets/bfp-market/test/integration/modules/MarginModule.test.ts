@@ -2540,7 +2540,7 @@ describe('MarginModule', async () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       const { marginUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
-      const netAssetValue = await PerpMarketProxy.getNetAssetValue(trader.accountId, marketId);
+      const netAssetValue = await PerpMarketProxy.getNetAssetValue(trader.accountId, marketId, 0);
 
       assertBn.equal(netAssetValue, marginUsd);
     });
