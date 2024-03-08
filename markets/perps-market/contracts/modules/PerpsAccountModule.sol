@@ -20,7 +20,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {QuantoUint256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {QuantoUint256, USDInt256, USDUint256, QuantoInt256, BaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module to manage accounts
@@ -109,7 +109,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         external
         view
         override
-        returns (int256 totalPnl, int256 accruedFunding, int128 positionSize, uint256 owedInterest)
+        returns (QuantoInt256 totalPnl, QuantoInt256 accruedFunding, BaseQuantoPerUSDInt128 positionSize, QuantoUint256 owedInterest)
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
@@ -118,7 +118,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         (, totalPnl, , owedInterest, accruedFunding, , ) = position.getPositionData(
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
-        return (totalPnl, accruedFunding, position.size.unwrap(), owedInterest);
+        return (totalPnl, accruedFunding, position.size, owedInterest);
     }
 
     /**

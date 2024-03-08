@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256, InteractionsQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256, InteractionsQuantoUint256, InteractionsUSDPerQuantoUint256, InteractionsQuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -42,6 +42,8 @@ library PerpsAccount {
     using KeeperCosts for KeeperCosts.Data;
     using AsyncOrder for AsyncOrder.Data;
     using InteractionsQuantoUint256 for QuantoUint256;
+    using InteractionsUSDPerQuantoUint256 for USDPerQuantoUint256;
+    using InteractionsQuantoInt256 for QuantoInt256;
 
     struct Data {
         // @dev synth marketId => amount
@@ -270,12 +272,12 @@ library PerpsAccount {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (int256 pnl, , , , , ) = position.getPnl(
+            (QuantoInt256 pnl, , , , , ) = position.getPnl(
                 PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
             );
 
             USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, stalenessTolerance);
-            USDInt256 usdPnl = USDInt256.wrap(pnl.mulDecimal(quantoPrice.unwrap().toInt()));
+            USDInt256 usdPnl = pnl.mulDecimalToUSD(quantoPrice.toInt());
 
             totalPnl = totalPnl + usdPnl;
         }
@@ -298,14 +300,14 @@ library PerpsAccount {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            uint256 openInterest = position.getNotionalValue(
+            QuantoUint256 openInterest = position.getNotionalValue(
                 PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
             );
 
             USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
-            uint usdValue = openInterest.mulDecimal(quantoPrice.unwrap());
+            USDUint256 usdValue = openInterest.mulDecimalToUSD(quantoPrice);
 
-            totalAccountOpenInterest += usdValue;
+            totalAccountOpenInterest += usdValue.unwrap();
         }
     }
 
@@ -447,9 +449,9 @@ library PerpsAccount {
      */
     function deductFromAccount(
         Data storage self,
-        uint256 amount // snxUSD
+        USDUint256 amount
     ) internal returns (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) {
-        uint256 leftoverAmount = amount;
+        uint256 leftoverAmount = amount.unwrap();
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
             .synthDeductionPriority;
