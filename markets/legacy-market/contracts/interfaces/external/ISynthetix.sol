@@ -127,5 +127,5 @@ interface ISynthetix is IERC20 {
 
     function migrateAccountBalances(
         address account
-    ) external returns (uint totalEscrowRevoked, uint totalLiquidBalance);
+    ) external returns (uint256 totalEscrowRevoked, uint256 totalLiquidBalance);
 }

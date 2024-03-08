@@ -44,7 +44,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     ISNXDistributor public rewardsDistributor;
 
     error MigrationInProgress();
-    
+
     // redefine event so it can be catched by ethers
     event MarketRegistered(
         address indexed marketAddress,

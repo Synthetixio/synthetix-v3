@@ -400,9 +400,9 @@ describe('LegacyMarket', function () {
             .connect(snxStaker)
             .transfer(
               await owner.getAddress(),
-              (
-                await snxToken.connect(owner).balanceOf(snxStakerAddress)
-              ).sub(ethers.utils.parseEther('10'))
+              (await snxToken.connect(owner).balanceOf(snxStakerAddress)).sub(
+                ethers.utils.parseEther('10')
+              )
             );
         });
 

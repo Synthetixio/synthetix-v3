@@ -70,9 +70,8 @@ describe('AssociateDebtModule', function () {
     it('only works when the target account has enough collateral', async () => {
       const debt = depositAmount.div(3).mul(2).add(100);
       await MockMarket().connect(owner).setReportedDebt(debt);
-      const { liquidationRatioD18 } = await systems().Core.getCollateralConfiguration(
-        collateralAddress()
-      );
+      const { liquidationRatioD18 } =
+        await systems().Core.getCollateralConfiguration(collateralAddress());
       const price = await systems().Core.getCollateralPrice(collateralAddress());
 
       await assertRevert(

@@ -70,7 +70,7 @@ func = "setSystemAddresses"
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
     "<%= imports.v3.contracts.CoreProxy.address %>",
-    "<%= contracts.SNXDistributor.address %>"
+    "<%= contracts.SNXDistributor.address %>",
 ]
 
 # add pool owner to pool feature flag allow list
@@ -181,7 +181,7 @@ func = "registerRewardsDistributor"
 args = [
     "<%= settings.sc_pool_id %>",
     "<%= imports.v2x.contracts.ProxySynthetix.address %>",
-    "<%= contracts.SNXDistributor.address %>"
+    "<%= contracts.SNXDistributor.address %>",
 ]
 
 fromCall.func = "owner"
