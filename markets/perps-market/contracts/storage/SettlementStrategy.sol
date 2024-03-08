@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 library SettlementStrategy {
     using DecimalMath for uint256;
@@ -36,7 +37,7 @@ library SettlementStrategy {
         /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */
-        uint256 settlementReward;
+        USDUint256 settlementReward;
         /**
          * @dev whether the strategy is disabled or not.
          */

@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {Position} from "../storage/Position.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
-import {USDPerBaseUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDPerBaseUint256, USDUint256, QuantoUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 interface IAsyncOrderSettlementPythModule {
     /**
@@ -33,7 +33,7 @@ interface IAsyncOrderSettlementPythModule {
         uint256 totalFees,
         uint256 referralFees,
         uint256 collectedFees,
-        uint256 settlementReward,
+        USDUint256 settlementReward,
         bytes32 indexed trackingCode,
         address settler
     );
@@ -50,12 +50,12 @@ interface IAsyncOrderSettlementPythModule {
         uint128 marketId;
         uint128 accountId;
         int128 sizeDelta;
-        int256 pnl;
-        uint256 chargedInterest;
-        int256 accruedFunding;
-        uint256 pnlUint;
-        uint256 amountToDeduct;
-        uint256 settlementReward;
+        QuantoInt256 pnl;
+        QuantoUint256 chargedInterest;
+        QuantoInt256 accruedFunding;
+        QuantoUint256 pnlUint;
+        USDUint256 amountToDeduct;
+        USDUint256 settlementReward;
         USDPerBaseUint256 fillPrice;
         USDUint256 totalFees;
         uint256 referralFees;

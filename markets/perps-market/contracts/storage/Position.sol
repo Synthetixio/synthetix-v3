@@ -7,7 +7,7 @@ import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {InterestRate} from "./InterestRate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerBaseUint128} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerBaseUint128, USDPerBaseInt256, QuantoUint256, QuantoInt256, InteractionsBaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDInt256, InteractionsUSDPerBaseUint256, InteractionsUSDPerBaseUint128, BaseQuantoPerUSDInt256, InteractionsQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 library Position {
     using SafeCastU256 for uint256;
@@ -16,6 +16,11 @@ library Position {
     using DecimalMath for int128;
     using PerpsMarket for PerpsMarket.Data;
     using InterestRate for InterestRate.Data;
+    using InteractionsBaseQuantoPerUSDInt128 for BaseQuantoPerUSDInt128;
+    using InteractionsBaseQuantoPerUSDInt256 for BaseQuantoPerUSDInt256;
+    using InteractionsUSDPerBaseUint256 for USDPerBaseUint256;
+    using InteractionsUSDPerBaseUint128 for USDPerBaseUint128;
+    using InteractionsQuantoUint256 for QuantoUint256;
 
     struct Data {
         uint128 marketId;
@@ -44,12 +49,12 @@ library Position {
         internal
         view
         returns (
-            uint256 notionalValue,
-            int256 totalPnl,
-            int256 pricePnl,
-            uint256 chargedInterest,
-            int256 accruedFunding,
-            int256 netFundingPerUnit,
+            QuantoUint256 notionalValue,
+            QuantoInt256 totalPnl,
+            QuantoInt256 pricePnl,
+            QuantoUint256 chargedInterest,
+            QuantoInt256 accruedFunding,
+            USDPerBaseInt256 netFundingPerUnit,
             int256 nextFunding
         )
     {
@@ -71,20 +76,20 @@ library Position {
         internal
         view
         returns (
-            int256 totalPnl,
-            int256 pricePnl,
-            uint256 chargedInterest,
-            int256 accruedFunding,
-            int256 netFundingPerUnit,
+            QuantoInt256 totalPnl,
+            QuantoInt256 pricePnl,
+            QuantoUint256 chargedInterest,
+            QuantoInt256 accruedFunding,
+            USDPerBaseInt256 netFundingPerUnit,
             int256 nextFunding
         )
     {
         nextFunding = PerpsMarket.load(self.marketId).calculateNextFunding(price);
-        netFundingPerUnit = nextFunding - self.latestInteractionFunding;
-        accruedFunding = self.size.unwrap().mulDecimal(netFundingPerUnit);
+        netFundingPerUnit = USDPerBaseInt256.wrap(nextFunding - self.latestInteractionFunding);
+        accruedFunding = self.size.to256().mulDecimalToQuanto(netFundingPerUnit);
 
-        int256 priceShift = price.unwrap().toInt() - self.latestInteractionPrice.unwrap().toInt();
-        pricePnl = self.size.unwrap().mulDecimal(priceShift);
+        USDPerBaseInt256 priceShift = price.toInt() - self.latestInteractionPrice.to256().toInt();
+        pricePnl = self.size.to256().mulDecimalToQuanto(priceShift);
 
         chargedInterest = interestAccrued(self, price);
 
@@ -94,7 +99,7 @@ library Position {
     function interestAccrued(
         Data storage self,
         USDPerBaseUint256 price
-    ) internal view returns (uint256 chargedInterest) {
+    ) internal view returns (QuantoUint256 chargedInterest) {
         uint256 nextInterestAccrued = InterestRate.load().calculateNextInterest();
         uint256 netInterestPerQuantoUnit = nextInterestAccrued - self.latestInterestAccrued;
 
@@ -105,14 +110,14 @@ library Position {
     function getLockedNotionalValue(
         Data storage self,
         USDPerBaseUint256 price
-    ) internal view returns (uint256) {
+    ) internal view returns (QuantoUint256) {
         return
             getNotionalValue(self, price).mulDecimal(
                 PerpsMarketConfiguration.load(self.marketId).lockedOiRatioD18
             );
     }
 
-    function getNotionalValue(Data storage self, USDPerBaseUint256 price) internal view returns (uint256) {
-        return MathUtil.abs(self.size.unwrap()).mulDecimal(price.unwrap());
+    function getNotionalValue(Data storage self, USDPerBaseUint256 price) internal view returns (QuantoUint256) {
+        return QuantoUint256.wrap(MathUtil.abs(self.size.unwrap()).mulDecimal(price.unwrap()));
     }
 }

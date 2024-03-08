@@ -13,7 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
 import {InterestRate} from "./InterestRate.sol";
-import {BaseQuantoPerUSDInt256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Data for a single perps market
@@ -249,7 +249,7 @@ library PerpsMarket {
         self.skew = BaseQuantoPerUSDInt256.wrap(self.skew.unwrap() + newPosition.size.unwrap() - oldPosition.size.unwrap());
 
         runtime.currentPrice = USDPerBaseUint256.wrap(newPosition.latestInteractionPrice.unwrap().to256());
-        (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
+        (, QuantoInt256 pricePnl, , QuantoInt256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
         runtime.sizeDelta = newPosition.size.unwrap() - oldPosition.size.unwrap();
         runtime.fundingDelta = calculateNextFunding(self, runtime.currentPrice).mulDecimal(
@@ -262,8 +262,8 @@ library PerpsMarket {
         self.debtCorrectionAccumulator +=
             runtime.fundingDelta +
             runtime.notionalDelta +
-            pricePnl +
-            fundingPnl;
+            pricePnl.unwrap() +
+            fundingPnl.unwrap();
 
         // update position to new position
         // Note: once market interest rate is updated, the current accrued interest is saved

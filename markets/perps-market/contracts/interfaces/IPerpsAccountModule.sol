@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256, USDInt256, QuantoInt256, BaseQuantoPerUSDInt128, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Account module
@@ -90,7 +90,7 @@ interface IPerpsAccountModule {
     )
         external
         view
-        returns (int256 totalPnl, int256 accruedFunding, int128 positionSize, uint256 owedInterest);
+        returns (QuantoInt256 totalPnl, QuantoInt256 accruedFunding, BaseQuantoPerUSDInt128 positionSize, QuantoUint256 owedInterest);
 
     /**
      * @notice Gets an account open position data for a given account id and market id
