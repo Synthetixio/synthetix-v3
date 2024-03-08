@@ -843,22 +843,6 @@ workflows:
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
       #    proxy: "contract.InitialProxy"
 
-      #- simulate-release: TODO: enable after deployed
-      #    name: "simulate-release-governance"
-      #    workspace: "@synthetixio/governance"
-      #    cannonPackage: "governance"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
-      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
-
-      #- simulate-release: TODO: enable after v2x is updated
-      #    name: "simulate-release-legacy-market"
-      #    workspace: "@synthetixio/legacy-market"
-      #    cannonPackage: "synthetix-legacy-market"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
-      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
-
   update-subgraphs:
     when:
       or:
