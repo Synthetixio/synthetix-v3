@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 library FeatureFlag {
     using SetUtil for SetUtil.AddressSet;
@@ -24,7 +25,7 @@ library FeatureFlag {
     }
 
     function ensureAccessToFeature(bytes32 feature) internal view {
-        if (!hasAccess(feature, msg.sender)) {
+        if (!hasAccess(feature, ERC2771Context._msgSender())) {
             revert FeatureUnavailable(feature);
         }
     }
@@ -40,7 +41,7 @@ library FeatureFlag {
     }
 
     function isDenier(Data storage self, address possibleDenier) internal view returns (bool) {
-        for (uint i = 0; i < self.deniers.length; i++) {
+        for (uint256 i = 0; i < self.deniers.length; i++) {
             if (self.deniers[i] == possibleDenier) {
                 return true;
             }

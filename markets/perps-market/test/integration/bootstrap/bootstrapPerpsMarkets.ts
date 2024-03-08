@@ -1,14 +1,13 @@
 import { createStakedPool } from '@synthetixio/main/test/common';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
-import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
+import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
-  aggregator: () => AggregatorV3Mock;
+  aggregator: () => MockPythExternalNode;
   strategyId: () => ethers.BigNumber;
 };
 
@@ -29,23 +28,26 @@ export type PerpsMarketData = Array<{
   };
   liquidationParams?: {
     initialMarginFraction: ethers.BigNumber;
-    maintenanceMarginFraction: ethers.BigNumber;
+    minimumInitialMarginRatio: ethers.BigNumber;
+    maintenanceMarginScalar: ethers.BigNumber;
     maxLiquidationLimitAccumulationMultiplier: ethers.BigNumber;
     liquidationRewardRatio: ethers.BigNumber;
     maxSecondsInLiquidationWindow: ethers.BigNumber;
     minimumPositionMargin: ethers.BigNumber;
+    maxLiquidationPd?: ethers.BigNumber;
+    endorsedLiquidator?: string;
   };
+  maxMarketSize?: ethers.BigNumber;
   maxMarketValue?: ethers.BigNumber;
   lockedOiRatioD18?: ethers.BigNumber;
   settlementStrategy?: Partial<{
     strategyType: ethers.BigNumber;
+    commitmentPriceDelay: ethers.BigNumber;
     settlementDelay: ethers.BigNumber;
     settlementWindowDuration: ethers.BigNumber;
-    priceWindowDuration: ethers.BigNumber;
     feedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
-    priceDeviationTolerance: ethers.BigNumber;
     disabled: boolean;
   }>;
 }>;
@@ -57,14 +59,15 @@ type IncomingChainState =
 export const DEFAULT_SETTLEMENT_STRATEGY = {
   strategyType: 0, // OFFCHAIN
   settlementDelay: 5,
+  commitmentPriceDelay: 2,
   settlementWindowDuration: 120,
-  priceWindowDuration: 110,
   settlementReward: bn(5),
-  priceDeviationTolerance: bn(0.01),
   disabled: false,
   url: 'https://fakeapi.pyth.synthetix.io/',
   feedId: ethers.utils.formatBytes32String('ETH/USD'),
 };
+
+export const STRICT_PRICE_TOLERANCE = ethers.BigNumber.from(60);
 
 export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
@@ -78,9 +81,16 @@ export const bootstrapPerpsMarkets = (
   });
 
   before('create super market', async () => {
-    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory();
-    await contracts.PerpsMarket.initializeFactory();
+    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
+      contracts.Core.address,
+      contracts.SpotMarket.address
+    );
+    await contracts.PerpsMarket.initializeFactory(
+      contracts.Core.address,
+      contracts.SpotMarket.address
+    );
 
+    await contracts.PerpsMarket.connect(r.owner()).setPerpsMarketName('SuperMarket');
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
       {
         marketId: superMarketId,
@@ -99,20 +109,25 @@ export const bootstrapPerpsMarkets = (
       orderFees,
       fundingParams,
       liquidationParams,
+      maxMarketSize,
       maxMarketValue,
       lockedOiRatioD18,
       settlementStrategy,
     }) => {
-      let oracleNodeId: string, aggregator: AggregatorV3Mock;
-      before('create price nodes', async () => {
-        const results = await createOracleNode(r.owner(), price, r.systems().OracleManager);
+      let oracleNodeId: string, aggregator: MockPythExternalNode;
+      before('create perps price nodes', async () => {
+        const results = await createPythNode(r.owner(), price, contracts.OracleManager);
         oracleNodeId = results.oracleNodeId;
         aggregator = results.aggregator;
       });
 
       before(`create perps market ${name}`, async () => {
         await contracts.PerpsMarket.createMarket(marketId, name, token);
-        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(marketId, oracleNodeId);
+        await contracts.PerpsMarket.connect(r.owner()).updatePriceData(
+          marketId,
+          oracleNodeId,
+          STRICT_PRICE_TOLERANCE
+        );
       });
 
       before('set funding parameters', async () => {
@@ -126,7 +141,11 @@ export const bootstrapPerpsMarkets = (
       before('set max market value', async () => {
         await contracts.PerpsMarket.connect(r.owner()).setMaxMarketSize(
           marketId,
-          maxMarketValue ? maxMarketValue : bn(10_000_000)
+          maxMarketSize ? maxMarketSize : bn(10_000_000)
+        );
+        await contracts.PerpsMarket.connect(r.owner()).setMaxMarketValue(
+          marketId,
+          maxMarketValue ? maxMarketValue : 0
         );
       });
 
@@ -145,11 +164,18 @@ export const bootstrapPerpsMarkets = (
           await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
             marketId,
             liquidationParams.initialMarginFraction,
-            liquidationParams.maintenanceMarginFraction,
+            liquidationParams.minimumInitialMarginRatio,
+            liquidationParams.maintenanceMarginScalar,
             liquidationParams.liquidationRewardRatio,
+            liquidationParams.minimumPositionMargin
+          );
+
+          await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
+            marketId,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
             liquidationParams.maxSecondsInLiquidationWindow,
-            liquidationParams.minimumPositionMargin
+            liquidationParams.maxLiquidationPd ?? 0,
+            liquidationParams.endorsedLiquidator ?? ethers.constants.AddressZero
           );
         });
       }
@@ -169,7 +195,7 @@ export const bootstrapPerpsMarkets = (
         const strategy = {
           ...DEFAULT_SETTLEMENT_STRATEGY,
           ...(settlementStrategy ?? {}),
-          priceVerificationContract: contracts.MockPyth.address,
+          priceVerificationContract: contracts.MockPythERC7412Wrapper.address,
         };
         // first call is static to get strategyId
         strategyId = await contracts.PerpsMarket.connect(
@@ -187,11 +213,8 @@ export const bootstrapPerpsMarkets = (
     }
   );
 
-  const restore = snapshotCheckpoint(r.provider);
-
   return {
     ...r,
-    restore,
     superMarketId: () => superMarketId,
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
@@ -18,6 +19,7 @@ import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
+    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
@@ -48,7 +50,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         if (orderType == Transaction.Type.ASYNC_BUY) {
             strategy.validateAmount(amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
-                msg.sender,
+                ERC2771Context._msgSender(),
                 address(this),
                 amountProvided
             );
@@ -56,36 +58,31 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountEscrowed = amountProvided;
         } else if (orderType == Transaction.Type.ASYNC_SELL) {
             // Get the dollar value of the provided synths
-            uint256 usdAmount = Price.synthUsdExchangeRate(
+            uint256 currentPrice = Price.getCurrentPrice(
                 marketId,
-                amountProvided,
-                Transaction.Type.ASYNC_SELL
+                Transaction.Type.ASYNC_SELL,
+                Price.Tolerance.STRICT
             );
+            uint256 usdAmount = amountProvided.mulDecimal(currentPrice);
 
             // ensures that the amount provided is greater than the settlement reward + minimum sell amount
             strategy.validateAmount(usdAmount);
             // using escrow in case of decaying token value
             amountEscrowed = AsyncOrder.transferIntoEscrow(
                 marketId,
-                msg.sender,
+                ERC2771Context._msgSender(),
                 amountProvided,
                 strategy.maxRoundingLoss
             );
         }
-
-        uint256 settlementDelay = AsyncOrderConfiguration
-            .load(marketId)
-            .settlementStrategies[settlementStrategyId]
-            .settlementDelay;
 
         asyncOrderClaim = AsyncOrderClaim.create(
             marketId,
             orderType,
             amountEscrowed,
             settlementStrategyId,
-            block.timestamp + settlementDelay,
             minimumSettlementAmount,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer
         );
 
@@ -94,7 +91,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             orderType,
             amountProvided,
             asyncOrderClaim.id,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer
         );
     }

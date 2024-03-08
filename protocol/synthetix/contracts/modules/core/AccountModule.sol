@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../interfaces/IAccountModule.sol";
@@ -61,11 +62,11 @@ contract AccountModule is IAccountModule {
         }
 
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
-        accountTokenModule.safeMint(msg.sender, requestedAccountId, "");
+        accountTokenModule.safeMint(ERC2771Context._msgSender(), requestedAccountId, "");
 
-        Account.create(requestedAccountId, msg.sender);
+        Account.create(requestedAccountId, ERC2771Context._msgSender());
 
-        emit AccountCreated(requestedAccountId, msg.sender);
+        emit AccountCreated(requestedAccountId, ERC2771Context._msgSender());
     }
 
     /**
@@ -81,10 +82,11 @@ contract AccountModule is IAccountModule {
         accountId = (type(uint128).max / 2) + systemAccountConfiguration.accountIdOffset;
         systemAccountConfiguration.accountIdOffset += 1;
 
-        accountTokenModule.safeMint(msg.sender, accountId, "");
-        Account.create(accountId, msg.sender);
+        Account.create(accountId, ERC2771Context._msgSender());
 
-        emit AccountCreated(accountId, msg.sender);
+        accountTokenModule.safeMint(ERC2771Context._msgSender(), accountId, "");
+
+        emit AccountCreated(accountId, ERC2771Context._msgSender());
     }
 
     /**
@@ -142,7 +144,7 @@ contract AccountModule is IAccountModule {
 
         account.rbac.grantPermission(permission, user);
 
-        emit PermissionGranted(accountId, permission, user, msg.sender);
+        emit PermissionGranted(accountId, permission, user, ERC2771Context._msgSender());
     }
 
     /**
@@ -160,20 +162,25 @@ contract AccountModule is IAccountModule {
 
         account.rbac.revokePermission(permission, user);
 
-        emit PermissionRevoked(accountId, permission, user, msg.sender);
+        emit PermissionRevoked(accountId, permission, user, ERC2771Context._msgSender());
     }
 
     /**
      * @inheritdoc IAccountModule
      */
     function renouncePermission(uint128 accountId, bytes32 permission) external override {
-        if (!Account.load(accountId).rbac.hasPermission(permission, msg.sender)) {
-            revert PermissionNotGranted(accountId, permission, msg.sender);
+        if (!Account.load(accountId).rbac.hasPermission(permission, ERC2771Context._msgSender())) {
+            revert PermissionNotGranted(accountId, permission, ERC2771Context._msgSender());
         }
 
-        Account.load(accountId).rbac.revokePermission(permission, msg.sender);
+        Account.load(accountId).rbac.revokePermission(permission, ERC2771Context._msgSender());
 
-        emit PermissionRevoked(accountId, permission, msg.sender, msg.sender);
+        emit PermissionRevoked(
+            accountId,
+            permission,
+            ERC2771Context._msgSender(),
+            ERC2771Context._msgSender()
+        );
     }
 
     /**
@@ -196,8 +203,8 @@ contract AccountModule is IAccountModule {
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
     function _onlyAccountToken() internal view {
-        if (msg.sender != address(getAccountTokenAddress())) {
-            revert OnlyAccountTokenProxy(msg.sender);
+        if (ERC2771Context._msgSender() != address(getAccountTokenAddress())) {
+            revert OnlyAccountTokenProxy(ERC2771Context._msgSender());
         }
     }
 }

@@ -10,7 +10,7 @@ describe('PerpsMarketModule', () => {
   const fixture = {
     skewScale: bn(10_000),
     maxFundingVelocity: bn(0.5),
-    maxMarketValue: bn(100_000),
+    maxMarketSize: bn(100_000),
     marketTokenPrice: bn(1000),
   };
 
@@ -33,7 +33,7 @@ describe('PerpsMarketModule', () => {
           skewScale: fixture.skewScale,
           maxFundingVelocity: fixture.maxFundingVelocity,
         },
-        maxMarketValue: fixture.maxMarketValue,
+        maxMarketSize: fixture.maxMarketSize,
       },
     ],
     traderAccountIds: [1, 2],
@@ -50,10 +50,23 @@ describe('PerpsMarketModule', () => {
       const summary = await systems().PerpsMarket.getMarketSummary(marketId);
       assertBn.equal(summary.skew, bn(0));
       assertBn.equal(summary.size, bn(0));
-      assertBn.equal(summary.maxOpenInterest, fixture.maxMarketValue);
+      assertBn.equal(summary.maxOpenInterest, fixture.maxMarketSize);
       assertBn.equal(summary.currentFundingRate, bn(0));
       assertBn.equal(summary.currentFundingVelocity, bn(0));
       assertBn.equal(summary.indexPrice, fixture.marketTokenPrice);
+    });
+  });
+
+  describe('get market data', () => {
+    it('should return all independent values successfully', async () => {
+      const skew = await systems().PerpsMarket.skew(marketId);
+      const size = await systems().PerpsMarket.size(marketId);
+      const currentFundingRate = await systems().PerpsMarket.currentFundingRate(marketId);
+      const currentFundingVelocity = await systems().PerpsMarket.currentFundingVelocity(marketId);
+      assertBn.equal(skew, bn(0));
+      assertBn.equal(size, bn(0));
+      assertBn.equal(currentFundingRate, bn(0));
+      assertBn.equal(currentFundingVelocity, bn(0));
     });
   });
 

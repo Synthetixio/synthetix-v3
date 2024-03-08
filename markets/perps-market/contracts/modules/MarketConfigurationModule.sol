@@ -5,9 +5,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
-import {OrderFee} from "../storage/OrderFee.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.
@@ -15,6 +13,7 @@ import {OrderFee} from "../storage/OrderFee.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsPrice for PerpsPrice.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
@@ -24,6 +23,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         SettlementStrategy.Data memory strategy
     ) external override returns (uint256 strategyId) {
         OwnableStorage.onlyOwner();
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 
@@ -37,17 +40,43 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function setSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        SettlementStrategy.Data memory strategy
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
+        strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
+        config.settlementStrategies[strategyId] = strategy;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
         bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
-        PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[strategyId]
-            .disabled = !enabled;
-        emit SettlementStrategyEnabled(marketId, strategyId, enabled);
+
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.validateStrategyExists(strategyId);
+
+        SettlementStrategy.Data storage strategy = config.settlementStrategies[strategyId];
+        strategy.disabled = !enabled;
+
+        emit SettlementStrategySet(marketId, strategyId, strategy);
     }
 
     /**
@@ -68,12 +97,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updatePriceData(
+        uint128 perpsMarketId,
+        bytes32 feedId,
+        uint256 strictStalenessTolerance
+    ) external override {
         OwnableStorage.onlyOwner();
 
-        PerpsPrice.load(perpsMarketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId, strictStalenessTolerance);
 
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
+        emit MarketPriceDataUpdated(perpsMarketId, feedId, strictStalenessTolerance);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getPriceData(
+        uint128 perpsMarketId
+    ) external view returns (bytes32 feedId, uint256 strictStalenessTolerance) {
+        PerpsPrice.Data storage priceData = PerpsPrice.load(perpsMarketId);
+        feedId = priceData.feedId;
+        strictStalenessTolerance = priceData.strictStalenessTolerance;
     }
 
     /**
@@ -84,6 +128,16 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.maxMarketSize = maxMarketSize;
         emit MaxMarketSizeSet(marketId, maxMarketSize);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external override {
+        OwnableStorage.onlyOwner();
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+        config.maxMarketValue = maxMarketValue;
+        emit MaxMarketValueSet(marketId, maxMarketValue);
     }
 
     /**
@@ -105,33 +159,57 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function setMaxLiquidationParameters(
+        uint128 marketId,
+        uint256 maxLiquidationLimitAccumulationMultiplier,
+        uint256 maxSecondsInLiquidationWindow,
+        uint256 maxLiquidationPd,
+        address endorsedLiquidator
+    ) external override {
+        OwnableStorage.onlyOwner();
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        config
+            .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
+        config.maxLiquidationPd = maxLiquidationPd;
+        config.endorsedLiquidator = endorsedLiquidator;
+        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
+
+        emit MaxLiquidationParametersSet(
+            marketId,
+            maxLiquidationLimitAccumulationMultiplier,
+            maxSecondsInLiquidationWindow,
+            maxLiquidationPd,
+            endorsedLiquidator
+        );
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setLiquidationParameters(
         uint128 marketId,
         uint256 initialMarginRatioD18,
-        uint256 maintenanceMarginRatioD18,
-        uint256 liquidationRewardRatioD18,
-        uint256 maxLiquidationLimitAccumulationMultiplier,
-        uint256 maxSecondsInLiquidationWindow,
+        uint256 minimumInitialMarginRatioD18,
+        uint256 maintenanceMarginScalarD18,
+        uint256 flagRewardRatioD18,
         uint256 minimumPositionMargin
     ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         config.initialMarginRatioD18 = initialMarginRatioD18;
-        config.maintenanceMarginRatioD18 = maintenanceMarginRatioD18;
-        config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
-        config
-            .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
-        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
+        config.maintenanceMarginScalarD18 = maintenanceMarginScalarD18;
+        config.minimumInitialMarginRatioD18 = minimumInitialMarginRatioD18;
+        config.flagRewardRatioD18 = flagRewardRatioD18;
         config.minimumPositionMargin = minimumPositionMargin;
 
         emit LiquidationParametersSet(
             marketId,
             initialMarginRatioD18,
-            maintenanceMarginRatioD18,
-            liquidationRewardRatioD18,
-            maxLiquidationLimitAccumulationMultiplier,
-            maxSecondsInLiquidationWindow,
+            maintenanceMarginScalarD18,
+            minimumInitialMarginRatioD18,
+            flagRewardRatioD18,
             minimumPositionMargin
         );
     }
@@ -159,6 +237,31 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getMaxLiquidationParameters(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (
+            uint256 maxLiquidationLimitAccumulationMultiplier,
+            uint256 maxSecondsInLiquidationWindow,
+            uint256 maxLiquidationPd,
+            address endorsedLiquidator
+        )
+    {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        maxLiquidationLimitAccumulationMultiplier = config
+            .maxLiquidationLimitAccumulationMultiplier;
+        maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
+        maxLiquidationPd = config.maxLiquidationPd;
+        endorsedLiquidator = config.endorsedLiquidator;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function getLiquidationParameters(
         uint128 marketId
     )
@@ -167,20 +270,19 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         override
         returns (
             uint256 initialMarginRatioD18,
-            uint256 maintenanceMarginRatioD18,
-            uint256 liquidationRewardRatioD18,
-            uint256 maxLiquidationLimitAccumulationMultiplier,
-            uint256 maxSecondsInLiquidationWindow
+            uint256 minimumInitialMarginRatioD18,
+            uint256 maintenanceMarginScalarD18,
+            uint256 flagRewardRatioD18,
+            uint256 minimumPositionMargin
         )
     {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         initialMarginRatioD18 = config.initialMarginRatioD18;
-        maintenanceMarginRatioD18 = config.maintenanceMarginRatioD18;
-        liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
-        maxLiquidationLimitAccumulationMultiplier = config
-            .maxLiquidationLimitAccumulationMultiplier;
-        maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
+        minimumInitialMarginRatioD18 = config.minimumInitialMarginRatioD18;
+        maintenanceMarginScalarD18 = config.maintenanceMarginScalarD18;
+        flagRewardRatioD18 = config.flagRewardRatioD18;
+        minimumPositionMargin = config.minimumPositionMargin;
     }
 
     /**
@@ -204,6 +306,17 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         maxMarketSize = config.maxMarketSize;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getMaxMarketValue(
+        uint128 marketId
+    ) external view override returns (uint256 maxMarketValue) {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        maxMarketValue = config.maxMarketValue;
     }
 
     /**

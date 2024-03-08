@@ -1,17 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 
+/**
+ * @title Mock Fee Collector.
+ */
 contract FeeCollectorMock is IFeeCollector {
-    uint internal feeRatioD18;
+    uint256 internal feeRatioD18;
 
-    function mockSetFeeRatio(uint _feeRatio) external {
+    function mockSetFeeRatio(uint256 _feeRatio) external {
         feeRatioD18 = _feeRatio;
     }
 
-    // solc-ignore-next-line func-mutability
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,

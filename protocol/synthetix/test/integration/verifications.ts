@@ -1,6 +1,7 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
+import { bn } from '../common';
 
 export function verifyUsesFeatureFlag(
   c: () => ethers.Contract,
@@ -8,20 +9,14 @@ export function verifyUsesFeatureFlag(
   txn: () => Promise<unknown>
 ) {
   describe(`when ${flagName} feature disabled`, () => {
-    before('disable feature', async () => {
-      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), true);
-    });
-
-    after('re-enable feature', async () => {
-      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), false);
-    });
-
     it('it fails with feature unavailable', async () => {
+      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), true);
       await assertRevert(
         txn(),
         `FeatureUnavailable("${ethers.utils.formatBytes32String(flagName)}")`,
         c()
       );
+      await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), false);
     });
   });
 }
@@ -38,8 +33,8 @@ export function verifyChecksCollateralEnabled(
     before('disable collateral', async () => {
       await c().configureCollateral({
         depositingEnabled: false,
-        issuanceRatioD18: 0,
-        liquidationRatioD18: 0,
+        issuanceRatioD18: bn(2),
+        liquidationRatioD18: bn(2),
         liquidationRewardD18: 0,
         oracleNodeId: ethers.utils.formatBytes32String(''),
         tokenAddress: collateralAddress(),

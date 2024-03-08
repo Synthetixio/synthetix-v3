@@ -17,32 +17,87 @@ describe('ModifyCollateral Withdraw', () => {
   const withdrawAmount = wei(0.1);
   const BTC_PRICE = wei(10_000);
 
-  const { systems, owner, synthMarkets, superMarketId, trader1 } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: BTC_PRICE.toBN(),
-        sellPrice: BTC_PRICE.toBN(),
-      },
-    ],
-    perpsMarkets: [],
-    traderAccountIds: accountIds,
-  });
+  const { systems, owner, synthMarkets, provider, superMarketId, trader1, trader2 } =
+    bootstrapMarkets({
+      synthMarkets: [
+        {
+          name: 'Bitcoin',
+          token: 'snxBTC',
+          buyPrice: BTC_PRICE.toBN(),
+          sellPrice: BTC_PRICE.toBN(),
+        },
+      ],
+      perpsMarkets: [],
+      traderAccountIds: accountIds,
+    });
   let synthBTCMarketId: ethers.BigNumber;
 
   before('identify actors', () => {
     synthBTCMarketId = synthMarkets()[0].marketId();
   });
 
-  describe('withdraw without open position modifyCollateral()', async () => {
-    let spotBalanceBefore: ethers.BigNumber;
-    let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
+  const restoreToSetup = snapshotCheckpoint(provider);
+
+  describe('withdraw without open position modifyCollateral() from another account', () => {
+    before(restoreToSetup);
 
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+        .setCollateralConfiguration(synthBTCMarketId, ethers.constants.MaxUint256);
+    });
+
+    before('trader1 buys 1 snxBTC', async () => {
+      await systems()
+        .SpotMarket.connect(trader1())
+        .buy(synthBTCMarketId, marginAmount.toBN(), oneBTC.toBN(), ethers.constants.AddressZero);
+    });
+
+    before('trader1 approves the perps market', async () => {
+      await synthMarkets()[0]
+        .synth()
+        .connect(trader1())
+        .approve(systems().PerpsMarket.address, depositAmount.toBN());
+    });
+
+    before('trader1 deposits collateral', async () => {
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .modifyCollateral(accountIds[0], synthBTCMarketId, depositAmount.toBN());
+    });
+    before('trader2 deposits snxUSD as collateral', async () => {
+      await systems()
+        .PerpsMarket.connect(trader2())
+        .modifyCollateral(accountIds[1], sUSDSynthId, depositAmount.toBN());
+    });
+    it('reverts when trader1 tries to withdraw snxUSD', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountIds[0], sUSDSynthId, withdrawAmount.mul(-1).toBN()),
+        `InsufficientSynthCollateral("${sUSDSynthId}", "0", "${withdrawAmount.toBN()}")`
+      );
+    });
+    it('reverts when trader2 tries to withdraw snxBTC', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader2())
+          .modifyCollateral(accountIds[1], synthBTCMarketId, withdrawAmount.mul(-1).toBN()),
+        `InsufficientSynthCollateral("${synthBTCMarketId}", "0", "${withdrawAmount.toBN()}")`
+      );
+    });
+  });
+
+  describe('withdraw without open position modifyCollateral()', () => {
+    let spotBalanceBefore: ethers.BigNumber;
+    let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
+
+    before(restoreToSetup);
+
+    before('owner sets limits to max', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setCollateralConfiguration(synthBTCMarketId, ethers.constants.MaxUint256);
     });
 
     before('trader1 buys 1 snxBTC', async () => {
@@ -111,6 +166,7 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
   });
+
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
@@ -121,10 +177,11 @@ describe('ModifyCollateral Withdraw', () => {
         fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
+          minimumInitialMarginRatio: bn(0.01),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
-          maxSecondsInLiquidationWindow: bn(10),
+          maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
@@ -139,10 +196,11 @@ describe('ModifyCollateral Withdraw', () => {
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
+          minimumInitialMarginRatio: bn(0.01),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
-          maxSecondsInLiquidationWindow: bn(10),
+          maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
@@ -165,6 +223,13 @@ describe('ModifyCollateral Withdraw', () => {
     const { systems, provider, trader1, perpsMarkets, synthMarkets } = bootstrapMarkets({
       synthMarkets: spotMarketConfig,
       perpsMarkets: perpsMarketConfigs,
+      liquidationGuards: {
+        minLiquidationReward: bn(0),
+        minKeeperProfitRatioD18: bn(0),
+        maxLiquidationReward: bn(10_000),
+        maxKeeperScalingRatioD18: bn(1),
+      },
+
       traderAccountIds,
     });
     before('add some snx collateral to margin', async () => {
@@ -222,7 +287,7 @@ describe('ModifyCollateral Withdraw', () => {
         });
       }
     });
-    describe('account check after initial positions open', async () => {
+    describe('account check after initial positions open', () => {
       it('should have correct open interest', async () => {
         const expectedOi = 100_000; // abs((-2 * 30000) + (20 * 2000))
         assertBn.equal(
@@ -286,11 +351,19 @@ describe('ModifyCollateral Withdraw', () => {
       });
       it('reverts when withdrawing more than "collateral available for withdraw"', async () => {
         // Note that more low level tests related to specific maintenance margins are done in the liquidation tests
+
+        // calculate liquidation rewards based on price, sizes and liquidation reward ratio
+        const liquidationRewards = wei(2)
+          .mul(wei(30_000))
+          .mul(wei(0.05))
+          .add(wei(20).mul(wei(2_000).mul(wei(0.05))));
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader1())
             .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
-          `InsufficientCollateralAvailableForWithdraw("${bn(15000)}", "${bn(18000)}")`
+          `InsufficientCollateralAvailableForWithdraw("${bn(14000).sub(
+            liquidationRewards.toBN()
+          )}", "${bn(18000)}")`
         );
       });
 

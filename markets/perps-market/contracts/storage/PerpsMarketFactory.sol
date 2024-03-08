@@ -5,11 +5,23 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
+import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
  */
 library PerpsMarketFactory {
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using SetUtil for SetUtil.UintSet;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using PerpsMarket for PerpsMarket.Data;
+
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
 
@@ -28,8 +40,7 @@ library PerpsMarketFactory {
         ISynthetixSystem synthetix;
         ISpotMarketSystem spotMarket;
         uint128 perpsMarketId;
-        address owner;
-        address nominatedOwner;
+        string name;
     }
 
     function onlyIfInitialized(Data storage self) internal view {
@@ -49,6 +60,28 @@ library PerpsMarketFactory {
         assembly {
             perpsMarketFactory.slot := s
         }
+    }
+
+    function initialize(
+        Data storage self,
+        ISynthetixSystem synthetix,
+        ISpotMarketSystem spotMarket
+    ) internal returns (uint128 perpsMarketId) {
+        onlyIfNotInitialized(self); // redundant check, but kept here in case this internal is called somewhere else
+
+        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
+        perpsMarketId = synthetix.registerMarket(address(this));
+
+        self.spotMarket = spotMarket;
+        self.synthetix = synthetix;
+        self.usdToken = ITokenModule(usdTokenAddress);
+        self.oracle = synthetix.getOracleManager();
+        self.perpsMarketId = perpsMarketId;
+    }
+
+    function totalWithdrawableUsd() internal view returns (uint256) {
+        Data storage self = load();
+        return self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
     }
 
     function depositMarketCollateral(

@@ -44,7 +44,7 @@ describe('MarketManagerModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'registerMarket',
-      () => systems().Core.connect(user2).registerMarket(user1.getAddress())
+      () => systems().Core.connect(user2).registerMarket(MockMarket().address)
     );
 
     it('reverts when trying to register a market that does not support the IMarket interface', async function () {
@@ -93,6 +93,9 @@ describe('MarketManagerModule', function () {
 
     before('acquire USD', async () => {
       await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
+      await systems()
+        .Core.connect(user1)
+        .withdraw(accountId, await systems().Core.getUsdToken(), One);
     });
 
     it('should not work if user has not approved', async () => {
@@ -142,6 +145,28 @@ describe('MarketManagerModule', function () {
           assertBn.equal(
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             0
+          );
+        });
+
+        it('emits event', async () => {
+          const target = `"${await user1.getAddress()}"`;
+          const amount = bn(1).toString();
+          const market = `"${MockMarket().address}"`;
+          const creditCapacity = bn(1001).toString();
+          const netIssuance = bn(-1).toString();
+          const depositedCollateralValue = bn(0).toString();
+          await assertEvent(
+            txn,
+            `MarketUsdDeposited(${[
+              marketId(),
+              target,
+              amount,
+              market,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+            ].join(', ')})`,
+            systems().Core
           );
         });
       });
@@ -214,6 +239,16 @@ describe('MarketManagerModule', function () {
             systems().Core
           );
         });
+
+        it('no event emitted when fee address is 0', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('depositMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+            );
+          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
+        });
       });
     });
   });
@@ -224,6 +259,9 @@ describe('MarketManagerModule', function () {
     describe('deposit into the pool', async () => {
       before('mint USD to use market', async () => {
         await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
       });
@@ -268,6 +306,28 @@ describe('MarketManagerModule', function () {
           assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One.div(2));
         });
 
+        it('emits event', async () => {
+          const target = `"${await user1.getAddress()}"`;
+          const amount = bn(0.5).toString();
+          const market = `"${MockMarket().address}"`;
+          const creditCapacity = bn(1000.5).toString();
+          const netIssuance = bn(-0.5).toString();
+          const depositedCollateralValue = bn(0).toString();
+          await assertEvent(
+            txn,
+            `MarketUsdWithdrawn(${[
+              marketId(),
+              target,
+              amount,
+              market,
+              creditCapacity,
+              netIssuance,
+              depositedCollateralValue,
+            ].join(', ')})`,
+            systems().Core
+          );
+        });
+
         describe('withdraw the rest', async () => {
           before('mint USD to use market', async () => {
             txn = await MockMarket().connect(user1).sellSynth(One.div(2));
@@ -284,6 +344,28 @@ describe('MarketManagerModule', function () {
 
           it('makes USD', async () => {
             assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One);
+          });
+
+          it('emits event', async () => {
+            const target = `"${await user1.getAddress()}"`;
+            const amount = bn(0.5).toString();
+            const market = `"${MockMarket().address}"`;
+            const creditCapacity = bn(1000).toString();
+            const netIssuance = bn(0).toString();
+            const depositedCollateralValue = bn(0).toString();
+            await assertEvent(
+              txn,
+              `MarketUsdWithdrawn(${[
+                marketId(),
+                target,
+                amount,
+                market,
+                creditCapacity,
+                netIssuance,
+                depositedCollateralValue,
+              ].join(', ')})`,
+              systems().Core
+            );
           });
         });
       });
@@ -346,6 +428,16 @@ describe('MarketManagerModule', function () {
             `MarketSystemFeePaid(${marketId()}, ${One.div(200)})`,
             systems().Core
           );
+        });
+
+        it('no event emitted when fee address is 0', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('withdrawMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+            );
+          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
         });
       });
     });

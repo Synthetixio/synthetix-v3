@@ -7,7 +7,7 @@ See in [subgraph.base.yaml](subgraph.base.yaml) the `source` field for the `Core
 ```yaml
 abis:
   - name: CoreProxy
-    file: ./deployments/optimism-goerli/CoreProxy.json
+    file: ./optimism-goerli/deployments/system/CoreProxy.json
 ```
 
 ## Updating the subgraph
@@ -17,7 +17,7 @@ abis:
 yarn deployments
 
 # 2. generate the networks.json file
-yarn codegen
+yarn subgraphgen
 ```
 
 ## Testing the subgraph

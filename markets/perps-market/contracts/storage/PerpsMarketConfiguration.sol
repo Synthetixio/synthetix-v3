@@ -12,14 +12,21 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
-    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int newSideSize);
+    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int256 newSideSize);
 
-    error InvalidSettlementStrategy(uint128 settlementStrategyId);
+    error MaxUSDOpenInterestReached(
+        uint128 marketId,
+        uint256 maxMarketValue,
+        int256 newSideSize,
+        uint256 price
+    );
+
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketSize; // oi cap
+        uint256 maxMarketSize; // oi cap in units of asset
         uint256 maxFundingVelocity;
         uint256 skewScale;
         /**
@@ -28,11 +35,14 @@ library PerpsMarketConfiguration {
          */
         uint256 initialMarginRatioD18;
         /**
-         * @dev the maintenance margin requirements for this market when opening a position
+         * @dev This scalar is applied to the calculated initial margin ratio
          * @dev this generally will be lower than initial margin but is used to determine when to liquidate a position
          * @dev this fraction is multiplied by the impact of the position on the skew (position size / skewScale)
          */
-        uint256 maintenanceMarginRatioD18;
+        uint256 maintenanceMarginScalarD18;
+        /**
+         * @dev This ratio is multiplied by the market's notional size (size * currentPrice) to determine how much credit is required for the market to be sufficiently backed by the LPs
+         */
         uint256 lockedOiRatioD18;
         /**
          * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
@@ -44,13 +54,31 @@ library PerpsMarketConfiguration {
          */
         uint256 maxSecondsInLiquidationWindow;
         /**
-         * @dev This value is multiplied by the notional value of a position to determine liquidation reward
+         * @dev This value is multiplied by the notional value of a position to determine flag reward
          */
-        uint256 liquidationRewardRatioD18;
+        uint256 flagRewardRatioD18;
         /**
          * @dev minimum position value in USD, this is a constant value added to position margin requirements (initial/maintenance)
          */
         uint256 minimumPositionMargin;
+        /**
+         * @dev This value gets applied to the initial margin ratio to ensure there's a cap on the max leverage regardless of position size
+         */
+        uint256 minimumInitialMarginRatioD18;
+        /**
+         * @dev Threshold for allowing further liquidations when max liquidation amount is reached
+         */
+        uint256 maxLiquidationPd;
+        /**
+         * @dev if the msg.sender is this endorsed liquidator during an account liquidation, the max liquidation amount doesn't apply.
+         * @dev this address is allowed to fully liquidate any account eligible for liquidation.
+         */
+        address endorsedLiquidator;
+        /**
+         * @dev OI cap in USD denominated.
+         * @dev If set to zero then there is no cap with value, just units
+         */
+        uint256 maxMarketValue;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -62,19 +90,26 @@ library PerpsMarketConfiguration {
         }
     }
 
-    function maxLiquidationAmountPerSecond(Data storage self) internal view returns (uint256) {
+    function maxLiquidationAmountInWindow(Data storage self) internal view returns (uint256) {
         OrderFee.Data storage orderFeeData = self.orderFees;
         return
             (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(self.skewScale).mulDecimal(
                 self.maxLiquidationLimitAccumulationMultiplier
-            );
+            ) * self.maxSecondsInLiquidationWindow;
     }
 
-    function calculateLiquidationReward(
+    function numberOfLiquidationWindows(
+        Data storage self,
+        uint256 positionSize
+    ) internal view returns (uint256) {
+        return MathUtil.ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
+    }
+
+    function calculateFlagReward(
         Data storage self,
         uint256 notionalValue
     ) internal view returns (uint256) {
-        return notionalValue.mulDecimal(self.liquidationRewardRatioD18);
+        return notionalValue.mulDecimal(self.flagRewardRatioD18);
     }
 
     function calculateRequiredMargins(
@@ -88,23 +123,26 @@ library PerpsMarketConfiguration {
             uint256 initialMarginRatio,
             uint256 maintenanceMarginRatio,
             uint256 initialMargin,
-            uint256 maintenanceMargin,
-            uint256 liquidationMargin
+            uint256 maintenanceMargin
         )
     {
+        if (size == 0) {
+            return (0, 0, 0, 0);
+        }
         uint256 sizeAbs = MathUtil.abs(size.to256());
         uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
 
-        initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginRatioD18);
-        maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginRatioD18);
+        initialMarginRatio =
+            impactOnSkew.mulDecimal(self.initialMarginRatioD18) +
+            self.minimumInitialMarginRatioD18;
+        maintenanceMarginRatio = initialMarginRatio.mulDecimal(self.maintenanceMarginScalarD18);
 
         uint256 notional = sizeAbs.mulDecimal(price);
+
         initialMargin = notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
         maintenanceMargin =
             notional.mulDecimal(maintenanceMarginRatio) +
             self.minimumPositionMargin;
-
-        liquidationMargin = calculateLiquidationReward(self, notional);
     }
 
     /**
@@ -112,15 +150,22 @@ library PerpsMarketConfiguration {
      */
     function loadValidSettlementStrategy(
         uint128 marketId,
-        uint128 settlementStrategyId
+        uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
         Data storage self = load(marketId);
-        if (settlementStrategyId >= self.settlementStrategies.length) {
-            revert InvalidSettlementStrategy(settlementStrategyId);
-        }
+        validateStrategyExists(self, settlementStrategyId);
 
         strategy = self.settlementStrategies[settlementStrategyId];
         if (strategy.disabled) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+    }
+
+    function validateStrategyExists(
+        Data storage config,
+        uint256 settlementStrategyId
+    ) internal view {
+        if (settlementStrategyId >= config.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
     }

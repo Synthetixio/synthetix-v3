@@ -1,12 +1,10 @@
 import { bootstrapStakers } from '@synthetixio/main/test/common';
 import { Systems, bn } from './bootstrap';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 
 type Data = {
   systems: () => Systems;
   signers: () => ethers.Signer[];
-  provider: () => ethers.providers.JsonRpcProvider;
   owner: () => ethers.Signer;
   accountIds: Array<number>;
 };
@@ -16,7 +14,7 @@ type Data = {
   needed for testing
 */
 export function bootstrapTraders(data: Data) {
-  const { systems, signers, provider, accountIds, owner } = data;
+  const { systems, signers, accountIds, owner } = data;
   bootstrapStakers(systems, signers, bn(100_000));
 
   let trader1: ethers.Signer, trader2: ethers.Signer, trader3: ethers.Signer, keeper: ethers.Signer;
@@ -27,19 +25,19 @@ export function bootstrapTraders(data: Data) {
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
-        trader1.getAddress()
+        await trader1.getAddress()
       );
     await systems()
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
-        trader2.getAddress()
+        await trader2.getAddress()
       );
     await systems()
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
-        trader3.getAddress()
+        await trader3.getAddress()
       );
   });
 
@@ -73,13 +71,10 @@ export function bootstrapTraders(data: Data) {
     });
   });
 
-  const restore = snapshotCheckpoint(provider);
-
   return {
     trader1: () => trader1,
     trader2: () => trader2,
     trader3: () => trader3,
     keeper: () => keeper,
-    restore,
   };
 }

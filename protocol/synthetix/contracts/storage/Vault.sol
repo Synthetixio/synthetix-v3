@@ -67,6 +67,12 @@ library Vault {
         SetUtil.Bytes32Set rewardIds;
     }
 
+    struct PositionSelector {
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
+    }
+
     /**
      * @dev Return's the VaultEpoch data for the current epoch.
      */
@@ -112,15 +118,35 @@ library Vault {
         return currentEpoch(self).consolidateAccountDebt(accountId);
     }
 
+    function updateRewards(
+        Data storage self,
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) internal returns (uint256[] memory rewards, address[] memory distributors) {
+        uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
+
+        return
+            updateRewards(
+                self,
+                PositionSelector(accountId, poolId, collateralType),
+                totalSharesD18,
+                actorSharesD18
+            );
+    }
+
     /**
      * @dev Traverses available rewards for this vault, and updates an accounts
      * claim on them according to the amount of debt shares they have.
      */
     function updateRewards(
         Data storage self,
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
+        PositionSelector memory pos,
+        uint256 totalSharesD18,
+        uint256 actorSharesD18
     ) internal returns (uint256[] memory rewards, address[] memory distributors) {
         rewards = new uint256[](self.rewardIds.length());
         distributors = new address[](self.rewardIds.length());
@@ -136,25 +162,23 @@ library Vault {
             distributors[i] = address(dist.distributor);
             rewards[i] = updateReward(
                 self,
-                accountId,
-                poolId,
-                collateralType,
-                self.rewardIds.valueAt(i + 1)
+                pos,
+                self.rewardIds.valueAt(i + 1),
+                totalSharesD18,
+                actorSharesD18
             );
         }
     }
 
     /**
-     * @dev Traverses available rewards for this vault and the reward id, and updates an accounts
-     * claim on them according to the amount of debt shares they have.
+     * @dev Traverses available rewards for this vault and the reward id, and returns an accounts
+     * pending claim on them according to the amount of debt shares they have.
      */
-    function updateReward(
+    function getReward(
         Data storage self,
         uint128 accountId,
-        uint128 poolId,
-        address collateralType,
         bytes32 rewardId
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
         uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
             accountId.toBytes32()
@@ -166,17 +190,53 @@ library Vault {
             revert RewardDistributorNotFound();
         }
 
-        dist.distributor.onPositionUpdated(accountId, poolId, collateralType, actorSharesD18);
+        uint256 currentRewardPerShare = dist.rewardPerShareD18;
+
+        currentRewardPerShare += dist.getEntry(totalSharesD18).toUint().to128();
+
+        uint256 currentPending = dist.claimStatus[accountId].pendingSendD18 +
+            actorSharesD18.mulDecimal(
+                currentRewardPerShare - dist.claimStatus[accountId].lastRewardPerShareD18
+            );
+
+        return currentPending;
+    }
+
+    /**
+     * @dev Traverses available rewards for this vault and the reward id, and updates an accounts
+     * claim on them according to the amount of debt shares they have.
+     */
+    function updateReward(
+        Data storage self,
+        PositionSelector memory pos,
+        bytes32 rewardId,
+        uint256 totalSharesD18,
+        uint256 actorSharesD18
+    ) internal returns (uint256) {
+        RewardDistribution.Data storage dist = self.rewards[rewardId];
+
+        if (address(dist.distributor) == address(0)) {
+            revert RewardDistributorNotFound();
+        }
+
+        dist.distributor.onPositionUpdated(
+            pos.accountId,
+            pos.poolId,
+            pos.collateralType,
+            actorSharesD18
+        );
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 
-        dist.claimStatus[accountId].pendingSendD18 += actorSharesD18
-            .mulDecimal(dist.rewardPerShareD18 - dist.claimStatus[accountId].lastRewardPerShareD18)
+        dist.claimStatus[pos.accountId].pendingSendD18 += actorSharesD18
+            .mulDecimal(
+                dist.rewardPerShareD18 - dist.claimStatus[pos.accountId].lastRewardPerShareD18
+            )
             .to128();
 
-        dist.claimStatus[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
+        dist.claimStatus[pos.accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
-        return dist.claimStatus[accountId].pendingSendD18;
+        return dist.claimStatus[pos.accountId].pendingSendD18;
     }
 
     /**

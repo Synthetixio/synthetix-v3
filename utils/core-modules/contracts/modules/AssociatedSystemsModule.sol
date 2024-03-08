@@ -126,7 +126,10 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         AssociatedSystem.Data storage store = AssociatedSystem.load(id);
 
         if (store.proxy != address(0)) {
-            _upgradeToken(id, impl);
+            if (store.impl != impl) {
+                _upgradeToken(id, impl);
+            }
+            ITokenModule(store.proxy).initialize(name, symbol, decimals);
         } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxyWithOwner(impl, address(this)));

@@ -8,9 +8,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
-import { calculateFillPrice } from '../helpers/fillPrice';
+import { calculateFillPrice, calculatePricePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
+import { deepEqual } from 'assert/strict';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -34,61 +35,34 @@ describe('Settle Offchain Async Order test', () => {
     traderAccountIds: [2, 3],
   });
   let ethMarketId: ethers.BigNumber;
+  let ethSettlementStrategyId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
+    ethSettlementStrategyId = perpsMarkets()[0].strategyId();
     btcSynth = synthMarkets()[0];
+  });
+
+  before('set Pyth Benchmark Price data', async () => {
+    const offChainPrice = bn(1000);
+
+    // set Pyth setBenchmarkPrice
+    await systems().MockPythERC7412Wrapper.setBenchmarkPrice(offChainPrice);
   });
 
   describe('failures before commiting orders', () => {
     describe('using settle', () => {
       it('reverts if account id is incorrect (not valid order)', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(1337),
+          systems().PerpsMarket.connect(trader1()).settleOrder(1337),
           'OrderNotValid()'
         );
       });
 
       it('reverts if order was not settled before (not valid order)', async () => {
-        await assertRevert(systems().PerpsMarket.connect(trader1()).settle(2), 'OrderNotValid()');
-      });
-    });
-
-    describe('using settlePythOrder', () => {
-      let pythPriceData: string, extraData: string, updateFee: ethers.BigNumber;
-      before('get some pyth price data and fee', async () => {
-        const startTime = Math.floor(Date.now() / 1000);
-
-        // Get the latest price
-        pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-          DEFAULT_SETTLEMENT_STRATEGY.feedId,
-          1000_0000,
-          1,
-          -4,
-          1000_0000,
-          1,
-          startTime + 6
-        );
-        updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
-      });
-
-      it('reverts if account id is incorrect (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [1337]);
         await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
-          'OrderNotValid()'
-        );
-      });
-
-      it('reverts if order was not settled before (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
+          systems().PerpsMarket.connect(trader1()).settleOrder(2),
           'OrderNotValid()'
         );
       });
@@ -147,8 +121,6 @@ describe('Settle Offchain Async Order test', () => {
   for (let idx = 0; idx < testCases.length; idx++) {
     const testCase = testCases[idx];
     describe(`Using ${testCase.name} as collateral`, () => {
-      let pythCallData: string, extraData: string, updateFee: ethers.BigNumber;
-
       let tx: ethers.ContractTransaction;
       let startTime: number;
 
@@ -173,44 +145,14 @@ describe('Settle Offchain Async Order test', () => {
         startTime = await getTxTime(provider(), tx);
       });
 
-      before('setup bytes data', () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
-        pythCallData = ethers.utils.solidityPack(
-          ['bytes32', 'uint64'],
-          [
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay,
-          ]
-        );
-      });
-
       const restoreBeforeSettle = snapshotCheckpoint(provider);
 
       describe('attempts to settle before settlement time', () => {
         before(restoreBeforeSettle);
 
-        it('with settle', async () => {
+        it('with settleOrder', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(2),
-            'SettlementWindowNotOpen'
-          );
-        });
-
-        it('with settlePythOrder', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1000_0000,
-            1,
-            -4,
-            1000_0000,
-            1,
-            startTime + 6
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
-          await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            systems().PerpsMarket.connect(trader1()).settleOrder(2),
             'SettlementWindowNotOpen'
           );
         });
@@ -230,28 +172,9 @@ describe('Settle Offchain Async Order test', () => {
           );
         });
 
-        it('with settle', async () => {
+        it('with settleOrder', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(2),
-            'SettlementWindowExpired'
-          );
-        });
-
-        it('with settlePythOrder', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1000_0000,
-            1,
-            -4,
-            1000_0000,
-            1,
-            startTime + 6
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
-          await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            systems().PerpsMarket.connect(keeper()).settleOrder(2),
             'SettlementWindowExpired'
           );
         });
@@ -268,44 +191,47 @@ describe('Settle Offchain Async Order test', () => {
           );
         });
 
-        it('reverts with invalid pyth price timestamp (before time)', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1000_0000,
-            1,
-            -4,
-            1000_0000,
-            1,
-            startTime
-          );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+        it('reverts when there is no benchmark price', async () => {
+          // set Pyth setBenchmarkPrice
+          await systems().MockPythERC7412Wrapper.setAlwaysRevertFlag(true);
+
           await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'PriceFeedNotFoundWithinRange'
+            systems().PerpsMarket.connect(keeper()).settleOrder(2),
+            `OracleDataRequired("${DEFAULT_SETTLEMENT_STRATEGY.feedId}", ${startTime + 2})`
+          );
+        });
+      });
+
+      describe('attempts to settle with not enough collateral', () => {
+        // Note: This tests is not valid for the "only snxUSD" case
+        before(restoreBeforeSettle);
+
+        before('fast forward to settlement time', async () => {
+          // fast forward to settlement
+          await fastForwardTo(
+            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+            provider()
           );
         });
 
+        before('update collateral price', async () => {
+          await btcSynth.sellAggregator().mockSetCurrentPrice(bn(0.1));
+        });
+
         it('reverts with invalid pyth price timestamp (after time)', async () => {
-          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-            DEFAULT_SETTLEMENT_STRATEGY.feedId,
-            1000_0000,
-            1,
-            -4,
-            1000_0000,
-            1,
-            startTime +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
-              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
-              1
+          if (testCase.name === 'only snxUSD') {
+            return;
+          }
+
+          const currentSkew = await systems().PerpsMarket.skew(ethMarketId);
+          const startingPnl = calculatePricePnl(wei(currentSkew), wei(100_000), wei(1), wei(1000));
+          const availableCollateral = (testCase.name === 'only snxBTC' ? wei(0.1) : wei(2.1)).add(
+            startingPnl
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+
           await assertRevert(
-            systems()
-              .PerpsMarket.connect(keeper())
-              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'PriceFeedNotFoundWithinRange'
+            systems().PerpsMarket.connect(keeper()).settleOrder(2),
+            `InsufficientMargin("${availableCollateral.bn}", "${bn(5).toString()}")`
           );
         });
       });
@@ -321,47 +247,39 @@ describe('Settle Offchain Async Order test', () => {
           );
         });
 
-        it('reverts with offchain info', async () => {
-          const functionSig = systems().PerpsMarket.interface.getSighash('settlePythOrder');
+        describe('disable settlement strategy', () => {
+          before(async () => {
+            await systems().PerpsMarket.setSettlementStrategyEnabled(
+              ethMarketId,
+              ethSettlementStrategyId,
+              false
+            );
+          });
 
-          // Coverage tests use hardhat provider, and hardhat provider stringifies array differently
-          // hre.network.name === 'hardhat'
-          //   ? `[${pythSettlementStrategy.url}]`
-          //   : pythSettlementStrategy.url;
+          it('reverts with invalid settlement strategy', async () => {
+            await assertRevert(
+              systems().PerpsMarket.connect(trader1()).settleOrder(2),
+              'InvalidSettlementStrategy'
+            );
+          });
 
-          await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settle(2),
-            `OffchainLookup("${systems().PerpsMarket.address}", "${
-              DEFAULT_SETTLEMENT_STRATEGY.url
-            }", "${pythCallData}", "${functionSig}", "${extraData}")`
-          );
+          after(async () => {
+            await systems().PerpsMarket.setSettlementStrategyEnabled(
+              ethMarketId,
+              ethSettlementStrategyId,
+              true
+            );
+          });
         });
 
-        describe('settle pyth order', () => {
-          let pythPriceData: string;
+        describe('settle order', () => {
           let settleTx: ethers.ContractTransaction;
 
-          before('prepare data', async () => {
-            // Get the latest price
-            pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-              DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              1000_0000,
-              1,
-              -4,
-              1000_0000,
-              1,
-              startTime + 6
-            );
-            updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
-          });
-
           before('settle', async () => {
-            settleTx = await systems()
-              .PerpsMarket.connect(keeper())
-              .settlePythOrder(pythPriceData, extraData, { value: updateFee });
+            settleTx = await systems().PerpsMarket.connect(keeper()).settleOrder(2);
           });
 
-          it('emits event settle event', async () => {
+          it('emits settle event', async () => {
             const accountId = 2;
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
             const sizeDelta = bn(1);
@@ -374,6 +292,7 @@ describe('Settle Offchain Async Order test', () => {
               ethMarketId,
               accountId,
               fillPrice,
+              0,
               0,
               sizeDelta,
               newPositionSize,
@@ -410,12 +329,38 @@ describe('Settle Offchain Async Order test', () => {
               sizeDelta,
               currentFundingRate,
               currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+              0, // interest rate is 0 since no params were set
             ];
             await assertEvent(
               settleTx,
               `MarketUpdated(${params.join(', ')})`,
               systems().PerpsMarket
             );
+          });
+
+          it('emits collateral deducted events', async () => {
+            let pendingTotalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const accountId = 2;
+
+            for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
+              const collateral = testCase.collateralData.collaterals[i];
+              const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
+              let deductedCollateralAmount: ethers.BigNumber = bn(0);
+              if (synthMarket == 0) {
+                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingTotalFees)
+                  ? collateral.snxUSDAmount()
+                  : pendingTotalFees;
+              } else {
+                deductedCollateralAmount = pendingTotalFees.div(10_000);
+              }
+              pendingTotalFees = pendingTotalFees.sub(deductedCollateralAmount);
+
+              await assertEvent(
+                settleTx,
+                `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
+                systems().PerpsMarket
+              );
+            }
           });
 
           it('check position is live', async () => {
@@ -426,6 +371,16 @@ describe('Settle Offchain Async Order test', () => {
             assertBn.equal(pnl, bn(-0.005));
             assertBn.equal(funding, bn(0));
             assertBn.equal(size, bn(1));
+          });
+
+          it('check position size', async () => {
+            const size = await systems().PerpsMarket.getOpenPositionSize(2, ethMarketId);
+            assertBn.equal(size, bn(1));
+          });
+
+          it('check account open position market ids', async () => {
+            const positions = await systems().PerpsMarket.getAccountOpenPositions(2);
+            deepEqual(positions, [ethMarketId]);
           });
         });
       });

@@ -1,0 +1,255 @@
+name = "bfp-market"
+version = "<%= package.version %>"
+description = "bfp market for Synthetix v3"
+include = ["tomls/oracles.toml"]
+
+# TODO: Replace this owner '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
+[setting.owner]
+description = "bfp market owner"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.synthetixPreset]
+defaultValue = "main"
+
+[setting.synthetixPackage]
+defaultValue = "synthetix:<%= package.version %>"
+
+[setting.spotMarketPackage]
+defaultValue = "synthetix-spot-market:<%= package.version %>"
+
+# What is salt?
+#
+# salt - The salt is a string which, when changed, will result in a new contract deployment.
+# @see: https://usecannon.com/docs/technical-reference
+[setting.salt]
+defaultValue = "bfp"
+
+# --- External Imports --- #
+
+[import.synthetix]
+source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
+
+[import.spotMarket]
+source = "<%= settings.spotMarketPackage %>"
+
+# --- Module Contracts --- #
+
+[contract.OrderModule]
+artifact = "OrderModule"
+args = []
+
+[contract.LiquidationModule]
+artifact = "LiquidationModule"
+args = []
+
+[contract.PerpMarketFactoryModule]
+artifact = "PerpMarketFactoryModule"
+args = []
+
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
+args = []
+
+[contract.PerpAccountModule]
+artifact = "PerpAccountModule"
+args = []
+
+[contract.MarginModule]
+artifact = "MarginModule"
+args = []
+
+[contract.PerpRewardDistributorFactoryModule]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
+args = []
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+args = []
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+args = []
+
+[contract.SettlementHookModule]
+artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
+args = []
+
+# --- Distributor contract --- #
+
+[contract.PerpRewardDistributor]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
+args = []
+
+# --- Market Proxy Contract --- #
+
+[contract.InitialPerpMarketProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
+abiOf = ["CoreModule"]
+salt = "<%= settings.salt %>"
+depends = ["contract.CoreModule"]
+
+# --- Core Router --- #
+
+[router.Router]
+contracts = [
+    "synthetix.AccountModule",
+    "synthetix.AssociatedSystemsModule",
+    "CoreModule",
+    "FeatureFlagModule",
+    "PerpMarketFactoryModule",
+    "MarketConfigurationModule",
+    "PerpAccountModule",
+    "MarginModule",
+    "OrderModule",
+    "LiquidationModule",
+    "PerpRewardDistributorFactoryModule",
+    "SettlementHookModule",
+]
+depends = [
+    "import.synthetix",
+    "contract.CoreModule",
+    "contract.FeatureFlagModule",
+    "contract.PerpMarketFactoryModule",
+    "contract.MarketConfigurationModule",
+    "contract.PerpAccountModule",
+    "contract.MarginModule",
+    "contract.OrderModule",
+    "contract.LiquidationModule",
+    "contract.PerpRewardDistributorFactoryModule",
+    "contract.SettlementHookModule",
+]
+
+# --- Proxy Post Deployment --- #
+
+[invoke.upgradeProxy]
+target = ["InitialPerpMarketProxy"]
+fromCall.func = "owner"
+func = "upgradeTo"
+args = ["<%= contracts.Router.address %>"]
+# Referencing Factory-deployed Contracts
+#
+# @see: https://usecannon.com/docs/technical-reference/
+factory.PerpMarketProxy.abiOf = ["Router"]
+factory.PerpMarketProxy.event = "Upgraded"
+factory.PerpMarketProxy.arg = 0
+depends = ["contract.InitialPerpMarketProxy", "router.Router"]
+
+# @see: https://github.com/Synthetixio/synthetix-v3/blob/main/utils/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol#L63
+[invoke.initOrUpgradeNft]
+target = ["PerpMarketProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeNft"
+args = [
+    "<%= formatBytes32String('accountNft') %>",
+    "Synthetix V3: BF Perp Account NFT",
+    "SNX-V3-BFP-ACC",
+    "",
+    "<%= imports.synthetix.contracts.AccountRouter.address %>",
+]
+depends = ["invoke.upgradeProxy"]
+factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.PerpAccountProxy.event = "AssociatedSystemSet"
+factory.PerpAccountProxy.arg = 2
+
+# --- Mocks --- #
+
+[contract.CollateralMock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "1"
+
+[contract.Collateral2Mock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "2"
+
+[invoke.initialize_snxCollateral]
+target = ["CollateralMock"]
+func = "initialize"
+args = ["SNX V3", "SNXV3", "18"]
+depends = ["contract.CollateralMock"]
+
+[invoke.initialize_xxxCollateral]
+target = ["Collateral2Mock"]
+func = "initialize"
+args = ["XXX X", "XXX", "18"]
+depends = ["contract.Collateral2Mock"]
+
+[import.pyth]
+source = "pyth:1.4.2"
+args = [120, 1]       # 120s, 1wei
+
+[contract.AggregatorV3Mock]
+artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
+args = []
+
+[contract.SettlementHookMock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+depends = ["contract.InitialPerpMarketProxy"]
+salt = "1"
+
+[contract.SettlementHook2Mock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+depends = ["contract.InitialPerpMarketProxy"]
+salt = "2"
+
+# --- Market Post BFP Deployment Configuration --- #
+
+[invoke.setSynthetix]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSynthetix"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+depends = ["invoke.upgradeProxy"]
+
+[invoke.setSpotMarket]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSpotMarket"
+args = ["<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
+depends = ["invoke.upgradeProxy", "import.spotMarket"]
+
+[invoke.setPyth]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setPyth"
+args = ["<%= imports.pyth.contracts.Pyth.address %>"]
+depends = ["invoke.upgradeProxy", "import.pyth"]
+
+[invoke.setRewardDistributorImplementation]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = ["<%= contracts.PerpRewardDistributor.address %>"]
+depends = ["invoke.upgradeProxy", "contract.PerpRewardDistributor"]
+
+# --- Feature Flags --- #
+
+[invoke.addToFeatureFlagAllowlist_registerMarket]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.owner %>"
+args = [
+    "<%= formatBytes32String('registerMarket') %>",
+    "<%= contracts.PerpMarketProxy.address %>",
+]
+depends = ['invoke.upgradeProxy']
+
+[invoke.addToFeatureFlagAllowlist_claimRewards]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.owner %>"
+args = [
+    "<%= formatBytes32String('claimRewards') %>",
+    "<%= contracts.PerpMarketProxy.address %>",
+]
+depends = ['invoke.upgradeProxy']
+
+[invoke.enableAllFeatures]
+target = ["PerpMarketProxy"]
+func = "enableAllFeatures"
+from = "<%= settings.owner %>"

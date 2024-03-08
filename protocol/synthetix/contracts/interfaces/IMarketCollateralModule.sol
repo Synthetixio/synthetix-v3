@@ -29,12 +29,20 @@ interface IMarketCollateralModule {
      * @param collateralType The address of the collateral that was directly deposited in the market.
      * @param tokenAmount The amount of tokens that were deposited, denominated in the token's native decimal representation.
      * @param sender The address that triggered the deposit.
+     * @param creditCapacity Updated credit capacity of the market after depositing collateral.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
+     * @param reportedDebt Updated reported debt of the market after depositing collateral.
      */
     event MarketCollateralDeposited(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 tokenAmount,
-        address indexed sender
+        address indexed sender,
+        int128 creditCapacity,
+        int128 netIssuance,
+        uint256 depositedCollateralValue,
+        uint256 reportedDebt
     );
 
     /**
@@ -43,12 +51,20 @@ interface IMarketCollateralModule {
      * @param collateralType The address of the collateral that was withdrawn from the market.
      * @param tokenAmount The amount of tokens that were withdrawn, denominated in the token's native decimal representation.
      * @param sender The address that triggered the withdrawal.
+     * @param creditCapacity Updated credit capacity of the market after withdrawing.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
+     * @param reportedDebt Updated reported debt of the market after withdrawing collateral.
      */
     event MarketCollateralWithdrawn(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 tokenAmount,
-        address indexed sender
+        address indexed sender,
+        int128 creditCapacity,
+        int128 netIssuance,
+        uint256 depositedCollateralValue,
+        uint256 reportedDebt
     );
 
     /**
@@ -110,7 +126,7 @@ interface IMarketCollateralModule {
     function getMaximumMarketCollateral(
         uint128 marketId,
         address collateralType
-    ) external returns (uint256 amountD18);
+    ) external view returns (uint256 amountD18);
 
     /**
      * @notice Return the total amount of a given collateral type that a specified market has deposited.
@@ -128,5 +144,5 @@ interface IMarketCollateralModule {
      * @param marketId The id of the market for which the directly deposited collateral amount is being queried.
      * @return valueD18 The total value of collateral deposited by the market, denominated with 18 decimals of precision.
      */
-    function getMarketCollateralValue(uint128 marketId) external returns (uint256 valueD18);
+    function getMarketCollateralValue(uint128 marketId) external view returns (uint256 valueD18);
 }

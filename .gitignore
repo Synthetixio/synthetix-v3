@@ -17,6 +17,8 @@ node_modules
 Router.sol
 typechain-types
 lerna-debug.log
+docs/
+junit
 
 # Yarn v3
 .yarn/*

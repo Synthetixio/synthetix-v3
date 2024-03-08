@@ -16,11 +16,11 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
-    function upscale(uint x, uint factor) public pure returns (uint) {
+    function upscale(uint256 x, uint256 factor) public pure returns (uint256) {
         return DecimalMath.upscale(x, factor);
     }
 
-    function downscale(uint x, uint factor) public pure returns (uint) {
+    function downscale(uint256 x, uint256 factor) public pure returns (uint256) {
         return DecimalMath.downscale(x, factor);
     }
 
@@ -36,11 +36,11 @@ contract DecimalMathMock {
         return DecimalMath.divDecimalUint128(x, y);
     }
 
-    function upscaleUint128(uint128 x, uint factor) public pure returns (uint128) {
+    function upscaleUint128(uint128 x, uint256 factor) public pure returns (uint128) {
         return DecimalMath.upscaleUint128(x, factor);
     }
 
-    function downscaleUint128(uint128 x, uint factor) public pure returns (uint128) {
+    function downscaleUint128(uint128 x, uint256 factor) public pure returns (uint128) {
         return DecimalMath.downscaleUint128(x, factor);
     }
 
@@ -56,11 +56,11 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
-    function upscale(int x, uint factor) public pure returns (int) {
+    function upscale(int256 x, uint256 factor) public pure returns (int256) {
         return DecimalMath.upscale(x, factor);
     }
 
-    function downscale(int x, uint factor) public pure returns (int) {
+    function downscale(int256 x, uint256 factor) public pure returns (int256) {
         return DecimalMath.downscale(x, factor);
     }
 
@@ -76,11 +76,11 @@ contract DecimalMathMock {
         return DecimalMath.divDecimalInt128(x, y);
     }
 
-    function upscale(int128 x, uint factor) public pure returns (int128) {
+    function upscale(int128 x, uint256 factor) public pure returns (int128) {
         return DecimalMath.upscaleInt128(x, factor);
     }
 
-    function downscale(int128 x, uint factor) public pure returns (int128) {
+    function downscale(int128 x, uint256 factor) public pure returns (int128) {
         return DecimalMath.downscaleInt128(x, factor);
     }
 }

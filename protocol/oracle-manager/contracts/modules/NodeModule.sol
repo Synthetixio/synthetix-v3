@@ -4,7 +4,8 @@ pragma solidity >=0.8.11 <0.9.0;
 import "../interfaces/INodeModule.sol";
 import "../nodes/ReducerNode.sol";
 import "../nodes/ExternalNode.sol";
-import "../nodes/PythNode.sol";
+import "../nodes/pyth/PythNode.sol";
+import "../nodes/pyth/PythOffchainLookupNode.sol";
 import "../nodes/ChainlinkNode.sol";
 import "../nodes/PriceDeviationCircuitBreakerNode.sol";
 import "../nodes/StalenessCircuitBreakerNode.sol";
@@ -13,6 +14,8 @@ import "../nodes/ConstantNode.sol";
 
 import "../storage/NodeOutput.sol";
 import "../storage/NodeDefinition.sol";
+
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 /**
  * @title Module for managing nodes
@@ -64,7 +67,18 @@ contract NodeModule is INodeModule {
      * @inheritdoc INodeModule
      */
     function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node) {
-        return _process(nodeId);
+        return NodeDefinition.process(nodeId, new bytes32[](0), new bytes32[](0));
+    }
+
+    /**
+     * @inheritdoc INodeModule
+     */
+    function processWithRuntime(
+        bytes32 nodeId,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data memory node) {
+        return NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
     }
 
     /**
@@ -135,50 +149,6 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns the output of a specified node.
      */
-    function _process(bytes32 nodeId) internal view returns (NodeOutput.Data memory price) {
-        NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
-
-        if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
-            return
-                ReducerNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
-                    nodeDefinition.parameters
-                );
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-            return
-                ExternalNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
-                    nodeDefinition.parameters
-                );
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
-            return ChainlinkNode.process(nodeDefinition.parameters);
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
-            return UniswapNode.process(nodeDefinition.parameters);
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
-            return PythNode.process(nodeDefinition.parameters);
-        } else if (
-            nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
-        ) {
-            return
-                PriceDeviationCircuitBreakerNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
-                    nodeDefinition.parameters
-                );
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
-            return
-                StalenessCircuitBreakerNode.process(
-                    _processParentNodeOutputs(nodeDefinition),
-                    nodeDefinition.parameters
-                );
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CONSTANT) {
-            return ConstantNode.process(nodeDefinition.parameters);
-        }
-        revert UnprocessableNode(nodeId);
-    }
-
-    /**
-     * @dev Returns the output of a specified node.
-     */
     function _isValidNodeDefinition(
         NodeDefinition.Data memory nodeDefinition
     ) internal returns (bool valid) {
@@ -188,7 +158,7 @@ contract NodeModule is INodeModule {
             nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER
         ) {
             //check if parents are processable
-            _processParentNodeOutputs(nodeDefinition);
+            _hasValidParentNodeDefinitions(nodeDefinition);
         }
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
@@ -201,6 +171,8 @@ contract NodeModule is INodeModule {
             return UniswapNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNode.isValid(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH_OFFCHAIN_LOOKUP) {
+            return PythOffchainLookupNode.isValid(nodeDefinition);
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
         ) {
@@ -213,15 +185,15 @@ contract NodeModule is INodeModule {
         return false;
     }
 
-    /**
-     * @dev helper function that calls process on parent nodes.
-     */
-    function _processParentNodeOutputs(
+    function _hasValidParentNodeDefinitions(
         NodeDefinition.Data memory nodeDefinition
-    ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
-        parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
+    ) internal returns (bool valid) {
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            parentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            NodeDefinition.Data memory nodeDef = _getNode(nodeDefinition.parents[i]);
+            if (!_isValidNodeDefinition(nodeDef)) {
+                return false;
+            }
         }
+        return true;
     }
 }

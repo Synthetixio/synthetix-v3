@@ -5,7 +5,6 @@ import { templates } from '@synthetixio/docgen';
 
 const config = {
   ...commonConfig,
-  solidity: '0.8.17',
   allowUnlimitedContractSize: true,
   docgen: {
     exclude: [
@@ -26,7 +25,7 @@ const config = {
     },
   },
   mocha: {
-    timeout: 200_000,
+    timeout: 30_000,
   },
 };
 

@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "../../interfaces/ICrossChainUSDModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/CrossChain.sol";
 
@@ -32,12 +33,12 @@ contract CrossChainUSDModule is ICrossChainUSDModule {
 
         CrossChain.Data storage cc = CrossChain.load();
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
-        usdToken.transferFrom(msg.sender, address(this), amount);
+        usdToken.transferFrom(ERC2771Context._msgSender(), address(this), amount);
         usdToken.approve(address(cc.ccipRouter), amount);
 
         gasTokenUsed = cc.teleport(destChainId, address(usdToken), amount, _TRANSFER_GAS_LIMIT);
         CrossChain.refundLeftoverGas(gasTokenUsed);
 
-        emit TransferCrossChainInitiated(destChainId, amount, msg.sender);
+        emit TransferCrossChainInitiated(destChainId, amount, ERC2771Context._msgSender());
     }
 }

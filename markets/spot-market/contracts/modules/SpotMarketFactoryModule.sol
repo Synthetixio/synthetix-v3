@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
@@ -88,7 +89,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         // default collateral leverage to 1
         MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
-        emit SynthRegistered(synthMarketId);
+        emit SynthRegistered(synthMarketId, address(SynthUtil.getToken(synthMarketId)));
     }
 
     /**
@@ -105,7 +106,11 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function reportedDebt(
         uint128 marketId
     ) external view override returns (uint256 reportedDebtAmount) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
+        uint256 price = Price.getCurrentPrice(
+            marketId,
+            Transaction.Type.SELL,
+            Price.Tolerance.DEFAULT
+        );
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -123,7 +128,13 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
             collateralLeverage == 0
                 ? 0
                 : totalBalance
-                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY))
+                    .mulDecimal(
+                        Price.getCurrentPrice(
+                            marketId,
+                            Transaction.Type.BUY,
+                            Price.Tolerance.DEFAULT
+                        )
+                    )
                     .divDecimal(collateralLeverage);
     }
 
@@ -163,16 +174,37 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    function getPriceData(
+        uint128 synthMarketId
+    )
+        external
+        view
+        override
+        returns (bytes32 buyFeedId, bytes32 sellFeedId, uint256 strictPriceStalenessTolerance)
+    {
+        Price.Data storage price = Price.load(synthMarketId);
+        return (price.buyFeedId, price.sellFeedId, price.strictStalenessTolerance);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function updatePriceData(
         uint128 synthMarketId,
         bytes32 buyFeedId,
-        bytes32 sellFeedId
+        bytes32 sellFeedId,
+        uint256 strictPriceStalenessTolerance
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        Price.load(synthMarketId).update(buyFeedId, sellFeedId);
+        Price.load(synthMarketId).update(buyFeedId, sellFeedId, strictPriceStalenessTolerance);
 
-        emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
+        emit SynthPriceDataUpdated(
+            synthMarketId,
+            buyFeedId,
+            sellFeedId,
+            strictPriceStalenessTolerance
+        );
     }
 
     /**
@@ -196,13 +228,13 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address nominee = spotMarketFactory.nominatedMarketOwners[synthMarketId];
 
-        if (nominee != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (nominee != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         spotMarketFactory.nominatedMarketOwners[synthMarketId] = address(0);
 
-        emit MarketNominationRenounced(synthMarketId, msg.sender);
+        emit MarketNominationRenounced(synthMarketId, ERC2771Context._msgSender());
     }
 
     /**
@@ -211,8 +243,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function acceptMarketOwnership(uint128 synthMarketId) public override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address currentNominatedOwner = spotMarketFactory.nominatedMarketOwners[synthMarketId];
-        if (msg.sender != currentNominatedOwner) {
-            revert NotNominated(msg.sender);
+        if (ERC2771Context._msgSender() != currentNominatedOwner) {
+            revert NotNominated(ERC2771Context._msgSender());
         }
 
         emit MarketOwnerChanged(
@@ -233,6 +265,28 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     ) public view override returns (address marketOwner) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return spotMarketFactory.marketOwners[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function getNominatedMarketOwner(
+        uint128 synthMarketId
+    ) public view override returns (address marketOwner) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        return spotMarketFactory.nominatedMarketOwners[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function renounceMarketOwnership(uint128 synthMarketId) external override {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.onlyMarketOwner(synthMarketId);
+
+        address currentOwner = spotMarketFactory.marketOwners[synthMarketId];
+        spotMarketFactory.marketOwners[synthMarketId] = address(0);
+        emit MarketOwnerChanged(synthMarketId, currentOwner, address(0));
     }
 
     /**

@@ -5,13 +5,13 @@ import {IAssociatedSystemsModule} from "@synthetixio/core-modules/contracts/inte
 import {IMarketManagerModule} from "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import {IMarketCollateralModule} from "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import {IUtilsModule} from "@synthetixio/main/contracts/interfaces/IUtilsModule.sol";
+import {ICollateralConfigurationModule} from "@synthetixio/main/contracts/interfaces/ICollateralConfigurationModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
 interface ISynthetixSystem is
     IAssociatedSystemsModule,
     IMarketCollateralModule,
     IMarketManagerModule,
-    IUtilsModule
-{
-
-}
+    IUtilsModule,
+    ICollateralConfigurationModule
+{}

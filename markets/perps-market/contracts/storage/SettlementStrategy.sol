@@ -10,15 +10,13 @@ library SettlementStrategy {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    error PriceDeviationToleranceExceeded(uint256 deviation, uint tolerance);
-
     struct Data {
         /**
-         * @dev see Type.Data for more details
+         * @dev see Type for more details
          */
         Type strategyType;
         /**
-         * @dev the delay added to commitment time for determining valid price window.
+         * @dev the delay added to commitment time after which committed orders can be settled.
          * @dev this ensures settlements aren't on the same block as commitment.
          */
         uint256 settlementDelay;
@@ -27,12 +25,8 @@ library SettlementStrategy {
          */
         uint256 settlementWindowDuration;
         /**
-         * @dev the duration of the price window, after which price is not valid.
-         */
-        uint256 priceWindowDuration;
-        /**
-         * @dev the address of the contract that will verify the result data blob.
-         * @dev used for pyth and chainlink offchain strategies.
+         * @dev the address of the contract that returns the benchmark price at a given timestamp
+         * @dev generally this contract orchestrates the erc7412 logic to force push an offchain price for a given timestamp.
          */
         address priceVerificationContract; // For Chainlink and Pyth settlement strategies
         /**
@@ -40,40 +34,21 @@ library SettlementStrategy {
          */
         bytes32 feedId;
         /**
-         * @dev gateway url for pyth/chainlink to retrieve offchain prices
-         */
-        string url;
-        /**
          * @dev the amount of reward paid to the keeper for settling the order.
          */
         uint256 settlementReward;
         /**
-         * @dev the % deviation from onchain price that is allowed for offchain settlement.
-         */
-        uint256 priceDeviationTolerance;
-        /**
          * @dev whether the strategy is disabled or not.
          */
         bool disabled;
+        /**
+         * @dev the delay added to commitment time for determining valid price. Defines the expected price timestamp.
+         * @dev this ensures price aren't on the same block as commitment in case of blockchain drift in timestamp or bad actors timestamp manipulation.
+         */
+        uint256 commitmentPriceDelay;
     }
 
     enum Type {
         PYTH
-    }
-
-    function checkPriceDeviation(
-        Data storage strategy,
-        uint offchainPrice,
-        uint onchainPrice
-    ) internal view {
-        uint priceDeviation = MathUtil.abs(offchainPrice.toInt() - onchainPrice.toInt());
-        uint priceDeviationPercentage = priceDeviation.divDecimal(onchainPrice);
-
-        if (priceDeviationPercentage > strategy.priceDeviationTolerance) {
-            revert PriceDeviationToleranceExceeded(
-                priceDeviationPercentage,
-                strategy.priceDeviationTolerance
-            );
-        }
     }
 }

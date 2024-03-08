@@ -20,8 +20,8 @@ interface IPyth {
         bool indexed fresh,
         uint16 chainId,
         uint64 sequenceNumber,
-        uint lastPublishTime,
-        uint publishTime,
+        uint256 lastPublishTime,
+        uint256 publishTime,
         int64 price,
         uint64 conf
     );
@@ -34,18 +34,18 @@ interface IPyth {
     event BatchPriceFeedUpdate(
         uint16 chainId,
         uint64 sequenceNumber,
-        uint batchSize,
-        uint freshPricesInBatch
+        uint256 batchSize,
+        uint256 freshPricesInBatch
     );
 
     /// @dev Emitted when a call to `updatePriceFeeds` is processed successfully.
     /// @param sender Sender of the call (`msg.sender`).
     /// @param batchCount Number of batches that this function processed.
     /// @param fee Amount of paid fee for updating the prices.
-    event UpdatePriceFeeds(address indexed sender, uint batchCount, uint fee);
+    event UpdatePriceFeeds(address indexed sender, uint256 batchCount, uint256 fee);
 
     /// @notice Returns the period (in seconds) that a price feed is considered valid since its publish time
-    function getValidTimePeriod() external view returns (uint validTimePeriod);
+    function getValidTimePeriod() external view returns (uint256 validTimePeriod);
 
     /// @notice Returns the price and confidence interval.
     /// @dev Reverts if the price has not been updated within the last `getValidTimePeriod()` seconds.
@@ -76,7 +76,7 @@ interface IPyth {
     /// @return price - please read the documentation of PythStructs.Price to understand how to use this safely.
     function getPriceNoOlderThan(
         bytes32 id,
-        uint age
+        uint256 age
     ) external view returns (PythStructs.Price memory price);
 
     /// @notice Returns the exponentially-weighted moving average price of a price feed without any sanity checks.
@@ -100,7 +100,7 @@ interface IPyth {
     /// @return price - please read the documentation of PythStructs.Price to understand how to use this safely.
     function getEmaPriceNoOlderThan(
         bytes32 id,
-        uint age
+        uint256 age
     ) external view returns (PythStructs.Price memory price);
 
     /// @notice Update price feeds with given update messages.
@@ -135,9 +135,28 @@ interface IPyth {
     ) external payable;
 
     /// @notice Returns the required fee to update an array of price updates.
-    /// @param updateDataSize Number of price updates.
+    /// @param updateData Array of price update data.
     /// @return feeAmount The required fee in Wei.
-    function getUpdateFee(uint updateDataSize) external view returns (uint feeAmount);
+    function getUpdateFee(bytes[] calldata updateData) external view returns (uint256 feeAmount);
+
+    /// @notice Similar to `parsePriceFeedUpdates` but ensures the updates returned are
+    /// the first updates published in minPublishTime. That is, if there are multiple updates for a given timestamp,
+    /// this method will return the first update.
+    ///
+    ///
+    /// @dev Reverts if the transferred fee is not sufficient or the updateData is invalid or there is
+    /// no update for any of the given `priceIds` within the given time range and uniqueness condition.
+    /// @param updateData Array of price update data.
+    /// @param priceIds Array of price ids.
+    /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
+    /// @param maxPublishTime maximum acceptable publishTime for the given `priceIds`.
+    /// @return priceFeeds Array of the price feeds corresponding to the given `priceIds` (with the same order).
+    function parsePriceFeedUpdatesUnique(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable returns (PythStructs.PriceFeed[] memory priceFeeds);
 }
 
 contract PythStructs {
@@ -157,7 +176,7 @@ contract PythStructs {
         // Price exponent
         int32 expo;
         // Unix timestamp describing when the price was published
-        uint publishTime;
+        uint256 publishTime;
     }
 
     // PriceFeed represents a current aggregate price from pyth publisher feeds.

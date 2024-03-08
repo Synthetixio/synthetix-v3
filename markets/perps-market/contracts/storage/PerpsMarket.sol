@@ -1,16 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {Liquidation} from "./Liquidation.sol";
+import {KeeperCosts} from "./KeeperCosts.sol";
+import {InterestRate} from "./InterestRate.sol";
 
 /**
  * @title Data for a single perps market
@@ -24,11 +26,20 @@ library PerpsMarket {
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
+    /**
+     * @notice Thrown when attempting to create a market that already exists or invalid id was passed in
+     */
     error InvalidMarket(uint128 marketId);
 
+    /**
+     * @notice Thrown when attempting to load a market without a configured price feed
+     */
     error PriceFeedNotSet(uint128 marketId);
 
-    error MarketAlreadyExists(uint128 marketId);
+    /**
+     * @notice Thrown when attempting to load a market without a configured keeper costs
+     */
+    error KeeperCostsNotSet();
 
     struct Data {
         string name;
@@ -36,20 +47,22 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        // TODO: move to new data structure?
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        // liquidation data
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128 __unused_1;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128 __unused_2;
         // debt calculation
         // accumulates total notional size of the market including accrued funding until the last time any position changed
         int256 debtCorrectionAccumulator;
         // accountId => asyncOrder
-        mapping(uint => AsyncOrder.Data) asyncOrders;
+        mapping(uint256 => AsyncOrder.Data) asyncOrders;
         // accountId => position
-        mapping(uint => Position.Data) positions;
+        mapping(uint256 => Position.Data) positions;
+        // liquidation amounts
+        Liquidation.Data[] liquidationData;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -88,6 +101,10 @@ library PerpsMarket {
         if (PerpsPrice.load(marketId).feedId == "") {
             revert PriceFeedNotSet(marketId);
         }
+
+        if (KeeperCosts.load().keeperCostNodeId == "") {
+            revert KeeperCostsNotSet();
+        }
     }
 
     /**
@@ -99,49 +116,117 @@ library PerpsMarket {
      */
     function maxLiquidatableAmount(
         Data storage self,
-        uint256 requestedLiquidationAmount
+        uint128 requestedLiquidationAmount
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
-        // this would only be 0 if fees or skew scale are configured to be 0.
-        // in that case, (very unlikely), allow full liquidation
-        if (maxLiquidationAmountPerSecond == 0) {
-            return requestedLiquidationAmount.to128();
+        // if endorsedLiquidator is configured and is the sender, allow full liquidation
+        if (ERC2771Context._msgSender() == marketConfig.endorsedLiquidator) {
+            _updateLiquidationData(self, requestedLiquidationAmount);
+            return requestedLiquidationAmount;
         }
 
-        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
-        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
+        (
+            uint256 liquidationCapacity,
+            uint256 maxLiquidationInWindow,
+            uint256 latestLiquidationTimestamp
+        ) = currentLiquidationCapacity(self, marketConfig);
 
-        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
-            maxLiquidationAmountPerSecond;
-        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
-            liquidatableAmount = MathUtil
-                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
-                .to128();
-            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
-        } else {
-            liquidatableAmount = MathUtil
-                .min(
-                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+        // this would only occur if there was a misconfiguration (like skew scale not being set)
+        // or the max liquidation window not being set etc.
+        // in this case, return the entire requested liquidation amount
+        if (maxLiquidationInWindow == 0) {
+            return requestedLiquidationAmount;
+        }
+
+        uint256 maxLiquidationPd = marketConfig.maxLiquidationPd;
+        // if liquidation capacity exists, update accordingly
+        if (liquidationCapacity != 0) {
+            liquidatableAmount = MathUtil.min128(
+                liquidationCapacity.to128(),
+                requestedLiquidationAmount
+            );
+        } else if (
+            maxLiquidationPd != 0 &&
+            // only allow this if the last update was not in the current block
+            latestLiquidationTimestamp != block.timestamp
+        ) {
+            /**
+                if capacity is at 0, but the market is under configured liquidation p/d,
+                another block of liquidation becomes allowable.
+             */
+            uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
+            if (currentPd < maxLiquidationPd) {
+                liquidatableAmount = MathUtil.min128(
+                    maxLiquidationInWindow.to128(),
                     requestedLiquidationAmount
-                )
-                .to128();
-            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
+                );
+            }
         }
 
-        // only update timestamp if there is something being liquidated
         if (liquidatableAmount > 0) {
-            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+            _updateLiquidationData(self, liquidatableAmount);
         }
     }
 
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+    function _updateLiquidationData(Data storage self, uint128 liquidationAmount) private {
+        uint256 liquidationDataLength = self.liquidationData.length;
+        uint256 currentTimestamp = liquidationDataLength == 0
+            ? 0
+            : self.liquidationData[liquidationDataLength - 1].timestamp;
+
+        if (currentTimestamp == block.timestamp) {
+            self.liquidationData[liquidationDataLength - 1].amount += liquidationAmount;
+        } else {
+            self.liquidationData.push(
+                Liquidation.Data({amount: liquidationAmount, timestamp: block.timestamp})
+            );
+        }
+    }
+
+    /**
+     * @dev Returns the current liquidation capacity for the market
+     * @notice This function sums up the liquidation amounts in the current liquidation window
+     * and returns the capacity left.
+     */
+    function currentLiquidationCapacity(
+        Data storage self,
+        PerpsMarketConfiguration.Data storage marketConfig
+    )
+        internal
+        view
+        returns (
+            uint256 capacity,
+            uint256 maxLiquidationInWindow,
+            uint256 latestLiquidationTimestamp
+        )
+    {
+        maxLiquidationInWindow = marketConfig.maxLiquidationAmountInWindow();
+        uint256 accumulatedLiquidationAmounts;
+        uint256 liquidationDataLength = self.liquidationData.length;
+        if (liquidationDataLength == 0) return (maxLiquidationInWindow, maxLiquidationInWindow, 0);
+
+        uint256 currentIndex = liquidationDataLength - 1;
+        latestLiquidationTimestamp = self.liquidationData[currentIndex].timestamp;
+        uint256 windowStartTimestamp = block.timestamp - marketConfig.maxSecondsInLiquidationWindow;
+
+        while (self.liquidationData[currentIndex].timestamp > windowStartTimestamp) {
+            accumulatedLiquidationAmounts += self.liquidationData[currentIndex].amount;
+
+            if (currentIndex == 0) break;
+            currentIndex--;
+        }
+        int256 availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
+            accumulatedLiquidationAmounts.toInt();
+        // solhint-disable-next-line numcast/safe-cast
+        capacity = MathUtil.max(availableLiquidationCapacity, int256(0)).toUint();
+    }
+
+    struct PositionDataRuntime {
+        uint256 currentPrice;
+        int256 sizeDelta;
+        int256 fundingDelta;
+        int256 notionalDelta;
     }
 
     /**
@@ -153,31 +238,42 @@ library PerpsMarket {
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal returns (MarketUpdateData memory) {
+    ) internal returns (MarketUpdate.Data memory) {
+        PositionDataRuntime memory runtime;
         Position.Data storage oldPosition = self.positions[accountId];
 
-        int128 oldPositionSize = oldPosition.size;
-        int128 newPositionSize = newPosition.size;
+        self.size =
+            (self.size + MathUtil.abs128(newPosition.size)) -
+            MathUtil.abs128(oldPosition.size);
+        self.skew += newPosition.size - oldPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPositionSize - oldPositionSize;
+        runtime.currentPrice = newPosition.latestInteractionPrice;
+        (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
-        uint currentPrice = newPosition.latestInteractionPrice;
-        (int totalPositionPnl, , , , ) = oldPosition.getPnl(currentPrice);
-
-        int sizeDelta = newPositionSize - oldPositionSize;
-        int fundingDelta = calculateNextFunding(self, currentPrice).mulDecimal(sizeDelta);
-        int notionalDelta = currentPrice.toInt().mulDecimal(sizeDelta);
+        runtime.sizeDelta = newPosition.size - oldPosition.size;
+        runtime.fundingDelta = calculateNextFunding(self, runtime.currentPrice).mulDecimal(
+            runtime.sizeDelta
+        );
+        runtime.notionalDelta = runtime.currentPrice.toInt().mulDecimal(runtime.sizeDelta);
 
         // update the market debt correction accumulator before losing oldPosition details
         // by adding the new updated notional (old - new size) plus old position pnl
-        self.debtCorrectionAccumulator += fundingDelta + notionalDelta + totalPositionPnl;
+        self.debtCorrectionAccumulator +=
+            runtime.fundingDelta +
+            runtime.notionalDelta +
+            pricePnl +
+            fundingPnl;
 
-        oldPosition.update(newPosition);
+        // update position to new position
+        // Note: once market interest rate is updated, the current accrued interest is saved
+        // to figure out the unrealized interest for the position
+        (uint128 interestRate, uint256 currentInterestAccrued) = InterestRate.update();
+        oldPosition.update(newPosition, currentInterestAccrued);
 
         return
-            MarketUpdateData(
+            MarketUpdate.Data(
                 self.id,
+                interestRate,
                 self.skew,
                 self.size,
                 self.lastFundingRate,
@@ -187,8 +283,8 @@ library PerpsMarket {
 
     function recomputeFunding(
         Data storage self,
-        uint price
-    ) internal returns (int fundingRate, int fundingValue) {
+        uint256 price
+    ) internal returns (int256 fundingRate, int256 fundingValue) {
         fundingRate = currentFundingRate(self);
         fundingValue = calculateNextFunding(self, price);
 
@@ -201,22 +297,22 @@ library PerpsMarket {
 
     function calculateNextFunding(
         Data storage self,
-        uint price
-    ) internal view returns (int nextFunding) {
+        uint256 price
+    ) internal view returns (int256 nextFunding) {
         nextFunding = self.lastFundingValue + unrecordedFunding(self, price);
     }
 
-    function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
-        int fundingRate = currentFundingRate(self);
+    function unrecordedFunding(Data storage self, uint256 price) internal view returns (int256) {
+        int256 fundingRate = currentFundingRate(self);
         // note the minus sign: funding flows in the opposite direction to the skew.
-        int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
+        int256 avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
 
         return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
-    function currentFundingRate(Data storage self) internal view returns (int) {
+    function currentFundingRate(Data storage self) internal view returns (int256) {
         // calculations:
         //  - velocity          = proportional_skew * max_funding_velocity
         //  - proportional_skew = skew / skew_scale
@@ -240,44 +336,46 @@ library PerpsMarket {
             (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
-    function currentFundingVelocity(Data storage self) internal view returns (int) {
+    function currentFundingVelocity(Data storage self) internal view returns (int256) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
-        int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
-        int skewScale = marketConfig.skewScale.toInt();
+        int256 maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
+        int256 skewScale = marketConfig.skewScale.toInt();
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
             return 0;
         }
         // Ensures the proportionalSkew is between -1 and 1.
-        int pSkew = self.skew.divDecimal(skewScale);
-        int pSkewBounded = MathUtil.min(
+        int256 pSkew = self.skew.divDecimal(skewScale);
+        int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
         return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
-    function proportionalElapsed(Data storage self) internal view returns (int) {
-        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+    function proportionalElapsed(Data storage self) internal view returns (int256) {
+        // even though timestamps here are not D18, divDecimal multiplies by 1e18 to preserve decimals into D18
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     function validatePositionSize(
         Data storage self,
-        uint maxSize,
-        int oldSize,
-        int newSize
+        uint256 maxSize,
+        uint256 maxValue,
+        uint256 price,
+        int128 oldSize,
+        int128 newSize
     ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        bool isNotReducingInterest = !(MathUtil.sameSide(oldSize, newSize) &&
-            MathUtil.abs(newSize) <= MathUtil.abs(oldSize));
-        if (isNotReducingInterest) {
-            int newSkew = self.skew - oldSize + newSize;
+        bool isReducingInterest = MathUtil.isSameSideReducing(oldSize, newSize);
+        if (!isReducingInterest) {
+            int256 newSkew = self.skew - oldSize + newSize;
 
-            int newMarketSize = self.size.toInt() -
+            int256 newMarketSize = self.size.toInt() -
                 MathUtil.abs(oldSize).toInt() +
                 MathUtil.abs(newSize).toInt();
 
-            int newSideSize;
+            int256 newSideSize;
             if (0 < newSize) {
                 // long case: marketSize + skew
                 //            = (|longSize| + |shortSize|) + (longSize + shortSize)
@@ -298,6 +396,17 @@ library PerpsMarket {
                     newSideSize / 2
                 );
             }
+
+            // same check but with value (size * price)
+            // note that if maxValue param is set to 0, this validation is skipped
+            if (maxValue > 0 && maxValue < MathUtil.abs(newSideSize / 2).mulDecimal(price)) {
+                revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
+                    self.id,
+                    maxValue,
+                    newSideSize / 2,
+                    price
+                );
+            }
         }
     }
 
@@ -305,12 +414,28 @@ library PerpsMarket {
      * @dev Returns the market debt incurred by all positions
      * @notice  Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
      */
-    function marketDebt(Data storage self, uint price) internal view returns (int) {
+    function marketDebt(Data storage self, uint256 price) internal view returns (int256) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt());
-        int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
+        int256 positionPnl = self.skew.mulDecimal(price.toInt());
+        int256 fundingPnl = self.skew.mulDecimal(calculateNextFunding(self, price));
 
-        return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
+        return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
+    }
+
+    function requiredCredit(uint128 marketId) internal view returns (uint256) {
+        return
+            PerpsMarket
+                .load(marketId)
+                .size
+                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
+    }
+
+    function accountPosition(
+        uint128 marketId,
+        uint128 accountId
+    ) internal view returns (Position.Data storage position) {
+        position = load(marketId).positions[accountId];
     }
 }

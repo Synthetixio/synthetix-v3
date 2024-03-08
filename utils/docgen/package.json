@@ -7,13 +7,12 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "abis": "node ./abis.js"
+    "abis": "node ./abis.js",
+    "docgen:contracts": "./docgen-contracts.sh"
   },
   "devDependencies": {
-    "@usecannon/cli": "^2.4.20",
-    "handlebars": "4.7.7",
-    "prettier": "^2.8.8",
-    "solidity-ast": "0.4.46",
-    "solidity-docgen": "0.6.0-beta.35"
+    "handlebars": "^4.7.8",
+    "solidity-ast": "^0.4.55",
+    "solidity-docgen": "^0.6.0-beta.36"
   }
 }

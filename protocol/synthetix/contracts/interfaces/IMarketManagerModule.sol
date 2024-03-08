@@ -36,12 +36,18 @@ interface IMarketManagerModule {
      * @param target The address of the account that provided the snxUSD in the deposit.
      * @param amount The amount of snxUSD deposited in the system, denominated with 18 decimals of precision.
      * @param market The address of the external market that is depositing.
+     * @param creditCapacity Updated credit capacity of the market after depositing.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market.
      */
     event MarketUsdDeposited(
         uint128 indexed marketId,
         address indexed target,
         uint256 amount,
-        address indexed market
+        address indexed market,
+        int128 creditCapacity,
+        int128 netIssuance,
+        uint256 depositedCollateralValue
     );
 
     /**
@@ -50,12 +56,18 @@ interface IMarketManagerModule {
      * @param target The address of the account that received the snxUSD in the withdrawal.
      * @param amount The amount of snxUSD withdrawn from the system, denominated with 18 decimals of precision.
      * @param market The address of the external market that is withdrawing.
+     * @param creditCapacity Updated credit capacity of the market after withdrawing.
+     * @param netIssuance Updated net issuance.
+     * @param depositedCollateralValue Updated deposited collateral value of the market
      */
     event MarketUsdWithdrawn(
         uint128 indexed marketId,
         address indexed target,
         uint256 amount,
-        address indexed market
+        address indexed market,
+        int128 creditCapacity,
+        int128 netIssuance,
+        uint256 depositedCollateralValue
     );
 
     event MarketSystemFeePaid(uint128 indexed marketId, uint256 feeAmount);
@@ -132,6 +144,13 @@ interface IMarketManagerModule {
     function getWithdrawableMarketUsd(
         uint128 marketId
     ) external view returns (uint256 withdrawableD18);
+
+    /**
+     * @notice Returns the contract address for the specified market.
+     * @param marketId The id of the market
+     * @return marketAddress The contract address for the specified market
+     */
+    function getMarketAddress(uint128 marketId) external view returns (address marketAddress);
 
     /**
      * @notice Returns the net issuance of the specified market (snxUSD withdrawn - snxUSD deposited).

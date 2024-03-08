@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import {
   AccountCreated,
   CollateralConfigured,
@@ -21,11 +21,12 @@ import {
   RewardsClaimed,
   RewardsDistributed,
   RewardsDistributorRegistered,
+  RewardsDistributorRemoved,
   UsdBurned,
   UsdMinted,
   VaultLiquidation,
   Withdrawn,
-} from '../generated/CoreProxy/CoreProxy';
+} from '../mainnet/generated/CoreProxy/CoreProxy';
 import { address } from './constants';
 
 function createBlock(timestamp: i64, blockNumber: i64): Map<string, i64> {
@@ -41,9 +42,9 @@ export function createPoolCreatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolCreated {
-  const newPoolCreatedEvent = changetype<PoolCreated>(newMockEvent());
+  const newPoolCreatedEvent = newTypedMockEvent<PoolCreated>();
   const block = createBlock(timestamp, blockNumber);
-  newPoolCreatedEvent.parameters = new Array();
+  newPoolCreatedEvent.parameters = [];
   newPoolCreatedEvent.parameters.push(new ethereum.EventParam('id', ethereum.Value.fromI32(id)));
   newPoolCreatedEvent.parameters.push(
     new ethereum.EventParam('owner', ethereum.Value.fromAddress(Address.fromString(owner)))
@@ -60,9 +61,9 @@ export function createPoolOwnerNominatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolOwnerNominated {
-  const newCreateNominatedPoolOwnerEvent = changetype<PoolOwnerNominated>(newMockEvent());
+  const newCreateNominatedPoolOwnerEvent = newTypedMockEvent<PoolOwnerNominated>();
   const block = createBlock(timestamp, blockNumber);
-  newCreateNominatedPoolOwnerEvent.parameters = new Array();
+  newCreateNominatedPoolOwnerEvent.parameters = [];
   newCreateNominatedPoolOwnerEvent.parameters.push(
     new ethereum.EventParam('id', ethereum.Value.fromI32(id))
   );
@@ -86,9 +87,9 @@ export function createPoolNameUpdatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolNameUpdated {
-  const newPoolNameUpdatedEvent = changetype<PoolNameUpdated>(newMockEvent());
+  const newPoolNameUpdatedEvent = newTypedMockEvent<PoolNameUpdated>();
   const block = createBlock(timestamp, blockNumber);
-  newPoolNameUpdatedEvent.parameters = new Array();
+  newPoolNameUpdatedEvent.parameters = [];
   newPoolNameUpdatedEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromI32(id))
   );
@@ -106,9 +107,9 @@ export function createPoolOwnershipAcceptedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolOwnershipAccepted {
-  const newPoolOwnershipAcceptedEvent = changetype<PoolOwnershipAccepted>(newMockEvent());
+  const newPoolOwnershipAcceptedEvent = newTypedMockEvent<PoolOwnershipAccepted>();
   const block = createBlock(timestamp, blockNumber);
-  newPoolOwnershipAcceptedEvent.parameters = new Array();
+  newPoolOwnershipAcceptedEvent.parameters = [];
   newPoolOwnershipAcceptedEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromI32(id))
   );
@@ -125,9 +126,9 @@ export function createPoolNominationRevokedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolNominationRevoked {
-  const newPoolNominationRevokedEvent = changetype<PoolNominationRevoked>(newMockEvent());
+  const newPoolNominationRevokedEvent = newTypedMockEvent<PoolNominationRevoked>();
   const block = createBlock(timestamp, blockNumber);
-  newPoolNominationRevokedEvent.parameters = new Array();
+  newPoolNominationRevokedEvent.parameters = [];
   newPoolNominationRevokedEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromI32(id))
   );
@@ -135,14 +136,15 @@ export function createPoolNominationRevokedEvent(
   newPoolNominationRevokedEvent.block.number = BigInt.fromI64(block['blockNumber']);
   return newPoolNominationRevokedEvent;
 }
+
 export function createPoolOwnershipRenouncedEvent(
   id: i32,
   timestamp: i64,
   blockNumber: i64
 ): PoolNominationRenounced {
-  const newPoolOwnerNominationRenouncedEvent = changetype<PoolNominationRenounced>(newMockEvent());
+  const newPoolOwnerNominationRenouncedEvent = newTypedMockEvent<PoolNominationRenounced>();
   const block = createBlock(timestamp, blockNumber);
-  newPoolOwnerNominationRenouncedEvent.parameters = new Array();
+  newPoolOwnerNominationRenouncedEvent.parameters = [];
   newPoolOwnerNominationRenouncedEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromI32(id))
   );
@@ -151,35 +153,15 @@ export function createPoolOwnershipRenouncedEvent(
   return newPoolOwnerNominationRenouncedEvent;
 }
 
-export function createMarketCreatedEvent(
-  id: i32,
-  market: string,
-  timestamp: i64,
-  blockNumber: i64
-): MarketRegistered {
-  const newMarketRegisteredEvent = changetype<MarketRegistered>(newMockEvent());
-  const block = createBlock(timestamp, blockNumber);
-  newMarketRegisteredEvent.parameters = new Array();
-  newMarketRegisteredEvent.parameters.push(
-    new ethereum.EventParam('market', ethereum.Value.fromAddress(Address.fromString(market)))
-  );
-  newMarketRegisteredEvent.parameters.push(
-    new ethereum.EventParam('marketId', ethereum.Value.fromI32(id))
-  );
-  newMarketRegisteredEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
-  newMarketRegisteredEvent.block.number = BigInt.fromI64(block['blockNumber']);
-  return newMarketRegisteredEvent;
-}
-
 export function createAccountCreatedEvent(
   id: i32,
   owner: string,
   timestamp: i64,
   blockNumber: i64
 ): AccountCreated {
-  const newMarketRegisteredEvent = changetype<AccountCreated>(newMockEvent());
+  const newMarketRegisteredEvent = newTypedMockEvent<AccountCreated>();
   const block = createBlock(timestamp, blockNumber);
-  newMarketRegisteredEvent.parameters = new Array();
+  newMarketRegisteredEvent.parameters = [];
 
   newMarketRegisteredEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromI32(id))
@@ -198,9 +180,9 @@ export function createPoolConfigurationSetEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolConfigurationSet {
-  const newMarketRegisteredEvent = changetype<PoolConfigurationSet>(newMockEvent());
+  const newMarketRegisteredEvent = newTypedMockEvent<PoolConfigurationSet>();
   const block = createBlock(timestamp, blockNumber);
-  newMarketRegisteredEvent.parameters = new Array();
+  newMarketRegisteredEvent.parameters = [];
   newMarketRegisteredEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
@@ -211,54 +193,6 @@ export function createPoolConfigurationSetEvent(
   newMarketRegisteredEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
   newMarketRegisteredEvent.block.number = BigInt.fromI64(block['blockNumber']);
   return newMarketRegisteredEvent;
-}
-
-export function createMarketUsdDepositedEvent(
-  marketId: i32,
-  target: Address,
-  amount: BigInt,
-  timestamp: i64,
-  blockNumber: i64
-): MarketUsdDeposited {
-  const newUsdMintedEvent = changetype<MarketUsdDeposited>(newMockEvent());
-  const block = createBlock(timestamp, blockNumber);
-  newUsdMintedEvent.parameters = new Array();
-  newUsdMintedEvent.parameters.push(
-    new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId))
-  );
-  newUsdMintedEvent.parameters.push(
-    new ethereum.EventParam('target', ethereum.Value.fromAddress(target))
-  );
-  newUsdMintedEvent.parameters.push(
-    new ethereum.EventParam('amount', ethereum.Value.fromUnsignedBigInt(amount))
-  );
-  newUsdMintedEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
-  newUsdMintedEvent.block.number = BigInt.fromI64(block['blockNumber']);
-  return newUsdMintedEvent;
-}
-
-export function createMarketUsdWithdrawnEvent(
-  marketId: i32,
-  target: Address,
-  amount: BigInt,
-  timestamp: i64,
-  blockNumber: i64
-): MarketUsdWithdrawn {
-  const newUsdWithdrawnEvent = changetype<MarketUsdWithdrawn>(newMockEvent());
-  const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = new Array();
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId))
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('target', ethereum.Value.fromAddress(target))
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('amount', ethereum.Value.fromUnsignedBigInt(amount))
-  );
-  newUsdWithdrawnEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
-  newUsdWithdrawnEvent.block.number = BigInt.fromI64(block['blockNumber']);
-  return newUsdWithdrawnEvent;
 }
 
 export function createCollateralConfiguredEvent(
@@ -272,9 +206,9 @@ export function createCollateralConfiguredEvent(
   timestamp: i64,
   blockNumber: i64
 ): CollateralConfigured {
-  const newUsdWithdrawnEvent = changetype<CollateralConfigured>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<CollateralConfigured>();
   const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = new Array();
+  newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
     new ethereum.EventParam('collateralType', ethereum.Value.fromAddress(collateralType))
   );
@@ -302,9 +236,9 @@ export function createDepositEvent(
   timestamp: i64,
   blockNumber: i64
 ): Deposited {
-  const newUsdWithdrawnEvent = changetype<Deposited>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<Deposited>();
   const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = new Array();
+  newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromI32(accountId))
   );
@@ -326,9 +260,9 @@ export function createWithdrawnEvent(
   timestamp: i64,
   blockNumber: i64
 ): Withdrawn {
-  const newUsdWithdrawnEvent = changetype<Withdrawn>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<Withdrawn>();
   const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = new Array();
+  newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromI32(accountId))
   );
@@ -350,9 +284,9 @@ export function createPermissionGrantedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PermissionGranted {
-  const newUsdWithdrawnEvent = changetype<PermissionGranted>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<PermissionGranted>();
   const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = new Array();
+  newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromI32(accountId))
   );
@@ -374,9 +308,9 @@ export function createPermissionRevokedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PermissionRevoked {
-  const newUsdWithdrawnEvent = changetype<PermissionRevoked>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<PermissionRevoked>();
   const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = new Array();
+  newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromI32(accountId))
   );
@@ -400,9 +334,9 @@ export function createDelegationUpdateEvent(
   timestamp: i64,
   blockNumber: i64
 ): DelegationUpdated {
-  const newDelegationUpdatedEvent = changetype<DelegationUpdated>(newMockEvent());
+  const newDelegationUpdatedEvent = newTypedMockEvent<DelegationUpdated>();
   const block = createBlock(timestamp, blockNumber);
-  newDelegationUpdatedEvent.parameters = new Array();
+  newDelegationUpdatedEvent.parameters = [];
   newDelegationUpdatedEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromUnsignedBigInt(accountId))
   );
@@ -431,9 +365,9 @@ export function createUSDMintedEvent(
   timestamp: i64,
   blockNumber: i64
 ): UsdMinted {
-  const newUSDMintedEvent = changetype<UsdMinted>(newMockEvent());
+  const newUSDMintedEvent = newTypedMockEvent<UsdMinted>();
   const block = createBlock(timestamp, blockNumber);
-  newUSDMintedEvent.parameters = new Array();
+  newUSDMintedEvent.parameters = [];
   newUSDMintedEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromUnsignedBigInt(accountId))
   );
@@ -459,9 +393,9 @@ export function createUSDBurnedEvent(
   timestamp: i64,
   blockNumber: i64
 ): UsdBurned {
-  const newUSDBurnedEvent = changetype<UsdBurned>(newMockEvent());
+  const newUSDBurnedEvent = newTypedMockEvent<UsdBurned>();
   const block = createBlock(timestamp, blockNumber);
-  newUSDBurnedEvent.parameters = new Array();
+  newUSDBurnedEvent.parameters = [];
   newUSDBurnedEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromUnsignedBigInt(accountId))
   );
@@ -486,11 +420,9 @@ export function createRewardsDistributorRegisteredEvent(
   timestamp: i64,
   blockNumber: i64
 ): RewardsDistributorRegistered {
-  const newRewardsDistributorRegisteredEvent = changetype<RewardsDistributorRegistered>(
-    newMockEvent()
-  );
+  const newRewardsDistributorRegisteredEvent = newTypedMockEvent<RewardsDistributorRegistered>();
   const block = createBlock(timestamp, blockNumber);
-  newRewardsDistributorRegisteredEvent.parameters = new Array();
+  newRewardsDistributorRegisteredEvent.parameters = [];
   newRewardsDistributorRegisteredEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(poolId))
   );
@@ -505,6 +437,32 @@ export function createRewardsDistributorRegisteredEvent(
   return newRewardsDistributorRegisteredEvent;
 }
 
+export function createRewardsDistributorRemovedEvent(
+  poolId: BigInt,
+  collateralType: Address,
+  distributor: Address,
+  timestamp: i64,
+  blockNumber: i64
+): RewardsDistributorRemoved {
+  const newRewardsDistributorRemovedEvent = newTypedMockEvent<RewardsDistributorRemoved>();
+  const block = createBlock(timestamp, blockNumber);
+  newRewardsDistributorRemovedEvent.parameters = [];
+  newRewardsDistributorRemovedEvent.parameters.push(
+    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(poolId))
+  );
+  newRewardsDistributorRemovedEvent.parameters.push(
+    new ethereum.EventParam('collateralType', ethereum.Value.fromAddress(collateralType))
+  );
+  newRewardsDistributorRemovedEvent.parameters.push(
+    new ethereum.EventParam('distributor', ethereum.Value.fromAddress(distributor))
+  );
+
+  newRewardsDistributorRemovedEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
+  newRewardsDistributorRemovedEvent.block.number = BigInt.fromI64(block['blockNumber']);
+
+  return newRewardsDistributorRemovedEvent;
+}
+
 export function createRewardsDistributedEvent(
   poolId: BigInt,
   collateralType: Address,
@@ -516,10 +474,10 @@ export function createRewardsDistributedEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): RewardsDistributed {
-  const newRewardsDistributedEvent = changetype<RewardsDistributed>(newMockEvent());
+  const newRewardsDistributedEvent = newTypedMockEvent<RewardsDistributed>();
   const block = createBlock(timestamp, blockNumber);
   newRewardsDistributedEvent.logIndex = BigInt.fromI32(logIndex);
-  newRewardsDistributedEvent.parameters = new Array();
+  newRewardsDistributedEvent.parameters = [];
   newRewardsDistributedEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(poolId))
   );
@@ -553,10 +511,10 @@ export function createRewardsClaimedEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): RewardsClaimed {
-  const newRewardsClaimedEvent = changetype<RewardsClaimed>(newMockEvent());
+  const newRewardsClaimedEvent = newTypedMockEvent<RewardsClaimed>();
   const block = createBlock(timestamp, blockNumber);
   newRewardsClaimedEvent.logIndex = BigInt.fromI32(logIndex);
-  newRewardsClaimedEvent.parameters = new Array();
+  newRewardsClaimedEvent.parameters = [];
   newRewardsClaimedEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromUnsignedBigInt(accountId))
   );
@@ -590,10 +548,10 @@ export function createLiquidationEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): Liquidation {
-  const newLiquidatedEvent = changetype<Liquidation>(newMockEvent());
+  const newLiquidatedEvent = newTypedMockEvent<Liquidation>();
   const block = createBlock(timestamp, blockNumber);
   newLiquidatedEvent.logIndex = BigInt.fromI32(logIndex);
-  newLiquidatedEvent.parameters = new Array();
+  newLiquidatedEvent.parameters = [];
   newLiquidatedEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromUnsignedBigInt(accountId))
   );
@@ -637,10 +595,10 @@ export function createVaultLiquidationEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): VaultLiquidation {
-  const newVaultLiquidationEvent = changetype<VaultLiquidation>(newMockEvent());
+  const newVaultLiquidationEvent = newTypedMockEvent<VaultLiquidation>();
   const block = createBlock(timestamp, blockNumber);
   newVaultLiquidationEvent.logIndex = BigInt.fromI32(logIndex);
-  newVaultLiquidationEvent.parameters = new Array();
+  newVaultLiquidationEvent.parameters = [];
   newVaultLiquidationEvent.parameters.push(
     new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(poolId))
   );

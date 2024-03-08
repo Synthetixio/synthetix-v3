@@ -3,8 +3,10 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, openPosition } from '../helpers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers } from 'ethers';
+import assert from 'assert/strict';
 
-describe('Liquidation - margin', async () => {
+describe('Liquidation - margin', () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -14,10 +16,11 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -32,10 +35,11 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -50,10 +54,11 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -68,10 +73,11 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(1.5),
-        maintenanceMarginFraction: bn(0.75),
+        minimumInitialMarginRatio: bn(0.035),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -86,10 +92,11 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(1.5),
-        maintenanceMarginFraction: bn(0.75),
+        minimumInitialMarginRatio: bn(0.035),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -142,7 +149,7 @@ describe('Liquidation - margin', async () => {
     }
   });
 
-  describe('account check after initial positions open', async () => {
+  describe('account check after initial positions open', () => {
     it('should have correct open interest', async () => {
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), bn(100_000));
     });
@@ -231,8 +238,11 @@ describe('Liquidation - margin', async () => {
         systems().PerpsMarket.connect(keeper()).liquidate(2),
         'NotEligibleForLiquidation'
       );
+
+      assert.equal(await systems().PerpsMarket.canLiquidate(2), false);
     });
   });
+
   describe('price change - available margin 0 ', () => {
     [
       bn(31000), // btc
@@ -271,21 +281,30 @@ describe('Liquidation - margin', async () => {
     before('set minimumPositionMargin for OP to 50', async () => {
       const opMarketId = perpsMarkets()[4].marketId();
       const initialMarginFraction = bn(1.5);
-      const maintenanceMarginFraction = bn(0.75);
+      const maintenanceMarginScalar = bn(0.035);
+      const minimumInitialMarginRatio = bn(0.5);
       const maxLiquidationLimitAccumulationMultiplier = bn(1);
       const liquidationRewardRatio = bn(0.05);
-      const maxSecondsInLiquidationWindow = bn(10);
+      const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
       const minimumPositionMargin = bn(50); // this is the only change from the initial values
       await systems()
         .PerpsMarket.connect(owner())
         .setLiquidationParameters(
           opMarketId,
           initialMarginFraction,
-          maintenanceMarginFraction,
-          maxLiquidationLimitAccumulationMultiplier,
+          maintenanceMarginScalar,
+          minimumInitialMarginRatio,
           liquidationRewardRatio,
-          maxSecondsInLiquidationWindow,
           minimumPositionMargin
+        );
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxLiquidationParameters(
+          opMarketId,
+          maxLiquidationLimitAccumulationMultiplier,
+          maxSecondsInLiquidationWindow,
+          0,
+          ethers.constants.AddressZero
         );
     });
     // Changing minimumPositionMargin does not have an affect on available margin
@@ -300,6 +319,11 @@ describe('Liquidation - margin', async () => {
         'AccountLiquidatable(2)'
       );
     });
+
+    // sanity check
+    it('is eligible for liquidation', async () => {
+      assert.equal(await systems().PerpsMarket.canLiquidate(2), true);
+    });
     // reset minimumPositionMargin to 0
     after(restoreMinimumPositionMargin);
   });
@@ -307,7 +331,7 @@ describe('Liquidation - margin', async () => {
   describe('price change - eligible for liquidation', () => {
     [
       bn(31000), // btc
-      bn(1775), // eth
+      bn(1820), // eth
       bn(3), // link
       bn(1), // arb
       bn(1), // op, the only one that has a price change
@@ -319,7 +343,7 @@ describe('Liquidation - margin', async () => {
 
     [
       bn(-1150), // btc
-      bn(-4900), // eth
+      bn(-4000), // eth
       bn(-4100), // link
       bn(-5250), // arb
       bn(-5250), // op
@@ -334,7 +358,7 @@ describe('Liquidation - margin', async () => {
     });
 
     it('has correct available margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(-650));
+      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(250));
     });
 
     it('reverts when trying to withdraw', async () => {

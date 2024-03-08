@@ -88,7 +88,7 @@ interface ICollateralModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
      *
      * Emits a {Withdrawn} event.
      *

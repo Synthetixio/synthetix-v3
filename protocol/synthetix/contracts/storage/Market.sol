@@ -227,7 +227,10 @@ library Market {
                 continue;
             }
 
-            uint256 priceD18 = CollateralConfiguration.getCollateralPrice(collateralConfiguration);
+            uint256 priceD18 = CollateralConfiguration.getCollateralPrice(
+                collateralConfiguration,
+                entry.amountD18
+            );
 
             totalDepositedCollateralValueD18 += priceD18.mulDecimal(entry.amountD18);
         }

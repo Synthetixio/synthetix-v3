@@ -88,7 +88,7 @@ interface IFeatureFlagModule {
      * @notice Gets the list of address which can block a feature
      * @param feature The bytes32 id of the feature.
      */
-    function getDeniers(bytes32 feature) external returns (address[] memory);
+    function getDeniers(bytes32 feature) external view returns (address[] memory);
 
     /**
      * @notice Determines if the given feature is freely allowed to all users.

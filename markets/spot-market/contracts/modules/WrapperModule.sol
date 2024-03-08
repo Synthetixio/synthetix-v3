@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -44,6 +45,17 @@ contract WrapperModule is IWrapperModule {
     /**
      * @inheritdoc IWrapperModule
      */
+    function getWrapper(
+        uint128 marketId
+    ) external view override returns (address wrapCollateralType, uint256 maxWrappableAmount) {
+        Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
+
+        return (wrapperStore.wrapCollateralType, wrapperStore.maxWrappableAmount);
+    }
+
+    /**
+     * @inheritdoc IWrapperModule
+     */
     function wrap(
         uint128 marketId,
         uint256 wrapAmount,
@@ -66,7 +78,7 @@ contract WrapperModule is IWrapperModule {
         (amountToMint, fees, config) = MarketConfiguration.quoteWrap(
             marketId,
             wrapAmountD18,
-            Price.getCurrentPrice(marketId, Transaction.Type.WRAP)
+            Price.getCurrentPrice(marketId, Transaction.Type.WRAP, Price.Tolerance.STRICT)
         );
 
         if (amountToMint < minAmountReceived) {
@@ -76,13 +88,17 @@ contract WrapperModule is IWrapperModule {
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             address(0),
             spotMarketFactory,
             Transaction.Type.WRAP
         );
 
-        address(wrappingCollateral).safeTransferFrom(msg.sender, address(this), wrapAmount);
+        address(wrappingCollateral).safeTransferFrom(
+            ERC2771Context._msgSender(),
+            address(this),
+            wrapAmount
+        );
         wrappingCollateral.approve(address(spotMarketFactory.synthetix), wrapAmount);
         spotMarketFactory.synthetix.depositMarketCollateral(
             marketId,
@@ -90,7 +106,7 @@ contract WrapperModule is IWrapperModule {
             wrapAmount
         );
 
-        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
+        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), amountToMint);
 
         emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
     }
@@ -111,14 +127,14 @@ contract WrapperModule is IWrapperModule {
         ITokenModule synth = SynthUtil.getToken(marketId);
 
         // burn from seller
-        synth.burn(msg.sender, unwrapAmount);
+        synth.burn(ERC2771Context._msgSender(), unwrapAmount);
 
         MarketConfiguration.Data storage config;
         uint256 returnCollateralAmountD18;
         (returnCollateralAmountD18, fees, config) = MarketConfiguration.quoteUnwrap(
             marketId,
             unwrapAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP)
+            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP, Price.Tolerance.STRICT)
         );
 
         uint8 collateralDecimals = ITokenModule(wrapperStore.wrapCollateralType).decimals();
@@ -133,7 +149,7 @@ contract WrapperModule is IWrapperModule {
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             address(0),
             spotMarketFactory,
             Transaction.Type.UNWRAP
@@ -145,7 +161,10 @@ contract WrapperModule is IWrapperModule {
             returnCollateralAmount
         );
 
-        wrapperStore.wrapCollateralType.safeTransfer(msg.sender, returnCollateralAmount);
+        wrapperStore.wrapCollateralType.safeTransfer(
+            ERC2771Context._msgSender(),
+            returnCollateralAmount
+        );
 
         emit SynthUnwrapped(marketId, returnCollateralAmount, fees, collectedFees);
     }

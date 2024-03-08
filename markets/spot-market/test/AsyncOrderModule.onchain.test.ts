@@ -14,8 +14,8 @@ const settlementStrategy = {
   feedId: ethers.constants.HashZero,
   url: '',
   settlementReward: bn(5),
-  priceDeviationTolerance: bn(0.01),
   disabled: false,
+  priceDeviationTolerance: bn(0.01),
   minimumUsdExchangeAmount: bn(0.000001),
   maxRoundingLoss: bn(0.000001),
 };

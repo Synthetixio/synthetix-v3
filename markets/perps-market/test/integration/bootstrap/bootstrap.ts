@@ -1,14 +1,20 @@
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
+import { CollateralMock } from '@synthetixio/main/typechain-types';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
+import {
+  SpotMarketProxy,
+  SynthRouter,
+  TrustedMulticallForwarder,
+} from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { FeeCollectorMock, PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
-import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
-import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
-import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
-import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
-import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
-import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { CollateralMock } from '@synthetixio/main/typechain-types';
+import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
+import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
+import { createKeeperCostNode } from './createKeeperCostNode';
+import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
+import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -19,7 +25,8 @@ type Proxies = {
   PerpsMarketProxy: PerpsMarketProxy;
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
-  ['MockPyth']: MockPyth;
+  ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
+  ['MockPythERC7412Wrapper']: MockPythERC7412Wrapper;
   ['FeeCollectorMock']: FeeCollectorMock;
 };
 
@@ -28,10 +35,11 @@ export type Systems = {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
-  MockPyth: MockPyth;
+  MockPythERC7412Wrapper: MockPythERC7412Wrapper;
   OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
+  TrustedMulticallForwarder: TrustedMulticallForwarder;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
@@ -53,9 +61,12 @@ export function bootstrap() {
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       CollateralMock: getContract('synthetix.CollateralMock'),
+      TrustedMulticallForwarder: getContract(
+        'synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder'
+      ),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
-      MockPyth: getContract('MockPyth'),
+      MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
@@ -63,7 +74,7 @@ export function bootstrap() {
 
   before('set snxUSD limit to max', async () => {
     // set max collateral amt for snxUSD to maxUINT
-    await contracts.PerpsMarket.connect(getSigners()[0]).setMaxCollateralAmount(
+    await contracts.PerpsMarket.connect(getSigners()[0]).setCollateralConfiguration(
       0, // snxUSD
       ethers.constants.MaxUint256
     );
@@ -83,8 +94,18 @@ type BootstrapArgs = {
   traderAccountIds: Array<number>;
   liquidationGuards?: {
     minLiquidationReward: ethers.BigNumber;
+    minKeeperProfitRatioD18: ethers.BigNumber;
     maxLiquidationReward: ethers.BigNumber;
+    maxKeeperScalingRatioD18: ethers.BigNumber;
   };
+  interestRateParams?: {
+    lowUtilGradient: ethers.BigNumber;
+    gradientBreakpoint: ethers.BigNumber;
+    highUtilGradient: ethers.BigNumber;
+  };
+  maxPositionsPerAccount?: ethers.BigNumber;
+  maxCollateralsPerAccount?: ethers.BigNumber;
+  skipKeeperCostOracleNode?: boolean;
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -92,9 +113,9 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId, superMarketId } =
+  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId, staker } =
     chainStateWithPerpsMarkets;
-  const { trader1, trader2, trader3, keeper, restore } = bootstrapTraders({
+  const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
     signers,
     provider,
@@ -102,12 +123,44 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     accountIds: data.traderAccountIds,
   });
 
+  let keeperCostOracleNode: MockGasPriceNode;
+
+  before('create perps gas usage nodes', async () => {
+    if (data.skipKeeperCostOracleNode) {
+      return;
+    }
+
+    const results = await createKeeperCostNode(owner(), systems().OracleManager);
+    const keeperCostNodeId = results.keeperCostNodeId;
+    keeperCostOracleNode = results.keeperCostNode;
+
+    await systems().PerpsMarket.connect(owner()).updateKeeperCostNodeId(keeperCostNodeId);
+  });
+
+  before('set pool config', async () => {
+    const synthMarketConfigs = synthMarkets().map((s) => ({
+      marketId: s.marketId(),
+      weightD18: ethers.utils.parseEther('1'),
+      maxDebtShareValueD18: ethers.utils.parseEther('1'),
+    }));
+    await systems()
+      .Core.connect(owner())
+      .setPoolConfiguration(poolId, [
+        {
+          marketId: superMarketId(),
+          weightD18: ethers.utils.parseEther('1'),
+          maxDebtShareValueD18: ethers.utils.parseEther('1'),
+        },
+        ...synthMarketConfigs,
+      ]);
+  });
+
   // auto set all synth markets collaterals to max
   before('set collateral max', async () => {
     for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
+        .setCollateralConfiguration(marketId(), ethers.constants.MaxUint256);
     }
   });
 
@@ -123,6 +176,16 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     }
   });
 
+  before('set max positions and colltaterals per account', async () => {
+    const { maxPositionsPerAccount, maxCollateralsPerAccount } = data;
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setPerAccountCaps(
+        maxPositionsPerAccount ? maxPositionsPerAccount : 100000,
+        maxCollateralsPerAccount ? maxCollateralsPerAccount : 100000
+      );
+  });
+
   // auto add all synth markets in the row they were created for deduction priority
   before('set synth deduction priority', async () => {
     // first item is always snxUSD
@@ -134,26 +197,41 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     before('set liquidation guards', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setLiquidationRewardGuards(
+        .setKeeperRewardGuards(
           liquidationGuards.minLiquidationReward,
-          liquidationGuards.maxLiquidationReward
+          liquidationGuards.minKeeperProfitRatioD18,
+          liquidationGuards.maxLiquidationReward,
+          liquidationGuards.maxKeeperScalingRatioD18
+        );
+    });
+  }
+
+  const { interestRateParams } = data;
+  if (interestRateParams) {
+    before('set interest rate params', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setInterestRateParameters(
+          interestRateParams.lowUtilGradient,
+          interestRateParams.gradientBreakpoint,
+          interestRateParams.highUtilGradient
         );
     });
   }
 
   return {
+    staker,
     systems,
     signers,
     provider,
-    restore,
     trader1,
     trader2,
     trader3,
     keeper,
     owner,
     perpsMarkets,
+    keeperCostOracleNode: () => keeperCostOracleNode,
     synthMarkets,
-    marketOwner,
     superMarketId,
     poolId,
   };

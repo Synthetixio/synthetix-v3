@@ -1,0 +1,33 @@
+name = "buyback-snx"
+version = "<%= package.version %>"
+description = "Buys SNX at market price plus premium"
+
+[setting.premium]
+defaultValue = "10000000000000000"
+
+[setting.snx_fee_share]
+defaultValue = "500000000000000000"
+
+[setting.oracle_manager_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.snx_oracle_id]
+defaultValue = "0x39d020f60982ed892abbcd4a06a276a9f9b7bfbce003204c110b6e488f502da3"
+
+[setting.snx_token]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.usd_token]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[contract.buyback_snx]
+artifact = "contracts/BuybackSnx.sol:BuybackSnx"
+args = [
+    "<%= settings.premium %>",
+    "<%= settings.snx_fee_share %>",
+    "<%= settings.oracle_manager_address %>",
+    "<%= settings.snx_oracle_id %>",
+    "<%= settings.snx_token %>",
+    "<%= settings.usd_token %>",
+]
+create2 = true

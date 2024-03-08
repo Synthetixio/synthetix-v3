@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { assertAddressEqual } from '@synthetixio/core-utils/utils/assertions/assert-address';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { ethers } from 'ethers';
@@ -136,8 +137,8 @@ describe('AssociatedSystemsModule', function () {
         assert.ok(evt && !Array.isArray(evt) && evt.args);
         assert.equal(evt.args.kind, toBytes32('erc20'));
         assert.equal(evt.args.id, registeredName);
-        assert.equal(evt.args.proxy, TokenModuleAssociated.address);
-        assert.equal(evt.args.impl, TokenModule.address);
+        assertAddressEqual(evt.args.proxy, TokenModuleAssociated.address);
+        assertAddressEqual(evt.args.impl, TokenModule.address);
       });
 
       it('has initialized the token', async function () {
@@ -154,6 +155,23 @@ describe('AssociatedSystemsModule', function () {
 
       it('should not affect existing proxy', async function () {
         assert.equal(await TokenModule.isInitialized(), false);
+      });
+
+      it('upgrade token with new name and symbol', async () => {
+        await AssociatedSystemsModule.initOrUpgradeToken(
+          registeredName,
+          'A Token 2',
+          'TOK2',
+          18,
+          TokenModule.address
+        );
+      });
+
+      it('the token has been successfully reinitlized', async function () {
+        assert.equal(await TokenModuleAssociated.isInitialized(), true);
+        assert.equal(await TokenModuleAssociated.name(), 'A Token 2');
+        assert.equal(await TokenModuleAssociated.symbol(), 'TOK2');
+        assert.equal(await TokenModuleAssociated.decimals(), 18);
       });
 
       describe('when attempting to register a different kind', function () {
@@ -199,9 +217,8 @@ describe('AssociatedSystemsModule', function () {
         });
 
         it('works when reinitialized with the same impl', async function () {
-          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
-            registeredName
-          );
+          const [newProxyAddress] =
+            await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
           assert.equal(newProxyAddress, TokenModuleAssociated.address);
         });
@@ -212,8 +229,8 @@ describe('AssociatedSystemsModule', function () {
           assert.ok(evt && !Array.isArray(evt) && evt.args);
           assert.equal(evt.args.kind, toBytes32('erc20'));
           assert.equal(evt.args.id, registeredName);
-          assert.equal(evt.args.proxy, TokenModuleAssociated.address);
-          assert.equal(evt.args.impl, NewTokenModule.address);
+          assertAddressEqual(evt.args.proxy, TokenModuleAssociated.address);
+          assertAddressEqual(evt.args.impl, NewTokenModule.address);
         });
       });
     });
@@ -270,8 +287,8 @@ describe('AssociatedSystemsModule', function () {
         assert.ok(evt && !Array.isArray(evt) && evt.args);
         assert.equal(evt.args.kind, toBytes32('erc721'));
         assert.equal(evt.args.id, registeredName);
-        assert.equal(evt.args.proxy, NftModuleAssociated.address);
-        assert.equal(evt.args.impl, NftModule.address);
+        assertAddressEqual(evt.args.proxy, NftModuleAssociated.address);
+        assertAddressEqual(evt.args.impl, NftModule.address);
       });
 
       it('has initialized the token', async function () {
@@ -338,9 +355,8 @@ describe('AssociatedSystemsModule', function () {
         });
 
         it('works when reinitialized with the same impl', async function () {
-          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
-            registeredName
-          );
+          const [newProxyAddress] =
+            await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
           assert.equal(newProxyAddress, NftModuleAssociated.address);
         });
@@ -351,8 +367,8 @@ describe('AssociatedSystemsModule', function () {
           assert.ok(evt && !Array.isArray(evt) && evt.args);
           assert.equal(evt.args.kind, toBytes32('erc721'));
           assert.equal(evt.args.id, registeredName);
-          assert.equal(evt.args.proxy, NftModuleAssociated.address);
-          assert.equal(evt.args.impl, NewNftModule.address);
+          assertAddressEqual(evt.args.proxy, NftModuleAssociated.address);
+          assertAddressEqual(evt.args.impl, NewNftModule.address);
         });
       });
     });

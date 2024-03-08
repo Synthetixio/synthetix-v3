@@ -5,11 +5,11 @@ import "./PythStructs.sol";
 import "./IPythEvents.sol";
 
 /// @title Consume prices from the Pyth Network (https://pyth.network/).
-/// @dev Please refer to the guidance at https://docs.pyth.network/consumers/best-practices for how to consume prices safely.
+/// @dev Please refer to the guidance at https://docs.pyth.network/documentation/pythnet-price-feeds/best-practices for how to consume prices safely.
 /// @author Pyth Data Association
 interface IPythMock is IPythEvents {
     /// @notice Returns the period (in seconds) that a price feed is considered valid since its publish time
-    function getValidTimePeriod() external view returns (uint validTimePeriod);
+    function getValidTimePeriod() external view returns (uint256 validTimePeriod);
 
     /// @notice Returns the price and confidence interval.
     /// @dev Reverts if the price has not been updated within the last `getValidTimePeriod()` seconds.
@@ -40,7 +40,7 @@ interface IPythMock is IPythEvents {
     /// @return price - please read the documentation of PythStructs.Price to understand how to use this safely.
     function getPriceNoOlderThan(
         bytes32 id,
-        uint age
+        uint256 age
     ) external view returns (PythStructs.Price memory price);
 
     /// @notice Returns the exponentially-weighted moving average price of a price feed without any sanity checks.
@@ -64,7 +64,7 @@ interface IPythMock is IPythEvents {
     /// @return price - please read the documentation of PythStructs.Price to understand how to use this safely.
     function getEmaPriceNoOlderThan(
         bytes32 id,
-        uint age
+        uint256 age
     ) external view returns (PythStructs.Price memory price);
 
     /// @notice Update price feeds with given update messages.
@@ -101,7 +101,7 @@ interface IPythMock is IPythEvents {
     /// @notice Returns the required fee to update an array of price updates.
     /// @param updateData Array of price update data.
     /// @return feeAmount The required fee in Wei.
-    function getUpdateFee(bytes[] calldata updateData) external view returns (uint feeAmount);
+    function getUpdateFee(bytes[] calldata updateData) external view returns (uint256 feeAmount);
 
     /// @notice Parse `updateData` and return price feeds of the given `priceIds` if they are all published
     /// within `minPublishTime` and `maxPublishTime`.
@@ -121,6 +121,25 @@ interface IPythMock is IPythEvents {
     /// @param maxPublishTime maximum acceptable publishTime for the given `priceIds`.
     /// @return priceFeeds Array of the price feeds corresponding to the given `priceIds` (with the same order).
     function parsePriceFeedUpdates(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable returns (PythStructs.PriceFeed[] memory priceFeeds);
+
+    /// @notice Similar to `parsePriceFeedUpdates` but ensures the updates returned are
+    /// the first updates published in minPublishTime. That is, if there are multiple updates for a given timestamp,
+    /// this method will return the first update.
+    ///
+    ///
+    /// @dev Reverts if the transferred fee is not sufficient or the updateData is invalid or there is
+    /// no update for any of the given `priceIds` within the given time range and uniqueness condition.
+    /// @param updateData Array of price update data.
+    /// @param priceIds Array of price ids.
+    /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
+    /// @param maxPublishTime maximum acceptable publishTime for the given `priceIds`.
+    /// @return priceFeeds Array of the price feeds corresponding to the given `priceIds` (with the same order).
+    function parsePriceFeedUpdatesUnique(
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
         uint64 minPublishTime,

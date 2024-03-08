@@ -1,11 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpsAccount} from "./PerpsAccount.sol";
+import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
+import {PerpsAccount, SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
+import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
@@ -16,6 +19,7 @@ library GlobalPerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using DecimalMath for uint256;
     using SetUtil for SetUtil.UintSet;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
@@ -26,9 +30,9 @@ library GlobalPerpsMarket {
      */
     error MaxCollateralExceeded(
         uint128 synthMarketId,
-        uint maxAmount,
-        uint collateralAmount,
-        uint depositAmount
+        uint256 maxAmount,
+        uint256 collateralAmount,
+        uint256 depositAmount
     );
 
     /**
@@ -39,7 +43,11 @@ library GlobalPerpsMarket {
     /**
      * @notice Thrown when attempting to withdraw more collateral than is available.
      */
-    error InsufficientCollateral(uint128 synthMarketId, uint collateralAmount, uint withdrawAmount);
+    error InsufficientCollateral(
+        uint128 synthMarketId,
+        uint256 collateralAmount,
+        uint256 withdrawAmount
+    );
 
     struct Data {
         /**
@@ -49,7 +57,7 @@ library GlobalPerpsMarket {
         /**
          * @dev Collateral amounts running total, by collateral synth market id.
          */
-        mapping(uint128 => uint) collateralAmounts;
+        mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
     }
@@ -61,19 +69,47 @@ library GlobalPerpsMarket {
         }
     }
 
+    function utilizationRate(
+        Data storage self
+    ) internal view returns (uint128 rate, uint256 delegatedCollateralValue, uint256 lockedCredit) {
+        uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
+        int256 delegatedCollateralValueInt = withdrawableUsd.toInt() -
+            totalCollateralValue(self).toInt();
+        lockedCredit = minimumCredit(self);
+        if (delegatedCollateralValueInt <= 0) {
+            return (DecimalMath.UNIT_UINT128, 0, lockedCredit);
+        }
+
+        delegatedCollateralValue = delegatedCollateralValueInt.toUint();
+
+        rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
+    }
+
+    function minimumCredit(
+        Data storage self
+    ) internal view returns (uint256 accumulatedMinimumCredit) {
+        uint256 activeMarketsLength = self.activeMarkets.length();
+        for (uint256 i = 1; i <= activeMarketsLength; i++) {
+            uint128 marketId = self.activeMarkets.valueAt(i).to128();
+
+            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId);
+        }
+    }
+
     function totalCollateralValue(Data storage self) internal view returns (uint256 total) {
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
         uint256 activeCollateralLength = activeCollateralTypes.length();
-        for (uint i = 1; i <= activeCollateralLength; i++) {
+        for (uint256 i = 1; i <= activeCollateralLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
 
-            if (synthMarketId == 0) {
+            if (synthMarketId == SNX_USD_MARKET_ID) {
                 total += self.collateralAmounts[synthMarketId];
             } else {
-                (uint collateralValue, ) = spotMarket.quoteSellExactIn(
+                (uint256 collateralValue, ) = spotMarket.quoteSellExactIn(
                     synthMarketId,
-                    self.collateralAmounts[synthMarketId]
+                    self.collateralAmounts[synthMarketId],
+                    Price.Tolerance.DEFAULT
                 );
                 total += collateralValue;
             }
@@ -83,8 +119,8 @@ library GlobalPerpsMarket {
     function updateCollateralAmount(
         Data storage self,
         uint128 synthMarketId,
-        int amountDelta
-    ) internal returns (uint collateralAmount) {
+        int256 amountDelta
+    ) internal returns (uint256 collateralAmount) {
         collateralAmount = (self.collateralAmounts[synthMarketId].toInt() + amountDelta).toUint();
         self.collateralAmounts[synthMarketId] = collateralAmount;
 
@@ -114,17 +150,17 @@ library GlobalPerpsMarket {
     function validateCollateralAmount(
         Data storage self,
         uint128 synthMarketId,
-        int synthAmount
+        int256 synthAmount
     ) internal view {
-        uint collateralAmount = self.collateralAmounts[synthMarketId];
+        uint256 collateralAmount = self.collateralAmounts[synthMarketId];
         if (synthAmount > 0) {
-            uint maxAmount = GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[
+            uint256 maxAmount = GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[
                 synthMarketId
             ];
             if (maxAmount == 0) {
                 revert SynthNotEnabledForCollateral(synthMarketId);
             }
-            uint newCollateralAmount = collateralAmount + synthAmount.toUint();
+            uint256 newCollateralAmount = collateralAmount + synthAmount.toUint();
             if (newCollateralAmount > maxAmount) {
                 revert MaxCollateralExceeded(
                     synthMarketId,
@@ -134,7 +170,7 @@ library GlobalPerpsMarket {
                 );
             }
         } else {
-            uint synthAmountAbs = MathUtil.abs(synthAmount);
+            uint256 synthAmountAbs = MathUtil.abs(synthAmount);
             if (collateralAmount < synthAmountAbs) {
                 revert InsufficientCollateral(synthMarketId, collateralAmount, synthAmountAbs);
             }

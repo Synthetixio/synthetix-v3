@@ -2,9 +2,10 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Market - size test', () => {
-  const { systems, perpsMarkets, provider, trader1, trader2, keeper, restore } = bootstrapMarkets({
+  const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
       {
@@ -12,12 +13,14 @@ describe('Market - size test', () => {
         name: 'Ether',
         token: 'snxETH',
         price: bn(2000),
-        maxMarketValue: bn(10_000),
-        settlementStrategy: { priceDeviationTolerance: bn(50) },
+        maxMarketSize: bn(10_000),
+        maxMarketValue: bn(40_000_000),
       },
     ],
     traderAccountIds: [2, 3],
   });
+
+  const restore = snapshotCheckpoint(provider);
 
   let ethMarket: PerpsMarket;
   before('identify actors', async () => {
@@ -46,7 +49,7 @@ describe('Market - size test', () => {
   // starting skew = 20 from above order
   // below test:
   // [newOrderSize, expectedSize, expectedSkew]
-  [
+  for (const [newOrderSize, expectedSize, expectedSkew] of [
     [bn(20), bn(40), bn(40)],
     [bn(-40), bn(40), bn(0)],
     [bn(-25), bn(65), bn(-25)],
@@ -56,7 +59,7 @@ describe('Market - size test', () => {
     [bn(180), bn(92), bn(92)],
     [bn(-15), bn(77), bn(77)],
     [bn(-19), bn(58), bn(58)],
-  ].forEach(([newOrderSize, expectedSize, expectedSkew]) => {
+  ]) {
     describe('skew and size test', () => {
       before('open position', async () => {
         await openPosition({
@@ -78,7 +81,7 @@ describe('Market - size test', () => {
         assertBn.equal(market.skew, expectedSkew);
       });
     });
-  });
+  }
 
   describe('max market value', () => {
     describe('success', () => {
@@ -178,8 +181,8 @@ describe('Market - size test', () => {
     });
 
     describe('reverts', () => {
-      beforeEach(restore);
-      beforeEach('add collateral to margin', async () => {
+      before(restore);
+      before('add collateral to margin', async () => {
         await depositCollateral({
           accountId: () => 2,
           collaterals: [
@@ -205,7 +208,7 @@ describe('Market - size test', () => {
           trader: () => trader2(),
         });
       });
-      beforeEach('open position that uses all of available market size', async () => {
+      before('open position that uses all of available market size', async () => {
         await openPosition({
           systems,
           provider,
@@ -219,13 +222,13 @@ describe('Market - size test', () => {
         });
       });
 
-      it('if max market value is reached', async () => {
+      it('if max market size is reached', async () => {
         await assertRevert(
           openPosition({
             systems,
             provider,
-            trader: trader2(),
-            accountId: 3,
+            trader: trader1(),
+            accountId: 2,
             keeper: keeper(),
             marketId: ethMarket.marketId(),
             sizeDelta: bn(1),
@@ -238,7 +241,7 @@ describe('Market - size test', () => {
         );
       });
 
-      it('if exceeds max market value with short', async () => {
+      it('if exceeds max market size with short', async () => {
         await assertRevert(
           openPosition({
             systems,
@@ -254,6 +257,60 @@ describe('Market - size test', () => {
           `MaxOpenInterestReached(${ethMarket.marketId()}, ${bn(10_000).toString()}, ${bn(
             20_000
           ).toString()})`
+        );
+      });
+
+      it('if max market value is reached', async () => {
+        // reduce position size to 5000
+        await openPosition({
+          systems,
+          provider,
+          trader: trader1(),
+          accountId: 2,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(-5_000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+
+        // 40_000_000 is max market value
+        // 5000 * 8000 = 40_000_000
+        await ethMarket.aggregator().mockSetCurrentPrice(bn(8000));
+        await assertRevert(
+          openPosition({
+            systems,
+            provider,
+            trader: trader1(),
+            accountId: 2,
+            keeper: keeper(),
+            marketId: ethMarket.marketId(),
+            sizeDelta: bn(1),
+            settlementStrategyId: ethMarket.strategyId(),
+            price: bn(8000),
+          }),
+          `MaxUSDOpenInterestReached(${ethMarket.marketId()}, ${bn(40_000_000).toString()}, ${bn(
+            5_001
+          ).toString()}, ${bn(8000).toString()})`
+        );
+      });
+
+      it('if exceeds max market value with short', async () => {
+        await assertRevert(
+          openPosition({
+            systems,
+            provider,
+            trader: trader2(),
+            accountId: 3,
+            keeper: keeper(),
+            marketId: ethMarket.marketId(),
+            sizeDelta: bn(-10_000),
+            settlementStrategyId: ethMarket.strategyId(),
+            price: bn(8000),
+          }),
+          `MaxUSDOpenInterestReached(${ethMarket.marketId()}, ${bn(40_000_000).toString()}, ${bn(
+            10_000
+          ).toString()}, ${bn(8000).toString()})`
         );
       });
     });

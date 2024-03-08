@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../interfaces/ISynthetixElectionModule.sol";
@@ -27,7 +28,7 @@ contract ElectionModule is
         uint64,
         uint64,
         uint64
-    ) external view override(BaseElectionModule, IElectionModule) {
+    ) external override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
         revert WrongInitializer();
     }
@@ -90,17 +91,17 @@ contract ElectionModule is
     }
 
     function setDebtShareSnapshotId(
-        uint snapshotId
+        uint256 snapshotId
     ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setDebtShareSnapshotId(snapshotId);
     }
 
-    function getDebtShareSnapshotId() external view override returns (uint) {
+    function getDebtShareSnapshotId() external view override returns (uint256) {
         return _getDebtShareSnapshotId();
     }
 
-    function getDebtShare(address user) external view override returns (uint) {
+    function getDebtShare(address user) external view override returns (uint256) {
         return _getDebtShare(user);
     }
 
@@ -110,7 +111,7 @@ contract ElectionModule is
 
     function setCrossChainDebtShareMerkleRoot(
         bytes32 merkleRoot,
-        uint blocknumber
+        uint256 blocknumber
     ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
@@ -126,7 +127,12 @@ contract ElectionModule is
         return _getCrossChainDebtShareMerkleRoot();
     }
 
-    function getCrossChainDebtShareMerkleRootBlockNumber() external view override returns (uint) {
+    function getCrossChainDebtShareMerkleRootBlockNumber()
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _getCrossChainDebtShareMerkleRootBlockNumber();
     }
 
@@ -140,7 +146,7 @@ contract ElectionModule is
         emit CrossChainDebtShareDeclared(user, debtShare);
     }
 
-    function getDeclaredCrossChainDebtShare(address user) external view override returns (uint) {
+    function getDeclaredCrossChainDebtShare(address user) external view override returns (uint256) {
         return _getDeclaredCrossChainDebtShare(user);
     }
 
@@ -149,7 +155,7 @@ contract ElectionModule is
         bytes32[] calldata merkleProof,
         address[] calldata candidates
     ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
+        declareCrossChainDebtShare(ERC2771Context._msgSender(), debtShare, merkleProof);
 
         cast(candidates);
     }
@@ -158,8 +164,8 @@ contract ElectionModule is
     // Internal
     // ---------------------------------------
 
-    function _sqrt(uint x) internal pure returns (uint y) {
-        uint z = (x + 1) / 2;
+    function _sqrt(uint256 x) internal pure returns (uint256 y) {
+        uint256 z = (x + 1) / 2;
         y = x;
         while (z < y) {
             y = z;
@@ -168,8 +174,8 @@ contract ElectionModule is
     }
 
     /// @dev Overrides the user's voting power by combining local chain debt share with debt shares in other chains, quadratically filtered
-    function _getVotePower(address user) internal view virtual override returns (uint) {
-        uint votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
+    function _getVotePower(address user) internal view virtual override returns (uint256) {
+        uint256 votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
 
         return _sqrt(votePower);
     }

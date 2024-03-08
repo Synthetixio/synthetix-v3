@@ -34,8 +34,9 @@ interface ISpotMarketFactoryModule is IMarket {
     /**
      * @notice Gets fired when the synth is registered as a market.
      * @param synthMarketId Id of the synth market that was created
+     * @param synthTokenAddress address of the newly created synth token
      */
-    event SynthRegistered(uint256 indexed synthMarketId);
+    event SynthRegistered(uint256 indexed synthMarketId, address synthTokenAddress);
     /**
      * @notice Gets fired when the synth's implementation is updated on the corresponding proxy.
      * @param proxy the synth proxy servicing the latest implementation
@@ -54,7 +55,8 @@ interface ISpotMarketFactoryModule is IMarket {
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
         bytes32 indexed buyFeedId,
-        bytes32 indexed sellFeedId
+        bytes32 indexed sellFeedId,
+        uint256 strictStalenessTolerance
     );
     /**
      * @notice Gets fired when the market's price feeds are updated, compatible with oracle manager
@@ -136,8 +138,29 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      * @param buyFeedId the oracle manager buy feed node id
      * @param sellFeedId the oracle manager sell feed node id
+     * @param strictPriceStalenessTolerance configurable price staleness tolerance used for transacting
      */
-    function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
+    function updatePriceData(
+        uint128 marketId,
+        bytes32 buyFeedId,
+        bytes32 sellFeedId,
+        uint256 strictPriceStalenessTolerance
+    ) external;
+
+    /**
+     * @notice Gets the price data for a given market.
+     * @dev Only the market owner can call this function.
+     * @param marketId id of the market
+     * @return buyFeedId the oracle manager buy feed node id
+     * @return sellFeedId the oracle manager sell feed node id
+     * @return strictPriceStalenessTolerance configurable price staleness tolerance used for transacting
+     */
+    function getPriceData(
+        uint128 marketId
+    )
+        external
+        view
+        returns (bytes32 buyFeedId, bytes32 sellFeedId, uint256 strictPriceStalenessTolerance);
 
     /**
      * @notice upgrades the synth implementation to the current implementation for the specified market.
@@ -177,8 +200,21 @@ interface ISpotMarketFactoryModule is IMarket {
     function renounceMarketNomination(uint128 synthMarketId) external;
 
     /**
+     * @notice Allows the market owner to renounce his ownership.
+     * @dev Reverts if the caller is not the owner.
+     * @param synthMarketId synth market id value
+     */
+    function renounceMarketOwnership(uint128 synthMarketId) external;
+
+    /**
      * @notice Returns market owner.
      * @param synthMarketId synth market id value
      */
     function getMarketOwner(uint128 synthMarketId) external view returns (address);
+
+    /**
+     * @notice Returns nominated market owner.
+     * @param synthMarketId synth market id value
+     */
+    function getNominatedMarketOwner(uint128 synthMarketId) external view returns (address);
 }

@@ -119,7 +119,7 @@ describe('StalenessCircuitBreakerNode', function () {
       ];
       await assertRevert(
         NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, params, parents),
-        'UnprocessableNode',
+        'NodeNotRegistered',
         NodeModule
       );
     });

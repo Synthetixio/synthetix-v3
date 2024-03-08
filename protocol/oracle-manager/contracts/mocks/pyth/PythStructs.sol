@@ -8,7 +8,7 @@ contract PythStructs {
     // Both the price and confidence are stored in a fixed-point numeric representation,
     // `x * (10^expo)`, where `expo` is the exponent.
     //
-    // Please refer to the documentation at https://docs.pyth.network/consumers/best-practices for how
+    // Please refer to the documentation at https://docs.pyth.network/documentation/pythnet-price-feeds/best-practices for how
     // to how this price safely.
     struct Price {
         // Price
@@ -18,7 +18,7 @@ contract PythStructs {
         // Price exponent
         int32 expo;
         // Unix timestamp describing when the price was published
-        uint publishTime;
+        uint256 publishTime;
     }
 
     // PriceFeed represents a current aggregate price from pyth publisher feeds.

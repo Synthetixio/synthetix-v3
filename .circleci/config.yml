@@ -1,0 +1,922 @@
+version: 2.1
+
+parameters:
+  node-version:
+    type: string
+    default: "18.18.0"
+
+commands:
+  yarn-install:
+    steps:
+      - run: yarn install --immutable --immutable-cache
+
+  install-foundry:
+    steps:
+      - restore_cache:
+          keys:
+            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+
+      - run:
+          name: "Install Foundry"
+          working_directory: ~/
+          environment:
+            SHELL: /bin/bash
+          command: |-
+            export PATH="$PATH:$HOME/.foundry/bin"
+            echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+
+            if command -v anvil; then
+              echo "Anvil already installed"
+              anvil --version
+            else
+              curl -L https://foundry.paradigm.xyz | bash
+              foundryup
+            fi
+
+      - save_cache:
+          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          paths:
+            - "~/.foundry"
+
+  install-ipfs:
+    steps:
+      - restore_cache:
+          keys:
+            - ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+
+      - run:
+          name: "Install IPFS"
+          working_directory: ~/
+          command: |
+            export PATH="$PATH:$HOME/go-ipfs"
+            echo 'export PATH=$PATH:$HOME/go-ipfs' >> $BASH_ENV
+
+            if command -v ipfs; then
+              echo "IPFS already installed"
+              ipfs version
+              ipfs id
+            else
+              LATEST_VERSION=$(curl -sSL https://dist.ipfs.tech/go-ipfs/versions | tail -n 1)
+              LATEST_VERSION_NUMBER=${LATEST_VERSION#*v}
+              DOWNLOAD_URL="https://dist.ipfs.tech/go-ipfs/${LATEST_VERSION}/go-ipfs_${LATEST_VERSION}_linux-amd64.tar.gz"
+              echo "DOWNLOAD_URL=$DOWNLOAD_URL"
+              curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
+              tar -xzf ipfs.tar.gz
+              rm -rf ~/.ipfs
+              ipfs init
+            fi
+
+      - save_cache:
+          key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+          paths:
+            - "~/go-ipfs"
+            - "~/.ipfs"
+
+  run-ipfs-daemon:
+    steps:
+      - run:
+          command: ipfs daemon
+          background: true
+
+  wait-for-ipfs:
+    steps:
+      - run:
+          name: "Wait for IPFS daemon to start"
+          command: wget --output-document - --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
+
+  github-pr:
+    parameters:
+      working_directory:
+        type: string
+      repo_slug:
+        type: string
+      branch_head:
+        type: string
+      branch_base:
+        type: string
+      commit_message:
+        type: string
+    steps:
+      - run:
+          working_directory: << parameters.working_directory >>
+          name: "Push to '<< parameters.branch_head >>' branch in '<< parameters.repo_slug >>' and open a PR"
+          command: |
+            STATUS=$(git status)
+            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
+              echo "SKIP. Working tree is clean. No changes"
+              exit 0
+            fi
+
+            git branch "<< parameters.branch_head >>"
+            git checkout "<< parameters.branch_head >>"
+
+            git config --global user.email engineering@snxdao.io
+            git config --global user.name synthetix-team
+
+            git add .
+            git commit -m "<< parameters.commit_message >>"
+            git push --set-upstream --force origin "<< parameters.branch_head >>"
+
+            curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              https://api.github.com/repos/<< parameters.repo_slug >>/pulls?state=open | tee /tmp/opened-pulls.txt
+
+            PR_URL=$(cat /tmp/opened-pulls.txt | jq -r '.[] | select(.head.ref=="<< parameters.branch_head >>") | .html_url')
+            echo "Existing PR: $PR_URL"
+
+            # If no PR exists with the branch "<< parameters.branch_head >>", create one
+            # If PR already exists it would be updated with the most recent docs via forced push
+            if [ -z "$PR_URL" ]; then
+              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                https://api.github.com/repos/<< parameters.repo_slug >>/pulls \
+                -d '{
+                  "title": "<< parameters.commit_message >>",
+                  "head": "<< parameters.branch_head >>",
+                  "base": "<< parameters.branch_base >>"
+                }'
+            else
+              echo "Pull Request already exists: $PR_URL"
+            fi
+jobs:
+  build-testable:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+    steps:
+      - checkout
+      - install-foundry
+      #- install-ipfs
+      #- run-ipfs-daemon
+      - yarn-install
+      #- wait-for-ipfs
+
+      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - restore_cache:
+          keys:
+            - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
+            - testable-hardhat-cache-
+
+      - restore_cache:
+          keys:
+            - generated-testable-{{ .Environment.CIRCLE_SHA1 }}
+            - generated-testable-
+
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
+            - cannon-
+
+      - run:
+          name: "Generate testable contracts sources"
+          command: yarn workspaces foreach --all --topological-dev --verbose run generate-testable
+      - save_cache:
+          key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - "protocol/synthetix/contracts/generated"
+            # Add more folders here if we generate more
+
+      - run:
+          name: "Build testable contracts"
+          environment:
+            CANNON_REGISTRY_PRIORITY: "local"
+          command: yarn workspaces foreach --all --topological-dev --verbose run build-testable
+
+      - save_cache:
+          key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - "protocol/synthetix/artifacts"
+            - "protocol/synthetix/cache"
+            - "protocol/synthetix/typechain-types"
+            - "protocol/oracle-manager/artifacts"
+            - "protocol/oracle-manager/cache"
+            - "protocol/oracle-manager/typechain-types"
+
+            - "markets/perps-market/artifacts"
+            - "markets/perps-market/cache"
+            - "markets/perps-market/typechain-types"
+            - "markets/spot-market/artifacts"
+            - "markets/spot-market/cache"
+            - "markets/spot-market/typechain-types"
+            - "markets/legacy-market/artifacts"
+            - "markets/legacy-market/cache"
+            - "markets/legacy-market/typechain-types"
+            - "markets/bfp-market/artifacts"
+            - "markets/bfp-market/cache"
+            - "markets/bfp-market/typechain-types"
+
+            - "auxiliary/ArbitrumGasPriceOracle/artifacts"
+            - "auxiliary/ArbitrumGasPriceOracle/cache"
+            - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
+            - "auxiliary/BuybackSnx/artifacts"
+            - "auxiliary/BuybackSnx/cache"
+            - "auxiliary/BuybackSnx/typechain-types"
+            - "auxiliary/OpGasPriceOracle/artifacts"
+            - "auxiliary/OpGasPriceOracle/cache"
+            - "auxiliary/OpGasPriceOracle/typechain-types"
+            - "auxiliary/PythERC7412Wrapper/artifacts"
+            - "auxiliary/PythERC7412Wrapper/cache"
+            - "auxiliary/PythERC7412Wrapper/typechain-types"
+            - "auxiliary/SpotMarketOracle/artifacts"
+            - "auxiliary/SpotMarketOracle/cache"
+            - "auxiliary/SpotMarketOracle/typechain-types"
+            - "auxiliary/TrustedMulticallForwarder/artifacts"
+            - "auxiliary/TrustedMulticallForwarder/cache"
+            - "auxiliary/TrustedMulticallForwarder/typechain-types"
+
+      - run: yarn workspaces foreach --all --verbose run check:storage
+
+      - save_cache:
+          key: cannon-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - "~/.local/share/cannon"
+      - save_cache:
+          key: hardhat-{{ .Environment.SOLC_VERSION }}
+          paths:
+            - "~/.cache/hardhat-nodejs"
+
+  test-contracts:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    parallelism: << parameters.parallelism >>
+    environment:
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+    steps:
+      - checkout
+      - install-foundry
+      #- install-ipfs
+      #- run-ipfs-daemon
+      - yarn-install
+      #- wait-for-ipfs
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - generated-testable-{{ .Environment.CIRCLE_SHA1 }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "TEST_FILES:"
+            echo $TEST_FILES
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-utils:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "TEST_FILES:"
+            echo $TEST_FILES
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-modules:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+    steps:
+      - checkout
+      - install-foundry
+      #- install-ipfs
+      #- run-ipfs-daemon
+      - yarn-install
+      #- wait-for-ipfs
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "TEST_FILES:"
+            echo $TEST_FILES
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-contracts:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run: yarn workspace "<< parameters.workspace >>" run compile-contracts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "TEST_FILES:"
+            echo $TEST_FILES
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-subgraph:
+    parameters:
+      workspace:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+      - run: yarn workspace "<< parameters.workspace >>" test
+
+  size-contracts:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach --all --verbose run size-contracts
+
+  lint:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run: yarn dedupe --check
+      - run: yarn deps
+      - run: yarn deps:mismatched
+      - run: yarn deps:circular
+      - run: yarn lint
+
+  check-packages:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - run: yarn install --immutable --immutable-cache --check-cache
+
+  simulate-release:
+    parameters:
+      workspace:
+        type: string
+      cannonPackage:
+        type: string
+      cannonPreset:
+        type: string
+      hardhatNetwork:
+        type: string
+      impersonate:
+        type: string
+      proxy:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+    steps:
+      - checkout
+      - install-foundry
+      #- install-ipfs
+      #- run-ipfs-daemon
+      - yarn-install
+      #- wait-for-ipfs
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - run:
+          name: "Simulate release and test for Proxy change"
+          command: |
+            set -eo pipefail
+            yarn workspace "<< parameters.workspace >>" exec \
+              hardhat cannon:build \
+                --preset << parameters.cannonPreset >> \
+                --dry-run \
+                --network "<< parameters.hardhatNetwork >>" \
+                --upgrade-from << parameters.cannonPackage >>@<< parameters.cannonPreset >> \
+                --impersonate << parameters.impersonate >> | tee deployment.log
+
+            echo "grep '💥' deployment.log"
+            grep '💥' deployment.log
+
+            echo "grep -c 'Executing [<< parameters.proxy >>]' deployment.log"
+            if [ $(grep -c 'Executing [<< parameters.proxy >>]' deployment.log) -gt 0 ]; then
+              echo "Proxy << parameters.proxy >> was modified"
+              exit 1
+            fi
+
+  docgen-contracts:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      GIT_PAGER: cat
+    working_directory: ~/synthetix-v3
+    steps:
+      - add_ssh_keys:
+          fingerprints: "4b:3a:c8:23:b8:4e:86:32:8e:d3:2d:17:0c:2b:63:b6"
+      - run:
+          working_directory: ~/
+          name: "Checkout docs"
+          command: |
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
+
+      - checkout
+      - install-foundry
+      #- install-ipfs
+      #- run-ipfs-daemon
+      - yarn-install
+      #- wait-for-ipfs
+
+      - run:
+          name: "Build TS"
+          command: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+      - run:
+          name: "Generate docs for each contract"
+          command: yarn workspaces foreach --all --verbose run docgen
+      - save_cache:
+          key: hardhat-{{ .Environment.SOLC_VERSION }}
+          paths:
+            - "~/.cache/hardhat-nodejs"
+
+      - run:
+          name: "Generate combined smart-contracts.md"
+          working_directory: ~/synthetix-v3/utils/docgen
+          command: |
+            ./docgen-contracts.sh
+            cp ~/synthetix-v3/docs/smart-contracts.md ~/synthetix-gitbook-v3/for-developers/smart-contracts.md
+
+      - store_artifacts:
+          path: "docs"
+          destination: "."
+
+      - github-pr:
+          working_directory: "~/synthetix-gitbook-v3"
+          repo_slug: "Synthetixio/Synthetix-Gitbook-v3"
+          branch_head: smart-contracts
+          branch_base: en
+          commit_message: "Update Smart Contracts"
+
+  update-subgraphs:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      GIT_PAGER: cat
+    working_directory: ~/synthetix-v3
+    steps:
+      - run:
+          working_directory: ~/
+          name: "Checkout synthetix-v3"
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/synthetix-v3.git --verbose --no-tags synthetix-v3
+            cd synthetix-v3
+            git checkout $CIRCLE_SHA1
+
+      - install-foundry
+      #- install-ipfs
+      #- run-ipfs-daemon
+      - yarn-install
+      #- wait-for-ipfs
+
+      - run:
+          name: "Generate updated subgraph code"
+          command: |
+            export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            yarn subgraphgen
+
+      - run: yarn workspace @synthetixio/core-subgraph test
+      - run: yarn workspace @synthetixio/spot-market-subgraph test
+      - run: yarn workspace @synthetixio/perps-market-subgraph test
+
+      - github-pr:
+          working_directory: "~/synthetix-v3"
+          repo_slug: "Synthetixio/synthetix-v3"
+          branch_head: subgraph-updates
+          branch_base: main
+          commit_message: "Update Subgraphs"
+
+workflows:
+  version: 2.1
+
+  bfp:
+    when:
+      or:
+        - equal: ["bfp", << pipeline.git.branch >>]
+    jobs:
+      - lint
+      - build-testable
+      - test-contracts:
+          name: "test-bfp-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/bfp-market"
+          parallelism: 8
+
+  tests:
+    unless:
+      or:
+        - equal: ["bfp", << pipeline.git.branch >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+
+    jobs:
+      - lint
+      - size-contracts
+      - check-packages
+
+      - build-testable
+
+      - test-contracts:
+          name: "test-main"
+          requires: [build-testable]
+          workspace: "@synthetixio/main"
+          parallelism: 2
+
+      - test-contracts:
+          name: "test-oracle-manager"
+          requires: [build-testable]
+          workspace: "@synthetixio/oracle-manager"
+          parallelism: 1
+
+      #- test-contracts: TODO: enable when we have some tests
+      #    name: "test-governance"
+      #    requires: [build-testable]
+      #    workspace: "@synthetixio/governance"
+
+      - test-contracts:
+          name: "test-spot-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/spot-market"
+          parallelism: 2
+
+      - test-contracts:
+          name: "test-perps-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/perps-market"
+          parallelism: 8
+
+      - test-contracts:
+          name: "test-bfp-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/bfp-market"
+          parallelism: 8
+
+      #- test-contracts: TODO: enable when tests are fixed
+      #    name: "test-legacy-market"
+      #    requires: [build-testable]
+      #    workspace: "@synthetixio/legacy-market"
+
+      - test-core-utils:
+          workspace: "@synthetixio/core-utils"
+          parallelism: 2
+
+      - test-core-modules:
+          workspace: "@synthetixio/core-modules"
+          parallelism: 1
+
+      - test-core-contracts:
+          workspace: "@synthetixio/core-contracts"
+          parallelism: 2
+
+      - test-subgraph:
+          name: "test-subgraph-core"
+          workspace: "@synthetixio/core-subgraph"
+
+      - test-subgraph:
+          name: "test-subgraph-spot-market"
+          workspace: "@synthetixio/spot-market-subgraph"
+
+      - test-subgraph:
+          name: "test-subgraph-perps-market"
+          workspace: "@synthetixio/perps-market-subgraph"
+
+      - simulate-release:
+          name: "synthetix--base-mainnet-andromeda"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--base-sepolia-andromeda"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--optimism-mainnet"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--mainnet"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--goerli"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "oracle-manager--base-mainnet-andromeda"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--base-sepolia-andromeda"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--optimism-mainnet"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--optimism-goerli"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--mainnet"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--goerli"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "spot-market--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/spot-market"
+      #    cannonPackage: "synthetix-spot-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialSpotMarketProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "spot-market--base-sepolia-andromeda"
+      #    workspace: "@synthetixio/spot-market"
+      #    cannonPackage: "synthetix-spot-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-sepolia"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialSpotMarketProxy"
+
+      - simulate-release:
+          name: "spot-market--optimism-mainnet"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
+
+      - simulate-release:
+          name: "spot-market--optimism-goerli"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "perps-market--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+
+      # TODO: Uncomment when hardhat-cannon supports --preset
+      #- simulate-release:
+      #    name: "perps-market--base-sepolia-andromeda"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-sepolia"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+
+      # TODO: Uncomment when deployed
+      #- simulate-release:
+      #    name: "perps-market--optimism-mainnet"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "main"
+      #    hardhatNetwork: "optimistic-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "perps-market--optimism-goerli"
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-goerli"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      #- simulate-release: TODO: enable after deployed
+      #    name: "simulate-release-governance"
+      #    workspace: "@synthetixio/governance"
+      #    cannonPackage: "governance"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after v2x is updated
+      #    name: "simulate-release-legacy-market"
+      #    workspace: "@synthetixio/legacy-market"
+      #    cannonPackage: "synthetix-legacy-market"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+  update-subgraphs:
+    when:
+      or:
+        - and:
+            - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+            - equal: ["Check deploys", << pipeline.schedule.name >>]
+        - equal: ["update-subgraphs", << pipeline.git.branch >>]
+    jobs:
+      - update-subgraphs
+
+  docgen-contracts:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
+      - docgen-contracts:
+          name: "docgen-contracts"
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+
+  dev-docgen-contracts:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
+      - docgen-contracts:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /docgen-contracts/
