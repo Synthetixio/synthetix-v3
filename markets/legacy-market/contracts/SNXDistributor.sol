@@ -10,6 +10,8 @@ import "./interfaces/ISNXDistributor.sol";
 
 import "./interfaces/ILegacyMarket.sol";
 
+// solhint-disable meta-transactions/no-msg-sender
+
 contract SNXDistributor is IRewardDistributor, ISNXDistributor {
     ILegacyMarket public legacyMarket;
 
