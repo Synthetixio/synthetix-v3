@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerBaseUint128, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerBaseUint128, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256, InteractionsQuantoUint256, InteractionsQuantoInt256, InteractionsBaseQuantoPerUSDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -28,6 +28,9 @@ library AsyncOrder {
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
     using KeeperCosts for KeeperCosts.Data;
+    using InteractionsQuantoUint256 for QuantoUint256;
+    using InteractionsQuantoInt256 for QuantoInt256;
+    using InteractionsBaseQuantoPerUSDInt256 for BaseQuantoPerUSDInt256;
 
     /**
      * @notice Thrown when settlement window is not open yet.

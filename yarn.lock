@@ -3190,7 +3190,7 @@ __metadata:
     "@usecannon/cli": "npm:2.11.18"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    quanto-dimensions: "npm:^1.0.6"
+    quanto-dimensions: "npm:^1.0.8"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
@@ -13654,10 +13654,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quanto-dimensions@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "quanto-dimensions@npm:1.0.6"
-  checksum: 10/47cbca7a88f807b649dec082257d2852e8a04259381fd928c5e54dc7c3d221dfd4e280a5d31992768b9759ef665b51364b6e1da6db05e0aff3420e0ed884bb8c
+"quanto-dimensions@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "quanto-dimensions@npm:1.0.8"
+  checksum: 10/36cb41ce8d4db0d55e3761c9027edbd34105c1d8e594c06978070a1e43f61f06e43ffa1dbb844d269f37bb2c1bc443a467d35503142aac6d0ee68781ca019a7f
   languageName: node
   linkType: hard
 

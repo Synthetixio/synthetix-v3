@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256, InteractionsQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -41,6 +41,7 @@ library PerpsAccount {
     using DecimalMath for uint256;
     using KeeperCosts for KeeperCosts.Data;
     using AsyncOrder for AsyncOrder.Data;
+    using InteractionsQuantoUint256 for QuantoUint256;
 
     struct Data {
         // @dev synth marketId => amount

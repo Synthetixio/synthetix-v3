@@ -6,12 +6,13 @@ import {SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {OrderFee} from "./OrderFee.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {BaseQuantoPerUSDUint256, BaseQuantoPerUSDInt128, USDPerBaseUint256, BaseQuantoPerUSDUint128, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDUint256, BaseQuantoPerUSDInt128, USDPerBaseUint256, BaseQuantoPerUSDUint128, QuantoUint256, InteractionsBaseQuantoPerUSDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 library PerpsMarketConfiguration {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
+    using InteractionsBaseQuantoPerUSDUint256 for BaseQuantoPerUSDUint256;
 
     error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int256 newSideSize);
 
