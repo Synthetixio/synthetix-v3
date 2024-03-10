@@ -2504,7 +2504,7 @@ describe('MarginModule', async () => {
     });
   });
 
-  describe('getNetAssetValueWithPrice', () => {
+  describe('getNetAssetValue', () => {
     it('should eq marginUsd from getMarginDigest', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
@@ -2518,11 +2518,29 @@ describe('MarginModule', async () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       const { marginUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
-      const netAssetValue = await PerpMarketProxy.getNetAssetValueWithPrice(
+      const netAssetValue = await PerpMarketProxy.getNetAssetValue(
         trader.accountId,
         marketId,
         order.oraclePrice
       );
+
+      assertBn.equal(netAssetValue, marginUsd);
+    });
+
+    it('should use default oracle price if no price was specified', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1.1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const { marginUsd } = await PerpMarketProxy.getMarginDigest(trader.accountId, marketId);
+      const netAssetValue = await PerpMarketProxy.getNetAssetValue(trader.accountId, marketId, 0);
 
       assertBn.equal(netAssetValue, marginUsd);
     });

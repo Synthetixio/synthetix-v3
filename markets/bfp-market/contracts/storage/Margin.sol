@@ -230,7 +230,32 @@ library Margin {
         PerpMarket.Data storage market,
         uint256 price
     ) internal view returns (uint256) {
-        (uint256 collateralUsd, ) = getCollateralUsd(accountId, market.id);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 available;
+        uint256 collateralPrice;
+        uint256 collateralUsd;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
+
+            if (available > 0) {
+                collateralPrice = getCollateralPrice(
+                    globalMarginConfig,
+                    synthMarketId,
+                    globalConfig
+                );
+                collateralUsd += available.mulDecimal(collateralPrice);
+            }
+            unchecked {
+                ++i;
+            }
+        }
         return
             MathUtil
                 .max(collateralUsd.toInt() + getPnlAdjustmentUsd(accountId, market, price), 0)
