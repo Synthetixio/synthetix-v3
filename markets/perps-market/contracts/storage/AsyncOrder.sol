@@ -80,7 +80,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
      */
-    error InsufficientMargin(USDInt256 availableMargin, uint256 minMargin);
+    error InsufficientMargin(USDInt256 availableMargin, USDUint256 minMargin);
 
     struct Data {
         /**
@@ -342,7 +342,7 @@ library AsyncOrder {
         ));
 
         if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees.unwrap());
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
         PerpsMarket.validatePositionSize(
@@ -367,7 +367,7 @@ library AsyncOrder {
             runtime.orderFees;
 
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin.unwrap());
+            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
 
         runtime.newPosition = Position.Data({
