@@ -18,7 +18,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "synthetix:2.94.1"
 
 [setting.v3_package]
-defaultValue = "synthetix:<%= package.version %>"
+defaultValue = "synthetix"
 
 [setting.oracle_package]
 defaultValue = "chainlink-mock-v3-aggregator:1.0"
