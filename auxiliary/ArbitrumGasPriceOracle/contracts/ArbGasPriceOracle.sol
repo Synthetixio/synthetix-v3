@@ -26,7 +26,7 @@ contract ArbGasPriceOracle is IExternalNode {
     /**
      * @notice the ArbGasInfo precompile contract on Arbitrum
      */
-    ArbGasInfo public immutable precompile;
+    ArbGasInfo public immutable PRECOMPILE;
 
     /**
      * @notice runtime parameters for the cost of resources consumed
@@ -57,7 +57,7 @@ contract ArbGasPriceOracle is IExternalNode {
      * @param _arbGasInfoPrecompileAddress the address of the ArbGasInfo precompile
      */
     constructor(address _arbGasInfoPrecompileAddress) {
-        precompile = ArbGasInfo(_arbGasInfoPrecompileAddress);
+        PRECOMPILE = ArbGasInfo(_arbGasInfoPrecompileAddress);
     }
 
     /**
@@ -130,10 +130,14 @@ contract ArbGasPriceOracle is IExternalNode {
         );
 
         // verify the oracle can be properly called
-        try precompile.getPricesInWei() {} catch {
+        try PRECOMPILE.getPricesInWei() {
+            // do nothing
+        } catch {
             return false;
         }
-        try precompile.getL1BaseFeeEstimate() {} catch {
+        try PRECOMPILE.getL1BaseFeeEstimate() {
+            // do nothing
+        } catch {
             return false;
         }
 
@@ -166,14 +170,14 @@ contract ArbGasPriceOracle is IExternalNode {
     ) internal view returns (uint256 costOfExecutionGrossEth) {
         // fetch & define L2 gas price
         /// @dev perArbGasTotal is the best estimate of the L2 gas price "base fee" in wei
-        (, , , , , uint256 perArbGasTotal) = precompile.getPricesInWei();
+        (, , , , , uint256 perArbGasTotal) = PRECOMPILE.getPricesInWei();
 
         // fetch & define L1 gas base fee; incorporate overhead buffer
         /// @dev if the estimate is too low or high at the time of the L1 batch submission,
         /// the transaction will still be processed, but the arbitrum nitro mechanism will
         /// amortize the deficit/surplus over subsequent users of the chain
         /// (i.e. lowering/raising the L1 base fee for a period of time)
-        uint256 l1BaseFee = precompile.getL1BaseFeeEstimate();
+        uint256 l1BaseFee = PRECOMPILE.getL1BaseFeeEstimate();
 
         // fetch & define gas units consumed on L1 and L2 for the given execution kind
         (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
