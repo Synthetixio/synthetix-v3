@@ -767,15 +767,6 @@ workflows:
           proxy: "contract.InitialProxy"
 
       - simulate-release:
-          name: "oracle-manager--optimism-goerli"
-          workspace: "@synthetixio/oracle-manager"
-          cannonPackage: "oracle-manager:latest"
-          cannonPreset: "main"
-          hardhatNetwork: "optimistic-goerli"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
-
-      - simulate-release:
           name: "oracle-manager--mainnet"
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
@@ -822,15 +813,6 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialSpotMarketProxy"
 
-      - simulate-release:
-          name: "spot-market--optimism-goerli"
-          workspace: "@synthetixio/spot-market"
-          cannonPackage: "synthetix-spot-market:latest"
-          cannonPreset: "main"
-          hardhatNetwork: "optimistic-goerli"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialSpotMarketProxy"
-
       # TODO: Uncomment when hardhat-cannon supports --preset
       #- simulate-release:
       #    name: "perps-market--base-mainnet-andromeda"
@@ -860,15 +842,6 @@ workflows:
       #    hardhatNetwork: "optimistic-mainnet"
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
       #    proxy: "contract.InitialProxy"
-
-      - simulate-release:
-          name: "perps-market--optimism-goerli"
-          workspace: "@synthetixio/perps-market"
-          cannonPackage: "synthetix-perps-market:latest"
-          cannonPreset: "main"
-          hardhatNetwork: "optimistic-goerli"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
 
       #- simulate-release: TODO: enable after deployed
       #    name: "simulate-release-governance"
