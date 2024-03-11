@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerBaseUint128, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256, InteractionsQuantoUint256, InteractionsQuantoInt256, InteractionsBaseQuantoPerUSDInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerBaseUint128, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256, InteractionsQuantoUint256, InteractionsQuantoInt256, InteractionsBaseQuantoPerUSDInt256, InteractionsUSDPerBaseUint256, InteractionsBaseQuantoPerUSDInt128, InteractionsUSDUint256, InteractionsUSDPerQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -30,7 +30,11 @@ library AsyncOrder {
     using KeeperCosts for KeeperCosts.Data;
     using InteractionsQuantoUint256 for QuantoUint256;
     using InteractionsQuantoInt256 for QuantoInt256;
+    using InteractionsUSDPerBaseUint256 for USDPerBaseUint256;
+    using InteractionsBaseQuantoPerUSDInt128 for BaseQuantoPerUSDInt128;
     using InteractionsBaseQuantoPerUSDInt256 for BaseQuantoPerUSDInt256;
+    using InteractionsUSDPerQuantoUint256 for USDPerQuantoUint256;
+    using InteractionsUSDUint256 for USDUint256;
 
     /**
      * @notice Thrown when settlement window is not open yet.
@@ -329,7 +333,7 @@ library AsyncOrder {
             runtime.fillPrice,
             orderPrice,
             runtime.newPositionSize
-        ).mulDecimalToUSD(USDPerQuantoInt256.wrap(runtime.quantoPrice.unwrap().toInt()));
+        ).mulDecimalToUSD(runtime.quantoPrice.toInt());
 
         // only account for negative pnl
         runtime.currentAvailableMargin = runtime.currentAvailableMargin + USDInt256.wrap(MathUtil.min(
@@ -337,7 +341,7 @@ library AsyncOrder {
             0
         ));
 
-        if (runtime.currentAvailableMargin.unwrap() < runtime.orderFees.unwrap().toInt()) {
+        if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees.unwrap());
         }
 
@@ -362,13 +366,13 @@ library AsyncOrder {
             ) +
             runtime.orderFees;
 
-        if (runtime.currentAvailableMargin.unwrap() < runtime.totalRequiredMargin.unwrap().toInt()) {
+        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin.unwrap());
         }
 
         runtime.newPosition = Position.Data({
             marketId: runtime.marketId,
-            latestInteractionPrice: USDPerBaseUint128.wrap(runtime.fillPrice.unwrap().to128()),
+            latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             latestInterestAccrued: 0,
             size: runtime.newPositionSize
@@ -430,7 +434,7 @@ library AsyncOrder {
         BaseQuantoPerUSDInt256 marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (QuantoUint256) {
-        QuantoInt256 notionalDiff = BaseQuantoPerUSDInt256.wrap(sizeDelta.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(fillPrice.unwrap().toInt()));
+        QuantoInt256 notionalDiff = sizeDelta.to256().mulDecimalToQuanto(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew.unwrap() + sizeDelta.unwrap(), marketSkew.unwrap())) {
@@ -538,7 +542,7 @@ library AsyncOrder {
         USDPerBaseUint256 marketPrice,
         BaseQuantoPerUSDInt128 size
     ) internal pure returns (QuantoInt256) {
-        return BaseQuantoPerUSDInt256.wrap(size.unwrap().to256()).mulDecimalToQuanto(USDPerBaseInt256.wrap(marketPrice.unwrap().toInt() - fillPrice.unwrap().toInt()));
+        return size.to256().mulDecimalToQuanto(marketPrice.toInt() - fillPrice.toInt());
     }
 
     /**
