@@ -550,14 +550,19 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getNetAssetValueWithPrice(
+    function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
         uint256 price
     ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.getNetAssetValue(accountId, market, price);
+        return
+            Margin.getNetAssetValue(
+                accountId,
+                market,
+                price == 0 ? market.getOraclePrice() : price
+            );
     }
 
     /**

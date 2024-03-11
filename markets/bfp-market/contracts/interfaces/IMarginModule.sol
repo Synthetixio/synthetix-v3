@@ -111,9 +111,9 @@ interface IMarginModule is IBasePerpMarket {
     ) external view returns (Margin.MarginValues memory);
 
     /**
-     * @notice Returns the NAV of `account` and `marketId` given a `price`.
+     * @notice Returns the NAV of `account` and `marketId` given an optional `price`.
      */
-    function getNetAssetValueWithPrice(
+    function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
         uint256 price

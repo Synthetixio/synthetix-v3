@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.21<0.9.0;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
 library DecimalMath {
@@ -106,4 +106,21 @@ library TickMath {
     int24 internal constant MAX_TICK = -MIN_TICK;
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
+}
+
+// @custom:artifact contracts/ArbGasPriceOracle.sol:ArbGasPriceOracle
+contract ArbGasPriceOracle {
+    uint256 public constant KIND_SETTLEMENT = 0;
+    uint256 public constant KIND_FLAG = 1;
+    uint256 public constant KIND_LIQUIDATE = 2;
+    struct RuntimeParams {
+        uint256 l1SettleGasUnits;
+        uint256 l2SettleGasUnits;
+        uint256 l1FlagGasUnits;
+        uint256 l2FlagGasUnits;
+        uint256 l1LiquidateGasUnits;
+        uint256 l2LiquidateGasUnits;
+        uint256 numberOfUpdatedFeeds;
+        uint256 executionKind;
+    }
 }
