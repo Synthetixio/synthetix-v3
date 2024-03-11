@@ -14,13 +14,13 @@ library PerpsMarketConfiguration {
     using SafeCastI128 for int128;
     using InteractionsBaseQuantoPerUSDUint256 for BaseQuantoPerUSDUint256;
 
-    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int256 newSideSize);
+    error MaxOpenInterestReached(uint128 marketId, BaseQuantoPerUSDUint256 maxMarketSize, int256 newSideSize);
 
     error MaxUSDOpenInterestReached(
         uint128 marketId,
-        uint256 maxMarketValue,
+        QuantoUint256 maxMarketValue,
         int256 newSideSize,
-        uint256 price
+        USDPerBaseUint256 price
     );
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
@@ -28,7 +28,7 @@ library PerpsMarketConfiguration {
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketSize; // oi cap in units of asset
+        BaseQuantoPerUSDUint256 maxMarketSize; // oi cap in base*quanto/usd
         uint256 maxFundingVelocity;
         uint256 skewScale;
         /**
@@ -77,10 +77,10 @@ library PerpsMarketConfiguration {
          */
         address endorsedLiquidator;
         /**
-         * @dev OI cap in USD denominated.
+         * @dev OI cap in quanto denominated.
          * @dev If set to zero then there is no cap with value, just units
          */
-        uint256 maxMarketValue;
+        QuantoUint256 maxMarketValue;
         /**
          * @dev The Synth Market Id for the quanto asset for this market
          */

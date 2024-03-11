@@ -349,9 +349,9 @@ library AsyncOrder {
             perpsMarketData,
             marketConfig.maxMarketSize,
             marketConfig.maxMarketValue,
-            orderPrice.unwrap(),
-            oldPosition.size.unwrap(),
-            runtime.newPositionSize.unwrap()
+            orderPrice,
+            oldPosition.size,
+            runtime.newPositionSize
         );
 
         runtime.totalRequiredMargin =
