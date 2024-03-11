@@ -23,7 +23,7 @@ options.salt = "usd"
 defaultValue = "60"
 
 [provision.oracle_manager]
-source = "oracle-manager:3.3.3-dev.249e185f"
+source = "oracle-manager"
 
 # Latest Price
 [invoke.registerConstantNode]
