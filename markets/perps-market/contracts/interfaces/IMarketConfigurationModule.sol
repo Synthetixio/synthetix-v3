@@ -104,21 +104,21 @@ interface IMarketConfigurationModule {
 
     /**
      * @notice Gets fired when max market value is updated.
-     * @param marketId udpates funding parameters to this specific market.
-     * @param maxMarketSize the max market size in units.
+     * @param marketId updates funding parameters to this specific market.
+     * @param maxMarketSize the max market size in quanto units.
      */
     event MaxMarketSizeSet(uint128 indexed marketId, BaseQuantoPerUSDUint256 maxMarketSize);
 
     /**
      * @notice Gets fired when max market value is updated.
-     * @param marketId udpates funding parameters to this specific market.
-     * @param maxMarketValue the max market value in USD.
+     * @param marketId updates funding parameters to this specific market.
+     * @param maxMarketValue the max market value in quanto units.
      */
     event MaxMarketValueSet(uint128 indexed marketId, QuantoUint256 maxMarketValue);
 
     /**
      * @notice Gets fired when locked oi ratio is updated.
-     * @param marketId udpates funding parameters to this specific market.
+     * @param marketId updates funding parameters to this specific market.
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
     event LockedOiRatioSet(uint128 indexed marketId, uint256 lockedOiRatioD18);
@@ -232,14 +232,14 @@ interface IMarketConfigurationModule {
      * @notice Set the max size of an specific market with this function.
      * @dev This controls the maximum open interest a market can have on either side (Long | Short). So the total Open Interest (with zero skew) for a market can be up to max market size * 2.
      * @param marketId id of the market to set the max market value.
-     * @param maxMarketSize the max market size in market asset units.
+     * @param maxMarketSize the max market size in base*quanto/usd.
      */
     function setMaxMarketSize(uint128 marketId, BaseQuantoPerUSDUint256 maxMarketSize) external;
 
     /**
      * @notice Set the max value in USD of an specific market with this function.
      * @param marketId id of the market to set the max market value.
-     * @param maxMarketValue the max market size in market USD value.
+     * @param maxMarketValue the max market size in market quanto value.
      */
     function setMaxMarketValue(uint128 marketId, QuantoUint256 maxMarketValue) external;
 
@@ -335,7 +335,7 @@ interface IMarketConfigurationModule {
     /**
      * @notice Gets the max size (in value) of an specific market.
      * @param marketId id of the market.
-     * @return maxMarketValue the max market size in market USD value.
+     * @return maxMarketValue the max market size in market quanto units.
      */
     function getMaxMarketValue(uint128 marketId) external view returns (QuantoUint256 maxMarketValue);
 

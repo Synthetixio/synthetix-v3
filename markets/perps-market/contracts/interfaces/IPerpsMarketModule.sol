@@ -14,7 +14,7 @@ interface IPerpsMarketModule {
         int256 skew;
         // @dev Size of the market in units of native asset
         uint256 size;
-        // @dev Max open interest of the market in units of native asset
+        // @dev Max open interest of the market in units of quanto*base/usd
         BaseQuantoPerUSDUint256 maxOpenInterest;
         // @dev Current funding rate of the market
         int256 currentFundingRate;
