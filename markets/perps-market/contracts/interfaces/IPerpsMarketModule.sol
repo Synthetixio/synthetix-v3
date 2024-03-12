@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDUint256, USDPerBaseUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Perps market module
@@ -14,8 +14,8 @@ interface IPerpsMarketModule {
         int256 skew;
         // @dev Size of the market in units of native asset
         uint256 size;
-        // @dev Max open interest of the market in units of native asset
-        uint256 maxOpenInterest;
+        // @dev Max open interest of the market in units of quanto*base/usd
+        BaseQuantoPerUSDUint256 maxOpenInterest;
         // @dev Current funding rate of the market
         int256 currentFundingRate;
         // @dev Current funding velocity of the market
@@ -53,7 +53,7 @@ interface IPerpsMarketModule {
      * @param marketId Id of the market.
      * @return maxOpenInterest Max open interest of the market.
      */
-    function maxOpenInterest(uint128 marketId) external view returns (uint256);
+    function maxOpenInterest(uint128 marketId) external view returns (BaseQuantoPerUSDUint256);
 
     /**
      * @notice Gets a market's current funding rate.

@@ -13,7 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
 import {InterestRate} from "./InterestRate.sol";
-import {BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoInt256, BaseQuantoPerUSDUint256, QuantoUint256, BaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Data for a single perps market
@@ -24,6 +24,7 @@ library PerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using InteractionsBaseQuantoPerUSDInt128 for BaseQuantoPerUSDInt128;
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
@@ -361,36 +362,36 @@ library PerpsMarket {
 
     function validatePositionSize(
         Data storage self,
-        uint256 maxSize,
-        uint256 maxValue,
-        uint256 price,
-        int128 oldSize,
-        int128 newSize
+        BaseQuantoPerUSDUint256 maxSize,
+        QuantoUint256 maxValue,
+        USDPerBaseUint256 price,
+        BaseQuantoPerUSDInt128 oldSize,
+        BaseQuantoPerUSDInt128 newSize
     ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        bool isReducingInterest = MathUtil.isSameSideReducing(oldSize, newSize);
+        bool isReducingInterest = MathUtil.isSameSideReducing(oldSize.unwrap(), newSize.unwrap());
         if (!isReducingInterest) {
-            int256 newSkew = self.skew.unwrap() - oldSize + newSize;
+            BaseQuantoPerUSDInt256 newSkew = self.skew - oldSize.to256() + newSize.to256();
 
             int256 newMarketSize = self.size.toInt() -
-                MathUtil.abs(oldSize).toInt() +
-                MathUtil.abs(newSize).toInt();
+                MathUtil.abs(oldSize.unwrap()).toInt() +
+                MathUtil.abs(newSize.unwrap()).toInt();
 
             int256 newSideSize;
-            if (0 < newSize) {
+            if (0 < newSize.unwrap()) {
                 // long case: marketSize + skew
                 //            = (|longSize| + |shortSize|) + (longSize + shortSize)
                 //            = 2 * longSize
-                newSideSize = newMarketSize + newSkew;
+                newSideSize = newMarketSize + newSkew.unwrap();
             } else {
                 // short case: marketSize - skew
                 //            = (|longSize| + |shortSize|) - (longSize + shortSize)
                 //            = 2 * -shortSize
-                newSideSize = newMarketSize - newSkew;
+                newSideSize = newMarketSize - newSkew.unwrap();
             }
 
             // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-            if (maxSize < MathUtil.abs(newSideSize / 2)) {
+            if (maxSize.unwrap() < MathUtil.abs(newSideSize / 2)) {
                 revert PerpsMarketConfiguration.MaxOpenInterestReached(
                     self.id,
                     maxSize,
@@ -400,7 +401,7 @@ library PerpsMarket {
 
             // same check but with value (size * price)
             // note that if maxValue param is set to 0, this validation is skipped
-            if (maxValue > 0 && maxValue < MathUtil.abs(newSideSize / 2).mulDecimal(price)) {
+            if (maxValue.unwrap() > 0 && maxValue.unwrap() < MathUtil.abs(newSideSize / 2).mulDecimal(price.unwrap())) {
                 revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
                     self.id,
                     maxValue,

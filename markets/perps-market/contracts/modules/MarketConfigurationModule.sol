@@ -6,6 +6,7 @@ import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModu
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {QuantoUint256, BaseQuantoPerUSDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for updating configuration in relation to async order modules.
@@ -170,7 +171,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external override {
+    function setMaxMarketSize(uint128 marketId, BaseQuantoPerUSDUint256 maxMarketSize) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.maxMarketSize = maxMarketSize;
@@ -180,7 +181,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external override {
+    function setMaxMarketValue(uint128 marketId, QuantoUint256 maxMarketValue) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.maxMarketValue = maxMarketValue;
@@ -349,7 +350,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
      */
     function getMaxMarketSize(
         uint128 marketId
-    ) external view override returns (uint256 maxMarketSize) {
+    ) external view override returns (BaseQuantoPerUSDUint256 maxMarketSize) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         maxMarketSize = config.maxMarketSize;
@@ -360,7 +361,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
      */
     function getMaxMarketValue(
         uint128 marketId
-    ) external view override returns (uint256 maxMarketValue) {
+    ) external view override returns (QuantoUint256 maxMarketValue) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         maxMarketValue = config.maxMarketValue;
