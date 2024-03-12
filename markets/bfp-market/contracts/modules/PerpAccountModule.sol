@@ -223,23 +223,12 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage fromPosition = market.positions[fromId];
         Position.Data storage toPosition = market.positions[toId];
 
-        if (toPosition.size == 0 || fromPosition.size == 0) {
-            revert ErrorUtil.PositionNotFound();
-        }
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
         }
         if (market.orders[toId].sizeDelta != 0) {
             // We only have to check "toAccount" as its impossible for fromAccount to have an order.
             revert ErrorUtil.OrderFound();
-        }
-
-        // TODO do I need this check?
-        if (
-            runtime.fromAccountCollateral == 0 ||
-            toAccountMargin.collaterals[runtime.synthMarketId] == 0
-        ) {
-            revert ErrorUtil.NilCollateral();
         }
 
         runtime.oraclePrice = market.getOraclePrice();
