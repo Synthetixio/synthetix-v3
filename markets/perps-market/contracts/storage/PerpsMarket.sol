@@ -13,7 +13,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {Liquidation} from "./Liquidation.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
 import {InterestRate} from "./InterestRate.sol";
-import {BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoInt256, BaseQuantoPerUSDUint256, QuantoUint256, BaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDInt128} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt256, USDPerBaseUint256, QuantoInt256, BaseQuantoPerUSDUint256, QuantoUint256, BaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDInt128} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Data for a single perps market

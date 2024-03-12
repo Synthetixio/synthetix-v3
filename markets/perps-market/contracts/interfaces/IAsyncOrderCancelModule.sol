@@ -4,7 +4,7 @@ import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 interface IAsyncOrderCancelModule {
     /**

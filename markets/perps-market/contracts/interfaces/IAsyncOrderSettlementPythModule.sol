@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {Position} from "../storage/Position.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
-import {USDPerBaseUint256, USDUint256, QuantoUint256, QuantoInt256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDPerBaseUint256, USDUint256, QuantoUint256, QuantoInt256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 interface IAsyncOrderSettlementPythModule {
     /**

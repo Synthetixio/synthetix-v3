@@ -7,7 +7,7 @@ import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {InterestRate} from "./InterestRate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerBaseUint128, USDPerBaseInt256, QuantoUint256, QuantoInt256, InteractionsBaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDInt256, InteractionsUSDPerBaseUint256, InteractionsUSDPerBaseUint128, BaseQuantoPerUSDInt256, InteractionsQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerBaseUint128, USDPerBaseInt256, QuantoUint256, QuantoInt256, InteractionsBaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDInt256, InteractionsUSDPerBaseUint256, InteractionsUSDPerBaseUint128, BaseQuantoPerUSDInt256, InteractionsQuantoUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 library Position {
     using SafeCastU256 for uint256;

@@ -5,7 +5,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {USDPerBaseUint256, USDPerQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDPerBaseUint256, USDPerQuantoUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Price storage for a specific synth market.

@@ -21,7 +21,7 @@ import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {USDUint256, USDPerBaseUint256, QuantoUint256, USDPerQuantoUint256, InteractionsQuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256, USDPerBaseUint256, QuantoUint256, USDPerQuantoUint256, InteractionsQuantoUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for settling async orders using pyth as price feed.

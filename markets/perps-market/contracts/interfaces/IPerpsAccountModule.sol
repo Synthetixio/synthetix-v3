@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {USDUint256, USDInt256, QuantoInt256, BaseQuantoPerUSDInt128, QuantoUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256, USDInt256, QuantoInt256, BaseQuantoPerUSDInt128, QuantoUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Account module

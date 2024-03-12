@@ -1417,6 +1417,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kwenta/quanto-dimensions@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "@kwenta/quanto-dimensions@npm:1.0.9"
+  checksum: 10/57147eb644d495a7fa0542faa042648aaf3893835106c3df361f5847329da1e6a1da55b26b054a839df6329c587a241748fba5997560ee9ed245ba10807fcb5b
+  languageName: node
+  linkType: hard
+
 "@lerna-lite/changed@npm:^3.3.0":
   version: 3.3.0
   resolution: "@lerna-lite/changed@npm:3.3.0"
@@ -3177,6 +3184,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market@workspace:markets/perps-market"
   dependencies:
+    "@kwenta/quanto-dimensions": "npm:^1.0.9"
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
@@ -3190,7 +3198,6 @@ __metadata:
     "@usecannon/cli": "npm:2.11.19"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    quanto-dimensions: "npm:^1.0.8"
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
@@ -13651,13 +13658,6 @@ __metadata:
   version: 6.5.3
   resolution: "qs@npm:6.5.3"
   checksum: 10/485c990fba7ad17671e16c92715fb064c1600337738f5d140024eb33a49fbc1ed31890d3db850117c760caeb9c9cc9f4ba22a15c20dd119968e41e3d3fe60b28
-  languageName: node
-  linkType: hard
-
-"quanto-dimensions@npm:^1.0.8":
-  version: 1.0.8
-  resolution: "quanto-dimensions@npm:1.0.8"
-  checksum: 10/36cb41ce8d4db0d55e3761c9027edbd34105c1d8e594c06978070a1e43f61f06e43ffa1dbb844d269f37bb2c1bc443a467d35503142aac6d0ee68781ca019a7f
   languageName: node
   linkType: hard
 

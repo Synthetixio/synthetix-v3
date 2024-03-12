@@ -7,7 +7,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
-import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 

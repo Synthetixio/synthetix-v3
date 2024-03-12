@@ -11,7 +11,7 @@ import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutp
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import {USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {USDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.

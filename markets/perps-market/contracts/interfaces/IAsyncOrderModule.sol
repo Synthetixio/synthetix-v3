@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, USDUint256} from 'quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, USDPerBaseUint256, QuantoUint256, USDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for committing and settling async orders.
