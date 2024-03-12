@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 
-interface IPerpAccountModule is IBasePerpMarket {
+interface IPerpAccountModule {
     // --- Structs --- //
 
     struct DepositedCollateral {

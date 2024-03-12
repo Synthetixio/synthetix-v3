@@ -124,26 +124,6 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
-    function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (uint256 utilizationRate, ) = market.recomputeUtilization(price);
-        emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
-    }
-
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
-    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(
-            market.id,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
-    }
     // A struct to hold all the data needed to merge accounts to avoid stack too deep.
 
     struct Runtime_MergeAccounts {
