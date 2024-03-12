@@ -709,6 +709,19 @@ contract OrderModule {
     }
 }
 
+// @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
+contract PerpAccountModule {
+    struct Runtime_mergeAccounts {
+        uint256 oraclePrice;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint128 synthMarketIdForLoop;
+        uint256 fromAccountCollateralForLoop;
+        uint256 fromAccountCollateral;
+        uint256 im;
+    }
+}
+
 // @custom:artifact contracts/storage/Margin.sol:Margin
 library Margin {
     struct CollateralType {
@@ -892,6 +905,7 @@ library Position {
     }
     struct Data {
         int128 size;
+        uint256 entryTime;
         int256 entryFundingAccrued;
         uint256 entryUtilizationAccrued;
         uint256 entryPrice;

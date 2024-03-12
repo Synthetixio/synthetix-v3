@@ -3,6 +3,8 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -10,8 +12,6 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
@@ -24,7 +24,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
     // --- Runtime structs --- //
 
-    struct Runtime_MergeAccounts {
+    struct Runtime_mergeAccounts {
         uint256 oraclePrice;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
@@ -137,24 +137,24 @@ contract PerpAccountModule is IPerpAccountModule {
     }
 
     function realizePosition(
-        uint256 oraclePrice,
-        Margin.MarginValues memory marginValues,
         PerpMarket.Data storage market,
         Position.Data storage position,
+        Margin.MarginValues memory marginValues,
         Margin.Data storage accountMargin,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal {
+        PerpMarketConfiguration.Data storage marketConfig,
+        uint256 oraclePrice
+    ) private {
         // Determine if toPosition can be immediately liquidated.
         if (Position.isLiquidatable(position, market, oraclePrice, marketConfig, marginValues)) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        // Update margin for both accounts
         accountMargin.updateAccountDebtAndCollateral(
             market,
             marginValues.marginUsd.toInt() - marginValues.collateralUsd.toInt()
         );
     }
+
     /**
      * @inheritdoc IPerpAccountModule
      */
@@ -173,7 +173,7 @@ contract PerpAccountModule is IPerpAccountModule {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
 
-        Runtime_MergeAccounts memory runtime;
+        Runtime_mergeAccounts memory runtime;
 
         runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
 
@@ -201,7 +201,6 @@ contract PerpAccountModule is IPerpAccountModule {
         }
 
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
-
         Position.Data storage fromPosition = market.positions[fromId];
         Position.Data storage toPosition = market.positions[toId];
 
@@ -215,14 +214,13 @@ contract PerpAccountModule is IPerpAccountModule {
 
         runtime.oraclePrice = market.getOraclePrice();
 
-        // Realize the toPostion.
         realizePosition(
-            runtime.oraclePrice,
-            Margin.getMarginUsd(toId, market, runtime.oraclePrice),
             market,
             toPosition,
+            Margin.getMarginUsd(toId, market, runtime.oraclePrice),
             toAccountMargin,
-            marketConfig
+            marketConfig,
+            runtime.oraclePrice
         );
 
         // Move collateral.
@@ -239,8 +237,8 @@ contract PerpAccountModule is IPerpAccountModule {
             runtime.oraclePrice,
             fromPosition.accruedFeesUsd
         );
+
         toPosition.update(newPosition);
-        // Delete the fromPosition
         delete market.positions[fromId];
 
         Margin.MarginValues memory newMarginValues = Margin.getMarginUsd(

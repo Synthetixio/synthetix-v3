@@ -15,7 +15,6 @@ contract MergeAccountSettlementHookMock is ISettlementHook {
     // --- Errors --- //
 
     error PermissionError(address);
-
     error InvalidSettlement();
     error VaultAccountIdNotSet();
 
@@ -45,6 +44,7 @@ contract MergeAccountSettlementHookMock is ISettlementHook {
         if (vaultAccountId == 0) {
             revert VaultAccountIdNotSet();
         }
+
         IPerpAccountModule(market).mergeAccounts(accountId, vaultAccountId, marketId);
 
         emit Settled();

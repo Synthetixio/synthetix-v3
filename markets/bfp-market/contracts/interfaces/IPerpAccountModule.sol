@@ -80,10 +80,12 @@ interface IPerpAccountModule {
     ) external view returns (IPerpAccountModule.PositionDigest memory);
 
     /**
-     * @notice Merges two accounts together.
-     * Will realize the position of the toAccount and then transfer the collateral and position of the fromAccount to the toAccount.
-     * Requires that the fromAccount just had its position settled, which means this can really only be called by a settlement hook.
-     * @dev Account permmisions from the "from account" wont be transfered.
+     * @notice Merges two accounts, combining `fromId` into `toId` for `marketId`.
+     *
+     * Merging accounts will realize the position of account `toId` in addition to transferring collateral and size
+     * from one to the other. It's on the caller to burn the perp account NFT post merge.
+     *
+     * @dev Important that account permmisions in `fromId` account will _not_ be transferred.
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
 }
