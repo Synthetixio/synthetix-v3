@@ -19,7 +19,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
-import {QuantoUint256, USDUint256, USDInt256, USDPerBaseUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
+import {QuantoUint256, USDUint256, USDInt256, USDPerBaseUint256, BaseQuantoPerUSDInt128, BaseQuantoPerUSDUint128, BaseQuantoPerUSDUint256, InteractionsBaseQuantoPerUSDUint128, InteractionsBaseQuantoPerUSDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Module for liquidating accounts.
@@ -35,6 +35,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using KeeperCosts for KeeperCosts.Data;
+    using InteractionsBaseQuantoPerUSDUint128 for BaseQuantoPerUSDUint128;
+    using InteractionsBaseQuantoPerUSDUint256 for BaseQuantoPerUSDUint256;
 
     /**
      * @inheritdoc ILiquidationModule
@@ -161,7 +163,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     struct LiquidateAccountRuntime {
         uint128 accountId;
         uint256 totalFlaggingRewards;
-        uint256 totalLiquidated;
+        BaseQuantoPerUSDUint256 totalLiquidated;
         bool accountFullyLiquidated;
         uint256 totalLiquidationCost;
         USDPerBaseUint256 price;
@@ -194,10 +196,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
 
             (
-                uint256 amountLiquidated,
-                int128 newPositionSize,
-                int128 sizeDelta,
-                uint256 oldPositionAbsSize,
+                BaseQuantoPerUSDUint128 amountLiquidated,
+                BaseQuantoPerUSDInt128 newPositionSize,
+                BaseQuantoPerUSDInt128 sizeDelta,
+                BaseQuantoPerUSDUint128 oldPositionAbsSize,
                 MarketUpdate.Data memory marketUpdateData
             ) = account.liquidatePosition(runtime.positionMarketId, runtime.price);
 
@@ -209,21 +211,21 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 // using oldPositionAbsSize to calculate flag reward
                 runtime.totalFlaggingRewards += PerpsMarketConfiguration
                     .load(runtime.positionMarketId)
-                    .calculateFlagReward(QuantoUint256.wrap(oldPositionAbsSize.mulDecimal(runtime.price.unwrap()))).unwrap();
+                    .calculateFlagReward(oldPositionAbsSize.to256().mulDecimalToQuanto(runtime.price)).unwrap();
             }
 
-            if (amountLiquidated == 0) {
+            if (amountLiquidated.unwrap() == 0) {
                 continue;
             }
 
-            runtime.totalLiquidated += amountLiquidated;
+            runtime.totalLiquidated = runtime.totalLiquidated + amountLiquidated.to256();
 
             emit MarketUpdated(
                 runtime.positionMarketId,
                 runtime.price.unwrap(),
                 marketUpdateData.skew,
                 marketUpdateData.size,
-                sizeDelta,
+                sizeDelta.unwrap(),
                 marketUpdateData.currentFundingRate,
                 marketUpdateData.currentFundingVelocity,
                 marketUpdateData.interestRate
@@ -232,15 +234,15 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             emit PositionLiquidated(
                 runtime.accountId,
                 runtime.positionMarketId,
-                amountLiquidated,
-                newPositionSize
+                amountLiquidated.unwrap(),
+                newPositionSize.unwrap()
             );
         }
 
         runtime.totalLiquidationCost =
             KeeperCosts.load().getLiquidateKeeperCosts().unwrap() +
             costOfFlagExecution;
-        if (positionFlagged || runtime.totalLiquidated > 0) {
+        if (positionFlagged || runtime.totalLiquidated.unwrap() > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
                 USDUint256.wrap(positionFlagged ? runtime.totalFlaggingRewards : 0),
                 USDUint256.wrap(runtime.totalLiquidationCost),
