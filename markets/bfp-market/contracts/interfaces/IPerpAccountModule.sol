@@ -59,6 +59,7 @@ interface IPerpAccountModule is IBasePerpMarket {
 
     // --- Events --- //
 
+    // @notice Emitted when two accounts gets merged.
     event AccountMerged(uint128 fromId, uint128 toId, uint128 marketId);
 
     // --- Views --- //
@@ -80,9 +81,10 @@ interface IPerpAccountModule is IBasePerpMarket {
     ) external view returns (IPerpAccountModule.PositionDigest memory);
 
     /**
-     * @notice Marges two accounts together.
-     * Requires that both accounts have an open position collateralised by the same asset.
-     * @dev Account permmisions from the "from account" wont be treansfered.
+     * @notice Merges two accounts together.
+     * Will realize the position of the toAccount and then transfer the collateral and position of the fromAccount to the toAccount.
+     * Requires that the fromAccount just had its position settled, which means this can really only be called by a settlement hook.
+     * @dev Account permmisions from the "from account" wont be transfered.
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
 }
