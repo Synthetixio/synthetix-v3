@@ -279,9 +279,10 @@ contract LiquidationModule is ILiquidationModule {
 
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
 
         // Cannot liquidate a position that does not exist.
-        if (market.positions[accountId].size == 0) {
+        if (position.size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
@@ -297,6 +298,7 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
+        int128 oldPositionSize = position.size;
         if (newPosition.size == 0) {
             delete market.positions[accountId];
             delete market.flaggedLiquidations[accountId];
@@ -310,6 +312,7 @@ contract LiquidationModule is ILiquidationModule {
         emit PositionLiquidated(
             accountId,
             marketId,
+            oldPositionSize,
             newPosition.size,
             msg.sender,
             flagger,

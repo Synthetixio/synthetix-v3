@@ -2546,6 +2546,102 @@ describe('MarginModule', async () => {
     });
   });
 
+  describe('getWithdrawableMargin', () => {
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { marketId } = await depositMargin(bs, genTrader(bs));
+      const invalidAccountId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getWithdrawableMargin(invalidAccountId, marketId),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader } = await depositMargin(bs, genTrader(bs));
+      const invalidMarketId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getWithdrawableMargin(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should return zero when no collateral deposits', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader } = await genTrader(bs);
+      const { marketId } = genOneOf(markets());
+
+      const margin = await PerpMarketProxy.getWithdrawableMargin(trader.accountId, marketId());
+      assertBn.isZero(margin);
+    });
+
+    it('should return the full collateralUsd value when no position open', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const desiredMarginUsdDepositAmount = genOneOf([5000, 10_000, 20_000]);
+      const { trader, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount })
+      );
+
+      const margin = await PerpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
+      assertBn.near(margin, bn(desiredMarginUsdDepositAmount), bn(0.000001));
+    });
+
+    it('should return the full collateralUsd value minus debt when no position open (concrete)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const desiredMarginUsdDepositAmount = genNumber(10_000, 15_000);
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount,
+          // NOTE: We cannot use sUSD collateral because debt will not increase if there's enough sUSD credit.
+          desiredCollateral: genOneOf(collateralsWithoutSusd()),
+        })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1.1,
+        desiredSide: -1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Pump the price to cause some debt.
+      await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(1.2).toBN());
+
+      // Realize the loss into debt.
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const { collateralUsd, debtUsd } = await PerpMarketProxy.getAccountDigest(
+        trader.accountId,
+        marketId
+      );
+
+      // There is _some_ debt on the account.
+      assertBn.gt(debtUsd, bn(0));
+
+      const margin = await PerpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
+      const expectedMargin = collateralUsd.sub(debtUsd);
+
+      assertBn.equal(margin, expectedMargin);
+    });
+
+    it('should return the discounted marginUsd less IM/keeperFees when position open');
+  });
+
   describe('getMarginCollateralConfiguration', () => {
     it('should return empty when there are no configured collaterals', async () => {
       const { PerpMarketProxy } = systems();
