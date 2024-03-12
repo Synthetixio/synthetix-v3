@@ -584,4 +584,58 @@ contract MarginModule is IMarginModule {
                 globalMarketConfig
             );
     }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function getWithdrawableMargin(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        uint256 oraclePrice = market.getOraclePrice();
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice
+        );
+        Position.Data storage position = market.positions[accountId];
+        int128 positionSize = position.size;
+
+        // When there is no position then we can ignore all running losses/profits but still need to include debt
+        // as they may have realized a prior negative PnL.
+        if (positionSize == 0) {
+            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+            return marginValues.collateralUsd - accountMargin.debtUsd;
+        }
+
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        (uint256 im, , uint256 liqFlagReward) = Position.getLiquidationMarginUsd(
+            positionSize,
+            oraclePrice,
+            marginValues.collateralUsd,
+            marketConfig
+        );
+        uint256 liqKeeperFee = Position.getLiquidationKeeperFee(
+            MathUtil.abs(positionSize).to128(),
+            marketConfig,
+            PerpMarketConfiguration.load()
+        );
+
+        // There is a position open. Discount the collateral, deduct running losses (or add profits), reduce
+        // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
+        // because both the liq and flag rewards can change based on chain usage.
+        return
+            MathUtil
+                .max(
+                    marginValues.discountedMarginUsd.toInt() -
+                        im.toInt() -
+                        liqFlagReward.toInt() -
+                        liqKeeperFee.toInt(),
+                    0
+                )
+                .toUint();
+    }
 }
