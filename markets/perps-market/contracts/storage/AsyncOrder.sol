@@ -12,7 +12,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
-import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, USDPerBaseUint256, USDPerBaseUint128, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256, InteractionsQuantoUint256, InteractionsQuantoInt256, InteractionsBaseQuantoPerUSDInt256, InteractionsUSDPerBaseUint256, InteractionsBaseQuantoPerUSDInt128, InteractionsUSDUint256, InteractionsUSDPerQuantoUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDInt256, BaseQuantoPerUSDUint256, USDPerBaseUint256, USDPerBaseUint128, USDPerQuantoUint256, USDPerQuantoInt256, USDPerBaseInt256, QuantoUint256, QuantoInt256, USDInt256, USDUint256, InteractionsQuantoUint256, InteractionsQuantoInt256, InteractionsBaseQuantoPerUSDInt256, InteractionsUSDPerBaseUint256, InteractionsBaseQuantoPerUSDInt128, InteractionsUSDUint256, InteractionsUSDPerQuantoUint256, InteractionsBaseQuantoPerUSDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 /**
  * @title Async order top level data storage
@@ -33,6 +33,7 @@ library AsyncOrder {
     using InteractionsUSDPerBaseUint256 for USDPerBaseUint256;
     using InteractionsBaseQuantoPerUSDInt128 for BaseQuantoPerUSDInt128;
     using InteractionsBaseQuantoPerUSDInt256 for BaseQuantoPerUSDInt256;
+    using InteractionsBaseQuantoPerUSDUint256 for BaseQuantoPerUSDUint256;
     using InteractionsUSDPerQuantoUint256 for USDPerQuantoUint256;
     using InteractionsUSDUint256 for USDUint256;
 
@@ -446,7 +447,7 @@ library AsyncOrder {
             uint256 staticRate = MathUtil.sameSide(notionalDiff.unwrap(), marketSkew.unwrap())
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
-            return QuantoUint256.wrap(MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()).unwrap()));
+            return notionalDiff.mulDecimal(staticRate.toInt()).abs();
         }
 
         // this trade flips the skew.
@@ -589,11 +590,11 @@ library AsyncOrder {
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
             .getKeeperRewardsAndCosts(marketId);
         runtime.accumulatedLiquidationRewards = runtime.accumulatedLiquidationRewards + marketConfig.calculateFlagReward(
-            QuantoUint256.wrap(MathUtil.abs(newPositionSize.unwrap()).mulDecimal(fillPrice.unwrap()))
+            newPositionSize.abs().mulDecimalToQuanto(fillPrice)
         ).mulDecimalToUSD(quantoPrice);
 
         runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
-            MathUtil.abs(newPositionSize.unwrap())
+            newPositionSize.abs()
         );
         runtime.maxNumberOfWindows = MathUtil.max(
             runtime.numberOfWindows,

@@ -106,9 +106,9 @@ library PerpsMarketConfiguration {
 
     function numberOfLiquidationWindows(
         Data storage self,
-        uint256 positionSize
+        BaseQuantoPerUSDUint256 positionSize
     ) internal view returns (uint256) {
-        return MathUtil.ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
+        return MathUtil.ceilDivide(positionSize.unwrap(), maxLiquidationAmountInWindow(self));
     }
 
     function calculateFlagReward(

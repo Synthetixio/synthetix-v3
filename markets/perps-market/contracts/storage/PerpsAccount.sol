@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {BaseQuantoPerUSDInt128, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256, InteractionsQuantoUint256, InteractionsUSDPerQuantoUint256, InteractionsQuantoInt256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
+import {BaseQuantoPerUSDInt128, BaseQuantoPerUSDUint256, USDPerBaseUint256, USDPerQuantoUint256, USDPerBaseUint128, QuantoUint256, QuantoInt256, USDUint256, USDInt256, InteractionsQuantoUint256, InteractionsUSDPerQuantoUint256, InteractionsQuantoInt256, InteractionsBaseQuantoPerUSDInt128, InteractionsBaseQuantoPerUSDUint256} from '@kwenta/quanto-dimensions/src/UnitTypes.sol';
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -44,6 +44,8 @@ library PerpsAccount {
     using InteractionsQuantoUint256 for QuantoUint256;
     using InteractionsUSDPerQuantoUint256 for USDPerQuantoUint256;
     using InteractionsQuantoInt256 for QuantoInt256;
+    using InteractionsBaseQuantoPerUSDInt128 for BaseQuantoPerUSDInt128;
+    using InteractionsBaseQuantoPerUSDUint256 for BaseQuantoPerUSDUint256;
 
     struct Data {
         // @dev synth marketId => amount
@@ -380,13 +382,13 @@ library PerpsAccount {
             );
 
             uint256 numberOfWindows = marketConfig.numberOfLiquidationWindows(
-                MathUtil.abs(position.size.unwrap())
+                position.size.abs()
             );
 
             QuantoUint256 flagReward = marketConfig.calculateFlagReward(
-                QuantoUint256.wrap(MathUtil.abs(position.size.unwrap()).mulDecimal(
-                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT).unwrap()
-                ))
+                position.size.abs().mulDecimalToQuanto(
+                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+                )
             );
             USDPerQuantoUint256 quantoPrice = PerpsPrice.getCurrentQuantoPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
             accumulatedLiquidationRewards = accumulatedLiquidationRewards + flagReward.mulDecimalToUSD(quantoPrice);
