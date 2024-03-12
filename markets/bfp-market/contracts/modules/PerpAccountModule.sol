@@ -10,12 +10,13 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
@@ -147,67 +148,35 @@ contract PerpAccountModule is IPerpAccountModule {
 
     struct Runtime_MergeAccounts {
         uint256 oraclePrice;
-        Margin.MarginValues fromMarginValues;
-        Margin.MarginValues toMarginValues;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint128 synthMarketIdForLoop;
+        uint256 fromAccountCollateralForLoop;
+        uint256 fromAccountCollateral;
+        uint256 im;
     }
 
-    function realizePositions(
-        Runtime_MergeAccounts memory runtime,
+    function realizePosition(
+        uint256 oraclePrice,
+        Margin.MarginValues memory marginValues,
         PerpMarket.Data storage market,
-        Position.Data storage toPosition,
-        Position.Data storage fromPosition,
-        Margin.Data storage toAccountMargin,
-        Margin.Data storage fromAccountMargin,
+        Position.Data storage position,
+        Margin.Data storage accountMargin,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal {
-        recomputeFunding(market, runtime.oraclePrice);
-
         // Determine if toPosition can be immediately liquidated.
-        if (
-            Position.isLiquidatable(
-                toPosition,
-                market,
-                runtime.oraclePrice,
-                marketConfig,
-                runtime.toMarginValues
-            )
-        ) {
-            revert ErrorUtil.CanLiquidatePosition();
-        }
-        // Determine if fromPosition can be immediately liquidated.
-        if (
-            Position.isLiquidatable(
-                fromPosition,
-                market,
-                runtime.oraclePrice,
-                marketConfig,
-                runtime.fromMarginValues
-            )
-        ) {
+        if (Position.isLiquidatable(position, market, oraclePrice, marketConfig, marginValues)) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
         // Update margin for both accounts
-        fromAccountMargin.updateAccountDebtAndCollateral(
+        accountMargin.updateAccountDebtAndCollateral(
             market,
-            runtime.fromMarginValues.marginUsd.toInt() -
-                runtime.fromMarginValues.collateralUsd.toInt()
+            marginValues.marginUsd.toInt() - marginValues.collateralUsd.toInt()
         );
-
-        toAccountMargin.updateAccountDebtAndCollateral(
-            market,
-            runtime.toMarginValues.marginUsd.toInt() - runtime.toMarginValues.collateralUsd.toInt()
-        );
-
-        recomputeUtilization(market, runtime.oraclePrice);
     }
 
-    function mergeAccounts(
-        uint128 fromId,
-        uint128 toId,
-        uint128 marketId,
-        uint128 synthMarketId
-    ) external {
+    function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         // Check msg sender is owner for both the accounts.
         Account.loadAccountAndValidatePermission(
             fromId,
@@ -220,14 +189,35 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-
-        if (globalMarginConfig.supported[synthMarketId].oracleNodeId != marketConfig.oracleNodeId) {
-            revert ErrorUtil.OracleNodeMismatch();
-        }
+        Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
 
         Runtime_MergeAccounts memory runtime;
 
-        Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
+        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
+
+        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
+            runtime.synthMarketIdForLoop = globalMarginConfig.supportedSynthMarketIds[i];
+            runtime.fromAccountCollateralForLoop = fromAccountMargin.collaterals[
+                runtime.synthMarketIdForLoop
+            ];
+            if (runtime.fromAccountCollateralForLoop > 0) {
+                if (
+                    globalMarginConfig.supported[runtime.synthMarketIdForLoop].oracleNodeId !=
+                    marketConfig.oracleNodeId
+                ) {
+                    // If the from account have collateral >0 with different oracle node id then the market, revert.
+                    revert ErrorUtil.OracleNodeMismatch();
+                }
+                // This is the collateral we're intrested in and it has correct oracle node id.
+                runtime.synthMarketId = runtime.synthMarketIdForLoop;
+                runtime.fromAccountCollateral = runtime.fromAccountCollateralForLoop;
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
 
         Position.Data storage fromPosition = market.positions[fromId];
@@ -236,51 +226,51 @@ contract PerpAccountModule is IPerpAccountModule {
         if (toPosition.size == 0 || fromPosition.size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
+        if (fromPosition.entryTime != block.timestamp) {
+            revert ErrorUtil.PositionTooOld();
+        }
+        if (market.orders[toId].sizeDelta != 0) {
+            // We only have to check "toAccount" as its impossible for fromAccount to have an order.
+            revert ErrorUtil.OrderFound();
+        }
 
-        uint256 fromAccountCollateral = fromAccountMargin.collaterals[synthMarketId];
-        uint256 toAccountCollateral = toAccountMargin.collaterals[synthMarketId];
-
-        if (fromAccountCollateral == 0 || toAccountCollateral == 0) {
+        // TODO do I need this check?
+        if (
+            runtime.fromAccountCollateral == 0 ||
+            toAccountMargin.collaterals[runtime.synthMarketId] == 0
+        ) {
             revert ErrorUtil.NilCollateral();
         }
 
         runtime.oraclePrice = market.getOraclePrice();
-        runtime.fromMarginValues = Margin.getMarginUsd(fromId, market, runtime.oraclePrice);
-        runtime.toMarginValues = Margin.getMarginUsd(toId, market, runtime.oraclePrice);
 
-        realizePositions(
-            runtime,
+        // Realize the toPostion.
+        realizePosition(
+            runtime.oraclePrice,
+            Margin.getMarginUsd(toId, market, runtime.oraclePrice),
             market,
             toPosition,
-            fromPosition,
             toAccountMargin,
-            fromAccountMargin,
             marketConfig
         );
 
-        // Move position size.
-        toPosition.size += fromPosition.size;
-        fromPosition.size = 0;
-
-        // Update entry price.
-        toPosition.entryPrice = runtime.oraclePrice;
-
-        // Move debt.
-        toAccountMargin.debtUsd += fromAccountMargin.debtUsd;
-        fromAccountMargin.debtUsd = 0;
-
         // Move collateral.
-        toAccountMargin.collaterals[synthMarketId] += fromAccountCollateral;
-        fromAccountMargin.collaterals[synthMarketId] = 0;
+        toAccountMargin.collaterals[runtime.synthMarketId] += runtime.fromAccountCollateral;
+        fromAccountMargin.collaterals[runtime.synthMarketId] = 0;
 
-        if (SYNTHETIX_USD_MARKET_ID != synthMarketId) {
-            // If collateral use is non USD we might have gotten some sUSD profit from realizingthe the position. Make sure that is moved over too.
-            uint256 fromSUsdCollateral = fromAccountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
-            if (fromSUsdCollateral > 0) {
-                toAccountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += fromSUsdCollateral;
-                fromAccountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
-            }
-        }
+        // Update to postions with data from fromPosition
+        Position.Data memory newPosition = Position.Data(
+            toPosition.size + fromPosition.size,
+            block.timestamp,
+            market.currentFundingAccruedComputed,
+            // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
+            market.currentUtilizationAccruedComputed + market.getUnrecordedUtilization(),
+            runtime.oraclePrice,
+            fromPosition.accruedFeesUsd
+        );
+        toPosition.update(newPosition);
+        // Delete the fromPosition
+        delete market.positions[fromId];
 
         Margin.MarginValues memory newMarginValues = Margin.getMarginUsd(
             toId,
@@ -288,14 +278,16 @@ contract PerpAccountModule is IPerpAccountModule {
             runtime.oraclePrice
         );
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (runtime.im, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             newMarginValues.collateralUsd,
             marketConfig
         );
-        if (newMarginValues.marginUsd < im) {
+        if (newMarginValues.marginUsd < runtime.im) {
             revert ErrorUtil.InsufficientMargin();
         }
+
+        emit AccountMerged(fromId, toId, marketId);
     }
 }

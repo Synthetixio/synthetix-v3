@@ -57,6 +57,10 @@ interface IPerpAccountModule is IBasePerpMarket {
         uint256 mm;
     }
 
+    // --- Events --- //
+
+    event AccountMerged(uint128 fromId, uint128 toId, uint128 marketId);
+
     // --- Views --- //
 
     /**
@@ -80,10 +84,5 @@ interface IPerpAccountModule is IBasePerpMarket {
      * Requires that both accounts have an open position collateralised by the same asset.
      * @dev Account permmisions from the "from account" wont be treansfered.
      */
-    function mergeAccounts(
-        uint128 fromId,
-        uint128 toId,
-        uint128 marketId,
-        uint128 synthMarketId
-    ) external;
+    function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
 }

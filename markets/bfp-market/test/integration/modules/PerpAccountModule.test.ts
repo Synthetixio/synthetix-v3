@@ -8,10 +8,11 @@ import {
   fastForwardBySec,
   findEventSafe,
   setMarketConfigurationById,
-  withExplicitEvmMine,
   withdrawAllCollateral,
 } from '../../helpers';
-import { wei } from '@synthetixio/wei';
+import Wei, { wei } from '@synthetixio/wei';
+import { ethers } from 'ethers';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('PerpAccountModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -128,16 +129,17 @@ describe('PerpAccountModule', () => {
     it('should revert if collateral and market use different oracle');
     it('should revert if either of the positions have size 0');
     it('should revert if either of the collateral is 0');
-    it('should revert if either of the positions can be liquidated');
-    it('should revert if the new position is below initial margin requirement');
     it('should revert if trader have collateral other than passed id');
+    it('should revert if toAccount position can be liquidated');
+    it('should revert if toAccount position has an open order');
+    it('should revert if fromAccount position entryTime is not block.timestamp');
+    it('should revert if the new position is below initial margin requirement');
+
     it('should merge two accounts', async () => {
-      const { PerpMarketProxy } = systems();
-      // Create two trader object with different accountIds but same signer.
+      const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+      // Create two trader objects with different accountIds but same signer.
       const fromTrader = traders()[0];
-
       const toTraderAccountId = 42069;
-
       await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
       const toTrader = {
         signer: fromTrader.signer,
@@ -154,13 +156,38 @@ describe('PerpAccountModule', () => {
       market.oracleNodeId = collateral.oracleNodeId;
       // Also make sure price align on the aggregator
       const collateralPrice = await collateral.getPrice();
-      await market.aggregator().mockSetCurrentPrice(collateralPrice);
+      await collateral.setPrice(collateralPrice);
 
-      // Reset any preexisting collateral.
+      // Withdraw any preexisting collateral.
       await withdrawAllCollateral(bs, fromTrader, market.marketId());
-      await withdrawAllCollateral(bs, toTrader, market.marketId());
 
-      const { marketId, collateralDepositAmount } = await depositMargin(
+      const { collateralDepositAmount: collateralDepositAmountTo, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: toTrader,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+        })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmountTo);
+      await commitAndSettle(bs, marketId, toTrader, order);
+
+      // Create some debt for the toAccount, so we later can assert it's realized on account merge.
+      await collateral.setPrice(
+        wei(collateralPrice)
+          .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
+          .toBN()
+      );
+
+      const toOrder = await genOrder(bs, market, collateral, collateralDepositAmountTo, {
+        desiredSize: wei(order.sizeDelta).mul(0.9).toBN(), // decrease position slightly
+      });
+      await commitAndSettle(bs, marketId, toTrader, toOrder);
+      // Reset the price causing the toAccount's position to have some pnl.
+      await collateral.setPrice(collateralPrice);
+
+      // Start creating from position.
+      const { collateralDepositAmount: collateralDepositAmountFrom } = await depositMargin(
         bs,
         genTrader(bs, {
           desiredTrader: fromTrader,
@@ -168,8 +195,41 @@ describe('PerpAccountModule', () => {
           desiredMarket: market,
         })
       );
+      // Set the from account to be the "vaultAccountId" that will have the new account merged into it.
+      await MergeAccountSettlementHookMock.mockSetVaultAccountId(toTrader.accountId);
 
-      const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      // Make sure the settlement hook have permission to merge both the accounts (PERPS_MODIFY_COLLATERAL).
+      // In a real world scenario the vault/settlement hook would own both of these account.
+      await PerpMarketProxy.connect(toTrader.signer).grantPermission(
+        toTrader.accountId,
+        ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
+        MergeAccountSettlementHookMock.address
+      );
+      await PerpMarketProxy.connect(toTrader.signer).grantPermission(
+        fromTrader.accountId,
+        ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
+        MergeAccountSettlementHookMock.address
+      );
+
+      const fromDigestBefore = await PerpMarketProxy.getAccountDigest(
+        fromTrader.accountId,
+        marketId
+      );
+      const toDigestBefore = await PerpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
+      const marketDigestBefore = await PerpMarketProxy.getMarketDigest(marketId);
+      // Assert that the accounts have some collateral.
+      assertBn.gt(fromDigestBefore.collateralUsd, 0);
+      assertBn.gt(toDigestBefore.collateralUsd, 0);
+      // The toAccount should also have some debt and an open position.
+      assertBn.gt(toDigestBefore.debtUsd, 0);
+      assertBn.notEqual(toDigestBefore.position.size, 0);
+
+      // Create an order with the MergeAccountSettlementHookMock as a hook.
+      const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmountFrom, {
+        desiredLeverage: 1,
+        desiredSide: 1,
+        desiredHooks: [MergeAccountSettlementHookMock.address],
+      });
 
       const { receipt: fromOrderReceipt } = await commitAndSettle(
         bs,
@@ -180,69 +240,62 @@ describe('PerpAccountModule', () => {
 
       const fromOrderEvent = findEventSafe(fromOrderReceipt, 'OrderSettled', PerpMarketProxy);
 
-      const { collateralDepositAmount: collateralDepositAmountTo } = await depositMargin(
-        bs,
-        genTrader(bs, {
-          desiredTrader: toTrader,
-          desiredCollateral: collateral,
-          desiredMarket: market,
-        })
-      );
-      const toOrder = await genOrder(bs, market, collateral, collateralDepositAmountTo);
-      const { receipt: toOrderReceipt } = await commitAndSettle(bs, marketId, toTrader, toOrder);
-      const toOrderEvent = findEventSafe(toOrderReceipt, 'OrderSettled', PerpMarketProxy);
-
-      const fromDigestBefore = await PerpMarketProxy.getAccountDigest(
-        fromTrader.accountId,
-        marketId
-      );
-      const toDigestBefore = await PerpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
-
-      assertBn.notEqual(fromDigestBefore.collateralUsd, 0);
-      assertBn.notEqual(toDigestBefore.collateralUsd, 0);
-      assertBn.notEqual(fromDigestBefore.position.size, 0);
-      assertBn.notEqual(toDigestBefore.position.size, 0);
-
-      const newCollateralPrice = wei(collateralPrice).mul(genNumber(0.9, 1.1)).toBN();
-      await market.aggregator().mockSetCurrentPrice(newCollateralPrice);
-
-      await withExplicitEvmMine(
-        () =>
-          PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
-            fromTrader.accountId,
-            toTrader.accountId,
-            marketId,
-            collateral.synthMarketId()
-          ),
-        provider()
-      );
-
       const fromDigestAfter = await PerpMarketProxy.getAccountDigest(
         fromTrader.accountId,
         marketId
       );
       const toDigestAfter = await PerpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
+      const marketDigestAfter = await PerpMarketProxy.getMarketDigest(marketId);
 
       assertBn.isZero(fromDigestAfter.collateralUsd);
       assertBn.isZero(fromDigestAfter.position.size);
       assertBn.isZero(fromDigestAfter.debtUsd);
 
-      const fromPotentialWinnings = wei(fromOrderEvent.args.pnl).add(
-        fromOrderEvent.args.accruedFunding
+      // Before the form position gets merged into the to position, we should be realising the to position.
+      const profitsFromRealizingPosition = toDigestBefore.position.pnl
+        .add(toDigestBefore.position.accruedFunding)
+        .sub(toDigestBefore.position.accruedFeesUsd)
+        .sub(toDigestBefore.position.accruedUtilization);
+
+      const expectedDebt = Wei.max(
+        wei(0),
+        wei(toDigestBefore.debtUsd).sub(profitsFromRealizingPosition)
+      ).toBN();
+      const expectedUsdCollateral = Wei.max(
+        wei(0),
+        wei(profitsFromRealizingPosition).sub(toDigestBefore.debtUsd)
+      ).toBN();
+
+      // Assert global tracking  (totalTraderDebtUsd and totalCollateralValueUsd)
+      assertBn.near(
+        marketDigestBefore.totalTraderDebtUsd.sub(toDigestBefore.debtUsd).add(expectedDebt),
+        marketDigestAfter.totalTraderDebtUsd,
+        bn(0.0001)
       );
-      const toPotentialWinnings = wei(toOrderEvent.args.pnl).add(toOrderEvent.args.accruedFunding);
-
-      const newCollateral = fromDigestBefore.collateralUsd
-        .add(toDigestBefore.collateralUsd)
-        .add(fromPotentialWinnings.toBN())
-        .add(toPotentialWinnings.toBN());
-
-      assertBn.equal(newCollateral, toDigestAfter.collateralUsd);
+      assertBn.near(
+        marketDigestBefore.totalCollateralValueUsd.add(expectedUsdCollateral),
+        marketDigestAfter.totalCollateralValueUsd,
+        bn(0.0001)
+      );
+      // Assert the to account got realized correctly
+      assertBn.near(expectedDebt, toDigestAfter.debtUsd, bn(0.0001));
+      assertBn.equal(fromDigestAfter.position.size, 0);
+      assertBn.near(
+        fromDigestBefore.collateralUsd.add(toDigestBefore.collateralUsd).add(expectedUsdCollateral),
+        toDigestAfter.collateralUsd,
+        bn(0.0001)
+      );
       assertBn.equal(
-        fromDigestBefore.position.size.add(toDigestBefore.position.size),
+        fromOrderEvent.args.sizeDelta.add(toDigestBefore.position.size),
         toDigestAfter.position.size
       );
+
+      // Assert event
+      await assertEvent(
+        fromOrderReceipt,
+        `AccountMerged(${fromTrader.accountId}, ${toTrader.accountId}, ${marketId})`,
+        PerpMarketProxy
+      );
     });
-    it('should merge accounts with debt and winning/losing position');
   });
 });
