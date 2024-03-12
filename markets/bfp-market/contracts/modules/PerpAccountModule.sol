@@ -229,7 +229,7 @@ contract PerpAccountModule is IPerpAccountModule {
         toAccountMargin.collaterals[runtime.synthMarketId] += runtime.fromAccountCollateral;
         fromAccountMargin.collaterals[runtime.synthMarketId] = 0;
 
-        // Update to postions with data from fromPosition
+        // Update toAccount's postion with data from the fromAccount's position.
         Position.Data memory newPosition = Position.Data(
             toPosition.size + fromPosition.size,
             block.timestamp,
