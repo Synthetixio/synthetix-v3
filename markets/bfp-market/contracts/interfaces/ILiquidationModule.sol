@@ -10,6 +10,7 @@ interface ILiquidationModule is IBasePerpMarket {
     event PositionLiquidated(
         uint128 indexed accountId,
         uint128 marketId,
+        int128 sizeBeforeLiquidation,
         int128 remainingSize,
         address keeper,
         address flagger,
