@@ -22,6 +22,18 @@ contract PerpAccountModule is IPerpAccountModule {
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
 
+    // --- Runtime structs --- //
+
+    struct Runtime_MergeAccounts {
+        uint256 oraclePrice;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint128 synthMarketIdForLoop;
+        uint256 fromAccountCollateralForLoop;
+        uint256 fromAccountCollateral;
+        uint256 im;
+    }
+
     /**
      * @inheritdoc IPerpAccountModule
      */
@@ -124,18 +136,6 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    // A struct to hold all the data needed to merge accounts to avoid stack too deep.
-
-    struct Runtime_MergeAccounts {
-        uint256 oraclePrice;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
-        uint128 synthMarketIdForLoop;
-        uint256 fromAccountCollateralForLoop;
-        uint256 fromAccountCollateral;
-        uint256 im;
-    }
-
     function realizePosition(
         uint256 oraclePrice,
         Margin.MarginValues memory marginValues,
@@ -155,7 +155,9 @@ contract PerpAccountModule is IPerpAccountModule {
             marginValues.marginUsd.toInt() - marginValues.collateralUsd.toInt()
         );
     }
-
+    /**
+     * @inheritdoc IPerpAccountModule
+     */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         // Check msg sender is owner for both the accounts.
         Account.loadAccountAndValidatePermission(
