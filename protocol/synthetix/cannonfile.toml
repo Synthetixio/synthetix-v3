@@ -16,7 +16,7 @@ description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.oracle_manager_source]
-defaultValue = "oracle-manager:<%= package.version %>"
+defaultValue = "oracle-manager"
 
 [provision.oracle_manager]
 source = "<%= settings.oracle_manager_source %>"

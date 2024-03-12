@@ -318,17 +318,25 @@ describe('ModifyCollateral Withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
       let initialMarginReq: ethers.BigNumber;
+      let balBeforeWithdraw: ethers.BigNumber;
+      let balAfterWithdraw: ethers.BigNumber;
+      let withdrawAmt: ethers.BigNumber;
 
       before('withdraw allowed amount', async () => {
         [initialMarginReq] = await systems()
           .PerpsMarket.connect(trader1())
           .getRequiredMargins(trader1AccountId);
         // available margin = collateral value + pnl = $19000
-        const withdrawAmt = bn(19_000).sub(initialMarginReq).mul(-1);
+        withdrawAmt = bn(19_000).sub(initialMarginReq).mul(-1);
+
+        const trader1Address = await trader1().getAddress();
+        balBeforeWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
 
         await systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(trader1AccountId, sUSDSynthId, withdrawAmt);
+
+        balAfterWithdraw = await systems().USD.connect(trader1()).balanceOf(trader1Address);
       });
       after(restore);
 
@@ -337,6 +345,9 @@ describe('ModifyCollateral Withdraw', () => {
           await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
           initialMarginReq
         );
+      });
+      it('correct amount of sUSD minted to trader1 after withdrawal', async () => {
+        assertBn.equal(balBeforeWithdraw.sub(balAfterWithdraw), withdrawAmt);
       });
     });
 

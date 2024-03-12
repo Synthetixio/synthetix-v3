@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.3.15",
+  "version": "3.3.17",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -17,7 +17,7 @@
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "publish-contracts": "cannon publish synthetix:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
-    "postpack": "yarn build && yarn publish-contracts",
+    "deploy": "yarn build && yarn publish-contracts",
     "docgen": "hardhat docgen"
   },
   "keywords": [],

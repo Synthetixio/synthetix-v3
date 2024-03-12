@@ -787,7 +787,7 @@ describe('LiquidationModule', () => {
         provider()
       );
 
-      return { tx, receipt, trader, marketId, newMarketOraclePrice };
+      return { tx, receipt, trader, marketId, order, newMarketOraclePrice };
     };
 
     it('should fully liquidate a flagged position', async () => {
@@ -796,13 +796,14 @@ describe('LiquidationModule', () => {
       const desiredKeeper = keeper();
       const keeperAddress = await desiredKeeper.getAddress();
 
-      const { tx, receipt, trader, marketId, newMarketOraclePrice } =
+      const { tx, receipt, trader, order, marketId, newMarketOraclePrice } =
         await commitAndSettleLiquidatedPosition(desiredKeeper);
 
       const positionLiquidatedEvent = findEventSafe(receipt, 'PositionLiquidated', PerpMarketProxy);
       const positionLiquidatedEventProperties = [
         trader.accountId,
         marketId,
+        order.sizeDelta,
         0, // sizeRemaining (expected full liquidation).
         `"${keeperAddress}"`, // keeper
         `"${keeperAddress}"`, // flagger
@@ -866,6 +867,7 @@ describe('LiquidationModule', () => {
       const positionLiquidatedEventProperties = [
         trader.accountId,
         marketId,
+        order.sizeDelta,
         0, // sizeRemaining (expected full liquidation).
         `"${keeperAddress}"`, // keeper
         `"${keeperAddress}"`, // flagger
@@ -1495,6 +1497,7 @@ describe('LiquidationModule', () => {
         const positionLiquidatedEventProperties = [
           trader.accountId,
           marketId,
+          order.sizeDelta,
           remainingSize,
           `"${flaggerKeeperAddr}"`,
           `"${liquidationKeeperAddr}"`,
@@ -1580,6 +1583,7 @@ describe('LiquidationModule', () => {
 
         const desiredKeeper = keeper();
         const desiredKeeperAddress = await desiredKeeper.getAddress();
+
         const {
           liquidatedSize,
           marketId,
@@ -1614,7 +1618,7 @@ describe('LiquidationModule', () => {
         await commitAndSettle(bs, marketId, trader2, order);
 
         // Liquidate remaining size.
-        const { tx, receipt } = await withExplicitEvmMine(
+        const { receipt } = await withExplicitEvmMine(
           () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader1.accountId, marketId),
           provider()
         );
@@ -1628,6 +1632,10 @@ describe('LiquidationModule', () => {
         // Partial liquidation (again) - not high enough cap to fully liquidate but did bypass liquidations.
         //
         // NOTE: We .mul(2) here because the position has been partially liquidated _twice_.
+        const expectedSizeBeforeLiquidation = order1.sizeDelta
+          .abs()
+          .sub(liquidatedSize) // 1x liquidatedSize to account for the first liq.
+          .mul(orderSide1);
         const expectedRemainingSize = order1.sizeDelta
           .abs()
           .sub(liquidatedSize.mul(2))
@@ -1635,6 +1643,7 @@ describe('LiquidationModule', () => {
         const positionLiquidatedEventProperties = [
           trader1.accountId,
           marketId,
+          expectedSizeBeforeLiquidation,
           expectedRemainingSize, // Remaining size to liquidate (none = dead).
           `"${desiredKeeperAddress}"`,
           `"${desiredKeeperAddress}"`,
@@ -1643,7 +1652,7 @@ describe('LiquidationModule', () => {
         ].join(', ');
 
         await assertEvent(
-          tx,
+          receipt,
           `PositionLiquidated(${positionLiquidatedEventProperties})`,
           PerpMarketProxy
         );
@@ -2033,6 +2042,7 @@ describe('LiquidationModule', () => {
         });
 
         await commitAndSettle(bs, marketId, trader, order);
+
         // Price falls/rises between 10% should results in a healthFactor of < 1.
         // Whether it goes up or down depends on the side of the order.
         const newMarketOraclePrice = wei(order.oraclePrice)
@@ -2048,6 +2058,7 @@ describe('LiquidationModule', () => {
           () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
           provider()
         );
+
         const { flagKeeperReward } = findEventSafe(
           flagReceipt,
           'PositionFlaggedLiquidation',
@@ -2058,6 +2069,7 @@ describe('LiquidationModule', () => {
           'PositionLiquidated',
           PerpMarketProxy
         ).args;
+
         assertBn.equal(flagKeeperReward, bn(1));
         assertBn.equal(liqKeeperFee, bn(1));
       });
@@ -2076,6 +2088,7 @@ describe('LiquidationModule', () => {
         });
 
         await commitAndSettle(bs, marketId, trader, order);
+
         // Price falls/rises between 10% should results in a healthFactor of < 1.
         // Whether it goes up or down depends on the side of the order.
         const newMarketOraclePrice = wei(order.oraclePrice)
@@ -2097,6 +2110,7 @@ describe('LiquidationModule', () => {
             liquidationRewardPercent: bn(0.0001), // really small so we dont hit maxKeeperFeeUsd
           }
         );
+
         // Set baseFeePerGas to 1gwei
         const baseFeePerGas = await setBaseFeePerGas(1, provider());
 
