@@ -167,10 +167,8 @@ contract MarginModule is IMarginModule {
             accountId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         // Prevent collateral transfers when there's a pending order.
         if (market.orders[accountId].sizeDelta != 0) {
@@ -187,6 +185,9 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
         // Prevent withdraw all when there is unpaid debt owned on the account margin.
         if (accountMargin.debtUsd != 0) {
             revert ErrorUtil.DebtFound(accountId, marketId);
@@ -203,6 +204,9 @@ contract MarginModule is IMarginModule {
 
         (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
@@ -607,8 +611,7 @@ contract MarginModule is IMarginModule {
         // When there is no position then we can ignore all running losses/profits but still need to include debt
         // as they may have realized a prior negative PnL.
         if (positionSize == 0) {
-            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-            return marginValues.collateralUsd - accountMargin.debtUsd;
+            return marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd;
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
