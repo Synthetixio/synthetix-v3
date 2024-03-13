@@ -2241,7 +2241,7 @@ describe('OrderModule', () => {
     // to parse out the event logs that contain the keeperFee.
     //
     // @see: https://github.com/NomicFoundation/hardhat/issues/3028
-    describe.skip('keeperFee', () => {
+    describe('keeperFee', () => {
       const getKeeperFee = (
         PerpMarketProxy: PerpMarketProxy,
         receipt: ethers.ContractReceipt
@@ -2264,7 +2264,7 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.keeperFeeBufferUsd
         );
-        const { tx, receipt, settlementTime, lastBaseFeePerGas } = await commitAndSettle(
+        const { tx, receipt, lastBaseFeePerGas } = await commitAndSettle(
           bs,
           marketId,
           trader,
@@ -2274,10 +2274,12 @@ describe('OrderModule', () => {
         const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
         const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
         assertBn.equal(expectedKeeperFee, keeperFee);
+        const block = await provider().getBlock(receipt.blockNumber);
+        const timestamp = block.timestamp;
 
         await assertEvent(
           tx,
-          `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, ${settlementTime})`,
+          `OrderSettled(${trader.accountId}, ${marketId}, ${timestamp}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, 0, 0, 0, ${order.fillPrice}, 0)`,
           PerpMarketProxy
         );
       });
