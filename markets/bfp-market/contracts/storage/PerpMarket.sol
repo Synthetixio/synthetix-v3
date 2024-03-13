@@ -179,7 +179,7 @@ library PerpMarket {
     }
 
     /**
-     * @dev Returns the collateral utilisation bounded by 0 and 1.
+     * @dev Returns the collateral utilization bounded by 0 and 1.
      */
     function getUtilization(
         PerpMarket.Data storage self,
@@ -192,7 +192,7 @@ library PerpMarket {
             marketConfig.minCreditPercent.to256()
         );
         if (lockedCollateralUsd == 0) {
-            // If we dont have any postions open, we're at 0% utilisation.
+            // If we dont have any postions open, we're at 0% utilization.
             return 0;
         }
 
@@ -201,7 +201,7 @@ library PerpMarket {
 
         // If we remove collateral deposited from traders we get the delegatedCollateral value.
         //
-        // NOTE: When < 0 then from the market's POV we're _above_ full utilisation and LPs can be liquidated.
+        // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
         int256 delegatedCollateralValueUsd = withdrawableUsd.toInt() -
             getTotalCollateralValueUsd(self).toInt();
         if (delegatedCollateralValueUsd < 0) {
