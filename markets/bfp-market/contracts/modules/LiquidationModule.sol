@@ -114,7 +114,7 @@ contract LiquidationModule is ILiquidationModule {
             accountMargin.debtUsd = 0;
         }
 
-        // For non-sUSD collateral, send to their respective reward distributor, create new distriction per collateral,
+        // For non-sUSD collateral, send to their respective reward distributor, create new distribution per collateral,
         // and then wipe out all associated collateral on the account.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
@@ -228,7 +228,7 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.CannotLiquidatePosition();
         }
 
-        // Cannot reflag something that's already flagged.
+        // Cannot reflag an account that's already flagged.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }

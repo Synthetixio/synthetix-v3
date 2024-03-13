@@ -66,7 +66,7 @@ library Position {
         int128 size;
         // The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
-        // The market's accumulated accrued utilisation at position settlement.
+        // The market's accumulated accrued utilization at position settlement.
         uint256 entryUtilizationAccrued;
         // The fill price at which this position was settled with.
         uint256 entryPrice;
@@ -77,7 +77,7 @@ library Position {
     /**
      * @dev Validates whether a change in a position's size would violate the max market value constraint.
      *
-     * A perp market has one configurable variable `maxMarketSize` which constraints the maximum open interest
+     * A perp market has one configurable variable `maxMarketSize` which constrains the maximum open interest
      * a market can have on either side.
      */
     function validateMaxOi(
@@ -262,7 +262,7 @@ library Position {
             orderFee + keeperFee
         );
 
-        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
+        // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
@@ -340,7 +340,7 @@ library Position {
             revert ErrorUtil.PositionNotFound();
         }
 
-        // Fetch the available capacity then alter iff zero AND the caller is a whitelisted endorsed liquidation keeper.
+        // Fetch the available capacity then alter if zero AND the caller is a whitelisted endorsed liquidation keeper.
         (
             runtime.maxLiquidatableCapacity,
             runtime.remainingCapacity,
@@ -358,7 +358,7 @@ library Position {
             uint128 skewScale = marketConfig.skewScale;
             uint128 liquidationMaxPd = marketConfig.liquidationMaxPd;
 
-            // Allow max capacity to be bypassed iff the following holds true:
+            // Allow max capacity to be bypassed if the following holds true:
             //  1. remainingCapacity is zero (as parent)
             //  2. This liquidation is _not_ in the same block as the most recent liquidation
             //  3. The current market premium/discount does not exceed a configurable maxPd.
@@ -376,7 +376,7 @@ library Position {
             }
         }
 
-        // Determine the resulting position post liqudation.
+        // Determine the resulting position post liquidation.
         liqSize = MathUtil.min(runtime.remainingCapacity, runtime.oldPositionSizeAbs).to128();
         liqKeeperFee = getLiquidationKeeperFee(liqSize, marketConfig, globalConfig);
         newPosition = Position.Data(
@@ -482,7 +482,7 @@ library Position {
     }
 
     /**
-     * @dev Returns the number of partial liquidations required given liquidation size and mac liquidation capacity.
+     * @dev Returns the number of partial liquidations required given liquidation size and max liquidation capacity.
      */
     function getLiquidationIterations(
         uint256 liqSize,
@@ -508,7 +508,7 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        // We exit early it size is 0, this would only happen then remaining liqcapacity is 0.
+        // We exit early if size is 0, this would only happen then remaining liqcapacity is 0.
         if (size == 0) {
             return 0;
         }

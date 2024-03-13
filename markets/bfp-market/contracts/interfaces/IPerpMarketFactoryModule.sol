@@ -106,7 +106,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     function getActiveMarketIds() external view returns (uint128[] memory);
 
     /**
-     * @notice Recomputes utlisation rate for a given market
+     * @notice Recomputes utilization rate for a given market
      */
     function recomputeUtilization(uint128 marketId) external;
 

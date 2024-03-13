@@ -79,7 +79,7 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Validates that an order can only be settled iff time and price is acceptable.
+     * @dev Validates that an order can only be settled if time and price are acceptable.
      */
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
@@ -306,7 +306,7 @@ contract OrderModule is IOrderModule {
             runtime.fillPrice
         );
 
-        // We call `getHeathData` here to fetch accrued utilisation before utilisation recomputation.
+        // We call `getHeathData` here to fetch accrued utilization before utilization recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
@@ -316,7 +316,7 @@ contract OrderModule is IOrderModule {
             runtime.fillPrice,
             marketConfig,
             // The margins passed here are missing the order fee + keeper fee for this trade. runtime.trade.newMarginUsd would be correct.
-            // But we are only calling getHealthData to get accruedFunding, accruedUtilisation and pnl. So we can use the old margin values.
+            // But we are only calling getHealthData to get accruedFunding, accruedUtilization and pnl. So we can use the old margin values.
             marginValues
         );
 
@@ -327,9 +327,9 @@ contract OrderModule is IOrderModule {
         market.skew = runtime.updatedMarketSkew;
         market.size = runtime.updatedMarketSize;
 
-        // We want to validateTrade and update market size before we recompute utilisation
-        // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilisation rate up to this point
-        // 2. The new utlization rate is calculated using the new maret size, so we need to update the size before we recompute utilisation
+        // We want to validateTrade and update market size before we recompute utilization
+        // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
+        // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
         recomputeUtilization(market, runtime.pythPrice);
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
@@ -342,7 +342,7 @@ contract OrderModule is IOrderModule {
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl (from entry price changes), accruedFunding,
-                // accruedUtilisation, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
+                // accruedUtilization, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
                 // as we dont want price impact to be deducted yet.
                 //
                 // TLDR; This is basically the `total realised PnL` for this position.

@@ -2290,7 +2290,7 @@ describe('LiquidationModule', () => {
         );
       });
 
-      it('should accumulate liq utilisation without exceeding cap', async () => {
+      it('should accumulate liq utilization without exceeding cap', async () => {
         const { PerpMarketProxy } = systems();
 
         const flaggerKeeper = keeper();
@@ -2311,7 +2311,7 @@ describe('LiquidationModule', () => {
         const orders: Awaited<ReturnType<typeof genOrder>>[] = [];
 
         // For two traders, open a position (both on the same side) and liquidate everything. The
-        // sum of all sizeDelta should be the utilisation and remaining should be max - utlisation.
+        // sum of all sizeDelta should be the utilization and remaining should be max - utilization.
         const tradersToUse = traders().slice(0, 2);
 
         for (const trader of tradersToUse) {
