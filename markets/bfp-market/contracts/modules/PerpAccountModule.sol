@@ -136,25 +136,6 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    function realizePosition(
-        PerpMarket.Data storage market,
-        Position.Data storage position,
-        Margin.MarginValues memory marginValues,
-        Margin.Data storage accountMargin,
-        PerpMarketConfiguration.Data storage marketConfig,
-        uint256 oraclePrice
-    ) private {
-        // Determine if toPosition can be immediately liquidated.
-        if (Position.isLiquidatable(position, market, oraclePrice, marketConfig, marginValues)) {
-            revert ErrorUtil.CanLiquidatePosition();
-        }
-
-        accountMargin.updateAccountDebtAndCollateral(
-            market,
-            marginValues.marginUsd.toInt() - marginValues.collateralUsd.toInt()
-        );
-    }
-
     /**
      * @inheritdoc IPerpAccountModule
      */
@@ -214,13 +195,28 @@ contract PerpAccountModule is IPerpAccountModule {
 
         runtime.oraclePrice = market.getOraclePrice();
 
-        realizePosition(
+        Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(
+            toId,
             market,
-            toPosition,
-            Margin.getMarginUsd(toId, market, runtime.oraclePrice),
-            toAccountMargin,
-            marketConfig,
             runtime.oraclePrice
+        );
+        // Determine if toPosition can be immediately liquidated.
+        if (
+            Position.isLiquidatable(
+                toPosition,
+                market,
+                runtime.oraclePrice,
+                marketConfig,
+                toMarginValues
+            )
+        ) {
+            revert ErrorUtil.CanLiquidatePosition();
+        }
+
+        // Realize the toPostion.
+        toAccountMargin.updateAccountDebtAndCollateral(
+            market,
+            toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );
 
         // Move collateral.
