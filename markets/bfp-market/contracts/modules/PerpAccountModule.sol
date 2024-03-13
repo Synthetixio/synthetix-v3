@@ -232,8 +232,7 @@ contract PerpAccountModule is IPerpAccountModule {
             toPosition.size + fromPosition.size,
             block.timestamp,
             market.currentFundingAccruedComputed,
-            // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
-            market.currentUtilizationAccruedComputed + market.getUnrecordedUtilization(),
+            market.currentUtilizationAccruedComputed,
             runtime.oraclePrice,
             fromPosition.accruedFeesUsd
         );
