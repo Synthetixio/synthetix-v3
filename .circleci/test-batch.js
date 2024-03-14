@@ -66,3 +66,7 @@ for (const file of files) {
     executeBatch(index, batch.splice(0));
   }
 }
+if (batch.length > 0) {
+  index++;
+  executeBatch(index, batch.splice(0));
+}
