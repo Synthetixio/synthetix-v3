@@ -619,10 +619,10 @@ jobs:
 workflows:
   version: 2.1
 
-  only-perps-market-tests:
+  skip:
     when:
       or:
-        - equal: ["optimise-tests", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
     jobs:
       - build-testable:
           wat: "--recursive --from '@synthetixio/perps-market'"
@@ -636,7 +636,6 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["optimise-tests", << pipeline.git.branch >>]
         - equal: ["skip", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
