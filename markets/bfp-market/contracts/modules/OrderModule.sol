@@ -300,12 +300,6 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
-            accountId,
-            market,
-            runtime.fillPrice
-        );
-
         // We call `getHeathData` here to fetch _current_ accrued utilization before utilization recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
@@ -315,9 +309,12 @@ contract OrderModule is IOrderModule {
             position.entryUtilizationAccrued,
             runtime.fillPrice,
             marketConfig,
-            // The margins passed here are missing the order fee + keeper fee for this trade. runtime.trade.newMarginUsd would be correct.
-            // But we are only calling getHealthData to get accruedFunding, accruedUtilization and pnl. So we can use the old margin values.
-            marginValues
+            // NOTE: The margins passed here are missing the order fee + keeper fee for this trade (as they are calc
+            // before settlement), ref `runtime.trade.newMarginUsd` for correct next marginUsd.
+            //
+            // However, call to `getHealthData` is only for `accruedFunding`, `accruedUtilization` and PnL for the settlement
+            // event below so it's fine to use the old margin values.
+            runtime.trade.marginValues
         );
 
         runtime.updatedMarketSize = (market.size.to256() +
@@ -346,7 +343,8 @@ contract OrderModule is IOrderModule {
                 // as we dont want price impact to be deducted yet.
                 //
                 // TLDR; This is basically the `total realised PnL` for this position.
-                runtime.trade.newMarginUsd.toInt() - marginValues.collateralUsd.toInt()
+                runtime.trade.newMarginUsd.toInt() -
+                    runtime.trade.marginValues.collateralUsd.toInt()
             );
 
             runtime.accountDebt = accountMargin.debtUsd;

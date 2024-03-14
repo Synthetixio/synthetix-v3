@@ -67,7 +67,6 @@ contract LiquidationModule is ILiquidationModule {
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         uint128 liqSize;
-
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(
             accountId,
             market,
@@ -91,7 +90,7 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Invoked post flag when position is dead and set to liquidate. Or when liquidating margin only due to debt.
+     * @dev Invoked post flag when position is dead and set to liquidate or when liquidating margin only due to debt.
      */
     function liquidateCollateral(
         uint128 accountId,
@@ -108,7 +107,7 @@ contract LiquidationModule is ILiquidationModule {
             market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= runtime.availableSusd;
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
         }
-        // Clear out debt
+        // Clear out debt.
         if (accountMargin.debtUsd > 0) {
             market.totalTraderDebtUsd -= accountMargin.debtUsd;
             accountMargin.debtUsd = 0;
@@ -203,13 +202,22 @@ contract LiquidationModule is ILiquidationModule {
      */
     function flagPosition(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.FLAG_POSITION);
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
+        // Cannot reflag an account that's already flagged.
+        if (market.flaggedLiquidations[accountId] != address(0)) {
+            revert ErrorUtil.PositionFlagged();
+        }
+
+        int128 size = position.size;
+
         // Cannot flag a position that does not exist.
-        if (position.size == 0) {
+        if (size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
+
         uint256 oraclePrice = market.getOraclePrice();
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
@@ -228,11 +236,6 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.CannotLiquidatePosition();
         }
 
-        // Cannot reflag an account that's already flagged.
-        if (market.flaggedLiquidations[accountId] != address(0)) {
-            revert ErrorUtil.PositionFlagged();
-        }
-
         // Remove any pending orders that may exist.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
@@ -242,14 +245,14 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 flagReward = Position.getLiquidationFlagReward(
-            MathUtil.abs(position.size).mulDecimal(oraclePrice),
+            MathUtil.abs(size).mulDecimal(oraclePrice),
             marginValues.collateralUsd,
             PerpMarketConfiguration.load(marketId),
             globalConfig
         );
 
         Position.Data memory newPosition = Position.Data(
-            position.size,
+            size,
             position.entryFundingAccrued,
             position.entryUtilizationAccrued,
             position.entryPrice,
@@ -358,12 +361,9 @@ contract LiquidationModule is ILiquidationModule {
 
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        uint256 oraclePrice = market.getOraclePrice();
 
-        // Cannot liquidate margin if trader has a position.
-        if (market.positions[accountId].size != 0) {
-            revert ErrorUtil.PositionFound(accountId, marketId);
-        }
-        if (!isMarginLiquidatable(accountId, marketId)) {
+        if (!Margin.isMarginLiquidatable(accountId, market, oraclePrice)) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
 
@@ -373,14 +373,14 @@ contract LiquidationModule is ILiquidationModule {
             emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
             delete market.orders[accountId];
         }
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            market.getOraclePrice()
+            oraclePrice
         );
 
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         uint256 keeperReward = getMarginLiquidationOnlyReward(
             marginValues.collateralUsd,
             PerpMarketConfiguration.load(marketId),
@@ -476,18 +476,13 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function isMarginLiquidatable(uint128 accountId, uint128 marketId) public view returns (bool) {
+    function isMarginLiquidatable(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (bool) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        // Cannot liquidate margin when there is an open position.
-        if (market.positions[accountId].size != 0) {
-            return false;
-        }
-
-        return
-            Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd ==
-            0;
+        return Margin.isMarginLiquidatable(accountId, market, market.getOraclePrice());
     }
 
     /**
