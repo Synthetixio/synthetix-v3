@@ -643,12 +643,8 @@ jobs:
             TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
             echo "$TEST_FILES" | tr ' ' '\n' | while read -r TEST; do
               echo "TEST: $TEST"
+              mocha --jobs 1 --retries 0 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/$TEST.xml --exit "$TEST"
             done
-
-      #
-      #            echo "TEST_FILES:"
-      #            echo $TEST_FILES
-      #            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
