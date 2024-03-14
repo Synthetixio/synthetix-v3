@@ -17,7 +17,7 @@ import {
   setMarketConfigurationById,
 } from '../../helpers';
 
-describe('OrderModule', () => {
+describe('OrderModule fees', () => {
   const bs = bootstrap(genBootstrap());
   const { systems, restore, provider, collateralsWithoutSusd, markets, traders } = bs;
 
