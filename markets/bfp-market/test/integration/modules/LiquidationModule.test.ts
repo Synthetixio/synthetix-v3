@@ -2556,6 +2556,20 @@ describe('LiquidationModule', () => {
       );
     });
 
+    it('should return 0 when no position found', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+      const { mm, im } = await PerpMarketProxy.getLiquidationMarginUsd(
+        trader.accountId,
+        marketId,
+        0
+      );
+
+      assertBn.isZero(mm);
+      assertBn.isZero(im);
+    });
+
     it('should calculate IM and MM for existing position', async () => {
       const { PerpMarketProxy } = systems();
       const {
@@ -2577,7 +2591,7 @@ describe('LiquidationModule', () => {
         0
       );
 
-      // Data for calcs
+      // Data for calcs.
       const { maxLiquidatableCapacity } =
         await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
       const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
@@ -2634,7 +2648,7 @@ describe('LiquidationModule', () => {
         desiredSize
       );
 
-      // Data for calcs
+      // Data for calcs.
       const { maxLiquidatableCapacity } =
         await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
       const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();

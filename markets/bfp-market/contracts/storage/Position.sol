@@ -527,10 +527,7 @@ library Position {
     }
 
     /**
-     * @dev Returns the health data given the marketId, config, and position{...} details.
-     *
-     * NOTE: marginUsd _must_ be calculated with `useDiscountedCollateralPrice=true` in order to correctly calculate a position's
-     * health related data and factor.
+     * @dev Returns the health data given the `marketId`, `config`, and position{...} details.
      */
     function getHealthData(
         PerpMarket.Data storage market,
@@ -542,6 +539,11 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues
     ) internal view returns (Position.HealthData memory healthData) {
+        // We can short-circuit entire getHealthData calcs when size is zero.
+        if (size == 0) {
+            return healthData;
+        }
+
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
         healthData.accruedFunding = size.mulDecimal(
