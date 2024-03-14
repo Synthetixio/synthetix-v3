@@ -112,7 +112,7 @@ library Order {
             .price
             .toUint();
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
-            (globalConfig.keeperSettlementGasUnits * block.basefee * 1e9)
+            globalConfig.keeperSettlementGasUnits * block.basefee
         );
         uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
             DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
