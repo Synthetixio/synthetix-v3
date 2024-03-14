@@ -169,7 +169,6 @@ jobs:
       - restore_cache:
           keys:
             - cannon-{{ .Environment.CIRCLE_SHA1 }}
-            - cannon-
 
       - run:
           name: "Generate testable contracts sources"
@@ -245,6 +244,16 @@ jobs:
         type: string
       parallelism:
         type: integer
+      mocha-retries:
+        type: integer
+        default: 2
+      batch-retries:
+        type: integer
+        default: 5
+      batch-size:
+        type: integer
+        default: 1
+
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: << parameters.parallelism >>
@@ -280,18 +289,26 @@ jobs:
           name: "Run tests"
           environment:
             REPORT_GAS: true
+            CANNON_REGISTRY_PRIORITY: local
+            MOCHA_RETRIES: << parameters.mocha-retries >>
+            BATCH_RETRIES: << parameters.batch-retries >>
+            BATCH_SIZE: << parameters.batch-size >>
           command: |
+            set -eo pipefail
+            export RUNNER=$PWD/.circleci/test-batch.js
             export PATH=$PATH:$PWD/node_modules/.bin
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
-            echo "TEST_FILES:"
-            echo $TEST_FILES
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --jobs 1 --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
+            export TEST_FILES=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            node $RUNNER
 
       - store_test_results:
           path: "/tmp/junit"
+
+      - store_artifacts:
+          path: "/tmp/junit"
+          destination: "."
 
   test-core-utils:
     parameters:
@@ -603,23 +620,29 @@ jobs:
 workflows:
   version: 2.1
 
-  bfp:
+  anvil-per-test:
     when:
       or:
-        - equal: ["bfp", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
     jobs:
-      - lint
       - build-testable
+
+      - test-contracts:
+          name: "test-perps-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/perps-market"
+          parallelism: 8
+
       - test-contracts:
           name: "test-bfp-market"
           requires: [build-testable]
           workspace: "@synthetixio/bfp-market"
-          parallelism: 8
+          parallelism: 4
 
   tests:
     unless:
       or:
-        - equal: ["bfp", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
@@ -635,12 +658,14 @@ workflows:
           requires: [build-testable]
           workspace: "@synthetixio/main"
           parallelism: 2
+          batch-size: 8
 
       - test-contracts:
           name: "test-oracle-manager"
           requires: [build-testable]
           workspace: "@synthetixio/oracle-manager"
           parallelism: 1
+          batch-size: 5
 
       #- test-contracts: TODO: enable when we have some tests
       #    name: "test-governance"
@@ -652,18 +677,21 @@ workflows:
           requires: [build-testable]
           workspace: "@synthetixio/spot-market"
           parallelism: 2
+          batch-size: 3
 
       - test-contracts:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
           parallelism: 8
+          batch-size: 1
 
       - test-contracts:
           name: "test-bfp-market"
           requires: [build-testable]
           workspace: "@synthetixio/bfp-market"
-          parallelism: 8
+          parallelism: 6
+          batch-size: 1
 
       #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"
