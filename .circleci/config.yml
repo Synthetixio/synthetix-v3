@@ -168,8 +168,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - cannon-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
-            - cannon-{{ .Branch }}-
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
 
       - run:
           name: "Generate testable contracts sources"
@@ -231,7 +230,7 @@ jobs:
       - run: yarn workspaces foreach --all --verbose run check:storage
 
       - save_cache:
-          key: cannon-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          key: cannon-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "~/.local/share/cannon"
       - save_cache:
@@ -274,7 +273,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - cannon-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
