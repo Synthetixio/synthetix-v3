@@ -325,6 +325,9 @@ library Margin {
         return price.mulDecimal(DecimalMath.UNIT - discount);
     }
 
+    /**
+     * @dev Returns whether an account in a specific market's margin can be liquidated.
+     */
     function isMarginLiquidatable(
         uint128 accountId,
         PerpMarket.Data storage market
@@ -333,8 +336,14 @@ library Margin {
         if (market.positions[accountId].size != 0) {
             return false;
         }
-        return
-            Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd ==
-            0;
+
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            market.getOraclePrice()
+        );
+
+        // Ensure that there is collateralUsd on the account to ensure this account margin can be liquidated.
+        return marginValues.discountedMarginUsd == 0 && marginValues.collateralUsd != 0;
     }
 }

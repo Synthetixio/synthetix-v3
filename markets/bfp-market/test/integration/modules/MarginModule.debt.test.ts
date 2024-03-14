@@ -22,7 +22,7 @@ import {
 
 describe('MarginModule Debt', async () => {
   const bs = bootstrap(genBootstrap());
-  const { collaterals, collateralsWithoutSusd, systems, provider, restore } = bs;
+  const { collaterals, collateralsWithoutSusd, systems, provider, restore, keeper } = bs;
 
   beforeEach(restore);
 
@@ -329,6 +329,7 @@ describe('MarginModule Debt', async () => {
       assertBn.equal(sUSDBalanceAfter, extraSUSDBalance);
     });
   });
+
   describe('isMarginLiquidatable', () => {
     it('should revert on invalid market id', async () => {
       const { PerpMarketProxy } = systems();
@@ -365,6 +366,17 @@ describe('MarginModule Debt', async () => {
       const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, openOrder);
 
+      const isMarginLiquidatable = await PerpMarketProxy.isMarginLiquidatable(
+        trader.accountId,
+        marketId
+      );
+      assert.equal(isMarginLiquidatable, false);
+    });
+
+    it('should return false when account has no collateral', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, marketId } = await genTrader(bs);
       const isMarginLiquidatable = await PerpMarketProxy.isMarginLiquidatable(
         trader.accountId,
         marketId
@@ -417,6 +429,7 @@ describe('MarginModule Debt', async () => {
       assert.equal(isMarginLiquidatableAfter, true);
     });
   });
+
   describe('liquidateMarginOnly', () => {
     it('should revert on invalid market id', async () => {
       const { PerpMarketProxy } = systems();
@@ -443,7 +456,7 @@ describe('MarginModule Debt', async () => {
       );
     });
 
-    it('should revert if we have a position', async () => {
+    it('should revert when there is an open a position', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
@@ -459,7 +472,7 @@ describe('MarginModule Debt', async () => {
 
       await assertRevert(
         PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
-        `PositionFound("${trader.accountId}", "${marketId}")`,
+        `CannotLiquidateMargin()`,
         PerpMarketProxy
       );
     });
@@ -553,6 +566,23 @@ describe('MarginModule Debt', async () => {
       const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(accountDigest.debtUsd);
       assertBn.isZero(accountDigest.collateralUsd);
+    });
+
+    it('should revert and not pay any keeper fees to an empty account', async () => {
+      const { PerpMarketProxy, USD } = systems();
+
+      const { marketId } = await depositMargin(bs, genTrader(bs));
+      await PerpMarketProxy['createAccount(uint128)'](0x1337);
+
+      const balanceBefore = await USD.balanceOf(await keeper().getAddress());
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).liquidateMarginOnly(0x1337, marketId),
+        `CannotLiquidateMargin()`,
+        PerpMarketProxy
+      );
+      const balanceAfter = await USD.balanceOf(await keeper().getAddress());
+
+      assertBn.equal(balanceAfter, balanceBefore);
     });
   });
 });
