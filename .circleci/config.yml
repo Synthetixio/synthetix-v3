@@ -637,39 +637,14 @@ jobs:
             REPORT_GAS: true
             CANNON_REGISTRY_PRIORITY: local
           command: |
+            set -eo pipefail
+            export RUNNER=$PWD/.circleci/test_batch.sh
             export PATH=$PATH:$PWD/node_modules/.bin
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
-
-            execute_batch () {
-                BATCH_INDEX=$1
-                shift
-                BATCH=("${@}")
-                for ATTEMPT in {1..3}; do
-                    mocha --jobs 1 --retries 0 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile="/tmp/junit/batch-$BATCH_INDEX.xml" --exit "${BATCH[@]}" && break || {
-                        echo "Batch $BATCH_INDEX failed... Retrying ATTEMPT $ATTEMPT..."
-                        sleep 1
-                    }
-                done
-            }
-
-            BATCH_INDEX=0
-            BATCH=()
-            echo "$TEST_FILES" | tr ' ' '\n' | while read -r TEST; do
-                BATCH+=("$TEST")
-                if [ ${#BATCH[@]} -eq 5 ]; then
-                    echo "Running batch $BATCH_INDEX..."
-                    execute_batch $BATCH_INDEX "${BATCH[@]}"
-                    BATCH=()
-                    ((BATCH_INDEX++))
-                fi
-            done
-            if [ ${#BATCH[@]} -ne 0 ]; then
-                echo "Running batch $BATCH_INDEX..."
-                execute_batch $BATCH_INDEX "${BATCH[@]}"
-            fi
+            export TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            $RUNNER
 
       - store_test_results:
           path: "/tmp/junit"
