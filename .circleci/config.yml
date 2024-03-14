@@ -624,7 +624,7 @@ workflows:
   anvil-per-test:
     when:
       or:
-        - equal: ["anvil-per-test", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
     jobs:
       - build-testable
 
@@ -643,7 +643,7 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["anvil-per-test", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
@@ -687,7 +687,7 @@ workflows:
           name: "test-bfp-market"
           requires: [build-testable]
           workspace: "@synthetixio/bfp-market"
-          parallelism: 8
+          parallelism: 4
 
       #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"
