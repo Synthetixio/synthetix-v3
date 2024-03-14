@@ -168,12 +168,13 @@ describe('Liquidation - multi collateral', () => {
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), bn(80_000));
     });
 
-    [
-      { size: bn(-1) }, // btc
-      { size: bn(20) }, // eth
-      { size: bn(2000) }, // link
-    ].forEach(({ size }, i) => {
-      it(`should have correct position for ${perpsMarketConfigs[i].token}`, async () => {
+    it(`should have correct positions`, async () => {
+      const sizes = [
+        { i: 0, size: bn(-1) }, // btc
+        { i: 1, size: bn(20) }, // eth
+        { i: 2, size: bn(2000) }, // link
+      ];
+      for await (const { size, i } of sizes) {
         const [positionPnl, , positionSize] = await systems().PerpsMarket.getOpenPosition(
           2,
           perpsMarkets()[i].marketId()
@@ -186,7 +187,7 @@ describe('Liquidation - multi collateral', () => {
         ).toBN();
         assertBn.equal(positionPnl, pnl);
         assertBn.equal(positionSize, size);
-      });
+      }
     });
   });
 
@@ -243,14 +244,22 @@ describe('Liquidation - multi collateral', () => {
         assertBn.equal(await systems().USD.balanceOf(await keeper().getAddress()), bn(1000));
       });
 
-      [bn(1), bn(20), bn(2000)].forEach((liquidatedSize, i) => {
-        it(`emits position liquidated event`, async () => {
-          await assertEvent(
-            liquidateTxn,
-            `PositionLiquidated(2, ${perpsMarkets()[i].marketId()}, ${liquidatedSize}, 0)`,
-            systems().PerpsMarket
-          );
-        });
+      it(`emits position liquidated event`, async () => {
+        await assertEvent(
+          liquidateTxn,
+          `PositionLiquidated(2, ${perpsMarkets()[0].marketId()}, ${bn(1)}, 0)`,
+          systems().PerpsMarket
+        );
+        await assertEvent(
+          liquidateTxn,
+          `PositionLiquidated(2, ${perpsMarkets()[1].marketId()}, ${bn(20)}, 0)`,
+          systems().PerpsMarket
+        );
+        await assertEvent(
+          liquidateTxn,
+          `PositionLiquidated(2, ${perpsMarkets()[2].marketId()}, ${bn(2000)}, 0)`,
+          systems().PerpsMarket
+        );
       });
 
       it('sold all market collateral for usd', async () => {

@@ -138,19 +138,18 @@ commands:
             fi
 jobs:
   build-testable:
+    parameters:
+      wat:
+        type: string
+        default: "--all"
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      #- install-ipfs
-      #- run-ipfs-daemon
       - yarn-install
-      #- wait-for-ipfs
 
-      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run build:ts
 
       - restore_cache:
           keys:
@@ -172,7 +171,7 @@ jobs:
 
       - run:
           name: "Generate testable contracts sources"
-          command: yarn workspaces foreach --all --topological-dev --verbose run generate-testable
+          command: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run generate-testable
       - save_cache:
           key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -183,7 +182,7 @@ jobs:
           name: "Build testable contracts"
           environment:
             CANNON_REGISTRY_PRIORITY: "local"
-          command: yarn workspaces foreach --all --topological-dev --verbose run build-testable
+          command: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run build-testable
 
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -227,7 +226,7 @@ jobs:
             - "auxiliary/TrustedMulticallForwarder/cache"
             - "auxiliary/TrustedMulticallForwarder/typechain-types"
 
-      - run: yarn workspaces foreach --all --verbose run check:storage
+      - run: yarn workspaces foreach << parameters.wat >> --verbose run check:storage
 
       - save_cache:
           key: cannon-{{ .Environment.CIRCLE_SHA1 }}
@@ -620,23 +619,18 @@ jobs:
 workflows:
   version: 2.1
 
-  anvil-per-test:
+  skip:
     when:
       or:
         - equal: ["skip", << pipeline.git.branch >>]
     jobs:
-      - build-testable
+      - build-testable:
+          wat: "--recursive --from '@synthetixio/perps-market'"
 
       - test-contracts:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 8
-
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          workspace: "@synthetixio/bfp-market"
           parallelism: 4
 
   tests:
