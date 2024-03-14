@@ -361,8 +361,9 @@ contract LiquidationModule is ILiquidationModule {
 
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        uint256 oraclePrice = market.getOraclePrice();
 
-        if (!Margin.isMarginLiquidatable(accountId, market)) {
+        if (!Margin.isMarginLiquidatable(accountId, market, oraclePrice)) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
 
@@ -376,7 +377,7 @@ contract LiquidationModule is ILiquidationModule {
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            market.getOraclePrice()
+            oraclePrice
         );
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -481,7 +482,7 @@ contract LiquidationModule is ILiquidationModule {
     ) external view returns (bool) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.isMarginLiquidatable(accountId, market);
+        return Margin.isMarginLiquidatable(accountId, market, market.getOraclePrice());
     }
 
     /**

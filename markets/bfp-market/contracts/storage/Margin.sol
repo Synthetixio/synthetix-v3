@@ -330,20 +330,16 @@ library Margin {
      */
     function isMarginLiquidatable(
         uint128 accountId,
-        PerpMarket.Data storage market
+        PerpMarket.Data storage market,
+        uint256 price
     ) internal view returns (bool) {
         // Cannot liquidate margin when there is an open position.
         if (market.positions[accountId].size != 0) {
             return false;
         }
 
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
-            accountId,
-            market,
-            market.getOraclePrice()
-        );
-
         // Ensure that there is collateralUsd on the account to ensure this account margin can be liquidated.
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, price);
         return marginValues.discountedMarginUsd == 0 && marginValues.collateralUsd != 0;
     }
 }
