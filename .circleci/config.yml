@@ -659,12 +659,14 @@ workflows:
           requires: [build-testable]
           workspace: "@synthetixio/main"
           parallelism: 2
+          batch-size: 8
 
       - test-contracts:
           name: "test-oracle-manager"
           requires: [build-testable]
           workspace: "@synthetixio/oracle-manager"
           parallelism: 1
+          batch-size: 5
 
       #- test-contracts: TODO: enable when we have some tests
       #    name: "test-governance"
@@ -676,18 +678,21 @@ workflows:
           requires: [build-testable]
           workspace: "@synthetixio/spot-market"
           parallelism: 2
+          batch-size: 3
 
       - test-contracts:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
           parallelism: 8
+          batch-size: 1
 
       - test-contracts:
           name: "test-bfp-market"
           requires: [build-testable]
           workspace: "@synthetixio/bfp-market"
-          parallelism: 4
+          parallelism: 6
+          batch-size: 1
 
       #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"
