@@ -40,6 +40,7 @@ library Position {
         uint256 orderFee;
         uint256 keeperFee;
         uint256 newMarginUsd;
+        Margin.MarginValues marginValues;
     }
 
     struct HealthData {
@@ -215,6 +216,7 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // --- Existing position validation --- //
+
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
@@ -303,7 +305,9 @@ library Position {
                 orderFee,
                 keeperFee,
                 // NOTE: Notice the lack of discounted margin.
-                getNextMarginUsd(marginValues.marginUsd, orderFee, keeperFee)
+                getNextMarginUsd(marginValues.marginUsd, orderFee, keeperFee),
+                // NOTE: `marginValues` are calc on the _current_ position (i.e. before settlement).
+                marginValues
             );
     }
 
