@@ -12,7 +12,6 @@ import {
   commitAndSettle,
   depositMargin,
   findEventSafe,
-  setBaseFeePerGas,
   setMarketConfiguration,
   setMarketConfigurationById,
 } from '../../helpers';
@@ -204,8 +203,6 @@ describe('OrderModule fees', () => {
     });
 
     describe('keeperFee', () => {
-      afterEach(async () => await setBaseFeePerGas(1, provider()));
-
       const getKeeperFee = (
         PerpMarketProxy: PerpMarketProxy,
         receipt: ethers.ContractReceipt
