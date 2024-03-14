@@ -658,11 +658,11 @@ workflows:
         - equal: ["anvil-per-test", << pipeline.git.branch >>]
     jobs:
       - build-testable:
-          wat: "--recursive --from '@synthetixio/perps-market'"
+          wat: "--recursive --from '@synthetixio/bfp-market'"
       - anvil-per-test:
-          name: "test-perps-market"
+          name: "test-bfp-market"
           requires: [build-testable]
-          workspace: "@synthetixio/perps-market"
+          workspace: "@synthetixio/bfp-market"
           parallelism: 1
 
   tests:
