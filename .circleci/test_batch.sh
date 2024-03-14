@@ -38,7 +38,7 @@ BATCH_INDEX=0
 BATCH=()
 echo "$TEST_FILES" | tr ' ' '\n' | while read -r TEST; do
   BATCH+=("$TEST")
-  if [ ${#BATCH[@]} -eq 5 ]; then
+  if [ ${#BATCH[@]} -eq 1 ]; then
     execute_batch $BATCH_INDEX "${BATCH[@]}"
     BATCH=()
     ((BATCH_INDEX++))
