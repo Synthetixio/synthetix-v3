@@ -606,23 +606,23 @@ contract MarginModule is IMarginModule {
             oraclePrice
         );
         Position.Data storage position = market.positions[accountId];
-        int128 positionSize = position.size;
+        int128 size = position.size;
 
         // When there is no position then we can ignore all running losses/profits but still need to include debt
         // as they may have realized a prior negative PnL.
-        if (positionSize == 0) {
+        if (size == 0) {
             return marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd;
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         (uint256 im, , uint256 liqFlagReward) = Position.getLiquidationMarginUsd(
-            positionSize,
+            size,
             oraclePrice,
             marginValues.collateralUsd,
             marketConfig
         );
         uint256 liqKeeperFee = Position.getLiquidationKeeperFee(
-            MathUtil.abs(positionSize).to128(),
+            MathUtil.abs(size).to128(),
             marketConfig,
             PerpMarketConfiguration.load()
         );

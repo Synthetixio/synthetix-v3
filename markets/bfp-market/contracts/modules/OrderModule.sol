@@ -300,7 +300,7 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        // We call `getHeathData` here to fetch accrued utilization before utilization recomputation.
+        // We call `getHeathData` here to fetch _current_ accrued utilization before utilization recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,

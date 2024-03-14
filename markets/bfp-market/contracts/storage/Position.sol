@@ -441,13 +441,19 @@ library Position {
      * impact to skew, the more risk stakers take on.
      */
     function getLiquidationMarginUsd(
-        int128 positionSize,
+        int128 size,
         uint256 price,
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint128 absSize = MathUtil.abs(positionSize).to128();
+
+        // Short-circuit empty position and return zero'd values.
+        if (size == 0) {
+            return (0, 0, 0);
+        }
+
+        uint128 absSize = MathUtil.abs(size).to128();
         uint256 notional = absSize.mulDecimal(price);
 
         uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(
@@ -468,21 +474,6 @@ library Position {
             marketConfig.minMarginUsd +
             liqFlagReward +
             getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
-    }
-
-    function getMaintenanceMargin(
-        int128 positionSize,
-        uint256 price,
-        uint256 collateralUsd,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256) {
-        (, uint256 mm, ) = getLiquidationMarginUsd(
-            positionSize,
-            price,
-            collateralUsd,
-            marketConfig
-        );
-        return mm;
     }
 
     /**
@@ -540,14 +531,11 @@ library Position {
     }
 
     /**
-     * @dev Returns the health data given the marketId, config, and position{...} details.
-     *
-     * NOTE: marginUsd _must_ be calculated with `useDiscountedCollateralPrice=true` in order to correctly calculate a position's
-     * health related data and factor.
+     * @dev Returns the health data given the `marketId`, `config`, and position{...} details.
      */
     function getHealthData(
         PerpMarket.Data storage market,
-        int128 positionSize,
+        int128 size,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
         uint256 positionEntryUtilizationAccrued,
@@ -555,23 +543,34 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues
     ) internal view returns (Position.HealthData memory healthData) {
+        // We can short-circuit entire getHealthData calcs when size is zero.
+        if (size == 0) {
+            return healthData;
+        }
+
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
-        healthData.accruedFunding = positionSize.mulDecimal(
+        healthData.accruedFunding = size.mulDecimal(
             unrecordedFunding + market.currentFundingAccruedComputed - positionEntryFundingAccrued
         );
-        healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
+        healthData.accruedUtilization = MathUtil.abs(size).mulDecimal(price).mulDecimal(
             market.getUnrecordedUtilization() +
                 market.currentUtilizationAccruedComputed -
                 positionEntryUtilizationAccrued
         );
 
-        // Calculate this position's PnL
-        healthData.pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
-        // margin / mm <= 1 means liquidation.
-        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(
-            getMaintenanceMargin(positionSize, price, marginValues.collateralUsd, marketConfig)
+        // Calculate this position's PnL.
+        healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+
+        // `margin / mm <= 1` means liquidation.
+        (, uint256 mm, ) = getLiquidationMarginUsd(
+            size,
+            price,
+            marginValues.collateralUsd,
+            marketConfig
         );
+        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(mm);
+
         return healthData;
     }
 
