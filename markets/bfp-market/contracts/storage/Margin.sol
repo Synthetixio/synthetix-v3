@@ -324,4 +324,17 @@ library Margin {
         // Apply discount on price by the discount.
         return price.mulDecimal(DecimalMath.UNIT - discount);
     }
+
+    function isMarginLiquidatable(
+        uint128 accountId,
+        PerpMarket.Data storage market
+    ) internal view returns (bool) {
+        // Cannot liquidate margin when there is an open position.
+        if (market.positions[accountId].size != 0) {
+            return false;
+        }
+        return
+            Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd ==
+            0;
+    }
 }

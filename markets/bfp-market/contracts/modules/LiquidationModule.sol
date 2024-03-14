@@ -362,11 +362,7 @@ contract LiquidationModule is ILiquidationModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        // Cannot liquidate margin if trader has a position.
-        if (market.positions[accountId].size != 0) {
-            revert ErrorUtil.PositionFound(accountId, marketId);
-        }
-        if (!isMarginLiquidatable(accountId, marketId)) {
+        if (!Margin.isMarginLiquidatable(accountId, market)) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
 
@@ -376,7 +372,6 @@ contract LiquidationModule is ILiquidationModule {
             emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
             delete market.orders[accountId];
         }
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
@@ -384,6 +379,7 @@ contract LiquidationModule is ILiquidationModule {
             market.getOraclePrice()
         );
 
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         uint256 keeperReward = getMarginLiquidationOnlyReward(
             marginValues.collateralUsd,
             PerpMarketConfiguration.load(marketId),
@@ -479,18 +475,13 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function isMarginLiquidatable(uint128 accountId, uint128 marketId) public view returns (bool) {
+    function isMarginLiquidatable(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (bool) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        // Cannot liquidate margin when there is an open position.
-        if (market.positions[accountId].size != 0) {
-            return false;
-        }
-
-        return
-            Margin.getMarginUsd(accountId, market, market.getOraclePrice()).discountedMarginUsd ==
-            0;
+        return Margin.isMarginLiquidatable(accountId, market);
     }
 
     /**
