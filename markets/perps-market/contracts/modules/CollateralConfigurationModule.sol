@@ -160,4 +160,141 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         distributor = lam.distributor;
         poolDelegatedCollateralTypes = lam.poolDelegatedCollateralTypes;
     }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function setCollateralLiquidateRewardRatio(
+        uint128 collateralLiquidateRewardRatioD18
+    ) external override {
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration
+            .load()
+            .collateralLiquidateRewardRatioD18 = collateralLiquidateRewardRatioD18;
+
+        emit CollateralLiquidateRewardRatioSet(collateralLiquidateRewardRatioD18);
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function getCollateralLiquidateRewardRatio()
+        external
+        view
+        override
+        returns (uint128 collateralLiquidateRewardRatioD18)
+    {
+        return GlobalPerpsMarketConfiguration.load().collateralLiquidateRewardRatioD18;
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function setRewardDistributorImplementation(
+        address rewardDistributorImplementation
+    ) external override {
+        if (rewardDistributorImplementation == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        if (!AddressUtil.isContract(rewardDistributorImplementation)) {
+            revert AddressError.NotAContract(rewardDistributorImplementation);
+        }
+
+        if (
+            !ERC165Helper.safeSupportsInterface(
+                rewardDistributorImplementation,
+                type(IPerpRewardDistributor).interfaceId
+            )
+        ) {
+            revert IDistributorErrors.InvalidDistributorContract(rewardDistributorImplementation);
+        }
+
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration
+            .load()
+            .rewardDistributorImplementation = rewardDistributorImplementation;
+
+        emit RewardDistributorImplementationSet(rewardDistributorImplementation);
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function getRewardDistributorImplementation()
+        external
+        view
+        override
+        returns (address rewardDistributorImplementation)
+    {
+        return GlobalPerpsMarketConfiguration.load().rewardDistributorImplementation;
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function registerDistributor(
+        uint128 poolId,
+        address token,
+        address previousDistributor,
+        string calldata name,
+        uint128 collateralId,
+        address[] calldata poolDelegatedCollateralTypes
+    ) external override returns (address) {
+        OwnableStorage.onlyOwner();
+        // Using loadValid here to ensure we are tying the distributor to a valid collateral.
+        LiquidationAssetManager.Data storage lam = CollateralConfiguration
+            .loadValid(collateralId)
+            .lam;
+
+        lam.id = collateralId;
+
+        // validate and set poolDelegatedCollateralTypes
+        lam.setValidPoolDelegatedCollateralTypes(poolDelegatedCollateralTypes);
+
+        // reuse current or clone distributor
+        lam.setValidDistributor(previousDistributor);
+
+        // A reward token to distribute must exist.
+        if (token == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        IPerpRewardDistributor distributor = IPerpRewardDistributor(lam.distributor);
+        distributor.initialize(
+            address(PerpsMarketFactory.load().synthetix),
+            address(this),
+            poolId,
+            token,
+            name
+        );
+
+        emit RewardDistributorRegistered(lam.distributor);
+        return lam.distributor;
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function isRegistered(address distributor) external view override returns (bool) {
+        return distributor != address(0) && IPerpRewardDistributor(distributor).getPoolId() != 0;
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function getRegisteredDistributor(
+        uint128 collateralId
+    )
+        external
+        view
+        override
+        returns (address distributor, address[] memory poolDelegatedCollateralTypes)
+    {
+        LiquidationAssetManager.Data storage lam = CollateralConfiguration.loadValidLam(
+            collateralId
+        );
+        distributor = lam.distributor;
+        poolDelegatedCollateralTypes = lam.poolDelegatedCollateralTypes;
+    }
 }
