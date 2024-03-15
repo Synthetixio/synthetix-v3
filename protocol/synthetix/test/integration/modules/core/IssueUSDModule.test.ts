@@ -283,7 +283,7 @@ describe('IssueUSDModule', function () {
     });
   });
 
-  describe('burnUSD()', () => {
+  describe('burnUsd()', () => {
     before(restore);
 
     before('mint', async () => {
