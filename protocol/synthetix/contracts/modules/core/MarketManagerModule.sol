@@ -44,9 +44,17 @@ contract MarketManagerModule is IMarketManagerModule {
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+
+    /// @notice SIP-365: slot is unused, but it is reserved for future use.
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
+
+    /// @notice SIP-365: slot is unused, but it is reserved for future use.
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
+
+    /// @notice SIP-365: slot is unused, but it is reserved for future use.
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
+
+    /// @notice SIP-365: slot is unused, but it is reserved for future use.
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS =
         "withdrawMarketUsd_feeAddress";
 
