@@ -54,6 +54,9 @@ artifact = "PerpsMarketModule"
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
 
+[contract.CollateralConfigurationModule]
+artifact = "CollateralConfigurationModule"
+
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 
@@ -87,6 +90,7 @@ contracts = [
     "FeatureFlagModule",
     "LiquidationModule",
     "MarketConfigurationModule",
+    "CollateralConfigurationModule",
     "GlobalPerpsMarketModule",
 ]
 
