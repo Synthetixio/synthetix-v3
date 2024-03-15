@@ -194,7 +194,7 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external override returns (uint256 feeAmount) {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
@@ -202,22 +202,12 @@ contract MarketManagerModule is IMarketManagerModule {
         if (ERC2771Context._msgSender() != market.marketAddress)
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
-        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
-        address feeAddress = address(0);
-        address configFeeAddress = Config.readAddress(
-            _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS,
-            address(0)
-        );
-
-        if (feeAmount > 0 && configFeeAddress != address(0)) {
-            feeAddress = configFeeAddress;
-        }
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting.
-        market.creditCapacityD18 += (amount - feeAmount).toInt().to128();
-        market.netIssuanceD18 -= (amount - feeAmount).toInt().to128();
+        market.creditCapacityD18 += amount.toInt().to128();
+        market.netIssuanceD18 -= amount.toInt().to128();
 
         // Burn the incoming USD.
         // Note: Instead of burning, we could transfer USD to and from the MarketManager,
@@ -228,12 +218,6 @@ contract MarketManagerModule is IMarketManagerModule {
             ERC2771Context._msgSender(),
             amount
         );
-
-        if (feeAmount > 0 && feeAddress != address(0)) {
-            IUSDTokenModule(address(usdToken)).mint(feeAddress, feeAmount);
-
-            emit MarketSystemFeePaid(marketId, feeAmount);
-        }
 
         emit MarketUsdDeposited(
             marketId,
