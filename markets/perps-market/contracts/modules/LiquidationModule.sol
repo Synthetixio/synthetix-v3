@@ -78,9 +78,13 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint128 accountId
     ) external override returns (uint256 liquidationReward) {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
-        // TODO: ensure no positions
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+
+        if (account.hasOpenPositions()) {
+            revert AccountHasOpenPositions(accountId);
+        }
+
         (bool isEligible, ) = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
         if (isEligible) {
             // margin is sent to liquidation rewards distributor in getMarginLiquidationCostAndSeizeMargin
