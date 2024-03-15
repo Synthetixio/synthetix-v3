@@ -1,4 +1,5 @@
 const { execSync } = require('node:child_process');
+const { existsSync } = require('node:fs');
 
 const { TEST_FILES = '', BATCH_SIZE = '3', BATCH_RETRIES = '3', MOCHA_RETRIES = '2' } = process.env;
 
@@ -10,6 +11,7 @@ function padding() {
 
 function executeBatch(index, batch) {
   console.log(`Running batch ${index}...`);
+  const isHardhat = existsSync('hardhat.config.ts');
 
   for (let attempt = 1; attempt <= parseInt(BATCH_RETRIES); attempt++) {
     console.log(`Running attempt ${attempt}...`);
@@ -19,7 +21,7 @@ function executeBatch(index, batch) {
       '--jobs 1',
       `--retries ${MOCHA_RETRIES}`,
       `--timeout 10000`,
-      `--require hardhat/register`,
+      isHardhat ? `--require hardhat/register` : '--require ts-node/register',
       `--reporter mocha-junit-reporter`,
       `--reporter-options mochaFile=/tmp/junit/batch-${index}.xml,outputs=true,toConsole=true`,
       `--exit`,
