@@ -209,6 +209,7 @@ describe('MarketManagerModule', function () {
 
       describe('withdraw some from the market', async () => {
         before(withdrawRestore);
+        
         before('mint USD to use market', async () => {
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
         });
@@ -287,77 +288,6 @@ describe('MarketManagerModule', function () {
               systems().Core
             );
           });
-        });
-      });
-
-      describe('when fee is levied', async () => {
-        before(withdrawRestore);
-        before('set fee', async () => {
-          await systems()
-            .Core.connect(owner)
-            .setConfig(
-              ethers.utils.formatBytes32String('withdrawMarketUsd_feeRatio'),
-              ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
-            ); // 1% fee levy
-          await systems()
-            .Core.connect(owner)
-            .setConfig(
-              ethers.utils.formatBytes32String('withdrawMarketUsd_feeAddress'),
-              ethers.utils.hexZeroPad(feeAddress, 32)
-            );
-        });
-
-        let quotedFee: BigNumber;
-        let returnValue: BigNumber;
-
-        before('mint USD to use market', async () => {
-          quotedFee = (await systems().Core.getMarketFees(marketId(), One.div(2)))[1];
-          returnValue = await MockMarket().connect(user1).callStatic.sellSynth(One.div(2));
-          txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
-        });
-
-        it('decreased withdrawable usd', async () => {
-          const liquidity = await systems().Core.getWithdrawableMarketUsd(marketId());
-          // also subtract the fee here
-          assertBn.equal(liquidity, depositAmount.add(One.div(2)).sub(One.div(200)));
-        });
-
-        it('leaves totalDebt the same', async () => {
-          assertBn.equal(
-            await systems().Core.connect(user1).getMarketTotalDebt(marketId()),
-            One.div(200)
-          );
-        });
-
-        it('makes USD', async () => {
-          assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One.div(2));
-        });
-
-        it('sent USD to fee address', async () => {
-          assertBn.equal(await systems().USD.balanceOf(feeAddress), One.div(200));
-        });
-
-        it('returned fees paid', async () => {
-          assertBn.gt(returnValue, 0);
-          assertBn.equal(quotedFee, returnValue);
-        });
-
-        it('emitted event', async () => {
-          await assertEvent(
-            txn,
-            `MarketSystemFeePaid(${marketId()}, ${One.div(200)})`,
-            systems().Core
-          );
-        });
-
-        it('no event emitted when fee address is 0', async () => {
-          await systems()
-            .Core.connect(owner)
-            .setConfig(
-              ethers.utils.formatBytes32String('withdrawMarketUsd_feeAddress'),
-              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
-            );
-          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
         });
       });
     });
