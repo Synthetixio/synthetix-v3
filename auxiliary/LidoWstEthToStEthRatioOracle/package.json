@@ -27,7 +27,6 @@
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/oracle-manager": "workspace:*",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.2",
