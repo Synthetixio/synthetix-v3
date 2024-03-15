@@ -510,6 +510,27 @@ jobs:
           branch_base: main
           commit_message: "Update Subgraphs"
 
+  test-forge:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    parallelism: << parameters.parallelism >>
+    steps:
+      - checkout
+      - install-foundry
+      - yarn-install
+      - run: yarn workspace "<< parameters.workspace >>" run forge-test
+      - run: yarn workspace "<< parameters.workspace >>" run forge-coverage
+
+      # TODO: Setup codecov job
+      - store_artifacts:
+          path: "lcov.info"
+
 workflows:
   version: 2.1
 
@@ -609,6 +630,10 @@ workflows:
       #    name: "test-legacy-market"
       #    requires: [build-testable]
       #    workspace: "@synthetixio/legacy-market"
+
+      - test-forge:
+          name: "test-rewards-distributor"
+          workspace: "@synthetixio/rewards-distributor"
 
       - test-subgraph:
           name: "test-subgraph-core"

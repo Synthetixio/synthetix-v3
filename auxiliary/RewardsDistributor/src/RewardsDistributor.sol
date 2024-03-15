@@ -2,12 +2,13 @@
 pragma solidity ^0.8.13;
 
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
+import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
+import {IPoolModule} from "@synthetixio/main/contracts/interfaces/IPoolModule.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import {ISynthetixCore} from "./interfaces/ISynthetixCore.sol";
 
 contract RewardsDistributor is IRewardDistributor {
     error NotEnoughRewardsLeft(uint256 amountRequested, uint256 amountLeft);
@@ -62,7 +63,7 @@ contract RewardsDistributor is IRewardDistributor {
     }
 
     function setShouldFailPayout(bool shouldFailPayout_) external {
-        if (msg.sender != ISynthetixCore(rewardManager).getPoolOwner(poolId)) {
+        if (msg.sender != IPoolModule(rewardManager).getPoolOwner(poolId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
         shouldFailPayout = shouldFailPayout_;
@@ -115,7 +116,7 @@ contract RewardsDistributor is IRewardDistributor {
         uint64 start_,
         uint32 duration_
     ) public {
-        if (msg.sender != ISynthetixCore(rewardManager).getPoolOwner(poolId)) {
+        if (msg.sender != IPoolModule(rewardManager).getPoolOwner(poolId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
         if (poolId_ != poolId) {
@@ -141,7 +142,7 @@ contract RewardsDistributor is IRewardDistributor {
         // this is necessary to avoid rounding issues when doing actual payouts
         uint256 adjustedAmount = (amount_ * SYSTEM_PRECISION) / precision;
 
-        ISynthetixCore(rewardManager).distributeRewards(
+        IRewardsManagerModule(rewardManager).distributeRewards(
             poolId_,
             collateralType_,
             adjustedAmount,

@@ -1,5 +1,5 @@
 name = "synthetix-rewards-distributor"
-version = "0.0.2"
+version = "<%= package.version %>"
 description = "Rewards distributor for Core Synthetix v3"
 
 [setting.salt]

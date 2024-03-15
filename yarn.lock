@@ -3211,6 +3211,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/rewards-distributor@workspace:auxiliary/RewardsDistributor":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/rewards-distributor@workspace:auxiliary/RewardsDistributor"
+  dependencies:
+    "@usecannon/cli": "npm:2.11.20"
+    forge-std: "github:foundry-rs/forge-std#master"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/router@npm:3.3.7, @synthetixio/router@npm:^3.3.7":
   version: 3.3.7
   resolution: "@synthetixio/router@npm:3.3.7"
@@ -7886,6 +7895,13 @@ __metadata:
   version: 0.6.1
   resolution: "forever-agent@npm:0.6.1"
   checksum: 10/c1e1644d5e074ac063ecbc3fb8582013ef91fff0e3fa41e76db23d2f62bc6d9677aac86db950917deed4fe1fdd772df780cfaa352075f23deec9c015313afb97
+  languageName: node
+  linkType: hard
+
+"forge-std@github:foundry-rs/forge-std#master":
+  version: 1.7.6
+  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=b6a506db2262cad5ff982a87789ee6d1558ec861"
+  checksum: 10/72a93362fbe440f8a1c95f1f85c42ab9b5403b6142219d88412aef697ebf18f1898224e9c2dd3158ef1c8e8926d8a69f9b1375d131ab2fd3aae684687b2b2822
   languageName: node
   linkType: hard
 
