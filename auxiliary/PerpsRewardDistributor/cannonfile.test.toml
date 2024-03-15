@@ -1,0 +1,2 @@
+version = "<%= package.version %>-testable"
+include = ["cannonfile.toml"]
