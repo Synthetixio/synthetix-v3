@@ -294,7 +294,7 @@ library PerpsAccount {
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256 withdrawableMargin) {
-        bool hasActivePositions = self.openPositionMarketIds.length() > 0;
+        bool hasActivePositions = hasOpenPositions(self);
         int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
 
         if (hasActivePositions) {
@@ -708,5 +708,9 @@ library PerpsAccount {
 
         // 3. deposit snxUSD into market manager
         factory.depositMarketUsd(amountUsd);
+    }
+
+    function hasOpenPositions(Data storage self) internal view returns (bool) {
+        return self.openPositionMarketIds.length() > 0;
     }
 }
