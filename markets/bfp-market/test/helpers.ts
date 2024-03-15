@@ -234,7 +234,8 @@ export const commitOrder = async (
         sizeDelta,
         limitPrice,
         keeperFeeBufferUsd,
-        hooks
+        hooks,
+        { gasLimit: BigNumber.from(1000000) } // Sometimes gas estimation is not big enough, add a large one to be safe.
       ),
     provider()
   );
@@ -277,6 +278,7 @@ export const commitAndSettle = async (
         updateData,
         {
           value: updateFee,
+          gasLimit: BigNumber.from(1000000), // Sometimes gas estimation is not big enough, add a large one to be safe.
         }
       ),
     provider()
