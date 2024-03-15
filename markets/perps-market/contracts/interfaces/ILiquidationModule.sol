@@ -16,6 +16,11 @@ interface ILiquidationModule {
     error NotEligibleForMarginLiquidation(uint128 accountId);
 
     /**
+     * @notice Thrown when attempting to liquidate an account's margin when it has open positions (should use normal liquidate)
+     */
+    error AccountHasOpenPositions(uint128 accountId);
+
+    /**
      * @notice Gets fired when an account position is liquidated .
      * @param marketId Id of the position's market.
      * @param accountId Id of the account liquidated.
