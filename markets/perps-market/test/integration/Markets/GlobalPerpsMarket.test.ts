@@ -22,7 +22,10 @@ describe('GlobalPerpsMarket', () => {
     async () => {
       await systems().PerpsMarket.setCollateralConfiguration(
         perpsMarkets()[0].marketId(),
-        bn(10000)
+        bn(10000),
+        0,
+        0,
+        0
       );
       await systems().PerpsMarket.setSynthDeductionPriority([1, 2]);
       await systems().PerpsMarket.setKeeperRewardGuards(100, bn(0.001), 500, bn(0.005));
@@ -90,7 +93,7 @@ describe('GlobalPerpsMarket', () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(trader1())
-        .setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(10000)),
+        .setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(10000), 0, 0, 0),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
@@ -167,7 +170,13 @@ describe('GlobalPerpsMarket', () => {
 
   describe('remove a supported collaterals', () => {
     before('remove a supported collateral by setting its max to zero', async () => {
-      await systems().PerpsMarket.setCollateralConfiguration(perpsMarkets()[0].marketId(), bn(0));
+      await systems().PerpsMarket.setCollateralConfiguration(
+        perpsMarkets()[0].marketId(),
+        bn(0),
+        0,
+        0,
+        0
+      );
     });
 
     it('the removed market was gone from supportedCollaterals', async () => {
