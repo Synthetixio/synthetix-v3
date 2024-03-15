@@ -144,3 +144,6 @@ artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[contract.MockPerpsRewardDistributor]
+artifact = "contracts/mocks/MockPerpsRewardDistributor.sol:MockPerpsRewardDistributor"
