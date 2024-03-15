@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
+// solhint-disable meta-transactions/no-msg-sender
 pragma solidity ^0.8.13;
 
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
@@ -156,7 +157,7 @@ contract RewardsDistributor is IRewardDistributor {
         uint128, // poolId,
         address, // collateralType,
         uint256 // actorSharesD18
-    ) external {}
+    ) external {} // solhint-disable-line no-empty-blocks
 
     /**
      * @dev See {IERC165-supportsInterface}.

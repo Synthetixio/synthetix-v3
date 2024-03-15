@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// solhint-disable one-contract-per-file, var-name-mixedcase, func-name-mixedcase
 pragma solidity ^0.8.21;
 
 import {Test} from "forge-std/Test.sol";
@@ -6,7 +7,6 @@ import {RewardsDistributor} from "../src/RewardsDistributor.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-
 import {MintableToken} from "./MintableToken.sol";
 
 contract CoreProxyMock {

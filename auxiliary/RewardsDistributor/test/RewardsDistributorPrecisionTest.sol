@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
+// solhint-disable one-contract-per-file, var-name-mixedcase, func-name-mixedcase
 pragma solidity ^0.8.21;
 
 import {Test} from "forge-std/Test.sol";
 import {RewardsDistributor} from "../src/RewardsDistributor.sol";
-
 import {MintableToken} from "./MintableToken.sol";
 
 contract CoreProxyMock {
