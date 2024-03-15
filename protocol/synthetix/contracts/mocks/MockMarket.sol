@@ -40,15 +40,14 @@ contract MockMarket is IMarket {
         );
     }
 
-    function buySynth(uint256 amount) external returns (uint256 feesPaid) {
+    function buySynth(uint256 amount) external {
         _reportedDebt += amount;
         uint256 toDeposit = amount.divDecimal(_price);
-        return
-            IMarketManagerModule(_proxy).depositMarketUsd(
-                _marketId,
-                ERC2771Context._msgSender(),
-                toDeposit
-            );
+        IMarketManagerModule(_proxy).depositMarketUsd(
+            _marketId,
+            ERC2771Context._msgSender(),
+            toDeposit
+        );
     }
 
     function sellSynth(uint256 amount) external returns (uint256 feesPaid) {
