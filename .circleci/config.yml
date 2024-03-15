@@ -587,6 +587,7 @@ workflows:
 
       - test-contracts:
           name: "test-core-contracts"
+          requires: [build-testable]
           workspace: "@synthetixio/core-contracts"
           parallelism: 2
           batch-size: 5
