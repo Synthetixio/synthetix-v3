@@ -115,13 +115,12 @@ interface IMarketManagerModule {
      * @param marketId The id of the market from which snxUSD will be withdrawn.
      * @param target The address of the account that will receive the withdrawn snxUSD.
      * @param amount The amount of snxUSD to be withdraw, denominated with 18 decimals of precision.
-     * @return feeAmount the amount of fees paid (billed as additional debt towards liquidity providers)
      */
     function withdrawMarketUsd(
         uint128 marketId,
         address target,
         uint256 amount
-    ) external returns (uint256 feeAmount);
+    ) external;
 
     /**
      * @notice Get the amount of fees paid in USD for a call to `depositMarketUsd` and `withdrawMarketUsd` for the given market and amount

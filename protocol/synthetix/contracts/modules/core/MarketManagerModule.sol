@@ -237,7 +237,7 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external override returns (uint256 feeAmount) {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -246,32 +246,16 @@ contract MarketManagerModule is IMarketManagerModule {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
         // Ensure that the market's balance allows for this withdrawal.
-        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
-        if (amount + feeAmount > getWithdrawableMarketUsd(marketId))
+        if (amount > getWithdrawableMarketUsd(marketId)) {
             revert NotEnoughLiquidity(marketId, amount);
-
-        address feeAddress = address(0);
-        address configFeeAddress = Config.readAddress(
-            _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS,
-            address(0)
-        );
-
-        if (feeAmount > 0 && configFeeAddress != address(0)) {
-            feeAddress = configFeeAddress;
         }
 
         // Adjust accounting.
-        marketData.creditCapacityD18 -= (amount + feeAmount).toInt().to128();
-        marketData.netIssuanceD18 += (amount + feeAmount).toInt().to128();
+        marketData.creditCapacityD18 -= amount.toInt().to128();
+        marketData.netIssuanceD18 += amount.toInt().to128();
 
         // Mint the requested USD.
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
-
-        if (feeAmount > 0 && feeAddress != address(0)) {
-            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
-
-            emit MarketSystemFeePaid(marketId, feeAmount);
-        }
 
         emit MarketUsdWithdrawn(
             marketId,
