@@ -3105,6 +3105,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/lido-wsteth-to-eth-ratio-oracle@workspace:auxiliary/LidoWstEthToStEthRatioOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/lido-wsteth-to-eth-ratio-oracle@workspace:auxiliary/LidoWstEthToStEthRatioOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/oracle-manager": "workspace:*"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/main@workspace:*, @synthetixio/main@workspace:protocol/synthetix":
   version: 0.0.0-use.local
   resolution: "@synthetixio/main@workspace:protocol/synthetix"

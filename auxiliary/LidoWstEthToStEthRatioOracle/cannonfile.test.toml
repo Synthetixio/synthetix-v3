@@ -1,0 +1,2 @@
+name = "lido-wsteth-to-eth-ratio-oracle"
+version = "<%= package.version %>-testable"
