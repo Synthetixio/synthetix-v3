@@ -49,12 +49,12 @@ describe('ModifyCollateral', () => {
   before('set setCollateralConfiguration to 1 btc', async () => {
     await systems()
       .PerpsMarket.connect(owner())
-      .setCollateralConfiguration(synthBTCMarketId, bn(1));
+      .setCollateralConfiguration(synthBTCMarketId, bn(1), 0, 0, 0);
   });
   before('set setCollateralConfiguration to 0 link', async () => {
     await systems()
       .PerpsMarket.connect(owner())
-      .setCollateralConfiguration(synthLINKMarketId, bn(0));
+      .setCollateralConfiguration(synthLINKMarketId, bn(0), 0, 0, 0);
   });
   before('trader1 buys 100 snxLink', async () => {
     const usdAmount = bn(100);
@@ -126,7 +126,7 @@ describe('ModifyCollateral', () => {
     it('reverts if the trader does not have enough allowance', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(synthETHMarketId, oneBTC);
+        .setCollateralConfiguration(synthETHMarketId, oneBTC, 0, 0, 0);
 
       await assertRevert(
         systems()
@@ -139,7 +139,7 @@ describe('ModifyCollateral', () => {
     it('reverts if the trader does not have enough spot balance', async () => {
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(synthBTCMarketId, oneBTC);
+        .setCollateralConfiguration(synthBTCMarketId, oneBTC, 0, 0, 0);
 
       await synthMarkets()[0]
         .synth()

@@ -83,8 +83,16 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         (bool isEligible, ) = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
         if (isEligible) {
-            // TODO: keeper flag rewards
-            // TODO: send margin to liquidation rewards distributor
+            // margin is sent to liquidation rewards distributor in getMarginLiquidationCostAndSeizeMargin
+            (uint256 marginLiquidateCost, uint256 seizedMarginValue) = account
+                .getMarginLiquidationCostAndSeizeMargin();
+            // keeper is rewarded in _liquidateAccount
+            liquidationReward = _liquidateAccount(
+                account,
+                marginLiquidateCost,
+                seizedMarginValue,
+                true
+            );
         } else {
             revert NotEligibleForMarginLiquidation(accountId);
         }
@@ -250,6 +258,21 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 amountLiquidated,
                 newPositionSize
             );
+        }
+
+        if (
+            ERC2771Context._msgSender() !=
+            PerpsMarketConfiguration.load(runtime.positionMarketId).endorsedLiquidator
+        ) {
+            // Use max of collateral or positions flag rewards
+            uint256 totalCollateralLiquidateRewards = GlobalPerpsMarketConfiguration
+                .load()
+                .calculateCollateralLiquidateReward(totalCollateralValue);
+
+            runtime.totalFlaggingRewards = totalCollateralLiquidateRewards >
+                runtime.totalFlaggingRewards
+                ? totalCollateralLiquidateRewards
+                : runtime.totalFlaggingRewards;
         }
 
         runtime.totalLiquidationCost =

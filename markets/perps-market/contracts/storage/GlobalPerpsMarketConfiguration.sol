@@ -85,6 +85,14 @@ library GlobalPerpsMarketConfiguration {
          * @dev interest rate gradient applied to utilization after hitting the gradient breakpoint
          */
         uint128 highUtilizationInterestRateGradient;
+        /**
+         * @dev ratio of the collateral liquidation reward. 1e18 is 100%.
+         */
+        uint128 collateralLiquidateRewardRatioD18;
+        /**
+         * @dev reward distributor implementation. This is used as a base to be cloned to distribute rewards to the liquidator.
+         */
+        address rewardDistributorImplementation;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -185,6 +193,13 @@ library GlobalPerpsMarketConfiguration {
         factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorQuote);
 
         return (referralFees, feeCollectorQuote);
+    }
+
+    function calculateCollateralLiquidateReward(
+        Data storage self,
+        uint256 notionalValue
+    ) internal view returns (uint256) {
+        return notionalValue.mulDecimal(self.collateralLiquidateRewardRatioD18);
     }
 
     function updateCollateralMax(

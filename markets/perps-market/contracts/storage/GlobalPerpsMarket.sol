@@ -155,7 +155,7 @@ library GlobalPerpsMarket {
     ) internal view {
         uint256 collateralAmount = self.collateralAmounts[synthMarketId];
         if (synthAmount > 0) {
-            uint maxAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
+            uint256 maxAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
             if (maxAmount == 0) {
                 revert SynthNotEnabledForCollateral(synthMarketId);
             }

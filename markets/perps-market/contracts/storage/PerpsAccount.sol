@@ -190,6 +190,15 @@ library PerpsAccount {
         }
     }
 
+    function getMarginLiquidationCostAndSeizeMargin(
+        Data storage self
+    ) internal returns (uint256 marginLiquidateCost, uint256 seizedMarginValue) {
+        // notice: using getFlagKeeperCosts here since the logic is the same, but with no positions.
+        marginLiquidateCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
+
+        seizedMarginValue = transferAllCollateral(self);
+    }
+
     function updateOpenPositions(
         Data storage self,
         uint256 positionMarketId,

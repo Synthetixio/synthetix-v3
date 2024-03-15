@@ -7,6 +7,8 @@ import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
+import {LiquidationAssetManager} from "../storage/LiquidationAssetManager.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
@@ -20,6 +22,7 @@ library PerpsMarketFactory {
     using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarket for PerpsMarket.Data;
+    using LiquidationAssetManager for LiquidationAssetManager.Data;
 
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
@@ -118,6 +121,7 @@ library PerpsMarketFactory {
             amount,
             Price.Tolerance.DEFAULT
         );
-        ITokenModule(synth).transfer(self.liquidationAssetManager, amount);
+
+        CollateralConfiguration.loadValidLam(synthMarketId).distrubuteCollateral(synth, amount);
     }
 }

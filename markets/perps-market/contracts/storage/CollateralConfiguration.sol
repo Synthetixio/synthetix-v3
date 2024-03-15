@@ -6,12 +6,18 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {LiquidationAssetManager} from "./LiquidationAssetManager.sol";
 
 /**
  * @title Configuration of all multi collateral assets used for trader margin
  */
 library CollateralConfiguration {
     using DecimalMath for uint256;
+
+    /**
+     * @notice Thrown when attempting to access a not registered id
+     */
+    error InvalidId(uint128 id);
 
     struct Data {
         /**
@@ -34,6 +40,10 @@ library CollateralConfiguration {
          * @dev This value is used to scale the impactOnSkew of the collateral.
          */
         uint256 discountScalar;
+        /**
+         * @dev Liquidation Asset Manager data. (see LiquidationAssetManager.Data struct).
+         */
+        LiquidationAssetManager.Data lam;
     }
 
     /**
@@ -45,6 +55,28 @@ library CollateralConfiguration {
         );
         assembly {
             collateralConfig.slot := s
+        }
+    }
+
+    /**
+     * @dev Load a valid collateral configuration data using collateral/synth id
+     */
+    function loadValid(uint128 collateralId) internal view returns (Data storage collateralConfig) {
+        collateralConfig = load(collateralId);
+        if (collateralConfig.id == 0) {
+            revert InvalidId(collateralId);
+        }
+    }
+
+    /**
+     * @dev Load a valid  collateral LiquidationAssetManager configuration data using collateral/synth id
+     */
+    function loadValidLam(
+        uint128 collateralId
+    ) internal view returns (LiquidationAssetManager.Data storage collateralLAMConfig) {
+        collateralLAMConfig = load(collateralId).lam;
+        if (collateralLAMConfig.id == 0) {
+            revert InvalidId(collateralId);
         }
     }
 
@@ -110,7 +142,7 @@ library CollateralConfiguration {
         (collateralValueInUsd, ) = spotMarket.quoteSellExactIn(
             self.id,
             discountedCollateralAmount,
-            Price.Tolerance(uint(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
+            Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
         );
     }
 }
