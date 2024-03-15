@@ -227,6 +227,13 @@ jobs:
             - "auxiliary/TrustedMulticallForwarder/cache"
             - "auxiliary/TrustedMulticallForwarder/typechain-types"
 
+            - "utils/core-contracts/artifacts"
+            - "utils/core-contracts/cache"
+            - "utils/core-contracts/typechain-types"
+            - "utils/core-modules/artifacts"
+            - "utils/core-modules/cache"
+            - "utils/core-modules/typechain-types"
+
       - run: yarn workspaces foreach --all --verbose run check:storage
 
       - save_cache:
