@@ -1,0 +1,7 @@
+name = "perps-reward-distributor"
+version = "<%= package.version %>"
+description = "Perps Reward Distributor implementation"
+
+[contract.PerpsRewardDistributor]
+artifact = "contracts/PerpsRewardDistributor.sol:PerpsRewardDistributor"
+create2 = true

@@ -45,6 +45,9 @@ artifact = "PerpsMarketModule"
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
 
+[contract.CollateralConfigurationModule]
+artifact = "CollateralConfigurationModule"
+
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 
@@ -78,6 +81,7 @@ contracts = [
     "FeatureFlagModule",
     "LiquidationModule",
     "MarketConfigurationModule",
+    "CollateralConfigurationModule",
     "GlobalPerpsMarketModule",
 ]
 
@@ -140,3 +144,6 @@ artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[contract.MockPerpsRewardDistributor]
+artifact = "contracts/mocks/MockPerpsRewardDistributor.sol:MockPerpsRewardDistributor"
