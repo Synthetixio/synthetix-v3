@@ -137,6 +137,46 @@ contract PerpAccountModule is IPerpAccountModule {
     }
 
     /**
+     * Finds the collateral with the same oracle as the market.
+     * We expect this to be called for an account that just had a postion settled, which gurantees we have some collateral.
+     * If also validates that the account doesn't have any other collateral.
+     */
+    function getMatchingMarketCollateral(
+        Margin.Data storage fromAccountMargin,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint128 synthMarketId, uint256 fromAccountCollateral) {
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+        // Variables for loop, to save some gas.
+        bytes32 marketOracleNodeId = marketConfig.oracleNodeId;
+        uint256 supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 currentSynthMarketId;
+        uint256 currentFromAccountCollateral;
+
+        for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
+            currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            currentFromAccountCollateral = fromAccountMargin.collaterals[currentSynthMarketId];
+            if (currentFromAccountCollateral > 0) {
+                if (
+                    globalMarginConfig.supported[currentSynthMarketId].oracleNodeId !=
+                    marketOracleNodeId
+                ) {
+                    // If the from account have collateral >0 with different oracle node id then the market, revert.
+                    revert ErrorUtil.OracleNodeMismatch();
+                }
+                // We found the matching collateral set it the return values.
+                // We're not breaking here as we want to check if the account has any other collateral and revert if it does.
+                synthMarketId = currentSynthMarketId;
+                fromAccountCollateral = currentFromAccountCollateral;
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
      * @inheritdoc IPerpAccountModule
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
@@ -151,35 +191,14 @@ contract PerpAccountModule is IPerpAccountModule {
         );
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
 
         Runtime_mergeAccounts memory runtime;
 
-        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
-
-        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
-            runtime.synthMarketIdForLoop = globalMarginConfig.supportedSynthMarketIds[i];
-            runtime.fromAccountCollateralForLoop = fromAccountMargin.collaterals[
-                runtime.synthMarketIdForLoop
-            ];
-            if (runtime.fromAccountCollateralForLoop > 0) {
-                if (
-                    globalMarginConfig.supported[runtime.synthMarketIdForLoop].oracleNodeId !=
-                    marketConfig.oracleNodeId
-                ) {
-                    // If the from account have collateral >0 with different oracle node id then the market, revert.
-                    revert ErrorUtil.OracleNodeMismatch();
-                }
-                // This is the collateral we're intrested in and it has correct oracle node id.
-                runtime.synthMarketId = runtime.synthMarketIdForLoop;
-                runtime.fromAccountCollateral = runtime.fromAccountCollateralForLoop;
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
+        (runtime.synthMarketId, runtime.fromAccountCollateral) = getMatchingMarketCollateral(
+            fromAccountMargin,
+            marketConfig
+        );
 
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage fromPosition = market.positions[fromId];
@@ -224,16 +243,16 @@ contract PerpAccountModule is IPerpAccountModule {
         fromAccountMargin.collaterals[runtime.synthMarketId] = 0;
 
         // Update toAccount's postion with data from the fromAccount's position.
-        Position.Data memory newPosition = Position.Data(
-            toPosition.size + fromPosition.size,
-            block.timestamp,
-            market.currentFundingAccruedComputed,
-            market.currentUtilizationAccruedComputed,
-            runtime.oraclePrice,
-            fromPosition.accruedFeesUsd
+        toPosition.update(
+            Position.Data(
+                toPosition.size + fromPosition.size,
+                block.timestamp,
+                market.currentFundingAccruedComputed,
+                market.currentUtilizationAccruedComputed,
+                runtime.oraclePrice,
+                fromPosition.accruedFeesUsd
+            )
         );
-
-        toPosition.update(newPosition);
         delete market.positions[fromId];
 
         Margin.MarginValues memory newMarginValues = Margin.getMarginUsd(

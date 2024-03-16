@@ -127,9 +127,9 @@ describe('PerpAccountModule mergeAccounts', () => {
       desiredLeverage: 1,
       desiredHooks: [MergeAccountSettlementHookMock.address],
     });
-    console.log('committing order');
+
     await commitOrder(bs, marketId, fromTrader, order);
-    console.log('committied');
+
     const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
     await fastForwardTo(settlementTime, provider());
 
