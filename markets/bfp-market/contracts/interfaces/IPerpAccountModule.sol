@@ -89,6 +89,8 @@ interface IPerpAccountModule {
      * operation can only be performed in the same block as settlement via multicalls on settlement or indirectly
      * settlement hooks.
      *
+     * We also only allow merging accounts that uses the same collateral as the market.
+     *
      * @dev Important that account permmisions in the `fromId` account will _not_ be transferred.
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
