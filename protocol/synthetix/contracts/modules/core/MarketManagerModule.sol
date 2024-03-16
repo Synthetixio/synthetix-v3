@@ -279,22 +279,6 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketFees(
-        uint128,
-        uint256 amount
-    ) external view override returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount) {
-        depositFeeAmount = amount.mulDecimal(
-            Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0)
-        );
-
-        withdrawFeeAmount = amount.mulDecimal(
-            Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0)
-        );
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
     function distributeDebtToPools(
         uint128 marketId,
         uint256 maxIter
