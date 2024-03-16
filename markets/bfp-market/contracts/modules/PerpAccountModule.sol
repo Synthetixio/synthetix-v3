@@ -22,18 +22,6 @@ contract PerpAccountModule is IPerpAccountModule {
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
 
-    // --- Runtime structs --- //
-
-    struct Runtime_mergeAccounts {
-        uint256 oraclePrice;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
-        uint128 synthMarketIdForLoop;
-        uint256 fromAccountCollateralForLoop;
-        uint256 fromAccountCollateral;
-        uint256 im;
-    }
-
     /**
      * @inheritdoc IPerpAccountModule
      */
@@ -193,9 +181,7 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
 
-        Runtime_mergeAccounts memory runtime;
-
-        (runtime.synthMarketId, runtime.fromAccountCollateral) = getMatchingMarketCollateral(
+        (uint128 synthMarketId, uint256 fromAccountCollateral) = getMatchingMarketCollateral(
             fromAccountMargin,
             marketConfig
         );
@@ -212,22 +198,12 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.OrderFound();
         }
 
-        runtime.oraclePrice = market.getOraclePrice();
+        uint256 oraclePrice = market.getOraclePrice();
 
-        Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(
-            toId,
-            market,
-            runtime.oraclePrice
-        );
+        Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
         // Determine if toPosition can be immediately liquidated.
         if (
-            Position.isLiquidatable(
-                toPosition,
-                market,
-                runtime.oraclePrice,
-                marketConfig,
-                toMarginValues
-            )
+            Position.isLiquidatable(toPosition, market, oraclePrice, marketConfig, toMarginValues)
         ) {
             revert ErrorUtil.CanLiquidatePosition();
         }
@@ -239,8 +215,8 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Move collateral.
-        toAccountMargin.collaterals[runtime.synthMarketId] += runtime.fromAccountCollateral;
-        fromAccountMargin.collaterals[runtime.synthMarketId] = 0;
+        toAccountMargin.collaterals[synthMarketId] += fromAccountCollateral;
+        fromAccountMargin.collaterals[synthMarketId] = 0;
 
         // Update toAccount's postion with data from the fromAccount's position.
         toPosition.update(
@@ -249,25 +225,21 @@ contract PerpAccountModule is IPerpAccountModule {
                 block.timestamp,
                 market.currentFundingAccruedComputed,
                 market.currentUtilizationAccruedComputed,
-                runtime.oraclePrice,
+                oraclePrice,
                 fromPosition.accruedFeesUsd
             )
         );
         delete market.positions[fromId];
 
-        Margin.MarginValues memory newMarginValues = Margin.getMarginUsd(
-            toId,
-            market,
-            runtime.oraclePrice
-        );
+        Margin.MarginValues memory newMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
 
-        (runtime.im, , ) = Position.getLiquidationMarginUsd(
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
-            runtime.oraclePrice,
+            oraclePrice,
             newMarginValues.collateralUsd,
             marketConfig
         );
-        if (newMarginValues.marginUsd < runtime.im) {
+        if (newMarginValues.marginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
 
