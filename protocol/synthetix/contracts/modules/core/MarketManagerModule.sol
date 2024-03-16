@@ -35,28 +35,24 @@ contract MarketManagerModule is IMarketManagerModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
-
     using DecimalMath for uint256;
 
+    /**
+     * @notice USD token slot identifier
+     */
     bytes32 private constant _USD_TOKEN = "USDToken";
+
+    /**
+     * @notice feature flag slot identifiers
+     */
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
+    /**
+     * @notice configuration slot identifiers
+     */
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
-
-    /// @notice SIP-365: slot is unused, but it is reserved for future use.
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
-
-    /// @notice SIP-365: slot is unused, but it is reserved for future use.
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
-
-    /// @notice SIP-365: slot is unused, but it is reserved for future use.
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
-
-    /// @notice SIP-365: slot is unused, but it is reserved for future use.
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS =
-        "withdrawMarketUsd_feeAddress";
 
     /**
      * @inheritdoc IMarketManagerModule
