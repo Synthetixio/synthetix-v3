@@ -194,11 +194,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external override {
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
@@ -237,11 +233,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external override {
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 

@@ -100,11 +100,7 @@ interface IMarketManagerModule {
      * @param target The address of the account on who's behalf the deposit will be made.
      * @param amount The amount of snxUSD to be deposited, denominated with 18 decimals of precision.
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external;
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
      * @notice Allows an external market connected to the system to withdraw snxUSD from the system.
@@ -114,11 +110,7 @@ interface IMarketManagerModule {
      * @param target The address of the account that will receive the withdrawn snxUSD.
      * @param amount The amount of snxUSD to be withdraw, denominated with 18 decimals of precision.
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external;
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
      * @notice Returns the total withdrawable snxUSD amount for the specified market.

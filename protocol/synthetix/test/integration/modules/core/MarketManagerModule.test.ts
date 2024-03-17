@@ -3,7 +3,7 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { MockMarket__factory } from '../../../../typechain-types/index';
@@ -27,8 +27,6 @@ describe('MarketManagerModule', function () {
 
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
-
-  const feeAddress = '0x1234567890123456789012345678901234567890';
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -209,7 +207,7 @@ describe('MarketManagerModule', function () {
 
       describe('withdraw some from the market', async () => {
         before(withdrawRestore);
-        
+
         before('mint USD to use market', async () => {
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
         });
