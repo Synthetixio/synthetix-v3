@@ -5,3 +5,4 @@ contracts/Router.sol
 deployments/hardhat
 deployments/local
 typechain-types
+test/generated
