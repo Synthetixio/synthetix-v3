@@ -231,15 +231,18 @@ contract PerpAccountModule is IPerpAccountModule {
         );
         delete market.positions[fromId];
 
-        Margin.MarginValues memory newMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
-
+        uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
         (uint256 im, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             oraclePrice,
-            newMarginValues.collateralUsd,
+            collateralUsd,
             marketConfig
         );
-        if (newMarginValues.marginUsd < im) {
+
+        if (
+            collateralUsd.toInt() + Margin.getPnlAdjustmentUsd(toId, market, oraclePrice) <
+            im.toInt()
+        ) {
             revert ErrorUtil.InsufficientMargin();
         }
 

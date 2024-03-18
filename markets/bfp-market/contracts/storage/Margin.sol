@@ -221,17 +221,13 @@ library Margin {
         marginValues.collateralUsd = collateralUsd;
     }
 
-    /**
-     * @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
-     */
-    function getNetAssetValue(
+    function getCollateralUsdWithoutDiscount(
         uint128 accountId,
-        PerpMarket.Data storage market,
-        uint256 price
+        uint128 marketId
     ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
@@ -255,9 +251,24 @@ library Margin {
                 ++i;
             }
         }
+        return collateralUsd;
+    }
+
+    /**
+     * @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
+     */
+    function getNetAssetValue(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (uint256) {
         return
             MathUtil
-                .max(collateralUsd.toInt() + getPnlAdjustmentUsd(accountId, market, price), 0)
+                .max(
+                    getCollateralUsdWithoutDiscount(accountId, market.id).toInt() +
+                        getPnlAdjustmentUsd(accountId, market, price),
+                    0
+                )
                 .toUint();
     }
 
