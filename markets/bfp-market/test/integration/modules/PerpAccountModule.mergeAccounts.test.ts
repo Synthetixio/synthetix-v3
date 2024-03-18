@@ -210,7 +210,65 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
-  it('should revert if toAccount position can be liquidated');
+  it('should revert if toAccount position can be liquidated', async () => {
+    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const collateral = collaterals()[1];
+    const market = genOneOf(markets());
+
+    // Set the market oracleNodeId to the collateral oracleNodeId
+    await setMarketConfigurationById(bs, market.marketId(), {
+      oracleNodeId: collateral.oracleNodeId(),
+    });
+    market.oracleNodeId = collateral.oracleNodeId;
+    const collateralPrice = await collateral.getPrice();
+    // Deposit and create a highly leveraged position
+    const { marketId, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: toTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    const toOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredLeverage: 9,
+    });
+    await commitAndSettle(bs, marketId, toTrader, toOrder);
+    // Change price to make the toAccount liquidatable.
+    const newPrice = wei(collateralPrice)
+      .mul(toOrder.sizeDelta.gt(0) ? 0.8 : 1.2)
+      .toBN();
+    await collateral.setPrice(newPrice);
+
+    // Deposit margin and commit and settle with settlement hook for the fromAccount.
+    await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredHooks: [MergeAccountSettlementHookMock.address],
+    });
+
+    await commitOrder(bs, marketId, fromTrader, order);
+
+    const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
+    await fastForwardTo(settlementTime, provider());
+
+    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+    await assertRevert(
+      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+        value: updateFee,
+      }),
+      `CanLiquidatePosition()`,
+      PerpMarketProxy
+    );
+  });
   it('should revert if the new position is below initial margin requirement');
 
   it('should merge two accounts', async () => {
@@ -227,7 +285,6 @@ describe('PerpAccountModule mergeAccounts', () => {
     market.oracleNodeId = collateral.oracleNodeId;
     // Also make sure price align on the aggregator
     const collateralPrice = await collateral.getPrice();
-    await collateral.setPrice(collateralPrice);
 
     // Withdraw any preexisting collateral.
     await withdrawAllCollateral(bs, fromTrader, market.marketId());
