@@ -62,7 +62,7 @@ describe('GlobalPerpsMarket', () => {
   });
 
   it('returns maxCollateralAmount and strictStalenessTolerance for synth market id', async () => {
-    const maxCollateralAmount = await systems().PerpsMarket.getCollateralConfiguration(
+    const { maxCollateralAmount } = await systems().PerpsMarket.getCollateralConfiguration(
       perpsMarkets()[0].marketId()
     );
     assertBn.equal(maxCollateralAmount, bn(10000));
