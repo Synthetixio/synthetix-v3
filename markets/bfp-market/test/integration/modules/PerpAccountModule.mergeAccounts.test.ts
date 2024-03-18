@@ -153,8 +153,64 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
+  it('should revert if toAccount position has an open order', async () => {
+    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const collateral = collaterals()[1];
+    const market = genOneOf(markets());
+
+    // Set the market oracleNodeId to the collateral oracleNodeId
+    await setMarketConfigurationById(bs, market.marketId(), {
+      oracleNodeId: collateral.oracleNodeId(),
+    });
+    market.oracleNodeId = collateral.oracleNodeId;
+
+    // Deposit and commit an order for the toAccount which wont be settled.
+    const { marketId, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: toTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    await commitOrder(
+      bs,
+      marketId,
+      toTrader,
+      genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+
+    // Deposit margin and commit and settle with settlement hook for the fromAccount.
+    await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredHooks: [MergeAccountSettlementHookMock.address],
+    });
+
+    await commitOrder(bs, marketId, fromTrader, order);
+
+    const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
+    await fastForwardTo(settlementTime, provider());
+
+    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+    await assertRevert(
+      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+        value: updateFee,
+      }),
+      `OrderFound()`,
+      PerpMarketProxy
+    );
+  });
+
   it('should revert if toAccount position can be liquidated');
-  it('should revert if toAccount position has an open order');
   it('should revert if the new position is below initial margin requirement');
 
   it('should merge two accounts', async () => {
