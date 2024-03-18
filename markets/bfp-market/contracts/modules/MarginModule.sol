@@ -167,10 +167,8 @@ contract MarginModule is IMarginModule {
             accountId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         // Prevent collateral transfers when there's a pending order.
         if (market.orders[accountId].sizeDelta != 0) {
@@ -187,6 +185,9 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
         // Prevent withdraw all when there is unpaid debt owned on the account margin.
         if (accountMargin.debtUsd != 0) {
             revert ErrorUtil.DebtFound(accountId, marketId);
@@ -203,6 +204,9 @@ contract MarginModule is IMarginModule {
 
         (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
@@ -550,14 +554,19 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getNetAssetValueWithPrice(
+    function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
         uint256 price
     ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.getNetAssetValue(accountId, market, price);
+        return
+            Margin.getNetAssetValue(
+                accountId,
+                market,
+                price == 0 ? market.getOraclePrice() : price
+            );
     }
 
     /**
@@ -578,5 +587,58 @@ contract MarginModule is IMarginModule {
                 synthMarketId,
                 globalMarketConfig
             );
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function getWithdrawableMargin(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        uint256 oraclePrice = market.getOraclePrice();
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
+            accountId,
+            market,
+            oraclePrice
+        );
+        Position.Data storage position = market.positions[accountId];
+        int128 size = position.size;
+
+        // When there is no position then we can ignore all running losses/profits but still need to include debt
+        // as they may have realized a prior negative PnL.
+        if (size == 0) {
+            return marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd;
+        }
+
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        (uint256 im, , uint256 liqFlagReward) = Position.getLiquidationMarginUsd(
+            size,
+            oraclePrice,
+            marginValues.collateralUsd,
+            marketConfig
+        );
+        uint256 liqKeeperFee = Position.getLiquidationKeeperFee(
+            MathUtil.abs(size).to128(),
+            marketConfig,
+            PerpMarketConfiguration.load()
+        );
+
+        // There is a position open. Discount the collateral, deduct running losses (or add profits), reduce
+        // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
+        // because both the liq and flag rewards can change based on chain usage.
+        return
+            MathUtil
+                .max(
+                    marginValues.discountedMarginUsd.toInt() -
+                        im.toInt() -
+                        liqFlagReward.toInt() -
+                        liqKeeperFee.toInt(),
+                    0
+                )
+                .toUint();
     }
 }

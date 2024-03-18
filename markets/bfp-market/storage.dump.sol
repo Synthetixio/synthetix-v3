@@ -593,8 +593,8 @@ interface IOrderModule {
         uint256 limitPrice;
         uint256 keeperFeeBufferUsd;
         address[] hooks;
-        bool isOrderStale;
-        bool isOrderReady;
+        bool isStale;
+        bool isReady;
     }
 }
 
@@ -876,6 +876,7 @@ library Position {
         uint256 orderFee;
         uint256 keeperFee;
         uint256 newMarginUsd;
+        Margin.MarginValues marginValues;
     }
     struct HealthData {
         uint256 healthFactor;

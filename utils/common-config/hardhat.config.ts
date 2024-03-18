@@ -61,12 +61,12 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 1,
     },
-    ['optimistic-goerli']: {
+    ['optimistic-sepolia']: {
       url:
         process.env.NETWORK_ENDPOINT ||
-        `https://optimism-goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        `https://optimism-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 420,
+      chainId: 11155420,
     },
     ['optimistic-mainnet']: {
       url:
@@ -75,11 +75,12 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 10,
     },
-    goerli: {
+    sepolia: {
       url:
-        process.env.NETWORK_ENDPOINT || `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        process.env.NETWORK_ENDPOINT ||
+        `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 5,
+      chainId: 11155111,
     },
     ['avalanche-fuji']: {
       url:
@@ -113,9 +114,9 @@ const config = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       rinkeby: process.env.ETHERSCAN_API_KEY,
-      goerli: process.env.ETHERSCAN_API_KEY,
+      sepolia: process.env.ETHERSCAN_API_KEY,
       optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
-      optimisticGoerli: process.env.OVM_ETHERSCAN_API_KEY,
+      optimisticSepolia: process.env.OVM_ETHERSCAN_API_KEY,
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,
     },
   },

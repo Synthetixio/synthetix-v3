@@ -230,7 +230,32 @@ library Margin {
         PerpMarket.Data storage market,
         uint256 price
     ) internal view returns (uint256) {
-        (uint256 collateralUsd, ) = getCollateralUsd(accountId, market.id);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 available;
+        uint256 collateralPrice;
+        uint256 collateralUsd;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
+
+            if (available > 0) {
+                collateralPrice = getCollateralPrice(
+                    globalMarginConfig,
+                    synthMarketId,
+                    globalConfig
+                );
+                collateralUsd += available.mulDecimal(collateralPrice);
+            }
+            unchecked {
+                ++i;
+            }
+        }
         return
             MathUtil
                 .max(collateralUsd.toInt() + getPnlAdjustmentUsd(accountId, market, price), 0)
@@ -298,5 +323,23 @@ library Margin {
 
         // Apply discount on price by the discount.
         return price.mulDecimal(DecimalMath.UNIT - discount);
+    }
+
+    /**
+     * @dev Returns whether an account in a specific market's margin can be liquidated.
+     */
+    function isMarginLiquidatable(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (bool) {
+        // Cannot liquidate margin when there is an open position.
+        if (market.positions[accountId].size != 0) {
+            return false;
+        }
+
+        // Ensure that there is collateralUsd on the account to ensure this account margin can be liquidated.
+        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, price);
+        return marginValues.discountedMarginUsd == 0 && marginValues.collateralUsd != 0;
     }
 }

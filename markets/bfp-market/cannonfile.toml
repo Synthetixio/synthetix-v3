@@ -12,10 +12,10 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "main"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>"
+defaultValue = "synthetix:latest"
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:<%= package.version %>"
+defaultValue = "synthetix-spot-market:latest"
 
 # What is salt?
 #
@@ -178,8 +178,8 @@ args = ["XXX X", "XXX", "18"]
 depends = ["contract.Collateral2Mock"]
 
 [import.pyth]
-source = "pyth:1.4.2"
-args = [120, 1]       # 120s, 1wei
+source = "pyth"
+args = [120, 1] # 120s, 1wei
 
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"

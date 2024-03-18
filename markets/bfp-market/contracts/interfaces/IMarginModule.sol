@@ -111,9 +111,9 @@ interface IMarginModule is IBasePerpMarket {
     ) external view returns (Margin.MarginValues memory);
 
     /**
-     * @notice Returns the NAV of `account` and `marketId` given a `price`.
+     * @notice Returns the NAV of `account` and `marketId` given an optional `price`.
      */
-    function getNetAssetValueWithPrice(
+    function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
         uint256 price
@@ -125,5 +125,16 @@ interface IMarginModule is IBasePerpMarket {
     function getDiscountedCollateralPrice(
         uint128 synthMarketId,
         uint256 amount
+    ) external view returns (uint256);
+
+    /**
+     * @notice Returns the withdrawable margin given the discounted margin for `accountId` accounting for any open position.
+     *
+     * Clients can invoke `getMarginDigest` to retrieve the available margin (i.e. discounted margin when there is a position
+     * open or marginUsd when there isn't, or just collateralUsd).
+     */
+    function getWithdrawableMargin(
+        uint128 accountId,
+        uint128 marketId
     ) external view returns (uint256);
 }

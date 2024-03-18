@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "3.3.15",
+  "version": "3.3.17",
   "publishConfig": {
     "access": "public"
   },
@@ -15,6 +15,7 @@
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
+    "build-testable": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],
