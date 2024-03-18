@@ -134,8 +134,8 @@ library PerpsAccount {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -leftoverDebt);
             }
         } else {
-            // if snxUSD exists, use it first
-            if (self.collateralAmounts[SNX_USD_MARKET_ID].toInt() >= pnl) {
+            // if snxUSD exists, use it first. Notice, pnl at this point is negative, so we need to use modulo to compare (or just -pnl)
+            if (self.collateralAmounts[SNX_USD_MARKET_ID].toInt() >= -pnl) {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, pnl);
             } else {
                 self.debt += (-pnl).toUint();

@@ -164,6 +164,14 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         );
     }
 
+    function canLiquidateMarginOnly(
+        uint128 accountId
+    ) external view override returns (bool isEligible) {
+        (isEligible, ) = PerpsAccount.load(accountId).isEligibleForMarginLiquidation(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+    }
+
     /**
      * @inheritdoc ILiquidationModule
      */
