@@ -22,6 +22,33 @@ describe('PerpAccountModule mergeAccounts', () => {
   const { markets, traders, systems, provider, restore, collaterals, keeper } = bs;
 
   beforeEach(restore);
+  const createAccountsToMerge = async () => {
+    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    // Set the from account to be the "vaultAccountId" that will have the new account merged into it.
+    await MergeAccountSettlementHookMock.mockSetVaultAccountId(toTraderAccountId);
+
+    // Make sure the settlement hook have permission to merge both the accounts (PERPS_MODIFY_COLLATERAL).
+    // In a real world scenario the vault/settlement hook would own both of these account.
+    await PerpMarketProxy.connect(fromTrader.signer).grantPermission(
+      toTraderAccountId,
+      ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
+      MergeAccountSettlementHookMock.address
+    );
+    await PerpMarketProxy.connect(fromTrader.signer).grantPermission(
+      fromTrader.accountId,
+      ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
+      MergeAccountSettlementHookMock.address
+    );
+    return { fromTrader, toTrader };
+  };
 
   it('should revert if either account does not exist/ missing permission', async () => {
     const { PerpMarketProxy } = systems();
@@ -100,25 +127,7 @@ describe('PerpAccountModule mergeAccounts', () => {
   });
   it('should revert if collateral and market use different oracle', async () => {
     const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
-    const fromTrader = genOneOf(traders());
-    const toTraderAccountId = 42069;
-
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
-    // Set the from account to be the "vaultAccountId" that will have the new account merged into it.
-    await MergeAccountSettlementHookMock.mockSetVaultAccountId(toTraderAccountId);
-
-    // Make sure the settlement hook have permission to merge both the accounts (PERPS_MODIFY_COLLATERAL).
-    // In a real world scenario the vault/settlement hook would own both of these account.
-    await PerpMarketProxy.connect(fromTrader.signer).grantPermission(
-      toTraderAccountId,
-      ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
-      MergeAccountSettlementHookMock.address
-    );
-    await PerpMarketProxy.connect(fromTrader.signer).grantPermission(
-      fromTrader.accountId,
-      ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
-      MergeAccountSettlementHookMock.address
-    );
+    const { fromTrader } = await createAccountsToMerge();
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, { desiredTrader: fromTrader })
@@ -150,14 +159,7 @@ describe('PerpAccountModule mergeAccounts', () => {
 
   it('should merge two accounts', async () => {
     const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
-    // Create two trader objects with different accountIds but same signer.
-    const fromTrader = traders()[0];
-    const toTraderAccountId = 42069;
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
-    const toTrader = {
-      signer: fromTrader.signer,
-      accountId: wei(toTraderAccountId).toNumber(),
-    };
+    const { fromTrader, toTrader } = await createAccountsToMerge();
 
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -207,21 +209,6 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredCollateral: collateral,
         desiredMarket: market,
       })
-    );
-    // Set the from account to be the "vaultAccountId" that will have the new account merged into it.
-    await MergeAccountSettlementHookMock.mockSetVaultAccountId(toTrader.accountId);
-
-    // Make sure the settlement hook have permission to merge both the accounts (PERPS_MODIFY_COLLATERAL).
-    // In a real world scenario the vault/settlement hook would own both of these account.
-    await PerpMarketProxy.connect(toTrader.signer).grantPermission(
-      toTrader.accountId,
-      ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
-      MergeAccountSettlementHookMock.address
-    );
-    await PerpMarketProxy.connect(toTrader.signer).grantPermission(
-      fromTrader.accountId,
-      ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
-      MergeAccountSettlementHookMock.address
     );
 
     const fromDigestBefore = await PerpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
