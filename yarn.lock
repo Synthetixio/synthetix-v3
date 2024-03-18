@@ -3109,14 +3109,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/lido-wsteth-to-eth-ratio-oracle@workspace:auxiliary/LidoWstEthToStEthRatioOracle"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    hardhat: "npm:^2.19.5"
-    solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    lodash: "npm:4.17.21"
   languageName: unknown
   linkType: soft
 
@@ -11315,7 +11308,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:^4.17.11, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.21":
+"lodash@npm:4.17.21, lodash@npm:^4.17.11, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: 10/c08619c038846ea6ac754abd6dd29d2568aa705feb69339e836dfa8d8b09abbb2f859371e86863eda41848221f9af43714491467b5b0299122431e202bb0c532
