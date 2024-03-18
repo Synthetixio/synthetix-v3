@@ -2,25 +2,25 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./OwnableOrConfigurerStorage.sol";
-import "./OwnableOrConfigurerStorage.sol";
 import "../interfaces/IOwnableOrConfigurer.sol";
 import "../errors/AddressError.sol";
 import "../errors/ChangeError.sol";
 
 /**
- * @title Contract for facilitating ownership by a the Configurer address.
- * See IOwnable.
+ * @title Contract for facilitating ownership by an owner and a configurer.
+ * See IOwnableOrConfigurer.
  */
 contract OwnableOrConfigurer is IOwnableOrConfigurer {
-    constructor(address initialOwner) {
-        OwnableStorage.load().owner = initialOwner;
+    constructor(address initialOwner, address initialConfigurer) {
+        OwnableOrConfigurerStorage.loadOwner().owner = initialOwner;
+        OwnableOrConfigurerStorage.loadConfigurer().configurer = initialConfigurer;
     }
 
     /**
      * @inheritdoc IOwnable
      */
     function acceptOwnership() public override {
-        OwnableStorage.Data storage store = OwnableStorage.load();
+        OwnableOrConfigurerStorage.OwnerData storage store = OwnableOrConfigurerStorage.loadOwner();
 
         address currentNominatedOwner = store.nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
@@ -34,10 +34,28 @@ contract OwnableOrConfigurer is IOwnableOrConfigurer {
     }
 
     /**
+     * @inheritdoc IOwnableOrConfigurer
+     */
+    function acceptConfigurerRole() public override {
+        OwnableOrConfigurerStorage.ConfigurerData storage store = OwnableOrConfigurerStorage
+            .loadConfigurer();
+
+        address currentNominatedConfigurer = store.nominatedConfigurer;
+        if (msg.sender != currentNominatedConfigurer) {
+            revert NotNominated(msg.sender);
+        }
+
+        emit ConfigurerChanged(store.configurer, currentNominatedConfigurer);
+        store.configurer = currentNominatedConfigurer;
+
+        store.nominatedConfigurer = address(0);
+    }
+
+    /**
      * @inheritdoc IOwnable
      */
     function nominateNewOwner(address newNominatedOwner) public override onlyOwner {
-        OwnableStorage.Data storage store = OwnableStorage.load();
+        OwnableOrConfigurerStorage.OwnerData storage store = OwnableOrConfigurerStorage.loadOwner();
 
         if (newNominatedOwner == address(0)) {
             revert AddressError.ZeroAddress();
@@ -52,10 +70,29 @@ contract OwnableOrConfigurer is IOwnableOrConfigurer {
     }
 
     /**
+     * @inheritdoc IOwnableOrConfigurer
+     */
+    function nominateNewConfigurer(address newNominatedConfigurer) public override onlyOwner {
+        OwnableOrConfigurerStorage.ConfigurerData storage store = OwnableOrConfigurerStorage
+            .loadConfigurer();
+
+        if (newNominatedConfigurer == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        if (newNominatedConfigurer == store.nominatedConfigurer) {
+            revert ChangeError.NoChange();
+        }
+
+        store.nominatedConfigurer = newNominatedConfigurer;
+        emit ConfigurerNominated(newNominatedConfigurer);
+    }
+
+    /**
      * @inheritdoc IOwnable
      */
     function renounceNomination() external override {
-        OwnableStorage.Data storage store = OwnableStorage.load();
+        OwnableOrConfigurerStorage.OwnerData storage store = OwnableOrConfigurerStorage.loadOwner();
 
         if (store.nominatedOwner != msg.sender) {
             revert NotNominated(msg.sender);
@@ -65,25 +102,60 @@ contract OwnableOrConfigurer is IOwnableOrConfigurer {
     }
 
     /**
+     * @inheritdoc IOwnableOrConfigurer
+     */
+    function renounceConfigurerNomination() external override {
+        OwnableOrConfigurerStorage.ConfigurerData storage store = OwnableOrConfigurerStorage
+            .loadConfigurer();
+
+        if (store.nominatedConfigurer != msg.sender) {
+            revert NotNominated(msg.sender);
+        }
+
+        store.nominatedConfigurer = address(0);
+    }
+
+    /**
      * @inheritdoc IOwnable
      */
     function owner() external view override returns (address) {
-        return OwnableStorage.load().owner;
+        return OwnableOrConfigurerStorage.loadOwner().owner;
+    }
+
+    /**
+     * @inheritdoc IOwnableOrConfigurer
+     */
+    function configurer() external view override returns (address) {
+        return OwnableOrConfigurerStorage.loadConfigurer().configurer;
     }
 
     /**
      * @inheritdoc IOwnable
      */
     function nominatedOwner() external view override returns (address) {
-        return OwnableStorage.load().nominatedOwner;
+        return OwnableOrConfigurerStorage.loadOwner().nominatedOwner;
+    }
+
+    /**
+     * @inheritdoc IOwnableOrConfigurer
+     */
+    function nominatedConfigurer() external view override returns (address) {
+        return OwnableOrConfigurerStorage.loadConfigurer().nominatedConfigurer;
     }
 
     /**
      * @dev Reverts if the caller is not the owner.
      */
     modifier onlyOwner() {
-        OwnableStorage.onlyOwner();
+        OwnableOrConfigurerStorage.onlyOwner();
+        _;
+    }
 
+    /**
+     * @dev Reverts if the caller is not the owner or the configurer.
+     */
+    modifier onlyOwnerOrConfigurer() {
+        OwnableOrConfigurerStorage.onlyConfigurerOrOwner();
         _;
     }
 }
