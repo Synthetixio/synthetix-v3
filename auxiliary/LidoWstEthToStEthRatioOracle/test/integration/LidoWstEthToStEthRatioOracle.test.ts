@@ -1,10 +1,9 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
-import { random } from 'lodash';
 import { bootstrap } from '../bootstrap';
 
-export const bn = (n: number) => wei(n).toBN();
-export const genNumber = (min = 0, max = 1) => random(min, max);
+const bn = (n: number) => wei(n).toBN();
+const genNumber = (min = 0, max = 1) => Math.random() * (max - min) + min;
 
 describe('LidoWstEthToStEthRatioOracle', () => {
   const { systems, extras } = bootstrap();

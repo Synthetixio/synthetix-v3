@@ -23,6 +23,13 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "lodash": "4.17.21"
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "hardhat": "^2.19.5",
+    "solidity-docgen": "^0.6.0-beta.36",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
