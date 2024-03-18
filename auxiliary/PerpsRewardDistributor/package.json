@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-reward-distributor",
-  "version": "3.3.4",
+  "version": "3.3.17",
   "description": "Perps Reward Distributor implementation",
   "publishConfig": {
     "access": "public"
