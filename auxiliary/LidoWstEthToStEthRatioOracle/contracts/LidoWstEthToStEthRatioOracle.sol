@@ -3,12 +3,12 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IExternalNode} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {IWstETH} from "../external/lido/IWstETH.sol";
+import {IWstETH} from "./interfaces/IWstETH.sol";
 
-contract LidoWstEthToStEthRatioNode is IExternalNode {
+contract LidoWstEthToStEthRatioOracle is IExternalNode {
     using SafeCastU256 for uint256;
 
     address public immutable lidoWstEthAddress;

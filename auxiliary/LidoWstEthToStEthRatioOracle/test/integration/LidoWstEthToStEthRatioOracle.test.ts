@@ -1,25 +1,24 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
-import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genNumber } from '../../generators';
+import { bootstrap } from '../bootstrap';
 
-describe('ChainlinkWstEthNode', () => {
-  const bs = bootstrap(genBootstrap());
-  const { systems, extras, restore } = bs;
+const bn = (n: number) => wei(n).toBN();
+const genNumber = (min = 0, max = 1) => Math.random() * (max - min) + min;
 
-  beforeEach(restore);
+describe('LidoWstEthToStEthRatioOracle', () => {
+  const { systems, extras } = bootstrap();
 
   describe('process', () => {
     const configureOracleNodes = async (options?: {
       desiredStEthPrice?: number;
       desiredStEthToWstEth?: number;
     }) => {
-      const { WstETHMock, StEthMock } = systems();
+      const { WstETHMock, StEthToEthMock } = systems();
 
       const stEthPrice = bn(options?.desiredStEthPrice ?? genNumber(2500, 3000));
       const stEthToWstEth = bn(options?.desiredStEthToWstEth ?? genNumber(1.1, 1.1568));
 
-      await StEthMock.mockSetCurrentPrice(stEthPrice);
+      await StEthToEthMock.mockSetCurrentPrice(stEthPrice);
       await WstETHMock.mockSetWstEthToStEthRatio(stEthToWstEth);
 
       return { stEthPrice, stEthToWstEth };

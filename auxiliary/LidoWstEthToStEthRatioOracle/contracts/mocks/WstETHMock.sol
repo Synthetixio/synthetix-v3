@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {IWstETH} from "../external/lido/IWstETH.sol";
+import {IWstETH} from "../interfaces/IWstETH.sol";
 
 contract WstETHMock is IWstETH {
     uint256 wstEthToStEthRatio;

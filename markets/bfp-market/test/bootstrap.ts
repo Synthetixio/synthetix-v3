@@ -14,22 +14,17 @@ import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
-import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
 import { GeneratedBootstrap } from './typed';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
-  AggregatorV3Mock: AggregatorV3Mock;
   SpotMarket: SynthSystems['SpotMarket'];
   Synth: SynthSystems['Synth'];
   PythMock: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
-  WstETHMock: WstETHMock;
-  StEthMock: AggregatorV3Mock;
-  StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
 }
@@ -50,10 +45,6 @@ export interface Contracts {
   Collateral2Mock: CollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
-  AggregatorV3Mock: AggregatorV3Mock;
-  WstETHMock: WstETHMock;
-  StEthMock: AggregatorV3Mock;
-  StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
 }
@@ -111,7 +102,6 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-      AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
@@ -123,9 +113,6 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
       CollateralMock: getContract('CollateralMock'),
       Collateral2Mock: getContract('Collateral2Mock'),
-      WstETHMock: getContract('WstETHMock'),
-      StEthMock: getContract('StEthMock'),
-      StEthToEthMock: getContract('StEthToEthMock'),
       SettlementHookMock: getContract('SettlementHookMock'),
       SettlementHook2Mock: getContract('SettlementHook2Mock'),
     };
