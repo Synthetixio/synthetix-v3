@@ -126,7 +126,7 @@ library CollateralConfiguration {
         bool useDiscount
     ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
         uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
-        uint256 impactOnSkew = useDiscount
+        uint256 impactOnSkew = useDiscount && skewScale != 0
             ? collateralAmount.divDecimal(skewScale).mulDecimal(self.discountScalar)
             : 0;
         discount =
