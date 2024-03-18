@@ -313,20 +313,21 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256 withdrawableMargin) {
         bool hasActivePositions = hasOpenPositions(self);
-        int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
 
         if (hasActivePositions) {
-            withdrawableMargin = self.debt > 0
-                ? availableMargin
-                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
-        } else {
             (
                 uint256 requiredInitialMargin,
                 ,
                 uint256 liquidationReward
             ) = getAccountRequiredMargins(self, stalenessTolerance);
             uint256 requiredMargin = requiredInitialMargin + liquidationReward;
-            withdrawableMargin = availableMargin - requiredMargin.toInt();
+            withdrawableMargin =
+                getAvailableMargin(self, stalenessTolerance) -
+                requiredMargin.toInt();
+        } else {
+            withdrawableMargin = self.debt > 0
+                ? getAvailableMargin(self, stalenessTolerance)
+                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
         }
     }
 
