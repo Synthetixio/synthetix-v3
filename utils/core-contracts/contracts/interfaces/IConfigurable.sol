@@ -4,9 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./IOwnable.sol";
 
 /**
- * @title Contract for facilitating ownership by an owner and a configurer.
+ * @title Contract for facilitating ownership by a configurer, meant to be used in tandem with IOwnable.sol.
  */
-interface IOwnableOrConfigurer is IOwnable {
+interface IConfigurable {
     /**
      * @notice Thrown when an address tries to accept ownership of the configurer role but has not been nominated.
      * @param addr The address that is trying to accept ownership.
@@ -43,6 +43,11 @@ interface IOwnableOrConfigurer is IOwnable {
      * @notice Allows a nominated configurer to reject the nomination.
      */
     function renounceConfigurerNomination() external;
+
+    /**
+     * @notice Allows the owner of the contract to set the configurer address.
+     */
+    function setConfigurer(address newConfigurer) external;
 
     /**
      * @notice Returns the current configurer of the contract.
