@@ -34,7 +34,6 @@ source = "<%= settings.oracle_package %>"
 
 [contract.InitialModuleBundle]
 artifact = "InitialModuleBundle"
-args = []
 
 [contract.InitialProxy]
 artifact = "Proxy"
@@ -57,6 +56,13 @@ factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
 
+[contract.SNXDistributor]
+artifact = "SNXDistributor"
+
+args = ["<%= contracts.Proxy.address %>"]
+
+depends = ["invoke.upgradeProxy"]
+
 [invoke.setSystemAddresses]
 target = ["Proxy"]
 from = "<%= settings.owner %>"
@@ -64,6 +70,7 @@ func = "setSystemAddresses"
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
     "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= contracts.SNXDistributor.address %>",
 ]
 
 # add pool owner to pool feature flag allow list
@@ -167,6 +174,19 @@ func = "setPreferredPool"
 args = ["<%= settings.sc_pool_id %>"]
 fromCall.func = "owner"
 depends = ["invoke.createPool"]
+
+[invoke.registerRewardsDistributor]
+target = ["v3.CoreProxy"]
+func = "registerRewardsDistributor"
+args = [
+    "<%= settings.sc_pool_id %>",
+    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
+    "<%= contracts.SNXDistributor.address %>",
+]
+
+fromCall.func = "owner"
+
+depends = ["invoke.createPool", "contract.SNXDistributor"]
 
 [provision.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"

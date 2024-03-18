@@ -15,7 +15,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 12,
   },
-  ignorePatterns: ['/*.js'],
+  ignorePatterns: ['!.*', '!.circleci/test-batch.js'],
   rules: {
     'progress/enable': process.env.ESLINT_PROGRESS === 'true' ? 1 : 0,
     indent: 'off', // prettier
@@ -41,6 +41,7 @@ module.exports = {
         '@typescript-eslint/no-empty-function': 0,
       },
     },
+
     {
       files: [
         './utils/*/test/**/*.{j,t}s',
