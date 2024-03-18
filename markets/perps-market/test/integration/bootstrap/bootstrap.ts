@@ -235,6 +235,16 @@ export function bootstrapMarkets(data: BootstrapArgs) {
             marketId(),
             [collateralAddress()]
           );
+
+        // get distributor address
+        const distributorAddress = (
+          await systems().PerpsMarket.connect(owner()).getRegisteredDistributor(marketId())
+        )[0];
+
+        // Register distributor for collateral
+        await systems()
+          .Core.connect(owner())
+          .registerRewardsDistributor(poolId, collateralAddress(), distributorAddress);
       }
     }
   });

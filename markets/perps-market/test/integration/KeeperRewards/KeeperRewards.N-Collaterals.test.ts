@@ -5,7 +5,7 @@ import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.skip('Keeper Rewards - Multiple Collaterals', () => {
+describe('Keeper Rewards - Multiple Collaterals', () => {
   const KeeperCosts = {
     settlementCost: 1111,
     flagCost: 3333,

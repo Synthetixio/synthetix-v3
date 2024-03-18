@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {IPerpRewardDistributor} from "./interfaces/IPerpsRewardDistributor.sol";
+import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
@@ -114,6 +115,7 @@ contract PerpsRewardDistributor is IPerpRewardDistributor {
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
         return
+            interfaceId == type(IRewardDistributor).interfaceId ||
             interfaceId == type(IPerpRewardDistributor).interfaceId ||
             interfaceId == this.supportsInterface.selector;
     }
