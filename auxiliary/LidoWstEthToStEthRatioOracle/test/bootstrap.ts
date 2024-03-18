@@ -1,5 +1,4 @@
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
-import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import type { LidoWstEthToStEthRatioOracle, WstETHMock } from '../typechain-types';
@@ -54,5 +53,3 @@ export const bootstrap = () => {
     extras: () => getExtras(),
   };
 };
-
-export const bn = (n: number) => wei(n).toBN();
