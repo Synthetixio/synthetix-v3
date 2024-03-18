@@ -115,6 +115,18 @@ contract OwnableOrConfigurer is IOwnableOrConfigurer {
         store.nominatedConfigurer = address(0);
     }
 
+    function setConfigurer(address newConfigurer) external override onlyOwner {
+        OwnableOrConfigurerStorage.ConfigurerData storage store = OwnableOrConfigurerStorage
+            .loadConfigurer();
+
+        if (newConfigurer == store.configurer) {
+            revert ChangeError.NoChange();
+        }
+
+        store.configurer = newConfigurer;
+        emit ConfigurerChanged(store.configurer, newConfigurer);
+    }
+
     /**
      * @inheritdoc IOwnable
      */
@@ -155,7 +167,7 @@ contract OwnableOrConfigurer is IOwnableOrConfigurer {
      * @dev Reverts if the caller is not the owner or the configurer.
      */
     modifier onlyOwnerOrConfigurer() {
-        OwnableOrConfigurerStorage.onlyConfigurerOrOwner();
+        OwnableOrConfigurerStorage.onlyOwnerOrConfigurer();
         _;
     }
 }

@@ -40,7 +40,7 @@ library OwnableOrConfigurerStorage {
         }
     }
 
-    function onlyConfigurerOrOwner() internal view {
+    function onlyOwnerOrConfigurer() internal view {
         if (msg.sender != getOwner() && msg.sender != getConfigurer()) {
             revert AccessError.Unauthorized(msg.sender);
         }
