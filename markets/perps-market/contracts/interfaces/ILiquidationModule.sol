@@ -111,6 +111,12 @@ interface ILiquidationModule {
     function canLiquidate(uint128 accountId) external view returns (bool isEligible);
 
     /**
+     * @notice Returns if an account's margin is eligible for liquidation.
+     * @return isEligible
+     */
+    function canLiquidateMarginOnly(uint128 accountId) external view returns (bool isEligible);
+
+    /**
      * @notice Current liquidation capacity for the market
      * @return capacity market can liquidate up to this #
      * @return maxLiquidationInWindow max amount allowed to liquidate based on the current market configuration
