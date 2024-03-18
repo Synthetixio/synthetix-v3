@@ -39,8 +39,6 @@ describe('ModifyCollateral Withdraw', () => {
   const restoreToSetup = snapshotCheckpoint(provider);
 
   describe('withdraw without open position modifyCollateral() from another account', () => {
-    before(restoreToSetup);
-
     before('owner sets limits to max', async () => {
       await systems()
         .PerpsMarket.connect(owner())

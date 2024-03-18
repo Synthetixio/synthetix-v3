@@ -264,7 +264,6 @@ library PerpsAccount {
         }
 
         int256 withdrawableMarginUsd = getWithdrawableMargin(self, PerpsPrice.Tolerance.STRICT);
-
         uint256 amountToWithdrawUsd;
         if (synthMarketId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
@@ -295,20 +294,21 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256 withdrawableMargin) {
         bool hasActivePositions = hasOpenPositions(self);
-        int256 availableMargin = getAvailableMargin(self, stalenessTolerance);
 
         if (hasActivePositions) {
-            withdrawableMargin = self.debt > 0
-                ? availableMargin
-                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
-        } else {
             (
                 uint256 requiredInitialMargin,
                 ,
                 uint256 liquidationReward
             ) = getAccountRequiredMargins(self, stalenessTolerance);
             uint256 requiredMargin = requiredInitialMargin + liquidationReward;
-            withdrawableMargin = availableMargin - requiredMargin.toInt();
+            withdrawableMargin =
+                getAvailableMargin(self, stalenessTolerance) -
+                requiredMargin.toInt();
+        } else {
+            withdrawableMargin = self.debt > 0
+                ? getAvailableMargin(self, stalenessTolerance)
+                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
         }
     }
 
@@ -353,6 +353,11 @@ library PerpsAccount {
         }
     }
 
+    /**
+     * @notice This function returns the available margin for an account (this is not withdrawable margin which takes into account, margin requirements for open positions)
+     * @dev    The available margin is the total collateral value + account pnl - account debt
+     * @dev    The total collateral value is always based on the discounted value of the collateral
+     */
     function getAvailableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
