@@ -1,11 +1,11 @@
 name = "bfp-market"
 version = "<%= package.version %>"
-description = "bfp market for Synthetix v3"
+description = "bfp-market for Synthetix v3"
 include = []
 
-# TODO: Replace this owner '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
+# NOTE: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
 [setting.owner]
-description = "bfp market owner"
+description = "bfp-market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPreset]
@@ -17,13 +17,6 @@ defaultValue = "synthetix:latest"
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:latest"
 
-# What is salt?
-#
-# salt - The salt is a string which, when changed, will result in a new contract deployment.
-# @see: https://usecannon.com/docs/technical-reference
-[setting.salt]
-defaultValue = "bfp"
-
 # --- External Imports --- #
 
 [import.synthetix]
@@ -32,6 +25,10 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
+
+[import.pyth]
+source = "pyth"
+args = [120, 1] # 120s, 1wei
 
 # --- Module Contracts --- #
 
@@ -128,9 +125,6 @@ target = ["InitialPerpMarketProxy"]
 fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]
-# Referencing Factory-deployed Contracts
-#
-# @see: https://usecannon.com/docs/technical-reference/
 factory.PerpMarketProxy.abiOf = ["Router"]
 factory.PerpMarketProxy.event = "Upgraded"
 factory.PerpMarketProxy.arg = 0
@@ -143,7 +137,7 @@ from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
     "<%= formatBytes32String('accountNft') %>",
-    "Synthetix V3: BF Perp Account NFT",
+    "Synthetix V3: BFP Account NFT",
     "SNX-V3-BFP-ACC",
     "",
     "<%= imports.synthetix.contracts.AccountRouter.address %>",
@@ -154,32 +148,6 @@ factory.PerpAccountProxy.event = "AssociatedSystemSet"
 factory.PerpAccountProxy.arg = 2
 
 # --- Mocks --- #
-
-[contract.CollateralMock]
-artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
-args = []
-salt = "1"
-
-[contract.Collateral2Mock]
-artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
-args = []
-salt = "2"
-
-[invoke.initialize_snxCollateral]
-target = ["CollateralMock"]
-func = "initialize"
-args = ["SNX V3", "SNXV3", "18"]
-depends = ["contract.CollateralMock"]
-
-[invoke.initialize_xxxCollateral]
-target = ["Collateral2Mock"]
-func = "initialize"
-args = ["XXX X", "XXX", "18"]
-depends = ["contract.Collateral2Mock"]
-
-[import.pyth]
-source = "pyth"
-args = [120, 1] # 120s, 1wei
 
 [contract.SettlementHookMock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
@@ -192,6 +160,50 @@ artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
 args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
 depends = ["contract.InitialPerpMarketProxy"]
 salt = "2"
+
+[contract.CollateralMock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "1"
+
+[contract.Collateral2Mock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "2"
+
+[contract.CollateralMockD18]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "3"
+
+[contract.CollateralMockD8]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "4"
+
+[invoke.initialize_CollateralMock]
+target = ["CollateralMock"]
+func = "initialize"
+args = ["CollateralMock", "CMOCK", "18"]
+depends = ["contract.CollateralMock"]
+
+[invoke.initialize_Collateral2Mock]
+target = ["Collateral2Mock"]
+func = "initialize"
+args = ["Collateral2Mock", "CMOCK2", "18"]
+depends = ["contract.Collateral2Mock"]
+
+[invoke.initialize_CollateralMockD18]
+target = ["CollateralMockD18"]
+func = "initialize"
+args = ["CollateralMockD18", "CMD18", "18"]
+depends = ["contract.CollateralMockD18"]
+
+[invoke.initialize_CollateralMockD8]
+target = ["CollateralMockD8"]
+func = "initialize"
+args = ["CollateralMockD18", "CMD8", "8"]
+depends = ["contract.CollateralMockD8"]
 
 # --- Market Post BFP Deployment Configuration --- #
 
