@@ -297,7 +297,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 totalCollateralValue
             );
             runtime.accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
-            if (runtime.accountFullyLiquidated) {
+            if (
+                runtime.accountFullyLiquidated &&
+                GlobalPerpsMarket.load().liquidatableAccounts.contains(runtime.accountId)
+            ) {
                 GlobalPerpsMarket.load().liquidatableAccounts.remove(runtime.accountId);
             }
         }
