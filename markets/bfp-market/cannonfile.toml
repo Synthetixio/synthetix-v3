@@ -152,13 +152,11 @@ factory.PerpAccountProxy.arg = 2
 [contract.SettlementHookMock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
 args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
-depends = ["contract.InitialPerpMarketProxy"]
 salt = "1"
 
 [contract.SettlementHook2Mock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
 args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
-depends = ["contract.InitialPerpMarketProxy"]
 salt = "2"
 
 [contract.CollateralMock]
