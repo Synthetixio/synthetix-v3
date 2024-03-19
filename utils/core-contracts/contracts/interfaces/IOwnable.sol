@@ -43,11 +43,6 @@ interface IOwnable {
     function renounceNomination() external;
 
     /**
-     * @notice Allows the owner of the contract to set the configurer address.
-     */
-    function setConfigurer(address newConfigurer) external;
-
-    /**
      * @notice Returns the current owner of the contract.
      */
     function owner() external view returns (address);
