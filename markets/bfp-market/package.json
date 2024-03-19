@@ -23,7 +23,6 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@openzeppelin/contracts": "4.9.3",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
@@ -43,8 +42,6 @@
     "typescript": "^5.3.3"
   },
   "depcheck": {
-    "ignoreMatches": [
-      "@openzeppelin/contracts"
-    ]
+    "ignoreMatches": []
   }
 }

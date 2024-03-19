@@ -8,13 +8,15 @@ import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
 
-/* solhint-disable meta-transactions/no-msg-sender */
+// solhint-disable meta-transactions/no-msg-sender
 
-// @see: https://github.com/Synthetixio/rewards-distributors
-contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
+contract PerpRewardDistributor is IPerpRewardDistributor {
+    string private constant _VERSION = "1.0.0";
+
+    bool private _initialized;
+
     using ERC20Helper for address;
 
     address private _rewardManager;
@@ -25,35 +27,10 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     address[] private _poolCollateralTypes;
     bool public shouldFailPayout;
 
+    error AlreadyInitialized();
+
     constructor() {
-        _disableInitializers();
-    }
-
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
-     */
-    function onlyPerpMarket() private view {
-        if (msg.sender != _perpMarket) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-    }
-
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
-     */
-    function onlyRewardManager() private view {
-        if (msg.sender != _rewardManager) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-    }
-
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
-     */
-    function onlyPoolOwner() private view {
-        if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
+        _initialized = true;
     }
 
     /**
@@ -66,7 +43,11 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         address[] calldata poolCollateralTypes_,
         address payoutToken_,
         string memory name_
-    ) external initializer {
+    ) external {
+        if (_initialized) {
+            revert AlreadyInitialized();
+        }
+
         _rewardManager = rewardManager; // CoreProxy
         _perpMarket = perpMarket;
         _poolId = poolId_;
@@ -84,8 +65,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
             _poolId,
             collateralType,
             amount,
-            // solhint-disable-next-line numcast/safe-cast
-            uint64(block.timestamp),
+            uint64(block.timestamp), // solhint-disable-line numcast/safe-cast
             0
         );
     }
@@ -131,10 +111,17 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     /**
      * @inheritdoc IRewardDistributor
      */
+    function version() external pure virtual override returns (string memory) {
+        return _version;
+    }
+
+    /**
+     * @inheritdoc IRewardDistributor
+     */
     function payout(
-        uint128,
-        uint128 poolId,
-        address,
+        uint128 /* accountId */,
+        uint128 poolId /* poolId */,
+        address /* collateralType */,
         address payoutTarget_, // msg.sender that called `claimRewards`
         uint256 payoutAmount_
     ) external returns (bool) {
@@ -166,5 +153,32 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         return
             interfaceId == type(IRewardDistributor).interfaceId ||
             interfaceId == this.supportsInterface.selector;
+    }
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
+     */
+    function onlyPerpMarket() private view {
+        if (msg.sender != _perpMarket) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
+     */
+    function onlyRewardManager() private view {
+        if (msg.sender != _rewardManager) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
+     */
+    function onlyPoolOwner() private view {
+        if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
     }
 }

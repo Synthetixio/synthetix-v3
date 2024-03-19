@@ -17,6 +17,11 @@ interface IPerpRewardDistributor is IRewardDistributor {
      */
     function getPoolCollateralTypes() external view returns (address[] memory);
 
+    /**
+     * @notice A semver version of this current deployed PerpRewardDistributor contract.
+     */
+    function version() external pure returns (string memory);
+
     // --- Mutations --- //
 
     /**

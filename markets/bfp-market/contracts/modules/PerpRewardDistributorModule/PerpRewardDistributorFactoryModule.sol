@@ -1,14 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
-import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPerpRewardDistributorFactoryModule} from "../../interfaces/IPerpRewardDistributorFactoryModule.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
 import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol";
 import {ErrorUtil} from "../../utils/ErrorUtil.sol";
+import {Clones} from "../../utils/external/Clones.sol";
 
 contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
     using Clones for address;
