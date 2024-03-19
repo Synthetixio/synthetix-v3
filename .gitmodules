@@ -1,3 +1,6 @@
 [submodule "auxiliary/TrustedMulticallForwarder/lib/openzeppelin-contracts"]
 	path = auxiliary/TrustedMulticallForwarder/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "auxiliary/TrustedMulticallForwarder/lib/forge-std"]
+	path = auxiliary/TrustedMulticallForwarder/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
