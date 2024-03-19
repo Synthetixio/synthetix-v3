@@ -44,7 +44,7 @@ export const assertEvents = async (
       throw new Error(
         `Failed to parse log at index: ${i} \n${spaces}List of parsed events:\n${spaces}${seenEvents.join(
           `\n${spaces}`
-        )} \n${spaces}Ethers error: ${(error as Error).message}`
+        )} \n${spaces}Ethers error: ${(error as Error).message} (len: ${logs.length})`
       );
     }
   });
