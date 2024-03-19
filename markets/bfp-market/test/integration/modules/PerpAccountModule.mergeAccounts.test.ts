@@ -269,7 +269,79 @@ describe('PerpAccountModule mergeAccounts', () => {
       PerpMarketProxy
     );
   });
-  it('should revert if the new position is below initial margin requirement');
+
+  it('should revert if the new position is below initial margin requirement', async () => {
+    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const collateral = collaterals()[1];
+    const market = genOneOf(markets());
+    // Withdraw any preexisting collateral.
+    await withdrawAllCollateral(bs, fromTrader, market.marketId());
+    await withdrawAllCollateral(bs, toTrader, market.marketId());
+
+    // Set collateral (and market) price to 1, to make make it easier to create our expected scenario.
+    const collateralPrice = bn(1);
+    await collateral.setPrice(collateralPrice);
+
+    // Set the market oracleNodeId to the collateral oracleNodeId
+    await setMarketConfigurationById(bs, market.marketId(), {
+      oracleNodeId: collateral.oracleNodeId(),
+      maxMarketSize: bn(10000000), // Make sure maxMarketSize is high enough given the market price is $1.
+    });
+    market.oracleNodeId = collateral.oracleNodeId;
+
+    // Deposit and create a highly leveraged position
+    const { marketId, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: toTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+        desiredMarginUsdDepositAmount: 500,
+      })
+    );
+
+    const toOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSize: bn(4000),
+    });
+
+    await commitAndSettle(bs, marketId, toTrader, toOrder);
+
+    // Deposit margin and commit and settle with settlement hook for the fromAccount.
+    await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+        desiredMarginUsdDepositAmount: 500,
+      })
+    );
+    const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSize: bn(500),
+      desiredHooks: [MergeAccountSettlementHookMock.address],
+    });
+
+    await commitOrder(bs, marketId, fromTrader, fromOrder);
+
+    const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
+    await fastForwardTo(settlementTime, provider());
+
+    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+    // Increase minMarginUsd to make IM checks fail and to avoid CanLiquidate revert.
+    await setMarketConfigurationById(bs, market.marketId(), {
+      minMarginUsd: bn(700),
+    });
+
+    await assertRevert(
+      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+        value: updateFee,
+      }),
+      `InsufficientMargin()`,
+      PerpMarketProxy
+    );
+  });
 
   it('should merge two accounts', async () => {
     const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
