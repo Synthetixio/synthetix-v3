@@ -4,6 +4,7 @@ import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { HardhatPluginError } from 'hardhat/plugins';
+import { HardhatConfig } from 'hardhat/types/config';
 import { dumpStorage } from '../internal/dump';
 import { validate } from '../internal/validate';
 import {
@@ -19,6 +20,8 @@ interface Params {
   noSave?: boolean;
   log?: boolean;
 }
+
+type ExtendedHathatConfig = HardhatConfig & { storage: Params };
 
 task(
   TASK_STORAGE_VERIFY,
@@ -43,7 +46,14 @@ task(
   )
   .addFlag('log', 'Show the result in the console')
   .addFlag('noSave', 'Do not update storage dump file')
-  .setAction(async ({ contracts, output, log, noSave }: Required<Params>, hre) => {
+  .setAction(async (params: Required<Params>, hre) => {
+    const userOverrideConfig = (hre.config as ExtendedHathatConfig).storage ?? {};
+
+    const contracts = userOverrideConfig.contracts ?? params.contracts;
+    const output = userOverrideConfig.output ?? params.output;
+    const log = userOverrideConfig.log ?? params.log;
+    const noSave = userOverrideConfig.noSave ?? params.noSave;
+
     const now = Date.now();
     logger.subtitle('Validating storage');
 

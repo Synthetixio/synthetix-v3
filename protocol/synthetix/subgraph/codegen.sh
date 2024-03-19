@@ -35,6 +35,4 @@ codegen base-sepolia-andromeda 84532 "synthetix-omnibus:latest@andromeda"
 codegen base-mainnet-andromeda 8453 "synthetix-omnibus:latest@andromeda"
 
 codegen mainnet 1 "synthetix-omnibus:latest@main"
-codegen goerli 5 "synthetix-omnibus:latest@main"
 codegen optimism-mainnet 10 "synthetix-omnibus:latest@main"
-codegen optimism-goerli 420 "synthetix-omnibus:latest@main"

@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 /// @title Interface a reward distributor.
 interface IRewardDistributor is IERC165 {
     /// @notice Returns a human-readable name for the reward distributor
-    function name() external returns (string memory);
+    function name() external view returns (string memory);
 
     /// @notice This function should revert if ERC2771Context._msgSender() is not the Synthetix CoreProxy address.
     /// @return whether or not the payout was executed
@@ -29,5 +29,5 @@ interface IRewardDistributor is IERC165 {
 
     /// @notice Address to ERC-20 token distributed by this distributor, for display purposes only
     /// @dev Return address(0) if providing non ERC-20 rewards
-    function token() external returns (address);
+    function token() external view returns (address);
 }

@@ -254,18 +254,22 @@ describe('MarketConfiguration', () => {
       systems().PerpsMarket
     );
   });
+  it('owner can set max market size and events are emitted', async () => {
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxMarketSize(marketId, fixture.maxMarketSize),
+      'MaxMarketSizeSet(' + marketId.toString() + ', ' + fixture.maxMarketSize.toString() + ')',
+      systems().PerpsMarket
+    );
+  });
+
   it('owner can set max market value and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxMarketSize(marketId, fixture.maxMarketSize, fixture.maxMarketValue),
-      'MaxMarketSizeSet(' +
-        marketId.toString() +
-        ', ' +
-        fixture.maxMarketSize.toString() +
-        ', ' +
-        fixture.maxMarketValue.toString() +
-        ')',
+        .setMaxMarketValue(marketId, fixture.maxMarketValue),
+      'MaxMarketValueSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
       systems().PerpsMarket
     );
   });
@@ -365,9 +369,12 @@ describe('MarketConfiguration', () => {
       systems().PerpsMarket
     );
     await assertRevert(
-      systems()
-        .PerpsMarket.connect(randomUser)
-        .setMaxMarketSize(marketId, fixture.maxMarketSize, fixture.maxMarketValue),
+      systems().PerpsMarket.connect(randomUser).setMaxMarketSize(marketId, fixture.maxMarketSize),
+      'Unauthorized',
+      systems().PerpsMarket
+    );
+    await assertRevert(
+      systems().PerpsMarket.connect(randomUser).setMaxMarketValue(marketId, fixture.maxMarketValue),
       'Unauthorized',
       systems().PerpsMarket
     );
@@ -415,8 +422,13 @@ describe('MarketConfiguration', () => {
   });
 
   it('get maxMarketSize', async () => {
-    const maxMarketSizes = await systems().PerpsMarket.getMaxMarketSize(marketId);
-    assertBn.equal(maxMarketSizes[0], fixture.maxMarketSize);
+    const maxMarketSize = await systems().PerpsMarket.getMaxMarketSize(marketId);
+    assertBn.equal(maxMarketSize, fixture.maxMarketSize);
+  });
+
+  it('get maxMarketValue', async () => {
+    const maxMarketValue = await systems().PerpsMarket.getMaxMarketValue(marketId);
+    assertBn.equal(maxMarketValue, fixture.maxMarketValue);
   });
 
   it('get orderFees', async () => {

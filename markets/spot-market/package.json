@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.3.14",
+  "version": "3.3.17",
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -16,7 +16,7 @@
     "coverage1": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "cannon publish synthetix-spot-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
-    "postpack": "yarn build && yarn publish-contracts",
+    "deploy": "yarn build && yarn publish-contracts",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "docgen": "hardhat docgen"
   },
@@ -34,7 +34,7 @@
     "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
     "@types/node-fetch": "^2.6.11",
-    "@usecannon/cli": "2.11.16",
+    "@usecannon/cli": "2.11.20",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "node-fetch": "^2.7.0",

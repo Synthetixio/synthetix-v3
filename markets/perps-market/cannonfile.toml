@@ -11,7 +11,7 @@ description = "perps market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>"
+defaultValue = "synthetix:latest"
 
 [setting.synthetixPreset]
 defaultValue = "main"
@@ -20,7 +20,7 @@ defaultValue = "main"
 defaultValue = "main"
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:<%= package.version %>"
+defaultValue = "synthetix-spot-market:latest"
 
 [setting.salt]
 defaultValue = "snax"

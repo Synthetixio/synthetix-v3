@@ -940,10 +940,6 @@ export class MarketUsdDeposited__Params {
   get depositedCollateralValue(): BigInt {
     return this._event.parameters[6].value.toBigInt();
   }
-
-  get reportedDebt(): BigInt {
-    return this._event.parameters[7].value.toBigInt();
-  }
 }
 
 export class MarketUsdWithdrawn extends ethereum.Event {
@@ -985,10 +981,6 @@ export class MarketUsdWithdrawn__Params {
 
   get depositedCollateralValue(): BigInt {
     return this._event.parameters[6].value.toBigInt();
-  }
-
-  get reportedDebt(): BigInt {
-    return this._event.parameters[7].value.toBigInt();
   }
 }
 

@@ -55,13 +55,13 @@ contract AssociateDebtModule is IAssociateDebtModule {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        // The market must appear in pool configuration of the specified position
+        // Refresh latest account debt (do this before hasMarket check to verify max debt per share)
+        poolData.updateAccountDebt(collateralType, accountId);
+
+        // The market must appear in pool configuration of the specified position (and not be out of range)
         if (!poolData.hasMarket(marketId)) {
             revert NotFundedByPool(marketId, poolId);
         }
-
-        // Refresh latest account debt
-        poolData.updateAccountDebt(collateralType, accountId);
 
         // rebalance here because this is a good opporitunity to do so, and because its required for correct debt accounting after account debt update
         poolData.rebalanceMarketsInPool();
@@ -70,7 +70,10 @@ contract AssociateDebtModule is IAssociateDebtModule {
         epochData.distributeDebtToAccounts(-amount.toInt());
 
         // Assign this debt to the specified position
-        int256 updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
+        epochData.assignDebtToAccount(accountId, amount.toInt());
+
+        // since the reassignment of debt removed some debt form the user's account before it was added, a consoldation is necessary
+        int256 updatedDebt = epochData.consolidateAccountDebt(accountId);
 
         (, uint256 actorCollateralValue) = poolData.currentAccountCollateral(
             collateralType,
