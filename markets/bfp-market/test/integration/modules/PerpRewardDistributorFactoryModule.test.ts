@@ -90,24 +90,24 @@ describe('PerpRewardDistributorFactoryModule', () => {
       await assertRevert(
         PerpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
-          collateralTypes: [genAddress(), ADDRESS0],
+          collateralTypes: [genAddress()],
           name: genBytes32(),
           token: CollateralMockD8.address,
         }),
-        `ZeroAddress()`,
+        'InvalidParameter("payoutToken", "Token decimals expected to be 18")',
         PerpMarketProxy
       );
     });
 
     it('should revert when not erc20', async () => {
-      const { PerpMarketProxy, CollateralMockD8 } = systems();
+      const { PerpMarketProxy } = systems();
 
       await assertRevert(
         PerpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress()],
           name: genBytes32(),
-          token: CollateralMockD8.address,
+          token: genAddress(),
         }),
         'InvalidParameter("payoutToken", "Token decimals expected to be 18")',
         PerpMarketProxy
