@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { Systems } from '../bootstrap';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
+import Wei, { wei } from '@synthetixio/wei';
 
 type CollateralSynthData = {
   synthMarket?: () => SynthMarkets[number];
@@ -117,4 +118,22 @@ export const depositCollateral: (
   return {
     stats: () => stats,
   };
+};
+
+type CollateralConfig = {
+  skewScale: Wei;
+  discountScalar: Wei;
+  lowerLimitDiscount: Wei;
+  upperLimitDiscount: Wei;
+};
+
+export const discountedValue = (
+  amount: Wei,
+  price: Wei,
+  { skewScale, discountScalar, lowerLimitDiscount, upperLimitDiscount }: CollateralConfig
+) => {
+  const impactOnSkew = amount.div(skewScale).mul(discountScalar);
+  const discount = Wei.max(Wei.min(impactOnSkew, lowerLimitDiscount), upperLimitDiscount);
+
+  return amount.mul(price).mul(wei(1).sub(discount));
 };
