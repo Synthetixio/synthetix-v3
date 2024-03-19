@@ -215,6 +215,50 @@ describe('PerpRewardDistributor', () => {
   });
 
   describe('distributeReward', () => {
+    it('should distribute after transfer', async () => {
+      const { Core, PerpMarketProxy, CollateralMock, CollateralMockD18 } = systems();
+
+      const args = {
+        poolId: pool().id,
+        collateralTypes: [CollateralMock.address],
+        name: genBytes32(),
+        token: CollateralMockD18.address,
+      };
+      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+
+      await Core.connect(owner()).registerRewardsDistributor(
+        args.poolId,
+        args.collateralTypes[0],
+        PerpRewardDistributor.address
+      );
+
+      await withImpersonate(bs, PerpMarketProxy.address, async (signer) => {
+        const amount = bn(genNumber(1, 100));
+        await CollateralMockD18.mint(PerpRewardDistributor.address, amount);
+        assertBn.equal(await CollateralMockD18.balanceOf(PerpRewardDistributor.address), amount);
+
+        // One less than transferred - OK
+        await PerpRewardDistributor.connect(signer).callStatic.distributeRewards(
+          args.collateralTypes[0],
+          amount.sub(bn(1))
+        );
+        // Exactly transferred - OK
+        await PerpRewardDistributor.connect(signer).callStatic.distributeRewards(
+          args.collateralTypes[0],
+          amount
+        );
+        // One more than transferred - FAIL
+        await assertRevert(
+          PerpRewardDistributor.connect(signer).distributeRewards(
+            args.collateralTypes[0],
+            amount.add(bn(1))
+          ),
+          `InsufficientRewardBalance("${amount.add(bn(1))}", "${amount}")`,
+          PerpRewardDistributor
+        );
+      });
+    });
+
     it('should revert when attempting to distribute reward before a transfer', async () => {
       const { PerpMarketProxy, CollateralMockD18 } = systems();
 
