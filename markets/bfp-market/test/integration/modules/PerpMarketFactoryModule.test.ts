@@ -25,9 +25,12 @@ import {
   commitAndSettle,
   depositMargin,
   fastForwardBySec,
+  findEventSafe,
+  getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
+  withdrawAllCollateral,
 } from '../../helpers';
 import { Collateral, Market, Trader } from '../../typed';
 import { isSameSide } from '../../calculations';
@@ -687,7 +690,184 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should expect sum of remaining all pnl to eq debt after a long period of trading');
 
-    it('should expect reportedDebt/totalDebt to be updated appropriately sUSD (concrete)');
+    it.only('should expect reportedDebt/totalDebt to be updated appropriately sUSD (concrete)', async () => {
+      const { PerpMarketProxy, Core } = systems();
+      const collateral = getSusdCollateral(collaterals());
+      const market = markets()[1]; // ETHPERP.
+      const marketId = market.marketId();
+      const trader = traders()[0];
+
+      // Create a frictionless market for simplicity.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: bn(0.01), // 1% fees to make calculations easier.
+        takerFee: bn(0.01), // 1% fees to make calculations easier.
+        maxFundingVelocity: bn(0), // Not testing funding is this test.
+        skewScale: bn(1_000_000_000), // An extremely large skewScale to minimise price impact.
+      });
+      // Cap keeper fees to $10.
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(10),
+        maxKeeperFeeUsd: bn(10),
+      });
+
+      // Set market price to $1.
+      await market.aggregator().mockSetCurrentPrice(bn(1));
+
+      // Deposit 1k USD
+      const { collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 1000,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredTrader: trader,
+        })
+      );
+      // No debt should be in the same system.
+      assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
+      assertBn.isZero(await Core.getMarketTotalDebt(marketId));
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Open a 1x long with deposit. This should also incur zero debt.
+      //
+      // NOTE: There is a slight extra in debt correction due to a tiny price impact incurred on the open order.
+      //
+      //
+      // fundingDelta = 0
+      // notionalDelta = 1 * 1000
+      // totalPositionPnl = pricePnl + accruedFunding + accruedFeesUsd
+      //                  = 0 + 0 + 20
+      // debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl)
+      //                = 0 + 1000 + 20
+      //                = 1020
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
+      //              = 1000 + 1000 * (1 + 0) - 1020
+      //              = 980
+      // netIssuance = oldNetIssuance + keeperFee
+      //             = -1000 + 10
+      //             = -990
+      // totalDebt = reportedDebt + netIssuance - collateralValueCore
+      //           = 980 + -990 - 0
+      //           = -10
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      console.log('Open order:');
+      console.log(
+        'await PerpMarketProxy.reportedDebt(marketId)',
+        wei(await PerpMarketProxy.reportedDebt(marketId)).toNumber()
+      );
+      console.log(
+        'await Core.getMarketTotalDebt(marketId)',
+        wei(await Core.getMarketTotalDebt(marketId)).toNumber()
+      );
+      // assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(980), bn(0.01));
+      // assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-10), bn(0.01));
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Close order.
+      //
+      // NOTE: There is a slight extra in debt correction due to a tiny price impact incurred on the open order.
+      //
+      //
+      // fundingDelta = 0
+      // notionalDelta = 1 * -1000
+      // totalPositionPnl = pricePnl + accruedFunding + accruedFeesUsd
+      //                  = 0 + 0 + 20
+      //                  = 20
+      // debtCorrection = prevDebtCorrection +fundingDelta + notionalDelta + totalPositionPnl
+      //                = 1020 + 0 + -1000 + 20
+      //                = 40
+      // collateralValue = Initial Margin - accruedFeesUsd open - accruedFeesUsd close
+      //                 = 1000 - 20 - 20
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
+      //              = 960 + 0 * (1 + 0) - 40
+      //              = 920
+      //
+      // netIssuance = oldNetIssuance + keeperFee
+      //             = -990 + 10
+      //             = -980
+      // totalDebt = reportedDebt + netIssuance - collateralValueCore
+      //           = 920 + -980 - 0
+      //           = -60
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+      console.log('Close order:');
+      console.log(
+        'await PerpMarketProxy.reportedDebt(marketId)',
+        wei(await PerpMarketProxy.reportedDebt(marketId)).toNumber()
+      );
+      console.log(
+        'await Core.getMarketTotalDebt(marketId)',
+        wei(await Core.getMarketTotalDebt(marketId)).toNumber()
+      );
+
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(920), bn(0.01));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-60), bn(0.01));
+
+      // Withdraw all margin.
+      //
+      // debtCorrection = prevDebtCorrection
+      //                = 40
+      // collateralValue = 0
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
+      //              = 0 + 0 * (1 + 0) - 40
+      //              = -40
+      //              = Math.min(0, -40) = 0
+      //
+      // netIssuance = prevNetIssuance + (initial margin - open + close fees)
+      //             = -980 + ( 1000 - 20 - 20)
+      //             = -20
+      // totalDebt = reportedDebt + netIssuance - collateralValue
+      //           = 0 + -20 - 0
+      //           = -20
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+        provider()
+      );
+      const x = findEventSafe(receipt, 'MarginWithdraw', PerpMarketProxy);
+      console.log(x);
+      console.log(
+        'await PerpMarketProxy.reportedDebt(marketId)',
+        wei(await PerpMarketProxy.reportedDebt(marketId)).toNumber()
+      );
+      console.log(
+        'await Core.getMarketTotalDebt(marketId)',
+        wei(await Core.getMarketTotalDebt(marketId)).toNumber()
+      );
+
+      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(0), bn(0.01));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-20), bn(0.01));
+      // Deposit 1k USD again
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 1000,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredTrader: trader,
+        })
+      );
+      console.log(
+        'await PerpMarketProxy.reportedDebt(marketId)',
+        wei(await PerpMarketProxy.reportedDebt(marketId)).toNumber()
+      );
+      console.log(
+        'await Core.getMarketTotalDebt(marketId)',
+        wei(await Core.getMarketTotalDebt(marketId)).toNumber()
+      );
+
+      // At this point, we should have earned $20 in order fees.
+      // This needs to be figured out.
+      assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
+      assertBn.isZero(await Core.getMarketTotalDebt(marketId));
+    });
 
     it('should expect reportedDebt/totalDebt to be updated appropriately non-sUSD (concrete)', async () => {
       const { PerpMarketProxy, Core } = systems();
