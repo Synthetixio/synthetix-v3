@@ -21,7 +21,6 @@
     "forge-coverage": "forge coverage --report lcov"
   },
   "devDependencies": {
-    "@synthetixio/rewards-distributor": "workspace:*",
     "@usecannon/cli": "2.11.20",
     "forge-std": "github:foundry-rs/forge-std#master"
   },
