@@ -71,8 +71,6 @@ library Position {
         uint256 entryUtilizationAccrued;
         // The fill price at which this position was settled with.
         uint256 entryPrice;
-        // Accrued static fees in USD incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
-        uint256 accruedFeesUsd;
     }
 
     /**
@@ -260,8 +258,7 @@ library Position {
             market.currentFundingAccruedComputed,
             // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
             market.currentUtilizationAccruedComputed + market.getUnrecordedUtilization(),
-            params.fillPrice,
-            orderFee + keeperFee
+            params.fillPrice
         );
 
         // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
@@ -389,9 +386,7 @@ library Position {
                 : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryUtilizationAccrued,
-            oldPosition.entryPrice,
-            // An accumulation of fees paid on liquidation paid out to the liquidator.
-            oldPosition.accruedFeesUsd + liqKeeperFee
+            oldPosition.entryPrice
         );
     }
 
@@ -664,6 +659,5 @@ library Position {
         self.entryFundingAccrued = data.entryFundingAccrued;
         self.entryUtilizationAccrued = data.entryUtilizationAccrued;
         self.entryPrice = data.entryPrice;
-        self.accruedFeesUsd = data.accruedFeesUsd;
     }
 }

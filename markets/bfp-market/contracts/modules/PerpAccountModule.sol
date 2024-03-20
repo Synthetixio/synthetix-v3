@@ -108,7 +108,6 @@ contract PerpAccountModule is IPerpAccountModule {
                 healthData.healthFactor,
                 MathUtil.abs(position.size).mulDecimal(oraclePrice), // notionalValueUsd
                 healthData.pnl,
-                position.accruedFeesUsd,
                 healthData.accruedFunding,
                 healthData.accruedUtilization,
                 position.entryPrice,

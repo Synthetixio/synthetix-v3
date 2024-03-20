@@ -191,7 +191,6 @@ library Margin {
                 : position.getPricePnl(price) +
                     position.getAccruedFunding(market, price) -
                     position.getAccruedUtilization(market, price).toInt() -
-                    position.accruedFeesUsd.toInt() -
                     accountMargin.debtUsd.to256().toInt();
     }
 

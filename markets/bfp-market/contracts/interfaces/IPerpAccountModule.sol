@@ -40,8 +40,6 @@ interface IPerpAccountModule {
         uint256 notionalValueUsd;
         // Unrealized PnL of position in USD.
         int256 pnl;
-        // Fees incurred to settle position (e.g. keeper/order).
-        uint256 accruedFeesUsd;
         // Funding accrued in USD.
         int256 accruedFunding;
         // Utilization accrued in USD.
