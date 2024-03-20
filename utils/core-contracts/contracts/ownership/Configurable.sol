@@ -74,6 +74,10 @@ contract Configurable is IConfigurable {
             revert ChangeError.NoChange();
         }
 
+        if (store.nominatedConfigurer != address(0)) {
+            store.nominatedConfigurer = address(0);
+        }
+
         store.configurer = newConfigurer;
         emit ConfigurerChanged(store.configurer, newConfigurer);
     }
