@@ -47,7 +47,6 @@ describe('OrderModule', () => {
     restore,
     provider,
     keeper,
-    spotMarket,
     ethOracleNode,
     collateralsWithoutSusd,
     markets,
@@ -1549,89 +1548,6 @@ describe('OrderModule', () => {
       assertBn.equal(await USD.balanceOf(await keeper().getAddress()), keeperFee);
     });
 
-    describe('SpotMarket.sellExactIn', () => {
-      it.skip('should revert when sale exceeds sellExactInMaxSlippagePercent', async () => {
-        const { PerpMarketProxy, SpotMarket } = systems();
-
-        // TODO: Mint Token X, set as wrapper, wrap token X to push skew.
-
-        const collateral = genOneOf(collateralsWithoutSusd());
-        const { trader, market, marketId, collateralDepositAmount } = await depositMargin(
-          bs,
-          genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: 100_000 })
-        );
-
-        const orderSide = genSide();
-        const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredSide: orderSide,
-          desiredLeverage: 1,
-          desiredKeeperFeeBufferUsd: 1,
-        });
-        await commitAndSettle(bs, marketId, trader, order1);
-
-        // A low slippage tolerance results in a revert on the position modify.
-        await setMarketConfiguration(bs, {
-          sellExactInMaxSlippagePercent: bn(0.00001),
-          maxCollateralDiscount: bn(0),
-          minCollateralDiscount: bn(0),
-        });
-        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-          collateral.synthMarketId(),
-          bn(1_000_000)
-        );
-
-        // Price moves by 50% and they incur a loss.
-        const newMarketOraclePrice = wei(order1.oraclePrice)
-          .mul(orderSide === 1 ? 0.5 : 1.5)
-          .toBN();
-        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-        // Add 0.1% more size to the position.
-        const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredSize: wei(order1.sizeDelta).mul(0.001).toBN(),
-        });
-        await commitOrder(bs, marketId, trader, order2);
-
-        const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-        const { updateData, updateFee } = await getPythPriceDataByMarketId(
-          bs,
-          marketId,
-          publishTime
-        );
-        await fastForwardTo(settlementTime, provider());
-
-        await assertRevert(
-          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
-            value: updateFee,
-          }),
-          'InsufficientAmountReceived',
-          PerpMarketProxy
-        );
-      });
-
-      describe('open', () => {
-        it('should not sell any margin when opening a new position');
-      });
-
-      describe('modify', () => {
-        it('should sell some non-sUSD synths to pay fees on when no sUSD margin');
-
-        it('should realize sUSD profit when modifying a profitable position');
-
-        it('should sell margin when modifying a neg pnl position (when no sUSD)');
-
-        it('should not sell margin when enough sUSD margin covers neg pnl');
-
-        it('should not sell margin on a profitable position even if fees > pnl');
-      });
-
-      describe('close', () => {
-        it('should not sell margin when closing a profitable position');
-
-        it('should sell margin when closing a neg pnl position');
-      });
-    });
-
     it('should revert when this order exceeds maxMarketSize (oi)');
 
     it('should revert when accountId does not exist', async () => {
@@ -1956,7 +1872,7 @@ describe('OrderModule', () => {
 
     it('should revert when not enough wei is available to pay pyth fee');
 
-    describe('hooks', () => {
+    describe('settlementHooks', () => {
       it('should settle and execute committed hooks', async () => {
         const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems();
 
@@ -1989,8 +1905,33 @@ describe('OrderModule', () => {
         }
       });
 
-      // TODO: Implement this when data sent as part of the hook is more concretely defined.
-      it('should execute hook with expected data');
+      it('should execute hook with expected data', async () => {
+        const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems();
+
+        const { trader, market, marketId, collateral, collateralDepositAmount } =
+          await depositMargin(bs, genTrader(bs));
+
+        const { maxHooksPerOrder } = await PerpMarketProxy.getSettlementHookConfiguration();
+        await PerpMarketProxy.setSettlementHookConfiguration({
+          whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
+          maxHooksPerOrder,
+        });
+        const hooks = [SettlementHookMock.address];
+
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredHooks: hooks,
+        });
+        const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+
+        await assertEvent(receipt, 'OrderSettled', PerpMarketProxy);
+
+        const price = await PerpMarketProxy.getOraclePrice(marketId);
+        await assertEvent(
+          receipt,
+          `OnSettledInvoked(${trader.accountId}, ${marketId}, ${price})`,
+          SettlementHookMock
+        );
+      });
 
       it('should revert settlement when a hook also reverts', async () => {
         const { PerpMarketProxy, SettlementHookMock } = systems();
