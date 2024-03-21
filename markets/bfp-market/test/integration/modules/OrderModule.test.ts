@@ -31,7 +31,6 @@ import {
   getPythPriceData,
   getSusdCollateral,
   getPythPriceDataByMarketId,
-  setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
 } from '../../helpers';
