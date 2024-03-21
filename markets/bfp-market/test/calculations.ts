@@ -102,7 +102,7 @@ export const calcOrderFees = async (
       ethPrice
     );
 
-    // Base keeperFee + profit margin and asmall user specified buffer.
+    // Base keeperFee + profit margin and a small user specified buffer.
     const baseKeeperFeePlusProfit = wei(baseKeeperFeeUsd)
       .mul(wei(1).add(keeperProfitMarginPercent))
       .add(keeperFeeBufferUsd);
