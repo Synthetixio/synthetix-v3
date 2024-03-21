@@ -1,6 +1,6 @@
 specVersion: 0.0.4
 schema:
-  file: ./arbitrum-one/schema.graphql
+  file: ./arbitrum-sepolia/schema.graphql
 dataSources:
   - kind: ethereum
     network: arbitrum-sepolia

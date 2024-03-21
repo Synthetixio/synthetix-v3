@@ -1,6 +1,6 @@
 specVersion: 0.0.4
 schema:
-  file: ./arbitrum-one/schema.graphql
+  file: ./arbitrum-mainnet/schema.graphql
 dataSources:
   - kind: ethereum
     network: arbitrum-one
@@ -13,10 +13,10 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./arbitrum-one/index.ts
+      file: ./arbitrum-mainnet/index.ts
       abis:
         - name: CoreProxy
-          file: ./arbitrum-one/deployments/system/CoreProxy.json
+          file: ./arbitrum-mainnet/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
