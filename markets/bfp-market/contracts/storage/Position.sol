@@ -286,18 +286,19 @@ library Position {
                 marginValues.collateralUsd,
                 nextMarginUsd
             );
+
             // Check new position margin validations.
             validateNextPositionEnoughMargin(marketConfig, market, newPosition, nextMarginUsd);
-        }
 
-        // Check the new position hasn't hit max OI on either side.
-        validateMaxOi(
-            marketConfig.maxMarketSize,
-            market.skew,
-            market.size,
-            currentPosition.size,
-            newPosition.size
-        );
+            // Check the new position hasn't hit max OI on either side.
+            validateMaxOi(
+                marketConfig.maxMarketSize,
+                market.skew,
+                market.size,
+                currentPosition.size,
+                newPosition.size
+            );
+        }
 
         return
             Position.ValidatedTrade(
