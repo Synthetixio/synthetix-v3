@@ -235,7 +235,10 @@ export const commitOrder = async (
         limitPrice,
         keeperFeeBufferUsd,
         hooks,
-        { gasLimit: BigNumber.from(1000000) } // Sometimes gas estimation is not big enough, add a large one to be safe.
+        {
+          maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
+          gasLimit: BigNumber.from(1000000), // Sometimes gas estimation is not big enough, add a large one to be safe.
+        }
       ),
     provider()
   );
@@ -278,6 +281,7 @@ export const commitAndSettle = async (
         updateData,
         {
           value: updateFee,
+          maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
           gasLimit: BigNumber.from(1000000), // Sometimes gas estimation is not big enough, add a large one to be safe.
         }
       ),

@@ -12,6 +12,7 @@ import {
   commitAndSettle,
   depositMargin,
   findEventSafe,
+  setBaseFeePerGas,
   setMarketConfiguration,
   setMarketConfigurationById,
 } from '../../helpers';
@@ -254,9 +255,7 @@ describe('OrderModule fees', () => {
 
         const { trader, marketId, market, collateral, collateralDepositAmount } =
           await depositMargin(bs, genTrader(bs));
-        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredKeeperFeeBufferUsd: 1000, // Set a really high keeper buffer fee so we hit the max amount.
-        });
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
         const { calcKeeperOrderSettlementFee } = await calcOrderFees(
           bs,
           marketId,
@@ -264,6 +263,8 @@ describe('OrderModule fees', () => {
           order.keeperFeeBufferUsd
         );
 
+        // Set a high base fee causing us to hit the maxKeeperFeeUsd
+        await setBaseFeePerGas(100, provider());
         const { receipt, lastBaseFeePerGas } = await commitAndSettle(bs, marketId, trader, order);
 
         const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
@@ -271,6 +272,7 @@ describe('OrderModule fees', () => {
 
         assertBn.equal(keeperFee, expectedKeeperFee);
         assertBn.equal(expectedKeeperFee, maxKeeperFeeUsd);
+        await setBaseFeePerGas(1, provider());
       });
 
       it('should cap the keeperFee by its min usd when below floor', async () => {
