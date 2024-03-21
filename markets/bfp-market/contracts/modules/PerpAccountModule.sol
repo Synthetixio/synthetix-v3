@@ -172,11 +172,11 @@ contract PerpAccountModule is IPerpAccountModule {
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         Account.loadAccountAndValidatePermission(
             fromId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION // TODO maybe new permission?
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
         Account.loadAccountAndValidatePermission(
             toId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION // TODO maybe new permission?
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
