@@ -18,7 +18,7 @@ contract SettlementHookMock is ISettlementHook {
 
     // --- Events --- //
 
-    event Settled();
+    event OnSettledInvoked(uint128 accountId, uint128 marketId, uint256 oraclePrice);
 
     constructor(address _market) {
         market = _market;
@@ -28,7 +28,7 @@ contract SettlementHookMock is ISettlementHook {
         shouldRevertOnSettlement = _shouldRevertOnSettlement;
     }
 
-    function onSettle(uint128, uint128, int128, int128, uint256) external {
+    function onSettle(uint128 accountId, uint128 marketId, uint256 oraclePrice) external {
         if (msg.sender != market) {
             revert PermissionError(msg.sender);
         }
@@ -37,7 +37,7 @@ contract SettlementHookMock is ISettlementHook {
             revert InvalidSettlement();
         }
 
-        emit Settled();
+        emit OnSettledInvoked(accountId, marketId, oraclePrice);
     }
 
     function supportsInterface(

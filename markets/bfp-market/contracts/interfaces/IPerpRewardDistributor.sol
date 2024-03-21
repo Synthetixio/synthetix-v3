@@ -5,6 +5,11 @@ import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/externa
 
 // @see: https://github.com/Synthetixio/rewards-distributors
 interface IPerpRewardDistributor is IRewardDistributor {
+    // --- Errors --- //
+
+    // @notice Thrown when rewards `balance` does not meet distribute or payout requirements.
+    error InsufficientRewardBalance(uint256 amount, uint256 balance);
+
     // --- Views --- //
 
     /**
@@ -27,7 +32,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
         address perpMarket,
         uint128 poolId_,
         address[] calldata collateralTypes,
-        address token_,
+        address payoutToken_,
         string memory name_
     ) external;
 

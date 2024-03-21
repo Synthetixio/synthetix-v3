@@ -11,3 +11,12 @@ The primary use case of bfp-market is to create a hyper-stable perp derivative u
 <p align="center">
   <img src="./assets/overview.png">
 </p>
+
+## Development
+
+```bash
+yarn
+yarn generate-testable
+yarn build-testable
+yarn workspace @synthetixio/bfp-market {build,test,test:stable}
+```

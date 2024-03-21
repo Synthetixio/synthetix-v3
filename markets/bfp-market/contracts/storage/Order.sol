@@ -124,6 +124,27 @@ library Order {
         return boundedKeeperFeeUsd;
     }
 
+    /**
+     * @dev Returns a copy of the hooks present in order. Array of empty length is if none.
+     */
+    function cloneSettlementHooks(
+        Order.Data storage self
+    ) internal view returns (address[] memory) {
+        uint256 length = self.hooks.length;
+        if (length == 0) {
+            return self.hooks;
+        }
+
+        address[] memory hooks = new address[](length);
+        for (uint256 i = 0; i < length; ) {
+            hooks[i] = self.hooks[i];
+            unchecked {
+                ++i;
+            }
+        }
+        return hooks;
+    }
+
     // --- Member (mutations) --- //
 
     /**

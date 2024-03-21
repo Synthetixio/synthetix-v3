@@ -117,7 +117,7 @@ describe('SettlementHookModule', () => {
       assert.deepEqual(configAfter.whitelistedHookAddresses, [SettlementHookMock.address]);
     });
 
-    it('should revert when settlment hook does not support interface', async () => {
+    it('should revert when settlement hook does not support interface', async () => {
       const { PerpMarketProxy } = systems();
 
       const invalidHook = genAddress();

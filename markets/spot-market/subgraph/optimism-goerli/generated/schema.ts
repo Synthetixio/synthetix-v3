@@ -29,21 +29,13 @@ export class Wrapper extends Entity {
     }
   }
 
-  static loadInBlock(id: string): Wrapper | null {
-    return changetype<Wrapper | null>(store.get_in_block('Wrapper', id));
-  }
-
   static load(id: string): Wrapper | null {
     return changetype<Wrapper | null>(store.get('Wrapper', id));
   }
 
   get id(): string {
     let value = this.get('id');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toString();
-    }
+    return value!.toString();
   }
 
   set id(value: string) {
@@ -52,11 +44,7 @@ export class Wrapper extends Entity {
 
   get marketId(): BigInt {
     let value = this.get('marketId');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set marketId(value: BigInt) {
@@ -65,11 +53,7 @@ export class Wrapper extends Entity {
 
   get maxWrappableAmount(): BigInt {
     let value = this.get('maxWrappableAmount');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set maxWrappableAmount(value: BigInt) {
@@ -78,11 +62,7 @@ export class Wrapper extends Entity {
 
   get wrapCollateralType(): string {
     let value = this.get('wrapCollateralType');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toString();
-    }
+    return value!.toString();
   }
 
   set wrapCollateralType(value: string) {
@@ -108,21 +88,13 @@ export class SettlementStrategy extends Entity {
     }
   }
 
-  static loadInBlock(id: string): SettlementStrategy | null {
-    return changetype<SettlementStrategy | null>(store.get_in_block('SettlementStrategy', id));
-  }
-
   static load(id: string): SettlementStrategy | null {
     return changetype<SettlementStrategy | null>(store.get('SettlementStrategy', id));
   }
 
   get id(): string {
     let value = this.get('id');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toString();
-    }
+    return value!.toString();
   }
 
   set id(value: string) {
@@ -131,11 +103,7 @@ export class SettlementStrategy extends Entity {
 
   get marketId(): BigInt {
     let value = this.get('marketId');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set marketId(value: BigInt) {
@@ -144,11 +112,7 @@ export class SettlementStrategy extends Entity {
 
   get settlementStrategyId(): BigInt {
     let value = this.get('settlementStrategyId');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set settlementStrategyId(value: BigInt) {
@@ -157,11 +121,7 @@ export class SettlementStrategy extends Entity {
 
   get disabled(): boolean {
     let value = this.get('disabled');
-    if (!value || value.kind == ValueKind.NULL) {
-      return false;
-    } else {
-      return value.toBoolean();
-    }
+    return value!.toBoolean();
   }
 
   set disabled(value: boolean) {
@@ -170,11 +130,7 @@ export class SettlementStrategy extends Entity {
 
   get strategyType(): i32 {
     let value = this.get('strategyType');
-    if (!value || value.kind == ValueKind.NULL) {
-      return 0;
-    } else {
-      return value.toI32();
-    }
+    return value!.toI32();
   }
 
   set strategyType(value: i32) {
@@ -336,21 +292,13 @@ export class Order extends Entity {
     }
   }
 
-  static loadInBlock(id: string): Order | null {
-    return changetype<Order | null>(store.get_in_block('Order', id));
-  }
-
   static load(id: string): Order | null {
     return changetype<Order | null>(store.get('Order', id));
   }
 
   get id(): string {
     let value = this.get('id');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toString();
-    }
+    return value!.toString();
   }
 
   set id(value: string) {
@@ -410,11 +358,7 @@ export class Order extends Entity {
 
   get orderType(): i32 {
     let value = this.get('orderType');
-    if (!value || value.kind == ValueKind.NULL) {
-      return 0;
-    } else {
-      return value.toI32();
-    }
+    return value!.toI32();
   }
 
   set orderType(value: i32) {
@@ -695,11 +639,7 @@ export class Order extends Entity {
 
   get block(): BigInt {
     let value = this.get('block');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set block(value: BigInt) {
@@ -708,11 +648,7 @@ export class Order extends Entity {
 
   get timestamp(): BigInt {
     let value = this.get('timestamp');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set timestamp(value: BigInt) {
@@ -738,21 +674,13 @@ export class MarketInfo extends Entity {
     }
   }
 
-  static loadInBlock(id: string): MarketInfo | null {
-    return changetype<MarketInfo | null>(store.get_in_block('MarketInfo', id));
-  }
-
   static load(id: string): MarketInfo | null {
     return changetype<MarketInfo | null>(store.get('MarketInfo', id));
   }
 
   get id(): string {
     let value = this.get('id');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toString();
-    }
+    return value!.toString();
   }
 
   set id(value: string) {
@@ -761,11 +689,7 @@ export class MarketInfo extends Entity {
 
   get marketId(): BigInt {
     let value = this.get('marketId');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
   set marketId(value: BigInt) {
@@ -825,21 +749,13 @@ export class WrappSynth extends Entity {
     }
   }
 
-  static loadInBlock(id: string): WrappSynth | null {
-    return changetype<WrappSynth | null>(store.get_in_block('WrappSynth', id));
-  }
-
   static load(id: string): WrappSynth | null {
     return changetype<WrappSynth | null>(store.get('WrappSynth', id));
   }
 
   get id(): string {
     let value = this.get('id');
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error('Cannot return null for a required field.');
-    } else {
-      return value.toString();
-    }
+    return value!.toString();
   }
 
   set id(value: string) {
