@@ -1872,7 +1872,7 @@ describe('OrderModule', () => {
 
     it('should revert when not enough wei is available to pay pyth fee');
 
-    describe('settlmentHooks', () => {
+    describe('settlementHooks', () => {
       it('should settle and execute committed hooks', async () => {
         const { PerpMarketProxy, SettlementHookMock, SettlementHook2Mock } = systems();
 
