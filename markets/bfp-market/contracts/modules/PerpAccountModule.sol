@@ -192,12 +192,12 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage fromPosition = market.positions[fromId];
         Position.Data storage toPosition = market.positions[toId];
 
+        if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
+            revert ErrorUtil.OrderFound();
+        }
+
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
-        }
-        if (market.orders[toId].sizeDelta != 0) {
-            // We only have to check "toAccount" as its impossible for fromAccount to have an order.
-            revert ErrorUtil.OrderFound();
         }
 
         uint256 oraclePrice = market.getOraclePrice();

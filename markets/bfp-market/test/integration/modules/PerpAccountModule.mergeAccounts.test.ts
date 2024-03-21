@@ -214,7 +214,44 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
-  it('should revert when fromAccount has an open order');
+  it('should revert when fromAccount has an open order', async () => {
+    const { PerpMarketProxy } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const collateral = collaterals()[1];
+    const market = genOneOf(markets());
+
+    // Set the market oracleNodeId to the collateral oracleNodeId
+    await setMarketConfigurationById(bs, market.marketId(), {
+      oracleNodeId: collateral.oracleNodeId(),
+    });
+    market.oracleNodeId = collateral.oracleNodeId;
+
+    // Deposit and commit an order for the toAccount which wont be settled.
+    const { marketId, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    await commitOrder(
+      bs,
+      marketId,
+      fromTrader,
+      genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId
+      ),
+      `OrderFound()`,
+      PerpMarketProxy
+    );
+  });
 
   it('should revert if toAccount position can be liquidated', async () => {
     const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
