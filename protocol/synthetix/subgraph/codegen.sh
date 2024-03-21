@@ -42,4 +42,5 @@ codegen optimism-mainnet 10 "synthetix-omnibus:latest@main"
 
 # Arbitrum
 codegen arbitrum-mainnet 42161 "synthetix-omnibus:latest@arbthetix"
-codegen arbitrum-sepolia 421614 "synthetix-omnibus:latest@arbthetix"
+# Note currently borked
+# codegen arbitrum-sepolia 421614 "synthetix-omnibus:latest@arbthetix" 
