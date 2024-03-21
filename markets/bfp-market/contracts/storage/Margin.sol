@@ -221,6 +221,12 @@ library Margin {
         marginValues.collateralUsd = collateralUsd;
     }
 
+    /**
+     * @dev Returns the same collateralUsd as `getMarginUsd` without discount collateral.
+     *
+     * Why? It's expensive to fetch spotMarketSkewScale from another contract and although most times
+     * you need both discounted and non-discounted values, sometimes you only need non-discounted.
+     */
     function getCollateralUsdWithoutDiscount(
         uint128 accountId,
         uint128 marketId
@@ -305,6 +311,13 @@ library Margin {
                 : getOracleCollateralPrice(self, synthMarketId, globalConfig);
     }
 
+    /**
+     * @dev Returns the discounted price of a specified collateral by their `synthMarketId`.
+     *
+     * Discount is calculated based on the `spotMarket.skewScale` and is dependent on `amountAvailable`,
+     * which may be different position to position. The larger `amountAvailable`, the larger the discount
+     * however, capped between a min/max.
+     */
     function getDiscountedPriceFromCollateralPrice(
         uint256 amountAvailable,
         uint256 price,

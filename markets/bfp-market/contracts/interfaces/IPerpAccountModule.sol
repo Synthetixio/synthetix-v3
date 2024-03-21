@@ -58,8 +58,8 @@ interface IPerpAccountModule {
 
     // --- Events --- //
 
-    // @notice Emitted when two accounts gets merged.
-    event AccountMerged(uint128 fromId, uint128 toId, uint128 marketId);
+    // @notice Emitted when two accounts are merged.
+    event AccountsMerged(uint128 fromId, uint128 toId, uint128 marketId);
 
     // --- Views --- //
 

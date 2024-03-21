@@ -125,9 +125,10 @@ contract PerpAccountModule is IPerpAccountModule {
     }
 
     /**
-     * Finds the collateral with the same oracle as the market.
-     * We expect this to be called for an account that just had a postion settled, which gurantees we have some collateral.
-     * If also validates that the account doesn't have any other collateral.
+     * @dev Returns the matching margin collateral equal to market.
+     *
+     * Upstream invocations are expected to be called in the same block as position settlement. This guarantees the
+     * same collateral. However, if any additional collateral or a mismatch does occur, a revert is thrown.
      */
     function getMatchingMarketCollateral(
         Margin.Data storage fromAccountMargin,
@@ -135,7 +136,6 @@ contract PerpAccountModule is IPerpAccountModule {
     ) internal view returns (uint128 synthMarketId, uint256 fromAccountCollateral) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
-        // Variables for loop, to save some gas.
         bytes32 marketOracleNodeId = marketConfig.oracleNodeId;
         uint256 supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 currentSynthMarketId;
@@ -149,11 +149,13 @@ contract PerpAccountModule is IPerpAccountModule {
                     globalMarginConfig.supported[currentSynthMarketId].oracleNodeId !=
                     marketOracleNodeId
                 ) {
-                    // If the from account have collateral >0 with different oracle node id then the market, revert.
+                    // Revert if `fromAccount` has collateral >0 with different oracleNodeId than market.
                     revert ErrorUtil.OracleNodeMismatch();
                 }
-                // We found the matching collateral set it the return values.
-                // We're not breaking here as we want to check if the account has any other collateral and revert if it does.
+
+                // Found matching collateral!
+                //
+                // NOTE: We do _not_ break out here as we continue checking if account as other collaterals.
                 synthMarketId = currentSynthMarketId;
                 fromAccountCollateral = currentFromAccountCollateral;
             }
@@ -168,7 +170,6 @@ contract PerpAccountModule is IPerpAccountModule {
      * @inheritdoc IPerpAccountModule
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
-        // Check msg sender is owner for both the accounts.
         Account.loadAccountAndValidatePermission(
             fromId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION // TODO maybe new permission?
@@ -177,6 +178,7 @@ contract PerpAccountModule is IPerpAccountModule {
             toId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION // TODO maybe new permission?
         );
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
@@ -201,7 +203,6 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 oraclePrice = market.getOraclePrice();
 
         Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
-        // Determine if toPosition can be immediately liquidated.
         if (
             Position.isLiquidatable(toPosition, market, oraclePrice, marketConfig, toMarginValues)
         ) {
@@ -214,11 +215,11 @@ contract PerpAccountModule is IPerpAccountModule {
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );
 
-        // Move collateral.
+        // Move collateral `from` -> `to`.
         toAccountMargin.collaterals[synthMarketId] += fromAccountCollateral;
         fromAccountMargin.collaterals[synthMarketId] = 0;
 
-        // Update toAccount's postion with data from the fromAccount's position.
+        // Update position accounting `from` -> `to`.
         toPosition.update(
             Position.Data(
                 toPosition.size + fromPosition.size,
@@ -246,6 +247,6 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        emit AccountMerged(fromId, toId, marketId);
+        emit AccountsMerged(fromId, toId, marketId);
     }
 }
