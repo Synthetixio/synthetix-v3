@@ -26,8 +26,6 @@ describe('IssueUSDModule', function () {
   let MockMarket: ethers.Contract;
   let marketId: BigNumber;
 
-  const feeAddress = '0x1234567890123456789012345678901234567890';
-
   before('identify signers', async () => {
     [owner, user1, user2, user3] = signers();
   });
