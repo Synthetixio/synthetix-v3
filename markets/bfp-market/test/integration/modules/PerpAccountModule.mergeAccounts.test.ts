@@ -480,7 +480,6 @@ describe('PerpAccountModule mergeAccounts', () => {
     // Before the fromPosition gets merged into the toPosition, we should be realising the to position.
     const profitsFromRealizingPosition = toDigestBefore.position.pnl
       .add(toDigestBefore.position.accruedFunding)
-      .sub(toDigestBefore.position.accruedFeesUsd)
       .sub(toDigestBefore.position.accruedUtilization);
 
     const expectedDebt = Wei.max(

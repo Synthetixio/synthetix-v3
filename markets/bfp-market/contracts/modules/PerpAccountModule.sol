@@ -219,6 +219,10 @@ contract PerpAccountModule is IPerpAccountModule {
         toAccountMargin.collaterals[synthMarketId] += fromAccountCollateral;
         fromAccountMargin.collaterals[synthMarketId] = 0;
 
+        // Move debt `from` -> `to`.
+        toAccountMargin.debtUsd += fromAccountMargin.debtUsd;
+        fromAccountMargin.debtUsd = 0;
+
         // Update position accounting `from` -> `to`.
         toPosition.update(
             Position.Data(
@@ -226,8 +230,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 block.timestamp,
                 market.currentFundingAccruedComputed,
                 market.currentUtilizationAccruedComputed,
-                oraclePrice,
-                fromPosition.accruedFeesUsd
+                oraclePrice
             )
         );
         delete market.positions[fromId];
