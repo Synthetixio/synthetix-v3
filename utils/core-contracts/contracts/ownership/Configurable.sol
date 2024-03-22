@@ -10,7 +10,8 @@ import "../utils/ERC2771Context.sol";
 
 /**
  * @title Contract for facilitating ownership by an owner and a configurer.
- * See IConfigurable.
+ * @dev Not intended for use without Ownable.sol.
+ * See IConfigurable for natspec.
  */
 contract Configurable is IConfigurable {
     /**
@@ -76,10 +77,11 @@ contract Configurable is IConfigurable {
 
         if (store.nominatedConfigurer != address(0)) {
             store.nominatedConfigurer = address(0);
+            emit ConfigurerNominated(address(0));
         }
 
-        store.configurer = newConfigurer;
         emit ConfigurerChanged(store.configurer, newConfigurer);
+        store.configurer = newConfigurer;
     }
 
     /**

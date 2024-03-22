@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { TransactionReceipt } from '@ethersproject/abstract-provider';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
@@ -113,6 +114,26 @@ describe('Ownable', function () {
             ),
             'NoChange'
           );
+        });
+      });
+
+      describe('when the owner and configurer are set', function () {
+        it('the owner and configurer can call functions with the onlyOwnerOrConfigurer modifier', async function () {
+          assertBn.equal(await ConfigurableMock.counter(), 0);
+          await ConfigurableMock.connect(owner).countUp();
+          assertBn.equal(await ConfigurableMock.counter(), 1);
+          await ConfigurableMock.connect(configurer).countUp();
+          assertBn.equal(await ConfigurableMock.counter(), 2);
+        });
+
+        it('a user cannot call functions with the onlyOwnerOrConfigurer modifier', async function () {
+          await assertRevert(ConfigurableMock.connect(user).countUp(), 'Unauthorized');
+        });
+
+        it('configurer cannot call onlyOwner functions but owner can', async function () {
+          await assertRevert(ConfigurableMock.connect(configurer).setCounter(1337), 'Unauthorized');
+          await ConfigurableMock.connect(owner).setCounter(1337);
+          assertBn.equal(await ConfigurableMock.counter(), 1337);
         });
       });
 
