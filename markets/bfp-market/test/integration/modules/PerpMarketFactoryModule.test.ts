@@ -841,7 +841,7 @@ describe('PerpMarketFactoryModule', () => {
       assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-20), bn(0.01));
     });
 
-    it('should expect totalDebt and reportedDebt to reflect pnl and funding', async () => {
+    it('should expect totalDebt and reportedDebt to reflect pnl, funding, and utilization', async () => {
       const { PerpMarketProxy, Core } = systems();
       const market = genOneOf(markets());
       const marketId = market.marketId();
@@ -858,17 +858,14 @@ describe('PerpMarketFactoryModule', () => {
           .map((d) => wei(d.pnl).add(d.accruedFunding).sub(d.accruedUtilization))
           .reduce((a, b) => a.add(b), wei(0));
 
-      // Remove order fees on settlement.
+      // Remove order/keeper fees on settlement.
       await setMarketConfigurationById(bs, marketId, {
         makerFee: bn(0),
         takerFee: bn(0),
       });
-      // Remove keeper fees on settlement and any collateral utilisation fees.
       await setMarketConfiguration(bs, {
         minKeeperFeeUsd: bn(0),
         maxKeeperFeeUsd: bn(0),
-        lowUtilizationSlopePercent: bn(0),
-        highUtilizationSlopePercent: bn(0),
       });
 
       const {
