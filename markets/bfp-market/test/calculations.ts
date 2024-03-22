@@ -95,14 +95,17 @@ export const calcOrderFees = async (
 
   const calcKeeperOrderSettlementFee = (blockBaseFeePerGas: BigNumber) => {
     // Perform calc bounding by min/max to prevent going over/under.
-    const baseKeeperFeeUsd = wei(keeperSettlementGasUnits.mul(blockBaseFeePerGas))
-      .mul(1e9)
-      .mul(ethPrice);
 
-    // Base keeperFee + profit margin and asmall user specified buffer.
-    const baseKeeperFeePlusProfit = baseKeeperFeeUsd.mul(
-      wei(1).add(keeperProfitMarginPercent).add(keeperFeeBufferUsd)
+    const baseKeeperFeeUsd = calcTransactionCostInUsd(
+      blockBaseFeePerGas,
+      keeperSettlementGasUnits,
+      ethPrice
     );
+
+    // Base keeperFee + profit margin and a small user specified buffer.
+    const baseKeeperFeePlusProfit = wei(baseKeeperFeeUsd)
+      .mul(wei(1).add(keeperProfitMarginPercent))
+      .add(keeperFeeBufferUsd);
 
     // Ensure keeper fee doesn't exceed min/max bounds.
     const boundedKeeperFeeUsd = Wei.min(

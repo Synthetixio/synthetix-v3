@@ -117,9 +117,7 @@ contract RewardsDistributor is IRewardDistributor {
         uint64 start_,
         uint32 duration_
     ) public {
-        if (msg.sender != IPoolModule(rewardManager).getPoolOwner(poolId)) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
+        _checkDistributeSender();
         if (poolId_ != poolId) {
             revert ParameterError.InvalidParameter(
                 "poolId",
@@ -168,5 +166,11 @@ contract RewardsDistributor is IRewardDistributor {
         return
             interfaceId == type(IRewardDistributor).interfaceId ||
             interfaceId == this.supportsInterface.selector;
+    }
+
+    function _checkDistributeSender() internal view virtual {
+        if (msg.sender != IPoolModule(rewardManager).getPoolOwner(poolId)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
     }
 }
