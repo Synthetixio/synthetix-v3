@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
-import { Systems } from '../bootstrap';
+import { Systems, bn } from '../bootstrap';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
+import { SpotMarketProxy } from '@synthetixio/spot-market/test/generated/typechain';
 import Wei, { wei } from '@synthetixio/wei';
 
 type CollateralSynthData = {
@@ -121,19 +122,43 @@ export const depositCollateral: (
 };
 
 type CollateralConfig = {
-  skewScale: Wei;
-  discountScalar: Wei;
-  lowerLimitDiscount: Wei;
-  upperLimitDiscount: Wei;
+  skewScale: ethers.BigNumber;
+  discountScalar: ethers.BigNumber;
+  lowerLimitDiscount: ethers.BigNumber;
+  upperLimitDiscount: ethers.BigNumber;
 };
 
-export const discountedValue = (
-  amount: Wei,
-  price: Wei,
-  { skewScale, discountScalar, lowerLimitDiscount, upperLimitDiscount }: CollateralConfig
-) => {
-  const impactOnSkew = amount.div(skewScale).mul(discountScalar);
-  const discount = Wei.max(Wei.min(impactOnSkew, lowerLimitDiscount), upperLimitDiscount);
+type ValueInputs = {
+  amount: Wei;
+  synthId: ethers.BigNumber;
+  config: CollateralConfig;
+}[];
 
-  return amount.mul(price).mul(wei(1).sub(discount));
+export const discountedValue = async (inputs: ValueInputs, spotMarket: SpotMarketProxy) => {
+  return await inputs.reduce(
+    async (total, input) => {
+      const { amount, synthId, config } = input;
+      const { skewScale, discountScalar, lowerLimitDiscount, upperLimitDiscount } = config;
+      const impactOnSkew = amount.div(wei(skewScale)).mul(wei(discountScalar));
+      const discount = Wei.max(
+        Wei.min(impactOnSkew, wei(lowerLimitDiscount)),
+        wei(upperLimitDiscount)
+      );
+
+      const collAmount = amount.mul(wei(1).sub(discount));
+      const quote = await collateralValue(collAmount, synthId, spotMarket);
+
+      return (await total).add(quote);
+    },
+    Promise.resolve(wei(0))
+  );
+};
+
+export const collateralValue = async (
+  amount: Wei,
+  synthId: ethers.BigNumber,
+  spotMarket: SpotMarketProxy
+) => {
+  const { returnAmount } = await spotMarket.quoteSellExactIn(synthId, amount.toBN(), bn(0));
+  return wei(returnAmount);
 };
