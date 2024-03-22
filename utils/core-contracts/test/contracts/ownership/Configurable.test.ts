@@ -60,6 +60,13 @@ describe('Ownable', function () {
       assert.equal(await ConfigurableMock.configurer(), await configurer.getAddress());
       assert.equal(await ConfigurableMock.nominatedConfigurer(), addressZero);
     });
+
+    it('shows that the owner cannot set the configurer to the same address as the current configurer', async function () {
+      await assertRevert(
+        ConfigurableMock.connect(owner).setConfigurer(await configurer.getAddress()),
+        'NoChange'
+      );
+    });
   });
   describe('after a configurer is set', function () {
     describe('Allows', function () {
