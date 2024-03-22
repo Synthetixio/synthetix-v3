@@ -39,6 +39,20 @@ describe('Ownable', function () {
       assert.equal(await ConfigurableMock.nominatedConfigurer(), addressZero);
     });
   });
+
+  describe('when the owner sets the configurer during a nomination', function () {
+    it('cancels the current nomination', async function () {
+      await ConfigurableMock.connect(owner).setConfigurer(await configurer.getAddress());
+      await ConfigurableMock.connect(configurer).nominateNewConfigurer(
+        await newConfigurer.getAddress()
+      );
+      assert.equal(await ConfigurableMock.nominatedConfigurer(), await newConfigurer.getAddress());
+      await ConfigurableMock.connect(owner).setConfigurer(addressZero);
+      assert.equal(await ConfigurableMock.configurer(), addressZero);
+      assert.equal(await ConfigurableMock.nominatedConfigurer(), addressZero);
+    });
+  });
+
   describe('allows owner to set configurer', function () {
     it('shows that the owner can call `setConfigurer`', async function () {
       await ConfigurableMock.connect(owner).setConfigurer(await configurer.getAddress());
