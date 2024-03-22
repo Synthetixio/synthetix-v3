@@ -2,6 +2,7 @@ import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
+import { assertEvents } from '../../assert';
 import { bootstrap } from '../../bootstrap';
 import {
   bn,
@@ -30,13 +31,13 @@ describe('PerpRewardDistributorFactoryModule', () => {
 
   describe('createRewardDistributor', () => {
     it('should be able to create a new reward distributor', async () => {
-      const { PerpMarketProxy } = systems();
+      const { PerpMarketProxy, CollateralMockD18 } = systems();
 
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD18.address,
       };
       const distributor =
         await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
@@ -54,17 +55,74 @@ describe('PerpRewardDistributorFactoryModule', () => {
       assert.equal(distributor, rewardDistributorCreatedEvent.args.distributor);
     });
 
-    it('should emit all events in correct order');
+    it('should emit all events in correct order', async () => {
+      const { PerpMarketProxy, CollateralMockD18 } = systems();
+
+      const contractsWithAllEvents = extendContractAbi(
+        PerpMarketProxy,
+        ['event Initialized(uint8 version)'] // OZ Initializer
+      );
+
+      const args = {
+        poolId: pool().id,
+        collateralTypes: [genAddress()],
+        name: genBytes32(),
+        token: CollateralMockD18.address,
+      };
+      const distributor =
+        await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+        provider()
+      );
+
+      await assertEvents(
+        receipt,
+        ['Initialized(1)', `RewardDistributorCreated("${distributor}")`],
+        contractsWithAllEvents
+      );
+    });
+
+    it('should revert when token does not have decimal 18', async () => {
+      const { PerpMarketProxy, CollateralMockD8 } = systems();
+
+      await assertRevert(
+        PerpMarketProxy.connect(owner()).createRewardDistributor({
+          poolId: pool().id,
+          collateralTypes: [genAddress()],
+          name: genBytes32(),
+          token: CollateralMockD8.address,
+        }),
+        'InvalidParameter("payoutToken", "Token decimals expected to be 18")',
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when not erc20', async () => {
+      const { PerpMarketProxy } = systems();
+
+      await assertRevert(
+        PerpMarketProxy.connect(owner()).createRewardDistributor({
+          poolId: pool().id,
+          collateralTypes: [genAddress()],
+          name: genBytes32(),
+          token: genAddress(),
+        }),
+        'InvalidParameter("payoutToken", "Token decimals expected to be 18")',
+        PerpMarketProxy
+      );
+    });
 
     it('should revert when any collateralType is address(0)', async () => {
-      const { PerpMarketProxy } = systems();
+      const { PerpMarketProxy, CollateralMockD18 } = systems();
 
       await assertRevert(
         PerpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress(), ADDRESS0],
           name: genBytes32(),
-          token: genAddress(),
+          token: CollateralMockD18.address,
         }),
         `ZeroAddress()`,
         PerpMarketProxy

@@ -112,7 +112,7 @@ library Order {
             .price
             .toUint();
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
-            (globalConfig.keeperSettlementGasUnits * block.basefee * 1e9)
+            globalConfig.keeperSettlementGasUnits * block.basefee
         );
         uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
             DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
@@ -122,6 +122,27 @@ library Order {
             globalConfig.maxKeeperFeeUsd
         );
         return boundedKeeperFeeUsd;
+    }
+
+    /**
+     * @dev Returns a copy of the hooks present in order. Array of empty length is if none.
+     */
+    function cloneSettlementHooks(
+        Order.Data storage self
+    ) internal view returns (address[] memory) {
+        uint256 length = self.hooks.length;
+        if (length == 0) {
+            return self.hooks;
+        }
+
+        address[] memory hooks = new address[](length);
+        for (uint256 i = 0; i < length; ) {
+            hooks[i] = self.hooks[i];
+            unchecked {
+                ++i;
+            }
+        }
+        return hooks;
     }
 
     // --- Member (mutations) --- //

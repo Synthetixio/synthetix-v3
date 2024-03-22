@@ -40,7 +40,6 @@ contract OrderModule is IOrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
-        int256 pnl;
         uint256 fillPrice;
         uint128 accountDebt;
         uint128 updatedMarketSize;
@@ -138,26 +137,25 @@ contract OrderModule is IOrderModule {
     function executeOrderHooks(
         uint128 accountId,
         uint128 marketId,
-        Order.Data storage order,
-        Position.Data memory newPosition,
-        uint256 fillPrice
+        address[] memory hooks,
+        uint256 oraclePrice
     ) private {
-        uint256 length = order.hooks.length;
-
+        uint256 length = hooks.length;
         if (length == 0) {
             return;
         }
 
-        for (uint256 i = 0; i < length; ) {
-            address hook = order.hooks[i];
+        SettlementHookConfiguration.GlobalData storage config = SettlementHookConfiguration.load();
 
-            ISettlementHook(hook).onSettle(
-                accountId,
-                marketId,
-                order.sizeDelta,
-                newPosition.size,
-                fillPrice
-            );
+        for (uint256 i = 0; i < length; ) {
+            address hook = hooks[i];
+
+            // Verify the hook is still whitelisted between commitment and settlement.
+            if (!config.whitelisted[hooks[i]]) {
+                revert ErrorUtil.InvalidHook(hooks[i]);
+            }
+
+            ISettlementHook(hook).onSettle(accountId, marketId, oraclePrice);
             emit OrderSettlementHookExecuted(accountId, marketId, hook);
 
             unchecked {
@@ -383,12 +381,13 @@ contract OrderModule is IOrderModule {
 
         emit MarketSizeUpdated(marketId, runtime.updatedMarketSize, runtime.updatedMarketSkew);
 
-        // Validate and perform the hook post settlement execution.
-        validateOrderHooks(order.hooks);
-        executeOrderHooks(accountId, marketId, order, runtime.trade.newPosition, runtime.fillPrice);
-
-        // Wipe the order, successfully settled!
+        // Execute any hooks on the order that may exist.
+        //
+        // First, copying any existing hooks that may be present in the commitment (up to maxHooksPerOrder). Then,
+        // deleting the order from market, and finally invoking each hook's `onSettle` callback.
+        address[] memory hooks = order.cloneSettlementHooks();
         delete market.orders[accountId];
+        executeOrderHooks(accountId, marketId, hooks, runtime.pythPrice);
     }
 
     /**

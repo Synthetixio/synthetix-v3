@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./base-sepolia-andromeda/schema.graphql
+  file: ./arbitrum-mainnet/schema.graphql
 dataSources:
   - kind: ethereum
-    network: base-sepolia
+    network: arbitrum-one
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0xF4Df9Dd327Fd30695d478c3c8a2fffAddcdD0d31"
-      startBlock: 4548677
+      address: "0x4Ab09F627fa9706f33178129005300Fd4c00EDF1"
+      startBlock: 190322190
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./base-sepolia-andromeda/index.ts
+      file: ./arbitrum-mainnet/index.ts
       abis:
         - name: CoreProxy
-          file: ./base-sepolia-andromeda/deployments/system/CoreProxy.json
+          file: ./arbitrum-mainnet/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
