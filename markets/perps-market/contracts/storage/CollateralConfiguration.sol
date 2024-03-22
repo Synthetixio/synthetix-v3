@@ -120,28 +120,28 @@ library CollateralConfiguration {
 
     function valueInUsd(
         Data storage self,
-        uint256 collateralAmount,
+        uint256 amount,
         ISpotMarketSystem spotMarket,
         PerpsPrice.Tolerance stalenessTolerance,
         bool useDiscount
     ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
         uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
-        uint256 impactOnSkew = useDiscount && skewScale != 0
-            ? collateralAmount.divDecimal(skewScale).mulDecimal(self.discountScalar)
-            : 0;
-        discount =
-            DecimalMath.UNIT -
-            (
+        uint256 discount;
+        // only discount collateral if skew scale is set on spot market and useDiscount is set to true
+        if (useDiscount && skewScale != 0) {
+            uint256 impactOnSkew = amount.divDecimal(skewScale).mulDecimal(self.discountScalar);
+            discount = (
                 MathUtil.max(
                     MathUtil.min(impactOnSkew, self.lowerLimitDiscount),
                     self.upperLimitDiscount
                 )
             );
-        uint256 discountedCollateralAmount = collateralAmount.mulDecimal(discount);
-
+        }
+        // if discount is 0, this just gets multiplied by 1
+        uint256 finalCollateralAmount = amount.mulDecimal(DecimalMath.UNIT - discount);
         (collateralValueInUsd, ) = spotMarket.quoteSellExactIn(
             self.id,
-            discountedCollateralAmount,
+            finalCollateralAmount,
             Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
         );
     }

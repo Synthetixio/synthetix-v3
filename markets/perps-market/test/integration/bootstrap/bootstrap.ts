@@ -96,7 +96,11 @@ export function bootstrap() {
 }
 
 type BootstrapArgs = {
-  synthMarkets: SynthArguments;
+  synthMarkets: (SynthArguments[number] & {
+    upperLimitDiscount?: ethers.BigNumber;
+    lowerLimitDiscount?: ethers.BigNumber;
+    discountScalar?: ethers.BigNumber;
+  })[];
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
   liquidationGuards?: {
@@ -120,7 +124,10 @@ type BootstrapArgs = {
 export function bootstrapMarkets(data: BootstrapArgs) {
   const chainStateWithPerpsMarkets = bootstrapPerpsMarkets(data.perpsMarkets, undefined);
 
-  const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
+  const { synthMarkets, marketOwner } = bootstrapSynthMarkets(
+    data.synthMarkets,
+    chainStateWithPerpsMarkets
+  );
 
   const {
     systems,
@@ -174,16 +181,20 @@ export function bootstrapMarkets(data: BootstrapArgs) {
   });
 
   // auto set all synth markets collaterals to max
-  before('set collateral max', async () => {
-    for (const { marketId } of synthMarkets()) {
+  before('set collateral config', async () => {
+    for (const [i, { marketId, synthAddress }] of synthMarkets().entries()) {
+      const { upperLimitDiscount, lowerLimitDiscount, discountScalar } = data.synthMarkets[i];
+
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(marketId(), ethers.constants.MaxUint256, 0, 0, 0);
-    }
-  });
+        .setCollateralConfiguration(
+          marketId(),
+          ethers.constants.MaxUint256,
+          upperLimitDiscount || bn(0),
+          lowerLimitDiscount || bn(0),
+          discountScalar || bn(0)
+        );
 
-  before('set max market collateral allowed for all synths', async () => {
-    for (const { synthAddress } of synthMarkets()) {
       await systems()
         .Core.connect(owner())
         .configureMaximumMarketCollateral(
@@ -290,6 +301,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     keeperCostOracleNode: () => keeperCostOracleNode,
     synthMarkets,
     superMarketId,
+    synthMarketOwner: marketOwner,
     poolId,
   };
 }
