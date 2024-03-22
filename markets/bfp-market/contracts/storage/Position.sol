@@ -555,7 +555,7 @@ library Position {
                 positionEntryUtilizationAccrued
         );
 
-        // Calculate this position's PnL.
+        // Calc the price PnL.
         healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
 
         // `margin / mm <= 1` means liquidation.

@@ -2,7 +2,6 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { IPerpAccountModule } from '../typechain-types';
 
 // --- Primitives --- //
 
@@ -19,16 +18,8 @@ export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) =>
 
 // --- Calcs --- //
 
-export const calcTotalPnls = (positionDigests: IPerpAccountModule.PositionDigestStructOutput[]) => {
-  return positionDigests
-    .map(({ pnl, accruedFunding, accruedUtilization }) =>
-      wei(pnl).add(accruedFunding).sub(accruedUtilization)
-    )
-    .reduce((a, b) => a.add(b), wei(0));
-};
-
 /** Calculates a position's unrealised PnL (no funding or fees) given the current and previous price. */
-export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
+export const calcPricePnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
   wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
 
 /** Calculates the fillPrice (pd adjusted market price) given market params and the size of next order. */

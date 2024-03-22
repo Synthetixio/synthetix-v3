@@ -4,7 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assert from 'assert';
 import Wei, { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
-import { calcPnl, calcTransactionCostInUsd } from '../../calculations';
+import { calcPricePnl, calcTransactionCostInUsd } from '../../calculations';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
   ADDRESS0,
@@ -170,7 +170,7 @@ describe('MarginModule Debt', async () => {
         .add(closeOrderEvent?.args.keeperFee);
 
       // Pnl expected to be close to 0 since not oracle price change
-      const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+      const pnl = calcPricePnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
       const expectedChangeUsd = wei(pnl)
         .sub(fees)
         .add(closeOrderEvent.args.accruedFunding)
