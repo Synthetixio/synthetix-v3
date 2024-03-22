@@ -40,7 +40,6 @@ contract OrderModule is IOrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
-        int256 pnl;
         uint256 fillPrice;
         uint128 accountDebt;
         uint128 updatedMarketSize;
@@ -79,7 +78,7 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Validates that an order can only be settled iff time and price is acceptable.
+     * @dev Validates that an order can only be settled if time and price are acceptable.
      */
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
@@ -137,26 +136,25 @@ contract OrderModule is IOrderModule {
     function executeOrderHooks(
         uint128 accountId,
         uint128 marketId,
-        Order.Data storage order,
-        Position.Data memory newPosition,
-        uint256 fillPrice
+        address[] memory hooks,
+        uint256 oraclePrice
     ) private {
-        uint256 length = order.hooks.length;
-
+        uint256 length = hooks.length;
         if (length == 0) {
             return;
         }
 
-        for (uint256 i = 0; i < length; ) {
-            address hook = order.hooks[i];
+        SettlementHookConfiguration.GlobalData storage config = SettlementHookConfiguration.load();
 
-            ISettlementHook(hook).onSettle(
-                accountId,
-                marketId,
-                order.sizeDelta,
-                newPosition.size,
-                fillPrice
-            );
+        for (uint256 i = 0; i < length; ) {
+            address hook = hooks[i];
+
+            // Verify the hook is still whitelisted between commitment and settlement.
+            if (!config.whitelisted[hooks[i]]) {
+                revert ErrorUtil.InvalidHook(hooks[i]);
+            }
+
+            ISettlementHook(hook).onSettle(accountId, marketId, oraclePrice);
             emit OrderSettlementHookExecuted(accountId, marketId, hook);
 
             unchecked {
@@ -300,13 +298,7 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(
-            accountId,
-            market,
-            runtime.fillPrice
-        );
-
-        // We call `getHeathData` here to fetch accrued utilisation before utilisation recomputation.
+        // We call `getHeathData` here to fetch _current_ accrued utilization before utilization recomputation.
         Position.HealthData memory healthData = Position.getHealthData(
             market,
             position.size,
@@ -315,9 +307,12 @@ contract OrderModule is IOrderModule {
             position.entryUtilizationAccrued,
             runtime.fillPrice,
             marketConfig,
-            // The margins passed here are missing the order fee + keeper fee for this trade. runtime.trade.newMarginUsd would be correct.
-            // But we are only calling getHealthData to get accruedFunding, accruedUtilisation and pnl. So we can use the old margin values.
-            marginValues
+            // NOTE: The margins passed here are missing the order fee + keeper fee for this trade (as they are calc
+            // before settlement), ref `runtime.trade.newMarginUsd` for correct next marginUsd.
+            //
+            // However, call to `getHealthData` is only for `accruedFunding`, `accruedUtilization` and PnL for the settlement
+            // event below so it's fine to use the old margin values.
+            runtime.trade.marginValues
         );
 
         runtime.updatedMarketSize = (market.size.to256() +
@@ -327,9 +322,9 @@ contract OrderModule is IOrderModule {
         market.skew = runtime.updatedMarketSkew;
         market.size = runtime.updatedMarketSize;
 
-        // We want to validateTrade and update market size before we recompute utilisation
-        // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilisation rate up to this point
-        // 2. The new utlization rate is calculated using the new maret size, so we need to update the size before we recompute utilisation
+        // We want to validateTrade and update market size before we recompute utilization
+        // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
+        // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
         recomputeUtilization(market, runtime.pythPrice);
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
@@ -342,11 +337,12 @@ contract OrderModule is IOrderModule {
                 // What is `newMarginUsd`?
                 //
                 // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl (from entry price changes), accruedFunding,
-                // accruedUtilisation, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
+                // accruedUtilization, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
                 // as we dont want price impact to be deducted yet.
                 //
                 // TLDR; This is basically the `total realised PnL` for this position.
-                runtime.trade.newMarginUsd.toInt() - marginValues.collateralUsd.toInt()
+                runtime.trade.newMarginUsd.toInt() -
+                    runtime.trade.marginValues.collateralUsd.toInt()
             );
 
             runtime.accountDebt = accountMargin.debtUsd;
@@ -379,12 +375,13 @@ contract OrderModule is IOrderModule {
 
         emit MarketSizeUpdated(marketId, runtime.updatedMarketSize, runtime.updatedMarketSkew);
 
-        // Validate and perform the hook post settlement execution.
-        validateOrderHooks(order.hooks);
-        executeOrderHooks(accountId, marketId, order, runtime.trade.newPosition, runtime.fillPrice);
-
-        // Wipe the order, successfully settled!
+        // Execute any hooks on the order that may exist.
+        //
+        // First, copying any existing hooks that may be present in the commitment (up to maxHooksPerOrder). Then,
+        // deleting the order from market, and finally invoking each hook's `onSettle` callback.
+        address[] memory hooks = order.cloneSettlementHooks();
         delete market.orders[accountId];
+        executeOrderHooks(accountId, marketId, hooks, runtime.pythPrice);
     }
 
     /**

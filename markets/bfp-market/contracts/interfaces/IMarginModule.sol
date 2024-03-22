@@ -126,4 +126,15 @@ interface IMarginModule is IBasePerpMarket {
         uint128 synthMarketId,
         uint256 amount
     ) external view returns (uint256);
+
+    /**
+     * @notice Returns the withdrawable margin given the discounted margin for `accountId` accounting for any open position.
+     *
+     * Clients can invoke `getMarginDigest` to retrieve the available margin (i.e. discounted margin when there is a position
+     * open or marginUsd when there isn't, or just collateralUsd).
+     */
+    function getWithdrawableMargin(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256);
 }

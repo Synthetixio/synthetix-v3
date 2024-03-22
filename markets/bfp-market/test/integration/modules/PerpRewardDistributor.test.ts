@@ -11,9 +11,12 @@ import {
   genNumber,
   genOneOf,
 } from '../../generators';
-import { withExplicitEvmMine } from '../../helpers';
+import { withExplicitEvmMine, withImpersonate } from '../../helpers';
 import { IPerpRewardDistributorFactoryModule } from '../../../typechain-types/contracts/interfaces/IPerpRewardDistributorFactoryModule';
 import { IPerpRewardDistributor__factory } from '../../../typechain-types/factories/contracts/interfaces/IPerpRewardDistributor__factory';
+
+type CreateRewardDistributorArgs =
+  IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParametersStruct;
 
 describe('PerpRewardDistributor', () => {
   const bs = bootstrap(genBootstrap());
@@ -21,9 +24,7 @@ describe('PerpRewardDistributor', () => {
 
   beforeEach(restore);
 
-  const createPerpRewardDistributor = async (
-    args: IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParametersStruct
-  ) => {
+  const createPerpRewardDistributor = async (args: CreateRewardDistributorArgs) => {
     const { PerpMarketProxy } = systems();
     const distributor =
       await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
@@ -36,11 +37,13 @@ describe('PerpRewardDistributor', () => {
 
   describe('initialize', () => {
     it('should match passed params during initialize', async () => {
+      const { CollateralMockD18 } = systems();
+
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD18.address,
       };
       const PerpRewardDistributor = await createPerpRewardDistributor(args);
 
@@ -51,15 +54,33 @@ describe('PerpRewardDistributor', () => {
       const poolCollateralTypes = await PerpRewardDistributor.getPoolCollateralTypes();
       assert.deepEqual(poolCollateralTypes, args.collateralTypes);
     });
-  });
 
-  describe('setShouldFailPayout', () => {
-    it('should set shouldFailPayout=true correctly', async () => {
+    it('should revert when payout token decimals not 18', async () => {
+      const { PerpMarketProxy, CollateralMockD8 } = systems();
+
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD8.address,
+      };
+
+      await assertRevert(
+        PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+        `InvalidParameter("payoutToken", "Token decimals expected to be 18")`
+      );
+    });
+  });
+
+  describe('setShouldFailPayout', () => {
+    it('should set shouldFailPayout=true correctly', async () => {
+      const { CollateralMockD18 } = systems();
+
+      const args = {
+        poolId: pool().id,
+        collateralTypes: [genAddress(), genAddress()],
+        name: genBytes32(),
+        token: CollateralMockD18.address,
       };
       const PerpRewardDistributor = await createPerpRewardDistributor(args);
       await PerpRewardDistributor.connect(owner()).setShouldFailPayout(true);
@@ -75,11 +96,13 @@ describe('PerpRewardDistributor', () => {
     });
 
     it('should revert when not owner', async () => {
+      const { CollateralMockD18 } = systems();
+
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD18.address,
       };
       const PerpRewardDistributor = await createPerpRewardDistributor(args);
 
@@ -94,11 +117,13 @@ describe('PerpRewardDistributor', () => {
 
   describe('payout', () => {
     it('should not payout when setShouldFailPayout=true', async () => {
+      const { CollateralMockD18 } = systems();
+
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD18.address,
       };
       const distributor = await createPerpRewardDistributor(args);
       await distributor.connect(owner()).setShouldFailPayout(true);
@@ -110,11 +135,13 @@ describe('PerpRewardDistributor', () => {
     });
 
     it('should revert when poolId does not match', async () => {
+      const { CollateralMockD18 } = systems();
+
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD18.address,
       };
       const PerpRewardDistributor = await createPerpRewardDistributor(args);
 
@@ -133,12 +160,13 @@ describe('PerpRewardDistributor', () => {
     });
 
     it('should revert when not reward manager', async () => {
-      const { Core } = systems();
+      const { Core, CollateralMockD18 } = systems();
+
       const args = {
         poolId: pool().id,
         collateralTypes: [genAddress(), genAddress()],
         name: genBytes32(),
-        token: genAddress(),
+        token: CollateralMockD18.address,
       };
       const PerpRewardDistributor = await createPerpRewardDistributor(args);
 
@@ -154,6 +182,102 @@ describe('PerpRewardDistributor', () => {
         `Unauthorized("${await from.signer.getAddress()}")`,
         Core
       );
+    });
+
+    it('should revert when there are no reward tokens remaining', async () => {
+      const { Core, CollateralMockD18 } = systems();
+
+      const args = {
+        poolId: pool().id,
+        collateralTypes: [genAddress(), genAddress()],
+        name: genBytes32(),
+        token: CollateralMockD18.address,
+      };
+      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+
+      // Amount of payoutTokens to send (1 more than there actually is, zero).
+      const amount = bn(1);
+
+      await withImpersonate(bs, Core.address, async (signer) => {
+        await assertRevert(
+          PerpRewardDistributor.connect(signer).payout(
+            bn(0),
+            args.poolId,
+            args.token,
+            genAddress(),
+            amount
+          ),
+          `InsufficientRewardBalance("${amount}", "0")`,
+          PerpRewardDistributor
+        );
+      });
+    });
+  });
+
+  describe('distributeReward', () => {
+    it('should distribute after transfer', async () => {
+      const { Core, PerpMarketProxy, CollateralMock, CollateralMockD18 } = systems();
+
+      const args = {
+        poolId: pool().id,
+        collateralTypes: [CollateralMock.address],
+        name: genBytes32(),
+        token: CollateralMockD18.address,
+      };
+      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+
+      await Core.connect(owner()).registerRewardsDistributor(
+        args.poolId,
+        args.collateralTypes[0],
+        PerpRewardDistributor.address
+      );
+
+      await withImpersonate(bs, PerpMarketProxy.address, async (signer) => {
+        const amount = bn(genNumber(1, 100));
+        await CollateralMockD18.mint(PerpRewardDistributor.address, amount);
+        assertBn.equal(await CollateralMockD18.balanceOf(PerpRewardDistributor.address), amount);
+
+        // One less than transferred - OK
+        await PerpRewardDistributor.connect(signer).callStatic.distributeRewards(
+          args.collateralTypes[0],
+          amount.sub(bn(1))
+        );
+        // Exactly transferred - OK
+        await PerpRewardDistributor.connect(signer).callStatic.distributeRewards(
+          args.collateralTypes[0],
+          amount
+        );
+        // One more than transferred - FAIL
+        await assertRevert(
+          PerpRewardDistributor.connect(signer).distributeRewards(
+            args.collateralTypes[0],
+            amount.add(bn(1))
+          ),
+          `InsufficientRewardBalance("${amount.add(bn(1))}", "${amount}")`,
+          PerpRewardDistributor
+        );
+      });
+    });
+
+    it('should revert when attempting to distribute reward before a transfer', async () => {
+      const { PerpMarketProxy, CollateralMockD18 } = systems();
+
+      const args = {
+        poolId: pool().id,
+        collateralTypes: [genAddress()],
+        name: genBytes32(),
+        token: CollateralMockD18.address,
+      };
+      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+
+      await withImpersonate(bs, PerpMarketProxy.address, async (signer) => {
+        const amount = bn(1);
+        await assertRevert(
+          PerpRewardDistributor.connect(signer).distributeRewards(args.collateralTypes[0], amount),
+          `InsufficientRewardBalance("${amount}", "0")`,
+          PerpRewardDistributor
+        );
+      });
     });
   });
 });

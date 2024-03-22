@@ -3,33 +3,28 @@ import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import {
-  PerpMarketProxy,
-  PerpAccountProxy,
-  AggregatorV3Mock,
-  PythMock,
-} from './generated/typechain';
-import { CollateralMock, SettlementHookMock } from '../typechain-types';
+import { PerpMarketProxy, PerpAccountProxy } from './generated/typechain';
+import { CollateralMock, SettlementHookMock, AggregatorV3Mock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
-import type { WstETHMock } from '../typechain-types/contracts/mocks/WstETHMock';
 import { GeneratedBootstrap } from './typed';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PythMock = any; // Cannon imported modules don't generate types via typechain...
+
+// A set of available contracts during testing. We extend that which is already available through
+// `createStakePool` and we add more bfp-market specific contracts.
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
-  AggregatorV3Mock: AggregatorV3Mock;
   SpotMarket: SynthSystems['SpotMarket'];
   Synth: SynthSystems['Synth'];
   PythMock: PythMock;
-  CollateralMock: CollateralMock;
-  Collateral2Mock: CollateralMock;
-  WstETHMock: WstETHMock;
-  StEthMock: AggregatorV3Mock;
-  StEthToEthMock: AggregatorV3Mock;
+  CollateralMockD18: CollateralMock;
+  CollateralMockD8: CollateralMock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
 }
@@ -48,12 +43,10 @@ export interface Contracts {
   ['pyth.Pyth']: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
+  CollateralMockD18: CollateralMock;
+  CollateralMockD8: CollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
-  AggregatorV3Mock: AggregatorV3Mock;
-  WstETHMock: WstETHMock;
-  StEthMock: AggregatorV3Mock;
-  StEthToEthMock: AggregatorV3Mock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
 }
@@ -88,6 +81,22 @@ export interface PerpCollateral {
   setPrice: (price: BigNumber) => Promise<void>;
 }
 
+// Configure spot market synths for collaterals in bfp-market.
+const MARGIN_COLLATERALS_TO_CONFIGURE = [
+  {
+    name: 'swstETH',
+    initialPrice: bn(genOneOf([1500, 1650, 1750, 1850, 4800])),
+    max: bn(500_000),
+    skewScale: bn(1_000_000),
+  },
+  {
+    name: 'sETH',
+    initialPrice: bn(genOneOf([1550, 1800, 2000, 2500])),
+    max: bn(100_000),
+    skewScale: bn(1_000_000),
+  },
+];
+
 export const bootstrap = (args: GeneratedBootstrap) => {
   const { getContract, getSigners, getExtras, getProvider } = _bootstraped;
 
@@ -111,21 +120,14 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-      AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('pyth.Pyth'),
       SpotMarket: getContract('spotMarket.SpotMarketProxy'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
-      // Difference between this and `Collateral{2}Mock`?
-      //
-      // `Collateral{2}Mock` is defined by a `cannon.test.toml` which isn't available here. Both mocks below
-      // follow the same ERC20 standard, simply named differently.
-      //
-      // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
+      // CollateralMock and Collateral2Mock are contracts needed by bootstraps invoked before this boostrap.
       CollateralMock: getContract('CollateralMock'),
       Collateral2Mock: getContract('Collateral2Mock'),
-      WstETHMock: getContract('WstETHMock'),
-      StEthMock: getContract('StEthMock'),
-      StEthToEthMock: getContract('StEthToEthMock'),
+      CollateralMockD18: getContract('CollateralMockD18'),
+      CollateralMockD8: getContract('CollateralMockD8'),
       SettlementHookMock: getContract('SettlementHookMock'),
       SettlementHook2Mock: getContract('SettlementHook2Mock'),
     };
@@ -138,24 +140,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     args.pool.stakedAmount
   );
 
-  // Configure spot market synths
-  const _COLLATERALS_TO_CONFIGURE = [
-    {
-      name: 'swstETH',
-      initialPrice: bn(genOneOf([1500, 1650, 1750, 1850, 4800])),
-      max: bn(500_000),
-      skewScale: bn(1_000_000),
-    },
-    {
-      name: 'srETH',
-      initialPrice: bn(genOneOf([1550, 1800, 2000, 2500])),
-      max: bn(100_000),
-      skewScale: bn(1_000_000),
-    },
-  ];
-
   const spotMarket = bootstrapSynthMarkets(
-    _COLLATERALS_TO_CONFIGURE.map(({ initialPrice, name, skewScale }) => ({
+    MARGIN_COLLATERALS_TO_CONFIGURE.map(({ initialPrice, name, skewScale }) => ({
       name,
       token: name,
       buyPrice: initialPrice,
@@ -165,17 +151,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     stakedPool
   );
 
-  const getConfiguredSynths = () =>
-    _COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({
-      ...collateral,
-      synthMarket: spotMarket.synthMarkets()[i],
-    }));
-
   let ethOracleNodeId: string;
   let ethOracleAgg: AggregatorV3Mock;
 
   const markets: {
-    oracleNodeId: () => BigNumber;
+    oracleNodeId: () => string;
     aggregator: () => AggregatorV3Mock;
     marketId: () => BigNumber;
   }[] = [];
@@ -269,7 +249,10 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     );
 
     // Configure margin collaterals and their prices.
-    const synths = getConfiguredSynths();
+    const configuredSynths = MARGIN_COLLATERALS_TO_CONFIGURE.map((collateral, i) => ({
+      ...collateral,
+      synthMarket: spotMarket.synthMarkets()[i],
+    }));
 
     // Collaterals we want to configure for the perp market - prepended with sUSD configuration.
     const sUsdMaxDepositAllowance = bn(10_000_000);
@@ -280,7 +263,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     const rewardDistributors = [ADDRESS0];
 
     // Synth collaterals we previously created.
-    for (const { synthMarket, max, name } of synths) {
+    for (const { synthMarket, max, name } of configuredSynths) {
       synthMarketIds.push(synthMarket.marketId());
       maxAllowances.push(max);
       oracleNodeIds.push(synthMarket.sellNodeId());
@@ -316,7 +299,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     );
 
     // Collect non-sUSD collaterals along with their Synth Market.
-    const nonSusdCollaterals = synths.map((collateral, i): PerpCollateral => {
+    const nonSusdCollaterals = configuredSynths.map((collateral, i): PerpCollateral => {
       const { synthMarket } = collateral;
       return {
         ...collateral,

@@ -585,4 +585,11 @@ library Market {
         HeapUtil.Node memory node = from.extractMax();
         to.insert(node.id, -node.priority);
     }
+
+    /**
+     * @dev Returns whether or not a pool is past its maxDebtPerShare configuration for this market
+     */
+    function isPoolInRange(Data storage self, uint128 poolId) internal view returns (bool) {
+        return self.inRangePools.getById(poolId).id == poolId;
+    }
 }

@@ -40,6 +40,7 @@ library Position {
         uint256 orderFee;
         uint256 keeperFee;
         uint256 newMarginUsd;
+        Margin.MarginValues marginValues;
     }
 
     struct HealthData {
@@ -66,7 +67,7 @@ library Position {
         int128 size;
         // The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
-        // The market's accumulated accrued utilisation at position settlement.
+        // The market's accumulated accrued utilization at position settlement.
         uint256 entryUtilizationAccrued;
         // The fill price at which this position was settled with.
         uint256 entryPrice;
@@ -77,7 +78,7 @@ library Position {
     /**
      * @dev Validates whether a change in a position's size would violate the max market value constraint.
      *
-     * A perp market has one configurable variable `maxMarketSize` which constraints the maximum open interest
+     * A perp market has one configurable variable `maxMarketSize` which constrains the maximum open interest
      * a market can have on either side.
      */
     function validateMaxOi(
@@ -215,6 +216,7 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // --- Existing position validation --- //
+
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
@@ -262,7 +264,7 @@ library Position {
             orderFee + keeperFee
         );
 
-        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
+        // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
@@ -284,18 +286,19 @@ library Position {
                 marginValues.collateralUsd,
                 nextMarginUsd
             );
+
             // Check new position margin validations.
             validateNextPositionEnoughMargin(marketConfig, market, newPosition, nextMarginUsd);
-        }
 
-        // Check the new position hasn't hit max OI on either side.
-        validateMaxOi(
-            marketConfig.maxMarketSize,
-            market.skew,
-            market.size,
-            currentPosition.size,
-            newPosition.size
-        );
+            // Check the new position hasn't hit max OI on either side.
+            validateMaxOi(
+                marketConfig.maxMarketSize,
+                market.skew,
+                market.size,
+                currentPosition.size,
+                newPosition.size
+            );
+        }
 
         return
             Position.ValidatedTrade(
@@ -303,7 +306,9 @@ library Position {
                 orderFee,
                 keeperFee,
                 // NOTE: Notice the lack of discounted margin.
-                getNextMarginUsd(marginValues.marginUsd, orderFee, keeperFee)
+                getNextMarginUsd(marginValues.marginUsd, orderFee, keeperFee),
+                // NOTE: `marginValues` are calc on the _current_ position (i.e. before settlement).
+                marginValues
             );
     }
 
@@ -340,7 +345,7 @@ library Position {
             revert ErrorUtil.PositionNotFound();
         }
 
-        // Fetch the available capacity then alter iff zero AND the caller is a whitelisted endorsed liquidation keeper.
+        // Fetch the available capacity then alter if zero AND the caller is a whitelisted endorsed liquidation keeper.
         (
             runtime.maxLiquidatableCapacity,
             runtime.remainingCapacity,
@@ -358,7 +363,7 @@ library Position {
             uint128 skewScale = marketConfig.skewScale;
             uint128 liquidationMaxPd = marketConfig.liquidationMaxPd;
 
-            // Allow max capacity to be bypassed iff the following holds true:
+            // Allow max capacity to be bypassed if the following holds true:
             //  1. remainingCapacity is zero (as parent)
             //  2. This liquidation is _not_ in the same block as the most recent liquidation
             //  3. The current market premium/discount does not exceed a configurable maxPd.
@@ -376,7 +381,7 @@ library Position {
             }
         }
 
-        // Determine the resulting position post liqudation.
+        // Determine the resulting position post liquidation.
         liqSize = MathUtil.min(runtime.remainingCapacity, runtime.oldPositionSizeAbs).to128();
         liqKeeperFee = getLiquidationKeeperFee(liqSize, marketConfig, globalConfig);
         newPosition = Position.Data(
@@ -437,13 +442,19 @@ library Position {
      * impact to skew, the more risk stakers take on.
      */
     function getLiquidationMarginUsd(
-        int128 positionSize,
+        int128 size,
         uint256 price,
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint128 absSize = MathUtil.abs(positionSize).to128();
+
+        // Short-circuit empty position and return zero'd values.
+        if (size == 0) {
+            return (0, 0, 0);
+        }
+
+        uint128 absSize = MathUtil.abs(size).to128();
         uint256 notional = absSize.mulDecimal(price);
 
         uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(
@@ -466,23 +477,8 @@ library Position {
             getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
     }
 
-    function getMaintenanceMargin(
-        int128 positionSize,
-        uint256 price,
-        uint256 collateralUsd,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256) {
-        (, uint256 mm, ) = getLiquidationMarginUsd(
-            positionSize,
-            price,
-            collateralUsd,
-            marketConfig
-        );
-        return mm;
-    }
-
     /**
-     * @dev Returns the number of partial liquidations required given liquidation size and mac liquidation capacity.
+     * @dev Returns the number of partial liquidations required given liquidation size and max liquidation capacity.
      */
     function getLiquidationIterations(
         uint256 liqSize,
@@ -508,7 +504,7 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        // We exit early it size is 0, this would only happen then remaining liqcapacity is 0.
+        // We exit early if size is 0, this would only happen then remaining liqcapacity is 0.
         if (size == 0) {
             return 0;
         }
@@ -536,14 +532,11 @@ library Position {
     }
 
     /**
-     * @dev Returns the health data given the marketId, config, and position{...} details.
-     *
-     * NOTE: marginUsd _must_ be calculated with `useDiscountedCollateralPrice=true` in order to correctly calculate a position's
-     * health related data and factor.
+     * @dev Returns the health data given the `marketId`, `config`, and position{...} details.
      */
     function getHealthData(
         PerpMarket.Data storage market,
-        int128 positionSize,
+        int128 size,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
         uint256 positionEntryUtilizationAccrued,
@@ -551,23 +544,34 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues
     ) internal view returns (Position.HealthData memory healthData) {
+        // We can short-circuit entire getHealthData calcs when size is zero.
+        if (size == 0) {
+            return healthData;
+        }
+
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
-        healthData.accruedFunding = positionSize.mulDecimal(
+        healthData.accruedFunding = size.mulDecimal(
             unrecordedFunding + market.currentFundingAccruedComputed - positionEntryFundingAccrued
         );
-        healthData.accruedUtilization = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
+        healthData.accruedUtilization = MathUtil.abs(size).mulDecimal(price).mulDecimal(
             market.getUnrecordedUtilization() +
                 market.currentUtilizationAccruedComputed -
                 positionEntryUtilizationAccrued
         );
 
-        // Calculate this position's PnL
-        healthData.pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
-        // margin / mm <= 1 means liquidation.
-        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(
-            getMaintenanceMargin(positionSize, price, marginValues.collateralUsd, marketConfig)
+        // Calculate this position's PnL.
+        healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+
+        // `margin / mm <= 1` means liquidation.
+        (, uint256 mm, ) = getLiquidationMarginUsd(
+            size,
+            price,
+            marginValues.collateralUsd,
+            marketConfig
         );
+        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(mm);
+
         return healthData;
     }
 

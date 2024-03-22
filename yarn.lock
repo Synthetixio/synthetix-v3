@@ -2953,7 +2953,7 @@ __metadata:
     "@typechain/hardhat": "npm:^9.1.0"
     dotenv: "npm:^16.4.3"
     hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.11.19"
+    hardhat-cannon: "npm:2.11.20"
     hardhat-contract-sizer: "npm:^2.10.0"
     hardhat-gas-reporter: "npm:^1.0.10"
     hardhat-ignore-warnings: "npm:^0.2.9"
@@ -2993,7 +2993,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.11.19"
+    "@usecannon/cli": "npm:2.11.20"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3007,7 +3007,7 @@ __metadata:
     "@ethersproject/abi": "npm:^5.7.0"
     "@istanbuljs/nyc-config-typescript": "npm:^1.0.2"
     "@types/prompts": "npm:^2.4.9"
-    "@usecannon/builder": "npm:2.11.19"
+    "@usecannon/builder": "npm:2.11.20"
     chalk: "npm:^4.1.2"
     ethereumjs-util: "npm:^7.1.5"
     ethers: "npm:^5.7.2"
@@ -3105,6 +3105,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/lido-wsteth-to-eth-ratio-oracle@workspace:auxiliary/LidoWstEthToStEthRatioOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/lido-wsteth-to-eth-ratio-oracle@workspace:auxiliary/LidoWstEthToStEthRatioOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/main": "workspace:*"
+    "@synthetixio/router": "npm:3.3.7"
+    "@synthetixio/wei": "npm:^2.74.4"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/main@workspace:*, @synthetixio/main@workspace:protocol/synthetix":
   version: 0.0.0-use.local
   resolution: "@synthetixio/main@workspace:protocol/synthetix"
@@ -3166,7 +3183,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.11.19"
+    "@usecannon/cli": "npm:2.11.20"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3187,7 +3204,7 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
-    "@usecannon/cli": "npm:2.11.19"
+    "@usecannon/cli": "npm:2.11.20"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
@@ -3208,6 +3225,24 @@ __metadata:
     solidity-docgen: "npm:^0.6.0-beta.36"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/rewards-distributor-external@workspace:auxiliary/RewardsDistributorExternal":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/rewards-distributor-external@workspace:auxiliary/RewardsDistributorExternal"
+  dependencies:
+    "@usecannon/cli": "npm:2.11.20"
+    forge-std: "github:foundry-rs/forge-std#master"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/rewards-distributor@workspace:auxiliary/RewardsDistributor":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/rewards-distributor@workspace:auxiliary/RewardsDistributor"
+  dependencies:
+    "@usecannon/cli": "npm:2.11.20"
+    forge-std: "github:foundry-rs/forge-std#master"
   languageName: unknown
   linkType: soft
 
@@ -3237,7 +3272,7 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    hardhat-cannon: "npm:2.11.19"
+    hardhat-cannon: "npm:2.11.20"
     solidity-coverage: "npm:^0.8.7"
   languageName: unknown
   linkType: soft
@@ -3263,7 +3298,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": "npm:^0.68.0"
     "@graphprotocol/graph-ts": "npm:^0.32.0"
-    "@usecannon/cli": "npm:2.11.19"
+    "@usecannon/cli": "npm:2.11.20"
     ethers: "npm:^5.7.2"
     matchstick-as: "npm:^0.6.0"
     prettier: "npm:^3.2.5"
@@ -3284,7 +3319,7 @@ __metadata:
     "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node-fetch": "npm:^2.6.11"
-    "@usecannon/cli": "npm:2.11.19"
+    "@usecannon/cli": "npm:2.11.20"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     node-fetch: "npm:^2.7.0"
@@ -3915,12 +3950,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.11.19":
-  version: 2.11.19
-  resolution: "@usecannon/builder@npm:2.11.19"
+"@usecannon/builder@npm:2.11.20":
+  version: 2.11.20
+  resolution: "@usecannon/builder@npm:2.11.20"
   dependencies:
     "@synthetixio/router": "npm:^3.3.7"
-    axios: "npm:^1.6.2"
+    axios: "npm:^1.6.7"
+    axios-retry: "npm:^4.0.0"
     buffer: "npm:^6.0.3"
     debug: "npm:^4.3.4"
     form-data: "npm:^4.0.0"
@@ -3931,17 +3967,17 @@ __metadata:
     typestub-ipfs-only-hash: "npm:^4.0.0"
     viem: "npm:^2.6.1"
     zod: "npm:^3.22.4"
-  checksum: 10/734aabe1bf7dc90a462520e33a5674f1fad87ee5abfa60b334b548032a4ee11ce741109c5fdf5b2141b45f208646693fc6f4efac3ca755577e2ecf0d9c2ec139
+  checksum: 10/415031198b8b7db5ca58bc33983fc8cf5f8ebc8d6aea86ffba4ba0bce11a966c2ceab1c379073304665d4513ac6cac9ed88ba963771d8aa60b4548a2f7ce0be6
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:2.11.19":
-  version: 2.11.19
-  resolution: "@usecannon/cli@npm:2.11.19"
+"@usecannon/cli@npm:2.11.20":
+  version: 2.11.20
+  resolution: "@usecannon/cli@npm:2.11.20"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
     "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:2.11.19"
+    "@usecannon/builder": "npm:2.11.20"
     abitype: "npm:^1.0.0"
     chalk: "npm:^4.1.2"
     commander: "npm:^9.5.0"
@@ -3961,7 +3997,7 @@ __metadata:
     zod: "npm:^3.22.4"
   bin:
     cannon: bin/cannon.js
-  checksum: 10/85a0b620c7e8ed4e9af94c73fa2adb340cfebbab4fbbb4405175d08aa4a980991260bf015937609bc2d432b40e64ecd90bbd3ae8c0281cb04d8331cf207d9580
+  checksum: 10/89094621f985f530e44e966b8c2cd3e92db09400d300318c9fcad9df4a50185067229c6e452e0cb2abaa928fba4993185654d72b3aacde9efc2e975b51c391fa
   languageName: node
   linkType: hard
 
@@ -4760,6 +4796,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios-retry@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "axios-retry@npm:4.0.0"
+  dependencies:
+    is-retry-allowed: "npm:^2.2.0"
+  peerDependencies:
+    axios: 0.x || 1.x
+  checksum: 10/40c72837540a768dd7d7e98b0243395f46a59b623e5e37a7bdd164ba748404783fe68c6284c793b8cdd6e51b006560ed093a3db50587fb13f1e192df26803c96
+  languageName: node
+  linkType: hard
+
 "axios@npm:^0.21.1, axios@npm:^0.21.4":
   version: 0.21.4
   resolution: "axios@npm:0.21.4"
@@ -4769,14 +4816,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.2":
-  version: 1.6.2
-  resolution: "axios@npm:1.6.2"
+"axios@npm:^1.6.7":
+  version: 1.6.7
+  resolution: "axios@npm:1.6.7"
   dependencies:
-    follow-redirects: "npm:^1.15.0"
+    follow-redirects: "npm:^1.15.4"
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10/612bc93f8f738a518e7c5f9de9cc782bcd36aac6bae279160ef6a10260378e21c1786520eab3336898e3d66e0839ebdf739f327fb6d0431baa4d3235703a7652
+  checksum: 10/a1932b089ece759cd261f175d9ebf4d41c8994cf0c0767cda86055c7a19bcfdade8ae3464bf4cec4c8b142f4a657dc664fb77a41855e8376cf38b86d7a86518f
   languageName: node
   linkType: hard
 
@@ -7831,13 +7878,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.12.1, follow-redirects@npm:^1.14.0, follow-redirects@npm:^1.15.0":
-  version: 1.15.2
-  resolution: "follow-redirects@npm:1.15.2"
+"follow-redirects@npm:^1.12.1, follow-redirects@npm:^1.14.0, follow-redirects@npm:^1.15.4":
+  version: 1.15.5
+  resolution: "follow-redirects@npm:1.15.5"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: 10/8be0d39919770054812537d376850ccde0b4762b0501c440bd08724971a078123b55f57704f2984e0664fecc0c86adea85add63295804d9dce401cd9604c91d3
+  checksum: 10/d467f13c1c6aa734599b8b369cd7a625b20081af358f6204ff515f6f4116eb440de9c4e0c49f10798eeb0df26c95dd05d5e0d9ddc5786ab1a8a8abefe92929b4
   languageName: node
   linkType: hard
 
@@ -7874,6 +7921,13 @@ __metadata:
   version: 0.6.1
   resolution: "forever-agent@npm:0.6.1"
   checksum: 10/c1e1644d5e074ac063ecbc3fb8582013ef91fff0e3fa41e76db23d2f62bc6d9677aac86db950917deed4fe1fdd772df780cfaa352075f23deec9c015313afb97
+  languageName: node
+  linkType: hard
+
+"forge-std@github:foundry-rs/forge-std#master":
+  version: 1.7.6
+  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=b6a506db2262cad5ff982a87789ee6d1558ec861"
+  checksum: 10/72a93362fbe440f8a1c95f1f85c42ab9b5403b6142219d88412aef697ebf18f1898224e9c2dd3158ef1c8e8926d8a69f9b1375d131ab2fd3aae684687b2b2822
   languageName: node
   linkType: hard
 
@@ -8723,20 +8777,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:2.11.19":
-  version: 2.11.19
-  resolution: "hardhat-cannon@npm:2.11.19"
+"hardhat-cannon@npm:2.11.20":
+  version: 2.11.20
+  resolution: "hardhat-cannon@npm:2.11.20"
   dependencies:
     "@iarna/toml": "npm:^3.0.0"
-    "@usecannon/builder": "npm:2.11.19"
-    "@usecannon/cli": "npm:2.11.19"
+    "@usecannon/builder": "npm:2.11.20"
+    "@usecannon/cli": "npm:2.11.20"
     chalk: "npm:^4.1.2"
     debug: "npm:^4.3.3"
     fs-extra: "npm:^10.0.1"
     viem: "npm:^2.6.1"
   peerDependencies:
     hardhat: ">=2.0.0"
-  checksum: 10/2d13f37b179445b04b64944c22f78945f35e23c46609f292ead64dfc524c319637521297f25f3c6d87a4fe746cb2a84606a764c97c3b9b943f6d7ccdb308f261
+  checksum: 10/e961a036b9bdc35361e20c9fd584db6af73903992033d5eb28483649329ee8c8461a42c9323c14ae336f71bb997003b7b2c343c181451efbc25cab7bc5751436
   languageName: node
   linkType: hard
 
@@ -9814,6 +9868,13 @@ __metadata:
     call-bind: "npm:^1.0.2"
     has-tostringtag: "npm:^1.0.0"
   checksum: 10/36d9174d16d520b489a5e9001d7d8d8624103b387be300c50f860d9414556d0485d74a612fdafc6ebbd5c89213d947dcc6b6bff6b2312093f71ea03cbb19e564
+  languageName: node
+  linkType: hard
+
+"is-retry-allowed@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "is-retry-allowed@npm:2.2.0"
+  checksum: 10/6d8685530871f0b040346cc72322d90122473e921149affa16de363d6c2a6e46bc76abdfaac3259b93994ec8e7f70fbe67bbb080190e440533ff728e6a64494d
   languageName: node
   linkType: hard
 

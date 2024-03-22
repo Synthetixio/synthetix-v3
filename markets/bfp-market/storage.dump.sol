@@ -876,6 +876,7 @@ library Position {
         uint256 orderFee;
         uint256 keeperFee;
         uint256 newMarginUsd;
+        Margin.MarginValues marginValues;
     }
     struct HealthData {
         uint256 healthFactor;

@@ -8,6 +8,7 @@ import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+import {ERC20} from "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
 
@@ -17,43 +18,25 @@ import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.so
 contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     using ERC20Helper for address;
 
+    // @notice Address of the RewardManager (i.e. Synthetix core proxy)
     address private _rewardManager;
+    // @notice Address the BFP market proxy.
     address private _perpMarket;
+    // @notice Address of the reward token to distribute.
     address private _payoutToken;
+    // @notice User defined name of this reward distributor.
     string private _name;
+    // @notice Pool this distributor is registered against.
     uint128 private _poolId;
+    // @notice Delegated pool collateral addresses at the point of distributor init.
     address[] private _poolCollateralTypes;
+    // @notice Internal counter to track distributed/payout reward tokens.
+    uint256 private _rewardsAmount;
+    // @notice Flag to enable or disable payouts.
     bool public shouldFailPayout;
 
     constructor() {
         _disableInitializers();
-    }
-
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
-     */
-    function onlyPerpMarket() private view {
-        if (msg.sender != _perpMarket) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-    }
-
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
-     */
-    function onlyRewardManager() private view {
-        if (msg.sender != _rewardManager) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-    }
-
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
-     */
-    function onlyPoolOwner() private view {
-        if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
     }
 
     /**
@@ -73,6 +56,17 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         _poolCollateralTypes = poolCollateralTypes_;
         _payoutToken = payoutToken_;
         _name = name_;
+
+        // Verify the `payoutToken` on init has exactly 18 decimals.
+        (bool success, bytes memory data) = payoutToken_.staticcall(
+            abi.encodeWithSignature("decimals()")
+        );
+        if (!success || data.length == 0 || abi.decode(data, (uint8)) != 18) {
+            revert ParameterError.InvalidParameter(
+                "payoutToken",
+                "Token decimals expected to be 18"
+            );
+        }
     }
 
     /**
@@ -80,6 +74,18 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
      */
     function distributeRewards(address collateralType, uint256 amount) external {
         onlyPerpMarket();
+
+        uint256 currentRewardsAmount = _rewardsAmount;
+        uint256 nextRewardsAmount = currentRewardsAmount + amount;
+
+        // NOTE: Caller must `payoutToken.transfer(address(this), amount)` before calling distributeRewards.
+        uint256 balance = ERC20(_payoutToken).balanceOf(address(this));
+        if (nextRewardsAmount > balance) {
+            revert InsufficientRewardBalance(amount, balance);
+        }
+
+        _rewardsAmount = nextRewardsAmount;
+
         IRewardsManagerModule(_rewardManager).distributeRewards(
             _poolId,
             collateralType,
@@ -147,6 +153,11 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
 
         onlyRewardManager();
 
+        uint256 currentRewardsAmount = _rewardsAmount;
+        if (payoutAmount_ > currentRewardsAmount) {
+            revert InsufficientRewardBalance(payoutAmount_, currentRewardsAmount);
+        }
+        _rewardsAmount = currentRewardsAmount - payoutAmount_;
         _payoutToken.safeTransfer(payoutTarget_, payoutAmount_);
 
         return true;
@@ -166,5 +177,34 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         return
             interfaceId == type(IRewardDistributor).interfaceId ||
             interfaceId == this.supportsInterface.selector;
+    }
+
+    // --- Helpers --- //
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
+     */
+    function onlyPerpMarket() private view {
+        if (msg.sender != _perpMarket) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
+     */
+    function onlyRewardManager() private view {
+        if (msg.sender != _rewardManager) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
+     */
+    function onlyPoolOwner() private view {
+        if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
     }
 }
