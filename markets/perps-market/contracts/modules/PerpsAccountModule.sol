@@ -83,6 +83,13 @@ contract PerpsAccountModule is IPerpsAccountModule {
         emit CollateralModified(accountId, synthMarketId, amountDelta, ERC2771Context._msgSender());
     }
 
+    function debt(uint128 accountId) external view override returns (uint256 accountDebt) {
+        Account.exists(accountId);
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+
+        accountDebt = account.debt;
+    }
+
     // 1. call depositMarketUsd and deposit amount directly to core system
     // 2. look up account and reduce debt by amount
     // 3. transfer synth to sender
