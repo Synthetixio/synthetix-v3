@@ -76,7 +76,7 @@ contract Configurable is IConfigurable {
         }
 
         if (store.nominatedConfigurer != address(0)) {
-            store.nominatedConfigurer = address(0);
+            store.nominatedConfigurer = address(0); // reset nominated configurer to address(0)
             emit ConfigurerNominated(address(0));
         }
 
