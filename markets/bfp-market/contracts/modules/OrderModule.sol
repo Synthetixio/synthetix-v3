@@ -44,6 +44,7 @@ contract OrderModule is IOrderModule {
         uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
+        uint128 totalFees;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
@@ -329,9 +330,14 @@ contract OrderModule is IOrderModule {
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
 
+        // Account debt and market total trader debt must be updated with fees incurred to settle.
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        runtime.totalFees = (runtime.trade.orderFee + runtime.trade.keeperFee).to128();
+        accountMargin.debtUsd += runtime.totalFees;
+        market.totalTraderDebtUsd += runtime.totalFees;
+
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
-            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
             accountMargin.updateAccountDebtAndCollateral(
                 market,
                 // What is `newMarginUsd`?

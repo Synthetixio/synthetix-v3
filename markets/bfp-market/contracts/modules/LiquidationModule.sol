@@ -251,18 +251,6 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
-        Position.Data memory newPosition = Position.Data(
-            size,
-            position.entryFundingAccrued,
-            position.entryUtilizationAccrued,
-            position.entryPrice,
-            position.accruedFeesUsd + flagReward
-        );
-        market.updateDebtCorrection(position, newPosition);
-
-        // Update position and market accounting.
-        position.update(newPosition);
-
         liquidateCollateral(accountId, marketId, market, globalConfig);
 
         // Flag and emit event.

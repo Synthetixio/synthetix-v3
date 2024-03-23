@@ -618,7 +618,6 @@ interface IPerpAccountModule {
         uint256 healthFactor;
         uint256 notionalValueUsd;
         int256 pnl;
-        uint256 accruedFeesUsd;
         int256 accruedFunding;
         uint256 accruedUtilization;
         uint256 entryPrice;
@@ -700,11 +699,11 @@ contract OrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
-        int256 pnl;
         uint256 fillPrice;
         uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
+        uint128 totalFees;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
@@ -896,7 +895,6 @@ library Position {
         int256 entryFundingAccrued;
         uint256 entryUtilizationAccrued;
         uint256 entryPrice;
-        uint256 accruedFeesUsd;
     }
 }
 

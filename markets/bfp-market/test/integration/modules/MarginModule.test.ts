@@ -41,7 +41,7 @@ import {
   payDebt,
   getFastForwardTimestamp,
 } from '../../helpers';
-import { calcDiscountedCollateralPrice, calcPnl } from '../../calculations';
+import { calcDiscountedCollateralPrice, calcPricePnl } from '../../calculations';
 import { assertEvents } from '../../assert';
 
 describe('MarginModule', async () => {
@@ -1315,7 +1315,7 @@ describe('MarginModule', async () => {
           .add(closeOrderEvent?.args.keeperFee);
 
         // Pnl expected to be close to 0 since not oracle price change
-        const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+        const pnl = calcPricePnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
         const expectedChangeUsd = wei(pnl)
           .sub(fees)
           .add(closeOrderEvent?.args.accruedFunding)
@@ -1375,7 +1375,7 @@ describe('MarginModule', async () => {
           const openOrderEvent = findEventSafe(openReceipt, 'OrderSettled', PerpMarketProxy);
           const closeOrderEvent = findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy);
 
-          const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+          const pnl = calcPricePnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
           const orderFees = wei(openOrderEvent?.args.orderFee).add(closeOrderEvent?.args.orderFee);
           const keeperFees = wei(openOrderEvent?.args.keeperFee).add(
             closeOrderEvent?.args.keeperFee
@@ -1451,7 +1451,7 @@ describe('MarginModule', async () => {
           findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy) || {};
         const { args: openEventArgs } =
           findEventSafe(openReceipt, 'OrderSettled', PerpMarketProxy) || {};
-        const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+        const pnl = calcPricePnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
         const openOrderFees = wei(openOrder.orderFee).add(openEventArgs?.keeperFee);
         const closeOrderFees = wei(closeOrder.orderFee).add(closeEventArgs?.keeperFee);
         const totalPnl = wei(pnl)
@@ -1541,7 +1541,7 @@ describe('MarginModule', async () => {
           findEventSafe(closeReceipt, 'OrderSettled', PerpMarketProxy) || {};
 
         // Gather details to run local calculations for assertions.
-        const pnl = calcPnl(
+        const pnl = calcPricePnl(
           openOrder.sizeDelta,
           closeEventArgs?.fillPrice,
           openEventArgs?.fillPrice
@@ -2332,7 +2332,7 @@ describe('MarginModule', async () => {
           marketId
         );
 
-        const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+        const pnl = calcPricePnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
         const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
           .sub(order.orderFee)
           .sub(keeperFee)
@@ -2356,7 +2356,7 @@ describe('MarginModule', async () => {
           trader.accountId,
           marketId
         );
-        const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
+        const newPnl = calcPricePnl(order.sizeDelta, newPrice, order.fillPrice);
 
         const { marginUsd: marginUsdAfterPriceChange } = await PerpMarketProxy.getMarginDigest(
           trader.accountId,

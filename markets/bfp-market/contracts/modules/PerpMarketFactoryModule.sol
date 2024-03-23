@@ -138,7 +138,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         int256 priceWithFunding = oraclePrice.toInt() + unrecordedFunding;
         int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
             market.skew.mulDecimal(priceWithFunding) -
-            market.debtCorrection +
+            market.debtCorrection -
             market.totalTraderDebtUsd.toInt();
 
         return MathUtil.max(marketReportedDebt, 0).toUint();

@@ -19,7 +19,7 @@ export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) =>
 // --- Calcs --- //
 
 /** Calculates a position's unrealised PnL (no funding or fees) given the current and previous price. */
-export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
+export const calcPricePnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
   wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
 
 /** Calculates the fillPrice (pd adjusted market price) given market params and the size of next order. */
