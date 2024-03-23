@@ -42,6 +42,7 @@ import {
   calcLiquidationKeeperFee,
   calcTransactionCostInUsd,
 } from '../../calculations';
+import { PerpMarketConfiguration } from '../../generated/typechain/MarketConfigurationModule';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -2452,6 +2453,19 @@ describe('LiquidationModule', () => {
   });
 
   describe('getLiquidationMarginUsd', () => {
+    const calcImrAndMmr = (size: Wei, marketConfig: PerpMarketConfiguration.DataStructOutput) => {
+      const imr = Wei.min(
+        size
+          .abs()
+          .div(marketConfig.skewScale)
+          .mul(marketConfig.incrementalMarginScalar)
+          .add(marketConfig.minMarginRatio),
+        wei(marketConfig.maxInitialMarginRatio)
+      );
+      const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
+      return { imr, mmr };
+    };
+
     it('should revert when invalid marketId', async () => {
       const { PerpMarketProxy } = systems();
       const invalidMarketId = 42069;
@@ -2534,14 +2548,7 @@ describe('LiquidationModule', () => {
         wei(maxLiquidatableCapacity),
         globalConfig
       );
-      const imr = Wei.min(
-        absSize
-          .div(marketConfig.skewScale)
-          .mul(marketConfig.incrementalMarginScalar)
-          .add(marketConfig.minMarginRatio),
-        marketConfig.maxInitialMarginRatio
-      );
-      const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
+      const { imr, mmr } = calcImrAndMmr(absSize, marketConfig);
 
       const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
       const expectedMm = notional
@@ -2594,14 +2601,7 @@ describe('LiquidationModule', () => {
         wei(maxLiquidatableCapacity),
         globalConfig
       );
-      const imr = Wei.min(
-        absSize
-          .div(marketConfig.skewScale)
-          .mul(marketConfig.incrementalMarginScalar)
-          .add(marketConfig.minMarginRatio),
-        marketConfig.maxInitialMarginRatio
-      );
-      const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
+      const { imr, mmr } = calcImrAndMmr(absSize, marketConfig);
 
       const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
       const expectedMm = notional
@@ -2663,14 +2663,7 @@ describe('LiquidationModule', () => {
         wei(maxLiquidatableCapacity),
         globalConfig
       );
-      const imr = Wei.min(
-        absSize
-          .div(marketConfig.skewScale)
-          .mul(marketConfig.incrementalMarginScalar)
-          .add(marketConfig.minMarginRatio),
-        marketConfig.maxInitialMarginRatio
-      );
-      const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
+      const { imr, mmr } = calcImrAndMmr(absSize, marketConfig);
 
       const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
       const expectedMm = notional
@@ -2683,7 +2676,39 @@ describe('LiquidationModule', () => {
       assertBn.near(mm, expectedMm.toBN(), bn(0.000001));
     });
 
-    it('should cap the IM and MM by the maxInitialMarginRatio');
+    it('should cap IMR (and hence IM) by the maxInitialMarginRatio (concrete)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      await collateral.setPrice(bn(50_000));
+
+      const { market, marketId, trader, marginUsdDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 3_000_000_000, // 3b position
+          desiredCollateral: collateral,
+        })
+      );
+
+      const { answer: marketPrice } = await market.aggregator().latestRoundData();
+
+      const desiredSizeDelta = wei(marginUsdDepositAmount).div(wei(marketPrice)).neg().toBN(); // 1x short
+      const { im } = await PerpMarketProxy.getLiquidationMarginUsd(
+        trader.accountId,
+        marketId,
+        desiredSizeDelta
+      );
+
+      const size = wei(desiredSizeDelta).abs();
+      const notional = size.mul(marketPrice);
+      const marketConfig = await PerpMarketProxy.getMarketConfigurationById(marketId);
+
+      // Expect the IMR to be at maxInitialMarginRatio cap.
+      const imr = wei(marketConfig.maxInitialMarginRatio);
+      const expectedIm = notional.mul(imr).add(wei(marketConfig.minMarginUsd));
+
+      assertBn.equal(im, expectedIm.toBN());
+    });
 
     it('should allow an infinitely large position to always at least 1x');
   });
