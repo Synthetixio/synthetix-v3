@@ -2710,6 +2710,44 @@ describe('LiquidationModule', () => {
       assertBn.equal(im, expectedIm.toBN());
     });
 
-    it('should allow an infinitely large position to always at least 1x');
+    it('should allow a position to always 1x even when very large', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      const { answer: marketPrice } = await market.aggregator().latestRoundData();
+
+      const trader = genOneOf(traders());
+
+      // 1M per token to avoid exceeding maxAllowable.
+      const collateral = genOneOf(collateralsWithoutSusd());
+      await collateral.setPrice(bn(1_000_000));
+
+      let accumulatedDepositUsd = wei(0);
+
+      for (let i = 0; i < 10; i++) {
+        const desiredMarginUsdDepositAmount = genNumber(420_000_000, 690_000_000);
+        const { marginUsdDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarginUsdDepositAmount,
+            desiredCollateral: collateral,
+            desiredMarket: market,
+            desiredTrader: trader,
+          })
+        );
+        accumulatedDepositUsd = accumulatedDepositUsd.add(marginUsdDepositAmount);
+
+        const desiredSizeDelta = wei(accumulatedDepositUsd).div(wei(marketPrice)).neg().toBN(); // 1x short
+        const { im } = await PerpMarketProxy.getLiquidationMarginUsd(
+          trader.accountId,
+          marketId,
+          desiredSizeDelta
+        );
+
+        // Expect the IMR to always be below the margin.
+        assertBn.lt(im, accumulatedDepositUsd.toBN());
+      }
+    });
   });
 });
