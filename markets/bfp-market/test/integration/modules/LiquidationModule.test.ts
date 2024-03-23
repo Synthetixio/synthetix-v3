@@ -2710,7 +2710,7 @@ describe('LiquidationModule', () => {
       assertBn.equal(im, expectedIm.toBN());
     });
 
-    it('should allow a position to always 1x even when very large', async () => {
+    it('should allow a position to always 1x even when extremely large', async () => {
       const { PerpMarketProxy } = systems();
 
       const market = genOneOf(markets());
@@ -2745,7 +2745,7 @@ describe('LiquidationModule', () => {
           desiredSizeDelta
         );
 
-        // Expect the IMR to always be below the margin.
+        // Expect the IM to always be below the total deposited margin.
         assertBn.lt(im, accumulatedDepositUsd.toBN());
       }
     });
