@@ -778,15 +778,16 @@ workflows:
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
       #    proxy: "contract.InitialProxy"
 
-  update-subgraphs:
-    when:
-      or:
-        - and:
-            - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-            - equal: ["Check deploys", << pipeline.schedule.name >>]
-        - equal: ["update-subgraphs", << pipeline.git.branch >>]
-    jobs:
-      - update-subgraphs
+  # TODO: Uncomment when update-subgraphs has been refactored/re-implemented to work.
+  # update-subgraphs:
+  #   when:
+  #     or:
+  #       - and:
+  #           - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+  #           - equal: ["Check deploys", << pipeline.schedule.name >>]
+  #       - equal: ["update-subgraphs", << pipeline.git.branch >>]
+  #   jobs:
+  #     - update-subgraphs
 
   docgen-contracts:
     unless:
