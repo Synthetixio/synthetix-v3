@@ -120,6 +120,7 @@ export const genMarket = () => ({
     minMarginRatio: bn(genNumber(0.01, 0.02)),
     incrementalMarginScalar: bn(genNumber(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
+    maxInitialMarginRatio: bn(0.9),
     liquidationRewardPercent: bn(genNumber(0.005, 0.0075)),
     liquidationLimitScalar: bn(genNumber(0.9, 1.2)),
     liquidationWindowDuration: genOneOf([36, 48, 60]), // In seconds

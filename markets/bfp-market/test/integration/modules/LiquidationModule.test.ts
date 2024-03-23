@@ -2534,10 +2534,13 @@ describe('LiquidationModule', () => {
         wei(maxLiquidatableCapacity),
         globalConfig
       );
-      const imr = absSize
-        .div(marketConfig.skewScale)
-        .mul(marketConfig.incrementalMarginScalar)
-        .add(marketConfig.minMarginRatio);
+      const imr = Wei.min(
+        absSize
+          .div(marketConfig.skewScale)
+          .mul(marketConfig.incrementalMarginScalar)
+          .add(marketConfig.minMarginRatio),
+        marketConfig.maxInitialMarginRatio
+      );
       const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
 
       const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
@@ -2591,10 +2594,13 @@ describe('LiquidationModule', () => {
         wei(maxLiquidatableCapacity),
         globalConfig
       );
-      const imr = absSize
-        .div(marketConfig.skewScale)
-        .mul(marketConfig.incrementalMarginScalar)
-        .add(marketConfig.minMarginRatio);
+      const imr = Wei.min(
+        absSize
+          .div(marketConfig.skewScale)
+          .mul(marketConfig.incrementalMarginScalar)
+          .add(marketConfig.minMarginRatio),
+        marketConfig.maxInitialMarginRatio
+      );
       const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
 
       const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
@@ -2657,10 +2663,13 @@ describe('LiquidationModule', () => {
         wei(maxLiquidatableCapacity),
         globalConfig
       );
-      const imr = absSize
-        .div(marketConfig.skewScale)
-        .mul(marketConfig.incrementalMarginScalar)
-        .add(marketConfig.minMarginRatio);
+      const imr = Wei.min(
+        absSize
+          .div(marketConfig.skewScale)
+          .mul(marketConfig.incrementalMarginScalar)
+          .add(marketConfig.minMarginRatio),
+        marketConfig.maxInitialMarginRatio
+      );
       const mmr = imr.mul(marketConfig.maintenanceMarginScalar);
 
       const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
@@ -2673,5 +2682,9 @@ describe('LiquidationModule', () => {
       assertBn.near(im, expectedIm.toBN(), bn(0.000001));
       assertBn.near(mm, expectedMm.toBN(), bn(0.000001));
     });
+
+    it('should cap the IM and MM by the maxInitialMarginRatio');
+
+    it('should allow an infinitely large position to always at least 1x');
   });
 });
