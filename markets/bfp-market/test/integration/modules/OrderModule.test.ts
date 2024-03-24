@@ -1229,6 +1229,24 @@ describe('OrderModule', () => {
       await assertEvent(receipt, 'FundingRecomputed', PerpMarketProxy);
     });
 
+    it('should add order fees as account debt', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+      const settleEvent = findEventSafe(receipt, 'OrderSettled', PerpMarketProxy);
+      const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.equal(
+        settleEvent?.args.orderFee.add(settleEvent.args.keeperFee),
+        accountDigest.debtUsd
+      );
+    });
+
     it('should accurately account for funding when holding for a long time', async () => {
       const { PerpMarketProxy } = systems();
       // Create a static market to make funding assertion easier.
