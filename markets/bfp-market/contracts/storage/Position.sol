@@ -452,9 +452,12 @@ library Position {
         uint128 absSize = MathUtil.abs(size).to128();
         uint256 notional = absSize.mulDecimal(price);
 
-        uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(
-            marketConfig.incrementalMarginScalar
-        ) + marketConfig.minMarginRatio;
+        uint256 imr = MathUtil.min(
+            absSize.divDecimal(marketConfig.skewScale).mulDecimal(
+                marketConfig.incrementalMarginScalar
+            ) + marketConfig.minMarginRatio,
+            marketConfig.maxInitialMarginRatio
+        );
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
         liqFlagReward = getLiquidationFlagReward(

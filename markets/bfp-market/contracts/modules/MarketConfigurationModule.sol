@@ -71,6 +71,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.minMarginRatio = data.minMarginRatio;
         config.incrementalMarginScalar = data.incrementalMarginScalar;
         config.maintenanceMarginScalar = data.maintenanceMarginScalar;
+        config.maxInitialMarginRatio = data.maxInitialMarginRatio;
         config.liquidationRewardPercent = data.liquidationRewardPercent;
         config.liquidationLimitScalar = data.liquidationLimitScalar;
         config.liquidationWindowDuration = data.liquidationWindowDuration;

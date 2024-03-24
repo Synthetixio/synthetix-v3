@@ -104,6 +104,8 @@ library PerpMarketConfiguration {
         uint256 incrementalMarginScalar;
         // MMS used to dynamically infer the MMR' based on IMR'.
         uint256 maintenanceMarginScalar;
+        // A max cap on the IMR.
+        uint256 maxInitialMarginRatio;
         // Used to infer a % of position notional as liquidation reward.
         uint256 liquidationRewardPercent;
         // An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
