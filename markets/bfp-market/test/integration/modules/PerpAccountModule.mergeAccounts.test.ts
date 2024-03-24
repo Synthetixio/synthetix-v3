@@ -208,9 +208,6 @@ describe('PerpAccountModule mergeAccounts', () => {
     });
     market.oracleNodeId = collateral.oracleNodeId;
 
-    // Ensure price aligns with the aggregator.
-    const collateralPrice = await collateral.getPrice();
-    await collateral.setPrice(collateralPrice);
     const { marketId, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, {
