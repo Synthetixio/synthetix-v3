@@ -477,18 +477,20 @@ describe('PerpAccountModule mergeAccounts', () => {
     assertBn.isZero(fromDigestAfter.position.size);
     assertBn.isZero(fromDigestAfter.debtUsd);
 
-    // Before the fromPosition gets merged into the toPosition, we should be realising the to position.
-    const profitsFromRealizingPosition = toDigestBefore.position.pnl
+    // Before the fromPosition gets merged into the toPosition, we should be realizing the to position.
+    const profitsFromRealizingToPosition = toDigestBefore.position.pnl
       .add(toDigestBefore.position.accruedFunding)
       .sub(toDigestBefore.position.accruedUtilization);
 
     const expectedDebt = Wei.max(
       wei(0),
-      wei(toDigestBefore.debtUsd).sub(profitsFromRealizingPosition)
-    ).toBN();
+      wei(toDigestBefore.debtUsd).sub(profitsFromRealizingToPosition)
+    )
+      .toBN()
+      .add(fromOrderEvent.args.accountDebt); // Debt from order fees.
     const expectedUsdCollateral = Wei.max(
       wei(0),
-      wei(profitsFromRealizingPosition).sub(toDigestBefore.debtUsd)
+      wei(profitsFromRealizingToPosition).sub(toDigestBefore.debtUsd)
     ).toBN();
 
     // Assert global tracking (totalTraderDebtUsd and totalCollateralValueUsd)
