@@ -32,7 +32,7 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 import { Collateral, Market, Trader } from '../../typed';
-import { calcTotalPnls, isSameSide } from '../../calculations';
+import { isSameSide } from '../../calculations';
 import { shuffle, times } from 'lodash';
 import { IPerpAccountModule } from '../../../typechain-types';
 
