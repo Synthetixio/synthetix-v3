@@ -10,6 +10,7 @@ import {
   getFastForwardTimestamp,
   getPythPriceDataByMarketId,
   setMarketConfigurationById,
+  withExplicitEvmMine,
   withdrawAllCollateral,
 } from '../../helpers';
 import Wei, { wei } from '@synthetixio/wei';
@@ -84,6 +85,111 @@ describe('PerpAccountModule mergeAccounts', () => {
         invalidMarketId
       ),
       `MarketNotFound("${invalidMarketId}")`,
+      PerpMarketProxy
+    );
+  });
+  it('should revert when fromAccount is flagged', async () => {
+    const { PerpMarketProxy } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const collateral = collaterals()[1];
+    const market = genOneOf(markets());
+    // Set the market oracleNodeId to the collateral oracleNodeId.
+    await setMarketConfigurationById(bs, market.marketId(), {
+      oracleNodeId: collateral.oracleNodeId(),
+    });
+    market.oracleNodeId = collateral.oracleNodeId;
+
+    const { marketId, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredLeverage: 9,
+    });
+    await commitAndSettle(bs, marketId, fromTrader, order);
+    const price = await collateral.getPrice();
+    await collateral.setPrice(
+      wei(price)
+        .mul(order.sizeDelta.gt(0) ? 0.5 : 1.5)
+        .toBN()
+    );
+    await withExplicitEvmMine(
+      () => PerpMarketProxy.connect(keeper()).flagPosition(fromTrader.accountId, marketId),
+      provider()
+    );
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId
+      ),
+      `PositionFlagged()`,
+      PerpMarketProxy
+    );
+  });
+
+  it('should revert when toAccount is flagged', async () => {
+    const { PerpMarketProxy } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const collateral = collaterals()[1];
+    const market = genOneOf(markets());
+    // Set the market oracleNodeId to the collateral oracleNodeId.
+    await setMarketConfigurationById(bs, market.marketId(), {
+      oracleNodeId: collateral.oracleNodeId(),
+    });
+    market.oracleNodeId = collateral.oracleNodeId;
+
+    // Create a 1x position from the fromAccount.
+    const { marketId, collateralDepositAmount: fromCollateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    await commitAndSettle(
+      bs,
+      marketId,
+      fromTrader,
+      genOrder(bs, market, collateral, fromCollateralDepositAmount, { desiredLeverage: 1 })
+    );
+
+    // Create flaggable position for the toAccount
+    const { collateralDepositAmount: toCollateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: toTrader,
+        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    const toOrder = await genOrder(bs, market, collateral, toCollateralDepositAmount, {
+      desiredLeverage: 9,
+    });
+    await commitAndSettle(bs, marketId, toTrader, toOrder);
+
+    const price = await collateral.getPrice();
+    await collateral.setPrice(
+      wei(price)
+        .mul(toOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
+        .toBN()
+    );
+    await withExplicitEvmMine(
+      () => PerpMarketProxy.connect(keeper()).flagPosition(toTrader.accountId, marketId),
+      provider()
+    );
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId
+      ),
+      `PositionFlagged()`,
       PerpMarketProxy
     );
   });

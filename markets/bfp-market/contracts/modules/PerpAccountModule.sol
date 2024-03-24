@@ -195,6 +195,12 @@ contract PerpAccountModule is IPerpAccountModule {
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+        if (
+            market.flaggedLiquidations[fromId] != address(0) ||
+            market.flaggedLiquidations[toId] != address(0)
+        ) {
+            revert ErrorUtil.PositionFlagged();
+        }
 
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
