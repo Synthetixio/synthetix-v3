@@ -74,6 +74,28 @@ library Vault {
     }
 
     /**
+     * @notice An object defining an intent to delegate collateral to a pool.
+     * @notice depending on when the object is used, the request may be defining 
+     * future intent or current collateral delegation changes that are being processed.
+     * @dev accountId The account that is or will be delegating.
+     * @dev poolId The pool that the account is or will be delegating to.
+     * @dev collateralType The collateral type that the account is or will be delegating.
+     * @dev collateralAmountD18 The amount that the account is or will be delegating.
+     * @dev timestamp The timestamp of the delegation request submission.
+     * @dev delay The delay that must pass before the delegation request can be executed.
+     * @dev window The window during which the delegation request can be executed.
+     */
+    struct DelegationRequest {
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
+        uint256 collateralAmountD18;
+        uint256 timestamp;
+        uint256 delay;
+        uint256 window;
+    }
+
+    /**
      * @dev Return's the VaultEpoch data for the current epoch.
      */
     function currentEpoch(Data storage self) internal view returns (VaultEpoch.Data storage) {
