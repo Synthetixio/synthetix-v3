@@ -223,11 +223,12 @@ contract PerpAccountModule is IPerpAccountModule {
                 ++i;
             }
         }
-
-        // Move debt from `from` -> `to`.
-        runtime.debtToMove = fromAccountMargin.debtUsd.mulDecimal(proportion).to128();
-        toAccountMargin.debtUsd = runtime.debtToMove;
-        fromAccountMargin.debtUsd -= runtime.debtToMove;
+        if (fromAccountMargin.debtUsd > 0) {
+            // Move debt from `from` -> `to`.
+            runtime.debtToMove = fromAccountMargin.debtUsd.mulDecimal(proportion).to128();
+            toAccountMargin.debtUsd = runtime.debtToMove;
+            fromAccountMargin.debtUsd -= runtime.debtToMove;
+        }
 
         // Move position from `from` -> `to`.
         runtime.sizeToMove = fromPosition.size.mulDecimal(proportion.toInt()).to128();
