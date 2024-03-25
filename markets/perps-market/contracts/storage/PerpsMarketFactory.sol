@@ -122,6 +122,6 @@ library PerpsMarketFactory {
             Price.Tolerance.DEFAULT
         );
 
-        CollateralConfiguration.loadValidLam(synthMarketId).distrubuteCollateral(synth, amount);
+        CollateralConfiguration.loadValidLam(synthMarketId).distributeCollateral(synth, amount);
     }
 }
