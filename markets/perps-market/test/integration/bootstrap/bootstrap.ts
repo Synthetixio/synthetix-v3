@@ -20,7 +20,6 @@ import {
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
 import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
-import { MockPerpsRewardDistributor } from '../../../typechain-types/contracts/mocks/MockPerpsRewardDistributor';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -34,7 +33,6 @@ type Proxies = {
   ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
   ['MockPythERC7412Wrapper']: MockPythERC7412Wrapper;
   ['FeeCollectorMock']: FeeCollectorMock;
-  ['MockPerpsRewardDistributor']: MockPerpsRewardDistributor;
 };
 
 export type Systems = {
@@ -48,7 +46,6 @@ export type Systems = {
   Account: AccountProxy;
   TrustedMulticallForwarder: TrustedMulticallForwarder;
   FeeCollectorMock: FeeCollectorMock;
-  PerpsRewardDistributor: MockPerpsRewardDistributor;
   Synth: (address: string) => SynthRouter;
 };
 
@@ -76,7 +73,6 @@ export function bootstrap() {
       Account: getContract('AccountProxy'),
       MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
-      PerpsRewardDistributor: getContract('MockPerpsRewardDistributor'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
