@@ -4,7 +4,12 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { PerpMarketProxy, PerpAccountProxy } from './generated/typechain';
-import { CollateralMock, SettlementHookMock, AggregatorV3Mock } from '../typechain-types';
+import {
+  CollateralMock,
+  SettlementHookMock,
+  AggregatorV3Mock,
+  MergeAccountSettlementHookMock,
+} from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
@@ -27,6 +32,8 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   CollateralMockD8: CollateralMock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
+  MergeAccountSettlementHookMock: MergeAccountSettlementHookMock;
+  Account: PerpAccountProxy;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -49,6 +56,7 @@ export interface Contracts {
   PerpAccountProxy: PerpAccountProxy;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
+  MergeAccountSettlementHookMock: MergeAccountSettlementHookMock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -130,6 +138,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       CollateralMockD8: getContract('CollateralMockD8'),
       SettlementHookMock: getContract('SettlementHookMock'),
       SettlementHook2Mock: getContract('SettlementHook2Mock'),
+      MergeAccountSettlementHookMock: getContract('MergeAccountSettlementHookMock'),
     };
   });
 
@@ -170,8 +179,15 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const traders: { signer: Signer; accountId: number }[] = [];
 
   before('perp market bootstrap', async () => {
-    const { Core, PerpMarketProxy, SettlementHookMock, SettlementHook2Mock, OracleManager, USD } =
-      systems;
+    const {
+      Core,
+      PerpMarketProxy,
+      SettlementHookMock,
+      SettlementHook2Mock,
+      MergeAccountSettlementHookMock,
+      OracleManager,
+      USD,
+    } = systems;
 
     // Configure global markets.
     await PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
@@ -219,7 +235,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     // Configure settlement hooks.
     await PerpMarketProxy.setSettlementHookConfiguration({
-      whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
+      whitelistedHookAddresses: [
+        SettlementHookMock.address,
+        SettlementHook2Mock.address,
+        MergeAccountSettlementHookMock.address,
+      ],
       maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
     });
 

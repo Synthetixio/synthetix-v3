@@ -207,6 +207,12 @@ func = "initialize"
 args = ["CollateralMockD18", "CMD8", "8"]
 depends = ["contract.CollateralMockD8"]
 
+[contract.MergeAccountSettlementHookMock]
+artifact = "contracts/mocks/MergeAccountSettlementHookMock.sol:MergeAccountSettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+depends = ["contract.InitialPerpMarketProxy"]
+salt = "3"
+
 # --- Market Post BFP Deployment Configuration --- #
 
 [invoke.setSynthetix]

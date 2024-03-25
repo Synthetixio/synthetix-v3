@@ -41,7 +41,6 @@ contract OrderModule is IOrderModule {
         uint256 pythPrice;
         int256 accruedFunding;
         uint256 fillPrice;
-        uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
@@ -350,8 +349,6 @@ contract OrderModule is IOrderModule {
                 runtime.trade.newMarginUsd.toInt() -
                     runtime.trade.marginValues.collateralUsd.toInt()
             );
-
-            runtime.accountDebt = accountMargin.debtUsd;
         }
 
         if (runtime.trade.newPosition.size == 0) {
@@ -376,7 +373,7 @@ contract OrderModule is IOrderModule {
             healthData.accruedUtilization,
             healthData.pnl,
             runtime.fillPrice,
-            runtime.accountDebt
+            accountMargin.debtUsd
         );
 
         emit MarketSizeUpdated(marketId, runtime.updatedMarketSize, runtime.updatedMarketSkew);

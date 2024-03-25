@@ -56,6 +56,11 @@ interface IPerpAccountModule {
         uint256 mm;
     }
 
+    // --- Events --- //
+
+    // @notice Emitted when two accounts are merged.
+    event AccountsMerged(uint128 fromId, uint128 toId, uint128 marketId);
+
     // --- Views --- //
 
     /**
@@ -73,4 +78,20 @@ interface IPerpAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (IPerpAccountModule.PositionDigest memory);
+
+    /**
+     * @notice Merges two accounts, combining `fromId` into `toId` for `marketId`.
+     *
+     * Merging accounts will realize the position of account `toId` in addition to transferring collateral and size
+     * from one to the other. It's on the caller to burn the perp account NFT post merge.
+     *
+     * Additionally, this fn requires that account `fromId` must have just been settled, implying account merge
+     * operation can only be performed in the same block as settlement via multicalls on settlement or indirectly
+     * settlement hooks.
+     *
+     * We also only allow merging accounts that uses the same collateral as the market.
+     *
+     * @dev Important that account permmisions in the `fromId` account will _not_ be transferred.
+     */
+    function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
 }
