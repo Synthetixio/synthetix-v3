@@ -60,6 +60,26 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
+  it('should revert if proportion is 0', async () => {
+    const { PerpMarketProxy } = systems();
+
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const market = genOneOf(markets());
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTraderAccountId,
+        market.marketId(),
+        bn(0)
+      ),
+      `ZeroProportion()`,
+      PerpMarketProxy
+    );
+  });
+
   it('should revert when market does not exist', async () => {
     const { PerpMarketProxy } = systems();
 

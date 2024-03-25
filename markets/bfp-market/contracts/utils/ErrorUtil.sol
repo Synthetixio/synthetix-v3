@@ -116,6 +116,9 @@ library ErrorUtil {
     // @notice Thrown when collateral is found when none was expected to exist.
     error CollateralFound();
 
-    // @notice Thrown when user trying to split and account with too large porportion.
+    // @notice Thrown when user trying to split an account with too large porportion.
     error AccountSplitProportionTooLarge();
+
+    // @notice Thrown when user trying to split an account with 0 porportion.
+    error ZeroProportion();
 }

@@ -161,9 +161,11 @@ contract PerpAccountModule is IPerpAccountModule {
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage toPosition = market.positions[toId];
 
-        // Check that the to account is empty.
         if (proportion > DecimalMath.UNIT) {
             revert ErrorUtil.AccountSplitProportionTooLarge();
+        }
+        if (proportion == 0) {
+            revert ErrorUtil.ZeroProportion();
         }
         // Ensure there are no pending orders from both to/from accounts.
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
