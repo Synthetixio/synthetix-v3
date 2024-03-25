@@ -86,7 +86,7 @@ library LiquidationAssetManager {
         // TODO - allow for address(0) to mark as deleted or not set?
     }
 
-    function distrubuteCollateral(
+    function distributeCollateral(
         Data storage self,
         address tokenAddress,
         uint256 amount

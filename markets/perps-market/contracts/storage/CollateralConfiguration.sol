@@ -80,8 +80,8 @@ library CollateralConfiguration {
         }
     }
 
-    function setMax(Data storage self, uint128 synthId, uint256 maxAmount) internal {
-        if (self.id == 0) self.id = synthId;
+    function setMax(Data storage self, uint128 collateralId, uint256 maxAmount) internal {
+        if (self.id == 0) self.id = collateralId;
         self.maxAmount = maxAmount;
     }
 
@@ -137,12 +137,14 @@ library CollateralConfiguration {
                 )
             );
         }
-        // if discount is 0, this just gets multiplied by 1
-        uint256 finalCollateralAmount = amount.mulDecimal(DecimalMath.UNIT - discount);
-        (collateralValueInUsd, ) = spotMarket.quoteSellExactIn(
+        // first get value of collateral in usd
+        (uint256 valueWithoutDiscount, ) = spotMarket.quoteSellExactIn(
             self.id,
-            finalCollateralAmount,
+            amount,
             Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
         );
+
+        // if discount is 0, this just gets multiplied by 1
+        collateralValueInUsd = valueWithoutDiscount.mulDecimal(DecimalMath.UNIT - discount);
     }
 }

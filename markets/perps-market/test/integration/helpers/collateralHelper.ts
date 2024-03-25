@@ -145,8 +145,8 @@ export const discountedValue = async (inputs: ValueInputs, spotMarket: SpotMarke
         wei(upperLimitDiscount)
       );
 
-      const collAmount = amount.mul(wei(1).sub(discount));
-      const quote = await collateralValue(collAmount, synthId, spotMarket);
+      const collValue = await collateralValue(amount, synthId, spotMarket);
+      const quote = collValue.mul(wei(1).sub(discount));
 
       return (await total).add(quote);
     },
