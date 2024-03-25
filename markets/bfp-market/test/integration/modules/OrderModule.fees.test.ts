@@ -241,7 +241,7 @@ describe('OrderModule fees', () => {
 
         await assertEvent(
           tx,
-          `OrderSettled(${trader.accountId}, ${marketId}, ${timestamp}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, 0, 0, 0, ${order.fillPrice}, 0)`,
+          `OrderSettled(${trader.accountId}, ${marketId}, ${timestamp}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, 0, 0, 0, ${order.fillPrice}, ${orderFee.add(expectedKeeperFee)})`,
           PerpMarketProxy
         );
       });

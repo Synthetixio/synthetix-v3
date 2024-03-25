@@ -759,7 +759,7 @@ describe('OrderModule', () => {
         0, // accruedUtilization (zero because no existing open position).
         0, // pnl.
         order.fillPrice,
-        0, // debt.
+        orderFee.add(orderSettledArgs?.keeperFee ?? 0), // debt.
       ].join(', ');
       await assertEvent(tx, `OrderSettled(${orderSettledEventArgs})`, PerpMarketProxy);
 
