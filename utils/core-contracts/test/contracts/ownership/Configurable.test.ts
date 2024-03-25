@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { Configurable, ConfigurableMock } from '../../../typechain-types';
 
-describe('Ownable', function () {
+describe('Configurable', function () {
   let Configurable: Configurable;
   let ConfigurableMock: ConfigurableMock;
 
