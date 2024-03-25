@@ -53,7 +53,7 @@ describe('PerpAccountModule splitAccount', () => {
         fromTrader.accountId,
         toTraderAccountId,
         market.marketId(),
-        bn(1.1)
+        bn(genNumber(1.1, 2))
       ),
       `AccountSplitProportionTooLarge()`,
       PerpMarketProxy
@@ -93,7 +93,7 @@ describe('PerpAccountModule splitAccount', () => {
         fromTrader.accountId,
         toTraderAccountId,
         invalidMarketId,
-        bn(0.1)
+        bn(genNumber(0.1, 1))
       ),
       `MarketNotFound("${invalidMarketId}")`,
       PerpMarketProxy
@@ -129,14 +129,14 @@ describe('PerpAccountModule splitAccount', () => {
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
-        bn(0.1)
+        bn(genNumber(0.1, 1))
       ),
       `OrderFound()`,
       PerpMarketProxy
     );
   });
 
-  it('should revert when toAccount have collateral', async () => {
+  it('should revert when toAccount has collateral', async () => {
     const { PerpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
@@ -154,7 +154,7 @@ describe('PerpAccountModule splitAccount', () => {
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
-        bn(0.1)
+        bn(genNumber(0.1, 1))
       ),
       `CollateralFound()`,
       PerpMarketProxy
@@ -188,7 +188,7 @@ describe('PerpAccountModule splitAccount', () => {
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
-        bn(0.1)
+        bn(genNumber(0.1, 1))
       ),
       `PositionFound("${toTrader.accountId}", "${marketId}")`,
       PerpMarketProxy
