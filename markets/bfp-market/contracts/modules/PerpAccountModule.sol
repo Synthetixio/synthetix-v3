@@ -165,7 +165,7 @@ contract PerpAccountModule is IPerpAccountModule {
         if (proportion > DecimalMath.UNIT) {
             revert ErrorUtil.AccountSplitProportionTooLarge();
         }
-        // Check that the to account is empty.
+        // Ensure there are no pending orders from both to/from accounts.
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
