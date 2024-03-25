@@ -11,9 +11,10 @@ import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/Param
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
-import {IPerpRewardDistributor} from "@synthetixio/perps-reward-distributor/contracts/interfaces/IPerpsRewardDistributor.sol";
+import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
+import {RewardsDistributor} from "@synthetixio/rewards-distributor/src/RewardsDistributor.sol";
+
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
-import {Clones} from "../utils/Clones.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {IDistributorErrors} from "../interfaces/IDistributorErrors.sol";
 
@@ -26,7 +27,6 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SetUtil for SetUtil.UintSet;
     using LiquidationAssetManager for LiquidationAssetManager.Data;
-    using Clones for address;
     using CollateralConfiguration for CollateralConfiguration.Data;
 
     /**
@@ -108,57 +108,12 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
-    function setRewardDistributorImplementation(
-        address rewardDistributorImplementation
-    ) external override {
-        if (rewardDistributorImplementation == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
-
-        if (!AddressUtil.isContract(rewardDistributorImplementation)) {
-            revert AddressError.NotAContract(rewardDistributorImplementation);
-        }
-
-        if (
-            !ERC165Helper.safeSupportsInterface(
-                rewardDistributorImplementation,
-                type(IPerpRewardDistributor).interfaceId
-            )
-        ) {
-            revert IDistributorErrors.InvalidDistributorContract(rewardDistributorImplementation);
-        }
-
-        OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration
-            .load()
-            .rewardDistributorImplementation = rewardDistributorImplementation;
-
-        emit RewardDistributorImplementationSet(rewardDistributorImplementation);
-    }
-
-    /**
-     * @inheritdoc ICollateralConfigurationModule
-     */
-    function getRewardDistributorImplementation()
-        external
-        view
-        override
-        returns (address rewardDistributorImplementation)
-    {
-        return GlobalPerpsMarketConfiguration.load().rewardDistributorImplementation;
-    }
-
-    /**
-     * @inheritdoc ICollateralConfigurationModule
-     */
     function registerDistributor(
-        uint128 poolId,
         address token,
-        address previousDistributor,
-        string calldata name,
+        address distributor,
         uint128 collateralId,
         address[] calldata poolDelegatedCollateralTypes
-    ) external override returns (address) {
+    ) external override {
         OwnableStorage.onlyOwner();
         // Using loadValid here to ensure we are tying the distributor to a valid collateral.
         LiquidationAssetManager.Data storage lam = CollateralConfiguration
@@ -171,31 +126,21 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         lam.setValidPoolDelegatedCollateralTypes(poolDelegatedCollateralTypes);
 
         // reuse current or clone distributor
-        lam.setValidDistributor(previousDistributor);
+        lam.setValidDistributor(distributor, token);
 
         // A reward token to distribute must exist.
         if (token == address(0)) {
             revert AddressError.ZeroAddress();
         }
 
-        IPerpRewardDistributor distributor = IPerpRewardDistributor(lam.distributor);
-        distributor.initialize(
-            address(PerpsMarketFactory.load().synthetix),
-            address(this),
-            poolId,
-            token,
-            name
-        );
-
-        emit RewardDistributorRegistered(lam.distributor);
-        return lam.distributor;
+        emit RewardDistributorRegistered(distributor);
     }
 
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
     function isRegistered(address distributor) external view override returns (bool) {
-        return distributor != address(0) && IPerpRewardDistributor(distributor).getPoolId() != 0;
+        return distributor != address(0) && RewardsDistributor(distributor).poolId() != 0;
     }
 
     /**
