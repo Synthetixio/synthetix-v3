@@ -11,11 +11,15 @@ import {
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
-import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
+import {
+  bootstrapPerpsMarkets,
+  bootstrapTraders,
+  createRewardsDistributor,
+  PerpsMarketData,
+} from './';
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
 import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
-import { MockPerpsRewardDistributor } from '../../../typechain-types/contracts/mocks/MockPerpsRewardDistributor';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -29,7 +33,6 @@ type Proxies = {
   ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
   ['MockPythERC7412Wrapper']: MockPythERC7412Wrapper;
   ['FeeCollectorMock']: FeeCollectorMock;
-  ['MockPerpsRewardDistributor']: MockPerpsRewardDistributor;
 };
 
 export type Systems = {
@@ -43,7 +46,6 @@ export type Systems = {
   Account: AccountProxy;
   TrustedMulticallForwarder: TrustedMulticallForwarder;
   FeeCollectorMock: FeeCollectorMock;
-  PerpsRewardDistributor: MockPerpsRewardDistributor;
   Synth: (address: string) => SynthRouter;
 };
 
@@ -71,7 +73,6 @@ export function bootstrap() {
       Account: getContract('AccountProxy'),
       MockPythERC7412Wrapper: getContract('MockPythERC7412Wrapper'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
-      PerpsRewardDistributor: getContract('MockPerpsRewardDistributor'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
@@ -223,10 +224,6 @@ export function bootstrapMarkets(data: BootstrapArgs) {
   });
 
   before('set reward distributor', async () => {
-    await systems()
-      .PerpsMarket.connect(owner())
-      .setRewardDistributorImplementation(systems().PerpsRewardDistributor.address);
-
     const { collateralLiquidateRewardRatio } = data;
     await systems()
       .PerpsMarket.connect(owner())
@@ -235,27 +232,25 @@ export function bootstrapMarkets(data: BootstrapArgs) {
       );
 
     if (!data.skipRegisterDistributors) {
+      // Deploy and register a new distributor for each collateral
       for (const { marketId, synthAddress } of synthMarkets()) {
+        // Deploy the new rewards distributor
+        const distributorAddress = await createRewardsDistributor(
+          owner(),
+          systems().Core,
+          systems().PerpsMarket,
+          poolId,
+          collateralAddress(),
+          synthAddress(),
+          18,
+          marketId()
+        );
+
         await systems()
           .PerpsMarket.connect(owner())
-          .registerDistributor(
-            poolId,
-            synthAddress(),
-            '0x0000000000000000000000000000000000000000',
-            `Distributor for ${marketId()}`,
-            marketId(),
-            [collateralAddress()]
-          );
-
-        // get distributor address
-        const distributorAddress = (
-          await systems().PerpsMarket.connect(owner()).getRegisteredDistributor(marketId())
-        )[0];
-
-        // Register distributor for collateral
-        await systems()
-          .Core.connect(owner())
-          .registerRewardsDistributor(poolId, collateralAddress(), distributorAddress);
+          .registerDistributor(synthAddress(), distributorAddress, marketId(), [
+            collateralAddress(),
+          ]);
       }
     }
   });
