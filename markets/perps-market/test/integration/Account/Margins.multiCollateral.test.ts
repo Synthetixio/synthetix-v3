@@ -1,5 +1,6 @@
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { collateralValue, depositCollateral, discountedValue, openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
@@ -115,7 +116,7 @@ describe('Account margins - Multicollateral', () => {
       collaterals: [
         {
           synthMarket: () => synthMarkets()[0],
-          snxUSDAmount: () => bn(16_000),
+          snxUSDAmount: () => bn(200_000),
         },
         {
           synthMarket: () => synthMarkets()[1],
@@ -151,6 +152,13 @@ describe('Account margins - Multicollateral', () => {
     assertBn.equal(
       totalCollateralValue.toBN(),
       await systems().PerpsMarket.getWithdrawableMargin(accountId)
+    );
+  });
+
+  it("doesn't allow you to withdraw more than you put in", async () => {
+    await assertRevert(
+      systems().PerpsMarket.connect(trader1()).modifyCollateral(accountId, btcMarketId, bn(-13)),
+      `InsufficientSynthCollateral(${btcMarketId}, ${btcAmount.toString(18, true)}, ${bn(13)})`
     );
   });
 
@@ -201,15 +209,18 @@ describe('Account margins - Multicollateral', () => {
       requiredMargin = wei(requiredInitialMargin);
     });
 
+    let expectedWithdrawableMargin: Wei;
     it('should have correct available margin', async () => {
       const { totalPnl } = await systems().PerpsMarket.getOpenPosition(
         accountId,
         perpsMarkets()[1].marketId()
       );
 
+      expectedWithdrawableMargin = availableTradingMargin.sub(requiredMargin).add(totalPnl);
+
       assertBn.equal(
         await systems().PerpsMarket.getWithdrawableMargin(accountId),
-        availableTradingMargin.sub(requiredMargin).add(totalPnl).toBN()
+        expectedWithdrawableMargin.toBN()
       );
     });
   });
