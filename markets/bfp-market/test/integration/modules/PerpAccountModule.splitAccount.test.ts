@@ -221,7 +221,7 @@ describe('PerpAccountModule splitAccount', () => {
       genOrder(bs, market, collateral, collateralDepositAmount)
     );
 
-    const proportion = bn(genNumber(0.1, 1));
+    const proportion = bn(genNumber(0.1, 0.99));
     const fromAccountDigestBefore = await PerpMarketProxy.getAccountDigest(
       fromTrader.accountId,
       marketId
@@ -276,5 +276,72 @@ describe('PerpAccountModule splitAccount', () => {
       fromAccountDigestBefore.position.size.sub(sizeChange),
       bn(0.0001)
     );
+  });
+
+  it('should split account with 1 proportion (concrete)', async () => {
+    const { PerpMarketProxy } = systems();
+
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    await commitAndSettle(
+      bs,
+      marketId,
+      fromTrader,
+      genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+
+    const proportion = bn(1);
+    const fromAccountDigestBefore = await PerpMarketProxy.getAccountDigest(
+      fromTrader.accountId,
+      marketId
+    );
+
+    const { receipt } = await withExplicitEvmMine(
+      () =>
+        PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+          fromTrader.accountId,
+          toTrader.accountId,
+          marketId,
+          proportion
+        ),
+      provider()
+    );
+
+    await assertEvent(
+      receipt,
+      `AccountSplit(${fromTrader.accountId}, ${toTrader.accountId}, ${marketId})`,
+      PerpMarketProxy
+    );
+    const fromAccountDigestAfter = await PerpMarketProxy.getAccountDigest(
+      fromTrader.accountId,
+      marketId
+    );
+    const toAccountDigestAfter = await PerpMarketProxy.getAccountDigest(
+      toTrader.accountId,
+      marketId
+    );
+    const debtChange = wei(fromAccountDigestBefore.debtUsd).mul(proportion).toBN();
+    const collateralChange = wei(fromAccountDigestBefore.collateralUsd).mul(proportion).toBN();
+    const sizeChange = wei(fromAccountDigestBefore.position.size).mul(proportion).toBN();
+
+    // Assert to account.
+    assertBn.near(toAccountDigestAfter.debtUsd, debtChange, bn(0.0001));
+    assertBn.near(toAccountDigestAfter.collateralUsd, collateralChange, bn(0.0001));
+    assertBn.near(toAccountDigestAfter.position.size, sizeChange, bn(0.0001));
+
+    // Assert from account.
+    assertBn.isZero(fromAccountDigestAfter.debtUsd);
+    assertBn.isZero(fromAccountDigestAfter.collateralUsd);
+    assertBn.isZero(fromAccountDigestAfter.position.size);
   });
 });
