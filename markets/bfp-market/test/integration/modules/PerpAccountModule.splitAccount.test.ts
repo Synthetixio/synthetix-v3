@@ -195,9 +195,84 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
-  it('should revert when fromAccount is flagged');
+  it('should revert when fromAccount is flagged', async () => {
+    const { PerpMarketProxy } = systems();
 
-  it('should revert when fromAccount is liquidatable');
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredLeverage: 9,
+    });
+    await commitAndSettle(bs, marketId, fromTrader, openOrder);
+
+    await market.aggregator().mockSetCurrentPrice(
+      wei(openOrder.oraclePrice)
+        .mul(openOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
+        .toBN()
+    );
+    await withExplicitEvmMine(
+      () => PerpMarketProxy.flagPosition(fromTrader.accountId, marketId),
+      provider()
+    );
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId,
+        bn(genNumber(0.1, 0.99))
+      ),
+      'PositionFlagged()',
+      PerpMarketProxy
+    );
+  });
+
+  it('should revert when fromAccount is liquidatable', async () => {
+    const { PerpMarketProxy } = systems();
+
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredLeverage: 9,
+    });
+    await commitAndSettle(bs, marketId, fromTrader, openOrder);
+
+    await market.aggregator().mockSetCurrentPrice(
+      wei(openOrder.oraclePrice)
+        .mul(openOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
+        .toBN()
+    );
+
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId,
+        bn(genNumber(0.1, 0.99))
+      ),
+      'CanLiquidatePosition()',
+      PerpMarketProxy
+    );
+  });
 
   it('should split account', async () => {
     const { PerpMarketProxy } = systems();
