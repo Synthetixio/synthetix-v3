@@ -41,27 +41,71 @@ interface IVaultModule {
     );
 
     /**
-     * @notice Updates an account's delegated collateral amount for the specified pool and collateral type pair.
+     * @custom:todo update for requestDelegateCollateral and processDelegateCollateral
+     *
+     * @notice ? may call requestDelegateCollateral or processDelegateCollateral depending on the delegation request.
      * @param accountId The id of the account associated with the position that will be updated.
      * @param poolId The id of the pool associated with the position.
      * @param collateralType The address of the collateral used in the position.
-     * @param amount The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
+     * @param newCollateralAmountD18 The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
      * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
      *
      * Requirements:
      *
-     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
-     * - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
-     * - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+     * - @custom:todo update for requestDelegateCollateral and processDelegateCollateral
      *
-     * Emits a {DelegationUpdated} event.
+     * Emits either {DelegationRequestSubmitted} or {DelegationUpdated} event dependent on state of the delegation request.
      */
     function delegateCollateral(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint256 amount,
+        uint256 newCollateralAmountD18,
         uint256 leverage
+    ) external;
+
+    /**
+     * @notice Submits a request to update an account's delegated collateral amount for the specified pool and collateral type pair.
+     * @param accountId The id of the account associated with the position that will be updated.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral used in the position.
+     * @param newCollateralAmountD18 The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
+     * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
+     *
+     * Requirements:
+     *
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+     * - @custom:todo add more requirements
+     *
+     * Emits a {DelegationRequestSubmitted} event.
+     */
+    function requestDelegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint256 newCollateralAmountD18,
+        uint256 leverage
+    ) external;
+
+    /**
+     * @notice Processes a request to update an account's delegated collateral amount for the specified pool and collateral type pair.
+     * @param accountId The id of the account associated with the position that will be updated.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral used in the position.
+     *
+     * Requirements:
+     *
+     * - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+     * - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+     * - Delegation delay must have passed.
+     * - Must be within the allotted time to process the request (delegation window).
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function processDelegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
     ) external;
 
     /**

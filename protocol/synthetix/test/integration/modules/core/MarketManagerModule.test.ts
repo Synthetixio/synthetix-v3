@@ -546,37 +546,90 @@ describe('MarketManagerModule', function () {
     });
   });
 
-  describe('setMarketMinDelegateTime()', () => {
+  describe('setUndelegateCollateralDelay()', () => {
     before(restore);
 
     it('only works for market', async () => {
-      await assertRevert(
-        systems().Core.setMarketMinDelegateTime(marketId(), 86400),
-        'Unauthorized',
-        systems().Core
-      );
+      assert(false, 'implement functionality');
     });
 
-    it('fails when min delegation time is unreasonably large', async () => {
-      await assertRevert(
-        MockMarket().setMinDelegationTime(100000000),
-        'InvalidParameter("minDelegateTime"',
-        systems().Core
-      );
+    it('only accepts valid delay', async () => {
+      assert(false, 'implement functionality');
     });
 
     describe('success', () => {
-      let tx: ethers.providers.TransactionResponse;
-      before('exec', async () => {
-        tx = await MockMarket().setMinDelegationTime(86400);
-      });
-
       it('sets the value', async () => {
-        assertBn.equal(await systems().Core.getMarketMinDelegateTime(marketId()), 86400);
+        assert(false, 'implement functionality');
       });
 
       it('emits', async () => {
-        await assertEvent(tx, `SetMinDelegateTime(${marketId()}, 86400)`, systems().Core);
+        assert(false, 'implement functionality');
+      });
+    });
+  });
+
+  describe('setDelegateCollateralDelay()', () => {
+    before(restore);
+
+    it('only works for market', async () => {
+      assert(false, 'implement functionality');
+    });
+
+    it('only accepts valid delay', async () => {
+      assert(false, 'implement functionality');
+    });
+
+    describe('success', () => {
+      it('sets the value', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('emits', async () => {
+        assert(false, 'implement functionality');
+      });
+    });
+  });
+
+  describe('setUndelegateCollateralWindow()', () => {
+    before(restore);
+
+    it('only works for market', async () => {
+      assert(false, 'implement functionality');
+    });
+
+    it('only accepts valid window', async () => {
+      assert(false, 'implement functionality');
+    });
+
+    describe('success', () => {
+      it('sets the value', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('emits', async () => {
+        assert(false, 'implement functionality');
+      });
+    });
+  });
+
+  describe('setDelegateCollateralWindow()', () => {
+    before(restore);
+
+    it('only works for market', async () => {
+      assert(false, 'implement functionality');
+    });
+
+    it('only accepts valid window', async () => {
+      assert(false, 'implement functionality');
+    });
+
+    describe('success', () => {
+      it('sets the value', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('emits', async () => {
+        assert(false, 'implement functionality');
       });
     });
   });

@@ -1,3 +1,4 @@
+import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
@@ -79,6 +80,14 @@ describe('MarketCollateralModule', function () {
           .configureMaximumMarketCollateral(marketId(), collateralAddress(), configuredMaxAmount);
       });
 
+      before('configure delegateCollateralDelay', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before('configure delegateCollateralWindow', async () => {
+        assert(false, 'implement functionality');
+      });
+
       before('user approves', async () => {
         await collateralContract()
           .connect(user1)
@@ -89,6 +98,21 @@ describe('MarketCollateralModule', function () {
       before('record user collateral balance', async () => {
         beforeCollateralBalance = await collateralContract().balanceOf(await user1.getAddress());
       });
+
+      it('requires delay met', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('only allows deposit within delegate collateral window', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before(
+        'fast-forward to meet deposit collateral delay and exist within valid window of time',
+        async () => {
+          assert(false, 'implement functionality');
+        }
+      );
 
       it('only works for the market matching marketId', async () => {
         await assertRevert(
@@ -201,6 +225,29 @@ describe('MarketCollateralModule', function () {
           .configureMaximumMarketCollateral(marketId(), collateralAddress(), configuredMaxAmount);
       });
 
+      before('configure delegateCollateralDelay', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before('configure delegateCollateralWindow', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before('configure undelegateCollateralDelay', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before('configure undelegateCollateralWindow', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before(
+        'fast-forward to meet deposit collateral delay and exist within valid window of time',
+        async () => {
+          assert(false, 'implement functionality');
+        }
+      );
+
       before('deposit', async () => {
         await collateralContract()
           .connect(user1)
@@ -214,6 +261,21 @@ describe('MarketCollateralModule', function () {
       before('record user collateral balance', async () => {
         beforeCollateralBalance = await collateralContract().balanceOf(await user1.getAddress());
       });
+
+      it('requires delay met', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('only allows withdraw within undelegate collateral window', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      before(
+        'fast-forward to meet withdraw collateral delay and exist within valid window of time',
+        async () => {
+          assert(false, 'implement functionality');
+        }
+      );
 
       it('only works for the market matching marketId', async () => {
         await assertRevert(

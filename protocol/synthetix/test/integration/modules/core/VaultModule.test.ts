@@ -196,6 +196,16 @@ describe('VaultModule', function () {
       assertBn.gt(await systems().Core.callStatic.getMarketCollateral(marketId), 0);
     });
 
+    describe('delegation request', async () => {
+      it('properly stores request to delegate collateral', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('properly stores request to un-delegate collateral', async () => {
+        assert(false, 'implement functionality');
+      });
+    });
+
     it('verifies permission for account', async () => {
       await assertRevert(
         systems()
@@ -289,6 +299,54 @@ describe('VaultModule', function () {
             ethers.utils.parseEther('1')
           )
     );
+
+    describe('processing request to delegate collateral', async () => {
+      it(`fails when request is not in storage`, async () => {
+        assert(false, 'implement functionality');
+      });
+
+      describe('time-based restrictions', async () => {
+        it(`fails when delay has not been met`, async () => {
+          assert(false, 'implement functionality');
+        });
+
+        it(`fails when outside of delegate collateral window`, async () => {
+          assert(false, 'implement functionality');
+        });
+      });
+
+      it('permits any caller to process request', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('removes request from storage after successful processing', async () => {
+        assert(false, 'implement functionality');
+      });
+    });
+
+    describe('processing request to un-delegate collateral', async () => {
+      it(`fails when request is not in storage`, async () => {
+        assert(false, 'implement functionality');
+      });
+
+      describe('time-based restrictions', async () => {
+        it(`fails when delay has not been met`, async () => {
+          assert(false, 'implement functionality');
+        });
+
+        it(`fails when outside of delegate collateral window`, async () => {
+          assert(false, 'implement functionality');
+        });
+      });
+
+      it('permits any caller to process request', async () => {
+        assert(false, 'implement functionality');
+      });
+
+      it('removes request from storage after successful processing', async () => {
+        assert(false, 'implement functionality');
+      });
+    });
 
     describe('when collateral is disabled by system', async () => {
       const restore = snapshotCheckpoint(provider);

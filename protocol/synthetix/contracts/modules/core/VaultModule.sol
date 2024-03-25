@@ -40,6 +40,38 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
+    function requestDelegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint256 newCollateralAmountD18,
+        uint256 leverage
+    ) public override {
+        // 1. stores request (along with the block.timestamp) to a mapping in the Vault storage library
+        // 2. ensure that the request is not already stored?
+        // 3. ensure that the request is "valid" (see delegateCollateral checks)
+        revert("Not implemented");
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function processDelegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) public override {
+        // 1. confirm that the collateralization ratio of the position will not drop below the issuance ratio if the delegation change is processed
+        // 2. can be called permissionlessly, such that anyone can process an open request
+        // 3. confirm that a corresponding request exists in storage
+        // 4. stored timestamp is greater than the current timestamp plus delegateCollateralDelay or undelegateCollateralDelay
+        //    and less than the current time plus the relevant delay value and the relevant window value
+        revert("Not implemented");
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
     function delegateCollateral(
         uint128 accountId,
         uint128 poolId,
