@@ -173,7 +173,7 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.PositionFound(toId, marketId);
         }
         // Note that we do not check for debt, as it's impossible for a trader to have debt with 0 collateral.
-        if (Margin.getCollateralUsdWithoutDiscount(toId, marketId) != 0) {
+        if (Margin.hasCollateralDeposited(toId, marketId)) {
             revert ErrorUtil.CollateralFound();
         }
 
