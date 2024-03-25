@@ -34,9 +34,8 @@ contract Configurable is IConfigurable {
     /**
      * @inheritdoc IConfigurable
      */
-    function nominateNewConfigurer(
-        address newNominatedConfigurer
-    ) public override onlyOwnerOrConfigurer {
+    function nominateNewConfigurer(address newNominatedConfigurer) public override {
+        ConfigurableStorage.onlyOwnerOrConfigurer();
         ConfigurableStorage.ConfigurerData storage store = ConfigurableStorage.loadConfigurer();
 
         if (newNominatedConfigurer == address(0)) {
@@ -96,13 +95,5 @@ contract Configurable is IConfigurable {
      */
     function nominatedConfigurer() external view override returns (address) {
         return ConfigurableStorage.loadConfigurer().nominatedConfigurer;
-    }
-
-    /**
-     * @dev Reverts if the caller is not the owner or the configurer.
-     */
-    modifier onlyOwnerOrConfigurer() {
-        ConfigurableStorage.onlyOwnerOrConfigurer();
-        _;
     }
 }
