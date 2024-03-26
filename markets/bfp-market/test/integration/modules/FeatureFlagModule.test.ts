@@ -260,6 +260,38 @@ describe('FeatureFlagModule', () => {
     );
   });
 
+  it('should disable mergeAccounts', async () => {
+    const { PerpMarketProxy } = systems();
+    const feature = formatBytes32String('mergeAccount');
+    const { receipt } = await withExplicitEvmMine(
+      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+
+    await assertRevert(
+      PerpMarketProxy.mergeAccounts(1, 2, 3),
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
+    );
+  });
+
+  it('should disable splitAccount', async () => {
+    const { PerpMarketProxy } = systems();
+    const feature = formatBytes32String('mergeAccount');
+    const { receipt } = await withExplicitEvmMine(
+      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+
+    await assertRevert(
+      PerpMarketProxy.splitAccount(1, 2, 3, bn(0.1)),
+      `FeatureUnavailable("${feature}")`,
+      PerpMarketProxy
+    );
+  });
+
   it('should disable flagPosition', async () => {
     const { PerpMarketProxy } = systems();
     const feature = formatBytes32String('flagPosition');
