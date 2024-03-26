@@ -468,9 +468,9 @@ contract OrderModule is IOrderModule {
                 );
             }
         }
-        address msgSender = ERC2771Context._msgSender();
+
         // If `isAccountOwner` then 0 else chargeFee.
-        uint256 keeperFee = msgSender == account.rbac.owner
+        uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
             ? 0
             : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
 
@@ -479,7 +479,11 @@ contract OrderModule is IOrderModule {
                 market,
                 -keeperFee.toInt()
             );
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, keeperFee);
+            globalConfig.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                keeperFee
+            );
         }
 
         emit OrderCanceled(accountId, marketId, keeperFee, commitmentTime);
