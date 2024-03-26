@@ -3,14 +3,13 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
 
 library Position {
     using DecimalMath for uint256;
@@ -349,7 +348,8 @@ library Position {
         ) = market.getRemainingLiquidatableSizeCapacity(marketConfig);
 
         if (
-            msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0
+            ERC2771Context._msgSender() == globalConfig.keeperLiquidationEndorsed &&
+            runtime.remainingCapacity == 0
         ) {
             runtime.remainingCapacity = runtime.oldPositionSizeAbs;
         }

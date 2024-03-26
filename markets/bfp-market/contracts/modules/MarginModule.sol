@@ -9,6 +9,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
@@ -17,8 +18,6 @@ import {Margin} from "../storage/Margin.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -80,14 +79,15 @@ contract MarginModule is IMarginModule {
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
+        address msgSender = ERC2771Context._msgSender();
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, amount);
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
-            synth.transfer(msg.sender, amount);
+            synth.transfer(msgSender, amount);
         }
-        emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
+        emit MarginWithdraw(address(this), msgSender, amount, synthMarketId);
     }
 
     /// @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
@@ -97,14 +97,15 @@ contract MarginModule is IMarginModule {
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
+        address msgSender = ERC2771Context._msgSender();
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amount);
+            globalConfig.synthetix.depositMarketUsd(marketId, msgSender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            synth.transferFrom(msg.sender, address(this), amount);
+            synth.transferFrom(msgSender, address(this), amount);
             globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
-        emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
+        emit MarginDeposit(msgSender, address(this), amount, synthMarketId);
     }
 
     /// @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
@@ -438,7 +439,7 @@ contract MarginModule is IMarginModule {
             }
         }
 
-        emit MarginCollateralConfigured(msg.sender, runtime.lengthAfter);
+        emit MarginCollateralConfigured(ERC2771Context._msgSender(), runtime.lengthAfter);
     }
 
     /// @inheritdoc IMarginModule
@@ -476,10 +477,14 @@ contract MarginModule is IMarginModule {
         accountMargin.debtUsd -= decreaseDebtAmount;
         market.updateDebtAndCollateral(-decreaseDebtAmount.toInt(), -sUsdToDeduct.toInt());
 
-        // Infer the remaining sUSD to burn from `msg.sender` after attributing sUSD in margin.
+        // Infer the remaining sUSD to burn from `ERC2771Context._msgSender()` after attributing sUSD in margin.
         uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
         if (amountToBurn > 0) {
-            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountToBurn);
+            globalConfig.synthetix.depositMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                amountToBurn
+            );
         }
 
         emit DebtPaid(accountId, marketId, debt, accountMargin.debtUsd, sUsdToDeduct);

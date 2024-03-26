@@ -2,11 +2,10 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
     /// @inheritdoc IMarketConfigurationModule
@@ -39,7 +38,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
         config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
 
-        emit GlobalMarketConfigured(msg.sender);
+        emit GlobalMarketConfigured(ERC2771Context._msgSender());
     }
 
     /// @inheritdoc IMarketConfigurationModule
@@ -73,7 +72,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.liquidationWindowDuration = data.liquidationWindowDuration;
         config.liquidationMaxPd = data.liquidationMaxPd;
 
-        emit MarketConfigured(marketId, msg.sender);
+        emit MarketConfigured(marketId, ERC2771Context._msgSender());
     }
 
     // --- Views --- //

@@ -4,12 +4,11 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ISettlementHookModule} from "../interfaces/ISettlementHookModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
 
 contract SettlementHookModule is ISettlementHookModule {
     // --- Mutations --- //
@@ -54,7 +53,7 @@ contract SettlementHookModule is ISettlementHookModule {
         config.whitelistedHookAddresses = data.whitelistedHookAddresses;
         config.maxHooksPerOrder = data.maxHooksPerOrder;
 
-        emit SettlementHookConfigured(msg.sender, hooksLengthAfter);
+        emit SettlementHookConfigured(ERC2771Context._msgSender(), hooksLengthAfter);
     }
 
     // --- Views --- //
