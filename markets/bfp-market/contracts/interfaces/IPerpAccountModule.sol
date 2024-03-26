@@ -96,7 +96,7 @@ interface IPerpAccountModule {
     /// @param fromId Account to merge from
     /// @param toId Account to merge into
     /// @param marketId Market to perform the account merge
-    /// @dev Account permmisions in the `fromId` account are _not_ be transferred and that we only allow
+    /// @dev Account permissions in the `fromId` account are _not_ be transferred and that we only allow
     ///      merging accounts that use the same margin collateral as the market.
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
 
@@ -105,7 +105,7 @@ interface IPerpAccountModule {
     /// @param toId Account to split into
     /// @param marketId Market to perform the split account
     /// @param proportion Portion of `fromId` to split out, expressed as a decimal (e.g 0.5 = half)
-    /// @dev Account permmisions in the `fromId` account will _not_ be transferred. This also requires the `toId` to
+    /// @dev Account permissions in the `fromId` account will _not_ be transferred. This also requires the `toId` to
     ///      be an empty account.
     function splitAccount(
         uint128 fromId,
