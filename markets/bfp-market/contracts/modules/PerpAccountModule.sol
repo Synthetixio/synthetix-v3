@@ -5,6 +5,7 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -12,7 +13,6 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
@@ -229,6 +229,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 ++i;
             }
         }
+
         if (fromAccountMargin.debtUsd > 0) {
             // Move debt from `from` -> `to`.
             runtime.debtToMove = fromAccountMargin.debtUsd.mulDecimal(proportion).to128();
@@ -348,6 +349,8 @@ contract PerpAccountModule is IPerpAccountModule {
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        // Prevent flagged positions from merging.
         if (
             market.flaggedLiquidations[fromId] != address(0) ||
             market.flaggedLiquidations[toId] != address(0)
@@ -355,13 +358,15 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.PositionFlagged();
         }
 
+        // Prevent merging positions that are not within the same block.
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
-
         Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
+
+        // Prevent merging for is liquidatable positions.
         if (
             Position.isLiquidatable(toPosition, market, oraclePrice, marketConfig, toMarginValues)
         ) {
