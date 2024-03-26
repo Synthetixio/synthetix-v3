@@ -4,11 +4,11 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ISettlementHookModule} from "../interfaces/ISettlementHookModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract SettlementHookModule is ISettlementHookModule {
     // --- Mutations --- //
@@ -17,7 +17,7 @@ contract SettlementHookModule is ISettlementHookModule {
      * @inheritdoc ISettlementHookModule
      */
     function setSettlementHookConfiguration(
-        ISettlementHookModule.ConfigureParameters memory data
+        ISettlementHookModule.SettlementHookConfigureParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
 
@@ -64,11 +64,11 @@ contract SettlementHookModule is ISettlementHookModule {
     function getSettlementHookConfiguration()
         external
         view
-        returns (ISettlementHookModule.ConfigureParameters memory)
+        returns (ISettlementHookModule.SettlementHookConfigureParameters memory)
     {
         SettlementHookConfiguration.GlobalData storage d = SettlementHookConfiguration.load();
         return
-            ISettlementHookModule.ConfigureParameters(
+            ISettlementHookModule.SettlementHookConfigureParameters(
                 d.whitelistedHookAddresses,
                 d.maxHooksPerOrder
             );

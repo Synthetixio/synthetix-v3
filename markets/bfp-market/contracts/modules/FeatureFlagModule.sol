@@ -3,17 +3,17 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {FeatureFlagModule as BaseFeatureFlagModule} from "@synthetixio/core-modules/contracts/modules/FeatureFlagModule.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IFeatureFlagModule} from "../interfaces/IFeatureFlagModule.sol";
 import {Flags} from "../utils/Flags.sol";
-import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
     using FeatureFlag for FeatureFlag.Data;
 
-    /**
-     * @dev Allow all addresses to use a feature.
-     */
+    // --- Helpers --- //
+
+    /// @dev Allow all addresses to use a feature.
     function enableFeature(bytes32 feature) internal {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
@@ -21,9 +21,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         flag.denyAll = false;
     }
 
-    /**
-     * @dev Deny all addresses to use a feature. This can be called by a "denier" or the owner.
-     */
+    /// @dev Deny all addresses to use a feature. This can be called by a "denier" or the owner.
     function suspendFeature(bytes32 feature) internal {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
@@ -34,9 +32,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         flag.denyAll = true;
     }
 
-    /**
-     * @inheritdoc IFeatureFlagModule
-     */
+    /// @inheritdoc IFeatureFlagModule
     function suspendAllFeatures() external {
         suspendFeature(Flags.CREATE_ACCOUNT);
         suspendFeature(Flags.DEPOSIT);
@@ -54,9 +50,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         emit PerpMarketSuspended(true);
     }
 
-    /**
-     * @inheritdoc IFeatureFlagModule
-     */
+    /// @inheritdoc IFeatureFlagModule
     function enableAllFeatures() external {
         OwnableStorage.onlyOwner();
 

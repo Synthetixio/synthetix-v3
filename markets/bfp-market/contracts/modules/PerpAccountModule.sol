@@ -5,6 +5,7 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -12,7 +13,6 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Flags} from "../utils/Flags.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
@@ -41,9 +41,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 toCollateralUsd;
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function getAccountDigest(
         uint128 accountId,
         uint128 marketId
@@ -84,9 +82,7 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
@@ -143,9 +139,7 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function splitAccount(
         uint128 fromId,
         uint128 toId,
@@ -185,19 +179,20 @@ contract PerpAccountModule is IPerpAccountModule {
         if (toPosition.size != 0) {
             revert ErrorUtil.PositionFound(toId, marketId);
         }
-        // Note that we do not check for debt, as it's impossible for a trader to have debt with 0 collateral.
+        // Verify the `toId` account is empty. We asset has collateral but we don't need to check debt as
+        // it is impossible for a trader to have debt and zero collateral.
         if (Margin.hasCollateralDeposited(toId, marketId)) {
             revert ErrorUtil.CollateralFound();
         }
-
         if (market.flaggedLiquidations[fromId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }
+
         runtime.oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Position.Data storage fromPosition = market.positions[fromId];
 
-        // From account should not be liquidatable
+        // From account should not be liquidatable.
         if (
             Position.isLiquidatable(
                 fromPosition,
@@ -234,6 +229,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 ++i;
             }
         }
+
         if (fromAccountMargin.debtUsd > 0) {
             // Move debt from `from` -> `to`.
             runtime.debtToMove = fromAccountMargin.debtUsd.mulDecimal(proportion).to128();
@@ -321,9 +317,7 @@ contract PerpAccountModule is IPerpAccountModule {
         }
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
         Account.loadAccountAndValidatePermission(
@@ -355,6 +349,8 @@ contract PerpAccountModule is IPerpAccountModule {
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        // Prevent flagged positions from merging.
         if (
             market.flaggedLiquidations[fromId] != address(0) ||
             market.flaggedLiquidations[toId] != address(0)
@@ -362,13 +358,15 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.PositionFlagged();
         }
 
+        // Prevent merging positions that are not within the same block.
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
-
         Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
+
+        // Prevent merging for is liquidatable positions.
         if (
             Position.isLiquidatable(toPosition, market, oraclePrice, marketConfig, toMarginValues)
         ) {
@@ -401,19 +399,22 @@ contract PerpAccountModule is IPerpAccountModule {
         );
         delete market.positions[fromId];
 
-        uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
-            toPosition.size,
-            oraclePrice,
-            collateralUsd,
-            marketConfig
-        );
+        // Stack too deep.
+        {
+            uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
+            (uint256 im, , ) = Position.getLiquidationMarginUsd(
+                toPosition.size,
+                oraclePrice,
+                collateralUsd,
+                marketConfig
+            );
 
-        if (
-            collateralUsd.toInt() + Margin.getPnlAdjustmentUsd(toId, market, oraclePrice) <
-            im.toInt()
-        ) {
-            revert ErrorUtil.InsufficientMargin();
+            if (
+                collateralUsd.toInt() + Margin.getPnlAdjustmentUsd(toId, market, oraclePrice) <
+                im.toInt()
+            ) {
+                revert ErrorUtil.InsufficientMargin();
+            }
         }
 
         emit AccountsMerged(fromId, toId, marketId);

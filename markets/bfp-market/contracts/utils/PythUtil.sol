@@ -11,10 +11,7 @@ library PythUtil {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
-    /**
-     * @dev Parse and update `priceUpdateData` relative to min/max publishTimes defined in config.
-     * @notice This function will revert if the price timestamp is outside the acceptable window (pythPublicTime{Min,Max}).
-     */
+    /// @dev Parse and update `priceUpdateData` relative to min/max publishTimes defined in config.
     function parsePythPrice(
         PerpMarketConfiguration.GlobalData storage globalConfig,
         PerpMarketConfiguration.Data storage marketConfig,
@@ -31,6 +28,8 @@ library PythUtil {
         // gt (not gte) `now + minTime`.
         //
         // `parsePrice` also performs an update to store new price if necessary.
+        //
+        // `parsePriceFeedUpdatesUnique` revert if timestamp is outside the acceptable window (pythPublishTime{Min,Max}).
         PythStructs.PriceFeed[] memory priceFeeds = IPyth(globalConfig.pyth)
             .parsePriceFeedUpdatesUnique{value: msg.value}(
             updateData,
@@ -43,9 +42,7 @@ library PythUtil {
         price = getScaledPrice(pythData.price.price, pythData.price.expo);
     }
 
-    /**
-     * @dev gets scaled price to 18 decimals. Borrowed from PythNode.sol.
-     */
+    /// @dev gets scaled price to 18 decimals. Borrowed from PythNode.sol.
     function getScaledPrice(int64 price, int32 expo) private pure returns (uint256) {
         int256 factor = 18 + expo;
         return

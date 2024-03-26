@@ -26,9 +26,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setSynthetix(ISynthetixSystem synthetix) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -39,41 +37,31 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         globalConfig.oracleManager = synthetix.getOracleManager();
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setSpotMarket(ISpotMarketSystem spotMarket) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().spotMarket = spotMarket;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setPyth(IPyth pyth) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().pyth = pyth;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setEthOracleNodeId(bytes32 ethOracleNodeId) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().ethOracleNodeId = ethOracleNodeId;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setRewardDistributorImplementation(address implementation) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().rewardDistributorImplementation = implementation;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function createMarket(
         IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
     ) external returns (uint128) {
@@ -90,18 +78,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return id;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function recomputeUtilization(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (uint256 utilizationRate, ) = market.recomputeUtilization(market.getOraclePrice());
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
@@ -113,18 +97,12 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         );
     }
 
-    // --- Required functions to be IMarket compatible --- //
-
-    /**
-     * @inheritdoc IMarket
-     */
+    /// @inheritdoc IMarket
     function name(uint128) external pure override returns (string memory) {
         return "BFP Market";
     }
 
-    /**
-     * @inheritdoc IMarket
-     */
+    /// @inheritdoc IMarket
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
@@ -144,9 +122,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return MathUtil.max(marketReportedDebt, 0).toUint();
     }
 
-    /**
-     * @inheritdoc IMarket
-     */
+    /// @inheritdoc IMarket
     function minimumCredit(uint128 marketId) external view override returns (uint256) {
         // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
@@ -159,9 +135,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             );
     }
 
-    /**
-     * @inheritdoc IERC165
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
@@ -172,16 +146,12 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function getActiveMarketIds() external view returns (uint128[] memory) {
         return PerpMarket.load().activeMarketIds;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function getMarketDigest(
         uint128 marketId
     ) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {

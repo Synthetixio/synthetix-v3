@@ -1868,7 +1868,7 @@ describe('MarginModule', async () => {
 
       await assertEvent(
         receipt,
-        `CollateralConfigured("${await from.getAddress()}", ${newCollaterals.length})`,
+        `MarginCollateralConfigured("${await from.getAddress()}", ${newCollaterals.length})`,
         PerpMarketProxy
       );
     });

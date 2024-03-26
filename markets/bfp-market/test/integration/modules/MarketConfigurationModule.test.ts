@@ -48,7 +48,7 @@ describe('MarketConfigurationModule', async () => {
 
       await assertEvent(
         receipt,
-        `ConfigurationUpdated("${await from.getAddress()}")`,
+        `GlobalMarketConfigured("${await from.getAddress()}")`,
         PerpMarketProxy
       );
     });
@@ -103,7 +103,7 @@ describe('MarketConfigurationModule', async () => {
 
       await assertEvent(
         receipt,
-        `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`,
+        `MarketConfigured(${marketId}, "${await from.getAddress()}")`,
         PerpMarketProxy
       );
     });

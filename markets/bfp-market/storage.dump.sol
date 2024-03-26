@@ -541,7 +541,7 @@ interface IMarginModule {
 
 // @custom:artifact contracts/interfaces/IMarketConfigurationModule.sol:IMarketConfigurationModule
 interface IMarketConfigurationModule {
-    struct ConfigureParameters {
+    struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
         uint128 minOrderAge;
@@ -667,7 +667,7 @@ interface IPerpRewardDistributorFactoryModule {
 
 // @custom:artifact contracts/interfaces/ISettlementHookModule.sol:ISettlementHookModule
 interface ISettlementHookModule {
-    struct ConfigureParameters {
+    struct SettlementHookConfigureParameters {
         address[] whitelistedHookAddresses;
         uint32 maxHooksPerOrder;
     }
@@ -701,7 +701,6 @@ contract OrderModule {
         uint256 pythPrice;
         int256 accruedFunding;
         uint256 fillPrice;
-        uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
@@ -712,14 +711,16 @@ contract OrderModule {
 
 // @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
 contract PerpAccountModule {
-    struct Runtime_mergeAccounts {
+    struct Runtime_splitAccount {
         uint256 oraclePrice;
+        uint256 im;
+        uint128 debtToMove;
+        int128 sizeToMove;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
-        uint128 synthMarketIdForLoop;
-        uint256 fromAccountCollateralForLoop;
+        uint256 collateralToMove;
         uint256 fromAccountCollateral;
-        uint256 im;
+        uint256 toCollateralUsd;
     }
 }
 
@@ -942,4 +943,6 @@ library Flags {
     bytes32 public constant LIQUIDATE_POSITION = "liquidatePosition";
     bytes32 public constant PAY_DEBT = "payDebt";
     bytes32 public constant LIQUIDATE_MARGIN_ONLY = "liquidateMarginOnly";
+    bytes32 public constant MERGE_ACCOUNT = "mergeAccount";
+    bytes32 public constant SPLIT_ACCOUNT = "splitAccount";
 }

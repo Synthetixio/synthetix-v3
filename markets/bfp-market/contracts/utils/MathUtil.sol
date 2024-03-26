@@ -1,13 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-/**
- * @dev A collection of math utilities for ease of calculation.
- *
- * Most of these math utility functions have been taken directly from PerpsV2:
- *
- * see: https://github.com/Synthetixio/synthetix/blob/develop/contracts/PerpsV2MarketBase.sol
- */
+/// @dev Math utilities mostly copied from PerpsV2 (https://github.com/Synthetixio/synthetix/blob/develop/contracts/PerpsV2MarketBase.sol)
 library MathUtil {
     // @custom:ref https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol
     // @custom:ref https://github.com/Kwenta/smart-margin-v3/blob/omniscia-audit-response/src/libraries/MathLib.sol
