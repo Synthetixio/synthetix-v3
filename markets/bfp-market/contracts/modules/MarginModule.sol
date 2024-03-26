@@ -83,14 +83,15 @@ contract MarginModule is IMarginModule {
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
+        address msgSender = ERC2771Context._msgSender();
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, ERC2771Context._msgSender(), amount);
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
-            synth.transfer(ERC2771Context._msgSender(), amount);
+            synth.transfer(msgSender, amount);
         }
-        emit MarginWithdraw(address(this), ERC2771Context._msgSender(), amount, synthMarketId);
+        emit MarginWithdraw(address(this), msgSender, amount, synthMarketId);
     }
 
     /**
@@ -102,14 +103,15 @@ contract MarginModule is IMarginModule {
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
+        address msgSender = ERC2771Context._msgSender();
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.depositMarketUsd(marketId, ERC2771Context._msgSender(), amount);
+            globalConfig.synthetix.depositMarketUsd(marketId, msgSender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            synth.transferFrom(ERC2771Context._msgSender(), address(this), amount);
+            synth.transferFrom(msgSender, address(this), amount);
             globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
-        emit MarginDeposit(ERC2771Context._msgSender(), address(this), amount, synthMarketId);
+        emit MarginDeposit(msgSender, address(this), amount, synthMarketId);
     }
 
     /**

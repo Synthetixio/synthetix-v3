@@ -252,19 +252,14 @@ contract LiquidationModule is ILiquidationModule {
 
         liquidateCollateral(accountId, marketId, market, globalConfig);
 
+        address msgSender = ERC2771Context._msgSender();
         // Flag and emit event.
-        market.flaggedLiquidations[accountId] = ERC2771Context._msgSender();
+        market.flaggedLiquidations[accountId] = msgSender;
 
         // Pay flagger.
-        globalConfig.synthetix.withdrawMarketUsd(marketId, ERC2771Context._msgSender(), flagReward);
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, flagReward);
 
-        emit PositionFlaggedLiquidation(
-            accountId,
-            marketId,
-            ERC2771Context._msgSender(),
-            flagReward,
-            oraclePrice
-        );
+        emit PositionFlaggedLiquidation(accountId, marketId, msgSender, flagReward, oraclePrice);
     }
 
     /**
@@ -302,19 +297,17 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
 
+        address msgSender = ERC2771Context._msgSender();
+
         // Pay the keeper
-        globalConfig.synthetix.withdrawMarketUsd(
-            marketId,
-            ERC2771Context._msgSender(),
-            liqKeeperFee
-        );
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, liqKeeperFee);
 
         emit PositionLiquidated(
             accountId,
             marketId,
             oldPositionSize,
             newPosition.size,
-            ERC2771Context._msgSender(),
+            msgSender,
             flagger,
             liqKeeperFee,
             oraclePrice
