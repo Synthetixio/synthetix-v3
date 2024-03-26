@@ -39,9 +39,7 @@ contract LiquidationModule is ILiquidationModule {
 
     // --- Helpers --- //
 
-    /**
-     * @dev Before liquidation (not flag) to perform pre-steps and validation.
-     */
+    /// @dev Before liquidation (not flag) to perform pre-steps and validation.
     function updateMarketPreLiquidation(
         uint128 accountId,
         uint128 marketId,
@@ -89,9 +87,7 @@ contract LiquidationModule is ILiquidationModule {
         market.updateDebtCorrection(market.positions[accountId], newPosition);
     }
 
-    /**
-     * @dev Invoked post flag when position is dead and set to liquidate or when liquidating margin only due to debt.
-     */
+    /// @dev Invoked post flag when position is dead and set to liquidate or when liquidating margin only due to debt.
     function liquidateCollateral(
         uint128 accountId,
         uint128 marketId,
@@ -197,9 +193,7 @@ contract LiquidationModule is ILiquidationModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function flagPosition(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.FLAG_POSITION);
 
@@ -262,9 +256,7 @@ contract LiquidationModule is ILiquidationModule {
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_POSITION);
 
@@ -312,9 +304,7 @@ contract LiquidationModule is ILiquidationModule {
         );
     }
 
-    /**
-     * @dev Returns the reward for liquidating margin.
-     */
+    /// @dev Returns the reward for liquidating margin.
     function getMarginLiquidationOnlyReward(
         uint256 collateralValue,
         PerpMarketConfiguration.Data storage marketConfig,
@@ -341,9 +331,7 @@ contract LiquidationModule is ILiquidationModule {
         return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function liquidateMarginOnly(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN_ONLY);
 
@@ -385,9 +373,7 @@ contract LiquidationModule is ILiquidationModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function getLiquidationFees(
         uint128 accountId,
         uint128 marketId
@@ -424,9 +410,7 @@ contract LiquidationModule is ILiquidationModule {
         );
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function getRemainingLiquidatableSizeCapacity(
         uint128 marketId
     )
@@ -442,9 +426,7 @@ contract LiquidationModule is ILiquidationModule {
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function isPositionLiquidatable(
         uint128 accountId,
         uint128 marketId
@@ -461,9 +443,7 @@ contract LiquidationModule is ILiquidationModule {
             );
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function isMarginLiquidatable(
         uint128 accountId,
         uint128 marketId
@@ -473,9 +453,7 @@ contract LiquidationModule is ILiquidationModule {
         return Margin.isMarginLiquidatable(accountId, market, market.getOraclePrice());
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function getLiquidationMarginUsd(
         uint128 accountId,
         uint128 marketId,
@@ -495,9 +473,7 @@ contract LiquidationModule is ILiquidationModule {
         );
     }
 
-    /**
-     * @inheritdoc ILiquidationModule
-     */
+    /// @inheritdoc ILiquidationModule
     function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
 

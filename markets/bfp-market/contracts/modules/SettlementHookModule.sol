@@ -65,11 +65,11 @@ contract SettlementHookModule is ISettlementHookModule {
     function getSettlementHookConfiguration()
         external
         view
-        returns (ISettlementHookModule.ConfigureParameters memory)
+        returns (ISettlementHookModule.SettlementHookConfigureParameters memory)
     {
         SettlementHookConfiguration.GlobalData storage d = SettlementHookConfiguration.load();
         return
-            ISettlementHookModule.ConfigureParameters(
+            ISettlementHookModule.SettlementHookConfigureParameters(
                 d.whitelistedHookAddresses,
                 d.maxHooksPerOrder
             );

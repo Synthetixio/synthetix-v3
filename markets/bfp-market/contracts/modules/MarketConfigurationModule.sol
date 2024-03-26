@@ -9,9 +9,7 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 /* solhint-disable meta-transactions/no-msg-sender */
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
-    /**
-     * @inheritdoc IMarketConfigurationModule
-     */
+    /// @inheritdoc IMarketConfigurationModule
     function setMarketConfiguration(
         IMarketConfigurationModule.GlobalMarketConfigureParameters memory data
     ) external {
@@ -44,9 +42,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit GlobalMarketConfigured(msg.sender);
     }
 
-    /**
-     * @inheritdoc IMarketConfigurationModule
-     */
+    /// @inheritdoc IMarketConfigurationModule
     function setMarketConfigurationById(
         uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
@@ -82,9 +78,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IMarketConfigurationModule
-     */
+    /// @inheritdoc IMarketConfigurationModule
     function getMarketConfiguration()
         external
         pure
@@ -93,9 +87,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         return PerpMarketConfiguration.load();
     }
 
-    /**
-     * @inheritdoc IMarketConfigurationModule
-     */
+    /// @inheritdoc IMarketConfigurationModule
     function getMarketConfigurationById(
         uint128 marketId
     ) external pure returns (PerpMarketConfiguration.Data memory) {

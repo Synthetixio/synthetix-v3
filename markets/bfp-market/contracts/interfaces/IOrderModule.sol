@@ -80,9 +80,13 @@ interface IOrderModule is IBasePerpMarket {
 
     // --- Mutations --- //
 
-    /**
-     * @notice Creates an order for `accountId` in `marketId` to be settled at a later time.
-     */
+    /// @notice Creates an order for `accountId` in `marketId` to be settled at a later time.
+    /// @param accountId Account to commit an order against
+    /// @param marketId Market to commit an order against
+    /// @param sizeDelta Size to modify on position after settlement
+    /// @param limitPrice The max acceptable price tolerance for settlement
+    /// @param keeperFeeBufferUsd tip in USD to pay for settlement keepers
+    /// @param hooks An array of settlement hook addresses for execution on settlement
     function commitOrder(
         uint128 accountId,
         uint128 marketId,
@@ -92,75 +96,75 @@ interface IOrderModule is IBasePerpMarket {
         address[] memory hooks
     ) external;
 
-    /**
-     * @notice Settles a previously committed order by `accountId` and `marketId`.
-     */
+    /// @notice Settles a previously committed order by `accountId` and `marketId`.
+    /// @param accountId Account of order to settle
+    /// @param marketId Market of order to settle
+    /// @param priceUpdateData An acceptable Pyth off-chain price blob
     function settleOrder(
         uint128 accountId,
         uint128 marketId,
         bytes calldata priceUpdateData
     ) external payable;
 
-    /**
-     * @notice Cancel a previously committed order by `accountId` and `marketId`.
-     *
-     * This can only happen after an order is ready and a keeper can prove price tolerance has been exceeded.
-     * If the order is stale only the owner is allowed to cancel
-     */
+    /// @notice Cancel a previously committed order by `accountId` and `marketId`. This can only be invoked after
+    ///         an order is ready and a keeper can prove price tolerance has been exceeded.
+    /// @param accountId Account of the order to cancel
+    /// @param marketId Market of the order to cancel
+    /// @param priceUpdateData An acceptable Pyth off-chain price blob
     function cancelOrder(
         uint128 accountId,
         uint128 marketId,
         bytes calldata priceUpdateData
     ) external payable;
 
-    /**
-     * @notice Cancels a previously committed order that has gone stale by `accountId` and `marketId`.
-     *
-     * This can only happen after an order is stale, and not settled or canceled by a keeper.
-     * It's added a conviennt method to clear stale orders without having to provide a price update
-     */
+    /// @notice Cancels a previously committed order that has gone stale by `accountId` and `marketId`.
+    ///         This can only happen after an order is stale, and not settled or canceled by a keeper. This
+    ///         is a convenience method to clear stale orders without having to provide a Pyth price.
+    /// @param accountId Account of stale order to cancel
+    /// @param marketId Market of stale order to cancel
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 
-    /**
-     * @notice Returns an order belonging to `accountId` in `marketId`.
-     */
+    /// @notice Returns an order belonging to `accountId` in `marketId`.
+    /// @param accountId Account of order to fetch the digest against
+    /// @param marketId Market of order to fetch the digest against
+    /// @return getOrderDigest A struct of the `OrderDigest`
     function getOrderDigest(
         uint128 accountId,
         uint128 marketId
     ) external view returns (IOrderModule.OrderDigest memory);
 
-    /**
-     * @notice Returns fees charged to open/close an order (along with a dynamic keeper fee).
-     *
-     * This incorporates the scenario where a if a trade flips the skew, the proportion that reduces the skew
-     * is charged a makerFee but the flipped side that expands skew is charged a takerFee.
-     *
-     * For the keeper fee, calculation is as follows `orderSettlementGasUnits * block.basefee * ETH/USD + bufferUsd.
-     * Which, can roughly be related to (units * baseFee) / 10e9 * oraclePrice.
-     *
-     * The keeper fee is then bounded between a configurable min/max and a buffer is then provided.
-     */
+    /// @notice Returns fees charged to open/close an order (along with a dynamic keeper fee).
+    /// @param marketId Market to query against
+    /// @param sizeDelta Size of impact on skew
+    /// @param keeperFeeBufferUsd A tip in USD to pay for settlement keepers
+    /// @return orderFee Estimated fees to be paid on settlement
+    /// @return keeperFee Estimated fees to be paid to keeper on settlement
+    /// @dev Order fees are charged a combination of marker/taker depending on the impact of the `sizeDelta`
+    ///      on skew. There is a scenario where if an order flips the skew, the proportion that reduces skew
+    ///      is charged with maker fees but the flipped side that expands skew is charged a taker fee.
+    /// @dev Keeper fees are fees paid to the keeper to settle an order. The fee is based on gas but can roughly
+    ///      be translated to `orderSettlementGasUnits * block.basefee * ETH/USD + bufferUsd`. This fee is bounded
+    ///      by a configurable min/max.
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
         uint256 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee);
 
-    /**
-     * @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
-     *
-     * 'Fill' can be attributed or when an order is 'filled'. The price is the oracle price + adjustment when
-     * which an order is settled. Intuitively, the adjustment is a discount if the size reduces the skew (i.e. skew
-     * is pulled closer to zero). However a premium is applied if skew expands (i.e. skew pushed away from zero).
-     *
-     * More can be read in SIP-279.
-     */
+    /// @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
+    /// @param marketId Market to query against
+    /// @param size Size of impact on skew
+    /// @param getFillPrice Premium/discount adjusted price
+    /// @dev The fill can be attributed or when an order is filled. The price is the oracle price + adjustment when
+    ///      which an order is settled. Intuitively, the adjustment is a discount if the size reduces the skew (i.e.
+    ///      skew is pulled closer to zero). However a premium is applied if skew expands (i.e. skew pushed away
+    ///      from zero). More can be read in SIP-279.
     function getFillPrice(uint128 marketId, int128 size) external view returns (uint256);
 
-    /**
-     * @notice Returns the oracle price given the `marketId`.
-     */
+    /// @notice Returns the oracle price given the `marketId`.
+    /// @param marketId Market to query against
+    /// @return getOraclePrice Raw oracle price
     function getOraclePrice(uint128 marketId) external view returns (uint256);
 }

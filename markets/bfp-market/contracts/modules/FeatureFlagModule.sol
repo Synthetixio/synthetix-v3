@@ -12,9 +12,9 @@ import {Flags} from "../utils/Flags.sol";
 contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
     using FeatureFlag for FeatureFlag.Data;
 
-    /**
-     * @dev Allow all addresses to use a feature.
-     */
+    // --- Helpers --- //
+
+    /// @dev Allow all addresses to use a feature.
     function enableFeature(bytes32 feature) internal {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
@@ -22,9 +22,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         flag.denyAll = false;
     }
 
-    /**
-     * @dev Deny all addresses to use a feature. This can be called by a "denier" or the owner.
-     */
+    /// @dev Deny all addresses to use a feature. This can be called by a "denier" or the owner.
     function suspendFeature(bytes32 feature) internal {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
@@ -35,9 +33,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         flag.denyAll = true;
     }
 
-    /**
-     * @inheritdoc IFeatureFlagModule
-     */
+    /// @inheritdoc IFeatureFlagModule
     function suspendAllFeatures() external {
         suspendFeature(Flags.CREATE_ACCOUNT);
         suspendFeature(Flags.DEPOSIT);
@@ -55,9 +51,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         emit PerpMarketSuspended(true);
     }
 
-    /**
-     * @inheritdoc IFeatureFlagModule
-     */
+    /// @inheritdoc IFeatureFlagModule
     function enableAllFeatures() external {
         OwnableStorage.onlyOwner();
 

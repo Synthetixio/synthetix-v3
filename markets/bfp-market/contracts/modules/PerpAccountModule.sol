@@ -41,9 +41,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 toCollateralUsd;
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function getAccountDigest(
         uint128 accountId,
         uint128 marketId
@@ -84,9 +82,7 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
@@ -143,9 +139,7 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function splitAccount(
         uint128 fromId,
         uint128 toId,
@@ -185,19 +179,20 @@ contract PerpAccountModule is IPerpAccountModule {
         if (toPosition.size != 0) {
             revert ErrorUtil.PositionFound(toId, marketId);
         }
-        // Note that we do not check for debt, as it's impossible for a trader to have debt with 0 collateral.
+        // Verify the `toId` account is empty. We asset has collateral but we don't need to check debt as
+        // it is impossible for a trader to have debt and zero collateral.
         if (Margin.hasCollateralDeposited(toId, marketId)) {
             revert ErrorUtil.CollateralFound();
         }
-
         if (market.flaggedLiquidations[fromId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }
+
         runtime.oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Position.Data storage fromPosition = market.positions[fromId];
 
-        // From account should not be liquidatable
+        // From account should not be liquidatable.
         if (
             Position.isLiquidatable(
                 fromPosition,
@@ -321,9 +316,7 @@ contract PerpAccountModule is IPerpAccountModule {
         }
     }
 
-    /**
-     * @inheritdoc IPerpAccountModule
-     */
+    /// @inheritdoc IPerpAccountModule
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
         Account.loadAccountAndValidatePermission(

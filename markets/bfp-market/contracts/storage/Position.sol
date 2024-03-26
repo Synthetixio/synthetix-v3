@@ -63,15 +63,15 @@ library Position {
     // --- Storage --- //
 
     struct Data {
-        // Size (in native units e.g. swstETH)
+        /// Size (in native units e.g. swstETH)
         int128 size;
-        // Block timestamp when position was opened or modified.
+        /// Block timestamp when position was opened or modified.
         uint256 entryTime;
-        // The market's accumulated accrued funding at position settlement.
+        /// The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
-        // The market's accumulated accrued utilization at position settlement.
+        /// The market's accumulated accrued utilization at position settlement.
         uint256 entryUtilizationAccrued;
-        // The fill price at which this position was settled with.
+        /// The fill price at which this position was settled with.
         uint256 entryPrice;
     }
 
@@ -199,9 +199,7 @@ library Position {
         }
     }
 
-    /**
-     * @dev Validates whether the given `TradeParams` would lead to a valid next position.
-     */
+    /// @dev Validates whether the given `TradeParams` would lead to a valid next position.
     function validateTrade(
         uint128 accountId,
         PerpMarket.Data storage market,
@@ -312,9 +310,7 @@ library Position {
             );
     }
 
-    /**
-     * @dev Validates whether the position at `accountId` and `marketId` would pass liquidation.
-     */
+    /// @dev Validates whether the position at `accountId` and `marketId` would pass liquidation.
     function validateLiquidation(
         uint128 accountId,
         PerpMarket.Data storage market,
@@ -395,10 +391,7 @@ library Position {
         );
     }
 
-    /**
-     * @dev Returns the reward for flagging a position given a certian position size | collateral , "flagKeeperReward"
-     * Note notionalValueUsd  = posSize.abs() * price
-     */
+    /// @dev Returns reward for flagging position, notionalValueUsd is `size * price`.
     function getLiquidationFlagReward(
         uint256 notionalValueUsd,
         uint256 collateralUsd,
@@ -479,9 +472,7 @@ library Position {
             getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
     }
 
-    /**
-     * @dev Returns the number of partial liquidations required given liquidation size and max liquidation capacity.
-     */
+    /// @dev Returns the number of partial liquidations required given liquidation size and max liquidation capacity.
     function getLiquidationIterations(
         uint256 liqSize,
         uint256 maxLiqCapacity
@@ -496,11 +487,7 @@ library Position {
         return remainder == 0 ? quotient : quotient + 1;
     }
 
-    /**
-     * @dev Returns the fee in USD paid to keeper for performing the liquidation (not flagging).
-     *
-     * The size here is either liqSize or position.size.abs()
-     */
+    /// @dev Returns fee paid to keeper for performing the liquidation (not flagging), size is liqSize or pos.size.abs
     function getLiquidationKeeperFee(
         uint128 size,
         PerpMarketConfiguration.Data storage marketConfig,
@@ -533,9 +520,7 @@ library Position {
         return MathUtil.min(liquidationFeeInUsd * iterations, globalConfig.maxKeeperFeeUsd);
     }
 
-    /**
-     * @dev Returns the health data given the `marketId`, `config`, and position{...} details.
-     */
+    /// @dev Returns the health data given the `marketId`, `config`, and position{...} details.
     function getHealthData(
         PerpMarket.Data storage market,
         int128 size,
@@ -579,9 +564,7 @@ library Position {
 
     // --- Member (views) --- //
 
-    /**
-     * @dev Returns whether the current position can be liquidated.
-     */
+    /// @dev Returns whether the current position can be liquidated.
     function isLiquidatable(
         Position.Data storage self,
         PerpMarket.Data storage market,
@@ -605,9 +588,7 @@ library Position {
         return healthData.healthFactor <= DecimalMath.UNIT;
     }
 
-    /**
-     * @dev Returns the notional profit or loss based on current price and entry price.
-     */
+    /// @dev Returns the notional profit or loss based on current price and entry price.
     function getPricePnl(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {
             return 0;
@@ -615,9 +596,7 @@ library Position {
         return self.size.mulDecimal(price.toInt() - self.entryPrice.toInt());
     }
 
-    /**
-     * @dev Returns the funding accrued from when the position was opened to now.
-     */
+    /// @dev Returns the funding accrued from when the position was opened to now.
     function getAccruedFunding(
         Position.Data storage self,
         PerpMarket.Data storage market,
@@ -635,9 +614,7 @@ library Position {
             );
     }
 
-    /**
-     * @dev Returns the utilization accrued from when the position was opened to now.
-     */
+    /// @dev Returns the utilization accrued from when the position was opened to now.
     function getAccruedUtilization(
         Position.Data storage self,
         PerpMarket.Data storage market,
@@ -659,9 +636,7 @@ library Position {
 
     // --- Member (mutations) --- //
 
-    /**
-     * @dev Clears the current position struct in-place of any stored data.
-     */
+    /// @dev Clears the current position struct in-place of any stored data.
     function update(Position.Data storage self, Position.Data memory data) internal {
         self.size = data.size;
         self.entryTime = data.entryTime;

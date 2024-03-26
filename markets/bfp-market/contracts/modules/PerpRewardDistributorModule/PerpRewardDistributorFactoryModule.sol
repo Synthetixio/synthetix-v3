@@ -15,9 +15,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IPerpRewardDistributorFactoryModule
-     */
+    /// @inheritdoc IPerpRewardDistributorFactoryModule
     function createRewardDistributor(
         IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParameters calldata data
     ) external returns (address) {

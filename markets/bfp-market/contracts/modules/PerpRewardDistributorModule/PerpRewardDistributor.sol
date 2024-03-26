@@ -14,34 +14,31 @@ import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.so
 
 /* solhint-disable meta-transactions/no-msg-sender */
 
-// @see: https://github.com/Synthetixio/rewards-distributors
 contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
     using ERC20Helper for address;
 
-    // @notice Address of the RewardManager (i.e. Synthetix core proxy)
+    /// @notice Address of the RewardManager (i.e. Synthetix core proxy)
     address private _rewardManager;
-    // @notice Address the BFP market proxy.
+    /// @notice Address the BFP market proxy.
     address private _perpMarket;
-    // @notice Address of the reward token to distribute.
+    /// @notice Address of the reward token to distribute.
     address private _payoutToken;
-    // @notice User defined name of this reward distributor.
+    /// @notice User defined name of this reward distributor.
     string private _name;
-    // @notice Pool this distributor is registered against.
+    /// @notice Pool this distributor is registered against.
     uint128 private _poolId;
-    // @notice Delegated pool collateral addresses at the point of distributor init.
+    /// @notice Delegated pool collateral addresses at the point of distributor init.
     address[] private _poolCollateralTypes;
-    // @notice Internal counter to track distributed/payout reward tokens.
+    /// @notice Internal counter to track distributed/payout reward tokens.
     uint256 private _rewardsAmount;
-    // @notice Flag to enable or disable payouts.
+    /// @notice Flag to enable or disable payouts.
     bool public shouldFailPayout;
 
     constructor() {
         _disableInitializers();
     }
 
-    /**
-     * @inheritdoc IPerpRewardDistributor
-     */
+    /// @inheritdoc IPerpRewardDistributor
     function initialize(
         address rewardManager,
         address perpMarket,
@@ -69,9 +66,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         }
     }
 
-    /**
-     * @inheritdoc IPerpRewardDistributor
-     */
+    /// @inheritdoc IPerpRewardDistributor
     function distributeRewards(address collateralType, uint256 amount) external {
         onlyPerpMarket();
 
@@ -96,23 +91,17 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         );
     }
 
-    /**
-     * @inheritdoc IPerpRewardDistributor
-     */
+    /// @inheritdoc IPerpRewardDistributor
     function getPoolId() external view returns (uint128) {
         return _poolId;
     }
 
-    /**
-     * @inheritdoc IPerpRewardDistributor
-     */
+    /// @inheritdoc IPerpRewardDistributor
     function getPoolCollateralTypes() external view returns (address[] memory) {
         return _poolCollateralTypes;
     }
 
-    /**
-     * @inheritdoc IPerpRewardDistributor
-     */
+    /// @inheritdoc IPerpRewardDistributor
     function setShouldFailPayout(bool _shouldFailedPayout) external {
         onlyPoolOwner();
         shouldFailPayout = _shouldFailedPayout;
@@ -120,23 +109,17 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
 
     // --- IRewardDistributor requirements --- //
 
-    /**
-     * @inheritdoc IRewardDistributor
-     */
+    /// @inheritdoc IRewardDistributor
     function name() public view override returns (string memory) {
         return _name;
     }
 
-    /**
-     * @inheritdoc IRewardDistributor
-     */
+    /// @inheritdoc IRewardDistributor
     function token() public view override returns (address) {
         return _payoutToken;
     }
 
-    /**
-     * @inheritdoc IRewardDistributor
-     */
+    /// @inheritdoc IRewardDistributor
     function payout(
         uint128,
         uint128 poolId,
@@ -163,14 +146,10 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         return true;
     }
 
-    /**
-     * @inheritdoc IRewardDistributor
-     */
+    /// @inheritdoc IRewardDistributor
     function onPositionUpdated(uint128, uint128, address, uint256) external pure {}
 
-    /**
-     * @inheritdoc IERC165
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
@@ -181,27 +160,21 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
 
     // --- Helpers --- //
 
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
-     */
+    /// @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
     function onlyPerpMarket() private view {
         if (msg.sender != _perpMarket) {
             revert AccessError.Unauthorized(msg.sender);
         }
     }
 
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
-     */
+    /// @dev Throws `Unauthorized` when msg.sender is not the RewardManagerProxy.
     function onlyRewardManager() private view {
         if (msg.sender != _rewardManager) {
             revert AccessError.Unauthorized(msg.sender);
         }
     }
 
-    /**
-     * @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
-     */
+    /// @dev Throws `Unauthorized` when msg.sender is not the `poolId` pool owner.
     function onlyPoolOwner() private view {
         if (msg.sender != IPoolModule(_rewardManager).getPoolOwner(_poolId)) {
             revert AccessError.Unauthorized(msg.sender);

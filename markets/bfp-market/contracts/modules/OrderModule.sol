@@ -50,9 +50,7 @@ contract OrderModule is IOrderModule {
 
     // --- Helpers --- //
 
-    /**
-     * @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
-     */
+    /// @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
     function isPriceToleranceExceeded(
         int128 sizeDelta,
         uint256 fillPrice,
@@ -77,9 +75,7 @@ contract OrderModule is IOrderModule {
         isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
 
-    /**
-     * @dev Validates that an order can only be settled if time and price are acceptable.
-     */
+    /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
@@ -104,9 +100,7 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /**
-     * @dev Validates that the hooks specified during commitment are valid and acceptable.
-     */
+    /// @dev Validates that the hooks specified during commitment are valid and acceptable.
     function validateOrderHooks(address[] memory hooks) private view {
         uint256 length = hooks.length;
 
@@ -130,9 +124,7 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /**
-     * @dev Executes the hooks supplied in the order commitment.
-     */
+    /// @dev Executes the hooks supplied in the order commitment.
     function executeOrderHooks(
         uint128 accountId,
         uint128 marketId,
@@ -163,17 +155,13 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
+    /// @dev Generic helper for funding recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
         (uint256 utilizationRate, ) = market.recomputeUtilization(price);
         emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
     }
 
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
+    /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
         (int256 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
@@ -186,9 +174,7 @@ contract OrderModule is IOrderModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function commitOrder(
         uint128 accountId,
         uint128 marketId,
@@ -248,9 +234,7 @@ contract OrderModule is IOrderModule {
         );
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function settleOrder(
         uint128 accountId,
         uint128 marketId,
@@ -387,9 +371,7 @@ contract OrderModule is IOrderModule {
         executeOrderHooks(accountId, marketId, hooks, runtime.pythPrice);
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -410,9 +392,7 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function cancelOrder(
         uint128 accountId,
         uint128 marketId,
@@ -485,9 +465,7 @@ contract OrderModule is IOrderModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getOrderDigest(
         uint128 accountId,
         uint128 marketId
@@ -519,9 +497,7 @@ contract OrderModule is IOrderModule {
             );
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
@@ -545,9 +521,7 @@ contract OrderModule is IOrderModule {
         keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd);
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getFillPrice(uint128 marketId, int128 size) external view returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
@@ -559,9 +533,7 @@ contract OrderModule is IOrderModule {
             );
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getOraclePrice(uint128 marketId) external view returns (uint256) {
         return PerpMarket.exists(marketId).getOraclePrice();
     }

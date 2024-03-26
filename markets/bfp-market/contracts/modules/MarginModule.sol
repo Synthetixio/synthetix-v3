@@ -40,9 +40,7 @@ contract MarginModule is IMarginModule {
 
     // --- Helpers --- //
 
-    /**
-     * @dev Post collateral withdraw validation to verify margin requirements are acceptable.
-     */
+    /// @dev Post collateral withdraw validation to verify margin requirements are acceptable.
     function validatePositionPostWithdraw(
         uint128 accountId,
         Position.Data storage position,
@@ -75,9 +73,7 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    /**
-     * @dev Performs a collateral withdraw from Synthetix, ERC20 transfer, and emits event.
-     */
+    /// @dev Performs a collateral withdraw from Synthetix, ERC20 transfer, and emits event.
     function withdrawAndTransfer(
         uint128 marketId,
         uint256 amount,
@@ -94,9 +90,7 @@ contract MarginModule is IMarginModule {
         emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
     }
 
-    /**
-     * @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
-     */
+    /// @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
     function transferAndDeposit(
         uint128 marketId,
         uint256 amount,
@@ -113,9 +107,7 @@ contract MarginModule is IMarginModule {
         emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
     }
 
-    /**
-     * @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
-     */
+    /// @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
     function approveSynthCollateral(
         uint128 synthMarketId,
         uint256 amount,
@@ -132,9 +124,7 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    /**
-     * @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.
-     */
+    /// @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.
     function isCollateralDeposited(uint128 synthMarketId) private view returns (bool) {
         PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
 
@@ -158,9 +148,7 @@ contract MarginModule is IMarginModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
         Account.loadAccountAndValidatePermission(
@@ -238,9 +226,7 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function modifyCollateral(
         uint128 accountId,
         uint128 marketId,
@@ -332,9 +318,7 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external {
         OwnableStorage.onlyOwner();
 
@@ -353,9 +337,7 @@ contract MarginModule is IMarginModule {
         revert ErrorUtil.UnsupportedCollateral(synthMarketId);
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function setMarginCollateralConfiguration(
         uint128[] calldata synthMarketIds,
         bytes32[] calldata oracleNodeIds,
@@ -459,9 +441,7 @@ contract MarginModule is IMarginModule {
         emit MarginCollateralConfigured(msg.sender, runtime.lengthAfter);
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function payDebt(uint128 accountId, uint128 marketId, uint128 amount) external {
         FeatureFlag.ensureAccessToFeature(Flags.PAY_DEBT);
         if (amount == 0) {
@@ -507,9 +487,7 @@ contract MarginModule is IMarginModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getMarginCollateralConfiguration()
         external
         view
@@ -539,9 +517,7 @@ contract MarginModule is IMarginModule {
         return collaterals;
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getMarginDigest(
         uint128 accountId,
         uint128 marketId
@@ -551,9 +527,7 @@ contract MarginModule is IMarginModule {
         return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
@@ -569,9 +543,7 @@ contract MarginModule is IMarginModule {
             );
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getDiscountedCollateralPrice(
         uint128 synthMarketId,
         uint256 amount
@@ -589,9 +561,7 @@ contract MarginModule is IMarginModule {
             );
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getWithdrawableMargin(
         uint128 accountId,
         uint128 marketId
