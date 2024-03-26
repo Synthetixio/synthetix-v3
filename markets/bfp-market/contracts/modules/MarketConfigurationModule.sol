@@ -13,7 +13,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
      * @inheritdoc IMarketConfigurationModule
      */
     function setMarketConfiguration(
-        IMarketConfigurationModule.ConfigureParameters memory data
+        IMarketConfigurationModule.GlobalMarketConfigureParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
 
@@ -41,7 +41,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
         config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
 
-        emit ConfigurationUpdated(msg.sender);
+        emit GlobalMarketConfigured(msg.sender);
     }
 
     /**
@@ -77,7 +77,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.liquidationWindowDuration = data.liquidationWindowDuration;
         config.liquidationMaxPd = data.liquidationMaxPd;
 
-        emit MarketConfigurationUpdated(marketId, msg.sender);
+        emit MarketConfigured(marketId, msg.sender);
     }
 
     // --- Views --- //

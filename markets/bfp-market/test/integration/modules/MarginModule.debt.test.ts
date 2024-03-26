@@ -199,7 +199,11 @@ describe('MarginModule Debt', async () => {
       );
 
       const receipt = await tx.wait();
-      await assertEvent(receipt, `DebtPaid(${debtFromAccountDigest}, 0, 0)`, PerpMarketProxy);
+      await assertEvent(
+        receipt,
+        `DebtPaid("${trader.accountId}", "${marketId}", ${debtFromAccountDigest}, 0, 0)`,
+        PerpMarketProxy
+      );
 
       const { debtUsd: debtFromAccountDigestAfter } = await PerpMarketProxy.getAccountDigest(
         trader.accountId,

@@ -456,7 +456,7 @@ contract MarginModule is IMarginModule {
             }
         }
 
-        emit CollateralConfigured(msg.sender, runtime.lengthAfter);
+        emit MarginCollateralConfigured(msg.sender, runtime.lengthAfter);
     }
 
     /**
@@ -502,7 +502,7 @@ contract MarginModule is IMarginModule {
             globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountToBurn);
         }
 
-        emit DebtPaid(debt, accountMargin.debtUsd, sUsdToDeduct);
+        emit DebtPaid(accountId, marketId, debt, accountMargin.debtUsd, sUsdToDeduct);
     }
 
     // --- Views --- //
@@ -557,7 +557,7 @@ contract MarginModule is IMarginModule {
     function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
-        uint256 price
+        uint256 oraclePrice
     ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -565,7 +565,7 @@ contract MarginModule is IMarginModule {
             Margin.getNetAssetValue(
                 accountId,
                 market,
-                price == 0 ? market.getOraclePrice() : price
+                oraclePrice == 0 ? market.getOraclePrice() : oraclePrice
             );
     }
 

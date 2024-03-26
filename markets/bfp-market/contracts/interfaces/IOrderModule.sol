@@ -9,18 +9,31 @@ interface IOrderModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct OrderDigest {
+        /// Size to modify when settled
         int128 sizeDelta;
+        /// block.timestamp of when the order was committed
         uint256 commitmentTime;
+        /// The max acceptable price tolerance for settlement
         uint256 limitPrice;
+        /// A tip in USD to pay for settlement keepers
         uint256 keeperFeeBufferUsd;
+        /// A list of whitelisted hook addresses to invoke after settlement
         address[] hooks;
+        /// True if order expired and must be canceled, false otherwise
         bool isStale;
+        /// True if order can be settled, false otherwise
         bool isReady;
     }
 
     // --- Events --- //
 
-    // @notice Emitted when an order is committed.
+    /// @notice Emitted when an order is committed.
+    /// @param accountId Account the order belongs to
+    /// @param marketId Market the order was committed against
+    /// @param commitmentTime block.timestamp of commitment
+    /// @param sizeDelta Size to modify on the existing or new position after settlement
+    /// @param estimatedOrderFee Projected fee paid to open order at the time of commitment
+    /// @param estimatedKeeperFee Projected fee paid to keepers at the time of commitment
     event OrderCommitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -30,7 +43,17 @@ interface IOrderModule is IBasePerpMarket {
         uint256 estimatedKeeperFee
     );
 
-    // @notice Emitted when a pending order was successfully settled.
+    /// @notice Emitted when a pending order was successfully settled.
+    /// @param accountId Account of the settled order
+    /// @param marketId Market of the settled order
+    /// @param settlementTime block.timestamp when order was settled
+    /// @param sizeDelta Size to modify, applied on the new or existing position
+    /// @param orderFee Actual fee paid to settle order
+    /// @param keeperFee Actual fee paid to keeper to settle order
+    /// @param accruedFunding Realized funding accrued on existing position before settlement
+    /// @param accruedUtilization Realized utilization accrued on existing position before settlement
+    /// @param pnl Realized price PnL on existing position before settlement
+    /// @param accountDebt Debt due to position realization after settlement
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -45,8 +68,15 @@ interface IOrderModule is IBasePerpMarket {
         uint128 accountDebt
     );
 
-    // @notice Emitted after an order is settled with hook(s) and the hook was completely successfully.
-    event OrderSettlementHookExecuted(uint128 indexed accountId, uint128 marketId, address hook);
+    /// @notice Emitted after an order is settled with hook(s) and the hook was completely successfully.
+    /// @param accountId Account of order that was settled before hook was executed
+    /// @param marketId Market of order that was settled before hook was executed
+    /// @param hook Address of the executed settlement hook
+    event OrderSettlementHookExecuted(
+        uint128 indexed accountId,
+        uint128 indexed marketId,
+        address hook
+    );
 
     // --- Mutations --- //
 

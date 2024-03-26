@@ -266,13 +266,13 @@ library Margin {
     function getNetAssetValue(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 oraclePrice
     ) internal view returns (uint256) {
         return
             MathUtil
                 .max(
                     getCollateralUsdWithoutDiscount(accountId, market.id).toInt() +
-                        getPnlAdjustmentUsd(accountId, market, price),
+                        getPnlAdjustmentUsd(accountId, market, oraclePrice),
                     0
                 )
                 .toUint();
@@ -281,8 +281,9 @@ library Margin {
     // --- Member (views) --- //
 
     /**
-     * @dev Helper to call oraclerManager.process on a given `synthMarketId`. Note that this can result in errors
-     * if the `synthMarketId` does not exist.
+     * @dev Helper to call oraclerManager.process on a given `synthMarketId`.
+     *
+     * NOTE: that this can result in errors if the `synthMarketId` does not exist.
      */
     function getOracleCollateralPrice(
         Margin.GlobalData storage self,

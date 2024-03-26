@@ -9,8 +9,8 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 interface IMarketConfigurationModule {
     // --- Structs --- //
 
-    // @notice See PerpMarketConfiguration.GlobalData for more details.
-    struct ConfigureParameters {
+    /// @notice See PerpMarketConfiguration.GlobalData for more details.
+    struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
         uint128 minOrderAge;
@@ -34,7 +34,7 @@ interface IMarketConfigurationModule {
         uint128 highUtilizationSlopePercent;
     }
 
-    // @notice See PerpMarketConfiguration.Data for more details.
+    /// @notice See PerpMarketConfiguration.Data for more details.
     struct ConfigureByMarketParameters {
         bytes32 oracleNodeId;
         bytes32 pythPriceFeedId;
@@ -58,24 +58,26 @@ interface IMarketConfigurationModule {
 
     // --- Events --- //
 
-    // @notice Emitted when the global market config is updated.
-    event ConfigurationUpdated(address from);
+    /// @notice Emitted when the global market config is updated.
+    /// @param from Address of configurer
+    event GlobalMarketConfigured(address indexed from);
 
-    // @notice Emitted when parameters for a specific market is updated.
-    event MarketConfigurationUpdated(uint128 marketId, address from);
+    /// @notice Emitted when parameters for a specific market is updated.
+    /// @param marketId Market that configured
+    /// @param from Address of configurer
+    event MarketConfigured(uint128 indexed marketId, address indexed from);
 
     // --- Mutations --- //
 
-    /**
-     * @notice Configures market parameters applied globally.
-     */
+    /// @notice Configures market parameters applied globally.
+    /// @param data A struct of parameters to configure
     function setMarketConfiguration(
-        IMarketConfigurationModule.ConfigureParameters memory data
+        IMarketConfigurationModule.GlobalMarketConfigureParameters memory data
     ) external;
 
-    /**
-     * @notice Configures a market specific parameters applied to the `marketId`.
-     */
+    /// @notice Configures a market specific parameters applied to the `marketId`.
+    /// @param marketId Market to configure
+    /// @param data A struct of parameters to configure
     function setMarketConfigurationById(
         uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
@@ -83,17 +85,16 @@ interface IMarketConfigurationModule {
 
     // --- Views --- //
 
-    /**
-     * @notice Returns configured global market parameters.
-     */
+    /// @notice Returns configured global market parameters.
+    /// @return getMarketConfiguration A struct of configured parameters
     function getMarketConfiguration()
         external
         view
         returns (PerpMarketConfiguration.GlobalData memory);
 
-    /**
-     * @notice Returns configured market specific parameters.
-     */
+    /// @notice Returns configured market specific parameters.
+    /// @param marketId Market to query against
+    /// @return getMarketConfigurationById A struct of configured parameters for marketId
     function getMarketConfigurationById(
         uint128 marketId
     ) external view returns (PerpMarketConfiguration.Data memory);
