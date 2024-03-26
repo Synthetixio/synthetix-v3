@@ -541,7 +541,7 @@ interface IMarginModule {
 
 // @custom:artifact contracts/interfaces/IMarketConfigurationModule.sol:IMarketConfigurationModule
 interface IMarketConfigurationModule {
-    struct ConfigureParameters {
+    struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
         uint128 minOrderAge;
@@ -578,6 +578,7 @@ interface IMarketConfigurationModule {
         uint256 minMarginRatio;
         uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
+        uint256 maxInitialMarginRatio;
         uint256 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
@@ -618,7 +619,6 @@ interface IPerpAccountModule {
         uint256 healthFactor;
         uint256 notionalValueUsd;
         int256 pnl;
-        uint256 accruedFeesUsd;
         int256 accruedFunding;
         uint256 accruedUtilization;
         uint256 entryPrice;
@@ -667,7 +667,7 @@ interface IPerpRewardDistributorFactoryModule {
 
 // @custom:artifact contracts/interfaces/ISettlementHookModule.sol:ISettlementHookModule
 interface ISettlementHookModule {
-    struct ConfigureParameters {
+    struct SettlementHookConfigureParameters {
         address[] whitelistedHookAddresses;
         uint32 maxHooksPerOrder;
     }
@@ -700,13 +700,27 @@ contract OrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
-        int256 pnl;
         uint256 fillPrice;
-        uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
+        uint128 totalFees;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
+    }
+}
+
+// @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
+contract PerpAccountModule {
+    struct Runtime_splitAccount {
+        uint256 oraclePrice;
+        uint256 im;
+        uint128 debtToMove;
+        int128 sizeToMove;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 collateralToMove;
+        uint256 fromAccountCollateral;
+        uint256 toCollateralUsd;
     }
 }
 
@@ -841,6 +855,7 @@ library PerpMarketConfiguration {
         uint256 minMarginRatio;
         uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
+        uint256 maxInitialMarginRatio;
         uint256 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
@@ -893,10 +908,10 @@ library Position {
     }
     struct Data {
         int128 size;
+        uint256 entryTime;
         int256 entryFundingAccrued;
         uint256 entryUtilizationAccrued;
         uint256 entryPrice;
-        uint256 accruedFeesUsd;
     }
 }
 
@@ -928,4 +943,6 @@ library Flags {
     bytes32 public constant LIQUIDATE_POSITION = "liquidatePosition";
     bytes32 public constant PAY_DEBT = "payDebt";
     bytes32 public constant LIQUIDATE_MARGIN_ONLY = "liquidateMarginOnly";
+    bytes32 public constant MERGE_ACCOUNT = "mergeAccount";
+    bytes32 public constant SPLIT_ACCOUNT = "splitAccount";
 }
