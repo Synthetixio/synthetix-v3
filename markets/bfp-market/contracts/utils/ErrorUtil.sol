@@ -112,4 +112,16 @@ library ErrorUtil {
 
     // @notice Thrown when you trying to merge an account with a position that wasn't created in the same block.
     error PositionTooOld();
+
+    // @notice Thrown when collateral is found when none was expected to exist.
+    error CollateralFound();
+
+    // @notice Thrown when user trying to split an account with too large porportion.
+    error AccountSplitProportionTooLarge();
+
+    // @notice Thrown when user trying to split an account with 0 porportion.
+    error ZeroProportion();
+
+    // @notice Thrown when user trying to split/merge the same account.
+    error DuplicateAccountIds();
 }

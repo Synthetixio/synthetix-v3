@@ -220,6 +220,34 @@ library Margin {
         marginValues.discountedCollateralUsd = discountedCollateralUsd;
         marginValues.collateralUsd = collateralUsd;
     }
+    /**
+     * @dev Returns a boolean indicating whether the account has any collateral deposited.
+     */
+    function hasCollateralDeposited(
+        uint128 accountId,
+        uint128 marketId
+    ) internal view returns (bool) {
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 available;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
+
+            if (available > 0) {
+                return true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * @dev Returns the same collateralUsd as `getMarginUsd` without discount collateral.

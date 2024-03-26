@@ -1,9 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {Order} from "../storage/Order.sol";
-import {Position} from "../storage/Position.sol";
-
 interface IPerpAccountModule {
     // --- Structs --- //
 
@@ -61,6 +58,9 @@ interface IPerpAccountModule {
     // @notice Emitted when two accounts are merged.
     event AccountsMerged(uint128 fromId, uint128 toId, uint128 marketId);
 
+    // @notice Emitted when an account is split into a new one.
+    event AccountSplit(uint128 fromId, uint128 toId, uint128 marketId);
+
     // --- Views --- //
 
     /**
@@ -94,4 +94,18 @@ interface IPerpAccountModule {
      * @dev Important that account permmisions in the `fromId` account will _not_ be transferred.
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external;
+
+    /**
+     * @notice Splits the from accounts size, collateral and debt based on the proportion provided.
+     *
+     * This requires the toAccount to be a empty account.
+     *
+     * @dev Important that account permmisions in the `fromId` account will _not_ be transferred.
+     */
+    function splitAccount(
+        uint128 fromId,
+        uint128 toId,
+        uint128 marketId,
+        uint128 proportion
+    ) external;
 }

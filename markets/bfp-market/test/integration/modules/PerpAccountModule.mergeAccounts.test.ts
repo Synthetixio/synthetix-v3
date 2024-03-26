@@ -70,6 +70,21 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
+  it('should revert if toId and fromId is the same', async () => {
+    const { PerpMarketProxy } = systems();
+    const fromTrader = genOneOf(traders());
+
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        fromTrader.accountId,
+        1
+      ),
+      `DuplicateAccountIds`,
+      PerpMarketProxy
+    );
+  });
+
   it('should revert when market does not exist', async () => {
     const { PerpMarketProxy } = systems();
 
