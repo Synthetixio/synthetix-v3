@@ -40,6 +40,21 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
+  it('should revert if toId and fromId is the same', async () => {
+    const { PerpMarketProxy } = systems();
+    const fromTrader = genOneOf(traders());
+
+    await assertRevert(
+      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        fromTrader.accountId,
+        1
+      ),
+      `DuplicateAccountIds`,
+      PerpMarketProxy
+    );
+  });
+
   it('should revert if proportion is bigger than 1', async () => {
     const { PerpMarketProxy } = systems();
 

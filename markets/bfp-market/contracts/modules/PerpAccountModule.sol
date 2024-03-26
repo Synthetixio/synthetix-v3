@@ -158,6 +158,11 @@ contract PerpAccountModule is IPerpAccountModule {
             toId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
+
+        if (toId == fromId) {
+            revert ErrorUtil.DuplicateAccountIds();
+        }
+
         Runtime_splitAccount memory runtime;
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -326,6 +331,10 @@ contract PerpAccountModule is IPerpAccountModule {
             toId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
+
+        if (toId == fromId) {
+            revert ErrorUtil.DuplicateAccountIds();
+        }
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);

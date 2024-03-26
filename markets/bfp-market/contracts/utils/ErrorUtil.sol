@@ -121,4 +121,7 @@ library ErrorUtil {
 
     // @notice Thrown when user trying to split an account with 0 porportion.
     error ZeroProportion();
+
+    // @notice Thrown when user trying to split/merge the same account.
+    error DuplicateAccountIds();
 }
