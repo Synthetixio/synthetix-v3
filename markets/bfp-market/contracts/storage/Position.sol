@@ -9,8 +9,7 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 library Position {
     using DecimalMath for uint256;
@@ -353,7 +352,8 @@ library Position {
         ) = market.getRemainingLiquidatableSizeCapacity(marketConfig);
 
         if (
-            msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0
+            ERC2771Context._msgSender() == globalConfig.keeperLiquidationEndorsed &&
+            runtime.remainingCapacity == 0
         ) {
             runtime.remainingCapacity = runtime.oldPositionSizeAbs;
         }

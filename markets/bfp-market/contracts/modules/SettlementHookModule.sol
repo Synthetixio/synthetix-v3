@@ -8,8 +8,7 @@ import {ISettlementHookModule} from "../interfaces/ISettlementHookModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract SettlementHookModule is ISettlementHookModule {
     // --- Mutations --- //
@@ -54,7 +53,7 @@ contract SettlementHookModule is ISettlementHookModule {
         config.whitelistedHookAddresses = data.whitelistedHookAddresses;
         config.maxHooksPerOrder = data.maxHooksPerOrder;
 
-        emit SettlementHookConfigured(msg.sender, hooksLengthAfter);
+        emit SettlementHookConfigured(ERC2771Context._msgSender(), hooksLengthAfter);
     }
 
     // --- Views --- //

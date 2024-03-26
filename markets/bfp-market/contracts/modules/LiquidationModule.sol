@@ -16,8 +16,7 @@ import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint256;
@@ -254,12 +253,18 @@ contract LiquidationModule is ILiquidationModule {
         liquidateCollateral(accountId, marketId, market, globalConfig);
 
         // Flag and emit event.
-        market.flaggedLiquidations[accountId] = msg.sender;
+        market.flaggedLiquidations[accountId] = ERC2771Context._msgSender();
 
         // Pay flagger.
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, flagReward);
+        globalConfig.synthetix.withdrawMarketUsd(marketId, ERC2771Context._msgSender(), flagReward);
 
-        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, flagReward, oraclePrice);
+        emit PositionFlaggedLiquidation(
+            accountId,
+            marketId,
+            ERC2771Context._msgSender(),
+            flagReward,
+            oraclePrice
+        );
     }
 
     /**
@@ -298,14 +303,18 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         // Pay the keeper
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqKeeperFee);
+        globalConfig.synthetix.withdrawMarketUsd(
+            marketId,
+            ERC2771Context._msgSender(),
+            liqKeeperFee
+        );
 
         emit PositionLiquidated(
             accountId,
             marketId,
             oldPositionSize,
             newPosition.size,
-            msg.sender,
+            ERC2771Context._msgSender(),
             flagger,
             liqKeeperFee,
             oraclePrice
@@ -378,7 +387,11 @@ contract LiquidationModule is ILiquidationModule {
         liquidateCollateral(accountId, marketId, market, PerpMarketConfiguration.load());
 
         // Pay flagger.
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperReward);
+        globalConfig.synthetix.withdrawMarketUsd(
+            marketId,
+            ERC2771Context._msgSender(),
+            keeperReward
+        );
 
         emit MarginLiquidated(accountId, marketId, keeperReward);
     }
