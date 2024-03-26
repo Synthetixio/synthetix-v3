@@ -156,7 +156,7 @@ interface IOrderModule is IBasePerpMarket {
     /// @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
     /// @param marketId Market to query against
     /// @param size Size of impact on skew
-    /// @param getFillPrice Premium/discount adjusted price
+    /// @return getFillPrice Premium/discount adjusted price
     /// @dev The fill can be attributed or when an order is filled. The price is the oracle price + adjustment when
     ///      which an order is settled. Intuitively, the adjustment is a discount if the size reduces the skew (i.e.
     ///      skew is pulled closer to zero). However a premium is applied if skew expands (i.e. skew pushed away

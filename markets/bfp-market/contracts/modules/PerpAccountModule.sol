@@ -394,19 +394,22 @@ contract PerpAccountModule is IPerpAccountModule {
         );
         delete market.positions[fromId];
 
-        uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
-            toPosition.size,
-            oraclePrice,
-            collateralUsd,
-            marketConfig
-        );
+        // Stack too deep.
+        {
+            uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
+            (uint256 im, , ) = Position.getLiquidationMarginUsd(
+                toPosition.size,
+                oraclePrice,
+                collateralUsd,
+                marketConfig
+            );
 
-        if (
-            collateralUsd.toInt() + Margin.getPnlAdjustmentUsd(toId, market, oraclePrice) <
-            im.toInt()
-        ) {
-            revert ErrorUtil.InsufficientMargin();
+            if (
+                collateralUsd.toInt() + Margin.getPnlAdjustmentUsd(toId, market, oraclePrice) <
+                im.toInt()
+            ) {
+                revert ErrorUtil.InsufficientMargin();
+            }
         }
 
         emit AccountsMerged(fromId, toId, marketId);

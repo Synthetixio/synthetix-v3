@@ -18,7 +18,7 @@ contract SettlementHookModule is ISettlementHookModule {
      * @inheritdoc ISettlementHookModule
      */
     function setSettlementHookConfiguration(
-        ISettlementHookModule.ConfigureParameters memory data
+        ISettlementHookModule.SettlementHookConfigureParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
 

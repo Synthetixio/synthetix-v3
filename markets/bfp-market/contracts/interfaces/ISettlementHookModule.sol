@@ -24,7 +24,7 @@ interface ISettlementHookModule {
     /// @notice Configures settlement hook parameters applied globally.
     /// @param data A struct of parameters to configure with
     function setSettlementHookConfiguration(
-        ISettlementHookModule.ConfigureParameters memory data
+        ISettlementHookModule.SettlementHookConfigureParameters memory data
     ) external;
 
     // --- Views --- //
