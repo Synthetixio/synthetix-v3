@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {RewardsDistributorExternal as BaseRewardsDistributor} from "@synthetixio/rewards-distributor-external/src/RewardsDistributorExternal.sol";
+import {RewardsDistributorExternal as BaseRewardsDistributor} from "@synthetixio/rewards-dist-ext/src/RewardsDistributorExternal.sol";
 
 // solhint-disable no-empty-blocks
 

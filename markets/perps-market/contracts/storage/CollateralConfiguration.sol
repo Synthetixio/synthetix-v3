@@ -7,6 +7,7 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {LiquidationAssetManager} from "./LiquidationAssetManager.sol";
+import {SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 
 /**
  * @title Configuration of all multi collateral assets used for trader margin
@@ -80,6 +81,12 @@ library CollateralConfiguration {
         }
     }
 
+    function validDistributorExists(uint128 collateralId) internal view returns (bool) {
+        return
+            (collateralId == SNX_USD_MARKET_ID) ||
+            (loadValidLam(collateralId).distributor != address(0));
+    }
+
     function setMax(Data storage self, uint128 collateralId, uint256 maxAmount) internal {
         if (self.id == 0) self.id = collateralId;
         self.maxAmount = maxAmount;
@@ -126,7 +133,6 @@ library CollateralConfiguration {
         bool useDiscount
     ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
         uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
-        uint256 discount;
         // only discount collateral if skew scale is set on spot market and useDiscount is set to true
         if (useDiscount && skewScale != 0) {
             uint256 impactOnSkew = amount.divDecimal(skewScale).mulDecimal(self.discountScalar);
