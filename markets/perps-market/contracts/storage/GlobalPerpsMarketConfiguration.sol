@@ -34,7 +34,7 @@ library GlobalPerpsMarketConfiguration {
          */
         mapping(address => uint256) referrerShare;
         /**
-         * @dev previously maxCollateralAmounts[synthMarketId] was used in storage slot
+         * @dev previously maxCollateralAmounts[collateralId] was used in storage slot
          */
         mapping(uint128 => uint256) __unused_1;
         /**
@@ -204,16 +204,16 @@ library GlobalPerpsMarketConfiguration {
 
     function updateCollateralMax(
         Data storage self,
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 maxCollateralAmount
     ) internal {
-        CollateralConfiguration.load(synthMarketId).setMax(synthMarketId, maxCollateralAmount);
+        CollateralConfiguration.load(collateralId).setMax(collateralId, maxCollateralAmount);
 
-        bool isSupportedCollateral = self.supportedCollateralTypes.contains(synthMarketId);
+        bool isSupportedCollateral = self.supportedCollateralTypes.contains(collateralId);
         if (maxCollateralAmount > 0 && !isSupportedCollateral) {
-            self.supportedCollateralTypes.add(synthMarketId.to256());
+            self.supportedCollateralTypes.add(collateralId.to256());
         } else if (maxCollateralAmount == 0 && isSupportedCollateral) {
-            self.supportedCollateralTypes.remove(synthMarketId.to256());
+            self.supportedCollateralTypes.remove(collateralId.to256());
         }
     }
 
