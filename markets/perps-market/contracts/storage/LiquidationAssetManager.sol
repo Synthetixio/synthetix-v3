@@ -67,23 +67,21 @@ library LiquidationAssetManager {
         address distributor,
         address tokenAddress
     ) internal {
-        if (distributor != address(0)) {
-            if (
-                !ERC165Helper.safeSupportsInterface(
-                    distributor,
-                    type(IRewardDistributor).interfaceId
-                )
-            ) {
-                revert IDistributorErrors.InvalidDistributorContract(distributor);
-            }
-
-            if (RewardsDistributor(distributor).token() != tokenAddress) {
-                revert IDistributorErrors.InvalidDistributor(self.id, tokenAddress);
-            }
-
-            self.distributor = distributor;
+        if (distributor == address(0)) {
+            revert AddressError.ZeroAddress();
         }
-        // TODO - allow for address(0) to mark as deleted or not set?
+
+        if (
+            !ERC165Helper.safeSupportsInterface(distributor, type(IRewardDistributor).interfaceId)
+        ) {
+            revert IDistributorErrors.InvalidDistributorContract(distributor);
+        }
+
+        if (RewardsDistributor(distributor).token() != tokenAddress) {
+            revert IDistributorErrors.InvalidDistributor(self.id, tokenAddress);
+        }
+
+        self.distributor = distributor;
     }
 
     function distributeCollateral(

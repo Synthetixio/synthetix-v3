@@ -33,7 +33,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      * @inheritdoc ICollateralConfigurationModule
      */
     function setCollateralConfiguration(
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 maxCollateralAmount,
         uint256 upperLimitDiscount,
         uint256 lowerLimitDiscount,
@@ -41,18 +41,18 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.load().updateCollateralMax(
-            synthMarketId,
+            collateralId,
             maxCollateralAmount
         );
 
-        CollateralConfiguration.load(synthMarketId).setDiscounts(
+        CollateralConfiguration.load(collateralId).setDiscounts(
             upperLimitDiscount,
             lowerLimitDiscount,
             discountScalar
         );
 
         emit CollateralConfigurationSet(
-            synthMarketId,
+            collateralId,
             maxCollateralAmount,
             upperLimitDiscount,
             lowerLimitDiscount,
@@ -64,7 +64,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      * @inheritdoc ICollateralConfigurationModule
      */
     function getCollateralConfiguration(
-        uint128 synthMarketId
+        uint128 collateralId
     )
         external
         view
@@ -76,7 +76,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
             uint256 discountScalar
         )
     {
-        return CollateralConfiguration.load(synthMarketId).getConfig();
+        return CollateralConfiguration.load(collateralId).getConfig();
     }
 
     /**
@@ -115,6 +115,11 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         address[] calldata poolDelegatedCollateralTypes
     ) external override {
         OwnableStorage.onlyOwner();
+        // A reward token to distribute must exist.
+        if (token == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
         // Using loadValid here to ensure we are tying the distributor to a valid collateral.
         LiquidationAssetManager.Data storage lam = CollateralConfiguration
             .loadValid(collateralId)
@@ -127,11 +132,6 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
 
         // reuse current or clone distributor
         lam.setValidDistributor(distributor, token);
-
-        // A reward token to distribute must exist.
-        if (token == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
 
         emit RewardDistributorRegistered(distributor);
     }

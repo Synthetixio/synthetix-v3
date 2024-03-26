@@ -8,8 +8,8 @@ interface IAccountEvents {
     /**
      * @notice Gets fired when some collateral is deducted from the account for paying fees or liquidations.
      * @param account Id of the account being deducted.
-     * @param synthMarketId Id of the synth deducted.
+     * @param collateralId Id of the collateral (synth) deducted.
      * @param amount Amount of synth market deducted from the account.
      */
-    event CollateralDeducted(uint256 account, uint128 synthMarketId, uint256 amount);
+    event CollateralDeducted(uint256 account, uint128 collateralId, uint256 amount);
 }
