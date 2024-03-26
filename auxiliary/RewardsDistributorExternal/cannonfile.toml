@@ -1,4 +1,4 @@
-name = "synthetix-rewards-distributor-external"
+name = "synthetix-rewards-dist-ext"
 version = "<%= package.version %>"
 description = "Rewards distributor (approved to an external distributor) for Core Synthetix v3"
 

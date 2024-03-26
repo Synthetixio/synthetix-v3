@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/rewards-distributor-external",
+  "name": "@synthetixio/rewards-dist-ext",
   "version": "0.0.2",
   "publishConfig": {
     "access": "public"
@@ -16,7 +16,7 @@
   "scripts": {
     "cov": "forge coverage --report lcov && genhtml ./lcov.info --output-directory coverage",
     "build": "CANNON_REGISTRY_PRIORITY=local cannon build",
-    "publish-contracts": "cannon publish synthetix-rewards-distributor-external:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "publish-contracts": "cannon publish synthetix-rewards-dist-ext:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
     "forge-test": "forge test -vvvvv",
     "forge-coverage": "forge coverage --report lcov"
   },
