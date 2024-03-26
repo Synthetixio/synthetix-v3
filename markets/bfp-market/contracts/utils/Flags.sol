@@ -13,4 +13,6 @@ library Flags {
     bytes32 public constant LIQUIDATE_POSITION = "liquidatePosition";
     bytes32 public constant PAY_DEBT = "payDebt";
     bytes32 public constant LIQUIDATE_MARGIN_ONLY = "liquidateMarginOnly";
+    bytes32 public constant MERGE_ACCOUNT = "mergeAccount";
+    bytes32 public constant SPLIT_ACCOUNT = "splitAccount";
 }

@@ -12,6 +12,8 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {Flags} from "../utils/Flags.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
@@ -147,6 +149,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint128 marketId,
         uint128 proportion
     ) external {
+        FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
         Account.loadAccountAndValidatePermission(
             fromId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
@@ -314,6 +317,7 @@ contract PerpAccountModule is IPerpAccountModule {
      * @inheritdoc IPerpAccountModule
      */
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
+        FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
         Account.loadAccountAndValidatePermission(
             fromId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION

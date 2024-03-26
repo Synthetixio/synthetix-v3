@@ -49,6 +49,8 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         suspendFeature(Flags.LIQUIDATE_POSITION);
         suspendFeature(Flags.PAY_DEBT);
         suspendFeature(Flags.LIQUIDATE_MARGIN_ONLY);
+        suspendFeature(Flags.MERGE_ACCOUNT);
+        suspendFeature(Flags.SPLIT_ACCOUNT);
 
         emit PerpMarketSuspended(true);
     }
@@ -69,6 +71,8 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         enableFeature(Flags.LIQUIDATE_POSITION);
         enableFeature(Flags.PAY_DEBT);
         enableFeature(Flags.LIQUIDATE_MARGIN_ONLY);
+        enableFeature(Flags.MERGE_ACCOUNT);
+        enableFeature(Flags.SPLIT_ACCOUNT);
 
         emit PerpMarketSuspended(false);
     }
