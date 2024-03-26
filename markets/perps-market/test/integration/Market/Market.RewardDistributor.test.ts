@@ -23,12 +23,45 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
   });
 
   let randomAccount: ethers.Signer;
+  let wrongTokenAccount: ethers.Signer;
 
   let synthBTCMarketId: ethers.BigNumber;
 
   before('identify actors', async () => {
-    [, , , , randomAccount] = signers();
+    [, , , , randomAccount, wrongTokenAccount] = signers();
     synthBTCMarketId = synthMarkets()[0].marketId(); // 2
+  });
+
+  let distributorAddress: string;
+  let poolDelegatedCollateralTypes: string[];
+  let tokenAddress: string;
+  let distributorData: {
+    tokenAddress: string;
+    distributorAddress: string;
+    syntMarketId: ethers.BigNumber;
+    poolDelegatedCollateralTypes: string[];
+  };
+  before('get valid distributor data', async () => {
+    tokenAddress = await randomAccount.getAddress();
+
+    poolDelegatedCollateralTypes = [await randomAccount.getAddress()];
+    distributorAddress = await createRewardsDistributor(
+      owner(),
+      systems().Core,
+      systems().PerpsMarket,
+      1,
+      ethers.constants.AddressZero,
+      tokenAddress,
+      18,
+      synthBTCMarketId
+    );
+
+    distributorData = {
+      tokenAddress: tokenAddress,
+      distributorAddress: distributorAddress,
+      syntMarketId: synthBTCMarketId,
+      poolDelegatedCollateralTypes: poolDelegatedCollateralTypes,
+    };
   });
 
   describe('initial configuration', () => {
@@ -50,10 +83,10 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
         systems()
           .PerpsMarket.connect(randomAccount)
           .registerDistributor(
-            await randomAccount.getAddress(),
-            ethers.constants.AddressZero,
-            synthBTCMarketId,
-            []
+            distributorData.tokenAddress,
+            distributorData.distributorAddress,
+            distributorData.syntMarketId,
+            distributorData.poolDelegatedCollateralTypes
           ),
         'Unauthorized'
       );
@@ -64,12 +97,26 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
         systems()
           .PerpsMarket.connect(owner())
           .registerDistributor(
-            await randomAccount.getAddress(),
-            ethers.constants.AddressZero,
+            distributorData.tokenAddress,
+            distributorData.distributorAddress,
             42,
-            []
+            distributorData.poolDelegatedCollateralTypes
           ),
         'InvalidId("42")'
+      );
+    });
+
+    it('reverts registering a new distributor with wrong data: distributor address zero', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(owner())
+          .registerDistributor(
+            distributorData.tokenAddress,
+            ethers.constants.AddressZero,
+            distributorData.syntMarketId,
+            distributorData.poolDelegatedCollateralTypes
+          ),
+        'ZeroAddress()'
       );
     });
 
@@ -78,9 +125,9 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
         systems()
           .PerpsMarket.connect(owner())
           .registerDistributor(
-            await randomAccount.getAddress(),
-            ethers.constants.AddressZero,
-            synthBTCMarketId,
+            distributorData.tokenAddress,
+            distributorData.distributorAddress,
+            distributorData.syntMarketId,
             []
           ),
         'InvalidParameter("collateralTypes", "must not be empty")'
@@ -92,9 +139,9 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
         systems()
           .PerpsMarket.connect(owner())
           .registerDistributor(
-            await randomAccount.getAddress(),
-            ethers.constants.AddressZero,
-            synthBTCMarketId,
+            distributorData.tokenAddress,
+            distributorData.distributorAddress,
+            distributorData.syntMarketId,
             [ethers.constants.AddressZero]
           ),
         'ZeroAddress'
@@ -107,9 +154,9 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
           .PerpsMarket.connect(owner())
           .registerDistributor(
             ethers.constants.AddressZero,
-            ethers.constants.AddressZero,
-            synthBTCMarketId,
-            [await randomAccount.getAddress()]
+            distributorData.distributorAddress,
+            distributorData.syntMarketId,
+            distributorData.poolDelegatedCollateralTypes
           ),
         'ZeroAddress'
       );
@@ -120,37 +167,25 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
         systems()
           .PerpsMarket.connect(owner())
           .registerDistributor(
+            distributorData.tokenAddress,
             await randomAccount.getAddress(),
-            await randomAccount.getAddress(),
-            synthBTCMarketId,
-            [await randomAccount.getAddress()]
+            distributorData.syntMarketId,
+            distributorData.poolDelegatedCollateralTypes
           ),
         'InvalidDistributorContract'
       );
     });
 
     it('reverts registering a new distributor with wrong data: wrong distributor (wrong token)', async () => {
-      const wrongTokenAddress = await randomAccount.getAddress();
-      const distributorAddress = await createRewardsDistributor(
-        owner(),
-        systems().Core,
-        systems().PerpsMarket,
-        1,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-        18,
-        synthBTCMarketId
-      );
+      const wrongTokenAddress = await wrongTokenAccount.getAddress();
 
       await assertRevert(
-        systems()
-          .PerpsMarket.connect(owner())
-          .registerDistributor(
-            wrongTokenAddress, // token
-            distributorAddress,
-            synthBTCMarketId,
-            [await randomAccount.getAddress()]
-          ),
+        systems().PerpsMarket.connect(owner()).registerDistributor(
+          wrongTokenAddress, // token
+          distributorData.distributorAddress,
+          distributorData.syntMarketId,
+          distributorData.poolDelegatedCollateralTypes
+        ),
         `InvalidDistributor("${synthBTCMarketId}", "${wrongTokenAddress}")`
       );
     });
@@ -181,30 +216,15 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
 
     describe('register distributor', () => {
       let tx: ethers.ContractTransaction;
-      let distributorAddress: string;
-      let poolDelegatedCollateralTypes: string[];
 
       before('register distributor', async () => {
-        const tokenAddress = await randomAccount.getAddress();
-
-        poolDelegatedCollateralTypes = [await randomAccount.getAddress()];
-        distributorAddress = await createRewardsDistributor(
-          owner(),
-          systems().Core,
-          systems().PerpsMarket,
-          1,
-          ethers.constants.AddressZero,
-          tokenAddress,
-          18,
-          synthBTCMarketId
-        );
         tx = await systems()
           .PerpsMarket.connect(owner())
           .registerDistributor(
-            tokenAddress,
-            distributorAddress,
-            synthBTCMarketId,
-            poolDelegatedCollateralTypes
+            distributorData.tokenAddress,
+            distributorData.distributorAddress,
+            distributorData.syntMarketId,
+            distributorData.poolDelegatedCollateralTypes
           );
       });
 

@@ -110,18 +110,18 @@ library PerpsMarketFactory {
 
     function transferLiquidatedSynth(
         Data storage self,
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 amount
     ) internal returns (uint256 synthValue) {
-        address synth = self.spotMarket.getSynth(synthMarketId);
+        address synth = self.spotMarket.getSynth(collateralId);
         self.synthetix.withdrawMarketCollateral(self.perpsMarketId, synth, amount);
 
         (synthValue, ) = self.spotMarket.quoteSellExactIn(
-            synthMarketId,
+            collateralId,
             amount,
             Price.Tolerance.DEFAULT
         );
 
-        CollateralConfiguration.loadValidLam(synthMarketId).distributeCollateral(synth, amount);
+        CollateralConfiguration.loadValidLam(collateralId).distributeCollateral(synth, amount);
     }
 }
