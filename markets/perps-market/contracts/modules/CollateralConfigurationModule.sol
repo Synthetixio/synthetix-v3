@@ -197,6 +197,11 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         address[] calldata poolDelegatedCollateralTypes
     ) external override {
         OwnableStorage.onlyOwner();
+        // A reward token to distribute must exist.
+        if (token == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
         // Using loadValid here to ensure we are tying the distributor to a valid collateral.
         LiquidationAssetManager.Data storage lam = CollateralConfiguration
             .loadValid(collateralId)
@@ -209,11 +214,6 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
 
         // reuse current or clone distributor
         lam.setValidDistributor(distributor, token);
-
-        // A reward token to distribute must exist.
-        if (token == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
 
         emit RewardDistributorRegistered(distributor);
     }
