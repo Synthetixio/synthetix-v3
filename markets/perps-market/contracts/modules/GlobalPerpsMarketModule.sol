@@ -28,29 +28,6 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setCollateralConfiguration(
-        uint128 synthMarketId,
-        uint256 maxCollateralAmount
-    ) external override {
-        OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.load().updateCollateral(synthMarketId, maxCollateralAmount);
-
-        emit CollateralConfigurationSet(synthMarketId, maxCollateralAmount);
-    }
-
-    /**
-     * @inheritdoc IGlobalPerpsMarketModule
-     */
-    function getCollateralConfiguration(
-        uint128 synthMarketId
-    ) external view override returns (uint256 maxCollateralAmount) {
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        maxCollateralAmount = store.maxCollateralAmounts[synthMarketId];
-    }
-
-    /**
-     * @inheritdoc IGlobalPerpsMarketModule
-     */
     function getSupportedCollaterals()
         external
         view

@@ -3228,9 +3228,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/rewards-distributor-external@workspace:auxiliary/RewardsDistributorExternal":
+"@synthetixio/rewards-dist-ext@workspace:auxiliary/RewardsDistributorExternal":
   version: 0.0.0-use.local
-  resolution: "@synthetixio/rewards-distributor-external@workspace:auxiliary/RewardsDistributorExternal"
+  resolution: "@synthetixio/rewards-dist-ext@workspace:auxiliary/RewardsDistributorExternal"
   dependencies:
     "@usecannon/cli": "npm:2.11.20"
     forge-std: "github:foundry-rs/forge-std#master"

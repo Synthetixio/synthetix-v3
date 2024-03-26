@@ -19,6 +19,7 @@ export type SynthArguments = Array<{
   token: string;
   buyPrice: ethers.BigNumber;
   sellPrice: ethers.BigNumber;
+  skewScale?: ethers.BigNumber;
 }>;
 
 export const STRICT_PRICE_TOLERANCE = 60;
@@ -33,7 +34,7 @@ export function bootstrapSynthMarkets(
     [, , marketOwner] = r.signers();
   });
 
-  const synthMarkets: SynthMarkets = data.map(({ name, token, buyPrice, sellPrice }) => {
+  const synthMarkets: SynthMarkets = data.map(({ name, token, buyPrice, sellPrice, skewScale }) => {
     let marketId: ethers.BigNumber,
       buyNodeId: string,
       buyAggregator: MockPythExternalNode,
@@ -98,6 +99,12 @@ export function bootstrapSynthMarkets(
         depositingEnabled: false,
       });
     });
+
+    if (skewScale) {
+      before('set skew scale', async () => {
+        await contracts.SpotMarket.connect(marketOwner).setMarketSkewScale(marketId, skewScale);
+      });
+    }
 
     return {
       marketId: () => marketId,
