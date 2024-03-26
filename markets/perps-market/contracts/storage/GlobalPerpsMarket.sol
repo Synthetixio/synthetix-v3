@@ -30,7 +30,7 @@ library GlobalPerpsMarket {
      * @notice Thrown when attempting to deposit more than enabled collateral.
      */
     error MaxCollateralExceeded(
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 maxAmount,
         uint256 collateralAmount,
         uint256 depositAmount
@@ -39,13 +39,13 @@ library GlobalPerpsMarket {
     /**
      * @notice Thrown when attempting to use a synth that is not enabled as collateral.
      */
-    error SynthNotEnabledForCollateral(uint128 synthMarketId);
+    error SynthNotEnabledForCollateral(uint128 collateralId);
 
     /**
      * @notice Thrown when attempting to withdraw more collateral than is available.
      */
     error InsufficientCollateral(
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 collateralAmount,
         uint256 withdrawAmount
     );
@@ -102,14 +102,14 @@ library GlobalPerpsMarket {
         SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
         uint256 activeCollateralLength = activeCollateralTypes.length();
         for (uint256 i = 1; i <= activeCollateralLength; i++) {
-            uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
+            uint128 collateralId = activeCollateralTypes.valueAt(i).to128();
 
-            if (synthMarketId == SNX_USD_MARKET_ID) {
-                total += self.collateralAmounts[synthMarketId];
+            if (collateralId == SNX_USD_MARKET_ID) {
+                total += self.collateralAmounts[collateralId];
             } else {
                 (uint256 collateralValue, ) = spotMarket.quoteSellExactIn(
-                    synthMarketId,
-                    self.collateralAmounts[synthMarketId],
+                    collateralId,
+                    self.collateralAmounts[collateralId],
                     Price.Tolerance.DEFAULT
                 );
                 total += collateralValue;
@@ -119,17 +119,17 @@ library GlobalPerpsMarket {
 
     function updateCollateralAmount(
         Data storage self,
-        uint128 synthMarketId,
+        uint128 collateralId,
         int256 amountDelta
     ) internal returns (uint256 collateralAmount) {
-        collateralAmount = (self.collateralAmounts[synthMarketId].toInt() + amountDelta).toUint();
-        self.collateralAmounts[synthMarketId] = collateralAmount;
+        collateralAmount = (self.collateralAmounts[collateralId].toInt() + amountDelta).toUint();
+        self.collateralAmounts[collateralId] = collateralAmount;
 
-        bool isActiveCollateral = self.activeCollateralTypes.contains(synthMarketId);
+        bool isActiveCollateral = self.activeCollateralTypes.contains(collateralId);
         if (collateralAmount > 0 && !isActiveCollateral) {
-            self.activeCollateralTypes.add(synthMarketId.to256());
+            self.activeCollateralTypes.add(collateralId.to256());
         } else if (collateralAmount == 0 && isActiveCollateral) {
-            self.activeCollateralTypes.remove(synthMarketId.to256());
+            self.activeCollateralTypes.remove(collateralId.to256());
         }
     }
 
@@ -150,19 +150,19 @@ library GlobalPerpsMarket {
      */
     function validateCollateralAmount(
         Data storage self,
-        uint128 synthMarketId,
+        uint128 collateralId,
         int256 synthAmount
     ) internal view {
-        uint256 collateralAmount = self.collateralAmounts[synthMarketId];
+        uint256 collateralAmount = self.collateralAmounts[collateralId];
         if (synthAmount > 0) {
-            uint256 maxAmount = CollateralConfiguration.load(synthMarketId).maxAmount;
+            uint256 maxAmount = CollateralConfiguration.load(collateralId).maxAmount;
             if (maxAmount == 0) {
-                revert SynthNotEnabledForCollateral(synthMarketId);
+                revert SynthNotEnabledForCollateral(collateralId);
             }
             uint256 newCollateralAmount = collateralAmount + synthAmount.toUint();
             if (newCollateralAmount > maxAmount) {
                 revert MaxCollateralExceeded(
-                    synthMarketId,
+                    collateralId,
                     maxAmount,
                     collateralAmount,
                     synthAmount.toUint()
@@ -171,7 +171,7 @@ library GlobalPerpsMarket {
         } else {
             uint256 synthAmountAbs = MathUtil.abs(synthAmount);
             if (collateralAmount < synthAmountAbs) {
-                revert InsufficientCollateral(synthMarketId, collateralAmount, synthAmountAbs);
+                revert InsufficientCollateral(collateralId, collateralAmount, synthAmountAbs);
             }
         }
     }
