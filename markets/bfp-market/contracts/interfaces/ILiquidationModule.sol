@@ -109,7 +109,7 @@ interface ILiquidationModule is IBasePerpMarket {
     /// @return isMarginLiquidatable True if margin can be liquidated, false otherwise
     function isMarginLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool);
 
-    /// @notice Returns the IM (initial maintenance) and MM (maintenance margin) for a given account, market, and sizeDelta.
+    /// @notice Returns the IM (initial margin) and MM (maintenance margin) for a given account, market, and sizeDelta.
     ///         Specify a sizeDelta of 0 for the current IM/MM of an existing position.
     /// @param accountId Account of position to query against
     /// @param marketId Market of position to query against
