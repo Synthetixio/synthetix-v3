@@ -18,8 +18,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
 import {Flags} from "../utils/Flags.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -359,7 +358,11 @@ contract OrderModule is IOrderModule {
 
         // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
+            globalConfig.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                runtime.trade.keeperFee
+            );
         }
 
         emit OrderSettled(
@@ -467,7 +470,7 @@ contract OrderModule is IOrderModule {
         }
 
         // If `isAccountOwner` then 0 else chargeFee.
-        uint256 keeperFee = msg.sender == account.rbac.owner
+        uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
             ? 0
             : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
 
@@ -476,7 +479,11 @@ contract OrderModule is IOrderModule {
                 market,
                 -keeperFee.toInt()
             );
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+            globalConfig.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                keeperFee
+            );
         }
 
         emit OrderCanceled(accountId, marketId, keeperFee, commitmentTime);

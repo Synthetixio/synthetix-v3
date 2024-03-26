@@ -5,8 +5,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
@@ -41,7 +40,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
         config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
 
-        emit ConfigurationUpdated(msg.sender);
+        emit ConfigurationUpdated(ERC2771Context._msgSender());
     }
 
     /**
@@ -77,7 +76,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.liquidationWindowDuration = data.liquidationWindowDuration;
         config.liquidationMaxPd = data.liquidationMaxPd;
 
-        emit MarketConfigurationUpdated(marketId, msg.sender);
+        emit MarketConfigurationUpdated(marketId, ERC2771Context._msgSender());
     }
 
     // --- Views --- //
