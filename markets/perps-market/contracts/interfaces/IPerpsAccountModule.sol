@@ -8,13 +8,13 @@ interface IPerpsAccountModule {
     /**
      * @notice Gets fired when an account colateral is modified.
      * @param accountId Id of the account.
-     * @param synthMarketId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+     * @param collateralId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
      * @param amountDelta requested change in amount of collateral delegated to the account.
      * @param sender address of the sender of the size modification. Authorized by account owner.
      */
     event CollateralModified(
         uint128 indexed accountId,
-        uint128 indexed synthMarketId,
+        uint128 indexed collateralId,
         int256 amountDelta,
         address indexed sender
     );
@@ -29,24 +29,20 @@ interface IPerpsAccountModule {
     /**
      * @notice Modify the collateral delegated to the account.
      * @param accountId Id of the account.
-     * @param synthMarketId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+     * @param collateralId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
      * @param amountDelta requested change in amount of collateral delegated to the account.
      */
-    function modifyCollateral(
-        uint128 accountId,
-        uint128 synthMarketId,
-        int256 amountDelta
-    ) external;
+    function modifyCollateral(uint128 accountId, uint128 collateralId, int256 amountDelta) external;
 
     /**
      * @notice Gets the account's collateral value for a specific collateral.
      * @param accountId Id of the account.
-     * @param synthMarketId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+     * @param collateralId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
      * @return collateralValue collateral value of the account.
      */
     function getCollateralAmount(
         uint128 accountId,
-        uint128 synthMarketId
+        uint128 collateralId
     ) external view returns (uint256);
 
     /**
