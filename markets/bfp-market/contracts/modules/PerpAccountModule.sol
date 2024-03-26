@@ -143,6 +143,9 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
+    /**
+     * @inheritdoc IPerpAccountModule
+     */
     function splitAccount(
         uint128 fromId,
         uint128 toId,
