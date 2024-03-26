@@ -8,12 +8,6 @@ const accountId = 4;
 
 const synthMarketsConfig = [
   {
-    name: 'btc',
-    token: 'snxBTC',
-    buyPrice: bn(20_000),
-    sellPrice: bn(20_000),
-  },
-  {
     name: 'eth',
     token: 'snxETH',
     buyPrice: bn(2_000),
@@ -29,7 +23,7 @@ const orderFees = {
 const ethPerpsMarketId = bn(26);
 
 describe('Account Debt', () => {
-  const { systems, provider, perpsMarkets, trader1, trader2, synthMarkets } = bootstrapMarkets({
+  const { systems, provider, perpsMarkets, trader1, synthMarkets } = bootstrapMarkets({
     synthMarkets: synthMarketsConfig,
     perpsMarkets: [
       {
@@ -53,7 +47,7 @@ describe('Account Debt', () => {
         },
       },
     ],
-    traderAccountIds: [accountId, 5],
+    traderAccountIds: [accountId],
     liquidationGuards: {
       minLiquidationReward: bn(0),
       minKeeperProfitRatioD18: bn(0),
@@ -72,31 +66,27 @@ describe('Account Debt', () => {
           synthMarket: () => synthMarkets()[0],
           snxUSDAmount: () => bn(240_000),
         },
-        {
-          synthMarket: () => synthMarkets()[1],
-          snxUSDAmount: () => bn(1_400_000),
-        },
-      ],
-    });
-
-    await depositCollateral({
-      systems,
-      trader: trader2,
-      accountId: () => 5,
-      collaterals: [
-        {
-          synthMarket: () => synthMarkets()[0],
-          snxUSDAmount: () => bn(16_000),
-        },
-        {
-          synthMarket: () => synthMarkets()[1],
-          snxUSDAmount: () => bn(20_000),
-        },
       ],
     });
   });
 
   const openAndClosePosition = (size: Wei, startingPrice: Wei, endingPrice: Wei) => {
+    const initialFillPrice = calculateFillPrice(wei(0), wei(1000), size, startingPrice);
+    const finalFillPrice = calculateFillPrice(size, wei(1000), size.mul(-1), endingPrice);
+
+    const openOrderFee = computeFees(wei(0), wei(50), initialFillPrice, orderFees);
+    const closeOrderFee = computeFees(wei(50), wei(-50), finalFillPrice, orderFees);
+
+    let synthUsedForOpenOrderFee: Wei, synthUsedForCloseOrderFee: Wei;
+    before('identify synth amount required to pay open order fee', async () => {
+      const { synthToBurn } = await systems().SpotMarket.quoteSellExactOut(
+        synthMarkets()[0].marketId(),
+        openOrderFee.totalFees,
+        bn(0)
+      );
+      synthUsedForOpenOrderFee = wei(synthToBurn);
+    });
+
     before(`open position size ${size.toString()}`, async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(startingPrice.toBN());
 
@@ -113,9 +103,20 @@ describe('Account Debt', () => {
       });
     });
 
-    before('close position', async () => {
+    before('set ending price', async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(endingPrice.toBN());
+    });
 
+    before('identify synth amount required to pay open order fee', async () => {
+      const { synthToBurn } = await systems().SpotMarket.quoteSellExactOut(
+        synthMarkets()[0].marketId(),
+        closeOrderFee.totalFees,
+        bn(0)
+      );
+      synthUsedForCloseOrderFee = wei(synthToBurn);
+    });
+
+    before('close position', async () => {
       await openPosition({
         systems,
         provider,
@@ -129,23 +130,41 @@ describe('Account Debt', () => {
       });
     });
 
-    const initialFillPrice = calculateFillPrice(wei(0), wei(1000), size, startingPrice);
-    const finalFillPrice = calculateFillPrice(size, wei(1000), size.mul(-1), endingPrice);
-
     return {
-      openOrderFee: computeFees(wei(0), wei(50), initialFillPrice, orderFees),
-      closeOrderFee: computeFees(wei(50), wei(-50), finalFillPrice, orderFees),
+      openOrderFee,
+      closeOrderFee,
+      synthUsedForOpenOrderFee: () => synthUsedForOpenOrderFee,
+      synthUsedForCloseOrderFee: () => synthUsedForCloseOrderFee,
       pnl: finalFillPrice.sub(initialFillPrice).mul(size),
     };
   };
 
   let currentDebt: Wei;
   describe('negative pnl', () => {
-    const { pnl: expectedPnl } = openAndClosePosition(wei(50), wei(2000), wei(1500));
+    let startingCollateralAmount: Wei;
+    before('identify collateral amount', async () => {
+      startingCollateralAmount = wei(
+        await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
+      );
+    });
+
+    const {
+      pnl: expectedPnl,
+      synthUsedForOpenOrderFee,
+      synthUsedForCloseOrderFee,
+    } = openAndClosePosition(wei(50), wei(2000), wei(1500));
 
     it('accrues correct amount of debt', async () => {
       currentDebt = expectedPnl;
       assertBn.equal(currentDebt.abs().toBN(), await systems().PerpsMarket.debt(accountId));
+    });
+
+    it('used collateral to pay order fees', async () => {
+      const synthUsedForFees = synthUsedForOpenOrderFee().add(synthUsedForCloseOrderFee());
+      assertBn.equal(
+        startingCollateralAmount.sub(synthUsedForFees).toBN(),
+        await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
+      );
     });
   });
 
