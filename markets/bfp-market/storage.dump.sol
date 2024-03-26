@@ -701,25 +701,11 @@ contract OrderModule {
         uint256 pythPrice;
         int256 accruedFunding;
         uint256 fillPrice;
-        uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
-    }
-}
-
-// @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
-contract PerpAccountModule {
-    struct Runtime_mergeAccounts {
-        uint256 oraclePrice;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
-        uint128 synthMarketIdForLoop;
-        uint256 fromAccountCollateralForLoop;
-        uint256 fromAccountCollateral;
-        uint256 im;
     }
 }
 

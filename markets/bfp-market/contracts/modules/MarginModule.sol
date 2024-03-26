@@ -68,8 +68,8 @@ contract MarginModule is IMarginModule {
             marginValues.collateralUsd,
             marketConfig
         );
-        // We use the discount adjusted price here due to the explicit liquidation check.
 
+        // We use the discount adjusted price here due to the explicit liquidation check.
         if (marginValues.discountedMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
