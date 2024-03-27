@@ -1,0 +1,39 @@
+name = "op-gas-price-oracle-mock"
+version = "<%= package.version %>"
+
+[setting.baseFee]
+defaultValue = "30000000"
+
+[setting.gasPrice]
+defaultValue = "30000000"
+
+[setting.l1BaseFee]
+defaultValue = "50000000000"
+
+[setting.overhead]
+defaultValue = "200"
+
+[setting.scalar]
+defaultValue = "684000"
+
+[setting.internall1GasUsed]
+defaultValue = "10000"
+
+[setting.internall1Fee]
+defaultValue = "1000"
+
+[contract.mockOVMGasPriceOracle]
+artifact = "contracts/mocks/MockOVMGasPriceOracle.sol:MockOVMGasPriceOracle"
+args = [
+    "<%= settings.gasPrice %>",
+    "<%= settings.overhead %>",
+    "<%= settings.baseFee %>",
+    "<%= settings.l1BaseFee %>",
+    "<%= settings.scalar %>",
+    "<%= settings.internall1GasUsed %>",
+    "<%= settings.internall1Fee %>"
+]
+
+[contract.OpGasPriceOracle]
+artifact = "contracts/OpGasPriceOracle.sol:OpGasPriceOracle"
+args = ["<%= contracts.mockOVMGasPriceOracle.address %>"]
