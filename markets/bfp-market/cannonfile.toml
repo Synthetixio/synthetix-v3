@@ -161,9 +161,3 @@ args = [
     "<%= formatBytes32String('registerMarket') %>",
     "<%= contracts.PerpMarketProxy.address %>",
 ]
-
-[invoke.addToFeatureFlagAllowlist_createMarket]
-target = ["PerpsMarketProxy"]
-func = "addToFeatureFlagAllowlist"
-fromCall.func = "owner"
-args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
