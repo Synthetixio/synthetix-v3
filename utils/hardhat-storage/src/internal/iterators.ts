@@ -9,20 +9,22 @@ import {
 
 export function* iterateContracts(
   sourceUnits: SourceUnit[],
-  filter?: (node: ContractDefinition) => boolean
+  filter?: (sourceUnit: SourceUnit, contractNode: ContractDefinition) => boolean
 ): Generator<[SourceUnit, ContractDefinition]> {
   for (const sourceUnit of sourceUnits) {
-    for (const contractNode of findAll(sourceUnit, 'ContractDefinition', filter)) {
-      yield [sourceUnit, contractNode];
+    for (const contractNode of findAll(sourceUnit, 'ContractDefinition')) {
+      if (!filter || filter(sourceUnit, contractNode)) {
+        yield [sourceUnit, contractNode];
+      }
     }
   }
 }
 
 export function* iterateVariables(
-  sourceUnits: SourceUnit[],
+  contractNodes: [SourceUnit, ContractDefinition][],
   filter?: (node: VariableDeclaration) => boolean
 ): Generator<[SourceUnit, ContractDefinition, VariableDeclaration]> {
-  for (const [sourceUnit, contractNode] of iterateContracts(sourceUnits)) {
+  for (const [sourceUnit, contractNode] of contractNodes) {
     for (const variableNode of findAll(contractNode, 'VariableDeclaration', filter)) {
       yield [sourceUnit, contractNode, variableNode];
     }

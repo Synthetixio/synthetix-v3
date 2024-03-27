@@ -130,6 +130,15 @@ const config = {
   typechain: {
     target: 'ethers-v5',
   },
+  storage: {
+    artifacts: [
+      'contracts/**',
+      '!contracts/routers/**',
+      '!contracts/generated/**',
+      '!contracts/mocks/**',
+    ],
+    skip: ['@synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor'],
+  },
 };
 
 export default config;
