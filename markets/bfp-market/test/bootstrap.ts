@@ -69,7 +69,7 @@ export interface Contracts {
 // @see: https://github.com/Synthetixio/synthetix-router/blob/master/src/utils/tests.ts#L23
 // @see: https://github.com/usecannon/cannon/blob/main/packages/hardhat-cannon/src/tasks/build.ts
 // @see: https://github.com/foundry-rs/foundry/commit/b02dcd26ff2aabc305cee61cd2fa3f7c3a85aad2
-const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
+const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.test.toml' });
 const restoreSnapshot = _bootstraped.createSnapshot();
 
 export interface PerpCollateral {

@@ -151,7 +151,90 @@ factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
 factory.PerpAccountProxy.event = "AssociatedSystemSet"
 factory.PerpAccountProxy.arg = 2
 
-# --- Core feature flags --- #
+# --- Mocks --- #
+
+[contract.SettlementHookMock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+salt = "1"
+
+[contract.SettlementHook2Mock]
+artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+salt = "2"
+
+[contract.CollateralMock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "1"
+
+[contract.Collateral2Mock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "2"
+
+[contract.CollateralMockD18]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "3"
+
+[contract.CollateralMockD8]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+salt = "4"
+
+[invoke.initialize_CollateralMock]
+target = ["CollateralMock"]
+func = "initialize"
+args = ["CollateralMock", "CMOCK", "18"]
+
+[invoke.initialize_Collateral2Mock]
+target = ["Collateral2Mock"]
+func = "initialize"
+args = ["Collateral2Mock", "CMOCK2", "18"]
+
+[invoke.initialize_CollateralMockD18]
+target = ["CollateralMockD18"]
+func = "initialize"
+args = ["CollateralMockD18", "CMD18", "18"]
+
+[invoke.initialize_CollateralMockD8]
+target = ["CollateralMockD8"]
+func = "initialize"
+args = ["CollateralMockD18", "CMD8", "8"]
+
+[contract.MergeAccountSettlementHookMock]
+artifact = "contracts/mocks/MergeAccountSettlementHookMock.sol:MergeAccountSettlementHookMock"
+args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+salt = "3"
+
+# --- Market Post BFP Deployment Configuration --- #
+
+[invoke.setSynthetix]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSynthetix"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[invoke.setSpotMarket]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSpotMarket"
+args = ["<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
+
+[invoke.setPyth]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setPyth"
+args = ["<%= imports.pyth.contracts.Pyth.address %>"]
+
+[invoke.setRewardDistributorImplementation]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = ["<%= contracts.PerpRewardDistributor.address %>"]
+
+# --- Feature Flags --- #
 
 [invoke.addToFeatureFlagAllowlist_registerMarket]
 target = ["synthetix.CoreProxy"]
@@ -161,3 +244,8 @@ args = [
     "<%= formatBytes32String('registerMarket') %>",
     "<%= contracts.PerpMarketProxy.address %>",
 ]
+
+[invoke.enableAllFeatures]
+target = ["PerpMarketProxy"]
+func = "enableAllFeatures"
+from = "<%= settings.owner %>"
