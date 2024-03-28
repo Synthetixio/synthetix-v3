@@ -13,12 +13,6 @@ defaultValue = "main"
 [setting.synthetixPackage]
 defaultValue = "synthetix:latest"
 
-[setting.spotMarketPreset]
-defaultValue = "main"
-
-[setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:latest"
-
 [setting.salt]
 defaultValue = "snax"
 
@@ -27,10 +21,6 @@ defaultValue = "snax"
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
-
-[import.spotMarket]
-source = "<%= settings.spotMarketPackage %>"
-preset = "<%= settings.spotMarketPreset %>"
 
 # --- Module contracts --- #
 
