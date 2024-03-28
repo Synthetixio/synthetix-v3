@@ -2913,6 +2913,7 @@ __metadata:
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/lodash": "npm:^4.14.199"
     "@types/mocha-each": "npm:2.0.1"
+    "@usecannon/cli": "npm:2.11.20"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     lodash: "npm:^4.17.21"

@@ -1,4 +1,4 @@
-name = "bfp-market"
+name = "synthetix-bfp-market"
 version = "<%= package.version %>"
 description = "bfp-market for Synthetix v3"
 
