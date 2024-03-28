@@ -13,110 +13,110 @@ describe('PerpAccountModule splitAccount', () => {
   beforeEach(restore);
 
   it('should revert when fromAccount does not exist/has missing permission', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     const invalidAccountId = 42069;
     const marketId = 1;
     const toTrader = genOneOf(traders());
 
     await assertRevert(
-      PerpMarketProxy.splitAccount(invalidAccountId, toTrader.accountId, marketId, bn(0.1)),
+      BfpMarketProxy.splitAccount(invalidAccountId, toTrader.accountId, marketId, bn(0.1)),
       `PermissionDenied`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when toAccount does not exist/has missing permission', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     const invalidAccountId = 42069;
     const marketId = 1;
     const fromTrader = genOneOf(traders());
 
     await assertRevert(
-      PerpMarketProxy.splitAccount(fromTrader.accountId, invalidAccountId, marketId, bn(0.1)),
+      BfpMarketProxy.splitAccount(fromTrader.accountId, invalidAccountId, marketId, bn(0.1)),
       `PermissionDenied`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert if toId and fromId is the same', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const fromTrader = genOneOf(traders());
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         fromTrader.accountId,
         1
       ),
       `DuplicateAccountIds`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert if proportion is bigger than 1', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const market = genOneOf(markets());
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTraderAccountId,
         market.marketId(),
         bn(genNumber(1.1, 2))
       ),
       `AccountSplitProportionTooLarge()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert if proportion is 0', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const market = genOneOf(markets());
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTraderAccountId,
         market.marketId(),
         bn(0)
       ),
       `ZeroProportion()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when market does not exist', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const invalidMarketId = 69420;
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTraderAccountId,
         invalidMarketId,
         bn(genNumber(0.1, 1))
       ),
       `MarketNotFound("${invalidMarketId}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when any account have an order open', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -125,7 +125,7 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const traderWithOrder = genOneOf([fromTrader, toTrader]);
     const { market, collateral, marketId, collateralDepositAmount } = await depositMargin(
       bs,
@@ -140,19 +140,19 @@ describe('PerpAccountModule splitAccount', () => {
       genOrder(bs, market, collateral, collateralDepositAmount)
     );
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
         bn(genNumber(0.1, 1))
       ),
       `OrderFound()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when toAccount has collateral', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -161,23 +161,23 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const { marketId } = await depositMargin(bs, genTrader(bs, { desiredTrader: toTrader }));
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
         bn(genNumber(0.1, 1))
       ),
       `CollateralFound()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when toAccount have a position', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -186,7 +186,7 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, { desiredTrader: toTrader })
@@ -199,19 +199,19 @@ describe('PerpAccountModule splitAccount', () => {
     );
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
         bn(genNumber(0.1, 1))
       ),
       `PositionFound("${toTrader.accountId}", "${marketId}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when fromAccount is flagged', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -220,7 +220,7 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, { desiredTrader: fromTrader })
@@ -236,23 +236,23 @@ describe('PerpAccountModule splitAccount', () => {
         .toBN()
     );
     await withExplicitEvmMine(
-      () => PerpMarketProxy.flagPosition(fromTrader.accountId, marketId),
+      () => BfpMarketProxy.flagPosition(fromTrader.accountId, marketId),
       provider()
     );
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
         bn(genNumber(0.1, 0.99))
       ),
       'PositionFlagged()',
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when fromAccount is liquidatable', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -261,7 +261,7 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, { desiredTrader: fromTrader })
@@ -278,19 +278,19 @@ describe('PerpAccountModule splitAccount', () => {
     );
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
         toTrader.accountId,
         marketId,
         bn(genNumber(0.1, 0.99))
       ),
       'CanLiquidatePosition()',
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should split account', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -299,7 +299,7 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, { desiredTrader: fromTrader })
@@ -312,14 +312,14 @@ describe('PerpAccountModule splitAccount', () => {
     );
 
     const proportion = bn(genNumber(0.1, 0.99));
-    const fromAccountDigestBefore = await PerpMarketProxy.getAccountDigest(
+    const fromAccountDigestBefore = await BfpMarketProxy.getAccountDigest(
       fromTrader.accountId,
       marketId
     );
 
     const { receipt } = await withExplicitEvmMine(
       () =>
-        PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+        BfpMarketProxy.connect(fromTrader.signer).splitAccount(
           fromTrader.accountId,
           toTrader.accountId,
           marketId,
@@ -331,13 +331,13 @@ describe('PerpAccountModule splitAccount', () => {
     await assertEvent(
       receipt,
       `AccountSplit(${fromTrader.accountId}, ${toTrader.accountId}, ${marketId})`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
-    const fromAccountDigestAfter = await PerpMarketProxy.getAccountDigest(
+    const fromAccountDigestAfter = await BfpMarketProxy.getAccountDigest(
       fromTrader.accountId,
       marketId
     );
-    const toAccountDigestAfter = await PerpMarketProxy.getAccountDigest(
+    const toAccountDigestAfter = await BfpMarketProxy.getAccountDigest(
       toTrader.accountId,
       marketId
     );
@@ -369,7 +369,7 @@ describe('PerpAccountModule splitAccount', () => {
   });
 
   it('should split account with 1 proportion (concrete)', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
@@ -378,7 +378,7 @@ describe('PerpAccountModule splitAccount', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, { desiredTrader: fromTrader })
@@ -391,14 +391,14 @@ describe('PerpAccountModule splitAccount', () => {
     );
 
     const proportion = bn(1);
-    const fromAccountDigestBefore = await PerpMarketProxy.getAccountDigest(
+    const fromAccountDigestBefore = await BfpMarketProxy.getAccountDigest(
       fromTrader.accountId,
       marketId
     );
 
     const { receipt } = await withExplicitEvmMine(
       () =>
-        PerpMarketProxy.connect(fromTrader.signer).splitAccount(
+        BfpMarketProxy.connect(fromTrader.signer).splitAccount(
           fromTrader.accountId,
           toTrader.accountId,
           marketId,
@@ -410,13 +410,13 @@ describe('PerpAccountModule splitAccount', () => {
     await assertEvent(
       receipt,
       `AccountSplit(${fromTrader.accountId}, ${toTrader.accountId}, ${marketId})`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
-    const fromAccountDigestAfter = await PerpMarketProxy.getAccountDigest(
+    const fromAccountDigestAfter = await BfpMarketProxy.getAccountDigest(
       fromTrader.accountId,
       marketId
     );
-    const toAccountDigestAfter = await PerpMarketProxy.getAccountDigest(
+    const toAccountDigestAfter = await BfpMarketProxy.getAccountDigest(
       toTrader.accountId,
       marketId
     );

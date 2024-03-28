@@ -1,7 +1,6 @@
 name = "bfp-market"
 version = "<%= package.version %>"
 description = "bfp-market for Synthetix v3"
-include = []
 
 # NOTE: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
 [setting.owner]
@@ -21,7 +20,7 @@ defaultValue = "main"
 defaultValue = "synthetix-spot-market:latest"
 
 [setting.salt]
-defaultValue = "bfp-snax"
+defaultValue = "snax"
 
 # --- External Imports --- #
 
@@ -85,17 +84,17 @@ args = []
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
 args = []
 
-# --- Market Proxy Contract --- #
+# --- Market proxy contract --- #
 
-[contract.InitialPerpMarketProxy]
+[contract.InitialBfpMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 
-# --- Core Router --- #
+# --- Core router --- #
 
-[router.Router]
+[router.BfpMarketRouter]
 contracts = [
     "synthetix.AccountModule",
     "synthetix.AssociatedSystemsModule",
@@ -110,35 +109,22 @@ contracts = [
     "PerpRewardDistributorFactoryModule",
     "SettlementHookModule",
 ]
-depends = [
-    "import.synthetix",
-    "contract.CoreModule",
-    "contract.FeatureFlagModule",
-    "contract.PerpMarketFactoryModule",
-    "contract.MarketConfigurationModule",
-    "contract.PerpAccountModule",
-    "contract.MarginModule",
-    "contract.OrderModule",
-    "contract.LiquidationModule",
-    "contract.PerpRewardDistributorFactoryModule",
-    "contract.SettlementHookModule",
-]
 
-# --- Proxy Post Deployment --- #
+# --- Proxy post deployment --- #
 
 [invoke.upgradeProxy]
-target = ["InitialPerpMarketProxy"]
+target = ["InitialBfpMarketProxy"]
 fromCall.func = "owner"
 func = "upgradeTo"
-args = ["<%= contracts.Router.address %>"]
-factory.PerpMarketProxy.abiOf = ["Router"]
-factory.PerpMarketProxy.event = "Upgraded"
-factory.PerpMarketProxy.arg = 0
+args = ["<%= contracts.BfpMarketRouter.address %>"]
+factory.BfpMarketProxy.abiOf = ["BfpMarketRouter"]
+factory.BfpMarketProxy.event = "Upgraded"
+factory.BfpMarketProxy.arg = 0
 
 # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/utils/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol#L63
-[invoke.initOrUpgradeNft]
-target = ["PerpMarketProxy"]
-from = "<%= settings.owner %>"
+[invoke.init_or_upgrade_nft]
+target = ["BfpMarketProxy"]
+fromCall.func = "owner"
 func = "initOrUpgradeNft"
 args = [
     "<%= formatBytes32String('accountNft') %>",
@@ -155,12 +141,12 @@ factory.PerpAccountProxy.arg = 2
 
 [contract.SettlementHookMock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
-args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "1"
 
 [contract.SettlementHook2Mock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
-args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "2"
 
 [contract.CollateralMock]
@@ -183,69 +169,69 @@ artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "4"
 
-[invoke.initialize_CollateralMock]
+[invoke.initialize_collateral_mock]
 target = ["CollateralMock"]
 func = "initialize"
 args = ["CollateralMock", "CMOCK", "18"]
 
-[invoke.initialize_Collateral2Mock]
+[invoke.initialize_collateral2_mock]
 target = ["Collateral2Mock"]
 func = "initialize"
 args = ["Collateral2Mock", "CMOCK2", "18"]
 
-[invoke.initialize_CollateralMockD18]
+[invoke.initialize_collateral_mock_d18]
 target = ["CollateralMockD18"]
 func = "initialize"
 args = ["CollateralMockD18", "CMD18", "18"]
 
-[invoke.initialize_CollateralMockD8]
+[invoke.initialize_collateral_mock_d8]
 target = ["CollateralMockD8"]
 func = "initialize"
 args = ["CollateralMockD18", "CMD8", "8"]
 
 [contract.MergeAccountSettlementHookMock]
 artifact = "contracts/mocks/MergeAccountSettlementHookMock.sol:MergeAccountSettlementHookMock"
-args = ["<%= contracts.InitialPerpMarketProxy.address %>"]
+args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "3"
 
 # --- Market Post BFP Deployment Configuration --- #
 
-[invoke.setSynthetix]
-target = ["PerpMarketProxy"]
+[invoke.set_synthetix]
+target = ["BfpMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthetix"
 args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
-[invoke.setSpotMarket]
-target = ["PerpMarketProxy"]
+[invoke.set_spot_market]
+target = ["BfpMarketProxy"]
 fromCall.func = "owner"
 func = "setSpotMarket"
 args = ["<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
 
-[invoke.setPyth]
-target = ["PerpMarketProxy"]
+[invoke.set_pyth]
+target = ["BfpMarketProxy"]
 fromCall.func = "owner"
 func = "setPyth"
 args = ["<%= imports.pyth.contracts.Pyth.address %>"]
 
-[invoke.setRewardDistributorImplementation]
-target = ["PerpMarketProxy"]
+[invoke.set_reward_distributor_implementation]
+target = ["BfpMarketProxy"]
 fromCall.func = "owner"
 func = "setRewardDistributorImplementation"
 args = ["<%= contracts.PerpRewardDistributor.address %>"]
 
-# --- Feature Flags --- #
+# --- Feature flags --- #
 
-[invoke.addToFeatureFlagAllowlist_registerMarket]
+[invoke.add_to_feature_flag_allowlist_register_market]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = [
     "<%= formatBytes32String('registerMarket') %>",
-    "<%= contracts.PerpMarketProxy.address %>",
+    "<%= contracts.BfpMarketProxy.address %>",
 ]
 
-[invoke.enableAllFeatures]
-target = ["PerpMarketProxy"]
+[invoke.enable_all_features]
+target = ["BfpMarketProxy"]
 func = "enableAllFeatures"
 from = "<%= settings.owner %>"

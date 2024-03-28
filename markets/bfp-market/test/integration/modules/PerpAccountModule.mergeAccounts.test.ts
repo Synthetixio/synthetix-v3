@@ -24,7 +24,7 @@ describe('PerpAccountModule mergeAccounts', () => {
 
   beforeEach(restore);
   const createAccountsToMerge = async () => {
-    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
 
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
@@ -32,19 +32,19 @@ describe('PerpAccountModule mergeAccounts', () => {
       signer: fromTrader.signer,
       accountId: toTraderAccountId,
     };
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
 
     // Set the fromAccount to be the "vaultAccountId" that will have the new account merged into it.
     await MergeAccountSettlementHookMock.mockSetVaultAccountId(toTraderAccountId);
 
     // Ensure settlement hook has permission to merge both accounts. In a realistic scenario,
     // the settlement hook would own both of these account.
-    await PerpMarketProxy.connect(fromTrader.signer).grantPermission(
+    await BfpMarketProxy.connect(fromTrader.signer).grantPermission(
       toTraderAccountId,
       ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
       MergeAccountSettlementHookMock.address
     );
-    await PerpMarketProxy.connect(fromTrader.signer).grantPermission(
+    await BfpMarketProxy.connect(fromTrader.signer).grantPermission(
       fromTrader.accountId,
       ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
       MergeAccountSettlementHookMock.address
@@ -53,58 +53,58 @@ describe('PerpAccountModule mergeAccounts', () => {
   };
 
   it('should revert when either account does not exist/has missing permission', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     const invalidAccountId = 42069;
     const validAccountId = genOneOf(traders()).accountId;
 
     await assertRevert(
-      PerpMarketProxy.mergeAccounts(invalidAccountId, validAccountId, 1),
+      BfpMarketProxy.mergeAccounts(invalidAccountId, validAccountId, 1),
       `PermissionDenied`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
     await assertRevert(
-      PerpMarketProxy.mergeAccounts(validAccountId, invalidAccountId, 1),
+      BfpMarketProxy.mergeAccounts(validAccountId, invalidAccountId, 1),
       `PermissionDenied`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert if toId and fromId is the same', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const fromTrader = genOneOf(traders());
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         fromTrader.accountId,
         1
       ),
       `DuplicateAccountIds`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when market does not exist', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
 
     // Create two trader objects with different accountIds but same signer.
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const invalidMarketId = 69420;
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         toTraderAccountId,
         invalidMarketId
       ),
       `MarketNotFound("${invalidMarketId}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
   it('should revert when fromAccount is flagged', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -133,22 +133,22 @@ describe('PerpAccountModule mergeAccounts', () => {
         .toBN()
     );
     await withExplicitEvmMine(
-      () => PerpMarketProxy.connect(keeper()).flagPosition(fromTrader.accountId, marketId),
+      () => BfpMarketProxy.connect(keeper()).flagPosition(fromTrader.accountId, marketId),
       provider()
     );
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         toTrader.accountId,
         marketId
       ),
       `PositionFlagged()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when toAccount is flagged', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -195,22 +195,22 @@ describe('PerpAccountModule mergeAccounts', () => {
         .toBN()
     );
     await withExplicitEvmMine(
-      () => PerpMarketProxy.connect(keeper()).flagPosition(toTrader.accountId, marketId),
+      () => BfpMarketProxy.connect(keeper()).flagPosition(toTrader.accountId, marketId),
       provider()
     );
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         toTrader.accountId,
         marketId
       ),
       `PositionFlagged()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when fromAccount.position.entryTime is not block.timestamp', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
 
@@ -231,24 +231,24 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredMarket: market,
       })
     );
-    await PerpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
 
     const order = await genOrder(bs, market, collateral, collateralDepositAmount);
     await commitAndSettle(bs, marketId, fromTrader, order);
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         toTraderAccountId,
         marketId
       ),
       `PositionTooOld()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when collateral and market use different oracle', async () => {
-    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader } = await createAccountsToMerge();
     const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -267,16 +267,16 @@ describe('PerpAccountModule mergeAccounts', () => {
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
         value: updateFee,
       }),
       `OracleNodeMismatch()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when toAccount has an open order', async () => {
-    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -324,16 +324,16 @@ describe('PerpAccountModule mergeAccounts', () => {
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
         value: updateFee,
       }),
       `OrderFound()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when fromAccount has an open order', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -361,18 +361,18 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
 
     await assertRevert(
-      PerpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
         fromTrader.accountId,
         toTrader.accountId,
         marketId
       ),
       `OrderFound()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert if toAccount position can be liquidated', async () => {
-    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -425,16 +425,16 @@ describe('PerpAccountModule mergeAccounts', () => {
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
         value: updateFee,
       }),
       `CanLiquidatePosition()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should revert when the merged position is below initial margin requirement', async () => {
-    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const collateral = collaterals()[1];
     const market = genOneOf(markets());
@@ -499,16 +499,16 @@ describe('PerpAccountModule mergeAccounts', () => {
     });
 
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
         value: updateFee,
       }),
       `InsufficientMargin()`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should merge two accounts', async () => {
-    const { PerpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
 
     const collateral = collaterals()[1];
@@ -560,9 +560,9 @@ describe('PerpAccountModule mergeAccounts', () => {
       })
     );
 
-    const fromDigestBefore = await PerpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
-    const toDigestBefore = await PerpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
-    const marketDigestBefore = await PerpMarketProxy.getMarketDigest(marketId);
+    const fromDigestBefore = await BfpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
+    const toDigestBefore = await BfpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
+    const marketDigestBefore = await BfpMarketProxy.getMarketDigest(marketId);
 
     // Assert that the accounts have some collateral.
     assertBn.gt(fromDigestBefore.collateralUsd, 0);
@@ -585,11 +585,11 @@ describe('PerpAccountModule mergeAccounts', () => {
       fromOrder
     );
 
-    const fromOrderEvent = findEventSafe(fromOrderReceipt, 'OrderSettled', PerpMarketProxy);
+    const fromOrderEvent = findEventSafe(fromOrderReceipt, 'OrderSettled', BfpMarketProxy);
 
-    const fromDigestAfter = await PerpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
-    const toDigestAfter = await PerpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
-    const marketDigestAfter = await PerpMarketProxy.getMarketDigest(marketId);
+    const fromDigestAfter = await BfpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
+    const toDigestAfter = await BfpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
+    const marketDigestAfter = await BfpMarketProxy.getMarketDigest(marketId);
 
     assertBn.isZero(fromDigestAfter.collateralUsd);
     assertBn.isZero(fromDigestAfter.position.size);
@@ -640,7 +640,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     await assertEvent(
       fromOrderReceipt,
       `AccountsMerged(${fromTrader.accountId}, ${toTrader.accountId}, ${marketId})`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 });

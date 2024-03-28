@@ -19,6 +19,9 @@ defaultValue = "main"
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:latest"
 
+[setting.salt]
+defaultValue = "snax"
+
 # --- External Imports --- #
 
 [import.synthetix]
