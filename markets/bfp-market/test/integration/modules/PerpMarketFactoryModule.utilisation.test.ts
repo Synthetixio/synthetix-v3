@@ -29,14 +29,14 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
   describe('Market digest UtilizationRate', () => {
     it('should be 0 when no position', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const market = genOneOf(markets());
-      const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
+      const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
       assertBn.equal(marketDigest.utilizationRate, bn(0));
     });
 
     it('should handle utilization config set to 0', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
         bs,
@@ -45,7 +45,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, order);
 
-      const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
+      const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
 
       // Should not be 0 as our settlement has recomputed utilization
       assertBn.notEqual(marketDigest.utilizationRate, bn(0));
@@ -55,21 +55,21 @@ describe('PerpMarketFactoryModule Utilization', () => {
         lowUtilizationSlopePercent: 0,
         highUtilizationSlopePercent: 0,
       });
-      const marketDigest1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+      const marketDigest1 = await BfpMarketProxy.getMarketDigest(market.marketId());
       // Should not be 0 as utilization has not been recomputed yet
       assertBn.notEqual(marketDigest1.utilizationRate, bn(0));
 
-      await PerpMarketProxy.recomputeUtilization(marketId);
-      const marketDigest2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+      await BfpMarketProxy.recomputeUtilization(marketId);
+      const marketDigest2 = await BfpMarketProxy.getMarketDigest(market.marketId());
       // We now expect utilization to be 0
       assertBn.equal(marketDigest2.utilizationRate, bn(0));
     });
 
     it('should support collateral utilization above 100%', async () => {
-      const { PerpMarketProxy, Core } = systems();
+      const { BfpMarketProxy, Core } = systems();
       const market = genOneOf(markets());
       const marketId = market.marketId();
-      const globalMarketConfig = await PerpMarketProxy.getMarketConfiguration();
+      const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
       const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
       const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
       const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
@@ -117,13 +117,13 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
       // Right now the market is underwater, trader1 have some sUSD allocated to his collateral, but we wouldn't be able to withdraw until more stakers come in/ or stakers get liquidated
       const { receipt: recomputeReceipt1 } = await withExplicitEvmMine(
-        () => PerpMarketProxy.recomputeUtilization(marketId),
+        () => BfpMarketProxy.recomputeUtilization(marketId),
         provider()
       );
       const recomputeUtilizationEvent1 = findEventSafe(
         recomputeReceipt1,
         'UtilizationRecomputed',
-        PerpMarketProxy
+        BfpMarketProxy
       );
 
       // We expect max utilization rate, which is based on the slope configs.
@@ -143,13 +143,13 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
       // Now there's no open options in the market, we expect the utilization to be 0.
       const { receipt: recomputeReceipt2 } = await withExplicitEvmMine(
-        () => PerpMarketProxy.recomputeUtilization(marketId),
+        () => BfpMarketProxy.recomputeUtilization(marketId),
         provider()
       );
       const recomputeUtilizationEvent2 = findEventSafe(
         recomputeReceipt2,
         'UtilizationRecomputed',
-        PerpMarketProxy
+        BfpMarketProxy
       );
       assertBn.isZero(recomputeUtilizationEvent2.args.utilizationRate);
     });
@@ -157,13 +157,13 @@ describe('PerpMarketFactoryModule Utilization', () => {
     forEach(['lowUtilization', 'highUtilization']).it(
       'should return current utilization rate when %s',
       async (variant) => {
-        const { PerpMarketProxy, Core } = systems();
-        const globalMarketConfig = await PerpMarketProxy.getMarketConfiguration();
+        const { BfpMarketProxy, Core } = systems();
+        const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
         const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
         const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
         const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
         const market = genOneOf(markets());
-        const marketConfig = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const marketConfig = await BfpMarketProxy.getMarketConfigurationById(market.marketId());
 
         // Create random utilization rate
         const breakPointNumber = utilizationBreakpointPercent.mul(100).toNumber();
@@ -175,9 +175,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
         // Get delegated usd amount
         const withdrawable = await Core.getWithdrawableMarketUsd(market.marketId());
-        const { totalCollateralValueUsd } = await PerpMarketProxy.getMarketDigest(
-          market.marketId()
-        );
+        const { totalCollateralValueUsd } = await BfpMarketProxy.getMarketDigest(market.marketId());
         const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
 
         const leverage = genNumber(1, 5);
@@ -209,7 +207,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
         await commitAndSettle(bs, marketId, trader, order);
 
         // assert the utilization rate
-        const marketDigest = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
         if (variant === 'lowUtilization') {
           const expectedRate = wei(lowUtilizationSlopePercent)
             .mul(targetUtilizationPercent)

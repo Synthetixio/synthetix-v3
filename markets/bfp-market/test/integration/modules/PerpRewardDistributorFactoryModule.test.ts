@@ -31,7 +31,7 @@ describe('PerpRewardDistributorFactoryModule', () => {
 
   describe('createRewardDistributor', () => {
     it('should be able to create a new reward distributor', async () => {
-      const { PerpMarketProxy, CollateralMockD18 } = systems();
+      const { BfpMarketProxy, CollateralMockD18 } = systems();
 
       const args = {
         poolId: pool().id,
@@ -40,26 +40,26 @@ describe('PerpRewardDistributorFactoryModule', () => {
         token: CollateralMockD18.address,
       };
       const distributor =
-        await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
+        await BfpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
 
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+        () => BfpMarketProxy.connect(owner()).createRewardDistributor(args),
         provider()
       );
       const rewardDistributorCreatedEvent = findEventSafe(
         receipt,
         'RewardDistributorCreated',
-        PerpMarketProxy
+        BfpMarketProxy
       );
 
       assert.equal(distributor, rewardDistributorCreatedEvent.args.distributor);
     });
 
     it('should emit all events in correct order', async () => {
-      const { PerpMarketProxy, CollateralMockD18 } = systems();
+      const { BfpMarketProxy, CollateralMockD18 } = systems();
 
       const contractsWithAllEvents = extendContractAbi(
-        PerpMarketProxy,
+        BfpMarketProxy,
         ['event Initialized(uint8 version)'] // OZ Initializer
       );
 
@@ -70,10 +70,10 @@ describe('PerpRewardDistributorFactoryModule', () => {
         token: CollateralMockD18.address,
       };
       const distributor =
-        await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
+        await BfpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
 
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+        () => BfpMarketProxy.connect(owner()).createRewardDistributor(args),
         provider()
       );
 
@@ -85,100 +85,100 @@ describe('PerpRewardDistributorFactoryModule', () => {
     });
 
     it('should revert when token does not have decimal 18', async () => {
-      const { PerpMarketProxy, CollateralMockD8 } = systems();
+      const { BfpMarketProxy, CollateralMockD8 } = systems();
 
       await assertRevert(
-        PerpMarketProxy.connect(owner()).createRewardDistributor({
+        BfpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress()],
           name: genBytes32(),
           token: CollateralMockD8.address,
         }),
         'InvalidParameter("payoutToken", "Token decimals expected to be 18")',
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
     it('should revert when not erc20', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       await assertRevert(
-        PerpMarketProxy.connect(owner()).createRewardDistributor({
+        BfpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress()],
           name: genBytes32(),
           token: genAddress(),
         }),
         'InvalidParameter("payoutToken", "Token decimals expected to be 18")',
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
     it('should revert when any collateralType is address(0)', async () => {
-      const { PerpMarketProxy, CollateralMockD18 } = systems();
+      const { BfpMarketProxy, CollateralMockD18 } = systems();
 
       await assertRevert(
-        PerpMarketProxy.connect(owner()).createRewardDistributor({
+        BfpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress(), ADDRESS0],
           name: genBytes32(),
           token: CollateralMockD18.address,
         }),
         `ZeroAddress()`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
     it('should revert when token is address(0)', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       await assertRevert(
-        PerpMarketProxy.connect(owner()).createRewardDistributor({
+        BfpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress()],
           name: genBytes32(),
           token: ADDRESS0,
         }),
         `ZeroAddress()`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
     it('should revert when empty collateralTypes length', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       await assertRevert(
-        PerpMarketProxy.connect(owner()).createRewardDistributor({
+        BfpMarketProxy.connect(owner()).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [],
           name: genBytes32(),
           token: genAddress(),
         }),
         `ZeroLength()`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
     it('should revert when market owner is not msg.sender', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       const from = genOneOf(traders()).signer;
       await assertRevert(
-        PerpMarketProxy.connect(from).createRewardDistributor({
+        BfpMarketProxy.connect(from).createRewardDistributor({
           poolId: pool().id,
           collateralTypes: [genAddress(), genAddress()],
           name: genBytes32(),
           token: genAddress(),
         }),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('Core.RewardsManagerModule.claimReward', () => {
     it('should be able to claim a distributed reward', async () => {
-      const { PerpMarketProxy, Core } = systems();
+      const { BfpMarketProxy, Core } = systems();
 
       // NOTE: We _cannot_ use sUSD collateral because this will not be distributed.
       const orderSide = genSide();
@@ -202,13 +202,13 @@ describe('PerpRewardDistributorFactoryModule', () => {
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { receipt: flagReceipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+        () => BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
         provider()
       );
       const transferEvent = findEventSafe(
         flagReceipt,
         'Transfer',
-        extendContractAbi(PerpMarketProxy, [
+        extendContractAbi(BfpMarketProxy, [
           'event Transfer(address indexed from, address indexed to, uint256 value)',
         ])
       );

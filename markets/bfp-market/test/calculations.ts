@@ -65,11 +65,11 @@ export const calcOrderFees = async (
   }
 
   const { systems, ethOracleNode } = bs;
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
-  const fillPrice = await PerpMarketProxy.getFillPrice(marketId, sizeDelta);
-  const { skew } = await PerpMarketProxy.getMarketDigest(marketId);
-  const { makerFee, takerFee } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+  const fillPrice = await BfpMarketProxy.getFillPrice(marketId, sizeDelta);
+  const { skew } = await BfpMarketProxy.getMarketDigest(marketId);
+  const { makerFee, takerFee } = await BfpMarketProxy.getMarketConfigurationById(marketId);
 
   let [makerSizeRatio, takerSizeRatio] = [wei(0), wei(0)];
   const marketSkewBefore = wei(skew);
@@ -100,7 +100,7 @@ export const calcOrderFees = async (
   const { answer: ethPrice } = await ethOracleNode().agg.latestRoundData();
   // Grab market configuration to infer price.
   const { keeperSettlementGasUnits, keeperProfitMarginPercent, minKeeperFeeUsd, maxKeeperFeeUsd } =
-    await PerpMarketProxy.getMarketConfiguration();
+    await BfpMarketProxy.getMarketConfiguration();
 
   const calcKeeperOrderSettlementFee = (blockBaseFeePerGas: BigNumber) => {
     // Perform calc bounding by min/max to prevent going over/under.
