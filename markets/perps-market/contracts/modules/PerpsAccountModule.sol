@@ -18,6 +18,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 /**
  * @title Module to manage accounts
@@ -211,6 +212,31 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (uint256[] memory) {
         return PerpsAccount.load(accountId).openPositionMarketIds.values();
+    }
+
+    /**
+        NOTE: Please remove prior to next deployment.
+     */
+    function __fixFundingOnSpecificAccounts() external {
+        OwnableStorage.onlyOwner();
+
+        uint256[3] memory accountIds = [
+            // solhint-disable-next-line numcast/safe-cast
+            uint256(3423774689),
+            // solhint-disable-next-line numcast/safe-cast
+            uint256(4126020209),
+            // solhint-disable-next-line numcast/safe-cast
+            uint256(170141183460469231731687303715884105747)
+        ];
+        uint128 ethMarketId = 100;
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(ethMarketId);
+        int128 lastMarketFundingValue = perpsMarketData.lastFundingValue.to128();
+
+        for (uint256 i = 0; i < accountIds.length; i++) {
+            Position.Data storage position = perpsMarketData.positions[accountIds[i]];
+            position.latestInteractionFunding = lastMarketFundingValue;
+            position.latestInterestAccrued = 0;
+        }
     }
 
     function _depositMargin(
