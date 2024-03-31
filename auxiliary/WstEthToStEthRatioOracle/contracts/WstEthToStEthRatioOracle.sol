@@ -8,7 +8,7 @@ import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IWstETH} from "./interfaces/IWstETH.sol";
 
-contract LidoWstEthToStEthRatioOracle is IExternalNode {
+contract WstEthToStEthRatioOracle is IExternalNode {
     using SafeCastU256 for uint256;
 
     address public immutable lidoWstEthAddress;

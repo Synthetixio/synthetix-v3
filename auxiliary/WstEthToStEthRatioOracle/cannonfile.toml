@@ -1,4 +1,4 @@
-name = "lido-wsteth-to-eth-ratio-oracle"
+name = "wsteth-to-steth-ratio-oracle"
 version = "<%= package.version %>"
 description = "<%= package.description %>"
 
@@ -6,6 +6,6 @@ description = "<%= package.description %>"
 [setting.wsteth]
 defaultValue = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
 
-[contract.LidoWstEthToStEthRatioOracle]
-artifact = "contracts/LidoWstEthToStEthRatioOracle.sol:LidoWstEthToStEthRatioOracle"
+[contract.WstEthToStEthRatioOracle]
+artifact = "contracts/WstEthToStEthRatioOracle.sol:WstEthToStEthRatioOracle"
 args = ["<%= settings.wsteth %>"]

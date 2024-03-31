@@ -1,23 +1,23 @@
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import { createStakedPool } from '@synthetixio/main/test/common';
-import type { LidoWstEthToStEthRatioOracle, WstETHMock } from '../typechain-types';
+import type { WstEthToStEthRatioOracle, WstETHMock } from '../typechain-types';
 import { AggregatorV3Mock } from '../typechain-types/contracts/mocks';
 
 type CreateStakePoolSystems = ReturnType<Parameters<typeof createStakedPool>[0]['systems']>;
 type OracleManager = CreateStakePoolSystems['OracleManager'];
 
 interface Contracts {
-  LidoWstEthToStEthRatioOracle: LidoWstEthToStEthRatioOracle;
+  WstEthToStEthRatioOracle: WstEthToStEthRatioOracle;
   WstETHMock: WstETHMock;
-  StEthToEthMock: AggregatorV3Mock;
+  StEthAggregatorV3MockOracleNode: AggregatorV3Mock;
   ['synthetix.oracle_manager.Proxy']: OracleManager;
 }
 
 interface Systems {
-  LidoWstEthToStEthRatioOracle: LidoWstEthToStEthRatioOracle;
+  WstEthToStEthRatioOracle: WstEthToStEthRatioOracle;
   WstETHMock: WstETHMock;
-  StEthToEthMock: AggregatorV3Mock;
+  StEthAggregatorV3MockOracleNode: AggregatorV3Mock;
   OracleManager: OracleManager;
 }
 
@@ -33,13 +33,13 @@ export const bootstrap = () => {
   let owner: ethers.Signer;
   let user: ethers.Signer;
 
-  before('bootstrap LidoWstEthToStEthRatioOracle', async function () {
+  before('bootstrap WstEthToStEthRatioOracle', async function () {
     [owner, user] = getSigners();
 
     systems = {
-      LidoWstEthToStEthRatioOracle: getContract('LidoWstEthToStEthRatioOracle'),
+      WstEthToStEthRatioOracle: getContract('WstEthToStEthRatioOracle'),
       WstETHMock: getContract('WstETHMock'),
-      StEthToEthMock: getContract('StEthToEthMock'),
+      StEthAggregatorV3MockOracleNode: getContract('StEthAggregatorV3MockOracleNode'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     };
   });
