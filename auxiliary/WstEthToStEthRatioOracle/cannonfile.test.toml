@@ -15,7 +15,7 @@ artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
 artifact = "contracts/WstEthToStEthRatioOracle.sol:WstEthToStEthRatioOracle"
 args = ["<%= contracts.WstETHMock.address %>"]
 
-[invoke.registerNode_WstEthToStEthRatioOracle]
+[invoke.register_node_wsteth_to_steth_ratio_oracle]
 target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
@@ -26,17 +26,17 @@ args = [
     [
     ],
 ]
-extra.wstEthToStEthRatioOracleNodeId.event = "NodeRegistered"
-extra.wstEthToStEthRatioOracleNodeId.arg = 0
+extra.wsteth_to_steth_ratio_oracle_node_id.event = "NodeRegistered"
+extra.wsteth_to_steth_ratio_oracle_node_id.arg = 0
 depends = ["contract.WstETHMock", "contract.WstEthToStEthRatioOracle"]
 
-# --- CL stETH/ETH oracle --- #
+# --- CL stETH/USD oracle --- #
 
 [contract.StEthAggregatorV3MockOracleNode]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
 
-[invoke.registerNode_StEthAggregatorV3MockOracleNode]
+[invoke.register_node_steth_aggregator_v3_mock_oracle_node]
 target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
@@ -47,13 +47,13 @@ args = [
     [
     ],
 ]
-extra.stEthAggregatorV3MockOracleNodeId.event = "NodeRegistered"
-extra.stEthAggregatorV3MockOracleNodeId.arg = 0
+extra.steth_aggregator_v3_mock_oracle_node_id.event = "NodeRegistered"
+extra.steth_aggregator_v3_mock_oracle_node_id.arg = 0
 depends = ["contract.StEthAggregatorV3MockOracleNode"]
 
 # --- wstETH/USD oracle --- #
 
-[invoke.registerNode_WstEthOracleNode]
+[invoke.register_node_wsteth_oracle_node]
 target = ["synthetix.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
@@ -63,14 +63,14 @@ args = [
     "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
     # stETH/USD, wstETH/stETH
     [
-        "<%= extras.stEthAggregatorV3MockOracleNodeId %>",
-        "<%= extras.wstEthToStEthRatioOracleNodeId %>",
+        "<%= extras.steth_aggregator_v3_mock_oracle_node_id %>",
+        "<%= extras.wsteth_to_steth_ratio_oracle_node_id %>",
     ],
 ]
-extra.wstEthOracleNodeId.event = "NodeRegistered"
-extra.wstEthOracleNodeId.arg = 0
+extra.wsteth_oracle_node_id.event = "NodeRegistered"
+extra.wsteth_oracle_node_id.arg = 0
 depends = [
     "import.synthetix",
-    "invoke.registerNode_WstEthToStEthRatioOracle",
-    "invoke.registerNode_StEthAggregatorV3MockOracleNode",
+    "invoke.register_node_wsteth_to_steth_ratio_oracle",
+    "invoke.register_node_steth_aggregator_v3_mock_oracle_node",
 ]

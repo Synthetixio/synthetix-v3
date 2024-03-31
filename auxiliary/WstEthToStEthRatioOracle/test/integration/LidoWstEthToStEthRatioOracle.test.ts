@@ -26,14 +26,14 @@ describe('WstEthToStEthRatioOracleNode', () => {
 
     it('should compute zero price when no prices available', async () => {
       const { OracleManager } = systems();
-      const { wstEthOracleNodeId } = extras();
+      const { wsteth_oracle_node_id: wstEthOracleNodeId } = extras();
       const { price } = await OracleManager.process(wstEthOracleNodeId);
       assertBn.isZero(price);
     });
 
     it('should compute a wstETH price (concrete)', async () => {
       const { OracleManager } = systems();
-      const { wstEthOracleNodeId } = extras();
+      const { wsteth_oracle_node_id: wstEthOracleNodeId } = extras();
 
       const { stEthPrice, stEthToWstEth } = await configureOracleNodes({
         desiredStEthPrice: 2586,
@@ -50,7 +50,7 @@ describe('WstEthToStEthRatioOracleNode', () => {
     // Same as the compute test above but with random data.
     it('should compute a wstETH price', async () => {
       const { OracleManager } = systems();
-      const { wstEthOracleNodeId } = extras();
+      const { wsteth_oracle_node_id: wstEthOracleNodeId } = extras();
 
       const { stEthPrice, stEthToWstEth } = await configureOracleNodes({
         desiredStEthPrice: genNumber(1800, 10_000),
@@ -64,7 +64,7 @@ describe('WstEthToStEthRatioOracleNode', () => {
 
     it('should be zero if the stETH/USD price is zero', async () => {
       const { OracleManager } = systems();
-      const { wstEthOracleNodeId } = extras();
+      const { wsteth_oracle_node_id: wstEthOracleNodeId } = extras();
 
       await configureOracleNodes({ desiredStEthPrice: 0 });
 
@@ -74,7 +74,7 @@ describe('WstEthToStEthRatioOracleNode', () => {
 
     it('should be zero if wstETH/stETH exchange is zero', async () => {
       const { OracleManager } = systems();
-      const { wstEthOracleNodeId } = extras();
+      const { wsteth_oracle_node_id: wstEthOracleNodeId } = extras();
 
       await configureOracleNodes({ desiredStEthToWstEth: 0 });
 
