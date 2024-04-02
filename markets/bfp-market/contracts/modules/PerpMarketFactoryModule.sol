@@ -107,15 +107,19 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
 
-        if (market.skew == 0 && market.debtCorrection == 0 && market.totalTraderDebtUsd == 0) {
-            return totalCollateralValueUsd;
+        int128 skew = market.skew;
+        if (skew == 0) {
+            return
+                totalCollateralValueUsd -
+                market.debtCorrection.toUint() -
+                market.totalTraderDebtUsd;
         }
 
         uint256 oraclePrice = market.getOraclePrice();
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
         int256 priceWithFunding = oraclePrice.toInt() + unrecordedFunding;
         int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
-            market.skew.mulDecimal(priceWithFunding) -
+            skew.mulDecimal(priceWithFunding) -
             market.debtCorrection -
             market.totalTraderDebtUsd.toInt();
 
