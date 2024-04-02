@@ -7,7 +7,6 @@ salt = "sample-project"
 initialOwner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-
 [deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
