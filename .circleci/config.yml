@@ -14,7 +14,7 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+            - foundry-{{ .Environment.FOUNDRY_COMMIT }}
 
       - run:
           name: "Install Foundry"
@@ -30,11 +30,11 @@ commands:
               anvil --version
             else
               curl -L https://foundry.paradigm.xyz | bash
-              foundryup
+              foundryup --commit $FOUNDRY_COMMIT
             fi
 
       - save_cache:
-          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          key: foundry-{{ .Environment.FOUNDRY_COMMIT }}
           paths:
             - "~/.foundry"
 
