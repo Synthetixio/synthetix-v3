@@ -1247,7 +1247,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should not erroneously override existing debt settlement', async () => {
+    it('should not erroneously override existing debt on settlement', async () => {
       const { BfpMarketProxy } = systems();
 
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(

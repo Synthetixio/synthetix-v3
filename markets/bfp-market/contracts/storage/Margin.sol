@@ -117,8 +117,8 @@ library Margin {
                 if (availableUsdCollateral > 0) {
                     accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
                 }
-                // We wipe the `debtUsd` here because we assume passed `amountDeltaUsd` already considers
-                // any existing account debtUsd before calculating the debt delta.
+                // Wipe `debtUsd` because we assume the passed `amountDeltaUsd` already attributes debtUsd before
+                // passing the delta as `amountDeltaUsd`.
                 accountMargin.debtUsd = MathUtil.abs(usdCollateralAfterDebtPayment).to128();
             }
         }

@@ -156,7 +156,7 @@ describe('MarginModule Debt', async () => {
         })
       );
 
-      // Before doing anything, this trader has zero debt.
+      // Before doing anything, verify this trader has zero debt.
       const d1 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(d1.debtUsd);
 
