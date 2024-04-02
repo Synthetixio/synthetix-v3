@@ -23,7 +23,7 @@ import {
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, systems, restore, provider, pool, traders } = bs;
+  const { markets, systems, restore, provider, pool, traders, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
@@ -45,10 +45,10 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, order);
 
-      const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
+      const d1 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
       // Should not be 0 as our settlement has recomputed utilization
-      assertBn.notEqual(marketDigest.utilizationRate, bn(0));
+      assertBn.notEqual(d1.utilizationRate, bn(0));
 
       // Set config values to 0
       await setMarketConfiguration(bs, {
@@ -62,10 +62,79 @@ describe('PerpMarketFactoryModule Utilization', () => {
       assertBn.notEqual(marketDigest1.utilizationRate, bn(0));
 
       await BfpMarketProxy.recomputeUtilization(marketId);
-      const marketDigest2 = await BfpMarketProxy.getMarketDigest(market.marketId());
+      const d2 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
       // We now expect utilization to be 0
-      assertBn.equal(marketDigest2.utilizationRate, bn(0));
+      assertBn.equal(d2.utilizationRate, bn(0));
+    });
+
+    it('should not revert when collateral utilization is exactly at 100%', async () => {
+      const { BfpMarketProxy, Core } = systems();
+
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      const collateral = genOneOf(collateralsWithoutSusd());
+
+      // Remove fees incurred on the trade.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: bn(0),
+        takerFee: bn(0),
+      });
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(0),
+        maxKeeperFeeUsd: bn(0),
+      });
+
+      const withdrawable = await Core.getWithdrawableMarketUsd(marketId);
+      const { totalCollateralValueUsd } = await BfpMarketProxy.getMarketDigest(marketId);
+      const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
+
+      const { answer: marketPrice } = await market.aggregator().latestRoundData();
+
+      // Increase OI to be slighly above max delegated amount for this test to work.
+      await setMarketConfigurationById(bs, marketId, {
+        maxMarketSize: delegatedAmountUsd.div(marketPrice).add(10).toBN(),
+      });
+
+      // Perform trade where the collateral to deposit is equal exactly to the delegatedAmountUsd.
+      const { trader, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: delegatedAmountUsd.toNumber(),
+          desiredCollateral: collateral,
+        })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Credit `delegatedAmountUsd` so that withdrawableUsd is exactly eq deposited collateral.
+      await BfpMarketProxy.__test_creditAccountMarginProfitUsd(
+        trader.accountId,
+        marketId,
+        delegatedAmountUsd.toBN()
+      );
+
+      const { receipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.recomputeUtilization(marketId),
+        provider()
+      );
+      const { utilizationRate } = findEventSafe(
+        receipt,
+        'UtilizationRecomputed',
+        BfpMarketProxy
+      ).args;
+
+      assertBn.notEqual(utilizationRate, 0);
+
+      const withdrawable2 = await Core.getWithdrawableMarketUsd(marketId);
+      const { totalCollateralValueUsd: totalCollateralValueUsd2 } =
+        await BfpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.equal(withdrawable2, totalCollateralValueUsd2);
     });
 
     it('should support collateral utilization above 100%', async () => {
