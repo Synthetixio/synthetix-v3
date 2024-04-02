@@ -2121,6 +2121,37 @@ describe('MarginModule', async () => {
       );
     });
 
+    it('should revert the number of collaterals exceed maximum', async () => {
+      const { BfpMarketProxy } = systems();
+      const from = owner();
+
+      // Hardcoded system maximum. This must also change if the system changes.
+      const MAX_SUPPORTED_MARGIN_COLLATERALS = 10;
+
+      const collateralsToConfigure = MAX_SUPPORTED_MARGIN_COLLATERALS + genNumber(1, 5);
+
+      const newCollaterals = genListOf(collateralsToConfigure, () => genOneOf(collaterals()));
+      const newSynthMarketIds = newCollaterals.map(({ synthMarketId }) => synthMarketId());
+      const newOracleNodeIds = genListOf(newCollaterals.length, () => genBytes32());
+      const newMaxAllowables = genListOf(newCollaterals.length, () =>
+        bn(genNumber(10_000, 100_000))
+      );
+      const newRewardDistributors = newCollaterals.map(({ rewardDistributorAddress }) =>
+        rewardDistributorAddress()
+      );
+
+      await assertRevert(
+        BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
+          newSynthMarketIds,
+          newOracleNodeIds,
+          newMaxAllowables,
+          newRewardDistributors
+        ),
+        `MaxCollateralExceeded("${collateralsToConfigure}", "${MAX_SUPPORTED_MARGIN_COLLATERALS}")`,
+        BfpMarketProxy
+      );
+    });
+
     it('should revoke/approve collateral with 0/maxUint');
   });
 

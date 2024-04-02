@@ -28,6 +28,10 @@ contract MarginModule is IMarginModule {
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
 
+    // --- Constants --- //
+
+    uint256 private constant MAX_SUPPORTED_MARGIN_COLLATERALS = 10;
+
     // --- Runtime structs --- //
 
     struct Runtime_setMarginCollateralConfiguration {
@@ -356,6 +360,14 @@ contract MarginModule is IMarginModule {
         runtime.lengthAfter = synthMarketIds.length;
         runtime.maxApproveAmount = type(uint256).max;
         runtime.previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
+
+        // Number of synth collaterals to configure exceeds system maxmium.
+        if (runtime.lengthAfter > MAX_SUPPORTED_MARGIN_COLLATERALS) {
+            revert ErrorUtil.MaxCollateralExceeded(
+                runtime.lengthAfter,
+                MAX_SUPPORTED_MARGIN_COLLATERALS
+            );
+        }
 
         // Ensure all supplied arrays have the same length.
         if (

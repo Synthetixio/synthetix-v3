@@ -687,6 +687,7 @@ contract LiquidationModule {
 
 // @custom:artifact contracts/modules/MarginModule.sol:MarginModule
 contract MarginModule {
+    uint256 private constant MAX_SUPPORTED_MARGIN_COLLATERALS = 10;
     struct Runtime_setMarginCollateralConfiguration {
         uint256 lengthBefore;
         uint256 lengthAfter;
