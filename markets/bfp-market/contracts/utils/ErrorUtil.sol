@@ -77,13 +77,13 @@ library ErrorUtil {
     /// @notice Thrown when an account tries to withdrawAll without having any collateral.
     error NilCollateral();
 
-    ///  @notice Thrown an debt is found when none was expected to exist.
+    /// @notice Thrown an debt is found when none was expected to exist.
     error DebtFound(uint128 accountId, uint128 marketId);
 
     /// @notice Thrown when a user calls payDebt without any debt.
     error NoDebt();
 
-    /// @notice Thrown when attempting to deposit a collateral that has reached a max deportable amount.
+    /// @notice Thrown when exceeding max acceptable collateral.
     error MaxCollateralExceeded(uint256 value, uint256 max);
 
     /// @notice Thrown when the supplied collateral is unsupported.

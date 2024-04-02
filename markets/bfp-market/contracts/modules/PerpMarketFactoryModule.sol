@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
@@ -19,6 +19,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for int128;
     using DecimalMath for uint128;
     using DecimalMath for uint256;
+    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
@@ -107,15 +108,19 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
 
-        if (market.skew == 0 && market.debtCorrection == 0 && market.totalTraderDebtUsd == 0) {
-            return totalCollateralValueUsd;
+        int128 skew = market.skew;
+        if (skew == 0) {
+            return
+                totalCollateralValueUsd -
+                market.debtCorrection.toUint() -
+                market.totalTraderDebtUsd;
         }
 
         uint256 oraclePrice = market.getOraclePrice();
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
         int256 priceWithFunding = oraclePrice.toInt() + unrecordedFunding;
         int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
-            market.skew.mulDecimal(priceWithFunding) -
+            skew.mulDecimal(priceWithFunding) -
             market.debtCorrection -
             market.totalTraderDebtUsd.toInt();
 

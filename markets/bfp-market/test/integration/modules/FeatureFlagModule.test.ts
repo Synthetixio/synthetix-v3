@@ -1,3 +1,7 @@
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { wei } from '@synthetixio/wei';
+import assert from 'assert';
 import { formatBytes32String } from 'ethers/lib/utils';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
@@ -11,10 +15,6 @@ import {
   ADDRESS0,
   withExplicitEvmMine,
 } from '../../helpers';
-import assert from 'assert';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { wei } from '@synthetixio/wei';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('FeatureFlagModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -278,7 +278,7 @@ describe('FeatureFlagModule', () => {
 
   it('should disable splitAccount', async () => {
     const { BfpMarketProxy } = systems();
-    const feature = formatBytes32String('mergeAccount');
+    const feature = formatBytes32String('splitAccount');
     const { receipt } = await withExplicitEvmMine(
       () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()

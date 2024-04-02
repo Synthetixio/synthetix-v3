@@ -146,7 +146,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint128 marketId,
         uint128 proportion
     ) external {
-        FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
+        FeatureFlag.ensureAccessToFeature(Flags.SPLIT_ACCOUNT);
         Account.loadAccountAndValidatePermission(
             fromId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
@@ -373,7 +373,7 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        // Realize the toPostion.
+        // Realize the toPosition.
         toAccountMargin.realizeAccountPnlAndUpdate(
             market,
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
