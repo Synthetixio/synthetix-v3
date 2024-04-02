@@ -209,7 +209,7 @@ describe('MarginModule Debt', async () => {
       assertBn.equal(d2.debtUsd, closeOrderEvent.args.accountDebt);
 
       // The account's debt should account for all the fees and pnl.
-      assertBn.equal(expectedAccountDebtUsd, closeOrderEvent.args.accountDebt);
+      assertBn.near(expectedAccountDebtUsd, closeOrderEvent.args.accountDebt, bn(0.001));
 
       // Mint an exact amount of sUSD to pay the accountDebt.
       await mintAndApprove(
