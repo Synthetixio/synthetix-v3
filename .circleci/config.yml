@@ -548,32 +548,27 @@ jobs:
       - store_artifacts:
           path: "lcov.info"
 
+  lock-foundry-version:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+
 workflows:
   version: 2.1
 
-  anvil-per-test:
+  lock-foundry-version:
     when:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["lock-foundry-version", << pipeline.git.branch >>]
     jobs:
-      - build-testable
-
-      - test-contracts:
-          name: "test-perps-market"
-          requires: [build-testable]
-          workspace: "@synthetixio/perps-market"
-          parallelism: 8
-
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          workspace: "@synthetixio/bfp-market"
-          parallelism: 4
+      - lock-foundry-version
 
   tests:
     unless:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["lock-foundry-version", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
