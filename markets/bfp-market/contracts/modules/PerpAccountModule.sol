@@ -373,7 +373,7 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        // Realize the toPostion.
+        // Realize the toPosition.
         toAccountMargin.realizeAccountPnlAndUpdate(
             market,
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()

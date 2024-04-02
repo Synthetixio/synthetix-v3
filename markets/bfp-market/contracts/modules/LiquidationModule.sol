@@ -368,7 +368,7 @@ contract LiquidationModule is ILiquidationModule {
 
         liquidateCollateral(accountId, marketId, market, PerpMarketConfiguration.load());
 
-        // Pay flagger.
+        // Pay the caller.
         globalConfig.synthetix.withdrawMarketUsd(
             marketId,
             ERC2771Context._msgSender(),
