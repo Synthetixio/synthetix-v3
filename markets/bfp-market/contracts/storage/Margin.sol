@@ -118,7 +118,7 @@ library Margin {
                 }
 
                 // `accountMargin.debtUsd` may have existing debt, add the remaining `usdCollateralAfterDebtPayment`
-                // after deducting any existing collateral that may exist.
+                // after deducting any sUSD that may exist.
                 //
                 // e.g. 100 sUSD collateral, `amountDelta = -150` then debt is `currentDebt + abs(100 - 150)`.
                 accountMargin.debtUsd += MathUtil.abs(usdCollateralAfterDebtPayment).to128();
