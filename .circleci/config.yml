@@ -29,6 +29,7 @@ commands:
               echo "Anvil already installed"
               anvil --version
             else
+              curl https://sh.rustup.rs -sSf | sh
               curl -L https://foundry.paradigm.xyz | bash
               foundryup --commit $FOUNDRY_COMMIT
             fi
