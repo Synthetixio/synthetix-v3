@@ -1,6 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assert from 'assert';
 import { shuffle } from 'lodash';
@@ -16,6 +17,7 @@ import {
   toRoundRobinGenerators,
 } from '../../generators';
 import {
+  commitAndSettle,
   commitOrder,
   depositMargin,
   findEventSafe,
@@ -28,7 +30,7 @@ import {
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, traders, spotMarket } = bs;
+  const { systems, restore, provider, keeper, traders, collateralsWithoutSusd, spotMarket } = bs;
 
   beforeEach(restore);
 
@@ -265,6 +267,72 @@ describe('OrderModule Cancelations', () => {
     });
 
     it('should emit all events in correct order');
+
+    it('should not erroneously override existing debt on cancel', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          // Ensure we use non sUSD so the account accrues debt.
+          desiredCollateral: genOneOf(collateralsWithoutSusd()),
+          desiredMarginUsdDepositAmount: 10_000,
+        })
+      );
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Incur a loss.
+      await market.aggregator().mockSetCurrentPrice(wei(order1.oraclePrice).mul(0.95).toBN());
+
+      // Close with a loss.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order1.sizeDelta.mul(-1),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order2);
+
+      // Assert there is existing debt.
+      const accountDigest1 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.gt(accountDigest1.debtUsd, 0);
+
+      // Open an order that we intend to close.
+      const order3 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Commit the order, fast forward time so it can be canceled.
+      await commitOrder(bs, marketId, trader, order3);
+      const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      await fastForwardTo(expireTime, provider());
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+      // Verify the order exists.
+      const orderDigest1 = await BfpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assert.equal(orderDigest1.isStale, true);
+      assertBn.equal(order3.sizeDelta, orderDigest1.sizeDelta);
+
+      // Cancel the order and ensure fees are > 0.
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
+        provider()
+      );
+      const { keeperFee } = findEventSafe(receipt, 'OrderCanceled', BfpMarketProxy).args;
+      assertBn.gt(keeperFee, 0);
+
+      // New debt should be previous debt + keeperFee.
+      const accountDigest2 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.equal(accountDigest2.debtUsd, accountDigest1.debtUsd.add(keeperFee));
+    });
   });
 
   describe('cancelStaleOrder', () => {
