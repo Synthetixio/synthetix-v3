@@ -455,10 +455,8 @@ contract OrderModule is IOrderModule {
             : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
 
         if (keeperFee > 0) {
-            Margin.load(accountId, marketId).updateAccountDebtAndCollateral(
-                market,
-                -keeperFee.toInt()
-            );
+            Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
+            market.totalTraderDebtUsd += keeperFee.to128();
             globalConfig.synthetix.withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),

@@ -116,12 +116,7 @@ library Margin {
                 if (availableUsdCollateral > 0) {
                     accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
                 }
-
-                // `accountMargin.debtUsd` may have existing debt, add the remaining `usdCollateralAfterDebtPayment`
-                // after deducting any sUSD that may exist.
-                //
-                // e.g. 100 sUSD collateral, `amountDelta = -150` then debt is `currentDebt + abs(100 - 150)`.
-                accountMargin.debtUsd += MathUtil.abs(usdCollateralAfterDebtPayment).to128();
+                accountMargin.debtUsd = MathUtil.abs(usdCollateralAfterDebtPayment).to128();
             }
         }
 
