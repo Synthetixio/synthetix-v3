@@ -95,7 +95,7 @@ salt = "<%= settings.salt %>"
 # --- Test helper module (only available for local test builds) --- #
 
 [contract.__TestHelperModule]
-artifact = "contracts/modules/test/__TestHelperModule.sol:__TestHelperModule"
+artifact = "contracts/mocks/modules/__TestHelperModule.sol:__TestHelperModule"
 args = []
 
 # --- Core router --- #
