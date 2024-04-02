@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
@@ -19,6 +19,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for int128;
     using DecimalMath for uint128;
     using DecimalMath for uint256;
+    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
