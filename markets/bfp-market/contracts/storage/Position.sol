@@ -305,7 +305,6 @@ library Position {
             }
         }
 
-        uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(accountId, market.id);
         return
             Position.ValidatedTrade(
                 newPosition,
@@ -314,7 +313,8 @@ library Position {
                 getNextMarginUsd(
                     MathUtil
                         .max(
-                            collateralUsd.toInt() +
+                            // Even though these marginValues are for liquidation checks, the collateralUsd can still be used here, we just need to "recompute" the pnl adjustment with the fill price
+                            marginValuesForLiqChecks.collateralUsd.toInt() +
                                 Margin.getPnlAdjustmentUsd(accountId, market, params.fillPrice),
                             0
                         )
@@ -322,7 +322,7 @@ library Position {
                     orderFee,
                     keeperFee
                 ),
-                collateralUsd
+                marginValuesForLiqChecks.collateralUsd
             );
     }
 
