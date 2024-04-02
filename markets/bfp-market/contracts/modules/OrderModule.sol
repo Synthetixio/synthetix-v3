@@ -320,15 +320,17 @@ contract OrderModule is IOrderModule {
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
-            accountMargin.updateAccountDebtAndCollateral(
+            accountMargin.realizeAccountPnlAndUpdate(
                 market,
-                // What is `newMarginUsd`?
+                // `newMarginUsd` is (oldMargin - orderFee - keeperFee).
                 //
-                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl (from entry price changes), accruedFunding,
-                // accruedUtilization, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
-                // as we dont want price impact to be deducted yet.
+                // Where `oldMargin` includes price PnL, accrued funding/util, account debt, and prev fees. We sub
+                // `collateralUsd` (opposed to `marginUsd`) here because `newMarginUsd` already considers this settlement
+                // fees and we want to avoid attributing price PnL (due to pd adjusted oracle price) now as its already
+                // tracked in the new position price PnL.
                 //
-                // TLDR; This is basically the `total realised PnL` for this position.
+                // The value passed is then just realized profits/losses of previous position, including fees paid during
+                // this order settlement.
                 runtime.trade.newMarginUsd.toInt() -
                     runtime.trade.marginValues.collateralUsd.toInt()
             );

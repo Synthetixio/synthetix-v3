@@ -80,13 +80,14 @@ library Margin {
     // --- Mutations --- //
 
     /**
-     * @dev Reevaluates the collateral and debt for `accountId` with `amountDeltaUsd`. When amount is negative,
-     * portion of their collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
-     * account.
+     * @dev Re-evaluates the debt and collateral for `accountMargin` with `amountDeltaUsd`. When amount is negative,
+     * a portion of their sUSD collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
+     * account margin.
      *
-     * NOTE: If `amountDeltaUsd` is margin then expected to include previous debt.
+     * NOTE: `amountDeltaUsd` _must_ consider margin and incorporate `debtUsd`. This also performs a global change
+     * in debt and collateral for the supplied `market`.
      */
-    function updateAccountDebtAndCollateral(
+    function realizeAccountPnlAndUpdate(
         Margin.Data storage accountMargin,
         PerpMarket.Data storage market,
         int256 amountDeltaUsd
@@ -116,6 +117,8 @@ library Margin {
                 if (availableUsdCollateral > 0) {
                     accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
                 }
+                // We wipe the `debtUsd` here because we assume passed `amountDeltaUsd` already considers
+                // any existing account debtUsd before calculating the debt delta.
                 accountMargin.debtUsd = MathUtil.abs(usdCollateralAfterDebtPayment).to128();
             }
         }

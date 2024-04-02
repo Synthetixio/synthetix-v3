@@ -374,7 +374,7 @@ contract PerpAccountModule is IPerpAccountModule {
         }
 
         // Realize the toPostion.
-        toAccountMargin.updateAccountDebtAndCollateral(
+        toAccountMargin.realizeAccountPnlAndUpdate(
             market,
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );

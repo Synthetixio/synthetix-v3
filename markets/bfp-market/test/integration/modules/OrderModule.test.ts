@@ -1247,6 +1247,70 @@ describe('OrderModule', () => {
       );
     });
 
+    it('should not erroneously override existing debt settlement', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          // Ensure we use non sUSD so the account accrues debt.
+          desiredCollateral: genOneOf(collateralsWithoutSusd()),
+          desiredMarginUsdDepositAmount: 10_000,
+        })
+      );
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Incur a loss.
+      await market.aggregator().mockSetCurrentPrice(wei(order1.oraclePrice).mul(0.95).toBN());
+
+      // Close with a loss.
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: order1.sizeDelta.mul(-1),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order2);
+
+      // Assert there is existing debt.
+      const accountDigest1 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.gt(accountDigest1.debtUsd, 0);
+
+      // Open an order that we intend to close.
+      const order3 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Commit the order.
+      await commitOrder(bs, marketId, trader, order3);
+      const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      await fastForwardTo(settlementTime, provider());
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+      // Verify the order exists.
+      const orderDigest1 = await BfpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(order3.sizeDelta, orderDigest1.sizeDelta);
+
+      // Settle the order.
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
+        provider()
+      );
+      const { orderFee, keeperFee } = findEventSafe(receipt, 'OrderSettled', BfpMarketProxy).args;
+
+      // New debt should be previous debt + keeperFee(s).
+      const accountDigest2 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.equal(accountDigest2.debtUsd, accountDigest1.debtUsd.add(keeperFee).add(orderFee));
+    });
+
     it('should accurately account for funding when holding for a long time', async () => {
       const { BfpMarketProxy } = systems();
       // Create a static market to make funding assertion easier.
