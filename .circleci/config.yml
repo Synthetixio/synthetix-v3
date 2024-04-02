@@ -29,9 +29,16 @@ commands:
               echo "Anvil already installed"
               anvil --version
             else
+              echo FOUNDRY_COMMIT=$FOUNDRY_COMMIT
               curl https://sh.rustup.rs -sSf | sh
-              curl -L https://foundry.paradigm.xyz | bash
-              foundryup --commit $FOUNDRY_COMMIT
+              git clone "https://github.com/foundry-rs/foundry.git" --no-checkout
+              cd foundry
+              git checkout "$FOUNDRY_COMMIT"
+              cargo build --bins --release
+              cp ./target/release/forge $HOME/.foundry/bin/forge
+              cp ./target/release/cast $HOME/.foundry/bin/cast
+              cp ./target/release/anvil $HOME/.foundry/bin/anvil
+              cp ./target/release/chisel $HOME/.foundry/bin/chisel
             fi
 
       - save_cache:
