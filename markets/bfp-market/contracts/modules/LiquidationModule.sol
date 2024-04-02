@@ -247,6 +247,7 @@ contract LiquidationModule is ILiquidationModule {
         liquidateCollateral(accountId, marketId, market, globalConfig);
 
         address msgSender = ERC2771Context._msgSender();
+
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msgSender;
 
