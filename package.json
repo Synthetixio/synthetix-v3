@@ -73,7 +73,10 @@
     "typescript": "^5.3.3"
   },
   "resolutions": {
-    "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors"
+    "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors",
+    "@usecannon/builder": "portal:/home/daniel/code/cannon/packages/builder",
+    "@usecannon/cli": "portal:/home/daniel/code/cannon/packages/cli",
+    "hardhat-cannon": "portal:/home/daniel/code/cannon/packages/hardhat-cannon"
   },
   "pre-commit": [
     "check-staged"

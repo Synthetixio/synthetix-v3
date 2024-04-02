@@ -3,76 +3,69 @@ version = "<%= package.version %>"
 description = "bfp-market for Synthetix v3"
 
 # NOTE: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
-[setting.owner]
-description = "bfp-market owner"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.synthetixPreset]
-defaultValue = "main"
-
-[setting.synthetixPackage]
-defaultValue = "synthetix:latest"
-
-[setting.salt]
-defaultValue = "snax"
+[var.main]
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+synthetixPreset = "main"
+synthetixPackage = "synthetix:latest"
+salt = "snax"
 
 # --- External Imports --- #
 
-[import.synthetix]
+[pull.synthetix]
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
 # --- Module contracts --- #
 
-[contract.OrderModule]
+[deploy.OrderModule]
 artifact = "OrderModule"
 args = []
 
-[contract.LiquidationModule]
+[deploy.LiquidationModule]
 artifact = "LiquidationModule"
 args = []
 
-[contract.PerpMarketFactoryModule]
+[deploy.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
 args = []
 
-[contract.MarketConfigurationModule]
+[deploy.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 args = []
 
-[contract.PerpAccountModule]
+[deploy.PerpAccountModule]
 artifact = "PerpAccountModule"
 args = []
 
-[contract.MarginModule]
+[deploy.MarginModule]
 artifact = "MarginModule"
 args = []
 
-[contract.PerpRewardDistributorFactoryModule]
+[deploy.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
 args = []
 
-[contract.FeatureFlagModule]
+[deploy.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 args = []
 
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
 
-[contract.SettlementHookModule]
+[deploy.SettlementHookModule]
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
 args = []
 
 # --- Distributor contract --- #
 
-[contract.PerpRewardDistributor]
+[deploy.PerpRewardDistributor]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
 args = []
 
 # --- Market proxy contract --- #
 
-[contract.InitialBfpMarketProxy]
+[deploy.InitialBfpMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]

@@ -2,74 +2,60 @@ name = "synthetix-perps-market"
 version = "<%= package.version %>"
 description = "Perps market implementation"
 
-[setting.coreProxyOwner]
-description = "owner of v3 core proxy"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+[var.main]
+coreProxyOwner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+synthetixPackage = "synthetix:latest"
+spotMarketPackage = "synthetix-spot-market:latest"
+synthetixPreset = "main"
+spotMarketPreset = "main"
+salt = "snax"
 
-[setting.owner]
-description = "perps market owner"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.synthetixPackage]
-defaultValue = "synthetix:latest"
-
-[setting.synthetixPreset]
-defaultValue = "main"
-
-[setting.spotMarketPreset]
-defaultValue = "main"
-
-[setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:latest"
-
-[setting.salt]
-defaultValue = "snax"
-
-[import.synthetix]
+[pull.synthetix]
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
-[import.spotMarket]
+[pull.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
 preset = "<%= settings.spotMarketPreset %>"
 
-[contract.PerpsMarketFactoryModule]
+[deploy.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.AsyncOrderModule]
+[deploy.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AsyncOrderSettlementPythModule]
+[deploy.AsyncOrderSettlementPythModule]
 artifact = "AsyncOrderSettlementPythModule"
 
-[contract.AsyncOrderCancelModule]
+[deploy.AsyncOrderCancelModule]
 artifact = "AsyncOrderCancelModule"
 
-[contract.PerpsAccountModule]
+[deploy.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
-[contract.PerpsMarketModule]
+[deploy.PerpsMarketModule]
 artifact = "PerpsMarketModule"
 
-[contract.LiquidationModule]
+[deploy.LiquidationModule]
 artifact = "LiquidationModule"
 
-[contract.MarketConfigurationModule]
+[deploy.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 
-[contract.FeatureFlagModule]
+[deploy.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
-[contract.InitialProxy]
+[deploy.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 
-[contract.GlobalPerpsMarketModule]
+[deploy.GlobalPerpsMarketModule]
 artifact = "GlobalPerpsMarketModule"
 
 # Core
@@ -141,8 +127,8 @@ args = [
     "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
 ]
 fromCall.func = "owner"
-extra.superMarketId.event = "FactoryInitialized"
-extra.superMarketId.arg = 0
+var.superMarketId.event = "FactoryInitialized"
+var.superMarketId.arg = 0
 
 [invoke.enableFeatureCreateAccount]
 target = ["PerpsMarketProxy"]

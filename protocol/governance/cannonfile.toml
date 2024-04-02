@@ -2,54 +2,41 @@ name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 
-[setting.salt]
-defaultValue = "governance"
-
+[var.main]
+salt = "governance"
 # Deployment Owner, defaults to first hardhat account
-[setting.owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+council_token_name = "Synthetix Governance Module"
+council_token_symbol = "SNXGOV"
+init_council_member = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+epoch_start = ""
+epoch_duration = ""
+voting_period_duration = "7"
 
-[setting.council_token_name]
-defaultValue = "Synthetix Governance Module"
-
-[setting.council_token_symbol]
-defaultValue = "SNXGOV"
-
-[setting.init_council_member]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
-
-[setting.epoch_start]
-
-[setting.epoch_duration]
-defaultValue = "90" # days
-
-[setting.voting_period_duration]
-defaultValue = "7" # days
-
-[contract.InitialModuleBundle]
+[deploy.InitialModuleBundle]
 artifact = "InitialModuleBundle"
 create2 = true
 
-[contract.InitialProxy]
+[deploy.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
 
-[contract.AssociatedSystemsModule]
+[deploy.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.ElectionModule]
+[deploy.ElectionModule]
 artifact = "ElectionModule"
 
-[contract.ElectionInspectorModule]
+[deploy.ElectionInspectorModule]
 artifact = "ElectionInspectorModule"
 
-[contract.CouncilTokenModule]
+[deploy.CouncilTokenModule]
 artifact = "CouncilTokenModule"
 
-[contract.DebtShareMock]
+[deploy.DebtShareMock]
 artifact = "DebtShareMock"
 
 [router.CoreRouter]
@@ -103,5 +90,5 @@ args = [
 ]
 from = "<%= settings.owner %>"
 
-[provision.trusted_multicall_forwarder]
+[clone.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"

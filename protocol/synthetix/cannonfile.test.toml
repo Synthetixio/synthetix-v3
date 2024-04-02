@@ -3,62 +3,62 @@ version = "<%= package.version %>-testable"
 include = ["cannonfile.toml"]
 
 # use the testable oracle manager
-[setting.oracle_manager_source]
-defaultValue = "oracle-manager:<%= package.version %>-testable"
+[var.testableMain]
+oracle_manager_source = "oracle-manager:<%= package.version %>-testable"
 
 # Test Modules
-[contract.TestableAccountStorage]
+[deploy.TestableAccountStorage]
 artifact = "contracts/generated/test/TestableAccountStorage.sol:TestableAccountStorage"
 
-[contract.TestableAccountRBACStorage]
+[deploy.TestableAccountRBACStorage]
 artifact = "contracts/generated/test/TestableAccountRBACStorage.sol:TestableAccountRBACStorage"
 
-[contract.TestableCollateralStorage]
+[deploy.TestableCollateralStorage]
 artifact = "contracts/generated/test/TestableCollateralStorage.sol:TestableCollateralStorage"
 
-[contract.TestableCollateralConfigurationStorage]
+[deploy.TestableCollateralConfigurationStorage]
 artifact = "contracts/generated/test/TestableCollateralConfigurationStorage.sol:TestableCollateralConfigurationStorage"
 
-[contract.TestableCollateralLockStorage]
+[deploy.TestableCollateralLockStorage]
 artifact = "contracts/generated/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
-[contract.TestableCrossChainStorage]
+[deploy.TestableCrossChainStorage]
 artifact = "contracts/generated/test/TestableCrossChainStorage.sol:TestableCrossChainStorage"
 
-[contract.TestableDistributionStorage]
+[deploy.TestableDistributionStorage]
 artifact = "contracts/generated/test/TestableDistributionStorage.sol:TestableDistributionStorage"
 
-[contract.TestableDistributionActorStorage]
+[deploy.TestableDistributionActorStorage]
 artifact = "contracts/generated/test/TestableDistributionActorStorage.sol:TestableDistributionActorStorage"
 
-[contract.TestableMarketStorage]
+[deploy.TestableMarketStorage]
 artifact = "contracts/generated/test/TestableMarketStorage.sol:TestableMarketStorage"
 
-[contract.TestableMarketConfigurationStorage]
+[deploy.TestableMarketConfigurationStorage]
 artifact = "contracts/generated/test/TestableMarketConfigurationStorage.sol:TestableMarketConfigurationStorage"
 
-[contract.TestableMarketPoolInfoStorage]
+[deploy.TestableMarketPoolInfoStorage]
 artifact = "contracts/generated/test/TestableMarketPoolInfoStorage.sol:TestableMarketPoolInfoStorage"
 
-[contract.TestablePoolStorage]
+[deploy.TestablePoolStorage]
 artifact = "contracts/generated/test/TestablePoolStorage.sol:TestablePoolStorage"
 
-[contract.TestableSystemPoolConfigurationStorage]
+[deploy.TestableSystemPoolConfigurationStorage]
 artifact = "contracts/generated/test/TestableSystemPoolConfigurationStorage.sol:TestableSystemPoolConfigurationStorage"
 
-[contract.TestableRewardDistributionStorage]
+[deploy.TestableRewardDistributionStorage]
 artifact = "contracts/generated/test/TestableRewardDistributionStorage.sol:TestableRewardDistributionStorage"
 
-[contract.TestableRewardDistributionClaimStatusStorage]
+[deploy.TestableRewardDistributionClaimStatusStorage]
 artifact = "contracts/generated/test/TestableRewardDistributionClaimStatusStorage.sol:TestableRewardDistributionClaimStatusStorage"
 
-[contract.TestableScalableMappingStorage]
+[deploy.TestableScalableMappingStorage]
 artifact = "contracts/generated/test/TestableScalableMappingStorage.sol:TestableScalableMappingStorage"
 
-[contract.TestableVaultEpochStorage]
+[deploy.TestableVaultEpochStorage]
 artifact = "contracts/generated/test/TestableVaultEpochStorage.sol:TestableVaultEpochStorage"
 
-[contract.TestableVaultStorage]
+[deploy.TestableVaultStorage]
 artifact = "contracts/generated/test/TestableVaultStorage.sol:TestableVaultStorage"
 
 # Core
@@ -102,10 +102,10 @@ contracts = [
 ]
 
 # Post stuff
-[contract.CollateralMock]
+[deploy.CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 
-[contract.Collateral2Mock]
+[deploy.Collateral2Mock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 salt = "2"
 

@@ -2,54 +2,47 @@ name = "synthetix-spot-market"
 version = "<%= package.version %>"
 description = "Spot market implementation"
 
-[setting.owner]
-description = "spot market owner"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+[var.main]
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+synthetixPackage = "synthetix"
+synthetixPreset = "main"
+salt = "snax"
 
-[setting.synthetixPackage]
-defaultValue = "synthetix"
-
-[setting.synthetixPreset]
-defaultValue = "main"
-
-[setting.salt]
-defaultValue = "snax"
-
-[import.synthetix]
+[pull.synthetix]
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
-[contract.SpotMarketFactoryModule]
+[deploy.SpotMarketFactoryModule]
 artifact = "SpotMarketFactoryModule"
 
-[contract.AtomicOrderModule]
+[deploy.AtomicOrderModule]
 artifact = "AtomicOrderModule"
 
-[contract.AsyncOrderModule]
+[deploy.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AsyncOrderSettlementModule]
+[deploy.AsyncOrderSettlementModule]
 artifact = "AsyncOrderSettlementModule"
 
-[contract.AsyncOrderConfigurationModule]
+[deploy.AsyncOrderConfigurationModule]
 artifact = "AsyncOrderConfigurationModule"
 
-[contract.WrapperModule]
+[deploy.WrapperModule]
 artifact = "WrapperModule"
 
-[contract.MarketConfigurationModule]
+[deploy.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 
-[contract.SynthTokenModule]
+[deploy.SynthTokenModule]
 artifact = "SynthTokenModule"
 
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
-[contract.FeatureFlagModule]
+[deploy.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.InitialSpotMarketProxy]
+[deploy.InitialSpotMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]

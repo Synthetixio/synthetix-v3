@@ -3,51 +3,47 @@ version = "<%= package.version %>"
 description = "Test Deployment for Synthetix's Core Modules project"
 
 # `salt` here only affects proxy contract
-[setting.salt]
-description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "core-modules"
-
-[setting.owner]
-description = "Admin user for the system"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+[var.main]
+salt = "core-modules"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 # Core Modules
-[contract.OwnerModule]
+[deploy.OwnerModule]
 artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
 
-[contract.UpgradeModule]
+[deploy.UpgradeModule]
 artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
 
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
-[contract.AssociatedSystemsModule]
+[deploy.AssociatedSystemsModule]
 artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.FeatureFlagModule]
+[deploy.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.TokenModule]
+[deploy.TokenModule]
 artifact = "contracts/modules/TokenModule.sol:TokenModule"
 
-[contract.DecayTokenModule]
+[deploy.DecayTokenModule]
 artifact = "contracts/modules/DecayTokenModule.sol:DecayTokenModule"
 
-[contract.NftModule]
+[deploy.NftModule]
 artifact = "contracts/modules/NftModule.sol:NftModule"
 
 # Mocks
-[contract.SampleFeatureFlagModule]
+[deploy.SampleFeatureFlagModule]
 artifact = "contracts/modules/mocks/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
 
-[contract.SampleOwnedModule]
+[deploy.SampleOwnedModule]
 artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 
-[contract.GenericModule]
+[deploy.GenericModule]
 artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
 
 # Setup Initial Proxy
-[contract.Proxy]
+[deploy.Proxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreRouter.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreRouter"]

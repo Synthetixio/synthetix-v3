@@ -2,34 +2,28 @@ name = "synthetix-sample-project"
 version = "<%= package.version %>"
 description = "Sample usage of the router manager"
 
-[setting.salt]
-description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "sample-project"
+[var.main]
+salt = "sample-project"
+initialOwner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.initialOwner]
-description = "Admin user to initialize the system"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.owner]
-description = "Admin user for the system"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
-[contract.InitializableModule]
+[deploy.InitializableModule]
 artifact = "contracts/modules/InitializableModule.sol:InitializableModule"
 
-[contract.SettingsModule]
+[deploy.SettingsModule]
 artifact = "contracts/modules/SettingsModule.sol:SettingsModule"
 
-[contract.SomeModule]
+[deploy.SomeModule]
 artifact = "contracts/modules/SomeModule.sol:SomeModule"
 
-[contract.AnotherModule]
+[deploy.AnotherModule]
 artifact = "contracts/modules/AnotherModule.sol:AnotherModule"
 
-[contract.InitialProxy]
+[deploy.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.initialOwner %>"]
 abiOf = ["CoreModule"]

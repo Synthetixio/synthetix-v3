@@ -3,90 +3,80 @@ version = "<%= package.version %>"
 description = "bfp-market for Synthetix v3"
 
 # NOTE: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
-[setting.owner]
+[var.main]
 description = "bfp-market owner"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.synthetixPreset]
-defaultValue = "main"
-
-[setting.synthetixPackage]
-defaultValue = "synthetix:latest"
-
-[setting.spotMarketPreset]
-defaultValue = "main"
-
-[setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:latest"
-
-[setting.salt]
-defaultValue = "snax"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+synthetixPreset = "main"
+synthetixPackage = "synthetix:latest"
+spotMarketPreset = "main"
+spotMarketPackage = "synthetix-spot-market:latest"
+salt = "snax"
 
 # --- External Imports --- #
 
-[import.synthetix]
+[pull.synthetix]
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
-[import.spotMarket]
+[pull.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
 preset = "<%= settings.spotMarketPreset %>"
 
-[import.pyth]
+[pull.pyth]
 source = "pyth"
 args = [120, 1] # 120s, 1wei
 
 # --- Module Contracts --- #
 
-[contract.OrderModule]
+[deploy.OrderModule]
 artifact = "OrderModule"
 args = []
 
-[contract.LiquidationModule]
+[deploy.LiquidationModule]
 artifact = "LiquidationModule"
 args = []
 
-[contract.PerpMarketFactoryModule]
+[deploy.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
 args = []
 
-[contract.MarketConfigurationModule]
+[deploy.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 args = []
 
-[contract.PerpAccountModule]
+[deploy.PerpAccountModule]
 artifact = "PerpAccountModule"
 args = []
 
-[contract.MarginModule]
+[deploy.MarginModule]
 artifact = "MarginModule"
 args = []
 
-[contract.PerpRewardDistributorFactoryModule]
+[deploy.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
 args = []
 
-[contract.FeatureFlagModule]
+[deploy.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 args = []
 
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
 
-[contract.SettlementHookModule]
+[deploy.SettlementHookModule]
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
 args = []
 
 # --- Distributor contract --- #
 
-[contract.PerpRewardDistributor]
+[deploy.PerpRewardDistributor]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
 args = []
 
 # --- Market proxy contract --- #
 
-[contract.InitialBfpMarketProxy]
+[deploy.InitialBfpMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
@@ -139,32 +129,32 @@ factory.PerpAccountProxy.arg = 2
 
 # --- Mocks --- #
 
-[contract.SettlementHookMock]
+[deploy.SettlementHookMock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
 args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "1"
 
-[contract.SettlementHook2Mock]
+[deploy.SettlementHook2Mock]
 artifact = "contracts/mocks/SettlementHookMock.sol:SettlementHookMock"
 args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "2"
 
-[contract.CollateralMock]
+[deploy.CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "1"
 
-[contract.Collateral2Mock]
+[deploy.Collateral2Mock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "2"
 
-[contract.CollateralMockD18]
+[deploy.CollateralMockD18]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "3"
 
-[contract.CollateralMockD8]
+[deploy.CollateralMockD8]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "4"
@@ -189,7 +179,7 @@ target = ["CollateralMockD8"]
 func = "initialize"
 args = ["CollateralMockD18", "CMD8", "8"]
 
-[contract.MergeAccountSettlementHookMock]
+[deploy.MergeAccountSettlementHookMock]
 artifact = "contracts/mocks/MergeAccountSettlementHookMock.sol:MergeAccountSettlementHookMock"
 args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "3"

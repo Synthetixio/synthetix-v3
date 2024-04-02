@@ -3,15 +3,15 @@ version = "<%= package.version %>-testable"
 
 # --- Imports --- #
 
-[import.synthetix]
+[pull.synthetix]
 source = "synthetix:latest"
 
 # --- wstETH mock (Lido contracts) --- #
 
-[contract.WstETHMock]
+[deploy.WstETHMock]
 artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
 
-[contract.WstEthToStEthRatioOracle]
+[deploy.WstEthToStEthRatioOracle]
 artifact = "contracts/WstEthToStEthRatioOracle.sol:WstEthToStEthRatioOracle"
 args = ["<%= contracts.WstETHMock.address %>"]
 
@@ -26,13 +26,13 @@ args = [
     [
     ],
 ]
-extra.wsteth_to_steth_ratio_oracle_node_id.event = "NodeRegistered"
-extra.wsteth_to_steth_ratio_oracle_node_id.arg = 0
+var.wsteth_to_steth_ratio_oracle_node_id.event = "NodeRegistered"
+var.wsteth_to_steth_ratio_oracle_node_id.arg = 0
 depends = ["contract.WstETHMock", "contract.WstEthToStEthRatioOracle"]
 
 # --- CL stETH/USD oracle --- #
 
-[contract.StEthAggregatorV3MockOracleNode]
+[deploy.StEthAggregatorV3MockOracleNode]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
 
@@ -47,8 +47,8 @@ args = [
     [
     ],
 ]
-extra.steth_aggregator_v3_mock_oracle_node_id.event = "NodeRegistered"
-extra.steth_aggregator_v3_mock_oracle_node_id.arg = 0
+var.steth_aggregator_v3_mock_oracle_node_id.event = "NodeRegistered"
+var.steth_aggregator_v3_mock_oracle_node_id.arg = 0
 depends = ["contract.StEthAggregatorV3MockOracleNode"]
 
 # --- wstETH/USD oracle --- #
@@ -63,12 +63,12 @@ args = [
     "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
     # stETH/USD, wstETH/stETH
     [
-        "<%= extras.steth_aggregator_v3_mock_oracle_node_id %>",
-        "<%= extras.wsteth_to_steth_ratio_oracle_node_id %>",
+        "<%= settings.steth_aggregator_v3_mock_oracle_node_id %>",
+        "<%= settings.wsteth_to_steth_ratio_oracle_node_id %>",
     ],
 ]
-extra.wsteth_oracle_node_id.event = "NodeRegistered"
-extra.wsteth_oracle_node_id.arg = 0
+var.wsteth_oracle_node_id.event = "NodeRegistered"
+var.wsteth_oracle_node_id.arg = 0
 depends = [
     "import.synthetix",
     "invoke.register_node_wsteth_to_steth_ratio_oracle",

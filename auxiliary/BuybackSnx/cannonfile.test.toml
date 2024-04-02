@@ -1,28 +1,24 @@
 name = "buyback-snx"
 version = "<%= package.version %>-testable"
 
-[setting.premium]
-defaultValue = "10000000000000000"
+[var.main]
+premium = "10000000000000000"
+snx_fee_share = "500000000000000000"
+staleness_tolerance = "60"
 
-[setting.snx_fee_share]
-defaultValue = "500000000000000000"
-
-[provision.snx]
+[clone.snx]
 source = "mintable-token@permissionless-mint"
 options.symbol = "SNX"
 options.name = "Mintable SNX"
 options.salt = "snx"
 
-[provision.usd]
+[clone.usd]
 source = "mintable-token@permissionless-mint"
 options.symbol = "USD"
 options.name = "Mintable USD"
 options.salt = "usd"
 
-[setting.staleness_tolerance]
-defaultValue = "60"
-
-[provision.oracle_manager]
+[clone.oracle_manager]
 source = "oracle-manager"
 
 # Latest Price
@@ -35,16 +31,16 @@ args = [
     [
     ],
 ]
-extra.snx_pyth_oracle_id.event = "NodeRegistered"
-extra.snx_pyth_oracle_id.arg = 0
+var.snx_pyth_oracle_id.event = "NodeRegistered"
+var.snx_pyth_oracle_id.arg = 0
 
-[contract.buyback_snx]
+[deploy.buyback_snx]
 artifact = "contracts/BuybackSnx.sol:BuybackSnx"
 args = [
     "<%= settings.premium %>",
     "<%= settings.snx_fee_share %>",
     "<%= imports.oracle_manager.contracts.Proxy.address %>",
-    "<%= extras.snx_pyth_oracle_id %>",
+    "<%= settings.snx_pyth_oracle_id %>",
     "<%= imports.snx.contracts.MintableToken.address %>",
     "<%= imports.usd.contracts.MintableToken.address %>",
 ]

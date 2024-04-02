@@ -2,24 +2,20 @@ name = "oracle-manager"
 version = "<%= package.version %>"
 description = "Core synthetix oracle manager"
 
+[var.main]
 # `salt` here only affects proxy contract
-[setting.salt]
-description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "oracle-manager-official"
+salt = "oracle-manager-official"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.owner]
-description = "Admin user for the system"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[contract.NodeModule]
+[deploy.NodeModule]
 artifact = "contracts/modules/NodeModule.sol:NodeModule"
 
-[contract.CoreModule]
+[deploy.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 salt = "<%= settings.salt %>"
 create2 = true
 
-[contract.InitialProxy]
+[deploy.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
@@ -39,5 +35,5 @@ factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
 
-[provision.trusted_multicall_forwarder]
+[clone.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"

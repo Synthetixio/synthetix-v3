@@ -2,46 +2,34 @@ name = "synthetix-legacy-market"
 version = "<%= package.version %>"
 description = "Representation of Synthetix v2x, v3, and the LegacyMarket which allows for migration between them"
 
-[setting.sc_pool_id]
-defaultValue = "1"
+[var.main]
+sc_pool_id = "1"
+market_id = "1"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+pool_owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+v2x_package = "synthetix:2.94.1"
+v3_package = "synthetix"
+oracle_package = "chainlink-mock-v3-aggregator:1.0"
 
-[setting.market_id]
-defaultValue = "1"
-
-[setting.owner] # this has to be the same owner as CoreProxy
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.pool_owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.v2x_package]
-defaultValue = "synthetix:2.94.1"
-
-[setting.v3_package]
-defaultValue = "synthetix"
-
-[setting.oracle_package]
-defaultValue = "chainlink-mock-v3-aggregator:1.0"
-
-[import.v2x]
+[pull.v2x]
 source = "<%= settings.v2x_package %>"
 
-[import.v3]
+[pull.v3]
 source = "<%= settings.v3_package %>"
 
-[import.fakeOracle]
+[pull.fakeOracle]
 source = "<%= settings.oracle_package %>"
 
-[contract.InitialModuleBundle]
+[deploy.InitialModuleBundle]
 artifact = "InitialModuleBundle"
 
-[contract.InitialProxy]
+[deploy.InitialProxy]
 artifact = "Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 
 # deploy the legacy market
-[contract.Market]
+[deploy.Market]
 artifact = "LegacyMarket"
 from = "<%= settings.owner %>"
 
@@ -56,7 +44,7 @@ factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
 
-[contract.SNXDistributor]
+[deploy.SNXDistributor]
 artifact = "SNXDistributor"
 
 args = ["<%= contracts.Proxy.address %>"]
@@ -106,8 +94,8 @@ target = ["Proxy"]
 from = "<%= settings.owner %>"
 func = "registerMarket"
 args = []
-extra.marketId.event = "MarketRegistered"
-extra.marketId.arg = 1
+var.marketId.event = "MarketRegistered"
+var.marketId.arg = 1
 depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
 
 [invoke.registerOracleManager]
@@ -119,14 +107,14 @@ args = [
     [
     ],
 ]
-extra.snx_oracle_id.event = "NodeRegistered"
-extra.snx_oracle_id.arg = 0
+var.snx_oracle_id.event = "NodeRegistered"
+var.snx_oracle_id.arg = 0
 
 [invoke.configureSnxCollateral]
 target = ["v3.CoreProxy"]
 func = "configureCollateral"
 args = [
-    { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= extras.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true },
+    { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= settings.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true },
 ]
 fromCall.func = "owner"
 
@@ -163,7 +151,7 @@ from = "<%= settings.pool_owner %>"
 args = [
     "<%= settings.sc_pool_id %>",
     [
-        { marketId = "<%= extras.marketId %>", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
+        { marketId = "<%= settings.marketId %>", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
     ],
 ]
 depends = ["invoke.createPool"]
@@ -188,5 +176,5 @@ fromCall.func = "owner"
 
 depends = ["invoke.createPool", "contract.SNXDistributor"]
 
-[provision.trusted_multicall_forwarder]
+[clone.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"

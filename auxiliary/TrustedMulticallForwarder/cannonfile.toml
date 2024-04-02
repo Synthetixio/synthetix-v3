@@ -2,10 +2,10 @@ name = "trusted-multicall-forwarder"
 version = "0.0.3"
 description = "ERC-2771 compliant trusted forwarder including Multicall3 functionality with error bubbling"
 
-[setting.salt]
-defaultValue = "salt"
+[var.main]
+salt = "salt"
 
-[contract.TrustedMulticallForwarder]
+[deploy.TrustedMulticallForwarder]
 artifact = "TrustedMulticallForwarder"
 salt = "<%= settings.salt %>"
 create2 = true

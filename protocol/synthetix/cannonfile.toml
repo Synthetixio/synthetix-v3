@@ -3,86 +3,77 @@ version = "<%= package.version %>"
 description = "Core synthetix system"
 
 # `salt` here only affects proxy contract
-[setting.salt]
-description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "main"
+[var.main]
+salt = "main"
+bundleSalt = "main"
+owner = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+oracle_manager_source = "oracle-manager"
 
-[setting.bundleSalt]
-description = "Change this to a unique string to get a new initial module bundle"
-defaultValue = "main"
-
-[setting.owner]
-description = "Admin user for the system"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.oracle_manager_source]
-defaultValue = "oracle-manager"
-
-[provision.oracle_manager]
+[clone.oracle_manager]
 source = "<%= settings.oracle_manager_source %>"
 options.owner = "<%= settings.owner %>"
 options.salt = "<%= settings.salt %>-oracle"
 
-[contract.InitialModuleBundle]
+[deploy.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 salt = "<%= settings.bundleSalt !== 'main' ? settings.bundleSalt : settings.salt %>"
 create2 = true
 
-[contract.FeatureFlagModule]
+[deploy.FeatureFlagModule]
 artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.AccountModule]
+[deploy.AccountModule]
 artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
 
-[contract.AssociateDebtModule]
+[deploy.AssociateDebtModule]
 artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
 
-[contract.AssociatedSystemsModule]
+[deploy.AssociatedSystemsModule]
 artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.CcipReceiverModule]
+[deploy.CcipReceiverModule]
 artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
 
-[contract.CollateralModule]
+[deploy.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
-[contract.CollateralConfigurationModule]
+[deploy.CollateralConfigurationModule]
 artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralConfigurationModule"
 
-[contract.CrossChainUSDModule]
+[deploy.CrossChainUSDModule]
 artifact = "contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule"
 
-[contract.IssueUSDModule]
+[deploy.IssueUSDModule]
 artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
 
-[contract.LiquidationModule]
+[deploy.LiquidationModule]
 artifact = "contracts/modules/core/LiquidationModule.sol:LiquidationModule"
 
-[contract.MarketCollateralModule]
+[deploy.MarketCollateralModule]
 artifact = "contracts/modules/core/MarketCollateralModule.sol:MarketCollateralModule"
 
-[contract.MarketManagerModule]
+[deploy.MarketManagerModule]
 artifact = "contracts/modules/core/MarketManagerModule.sol:MarketManagerModule"
 
-[contract.PoolConfigurationModule]
+[deploy.PoolConfigurationModule]
 artifact = "contracts/modules/core/PoolConfigurationModule.sol:PoolConfigurationModule"
 
-[contract.PoolModule]
+[deploy.PoolModule]
 artifact = "contracts/modules/core/PoolModule.sol:PoolModule"
 
-[contract.RewardsManagerModule]
+[deploy.RewardsManagerModule]
 artifact = "contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule"
 
-[contract.UtilsModule]
+[deploy.UtilsModule]
 artifact = "contracts/modules/core/UtilsModule.sol:UtilsModule"
 
-[contract.VaultModule]
+[deploy.VaultModule]
 artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
 
-[contract.AccountTokenModule]
+[deploy.AccountTokenModule]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
-[contract.USDTokenModule]
+[deploy.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
 # Core
@@ -108,7 +99,7 @@ contracts = [
     "VaultModule",
 ]
 
-[contract.InitialCoreProxy]
+[deploy.InitialCoreProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
@@ -262,8 +253,8 @@ args = [
     "<%= defaultAbiCoder.encode(['uint256'], [parseEther('1')]) %>",
     [],
 ]
-extra.const_one_oracle_id.event = "NodeRegistered"
-extra.const_one_oracle_id.arg = 0
+var.const_one_oracle_id.event = "NodeRegistered"
+var.const_one_oracle_id.arg = 0
 
 # we register USD as a collateral type because it is useful to treat it the same way as any other collateral
 [invoke.configure_usd_collateral]
@@ -271,8 +262,8 @@ target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "configureCollateral"
 args = [
-    { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true },
+    { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= settings.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true },
 ]
 
-[provision.trusted_multicall_forwarder]
+[clone.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"
