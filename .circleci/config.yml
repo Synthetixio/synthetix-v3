@@ -234,8 +234,6 @@ jobs:
             - "utils/core-modules/cache"
             - "utils/core-modules/typechain-types"
 
-      - run: yarn workspaces foreach --all --verbose run check:storage
-
       - save_cache:
           key: cannon-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -338,6 +336,17 @@ jobs:
       - yarn-install
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
       - run: yarn workspaces foreach --all --verbose run size-contracts
+
+  verify-storage:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+      - yarn-install
+      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach --all --topological-dev --verbose run build:contracts
+      - run: yarn workspaces foreach --all --verbose run check:storage
 
   lint:
     docker:
@@ -563,6 +572,7 @@ workflows:
     jobs:
       - lint
       - size-contracts
+      - verify-storage
       - check-packages
 
       - build-testable
