@@ -602,30 +602,16 @@ contract MarginModule is IMarginModule {
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (uint256 im, , uint256 liqFlagReward) = Position.getLiquidationMarginUsd(
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(
             size,
             oraclePrice,
             marginValues.collateralUsd,
             marketConfig
         );
-        uint256 liqKeeperFee = Position.getLiquidationKeeperFee(
-            MathUtil.abs(size).to128(),
-            marketConfig,
-            PerpMarketConfiguration.load()
-        );
 
         // There is a position open. Discount the collateral, deduct running losses (or add profits), reduce
         // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
         // because both the liq and flag rewards can change based on chain usage.
-        return
-            MathUtil
-                .max(
-                    marginValues.discountedMarginUsd.toInt() -
-                        im.toInt() -
-                        liqFlagReward.toInt() -
-                        liqKeeperFee.toInt(),
-                    0
-                )
-                .toUint();
+        return MathUtil.max(marginValues.discountedMarginUsd.toInt() - im.toInt(), 0).toUint();
     }
 }
