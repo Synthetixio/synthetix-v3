@@ -1,5 +1,5 @@
 name = "synthetix-bfp-market"
-version = "<%= package.version %>"
+version = "<%= package.version %>-testable"
 description = "bfp-market for Synthetix v3"
 
 # NOTE: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
