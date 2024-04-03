@@ -480,13 +480,10 @@ library Position {
             marketConfig,
             globalConfig
         );
+        uint256 liqKeeperFee = getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
 
-        im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
-        mm =
-            notional.mulDecimal(mmr) +
-            marketConfig.minMarginUsd +
-            liqFlagReward +
-            getLiquidationKeeperFee(absSize, marketConfig, globalConfig);
+        im = notional.mulDecimal(imr) + marketConfig.minMarginUsd + liqFlagReward + liqKeeperFee;
+        mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqFlagReward + liqKeeperFee;
     }
 
     /// @dev Returns the number of partial liquidations required given liquidation size and max liquidation capacity.
