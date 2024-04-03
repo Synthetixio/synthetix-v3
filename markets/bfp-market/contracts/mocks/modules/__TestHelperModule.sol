@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {SYNTHETIX_USD_MARKET_ID} from "../../storage/PerpMarketConfiguration.sol";
 import {Margin} from "../../storage/Margin.sol";
 import {PerpMarket} from "../../storage/PerpMarket.sol";
@@ -14,6 +15,8 @@ contract __TestHelperModule {
         uint128 marketId,
         uint256 creditAmountUsd
     ) external {
+        OwnableStorage.onlyOwner();
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 

@@ -23,7 +23,7 @@ import {
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, systems, restore, provider, pool, traders, collateralsWithoutSusd } = bs;
+  const { markets, systems, restore, provider, pool, traders, owner, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
@@ -112,7 +112,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       // Credit `delegatedAmountUsd` so that withdrawableUsd is exactly eq deposited collateral.
-      await BfpMarketProxy.__test_creditAccountMarginProfitUsd(
+      await BfpMarketProxy.connect(owner()).__test_creditAccountMarginProfitUsd(
         trader.accountId,
         marketId,
         delegatedAmountUsd.toBN()
