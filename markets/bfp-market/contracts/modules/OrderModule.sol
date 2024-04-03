@@ -39,6 +39,8 @@ contract OrderModule is IOrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
+        uint256 accruedUtilization;
+        int256 pricePnl;
         uint256 fillPrice;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
@@ -78,6 +80,7 @@ contract OrderModule is IOrderModule {
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
+        uint256 pythPrice,
         Position.TradeParams memory params
     ) private view {
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
@@ -87,7 +90,7 @@ contract OrderModule is IOrderModule {
         if (!isReady) {
             revert ErrorUtil.OrderNotReady();
         }
-        if (params.oraclePrice == 0) {
+        if (pythPrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
         if (isPriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice)) {
@@ -268,7 +271,7 @@ contract OrderModule is IOrderModule {
         );
         runtime.params = Position.TradeParams(
             order.sizeDelta,
-            runtime.pythPrice,
+            market.getOraclePrice(),
             runtime.fillPrice,
             marketConfig.makerFee,
             marketConfig.takerFee,
@@ -276,27 +279,15 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.params);
-        recomputeFunding(market, runtime.pythPrice);
+        validateOrderPriceReadiness(
+            globalConfig,
+            order.commitmentTime,
+            runtime.pythPrice,
+            runtime.params
+        );
+        recomputeFunding(market, runtime.params.oraclePrice);
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
-
-        // We call `getHeathData` here to fetch _current_ accrued utilization before utilization recomputation.
-        Position.HealthData memory healthData = Position.getHealthData(
-            market,
-            position.size,
-            position.entryPrice,
-            position.entryFundingAccrued,
-            position.entryUtilizationAccrued,
-            runtime.fillPrice,
-            marketConfig,
-            // NOTE: The margins passed here are missing the order fee + keeper fee for this trade (as they are calc
-            // before settlement), ref `runtime.trade.newMarginUsd` for correct next marginUsd.
-            //
-            // However, call to `getHealthData` is only for `accruedFunding`, `accruedUtilization` and PnL for the settlement
-            // event below so it's fine to use the old margin values.
-            runtime.trade.marginValues
-        );
 
         runtime.updatedMarketSize = (market.size.to256() +
             MathUtil.abs(runtime.trade.newPosition.size) -
@@ -308,7 +299,7 @@ contract OrderModule is IOrderModule {
         // We want to validateTrade and update market size before we recompute utilization
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
-        recomputeUtilization(market, runtime.pythPrice);
+        recomputeUtilization(market, runtime.params.oraclePrice);
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
 
@@ -331,15 +322,21 @@ contract OrderModule is IOrderModule {
                 //
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
-                runtime.trade.newMarginUsd.toInt() -
-                    runtime.trade.marginValues.collateralUsd.toInt()
+                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt()
             );
         }
+        // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
+        runtime.accruedFunding = position.getAccruedFunding(market, runtime.params.oraclePrice);
+        runtime.accruedUtilization = position.getAccruedUtilization(
+            market,
+            runtime.params.oraclePrice
+        );
+        runtime.pricePnl = position.getPricePnl(runtime.params.fillPrice);
 
         if (runtime.trade.newPosition.size == 0) {
             delete market.positions[accountId];
         } else {
-            market.positions[accountId].update(runtime.trade.newPosition);
+            position.update(runtime.trade.newPosition);
         }
 
         // Keeper fees can be set to zero.
@@ -358,9 +355,9 @@ contract OrderModule is IOrderModule {
             runtime.params.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
-            healthData.accruedFunding,
-            healthData.accruedUtilization,
-            healthData.pnl,
+            runtime.accruedFunding,
+            runtime.accruedUtilization,
+            runtime.pricePnl,
             runtime.fillPrice,
             accountMargin.debtUsd
         );

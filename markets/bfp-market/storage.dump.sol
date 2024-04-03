@@ -701,6 +701,8 @@ contract OrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
+        uint256 accruedUtilization;
+        int256 pricePnl;
         uint256 fillPrice;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
@@ -892,7 +894,7 @@ library Position {
         uint256 orderFee;
         uint256 keeperFee;
         uint256 newMarginUsd;
-        Margin.MarginValues marginValues;
+        uint256 collateralUsd;
     }
     struct HealthData {
         uint256 healthFactor;

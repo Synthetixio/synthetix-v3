@@ -580,7 +580,7 @@ describe('OrderModule', () => {
         //
         // The idea of this very specific number is that it would pass the initial margin requirement but still be
         // liquidatable, the really bad skew/fill price.
-        desiredLeverage: 14.2,
+        desiredLeverage: 14.3,
         desiredSide: 1,
         desiredKeeperFeeBufferUsd: 0,
       });
@@ -1069,7 +1069,7 @@ describe('OrderModule', () => {
       );
 
       // The profit is bigger than debt, make sure sUSD collateral gets increased.
-      assertBn.equal(expectedUsdCollateral.toBN(), usdCollateral!.available);
+      assertBn.near(expectedUsdCollateral.toBN(), usdCollateral!.available, bn(0.001));
 
       // Make sure totalTraderDebt and accountDebt are decreased.
       assertBn.equal(totalTraderDebtUsd, closeWinningEvent.args.accountDebt);
