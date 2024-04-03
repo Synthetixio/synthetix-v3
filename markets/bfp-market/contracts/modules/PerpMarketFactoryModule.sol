@@ -111,9 +111,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         int128 skew = market.skew;
         if (skew == 0) {
             return
-                totalCollateralValueUsd -
-                market.debtCorrection.toUint() -
-                market.totalTraderDebtUsd;
+                MathUtil
+                    .max(
+                        totalCollateralValueUsd.toInt() -
+                            market.debtCorrection -
+                            market.totalTraderDebtUsd.toInt(),
+                        0
+                    )
+                    .toUint();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
