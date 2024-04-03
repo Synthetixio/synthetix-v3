@@ -1412,6 +1412,7 @@ describe('OrderModule', () => {
 
       const { accruedUtilization: accruedUtilizationBeforeRecompute } =
         await BfpMarketProxy.getPositionDigest(trader.accountId, marketId);
+
       // Recompute utilization, to get the utlization rate updated due to the un-delegation
       const recomputeTx = await BfpMarketProxy.recomputeUtilization(marketId);
       const recomputeTimestamp = await getTxTime(provider(), recomputeTx);

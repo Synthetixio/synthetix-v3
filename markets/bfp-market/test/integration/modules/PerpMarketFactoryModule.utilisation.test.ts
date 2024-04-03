@@ -23,12 +23,12 @@ import {
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, systems, restore, provider, pool, traders } = bs;
+  const { markets, systems, restore, provider, pool, traders, owner, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
-  describe('Market digest UtilizationRate', () => {
-    it('should be 0 when no position', async () => {
+  describe('getMarketDigest.utilizationRate', () => {
+    it('should be 0 when no position open', async () => {
       const { BfpMarketProxy } = systems();
       const market = genOneOf(markets());
       const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
@@ -45,36 +45,110 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, order);
 
-      const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
+      const d1 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
       // Should not be 0 as our settlement has recomputed utilization
-      assertBn.notEqual(marketDigest.utilizationRate, bn(0));
+      assertBn.notEqual(d1.utilizationRate, bn(0));
+
       // Set config values to 0
       await setMarketConfiguration(bs, {
         utilizationBreakpointPercent: 0,
         lowUtilizationSlopePercent: 0,
         highUtilizationSlopePercent: 0,
       });
+
+      // Should not be 0 as utilization has not been recomputed yet.
       const marketDigest1 = await BfpMarketProxy.getMarketDigest(market.marketId());
-      // Should not be 0 as utilization has not been recomputed yet
       assertBn.notEqual(marketDigest1.utilizationRate, bn(0));
 
       await BfpMarketProxy.recomputeUtilization(marketId);
-      const marketDigest2 = await BfpMarketProxy.getMarketDigest(market.marketId());
+      const d2 = await BfpMarketProxy.getMarketDigest(market.marketId());
+
       // We now expect utilization to be 0
-      assertBn.equal(marketDigest2.utilizationRate, bn(0));
+      assertBn.equal(d2.utilizationRate, bn(0));
+    });
+
+    it('should not revert when collateral utilization is exactly at 100%', async () => {
+      const { BfpMarketProxy, Core } = systems();
+
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      const collateral = genOneOf(collateralsWithoutSusd());
+
+      // Remove fees incurred on the trade.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: bn(0),
+        takerFee: bn(0),
+      });
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(0),
+        maxKeeperFeeUsd: bn(0),
+      });
+
+      const withdrawable = await Core.getWithdrawableMarketUsd(marketId);
+      const { totalCollateralValueUsd } = await BfpMarketProxy.getMarketDigest(marketId);
+      const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
+
+      const { answer: marketPrice } = await market.aggregator().latestRoundData();
+
+      // Increase OI to be slighly above max delegated amount for this test to work.
+      await setMarketConfigurationById(bs, marketId, {
+        maxMarketSize: delegatedAmountUsd.div(marketPrice).add(10).toBN(),
+      });
+
+      // Perform trade where the collateral to deposit is equal exactly to the delegatedAmountUsd.
+      const { trader, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: delegatedAmountUsd.toNumber(),
+          desiredCollateral: collateral,
+        })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Credit `delegatedAmountUsd` so that withdrawableUsd is exactly eq deposited collateral.
+      await BfpMarketProxy.connect(owner()).__test_creditAccountMarginProfitUsd(
+        trader.accountId,
+        marketId,
+        delegatedAmountUsd.toBN()
+      );
+
+      const { receipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.recomputeUtilization(marketId),
+        provider()
+      );
+      const { utilizationRate } = findEventSafe(
+        receipt,
+        'UtilizationRecomputed',
+        BfpMarketProxy
+      ).args;
+
+      assertBn.notEqual(utilizationRate, 0);
+
+      const withdrawable2 = await Core.getWithdrawableMarketUsd(marketId);
+      const { totalCollateralValueUsd: totalCollateralValueUsd2 } =
+        await BfpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.equal(withdrawable2, totalCollateralValueUsd2);
     });
 
     it('should support collateral utilization above 100%', async () => {
       const { BfpMarketProxy, Core } = systems();
+
       const market = genOneOf(markets());
       const marketId = market.marketId();
+
       const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
       const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
       const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
       const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
 
-      // Change staking to the minimum about.
+      // Change staking to the minimum about
       const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
       const { minDelegationD18 } = await Core.getCollateralConfiguration(
         stakedCollateral().address
@@ -115,7 +189,9 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2);
       await commitAndSettle(bs, marketId, trader2, order2);
 
-      // Right now the market is underwater, trader1 have some sUSD allocated to his collateral, but we wouldn't be able to withdraw until more stakers come in/ or stakers get liquidated
+      // (1) The market is underwater
+      // (2) trader1 has some sUSD allocated to his collateral
+      // (3) but trader1 wouldn't be able to withdraw until more stakers come in/or LPs get liquidated
       const { receipt: recomputeReceipt1 } = await withExplicitEvmMine(
         () => BfpMarketProxy.recomputeUtilization(marketId),
         provider()
@@ -141,7 +217,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       });
       await commitAndSettle(bs, marketId, trader2, closeOrder2);
 
-      // Now there's no open options in the market, we expect the utilization to be 0.
+      // Now there are no more open positions in the market, we expect the utilization to be 0.
       const { receipt: recomputeReceipt2 } = await withExplicitEvmMine(
         () => BfpMarketProxy.recomputeUtilization(marketId),
         provider()
@@ -154,21 +230,28 @@ describe('PerpMarketFactoryModule Utilization', () => {
       assertBn.isZero(recomputeUtilizationEvent2.args.utilizationRate);
     });
 
-    forEach(['lowUtilization', 'highUtilization']).it(
-      'should return current utilization rate when %s',
-      async (variant) => {
+    enum UtilizationMode {
+      LOW = 'LOW',
+      HIGH = 'HIGH',
+    }
+
+    forEach([UtilizationMode.LOW, UtilizationMode.HIGH]).it(
+      'should return current rate when utilization is %s',
+      async (mode) => {
         const { BfpMarketProxy, Core } = systems();
+
         const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
         const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
         const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
         const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
+
         const market = genOneOf(markets());
         const marketConfig = await BfpMarketProxy.getMarketConfigurationById(market.marketId());
 
         // Create random utilization rate
         const breakPointNumber = utilizationBreakpointPercent.mul(100).toNumber();
         const utilization =
-          variant === 'lowUtilization'
+          mode === UtilizationMode.LOW
             ? Math.floor(genNumber(1, breakPointNumber))
             : Math.floor(genNumber(breakPointNumber, 100));
         const targetUtilizationPercent = wei(utilization).div(100);
@@ -208,7 +291,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
         // assert the utilization rate
         const marketDigest = await BfpMarketProxy.getMarketDigest(market.marketId());
-        if (variant === 'lowUtilization') {
+        if (mode === UtilizationMode.LOW) {
           const expectedRate = wei(lowUtilizationSlopePercent)
             .mul(targetUtilizationPercent)
             .mul(100);

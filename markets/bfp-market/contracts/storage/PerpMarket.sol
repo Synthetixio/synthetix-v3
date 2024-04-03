@@ -188,7 +188,7 @@ library PerpMarket {
         // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
         int256 delegatedCollateralValueUsd = withdrawableUsd.toInt() -
             getTotalCollateralValueUsd(self).toInt();
-        if (delegatedCollateralValueUsd < 0) {
+        if (delegatedCollateralValueUsd <= 0) {
             return DecimalMath.UNIT.to128();
         }
 
