@@ -2544,7 +2544,11 @@ describe('LiquidationModule', () => {
       );
       const { imr, mmr } = calcImrAndMmr(absSize, marketConfig);
 
-      const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
+      const expectedIm = notional
+        .mul(imr)
+        .add(marketConfig.minMarginUsd)
+        .add(liqReward)
+        .add(flagReward);
       const expectedMm = notional
         .mul(mmr)
         .add(marketConfig.minMarginUsd)
@@ -2597,7 +2601,11 @@ describe('LiquidationModule', () => {
       );
       const { imr, mmr } = calcImrAndMmr(absSize, marketConfig);
 
-      const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
+      const expectedIm = notional
+        .mul(imr)
+        .add(marketConfig.minMarginUsd)
+        .add(liqReward)
+        .add(flagReward);
       const expectedMm = notional
         .mul(mmr)
         .add(marketConfig.minMarginUsd)
@@ -2659,7 +2667,11 @@ describe('LiquidationModule', () => {
       );
       const { imr, mmr } = calcImrAndMmr(absSize, marketConfig);
 
-      const expectedIm = notional.mul(imr).add(marketConfig.minMarginUsd);
+      const expectedIm = notional
+        .mul(imr)
+        .add(marketConfig.minMarginUsd)
+        .add(liqReward)
+        .add(flagReward);
       const expectedMm = notional
         .mul(mmr)
         .add(marketConfig.minMarginUsd)
@@ -2687,20 +2699,55 @@ describe('LiquidationModule', () => {
       const { answer: marketPrice } = await market.aggregator().latestRoundData();
 
       const desiredSizeDelta = wei(marginUsdDepositAmount).div(wei(marketPrice)).neg().toBN(); // 1x short
+
+      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+
       const { im } = await BfpMarketProxy.getLiquidationMarginUsd(
         trader.accountId,
         marketId,
         desiredSizeDelta
       );
 
+      // Data for calcs
+      const marketConfig = await BfpMarketProxy.getMarketConfigurationById(marketId);
+      const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+      const globalConfig = await BfpMarketProxy.getMarketConfiguration();
+      const { maxLiquidatableCapacity } =
+        await BfpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+
       const size = wei(desiredSizeDelta).abs();
       const notional = size.mul(marketPrice);
-      const marketConfig = await BfpMarketProxy.getMarketConfigurationById(marketId);
 
+      const flagReward = calcFlagReward(
+        ethPrice,
+        baseFeePerGas,
+        size,
+        wei(marketPrice),
+        wei(marginUsdDepositAmount),
+        globalConfig,
+        marketConfig
+      );
+      const liqReward = calcLiquidationKeeperFee(
+        ethPrice,
+        baseFeePerGas,
+        size,
+        wei(maxLiquidatableCapacity),
+        globalConfig
+      );
       // Expect the IMR to be at maxInitialMarginRatio cap.
       const imr = wei(marketConfig.maxInitialMarginRatio);
-      const expectedIm = notional.mul(imr).add(wei(marketConfig.minMarginUsd));
-
+      const expectedIm = notional
+        .mul(imr)
+        .add(wei(marketConfig.minMarginUsd))
+        .add(liqReward)
+        .add(flagReward);
+      console.log({
+        flagReward: flagReward.toNumber(),
+        liqReward: liqReward.toNumber(),
+        im: wei(im).toNumber(),
+        expectedIm: expectedIm.toNumber(),
+        diff: wei(im).sub(expectedIm).toNumber(),
+      });
       assertBn.equal(im, expectedIm.toBN());
     });
 

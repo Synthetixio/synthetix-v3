@@ -189,7 +189,7 @@ export const calcLiquidationKeeperFee = (
     wei(flagExecutionCostInUsd).add(wei(globalConfig.keeperProfitMarginUsd))
   );
 
-  return Wei.min(liquidationFeeInUsd, wei(globalConfig.maxKeeperFeeUsd)).mul(iterations);
+  return Wei.min(liquidationFeeInUsd.mul(iterations), wei(globalConfig.maxKeeperFeeUsd));
 };
 
 /** Calculates the discounted collateral price given the size, spot market skew scale, and min/max discounts. */

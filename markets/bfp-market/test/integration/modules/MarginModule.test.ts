@@ -2658,7 +2658,41 @@ describe('MarginModule', async () => {
       assertBn.equal(margin, expectedMargin);
     });
 
-    it('should return the discounted marginUsd less IM/keeperFees when position open');
+    it('should return the discounted marginUsd less IM when position open', async () => {
+      const { BfpMarketProxy } = systems();
+
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(0),
+        maxKeeperFeeUsd: bn(0),
+      });
+
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 10_000,
+          desiredCollateral: genOneOf(collateralsWithoutSusd()), // Use non sUSD so margin is discounted.
+        })
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredSide: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const withdrawableMargin = await BfpMarketProxy.getWithdrawableMargin(
+        trader.accountId,
+        marketId
+      );
+      const { discountedMarginUsd } = await BfpMarketProxy.getMarginDigest(
+        trader.accountId,
+        marketId
+      );
+      const { im } = await BfpMarketProxy.getLiquidationMarginUsd(trader.accountId, marketId, 0);
+      const expectedWithdrawableMargin = wei(discountedMarginUsd).sub(im);
+
+      assertBn.equal(withdrawableMargin, expectedWithdrawableMargin.toBN());
+    });
   });
 
   describe('getMarginCollateralConfiguration', () => {
