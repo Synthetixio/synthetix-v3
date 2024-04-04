@@ -56,10 +56,7 @@ library PerpMarket {
         uint256 currentUtilizationAccruedComputed;
         /// block.timestamp of when utilization was last computed.
         uint256 lastUtilizationTime;
-        /// This is needed to perform a fast constant time op for overall market debt.
-        ///
-        /// debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
-        /// marketDebt     = market.skew * (price + nextFundingEntry) + debtCorrection
+        /// Accumulated debt correction on every position modification for reportedDebt.
         int128 debtCorrection;
         /// {accountId: Order}.
         mapping(uint128 => Order.Data) orders;
@@ -120,6 +117,10 @@ library PerpMarket {
         Position.Data storage oldPosition,
         Position.Data memory newPosition
     ) internal {
+        // This is needed to perform a fast constant time op for overall market debt.
+        //
+        // debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
+        // reportedDebt   = market.skew * (price + nextFundingEntry) + debtCorrection
         int256 sizeDelta = newPosition.size - oldPosition.size;
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
@@ -144,7 +145,7 @@ library PerpMarket {
         }
     }
 
-    ///  @dev Updates totalTraderDebtUsd and sUSD collateral. It also calls market.updateDebtAndCollateral to update global debt tracking.
+    ///  @dev Updates `totalTraderDebtUsd` and sUSD collateral.
     function updateDebtAndCollateral(
         PerpMarket.Data storage self,
         int128 debtAmountDeltaUsd,

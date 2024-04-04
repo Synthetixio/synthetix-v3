@@ -123,7 +123,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
-        int256 priceWithFunding = oraclePrice.toInt() + unrecordedFunding;
+        int256 priceWithFunding = oraclePrice.toInt() +
+            market.currentFundingAccruedComputed +
+            unrecordedFunding;
         int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
             skew.mulDecimal(priceWithFunding) -
             market.debtCorrection -
