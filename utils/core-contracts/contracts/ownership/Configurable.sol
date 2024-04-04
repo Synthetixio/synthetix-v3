@@ -29,6 +29,7 @@ contract Configurable is IConfigurable {
         store.configurer = currentNominatedConfigurer;
 
         store.nominatedConfigurer = address(0);
+        emit ConfigurerNominated(address(0));
     }
 
     /**
@@ -61,6 +62,7 @@ contract Configurable is IConfigurable {
         }
 
         store.nominatedConfigurer = address(0);
+        emit ConfigurerNominated(address(0));
     }
 
     /**
