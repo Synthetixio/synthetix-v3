@@ -16,6 +16,7 @@ depends = []
 
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>-testable"
+depends = []
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
@@ -125,7 +126,7 @@ args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 target = ["PerpsMarketProxy"]
 func = "setFeatureFlagAllowAll"
 from = "<%= settings.owner %>"
-args = ["<%= formatBytes32String('perpsSystem') %>", 1]
+args = ["<%= formatBytes32String('perpsSystem') %>", true]
 
 # add snxUSD as the only priority to deduct from on a given account, as default
 [invoke.setSynthDeductionPriority]
