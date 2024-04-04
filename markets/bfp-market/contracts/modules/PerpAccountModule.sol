@@ -14,6 +14,9 @@ import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Flags} from "../utils/Flags.sol";
+import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
@@ -361,6 +364,11 @@ contract PerpAccountModule is IPerpAccountModule {
         // Prevent merging positions that are not within the same block.
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
+        }
+
+        // Only settlement hooks are allowed to merge accounts.
+        if (!SettlementHookConfiguration.load().whitelisted[msg.sender]) {
+            revert ErrorUtil.InvalidHook(msg.sender);
         }
 
         uint256 oraclePrice = market.getOraclePrice();
