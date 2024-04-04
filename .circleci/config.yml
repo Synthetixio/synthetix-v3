@@ -36,11 +36,11 @@ commands:
               git clone "https://github.com/foundry-rs/foundry.git" --no-checkout
               cd foundry
               git checkout "$FOUNDRY_COMMIT"
-              cargo build --bins --release
-              cp ./target/release/forge $HOME/.foundry/bin/forge
-              cp ./target/release/cast $HOME/.foundry/bin/cast
-              cp ./target/release/anvil $HOME/.foundry/bin/anvil
-              cp ./target/release/chisel $HOME/.foundry/bin/chisel
+              cargo build --bin anvil --release
+              # cp ./target/release/forge $HOME/.foundry/bin/forge
+              # cp ./target/release/cast $HOME/.foundry/bin/cast
+              # cp ./target/release/anvil $HOME/.foundry/bin/anvil
+              # cp ./target/release/chisel $HOME/.foundry/bin/chisel
               anvil --version
             fi
 
