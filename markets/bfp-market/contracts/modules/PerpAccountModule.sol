@@ -278,48 +278,6 @@ contract PerpAccountModule is IPerpAccountModule {
         emit AccountSplit(fromId, toId, marketId);
     }
 
-    /**
-     * @dev Returns the matching margin collateral equal to market.
-     *
-     * Upstream invocations are expected to be called in the same block as position settlement. This guarantees the
-     * same collateral. However, if any additional collateral or a mismatch does occur, a revert is thrown.
-     */
-    function getMatchingMarketCollateral(
-        Margin.Data storage fromAccountMargin,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 synthMarketId, uint256 fromAccountCollateral) {
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-
-        bytes32 marketOracleNodeId = marketConfig.oracleNodeId;
-        uint256 supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 currentSynthMarketId;
-        uint256 currentFromAccountCollateral;
-
-        for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
-            currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            currentFromAccountCollateral = fromAccountMargin.collaterals[currentSynthMarketId];
-            if (currentFromAccountCollateral > 0) {
-                if (
-                    globalMarginConfig.supported[currentSynthMarketId].oracleNodeId !=
-                    marketOracleNodeId
-                ) {
-                    // Revert if `fromAccount` has collateral >0 with different oracleNodeId than market.
-                    revert ErrorUtil.OracleNodeMismatch();
-                }
-
-                // Found matching collateral!
-                //
-                // NOTE: We do _not_ break out here as we continue checking if account as other collaterals.
-                synthMarketId = currentSynthMarketId;
-                fromAccountCollateral = currentFromAccountCollateral;
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
     /// @inheritdoc IPerpAccountModule
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
@@ -339,11 +297,7 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
-
-        (uint128 synthMarketId, uint256 fromAccountCollateral) = getMatchingMarketCollateral(
-            fromAccountMargin,
-            marketConfig
-        );
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage fromPosition = market.positions[fromId];
@@ -386,10 +340,25 @@ contract PerpAccountModule is IPerpAccountModule {
             market,
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );
+        // Stack to deep.
+        {
+            uint256 supportedSynthMarketIdsLength = globalMarginConfig
+                .supportedSynthMarketIds
+                .length;
+            uint128 currentSynthMarketId;
+            for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
+                currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+                // Move collateral `from` -> `to`.
+                toAccountMargin.collaterals[currentSynthMarketId] += fromAccountMargin.collaterals[
+                    currentSynthMarketId
+                ];
+                fromAccountMargin.collaterals[currentSynthMarketId] = 0;
 
-        // Move collateral `from` -> `to`.
-        toAccountMargin.collaterals[synthMarketId] += fromAccountCollateral;
-        fromAccountMargin.collaterals[synthMarketId] = 0;
+                unchecked {
+                    ++i;
+                }
+            }
+        }
 
         // Move debt `from` -> `to`.
         toAccountMargin.debtUsd += fromAccountMargin.debtUsd;
