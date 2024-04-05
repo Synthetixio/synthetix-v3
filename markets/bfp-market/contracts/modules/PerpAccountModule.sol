@@ -31,7 +31,8 @@ contract PerpAccountModule is IPerpAccountModule {
 
     struct Runtime_splitAccount {
         uint256 oraclePrice;
-        uint256 im;
+        uint256 toIm;
+        uint256 fromIm;
         uint128 debtToMove;
         int128 sizeToMove;
         uint256 supportedSynthMarketIdsLength;
@@ -39,6 +40,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 collateralToMove;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
+        uint256 fromCollateralUsd;
     }
 
     /// @inheritdoc IPerpAccountModule
@@ -220,9 +222,17 @@ contract PerpAccountModule is IPerpAccountModule {
                 runtime.collateralToMove = runtime.fromAccountCollateral.mulDecimal(proportion);
                 toAccountMargin.collaterals[runtime.synthMarketId] = runtime.collateralToMove;
                 fromAccountMargin.collaterals[runtime.synthMarketId] -= runtime.collateralToMove;
-                runtime.toCollateralUsd += runtime.collateralToMove.mulDecimal(
-                    globalMarginConfig.getCollateralPrice(runtime.synthMarketId, globalConfig)
+                uint256 collateralPrice = globalMarginConfig.getCollateralPrice(
+                    runtime.synthMarketId,
+                    globalConfig
                 );
+                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
+                    collateralPrice
+                );
+                uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(collateralPrice);
+
+                runtime.toCollateralUsd += collateralToMoveUsd;
+                runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
             }
 
             unchecked {
@@ -257,7 +267,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Make sure the `toAccount` has enough margin for IM.
-        (runtime.im, , ) = Position.getLiquidationMarginUsd(
+        (runtime.toIm, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             runtime.toCollateralUsd,
@@ -267,9 +277,25 @@ contract PerpAccountModule is IPerpAccountModule {
         if (
             runtime.toCollateralUsd.toInt() +
                 Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
-            runtime.im.toInt()
+            runtime.toIm.toInt()
         ) {
             revert ErrorUtil.InsufficientMargin();
+        }
+        if (proportion < DecimalMath.UNIT) {
+            // If proportion is smaller than 1, make sure the `fromAccount` has enough margin for IM.
+            (runtime.fromIm, , ) = Position.getLiquidationMarginUsd(
+                fromPosition.size,
+                runtime.oraclePrice,
+                runtime.fromCollateralUsd,
+                marketConfig
+            );
+            if (
+                runtime.fromCollateralUsd.toInt() +
+                    Margin.getPnlAdjustmentUsd(fromId, market, runtime.oraclePrice) <
+                runtime.fromIm.toInt()
+            ) {
+                revert ErrorUtil.InsufficientMargin();
+            }
         }
 
         emit AccountSplit(fromId, toId, marketId);
