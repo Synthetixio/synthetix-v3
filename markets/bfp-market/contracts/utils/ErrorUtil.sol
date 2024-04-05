@@ -121,4 +121,7 @@ library ErrorUtil {
 
     /// @notice Thrown when user trying to split/merge the same account.
     error DuplicateAccountIds();
+
+    /// @notice Thrown when user trying to merge accounts with positions on opposite sides.
+    error PositionsOppositeSide();
 }

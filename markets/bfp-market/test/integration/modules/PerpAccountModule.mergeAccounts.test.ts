@@ -116,6 +116,45 @@ describe('PerpAccountModule mergeAccounts', () => {
       BfpMarketProxy
     );
   });
+
+  it('should revert when positions are on the opposite side', async () => {
+    const { BfpMarketProxy } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const market = genOneOf(markets());
+
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredMarket: market,
+      })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+    await commitAndSettle(bs, marketId, fromTrader, order);
+    const { collateralDepositAmount: toTraderCollateralDepositAmount, collateral: toCollateral } =
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: toTrader,
+          desiredMarket: market,
+        })
+      );
+    const toOrder = await genOrder(bs, market, toCollateral, toTraderCollateralDepositAmount, {
+      desiredSize: order.sizeDelta.mul(-1),
+    });
+    await commitAndSettle(bs, marketId, toTrader, toOrder);
+
+    await assertRevert(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId
+      ),
+      `PositionsOppositeSide()`,
+      BfpMarketProxy
+    );
+  });
+
   it('should revert when fromAccount is flagged', async () => {
     const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();

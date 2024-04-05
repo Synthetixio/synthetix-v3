@@ -306,6 +306,9 @@ contract PerpAccountModule is IPerpAccountModule {
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+        if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
+            revert ErrorUtil.PositionsOppositeSide();
+        }
 
         // Prevent flagged positions from merging.
         if (
