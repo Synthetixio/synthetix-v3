@@ -6,6 +6,7 @@ import {
   genBootstrap,
   genOneOf,
   genOrder,
+  genSide,
   genTrader,
   toRoundRobinGenerators,
 } from '../../generators';
@@ -196,7 +197,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
     const market = genOneOf(markets());
-
+    const side = genSide();
     const {
       marketId,
       collateralDepositAmount: fromCollateralDepositAmount,
@@ -212,10 +213,13 @@ describe('PerpAccountModule mergeAccounts', () => {
       bs,
       marketId,
       fromTrader,
-      genOrder(bs, market, collateral, fromCollateralDepositAmount, { desiredLeverage: 1 })
+      genOrder(bs, market, collateral, fromCollateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredSide: side,
+      })
     );
 
-    // Create flaggable position for the toAccount
+    // Create flagable position for the toAccount
     const { collateralDepositAmount: toCollateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, {
@@ -226,10 +230,11 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
     const toOrder = await genOrder(bs, market, collateral, toCollateralDepositAmount, {
       desiredLeverage: 9,
+      desiredSide: side,
     });
     await commitAndSettle(bs, marketId, toTrader, toOrder);
 
-    await collateral.setPrice(
+    await market.aggregator().mockSetCurrentPrice(
       wei(toOrder.oraclePrice)
         .mul(toOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
         .toBN()
@@ -425,6 +430,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     const { fromTrader, toTrader } = await createAccountsToMerge();
 
     const market = genOneOf(markets());
+    const side = genSide();
 
     // Deposit and create a highly leveraged position
     const { marketId, collateralDepositAmount, collateral } = await depositMargin(
@@ -436,6 +442,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
     const toOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
       desiredLeverage: 9,
+      desiredSide: side,
     });
     await commitAndSettle(bs, marketId, toTrader, toOrder);
 
@@ -454,11 +461,12 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredMarket: market,
       })
     );
-    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+    const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSide: side,
       desiredHooks: [MergeAccountSettlementHookMock.address],
     });
 
-    await commitOrder(bs, marketId, fromTrader, order);
+    await commitOrder(bs, marketId, fromTrader, fromOrder);
 
     const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
     await fastForwardTo(settlementTime, provider());
@@ -545,6 +553,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     // Use nonUSD collateral to make sure we still have some debt. And use a generator to make sure we have two different collaterals for the fromAccount.
     const collateralGenerator = toRoundRobinGenerators(shuffle(collateralsWithoutSusd()));
     const market = genOneOf(markets());
+    const side = genSide();
 
     // Withdraw any existing collateral.
     await withdrawAllCollateral(bs, fromTrader, market.marketId());
@@ -561,7 +570,9 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredMarket: market,
       })
     );
-    const order = await genOrder(bs, market, collateral, collateralDepositAmountTo);
+    const order = await genOrder(bs, market, collateral, collateralDepositAmountTo, {
+      desiredSide: side,
+    });
     await commitAndSettle(bs, marketId, toTrader, order);
 
     // Create some debt for the toAccount, so we later can assert it's realized on account merge.
@@ -620,6 +631,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmountFrom, {
       desiredLeverage: 1,
       desiredHooks: [MergeAccountSettlementHookMock.address],
+      desiredSide: side,
     });
 
     const { receipt: fromOrderReceipt } = await commitAndSettle(
