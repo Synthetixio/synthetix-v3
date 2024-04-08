@@ -54,7 +54,7 @@ type MarketInfo @entity {
   sellFeedId: Bytes
 }
 
-type WrappSynth @entity {
+type WrapSynth @entity {
   id: ID!
   marketId: BigInt
   amount: BigInt

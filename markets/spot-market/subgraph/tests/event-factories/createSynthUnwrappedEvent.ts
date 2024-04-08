@@ -1,11 +1,11 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
 import {
-  SynthUnwrapped as SynthUnWrappedEvent,
+  SynthUnwrapped as SynthUnwrappedEvent,
   SynthUnwrappedFeesStruct,
 } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
-export function createSynthUnWrappedEvent(
+export function createSynthUnwrappedEvent(
   id: i32,
   amountUnwrapped: i64,
   // fees tuple
@@ -18,8 +18,8 @@ export function createSynthUnWrappedEvent(
   timestamp: i64,
   blockNumber: i64,
   logIndex: i64
-): SynthUnWrappedEvent {
-  const event = newTypedMockEvent<SynthUnWrappedEvent>();
+): SynthUnwrappedEvent {
+  const event = newTypedMockEvent<SynthUnwrappedEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(id)));

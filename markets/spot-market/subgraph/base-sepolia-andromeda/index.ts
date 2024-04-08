@@ -4,6 +4,6 @@ export * from '../optimism-mainnet/handleOrderSettled';
 export * from '../optimism-mainnet/handleSettlementStrategyAdded';
 export * from '../optimism-mainnet/handleSettlementStrategyUpdated';
 export * from '../optimism-mainnet/handleSynthPriceDataUpdated';
-export * from '../optimism-mainnet/handleSynthUnWrapped';
+export * from '../optimism-mainnet/handleSynthUnwrapped';
 export * from '../optimism-mainnet/handleSynthWrapped';
 export * from '../optimism-mainnet/handleWrapperSet';
