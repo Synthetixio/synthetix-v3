@@ -290,7 +290,7 @@ export const commitAndSettle = async (
       BfpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
         value: updateFee,
         maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
-        gasLimit: BigNumber.from(10000000), // Sometimes gas estimation is not big enough, add a large one to be safe.
+        gasLimit: BigNumber.from(10_000_000), // Sometimes gas estimation is not high enough.
       }),
     provider()
   );
