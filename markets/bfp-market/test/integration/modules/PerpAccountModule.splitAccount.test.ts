@@ -289,6 +289,37 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
+  it('should revert if fromAccount not passing IM', async () => {
+    const { BfpMarketProxy } = systems();
+
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+    await commitAndSettle(bs, marketId, fromTrader, order);
+
+    const proportion = bn(0.9999);
+    await assertRevert(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId,
+        proportion
+      ),
+      'InsufficientMargin()',
+      BfpMarketProxy
+    );
+  });
+
   it('should split account', async () => {
     const { BfpMarketProxy } = systems();
 
