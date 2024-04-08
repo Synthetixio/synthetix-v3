@@ -151,7 +151,7 @@ describe('PerpAccountModule mergeAccounts', () => {
         toTrader.accountId,
         marketId
       ),
-      `PositionsOppositeSide()`,
+      `InvalidPositionSide()`,
       BfpMarketProxy
     );
   });

@@ -307,7 +307,7 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.OrderFound();
         }
         if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
-            revert ErrorUtil.PositionsOppositeSide();
+            revert ErrorUtil.InvalidPositionSide();
         }
 
         // Prevent flagged positions from merging.

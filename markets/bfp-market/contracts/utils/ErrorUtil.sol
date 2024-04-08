@@ -123,5 +123,5 @@ library ErrorUtil {
     error DuplicateAccountIds();
 
     /// @notice Thrown when user trying to merge accounts with positions on opposite sides.
-    error PositionsOppositeSide();
+    error InvalidPositionSide();
 }
