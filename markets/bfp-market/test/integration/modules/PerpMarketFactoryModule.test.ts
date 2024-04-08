@@ -1147,6 +1147,31 @@ describe('PerpMarketFactoryModule', () => {
       assertBn.lt(totalMarketDebt, bn(marginUsdDepositAmount));
     });
 
+    it('should report the same debt after recomputing funding', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const { trader, marketId, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: 10_000 })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Fast-forward time to accrue funding.
+      await fastForwardBySec(provider(), SECONDS_ONE_DAY);
+
+      const reportedDebtBeforeCompute = await BfpMarketProxy.reportedDebt(market.marketId());
+      await withExplicitEvmMine(() => BfpMarketProxy.recomputeFunding(marketId), provider());
+      const reportedDebtAfterCompute = await BfpMarketProxy.reportedDebt(market.marketId());
+
+      assertBn.near(reportedDebtBeforeCompute, reportedDebtAfterCompute, bn(0.01));
+    });
+
     forEach(times(5, () => genNumber(0.1, 0.3) * genOneOf([1, -1]))).it(
       'should reported same debt when skew=0 but with price fluctuations (%0.5f)',
       async (priceDeviation: number) => {
@@ -1223,7 +1248,7 @@ describe('PerpMarketFactoryModule', () => {
       }
     );
 
-    it('should report collateral - debtCorrection when skew is zero (dn market, some positions)', async () => {
+    it('should report collateral less debtCorrection when skew is zero (dn market, some positions)', async () => {
       const { BfpMarketProxy } = systems();
 
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
