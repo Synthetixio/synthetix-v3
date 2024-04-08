@@ -1,7 +1,7 @@
 import { SynthUnwrapped } from './generated/SpotMarketProxy/SpotMarketProxy';
 import { WrappSynth } from './generated/schema';
 
-export function handleSynthUnWrapped(event: SynthUnwrapped): void {
+export function handleSynthUnwrapped(event: SynthUnwrapped): void {
   let id = event.transaction.hash.toHexString() + '/' + event.logIndex.toString();
   let synth = new WrappSynth(id);
 
