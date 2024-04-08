@@ -281,8 +281,9 @@ contract PerpAccountModule is IPerpAccountModule {
         ) {
             revert ErrorUtil.InsufficientMargin();
         }
+
+        // Ensure we validate remaining margin > IM when position in `fromAccount` is still open.
         if (proportion < DecimalMath.UNIT) {
-            // If proportion is smaller than 1, make sure the `fromAccount` has enough margin for IM.
             (runtime.fromIm, , ) = Position.getLiquidationMarginUsd(
                 fromPosition.size,
                 runtime.oraclePrice,
