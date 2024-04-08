@@ -349,13 +349,15 @@ contract PerpAccountModule is IPerpAccountModule {
                 .supportedSynthMarketIds
                 .length;
             uint128 currentSynthMarketId;
+            uint256 fromAccountCollateral;
             for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
                 currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-                // Move collateral `from` -> `to`.
-                toAccountMargin.collaterals[currentSynthMarketId] += fromAccountMargin.collaterals[
-                    currentSynthMarketId
-                ];
-                fromAccountMargin.collaterals[currentSynthMarketId] = 0;
+                fromAccountCollateral = fromAccountMargin.collaterals[currentSynthMarketId];
+                if (fromAccountCollateral > 0) {
+                    // Move collateral `from` -> `to`.
+                    toAccountMargin.collaterals[currentSynthMarketId] += fromAccountCollateral;
+                    fromAccountMargin.collaterals[currentSynthMarketId] = 0;
+                }
 
                 unchecked {
                     ++i;
