@@ -136,42 +136,17 @@ library Position {
     }
 
     /**
-     * @dev Validates whether the `newPosition` is below initial margin req (IM).
-     *
-     * NOTE: We expect marginUsd here to be the discount adjusted margin due to liquidation checks as margin checks
-     * for liquidations are expected to discount the collateral.
-     */
-    function validateNextPositionIm(
-        PerpMarketConfiguration.Data storage marketConfig,
-        Position.Data memory newPosition,
-        uint256 oraclePrice,
-        uint256 collateralUsd,
-        uint256 nextMarginUsd
-    ) internal view {
-        (uint256 im, , ) = getLiquidationMarginUsd(
-            newPosition.size,
-            oraclePrice,
-            collateralUsd,
-            marketConfig
-        );
-
-        if (nextMarginUsd < im) {
-            revert ErrorUtil.InsufficientMargin();
-        }
-    }
-
-    /**
      * @dev Validates whether the `newPosition` can be liquidated.
      *
      * NOTE: We expect marginUsd here to be the discount adjusted margin due to liquidation checks as margin checks
      * for liquidations are expected to discount the collateral.
      */
     function validateNextPositionEnoughMargin(
-        PerpMarketConfiguration.Data storage marketConfig,
         Position.Data memory newPosition,
         uint256 oraclePrice,
+        uint256 mm,
         uint256 nextMarginUsd
-    ) internal view {
+    ) internal pure {
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
@@ -184,12 +159,6 @@ library Position {
         );
         uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
 
-        (, uint256 mm, ) = getLiquidationMarginUsd(
-            newPosition.size,
-            oraclePrice,
-            nextMarginUsd,
-            marketConfig
-        );
         uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
 
         if (healthFactor <= DecimalMath.UNIT) {
@@ -276,21 +245,23 @@ library Position {
                     orderFee,
                     keeperFee
                 );
-
-                // Check new position initial margin validations.
-                validateNextPositionIm(
-                    marketConfig,
-                    newPosition,
+                (uint256 im, uint256 mm, ) = getLiquidationMarginUsd(
+                    newPosition.size,
                     params.oraclePrice,
                     marginValuesForLiqValidation.collateralUsd,
-                    discountedNextMarginUsd
+                    marketConfig
                 );
+
+                // Check new position initial margin validations.
+                if (discountedNextMarginUsd < im) {
+                    revert ErrorUtil.InsufficientMargin();
+                }
 
                 // Check new position margin validations.
                 validateNextPositionEnoughMargin(
-                    marketConfig,
                     newPosition,
                     params.oraclePrice,
+                    mm,
                     discountedNextMarginUsd
                 );
 
