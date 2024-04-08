@@ -25,7 +25,7 @@ describe('PerpsMarketProxy', () => {
   test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
   test('handleSettlementStrategyUpdated', handleSettlementStrategyUpdated);
   test('handleSynthPriceDataUpdated', handleSynthPriceDataUpdated);
-  test('handleSynthUnWrapped', handleSynthUnwrapped);
+  test('handleSynthUnwrapped', handleSynthUnwrapped);
   test('handleSynthWrapped', handleSynthWrapped);
   test('handleWrapperSet', handleWrapperSet);
 });
