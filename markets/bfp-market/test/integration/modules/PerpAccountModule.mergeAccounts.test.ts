@@ -31,6 +31,7 @@ import {
   Multicall3 as TrustedMulticallForwarder,
 } from '../../external/TrustedMulticallForwarder';
 import { shuffle } from 'lodash';
+import assert from 'assert';
 
 describe('PerpAccountModule mergeAccounts', () => {
   const bs = bootstrap(genBootstrap());
@@ -617,12 +618,12 @@ describe('PerpAccountModule mergeAccounts', () => {
     assertBn.gt(fromDigestBefore.collateralUsd, 0);
     assertBn.gt(toDigestBefore.collateralUsd, 0);
 
-    // Assert that from account has at least two collaterals
+    // Assert that from account has two collaterals
     const numberOfCollateralsWithBalance = fromDigestBefore.depositedCollaterals.filter((x) =>
       x.available.gt(0)
     ).length;
 
-    assertBn.gt(bn(numberOfCollateralsWithBalance), 1);
+    assert.equal(numberOfCollateralsWithBalance, 2);
     // The toAccount should also have some debt and an open position.
     assertBn.gt(toDigestBefore.debtUsd, 0);
     assertBn.notEqual(toDigestBefore.position.size, 0);
