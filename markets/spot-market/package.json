@@ -34,7 +34,7 @@
     "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
     "@types/node-fetch": "^2.6.11",
-    "@usecannon/cli": "2.11.20",
+    "@usecannon/cli": "2.12.1",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "node-fetch": "^2.7.0",
