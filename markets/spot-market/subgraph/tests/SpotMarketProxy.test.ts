@@ -6,7 +6,7 @@ import handleOrderSettled from './handleOrderSettled';
 import handleSettlementStrategyAdded from './handleSettlementStrategyAdded';
 import handleSettlementStrategyUpdated from './handleSettlementStrategyUpdated';
 import handleSynthPriceDataUpdated from './handleSynthPriceDataUpdated';
-import handleSynthUnWrapped from './handleSynthUnWrapped';
+import handleSynthUnwrapped from './handleSynthUnwrapped';
 import handleSynthWrapped from './handleSynthWrapped';
 import handleWrapperSet from './handleWrapperSet';
 
@@ -25,7 +25,7 @@ describe('PerpsMarketProxy', () => {
   test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
   test('handleSettlementStrategyUpdated', handleSettlementStrategyUpdated);
   test('handleSynthPriceDataUpdated', handleSynthPriceDataUpdated);
-  test('handleSynthUnWrapped', handleSynthUnWrapped);
+  test('handleSynthUnwrapped', handleSynthUnwrapped);
   test('handleSynthWrapped', handleSynthWrapped);
   test('handleWrapperSet', handleWrapperSet);
 });

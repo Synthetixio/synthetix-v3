@@ -14,6 +14,9 @@ import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Flags} from "../utils/Flags.sol";
+import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
+
+/* solhint-disable meta-transactions/no-msg-sender */
 
 contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
@@ -31,7 +34,8 @@ contract PerpAccountModule is IPerpAccountModule {
 
     struct Runtime_splitAccount {
         uint256 oraclePrice;
-        uint256 im;
+        uint256 toIm;
+        uint256 fromIm;
         uint128 debtToMove;
         int128 sizeToMove;
         uint256 supportedSynthMarketIdsLength;
@@ -39,6 +43,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 collateralToMove;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
+        uint256 fromCollateralUsd;
     }
 
     /// @inheritdoc IPerpAccountModule
@@ -220,9 +225,17 @@ contract PerpAccountModule is IPerpAccountModule {
                 runtime.collateralToMove = runtime.fromAccountCollateral.mulDecimal(proportion);
                 toAccountMargin.collaterals[runtime.synthMarketId] = runtime.collateralToMove;
                 fromAccountMargin.collaterals[runtime.synthMarketId] -= runtime.collateralToMove;
-                runtime.toCollateralUsd += runtime.collateralToMove.mulDecimal(
-                    globalMarginConfig.getCollateralPrice(runtime.synthMarketId, globalConfig)
+                uint256 collateralPrice = globalMarginConfig.getCollateralPrice(
+                    runtime.synthMarketId,
+                    globalConfig
                 );
+                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
+                    collateralPrice
+                );
+                uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(collateralPrice);
+
+                runtime.toCollateralUsd += collateralToMoveUsd;
+                runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
             }
 
             unchecked {
@@ -257,7 +270,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Make sure the `toAccount` has enough margin for IM.
-        (runtime.im, , ) = Position.getLiquidationMarginUsd(
+        (runtime.toIm, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             runtime.toCollateralUsd,
@@ -267,54 +280,29 @@ contract PerpAccountModule is IPerpAccountModule {
         if (
             runtime.toCollateralUsd.toInt() +
                 Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
-            runtime.im.toInt()
+            runtime.toIm.toInt()
         ) {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        emit AccountSplit(fromId, toId, marketId);
-    }
-
-    /**
-     * @dev Returns the matching margin collateral equal to market.
-     *
-     * Upstream invocations are expected to be called in the same block as position settlement. This guarantees the
-     * same collateral. However, if any additional collateral or a mismatch does occur, a revert is thrown.
-     */
-    function getMatchingMarketCollateral(
-        Margin.Data storage fromAccountMargin,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 synthMarketId, uint256 fromAccountCollateral) {
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-
-        bytes32 marketOracleNodeId = marketConfig.oracleNodeId;
-        uint256 supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 currentSynthMarketId;
-        uint256 currentFromAccountCollateral;
-
-        for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
-            currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            currentFromAccountCollateral = fromAccountMargin.collaterals[currentSynthMarketId];
-            if (currentFromAccountCollateral > 0) {
-                if (
-                    globalMarginConfig.supported[currentSynthMarketId].oracleNodeId !=
-                    marketOracleNodeId
-                ) {
-                    // Revert if `fromAccount` has collateral >0 with different oracleNodeId than market.
-                    revert ErrorUtil.OracleNodeMismatch();
-                }
-
-                // Found matching collateral!
-                //
-                // NOTE: We do _not_ break out here as we continue checking if account as other collaterals.
-                synthMarketId = currentSynthMarketId;
-                fromAccountCollateral = currentFromAccountCollateral;
-            }
-
-            unchecked {
-                ++i;
+        // Ensure we validate remaining margin > IM when position in `fromAccount` is still open.
+        if (proportion < DecimalMath.UNIT) {
+            (runtime.fromIm, , ) = Position.getLiquidationMarginUsd(
+                fromPosition.size,
+                runtime.oraclePrice,
+                runtime.fromCollateralUsd,
+                marketConfig
+            );
+            if (
+                runtime.fromCollateralUsd.toInt() +
+                    Margin.getPnlAdjustmentUsd(fromId, market, runtime.oraclePrice) <
+                runtime.fromIm.toInt()
+            ) {
+                revert ErrorUtil.InsufficientMargin();
             }
         }
+
+        emit AccountSplit(fromId, toId, marketId);
     }
 
     /// @inheritdoc IPerpAccountModule
@@ -336,11 +324,7 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
-
-        (uint128 synthMarketId, uint256 fromAccountCollateral) = getMatchingMarketCollateral(
-            fromAccountMargin,
-            marketConfig
-        );
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage fromPosition = market.positions[fromId];
@@ -348,6 +332,9 @@ contract PerpAccountModule is IPerpAccountModule {
 
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
+        }
+        if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
+            revert ErrorUtil.InvalidPositionSide();
         }
 
         // Prevent flagged positions from merging.
@@ -361,6 +348,11 @@ contract PerpAccountModule is IPerpAccountModule {
         // Prevent merging positions that are not within the same block.
         if (fromPosition.entryTime != block.timestamp) {
             revert ErrorUtil.PositionTooOld();
+        }
+
+        // Only settlement hooks are allowed to merge accounts.
+        if (!SettlementHookConfiguration.load().whitelisted[msg.sender]) {
+            revert ErrorUtil.InvalidHook(msg.sender);
         }
 
         uint256 oraclePrice = market.getOraclePrice();
@@ -378,10 +370,27 @@ contract PerpAccountModule is IPerpAccountModule {
             market,
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );
+        // Stack to deep.
+        {
+            uint256 supportedSynthMarketIdsLength = globalMarginConfig
+                .supportedSynthMarketIds
+                .length;
+            uint128 currentSynthMarketId;
+            uint256 fromAccountCollateral;
+            for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
+                currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+                fromAccountCollateral = fromAccountMargin.collaterals[currentSynthMarketId];
+                if (fromAccountCollateral > 0) {
+                    // Move collateral `from` -> `to`.
+                    toAccountMargin.collaterals[currentSynthMarketId] += fromAccountCollateral;
+                    fromAccountMargin.collaterals[currentSynthMarketId] = 0;
+                }
 
-        // Move collateral `from` -> `to`.
-        toAccountMargin.collaterals[synthMarketId] += fromAccountCollateral;
-        fromAccountMargin.collaterals[synthMarketId] = 0;
+                unchecked {
+                    ++i;
+                }
+            }
+        }
 
         // Move debt `from` -> `to`.
         toAccountMargin.debtUsd += fromAccountMargin.debtUsd;

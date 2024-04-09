@@ -107,9 +107,6 @@ library ErrorUtil {
     /// @notice Thrown when there are too many hooks specified.
     error MaxHooksExceeded();
 
-    /// @notice Thrown when calling mergeAccounts with a sportMarketId / marketId where we expected matching oracle nodes.
-    error OracleNodeMismatch();
-
     /// @notice Thrown when you trying to merge an account with a position that wasn't created in the same block.
     error PositionTooOld();
 
@@ -122,6 +119,9 @@ library ErrorUtil {
     /// @notice Thrown when user trying to split an account with 0 porportion.
     error ZeroProportion();
 
-    /// @notice Thrown when user trying to split/merge the same account.
+    /// @notice Thrown when duplicate account ids were found.
     error DuplicateAccountIds();
+
+    /// @notice Thrown when user trying to merge accounts with positions on opposite sides.
+    error InvalidPositionSide();
 }
