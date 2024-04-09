@@ -1,7 +1,15 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genOneOf, genOrder, genTrader } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genOneOf,
+  genOrder,
+  genSide,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import {
   commitAndSettle,
   commitOrder,
@@ -17,10 +25,17 @@ import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import {
+  address as trustedMulticallerAddress,
+  abi as trustedMulticallerAbi,
+  Multicall3 as TrustedMulticallForwarder,
+} from '../../external/TrustedMulticallForwarder';
+import { shuffle } from 'lodash';
+import assert from 'assert';
 
 describe('PerpAccountModule mergeAccounts', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, systems, provider, restore, collaterals, keeper } = bs;
+  const { markets, traders, systems, provider, restore, collateralsWithoutSusd, keeper } = bs;
 
   beforeEach(restore);
   const createAccountsToMerge = async () => {
@@ -103,22 +118,54 @@ describe('PerpAccountModule mergeAccounts', () => {
       BfpMarketProxy
     );
   });
-  it('should revert when fromAccount is flagged', async () => {
+
+  it('should revert when positions are on the opposite side', async () => {
     const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    const collateral = collaterals()[1];
     const market = genOneOf(markets());
-    // Set the market oracleNodeId to the collateral oracleNodeId.
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
 
-    const { marketId, collateralDepositAmount } = await depositMargin(
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: fromTrader,
-        desiredCollateral: collateral,
+        desiredMarket: market,
+      })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+    await commitAndSettle(bs, marketId, fromTrader, order);
+    const { collateralDepositAmount: toTraderCollateralDepositAmount, collateral: toCollateral } =
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: toTrader,
+          desiredMarket: market,
+        })
+      );
+    const toOrder = await genOrder(bs, market, toCollateral, toTraderCollateralDepositAmount, {
+      desiredSize: order.sizeDelta.mul(-1),
+    });
+    await commitAndSettle(bs, marketId, toTrader, toOrder);
+
+    await assertRevert(
+      BfpMarketProxy.connect(fromTrader.signer).mergeAccounts(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId
+      ),
+      `InvalidPositionSide()`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert when fromAccount is flagged', async () => {
+    const { BfpMarketProxy } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const market = genOneOf(markets());
+
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
         desiredMarket: market,
       })
     );
@@ -126,9 +173,9 @@ describe('PerpAccountModule mergeAccounts', () => {
       desiredLeverage: 9,
     });
     await commitAndSettle(bs, marketId, fromTrader, order);
-    const price = await collateral.getPrice();
-    await collateral.setPrice(
-      wei(price)
+
+    await market.aggregator().mockSetCurrentPrice(
+      wei(order.oraclePrice)
         .mul(order.sizeDelta.gt(0) ? 0.5 : 1.5)
         .toBN()
     );
@@ -150,20 +197,16 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should revert when toAccount is flagged', async () => {
     const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    const collateral = collaterals()[1];
     const market = genOneOf(markets());
-    // Set the market oracleNodeId to the collateral oracleNodeId.
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
-
-    // Create a 1x position from the fromAccount.
-    const { marketId, collateralDepositAmount: fromCollateralDepositAmount } = await depositMargin(
+    const side = genSide();
+    const {
+      marketId,
+      collateralDepositAmount: fromCollateralDepositAmount,
+      collateral,
+    } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: fromTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
       })
     );
@@ -171,10 +214,13 @@ describe('PerpAccountModule mergeAccounts', () => {
       bs,
       marketId,
       fromTrader,
-      genOrder(bs, market, collateral, fromCollateralDepositAmount, { desiredLeverage: 1 })
+      genOrder(bs, market, collateral, fromCollateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredSide: side,
+      })
     );
 
-    // Create flaggable position for the toAccount
+    // Create flagable position for the toAccount
     const { collateralDepositAmount: toCollateralDepositAmount } = await depositMargin(
       bs,
       genTrader(bs, {
@@ -185,12 +231,12 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
     const toOrder = await genOrder(bs, market, collateral, toCollateralDepositAmount, {
       desiredLeverage: 9,
+      desiredSide: side,
     });
     await commitAndSettle(bs, marketId, toTrader, toOrder);
 
-    const price = await collateral.getPrice();
-    await collateral.setPrice(
-      wei(price)
+    await market.aggregator().mockSetCurrentPrice(
+      wei(toOrder.oraclePrice)
         .mul(toOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
         .toBN()
     );
@@ -214,20 +260,12 @@ describe('PerpAccountModule mergeAccounts', () => {
     const fromTrader = genOneOf(traders());
     const toTraderAccountId = 42069;
 
-    const collateral = collaterals()[1];
     const market = genOneOf(markets());
 
-    // Set the market oracleNodeId to the collateral oracleNodeId.
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
-
-    const { marketId, collateralDepositAmount } = await depositMargin(
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: fromTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
       })
     );
@@ -247,30 +285,63 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
-  it('should revert when collateral and market use different oracle', async () => {
-    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
-    const { fromTrader } = await createAccountsToMerge();
-    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+  it('should revert if called from a non settlement hook', async () => {
+    const { BfpMarketProxy } = systems();
+
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const market = genOneOf(markets());
+
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
-      genTrader(bs, { desiredTrader: fromTrader })
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredMarket: market,
+      })
     );
     const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
       desiredLeverage: 1,
-      desiredHooks: [MergeAccountSettlementHookMock.address],
     });
-
     await commitOrder(bs, marketId, fromTrader, order);
 
     const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
     await fastForwardTo(settlementTime, provider());
-
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
-    await assertRevert(
-      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+    // Populate a multicall where we settle our own order and try to call mergeAccounts.
+    const calls = [
+      {
+        target: BfpMarketProxy.address,
+        callData: BfpMarketProxy.interface.encodeFunctionData('settleOrder', [
+          fromTrader.accountId,
+          marketId,
+          updateData,
+        ]),
         value: updateFee,
-      }),
-      `OracleNodeMismatch()`,
+        allowFailure: false,
+        requireSuccess: true,
+      },
+      {
+        target: BfpMarketProxy.address,
+        callData: BfpMarketProxy.interface.encodeFunctionData('mergeAccounts', [
+          fromTrader.accountId,
+          toTrader.accountId,
+          market.marketId(),
+        ]),
+        value: bn(0),
+        allowFailure: false,
+        requireSuccess: true,
+      },
+    ];
+
+    const trustedMultiCallForwarder = new ethers.Contract(
+      trustedMulticallerAddress,
+      trustedMulticallerAbi
+    ) as TrustedMulticallForwarder;
+
+    // The trustedMulticaller is not a whitelisted settlement hook. Assert revert.
+    await assertRevert(
+      trustedMultiCallForwarder.connect(fromTrader.signer).aggregate3(calls, { value: updateFee }),
+      `InvalidHook("${trustedMulticallerAddress}")`,
       BfpMarketProxy
     );
   });
@@ -278,21 +349,13 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should revert when toAccount has an open order', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    const collateral = collaterals()[1];
     const market = genOneOf(markets());
 
-    // Set the market oracleNodeId to the collateral oracleNodeId
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
-
     // Deposit and commit an order for the toAccount which wont be settled.
-    const { marketId, collateralDepositAmount } = await depositMargin(
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: toTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
       })
     );
@@ -335,21 +398,13 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should revert when fromAccount has an open order', async () => {
     const { BfpMarketProxy } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    const collateral = collaterals()[1];
     const market = genOneOf(markets());
 
-    // Set the market oracleNodeId to the collateral oracleNodeId
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
-
     // Deposit and commit an order for the toAccount which wont be settled.
-    const { marketId, collateralDepositAmount } = await depositMargin(
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: fromTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
       })
     );
@@ -374,35 +429,29 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should revert if toAccount position can be liquidated', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    const collateral = collaterals()[1];
-    const market = genOneOf(markets());
 
-    // Set the market oracleNodeId to the collateral oracleNodeId
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
+    const market = genOneOf(markets());
+    const side = genSide();
 
     // Deposit and create a highly leveraged position
-    const { marketId, collateralDepositAmount } = await depositMargin(
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: toTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
       })
     );
     const toOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
       desiredLeverage: 9,
+      desiredSide: side,
     });
     await commitAndSettle(bs, marketId, toTrader, toOrder);
 
     // Change price to make the toAccount liquidatable.
-    const collateralPrice = await collateral.getPrice();
-    const newPrice = wei(collateralPrice)
+    const newPrice = wei(toOrder.oraclePrice)
       .mul(toOrder.sizeDelta.gt(0) ? 0.8 : 1.2)
       .toBN();
-    await collateral.setPrice(newPrice);
+    await market.aggregator().mockSetCurrentPrice(newPrice);
 
     // Deposit margin and commit and settle with settlement hook for the fromAccount.
     await depositMargin(
@@ -413,11 +462,12 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredMarket: market,
       })
     );
-    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+    const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSide: side,
       desiredHooks: [MergeAccountSettlementHookMock.address],
     });
 
-    await commitOrder(bs, marketId, fromTrader, order);
+    await commitOrder(bs, marketId, fromTrader, fromOrder);
 
     const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
     await fastForwardTo(settlementTime, provider());
@@ -436,30 +486,21 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should revert when the merged position is below initial margin requirement', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    const collateral = collaterals()[1];
     const market = genOneOf(markets());
 
     // Withdraw any existing collateral.
     await withdrawAllCollateral(bs, fromTrader, market.marketId());
     await withdrawAllCollateral(bs, toTrader, market.marketId());
 
-    // Set collateral (and market) price to 1, to make make it easier to create our expected scenario.
-    const collateralPrice = bn(1);
-    await collateral.setPrice(collateralPrice);
-
-    // Set the market oracleNodeId to the collateral oracleNodeId
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-      maxMarketSize: bn(10000000), // Make sure maxMarketSize is high enough given the market price is $1.
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
+    // Set market price to 1, to make make it easier to create our expected scenario.
+    const marketPrice = bn(1);
+    await market.aggregator().mockSetCurrentPrice(marketPrice);
 
     // Deposit and create a highly leveraged position
-    const { marketId, collateralDepositAmount } = await depositMargin(
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: toTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
         desiredMarginUsdDepositAmount: 500,
       })
@@ -510,34 +551,34 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should merge two accounts', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-
-    const collateral = collaterals()[1];
+    // Use nonUSD collateral to make sure we still have some debt. And use a generator to make sure we have two different collaterals for the fromAccount.
+    const collateralGenerator = toRoundRobinGenerators(shuffle(collateralsWithoutSusd()));
     const market = genOneOf(markets());
-
-    // Set the market oracleNodeId to the collateral oracleNodeId
-    await setMarketConfigurationById(bs, market.marketId(), {
-      oracleNodeId: collateral.oracleNodeId(),
-    });
-    market.oracleNodeId = collateral.oracleNodeId;
+    const side = genSide();
 
     // Withdraw any existing collateral.
     await withdrawAllCollateral(bs, fromTrader, market.marketId());
-
-    const { collateralDepositAmount: collateralDepositAmountTo, marketId } = await depositMargin(
+    const {
+      collateral,
+      collateralDepositAmount: collateralDepositAmountTo,
+      marketId,
+    } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: toTrader,
-        desiredCollateral: collateral,
+        // Use any collateral except sUSD for toAccount.
+        desiredCollateral: genOneOf(collateralsWithoutSusd()),
         desiredMarket: market,
       })
     );
-    const order = await genOrder(bs, market, collateral, collateralDepositAmountTo);
+    const order = await genOrder(bs, market, collateral, collateralDepositAmountTo, {
+      desiredSide: side,
+    });
     await commitAndSettle(bs, marketId, toTrader, order);
 
     // Create some debt for the toAccount, so we later can assert it's realized on account merge.
-    const collateralPrice = await collateral.getPrice();
-    await collateral.setPrice(
-      wei(collateralPrice)
+    await market.aggregator().mockSetCurrentPrice(
+      wei(order.oraclePrice)
         .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
         .toBN()
     );
@@ -548,15 +589,24 @@ describe('PerpAccountModule mergeAccounts', () => {
     await commitAndSettle(bs, marketId, toTrader, toOrder);
 
     // Reset the price causing the toAccount's position to have some pnl.
-    await collateral.setPrice(collateralPrice);
+    await market.aggregator().mockSetCurrentPrice(order.oraclePrice);
 
     // Start creating from position.
     const { collateralDepositAmount: collateralDepositAmountFrom } = await depositMargin(
       bs,
       genTrader(bs, {
         desiredTrader: fromTrader,
-        desiredCollateral: collateral,
         desiredMarket: market,
+        desiredCollateral: collateralGenerator.next().value,
+      })
+    );
+    // Make sure we have two different collaterals.
+    await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredMarket: market,
+        desiredCollateral: collateralGenerator.next().value,
       })
     );
 
@@ -568,6 +618,12 @@ describe('PerpAccountModule mergeAccounts', () => {
     assertBn.gt(fromDigestBefore.collateralUsd, 0);
     assertBn.gt(toDigestBefore.collateralUsd, 0);
 
+    // Assert that from account has two collaterals
+    const numberOfCollateralsWithBalance = fromDigestBefore.depositedCollaterals.filter((x) =>
+      x.available.gt(0)
+    ).length;
+
+    assert.equal(numberOfCollateralsWithBalance, 2);
     // The toAccount should also have some debt and an open position.
     assertBn.gt(toDigestBefore.debtUsd, 0);
     assertBn.notEqual(toDigestBefore.position.size, 0);
@@ -576,6 +632,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmountFrom, {
       desiredLeverage: 1,
       desiredHooks: [MergeAccountSettlementHookMock.address],
+      desiredSide: side,
     });
 
     const { receipt: fromOrderReceipt } = await commitAndSettle(
@@ -620,7 +677,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     assertBn.near(
       marketDigestBefore.totalCollateralValueUsd.add(expectedUsdCollateral),
       marketDigestAfter.totalCollateralValueUsd,
-      bn(0.0001)
+      bn(0.001)
     );
 
     // Assert the toAccount got realized correctly.

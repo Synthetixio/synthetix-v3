@@ -2902,6 +2902,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/bfp-market@workspace:markets/bfp-market"
   dependencies:
+    "@ethersproject/abi": "npm:^5.7.0"
+    "@ethersproject/providers": "npm:^5.7.2"
     "@openzeppelin/contracts": "npm:4.9.3"
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
