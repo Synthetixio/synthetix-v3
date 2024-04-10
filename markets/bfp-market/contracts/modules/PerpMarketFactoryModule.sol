@@ -106,27 +106,22 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IMarket
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
 
+        int256 totalCollateralValueUsd = market.getTotalCollateralValueUsd().toInt();
         int128 skew = market.skew;
+
         if (skew == 0) {
-            return
-                MathUtil
-                    .max(
-                        totalCollateralValueUsd.toInt() -
-                            market.debtCorrection -
-                            market.totalTraderDebtUsd.toInt(),
-                        0
-                    )
-                    .toUint();
+            int256 marketReportedDebt = totalCollateralValueUsd -
+                market.debtCorrection -
+                market.totalTraderDebtUsd.toInt();
+            return MathUtil.max(marketReportedDebt, 0).toUint();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
-        int256 priceWithFunding = oraclePrice.toInt() +
-            market.currentFundingAccruedComputed +
-            unrecordedFunding;
-        int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
+        int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
+        int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
+        int256 marketReportedDebt = totalCollateralValueUsd +
             skew.mulDecimal(priceWithFunding) -
             market.debtCorrection -
             market.totalTraderDebtUsd.toInt();
