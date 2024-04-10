@@ -49,9 +49,14 @@ describe('PerpAccountModule mergeAccounts', () => {
       accountId: toTraderAccountId,
     };
 
-    // Set the fromAccount to be the "vaultAccountId" that will have the new account merged into it.
     await withExplicitEvmMine(
       () => BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId),
+      provider()
+    );
+
+    // Set the fromAccount to be the "vaultAccountId" that will have the new account merged into it.
+    await withExplicitEvmMine(
+      () => MergeAccountSettlementHookMock.mockSetVaultAccountId(toTraderAccountId),
       provider()
     );
 
@@ -64,9 +69,9 @@ describe('PerpAccountModule mergeAccounts', () => {
           ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL'),
           MergeAccountSettlementHookMock.address
         ),
-
       provider()
     );
+
     await withExplicitEvmMine(
       () =>
         BfpMarketProxy.connect(fromTrader.signer).grantPermission(
@@ -367,6 +372,7 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should revert when toAccount has an open order', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
+
     const market = genOneOf(markets());
 
     // Deposit and commit an order for the toAccount which wont be settled.

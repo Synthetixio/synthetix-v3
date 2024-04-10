@@ -29,6 +29,7 @@ contract MergeAccountSettlementHookMock is ISettlementHook {
     function mockSetVaultAccountId(uint128 _vaultAccountId) external {
         vaultAccountId = _vaultAccountId;
     }
+
     function mockSetShouldRevertOnSettlement(bool _shouldRevertOnSettlement) external {
         shouldRevertOnSettlement = _shouldRevertOnSettlement;
     }
@@ -41,6 +42,7 @@ contract MergeAccountSettlementHookMock is ISettlementHook {
         if (shouldRevertOnSettlement) {
             revert InvalidSettlement();
         }
+
         if (vaultAccountId == 0) {
             revert VaultAccountIdNotSet();
         }
