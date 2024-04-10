@@ -137,7 +137,10 @@ const config = {
       '!contracts/generated/**',
       '!contracts/mocks/**',
     ],
-    skip: ['@synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor'],
+    skip: [
+      '@openzeppelin/contracts/**',
+      '@synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor',
+    ],
   },
 };
 
