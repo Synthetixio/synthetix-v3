@@ -43,18 +43,24 @@ contract MarginModule is IMarginModule {
 
     // --- Helpers --- //
 
-    /// @dev Post collateral withdraw validation to verify margin requirements are acceptable.
-    function validatePositionPostWithdraw(
+    /// @dev Validation account and position after accounting update to verify margin requirements are acceptable.
+    function validateAccountAndPositionOnWithdrawal(
         uint128 accountId,
+        PerpMarket.Data storage market,
+        Margin.Data storage accountMargin,
         Position.Data storage position,
-        PerpMarket.Data storage market
+        uint256 oraclePrice
     ) private view {
-        uint256 oraclePrice = market.getOraclePrice();
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
             oraclePrice
         );
+
+        // No position, just ensure if debt exists then remaining discounted collateral covers debt.
+        if (position.size == 0 && marginValues.discountedCollateralUsd < accountMargin.debtUsd) {
+            revert ErrorUtil.InsufficientMargin();
+        }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
@@ -286,6 +292,7 @@ contract MarginModule is IMarginModule {
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             FeatureFlag.ensureAccessToFeature(Flags.DEPOSIT);
+
             uint256 maxAllowable = collateral.maxAllowable;
             uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
 
@@ -298,6 +305,7 @@ contract MarginModule is IMarginModule {
             transferAndDeposit(marketId, absAmountDelta, synthMarketId, globalConfig);
         } else {
             FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
+
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
                 revert ErrorUtil.InsufficientCollateral(
@@ -310,15 +318,19 @@ contract MarginModule is IMarginModule {
             accountMargin.collaterals[synthMarketId] -= absAmountDelta;
             market.depositedCollateral[synthMarketId] -= absAmountDelta;
 
-            // If an open position exists, verify this does _not_ place them into instant liquidation.
-            //
-            // Ensure we perform this _after_ the accounting update so marginUsd uses with post withdrawal
-            // collateral amounts.
+            // Verify account and position remain solvent.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0 || accountMargin.debtUsd != 0) {
-                validatePositionPostWithdraw(accountId, position, market);
+                validateAccountAndPositionOnWithdrawal(
+                    accountId,
+                    market,
+                    accountMargin,
+                    position,
+                    oraclePrice
+                );
             }
 
+            // Perform the actual withdraw & transfer from Synthetix Core to msg.sender.
             withdrawAndTransfer(marketId, absAmountDelta, synthMarketId, globalConfig);
         }
     }
