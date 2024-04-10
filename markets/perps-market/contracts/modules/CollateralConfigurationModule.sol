@@ -10,7 +10,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
-import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
+import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {RewardsDistributor} from "@synthetixio/rewards-distributor/src/RewardsDistributor.sol";
 
@@ -27,7 +27,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SetUtil for SetUtil.UintSet;
     using LiquidationAssetManager for LiquidationAssetManager.Data;
-    using CollateralConfiguration for CollateralConfiguration.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
 
     /**
      * @inheritdoc ICollateralConfigurationModule
@@ -45,7 +45,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
             maxCollateralAmount
         );
 
-        CollateralConfiguration.load(collateralId).setDiscounts(
+        PerpsCollateralConfiguration.load(collateralId).setDiscounts(
             upperLimitDiscount,
             lowerLimitDiscount,
             discountScalar
@@ -76,7 +76,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
             uint256 discountScalar
         )
     {
-        return CollateralConfiguration.load(collateralId).getConfig();
+        return PerpsCollateralConfiguration.load(collateralId).getConfig();
     }
 
     /**
@@ -121,7 +121,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         }
 
         // Using loadValid here to ensure we are tying the distributor to a valid collateral.
-        LiquidationAssetManager.Data storage lam = CollateralConfiguration
+        LiquidationAssetManager.Data storage lam = PerpsCollateralConfiguration
             .loadValid(collateralId)
             .lam;
 
@@ -154,7 +154,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         override
         returns (address distributor, address[] memory poolDelegatedCollateralTypes)
     {
-        LiquidationAssetManager.Data storage lam = CollateralConfiguration.loadValidLam(
+        LiquidationAssetManager.Data storage lam = PerpsCollateralConfiguration.loadValidLam(
             collateralId
         );
         distributor = lam.distributor;

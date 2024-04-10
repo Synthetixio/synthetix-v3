@@ -11,7 +11,7 @@ import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {CollateralConfiguration} from "./CollateralConfiguration.sol";
+import {PerpsCollateralConfiguration} from "./PerpsCollateralConfiguration.sol";
 
 /**
  * @title This library contains all global perps market data
@@ -155,7 +155,7 @@ library GlobalPerpsMarket {
     ) internal view {
         uint256 collateralAmount = self.collateralAmounts[collateralId];
         if (synthAmount > 0) {
-            uint256 maxAmount = CollateralConfiguration.load(collateralId).maxAmount;
+            uint256 maxAmount = PerpsCollateralConfiguration.load(collateralId).maxAmount;
             if (maxAmount == 0) {
                 revert SynthNotEnabledForCollateral(collateralId);
             }
