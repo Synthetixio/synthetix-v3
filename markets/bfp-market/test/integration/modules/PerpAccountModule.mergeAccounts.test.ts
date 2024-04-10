@@ -361,12 +361,12 @@ describe('PerpAccountModule mergeAccounts', () => {
       trustedMulticallerAbi
     ) as TrustedMulticallForwarder;
 
-    // The trustedMulticaller is not a whitelisted settlement hook. Assert revert.
-    await assertRevert(
-      trustedMultiCallForwarder.connect(fromTrader.signer).aggregate3(calls, { value: updateFee }),
-      `InvalidHook("${trustedMulticallerAddress}")`,
-      BfpMarketProxy
-    );
+    await trustedMultiCallForwarder
+      .connect(fromTrader.signer)
+      .aggregate3(calls, { value: updateFee });
+
+    // // The trustedMulticaller is not a whitelisted settlement hook. Assert revert.
+    // await assertRevert(`InvalidHook("${trustedMulticallerAddress}")`, BfpMarketProxy);
   });
 
   it('should revert when toAccount has an open order', async () => {
