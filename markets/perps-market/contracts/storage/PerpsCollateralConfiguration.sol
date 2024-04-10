@@ -12,7 +12,7 @@ import {SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 /**
  * @title Configuration of all multi collateral assets used for trader margin
  */
-library CollateralConfiguration {
+library PerpsCollateralConfiguration {
     using DecimalMath for uint256;
 
     /**

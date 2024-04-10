@@ -18,7 +18,7 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
-import {CollateralConfiguration} from "./CollateralConfiguration.sol";
+import {PerpsCollateralConfiguration} from "./PerpsCollateralConfiguration.sol";
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -37,7 +37,7 @@ library PerpsAccount {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
-    using CollateralConfiguration for CollateralConfiguration.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using KeeperCosts for KeeperCosts.Data;
@@ -346,7 +346,7 @@ library PerpsAccount {
             if (collateralId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
-                (amountToAdd, ) = CollateralConfiguration.load(collateralId).valueInUsd(
+                (amountToAdd, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
                     amount,
                     spotMarket,
                     stalenessTolerance,

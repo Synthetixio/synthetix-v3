@@ -8,7 +8,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {CollateralConfiguration} from "./CollateralConfiguration.sol";
+import {PerpsCollateralConfiguration} from "./PerpsCollateralConfiguration.sol";
 
 /**
  * @title This library contains all global perps market configuration data
@@ -16,7 +16,7 @@ import {CollateralConfiguration} from "./CollateralConfiguration.sol";
 library GlobalPerpsMarketConfiguration {
     using DecimalMath for uint256;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
-    using CollateralConfiguration for CollateralConfiguration.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
     using SetUtil for SetUtil.UintSet;
     using SafeCastU128 for uint128;
 
@@ -207,7 +207,7 @@ library GlobalPerpsMarketConfiguration {
         uint128 collateralId,
         uint256 maxCollateralAmount
     ) internal {
-        CollateralConfiguration.load(collateralId).setMax(collateralId, maxCollateralAmount);
+        PerpsCollateralConfiguration.load(collateralId).setMax(collateralId, maxCollateralAmount);
 
         bool isSupportedCollateral = self.supportedCollateralTypes.contains(collateralId);
         if (maxCollateralAmount > 0 && !isSupportedCollateral) {

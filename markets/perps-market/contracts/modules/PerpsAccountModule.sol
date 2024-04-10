@@ -18,7 +18,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {CollateralConfiguration} from "../storage/CollateralConfiguration.sol";
+import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
 
 /**
  * @title Module to manage accounts
@@ -43,7 +43,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     ) external override {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
 
-        CollateralConfiguration.validDistributorExists(collateralId);
+        PerpsCollateralConfiguration.validDistributorExists(collateralId);
 
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(
