@@ -25,17 +25,13 @@ import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import {
-  address as trustedMulticallerAddress,
-  abi as trustedMulticallerAbi,
-  Multicall3 as TrustedMulticallForwarder,
-} from '../../external/TrustedMulticallForwarder';
 import { shuffle } from 'lodash';
 import assert from 'assert';
 
 describe('PerpAccountModule mergeAccounts', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, systems, provider, restore, collateralsWithoutSusd, keeper } = bs;
+  const { markets, traders, systems, provider, restore, collateralsWithoutSusd, keeper, owner } =
+    bs;
 
   beforeEach(restore);
 
@@ -309,9 +305,9 @@ describe('PerpAccountModule mergeAccounts', () => {
   });
 
   it('should revert if called from a non settlement hook', async () => {
-    const { BfpMarketProxy } = systems();
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
 
-    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const { fromTrader } = await createAccountsToMerge();
     const market = genOneOf(markets());
 
     const { marketId, collateralDepositAmount, collateral } = await depositMargin(
@@ -323,6 +319,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
     const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
       desiredLeverage: 1,
+      desiredHooks: [MergeAccountSettlementHookMock.address],
     });
     await commitOrder(bs, marketId, fromTrader, order);
 
@@ -330,43 +327,22 @@ describe('PerpAccountModule mergeAccounts', () => {
     await fastForwardTo(settlementTime, provider());
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
-    // Populate a multicall where we settle our own order and try to call mergeAccounts.
-    const calls = [
-      {
-        target: BfpMarketProxy.address,
-        callData: BfpMarketProxy.interface.encodeFunctionData('settleOrder', [
-          fromTrader.accountId,
-          marketId,
-          updateData,
-        ]),
+    await withExplicitEvmMine(
+      () =>
+        BfpMarketProxy.connect(owner()).setSettlementHookConfiguration({
+          whitelistedHookAddresses: [],
+          maxHooksPerOrder: 1,
+        }),
+      provider()
+    );
+
+    await assertRevert(
+      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
         value: updateFee,
-        allowFailure: false,
-        requireSuccess: true,
-      },
-      {
-        target: BfpMarketProxy.address,
-        callData: BfpMarketProxy.interface.encodeFunctionData('mergeAccounts', [
-          fromTrader.accountId,
-          toTrader.accountId,
-          market.marketId(),
-        ]),
-        value: bn(0),
-        allowFailure: false,
-        requireSuccess: true,
-      },
-    ];
-
-    const trustedMultiCallForwarder = new ethers.Contract(
-      trustedMulticallerAddress,
-      trustedMulticallerAbi
-    ) as TrustedMulticallForwarder;
-
-    await trustedMultiCallForwarder
-      .connect(fromTrader.signer)
-      .aggregate3(calls, { value: updateFee });
-
-    // // The trustedMulticaller is not a whitelisted settlement hook. Assert revert.
-    // await assertRevert(`InvalidHook("${trustedMulticallerAddress}")`, BfpMarketProxy);
+      }),
+      `InvalidHook("${MergeAccountSettlementHookMock.address}")`,
+      BfpMarketProxy
+    );
   });
 
   it('should revert when toAccount has an open order', async () => {
