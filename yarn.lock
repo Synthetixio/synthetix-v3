@@ -3009,6 +3009,7 @@ __metadata:
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     "@istanbuljs/nyc-config-typescript": "npm:^1.0.2"
+    "@types/micromatch": "npm:^4"
     "@types/prompts": "npm:^2.4.9"
     "@usecannon/builder": "npm:2.12.1"
     chalk: "npm:^4.1.2"
@@ -3016,8 +3017,8 @@ __metadata:
     ethers: "npm:^5.7.2"
     fast-glob: "npm:^3.3.2"
     hardhat: "npm:^2.19.5"
+    micromatch: "npm:^4.0.5"
     mocha: "npm:^10.3.0"
-    multimatch: "npm:^7.0.0"
     nyc: "npm:^15.1.0"
     prompts: "npm:^2.4.2"
     rfdc: "npm:^1.3.1"
@@ -3510,6 +3511,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/braces@npm:*":
+  version: 3.0.4
+  resolution: "@types/braces@npm:3.0.4"
+  checksum: 10/7324497b6cc34c963c44d3f8516c67a83b749ab4f18defd9418b231b071af7ee8f0a0f345a52b204e867de80f684cabb21158512e1eaecbcebbabed1d1e357a3
+  languageName: node
+  linkType: hard
+
 "@types/cli-progress@npm:^3.11.0":
   version: 3.11.0
   resolution: "@types/cli-progress@npm:3.11.0"
@@ -3632,6 +3640,15 @@ __metadata:
   version: 5.1.1
   resolution: "@types/lru-cache@npm:5.1.1"
   checksum: 10/0afadefc983306684a8ef95b6337a0d9e3f687e7e89e1f1f3f2e1ce3fbab5b018bb84cf277d781f871175a2c8f0176762b69e58b6f4296ee1b816cea94d5ef06
+  languageName: node
+  linkType: hard
+
+"@types/micromatch@npm:^4":
+  version: 4.0.6
+  resolution: "@types/micromatch@npm:4.0.6"
+  dependencies:
+    "@types/braces": "npm:*"
+  checksum: 10/d86560645ad74acfd8251da612e459f72c1b146ad48cfd894aae1c4d0e55f2ea32491f793b623c7890dae546bf4b6e3b31fc536e4448ea5331c7a26acc450f94
   languageName: node
   linkType: hard
 
@@ -11666,7 +11683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"micromatch@npm:4.0.5, micromatch@npm:^4.0.4":
+"micromatch@npm:4.0.5, micromatch@npm:^4.0.4, micromatch@npm:^4.0.5":
   version: 4.0.5
   resolution: "micromatch@npm:4.0.5"
   dependencies:

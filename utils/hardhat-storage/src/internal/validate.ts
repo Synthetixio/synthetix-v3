@@ -5,6 +5,7 @@ import { validateMutableStateVariables } from './validate-variables';
 export interface ValidateParams {
   sourceUnits: SourceUnit[];
   prevSourceUnits: SourceUnit[];
+  skip: string[];
 }
 
 export function validate(params: ValidateParams) {
