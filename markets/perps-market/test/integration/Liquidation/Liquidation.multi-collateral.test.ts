@@ -262,7 +262,7 @@ describe('Liquidation - multi collateral', () => {
         );
       });
 
-      it('sold all market collateral for usd', async () => {
+      it('distributed all collateral', async () => {
         assertBn.equal(
           await systems().Core.getMarketCollateralAmount(superMarketId(), btcSynth.synthAddress()),
           bn(0)
