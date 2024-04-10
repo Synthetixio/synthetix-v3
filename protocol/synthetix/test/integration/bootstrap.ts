@@ -28,13 +28,13 @@ export interface Systems {
   OracleManager: OracleManagerProxy;
 }
 
-const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
-  cannonfile: 'cannonfile.test.toml',
-});
-
-const restoreSnapshot = createSnapshot();
-
 export function bootstrap() {
+  const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
+    cannonfile: 'cannonfile.test.toml',
+  });
+
+  const restoreSnapshot = createSnapshot();
+
   let systems: Systems;
 
   before('load system proxies', function () {
