@@ -688,7 +688,7 @@ describe('LiquidationModule', () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       // Set a large enough liqCap to ensure a full liquidation.
-      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(1000) });
 
       const newMarketOraclePrice = wei(order.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
@@ -1113,6 +1113,32 @@ describe('LiquidationModule', () => {
       const d = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(d.collateralUsd);
       d.depositedCollaterals.forEach((c) => assertBn.isZero(c.available));
+    });
+
+    it('should update utilization rate after market update during liqudation', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const { receipt } = await commitAndSettleLiquidatedPosition(keeper());
+
+      const contractsWithAllEvents = extendContractAbi(
+        BfpMarketProxy,
+        Core.interface
+          .format(utils.FormatTypes.full)
+          .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+      );
+
+      // Here we check that 'MarketSizeUpdated' is _before_ 'UtilizationRecomputed'.
+      await assertEvents(
+        receipt,
+        [
+          /FundingRecomputed/,
+          /MarketSizeUpdated/,
+          /UtilizationRecomputed/,
+          /Transfer/,
+          /MarketUsdWithdrawn/,
+          /PositionLiquidated/,
+        ],
+        contractsWithAllEvents
+      );
     });
 
     it('should emit all events in correct order');
