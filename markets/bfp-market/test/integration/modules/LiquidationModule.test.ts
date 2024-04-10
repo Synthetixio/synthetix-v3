@@ -688,7 +688,7 @@ describe('LiquidationModule', () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       // Set a large enough liqCap to ensure a full liquidation.
-      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(1000) });
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: bn(100) });
 
       const newMarketOraclePrice = wei(order.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
