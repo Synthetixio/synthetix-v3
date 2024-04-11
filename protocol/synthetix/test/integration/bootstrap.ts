@@ -50,29 +50,10 @@ export function bootstrap() {
 
   before(restoreSnapshot);
 
-  /*
-   * Monkey patch to implicitily call to txRequest.wait() method on all write operations.
-   * This is necessary so we are sure that on each test case we don't leave pending txs.
-   */
-  const signers = () => {
-    const results = getSigners();
-
-    for (const signer of results) {
-      const originalSendTransaction = signer.sendTransaction.bind(signer);
-      signer.sendTransaction = async function sendTransactionWithWait(...params) {
-        const response = await originalSendTransaction(...params);
-        await response.wait();
-        return response;
-      };
-    }
-
-    return results;
-  };
-
   return {
     provider: () => getProvider(),
-    signers,
-    owner: () => signers()[0],
+    signers: () => getSigners(),
+    owner: () => getSigners()[0],
     systems: () => systems,
   };
 }
