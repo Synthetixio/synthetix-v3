@@ -1,12 +1,11 @@
-import { ethers } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-
 import { wei } from '@synthetixio/wei';
-import { OpenPositionData, openPosition } from '../helpers';
+import { ethers } from 'ethers';
+import { bn, bootstrapMarkets } from '../bootstrap';
+import { openPosition, OpenPositionData } from '../helpers';
 
 const sUSDSynthId = 0;
 describe('ModifyCollateral Withdraw', () => {
