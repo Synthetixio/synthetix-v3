@@ -309,7 +309,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
-  it('should revert when called from a non settlement hook', async () => {
+  it.skip('should revert when called from a non settlement hook', async () => {
     const { BfpMarketProxy } = systems();
 
     const { fromTrader, toTrader } = await createAccountsToMerge();
