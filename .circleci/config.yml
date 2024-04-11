@@ -14,7 +14,7 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+            - foundry-{{ .Environment.FOUNDRY_COMMIT }}
 
       - run:
           name: "Install Foundry"
@@ -23,18 +23,29 @@ commands:
             SHELL: /bin/bash
           command: |-
             export PATH="$PATH:$HOME/.foundry/bin"
+            export PATH="$PATH:$HOME/.cargo/bin"
             echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
 
             if command -v anvil; then
               echo "Anvil already installed"
               anvil --version
             else
-              curl -L https://foundry.paradigm.xyz | bash
-              foundryup
+              echo FOUNDRY_COMMIT=$FOUNDRY_COMMIT
+              curl https://sh.rustup.rs -sSf | sh -s -- -y --verbose --default-host x86_64-unknown-linux-gnu
+              cargo --version
+              git clone "https://github.com/foundry-rs/foundry.git" --no-checkout
+              cd foundry
+              git checkout "$FOUNDRY_COMMIT"
+              cargo build --bin anvil --release
+              # cp ./target/release/forge $HOME/.foundry/bin/forge
+              # cp ./target/release/cast $HOME/.foundry/bin/cast
+              # cp ./target/release/anvil $HOME/.foundry/bin/anvil
+              # cp ./target/release/chisel $HOME/.foundry/bin/chisel
+              anvil --version
             fi
 
       - save_cache:
-          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          key: foundry-{{ .Environment.FOUNDRY_COMMIT }}
           paths:
             - "~/.foundry"
 
@@ -540,32 +551,27 @@ jobs:
       - store_artifacts:
           path: "lcov.info"
 
+  lock-foundry-version:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+
 workflows:
   version: 2.1
 
-  anvil-per-test:
+  lock-foundry-version:
     when:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["lock-foundry-version", << pipeline.git.branch >>]
     jobs:
-      - build-testable
-
-      - test-contracts:
-          name: "test-perps-market"
-          requires: [build-testable]
-          workspace: "@synthetixio/perps-market"
-          parallelism: 8
-
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          workspace: "@synthetixio/bfp-market"
-          parallelism: 4
+      - lock-foundry-version
 
   tests:
     unless:
       or:
-        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["lock-foundry-version", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
