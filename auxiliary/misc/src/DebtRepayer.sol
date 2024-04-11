@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.13;
+
+import {ISynthetixCore} from "./ISynthetixCore.sol";
+import {ISpotMarket} from "./ISpotMarket.sol";
+import {IUSDToken} from "./IUSDToken.sol";
+
+/**
+ * Tiny contract which deposits the needed amount of collateral into synthetix v3 account for debt repayment
+ */
+contract DebtRepayer {
+    function depositDebtToRepay(
+        ISynthetixCore synthetixCore,
+        ISpotMarket spotMarket,
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint128 spotMarketId
+    ) public {
+        int256 debt = synthetixCore.getPositionDebt(accountId, poolId, collateralType);
+        if (debt > 0) {
+            (uint256 neededSynth,) = spotMarket.quoteSellExactOut(spotMarketId, uint256(debt), type(uint8).max);
+            (address toWrapToken,) = spotMarket.getWrapper(spotMarketId);
+            IUSDToken(toWrapToken).transferFrom(msg.sender, address(this), uint256(neededSynth));
+            IUSDToken(toWrapToken).approve(address(spotMarket), neededSynth);
+            spotMarket.wrap(spotMarketId, neededSynth, neededSynth);
+            spotMarket.sellExactOut(spotMarketId, uint256(debt), neededSynth, address(0));
+            IUSDToken(synthetixCore.getUsdToken()).approve(address(synthetixCore), uint256(debt));
+            synthetixCore.deposit(accountId, synthetixCore.getUsdToken(), uint256(debt));
+        }
+    }
+}
