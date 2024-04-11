@@ -27,11 +27,9 @@ export function bootstrapStakers(
   });
 
   before('create traders', async () => {
-    await Promise.all([
-      stake(systems(), 2, 1000, staker1, delegateAmount),
-      stake(systems(), 2, 1001, staker2, delegateAmount),
-      stake(systems(), 2, 1002, staker3, delegateAmount),
-    ]);
+    await stake(systems(), 2, 1000, staker1, delegateAmount);
+    await stake(systems(), 2, 1001, staker2, delegateAmount);
+    await stake(systems(), 2, 1002, staker3, delegateAmount);
   });
 
   before('mint usd', async () => {
@@ -64,22 +62,20 @@ export const stake = async (
   user: ethers.Signer,
   delegateAmount: ethers.BigNumber = depositAmount
 ) => {
-  const Core = systems.Core.connect(user);
-  const CollateralMock = systems.CollateralMock.connect(user);
-
+  const { Core, CollateralMock } = systems;
   await CollateralMock.mint(await user.getAddress(), delegateAmount.mul(1000));
 
   // create user account
-  await Core['createAccount(uint128)'](accountId);
+  await Core.connect(user)['createAccount(uint128)'](accountId);
 
   // approve
-  await CollateralMock.approve(Core.address, delegateAmount.mul(300));
+  await CollateralMock.connect(user).approve(Core.address, delegateAmount.mul(300));
 
   // stake collateral
-  await Core.deposit(accountId, CollateralMock.address, delegateAmount.mul(300));
+  await Core.connect(user).deposit(accountId, CollateralMock.address, delegateAmount.mul(300));
 
   // invest in the pool
-  await Core.delegateCollateral(
+  await Core.connect(user).delegateCollateral(
     accountId,
     poolId,
     CollateralMock.address,
@@ -88,7 +84,7 @@ export const stake = async (
   );
 
   // also for convenience invest in the 0 pool
-  await Core.delegateCollateral(
+  await Core.connect(user).delegateCollateral(
     accountId,
     0,
     CollateralMock.address,
