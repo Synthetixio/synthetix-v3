@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-
 import type { CoreProxy, CollateralMock } from '../generated/typechain';
 
 type SystemArgs = {
