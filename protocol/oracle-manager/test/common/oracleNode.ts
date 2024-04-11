@@ -13,7 +13,6 @@ export const createOracleNode = async (
   const abi = ethers.utils.defaultAbiCoder;
   const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
   const aggregator = await factory.connect(owner).deploy();
-  await aggregator.deployed();
 
   await aggregator.mockSetCurrentPrice(price);
 
