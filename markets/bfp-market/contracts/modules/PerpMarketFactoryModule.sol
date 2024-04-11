@@ -109,9 +109,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         int256 totalCollateralValueUsd = market.getTotalCollateralValueUsd().toInt();
         int128 skew = market.skew;
+        int256 marketReportedDebt;
 
         if (skew == 0) {
-            int256 marketReportedDebt = totalCollateralValueUsd -
+            marketReportedDebt =
+                totalCollateralValueUsd -
                 market.debtCorrection -
                 market.totalTraderDebtUsd.toInt();
             return MathUtil.max(marketReportedDebt, 0).toUint();
@@ -121,7 +123,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
         int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
-        int256 marketReportedDebt = totalCollateralValueUsd +
+
+        marketReportedDebt =
+            totalCollateralValueUsd +
             skew.mulDecimal(priceWithFunding) -
             market.debtCorrection -
             market.totalTraderDebtUsd.toInt();
