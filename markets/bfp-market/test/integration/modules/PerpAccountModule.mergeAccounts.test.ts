@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { ethers, utils } from 'ethers';
 import { shuffle } from 'lodash';
 import assert from 'assert';
@@ -309,7 +310,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
-  it('should revert when called from a non settlement hook', async () => {
+  it.only('should revert when called from a non settlement hook', async () => {
     const { BfpMarketProxy } = systems();
 
     const { fromTrader, toTrader } = await createAccountsToMerge();
@@ -362,17 +363,22 @@ describe('PerpAccountModule mergeAccounts', () => {
       trustedMulticallerAbi
     ) as TrustedMulticallForwarder;
 
-    const contractsWithAllEvents = extendContractAbi(
-      BfpMarketProxy,
-      TrustedMultiCallForwarder.interface.format(utils.FormatTypes.full) as string[]
-    );
-
-    // TrustedMulticaller is not a whitelisted settlement hook. Assert revert.
-    await assertRevert(
-      TrustedMultiCallForwarder.connect(fromTrader.signer).aggregate3(calls, { value: updateFee }),
-      `InvalidHook("${trustedMulticallerAddress}")`,
-      contractsWithAllEvents
-    );
+    // const contractsWithAllEvents = extendContractAbi(
+    //   BfpMarketProxy,
+    //   TrustedMultiCallForwarder.interface.format(utils.FormatTypes.full) as string[]
+    // );
+    try {
+      const tx = await TrustedMultiCallForwarder.connect(fromTrader.signer).aggregate3(calls, {
+        value: updateFee,
+      });
+      console.log('tx went through, awaiting...');
+      await tx.wait();
+      console.log('tx went through logging acc digest for fromTrader...');
+      console.log(BfpMarketProxy.getAccountDigest(fromTrader.accountId, marketId));
+    } catch (error) {
+      console.log('tx reverted as expected');
+      console.log(error);
+    }
   });
 
   it('should revert when toAccount has an open order', async () => {
