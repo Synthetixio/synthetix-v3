@@ -21,9 +21,11 @@ contract DebtRepayer {
         if (debt > 0) {
             (uint256 neededSynth,) = spotMarket.quoteSellExactOut(spotMarketId, uint256(debt), type(uint8).max);
             (address toWrapToken,) = spotMarket.getWrapper(spotMarketId);
-            IUSDToken(toWrapToken).transferFrom(msg.sender, address(this), uint256(neededSynth));
-            IUSDToken(toWrapToken).approve(address(spotMarket), neededSynth);
-            spotMarket.wrap(spotMarketId, neededSynth, neededSynth);
+						uint256 toWrapTokenDecimals = IUSDToken(toWrapToken).decimals();
+						uint256 toWrapTokenAmount = neededSynth * (10 ** 18) / (10 ** toWrapTokenDecimals);
+            IUSDToken(toWrapToken).transferFrom(msg.sender, address(this), uint256(toWrapTokenAmount));
+            IUSDToken(toWrapToken).approve(address(spotMarket), toWrapTokenAmount);
+            spotMarket.wrap(spotMarketId, toWrapTokenAmount, neededSynth);
             spotMarket.sellExactOut(spotMarketId, uint256(debt), neededSynth, address(0));
             IUSDToken(synthetixCore.getUsdToken()).approve(address(synthetixCore), uint256(debt));
             synthetixCore.deposit(accountId, synthetixCore.getUsdToken(), uint256(debt));
