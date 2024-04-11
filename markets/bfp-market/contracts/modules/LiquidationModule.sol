@@ -60,8 +60,6 @@ contract LiquidationModule is ILiquidationModule {
             fundingRate,
             market.getCurrentFundingVelocity()
         );
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
-        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         uint128 liqSize;
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(
@@ -81,6 +79,9 @@ contract LiquidationModule is ILiquidationModule {
         market.size = updatedMarketSize;
 
         emit MarketSizeUpdated(marketId, updatedMarketSize, updatedMarketSkew);
+
+        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // Update market debt relative to the keeperFee incurred.
         market.updateDebtCorrection(market.positions[accountId], newPosition);

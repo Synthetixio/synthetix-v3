@@ -1115,6 +1115,32 @@ describe('LiquidationModule', () => {
       d.depositedCollaterals.forEach((c) => assertBn.isZero(c.available));
     });
 
+    it('should update utilization rate after market update during liqudation', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const { receipt } = await commitAndSettleLiquidatedPosition(keeper());
+
+      const contractsWithAllEvents = extendContractAbi(
+        BfpMarketProxy,
+        Core.interface
+          .format(utils.FormatTypes.full)
+          .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+      );
+
+      // Here we check that 'MarketSizeUpdated' is _before_ 'UtilizationRecomputed'.
+      await assertEvents(
+        receipt,
+        [
+          /FundingRecomputed/,
+          /MarketSizeUpdated/,
+          /UtilizationRecomputed/,
+          /Transfer/,
+          /MarketUsdWithdrawn/,
+          /PositionLiquidated/,
+        ],
+        contractsWithAllEvents
+      );
+    });
+
     it('should emit all events in correct order');
 
     it('should recompute funding', async () => {
