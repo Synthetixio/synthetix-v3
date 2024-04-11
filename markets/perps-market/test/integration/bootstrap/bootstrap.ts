@@ -10,11 +10,11 @@ import {
 } from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
-import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
 import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
 import { createKeeperCostNode } from './createKeeperCostNode';
+import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
+import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -80,28 +80,9 @@ export function bootstrap() {
     );
   });
 
-  /*
-   * Monkey patch to implicitily call to txRequest.wait() method on all write operations.
-   * This is necessary so we are sure that on each test case we don't leave pending txs.
-   */
-  const signers = () => {
-    const results = getSigners();
-
-    for (const signer of results) {
-      const originalSendTransaction = signer.sendTransaction.bind(signer);
-      signer.sendTransaction = async function sendTransactionWithWait(...params) {
-        const response = await originalSendTransaction(...params);
-        await response.wait();
-        return response;
-      };
-    }
-
-    return results;
-  };
-
   return {
     provider: () => getProvider(),
-    signers,
+    signers: () => getSigners(),
     owner: () => getSigners()[0],
     systems: () => contracts,
   };
