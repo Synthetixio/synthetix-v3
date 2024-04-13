@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {ISynthetixCore} from "./ISynthetixCore.sol";
 import {ISpotMarket} from "./ISpotMarket.sol";
 import {IUSDToken} from "./IUSDToken.sol";
+import {ERC2771Context} from "./ERC2771Context.sol";
 
 /**
  * Tiny contract which deposits the needed amount of collateral into synthetix v3 account for debt repayment
@@ -17,13 +18,14 @@ contract DebtRepayer {
         address collateralType,
         uint128 spotMarketId
     ) public {
+        address msgSender = ERC2771Context._msgSender();
         int256 debt = synthetixCore.getPositionDebt(accountId, poolId, collateralType);
         if (debt > 0) {
-            (uint256 neededSynth,) = spotMarket.quoteSellExactOut(spotMarketId, uint256(debt), type(uint8).max);
+            (uint256 neededSynth,) = spotMarket.quoteSellExactOut(spotMarketId, uint256(debt), 0);
             (address toWrapToken,) = spotMarket.getWrapper(spotMarketId);
-						uint256 toWrapTokenDecimals = IUSDToken(toWrapToken).decimals();
-						uint256 toWrapTokenAmount = neededSynth * (10 ** 18) / (10 ** toWrapTokenDecimals);
-            IUSDToken(toWrapToken).transferFrom(msg.sender, address(this), uint256(toWrapTokenAmount));
+            uint256 toWrapTokenDecimals = IUSDToken(toWrapToken).decimals();
+            uint256 toWrapTokenAmount = neededSynth * (10 ** toWrapTokenDecimals) / (10 ** 18) + 1;
+            IUSDToken(toWrapToken).transferFrom(msgSender, address(this), uint256(toWrapTokenAmount));
             IUSDToken(toWrapToken).approve(address(spotMarket), toWrapTokenAmount);
             spotMarket.wrap(spotMarketId, toWrapTokenAmount, neededSynth);
             spotMarket.sellExactOut(spotMarketId, uint256(debt), neededSynth, address(0));
