@@ -214,6 +214,7 @@ contract OrderModule is IOrderModule {
             market,
             Position.TradeParams(
                 sizeDelta,
+                oraclePrice, // Note this should be the pyth price, but as we dont have that during commitment lets use the oracle price.
                 oraclePrice,
                 Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
                 marketConfig.makerFee,
@@ -272,6 +273,7 @@ contract OrderModule is IOrderModule {
         runtime.params = Position.TradeParams(
             order.sizeDelta,
             market.getOraclePrice(),
+            runtime.pythPrice,
             runtime.fillPrice,
             marketConfig.makerFee,
             marketConfig.takerFee,
