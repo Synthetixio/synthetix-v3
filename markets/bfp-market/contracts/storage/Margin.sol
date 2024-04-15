@@ -196,6 +196,31 @@ library Margin {
     }
 
     /**
+     * @dev Returns the debt, price pnl, funding, util, and fee adjusted PnL.
+     *
+     * This method is very similiar to `getPnlAdjustmentUsd` with the difference being the price PNL is calculated with the fill price.
+     * This is used when realising a just settled position.
+     */
+    function getPnlAdjustmentFillPriceUsd(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 oraclePrice,
+        uint256 fillPrice
+    ) internal view returns (int256) {
+        Position.Data storage position = market.positions[accountId];
+
+        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+        // Zero size means there are no running sums to adjust margin by.
+        return
+            position.size == 0
+                ? -(accountMargin.debtUsd.toInt())
+                : position.getPricePnl(fillPrice) +
+                    position.getAccruedFunding(market, oraclePrice) -
+                    position.getAccruedUtilization(market, oraclePrice).toInt() -
+                    accountMargin.debtUsd.toInt();
+    }
+
+    /**
      * @dev Returns the margin value in usd given the account, market, and market price.
      *
      * Margin is effectively the discounted value of the deposited collateral, accounting for the funding accrued,
