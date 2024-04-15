@@ -20,7 +20,6 @@ import {
   commitAndSettle,
   commitOrder,
   depositMargin,
-  extendContractAbi,
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceDataByMarketId,
@@ -28,11 +27,6 @@ import {
   withExplicitEvmMine,
   withdrawAllCollateral,
 } from '../../helpers';
-import {
-  address as trustedMulticallerAddress,
-  abi as trustedMulticallerAbi,
-  Multicall3 as TrustedMulticallForwarder,
-} from '../../external/TrustedMulticallForwarder';
 
 describe('PerpAccountModule mergeAccounts', () => {
   const bs = bootstrap(genBootstrap());
@@ -279,7 +273,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
-  it('should revert when fromAccount.position.entryTime is not block.timestamp', async () => {
+  it('should revert when calling mergeAccount from non settlement hook', async () => {
     const { BfpMarketProxy } = systems();
 
     const fromTrader = genOneOf(traders());
@@ -304,74 +298,8 @@ describe('PerpAccountModule mergeAccounts', () => {
         toTraderAccountId,
         marketId
       ),
-      `PositionTooOld()`,
+      `InvalidHook("${await fromTrader.signer.getAddress()}")`,
       BfpMarketProxy
-    );
-  });
-
-  it.skip('should revert when called from a non settlement hook', async () => {
-    const { BfpMarketProxy } = systems();
-
-    const { fromTrader, toTrader } = await createAccountsToMerge();
-    const market = genOneOf(markets());
-
-    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
-      bs,
-      genTrader(bs, {
-        desiredTrader: fromTrader,
-        desiredMarket: market,
-      })
-    );
-    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-      desiredLeverage: 1,
-    });
-    await commitOrder(bs, marketId, fromTrader, order);
-
-    const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
-    await fastForwardTo(settlementTime, provider());
-    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
-
-    // Populate a multicall where we settle our own order and try to call mergeAccounts.
-    const calls = [
-      {
-        target: BfpMarketProxy.address,
-        callData: BfpMarketProxy.interface.encodeFunctionData('settleOrder', [
-          fromTrader.accountId,
-          marketId,
-          updateData,
-        ]),
-        value: updateFee,
-        allowFailure: false,
-        requireSuccess: true,
-      },
-      {
-        target: BfpMarketProxy.address,
-        callData: BfpMarketProxy.interface.encodeFunctionData('mergeAccounts', [
-          fromTrader.accountId,
-          toTrader.accountId,
-          market.marketId(),
-        ]),
-        value: bn(0),
-        allowFailure: false,
-        requireSuccess: true,
-      },
-    ];
-
-    const TrustedMultiCallForwarder = new ethers.Contract(
-      trustedMulticallerAddress,
-      trustedMulticallerAbi
-    ) as TrustedMulticallForwarder;
-
-    const contractsWithAllEvents = extendContractAbi(
-      BfpMarketProxy,
-      TrustedMultiCallForwarder.interface.format(utils.FormatTypes.full) as string[]
-    );
-
-    // TrustedMulticaller is not a whitelisted settlement hook. Assert revert.
-    await assertRevert(
-      TrustedMultiCallForwarder.connect(fromTrader.signer).aggregate3(calls, { value: updateFee }),
-      `InvalidHook("${trustedMulticallerAddress}")`,
-      contractsWithAllEvents
     );
   });
 
