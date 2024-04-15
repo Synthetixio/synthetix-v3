@@ -736,8 +736,7 @@ contract OrderModule {
 contract PerpAccountModule {
     struct Runtime_splitAccount {
         uint256 oraclePrice;
-        uint256 toIm;
-        uint256 fromIm;
+        uint256 im;
         uint128 debtToMove;
         int128 sizeToMove;
         uint256 supportedSynthMarketIdsLength;
@@ -745,7 +744,6 @@ contract PerpAccountModule {
         uint256 collateralToMove;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
-        uint256 fromCollateralUsd;
     }
 }
 
