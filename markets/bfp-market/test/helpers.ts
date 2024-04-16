@@ -325,7 +325,7 @@ export const setBaseFeePerGas = async (
 };
 
 /** Updates the provided `contract` with more ABI details. */
-export const extendContractAbi = (contract: Contract, abi: string[]) => {
+export const extendContractAbi = (contract: Contract, abi: string | string[]) => {
   const contractAbi = contract.interface.format(utils.FormatTypes.full) as string[];
   const newContract = new Contract(
     contract.address,
