@@ -10,6 +10,7 @@ import { bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
+  genNumber,
   genOneOf,
   genOrder,
   genSide,
@@ -23,6 +24,7 @@ import {
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceDataByMarketId,
+  getSusdCollateral,
   setMarketConfigurationById,
   withExplicitEvmMine,
   withdrawAllCollateral,
@@ -31,7 +33,16 @@ import { calcPricePnl } from '../../calculations';
 
 describe('PerpAccountModule mergeAccounts', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, systems, provider, restore, collateralsWithoutSusd, keeper } = bs;
+  const {
+    markets,
+    traders,
+    systems,
+    provider,
+    restore,
+    collateralsWithoutSusd,
+    collaterals,
+    keeper,
+  } = bs;
 
   beforeEach(restore);
 
@@ -505,6 +516,113 @@ describe('PerpAccountModule mergeAccounts', () => {
         gasLimit: BigNumber.from(10_000_000), // Sometimes gas estimation is not high enough.
       }),
       `InsufficientMargin()`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should merge two accounts with sUSD collateral', async () => {
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const side = genSide();
+    const market = genOneOf(markets());
+
+    const {
+      collateral,
+      collateralDepositAmount: collateralDepositAmountTo,
+      marketId,
+    } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: toTrader,
+        desiredCollateral: getSusdCollateral(collaterals()),
+        desiredMarket: market,
+      })
+    );
+    // Open position for toAccount.
+    const order = await genOrder(bs, market, collateral, collateralDepositAmountTo, {
+      desiredSide: side,
+      desiredLeverage: genNumber(1, 3),
+    });
+    await commitAndSettle(bs, marketId, toTrader, order);
+
+    // Start creating from position.
+    const { collateralDepositAmount: collateralDepositAmountFrom } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredMarket: market,
+        desiredCollateral: getSusdCollateral(collaterals()),
+      })
+    );
+    const fromDigestBefore = await BfpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
+    const toDigestBefore = await BfpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
+
+    // Assert that the accounts have some collateral.
+    assertBn.gt(fromDigestBefore.collateralUsd, 0);
+    assertBn.gt(toDigestBefore.collateralUsd, 0);
+    // The toAccount should also have some debt and an open position.
+    assertBn.notEqual(toDigestBefore.position.size, 0);
+    // Not that the we have debt eventhough we use sUSD collateral, as postions only get realised from settlement when
+    assertBn.gt(toDigestBefore.debtUsd, 0);
+
+    // Create an order with the MergeAccountSettlementHookMock as a hook.
+    const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmountFrom, {
+      desiredHooks: [MergeAccountSettlementHookMock.address],
+      desiredSide: side,
+      desiredLeverage: genNumber(1, 3),
+    });
+    const { receipt: fromOrderReceipt } = await commitAndSettle(
+      bs,
+      marketId,
+      fromTrader,
+      fromOrder
+    );
+
+    const fromOrderEvent = findEventSafe(fromOrderReceipt, 'OrderSettled', BfpMarketProxy);
+    const fromDigestAfter = await BfpMarketProxy.getAccountDigest(fromTrader.accountId, marketId);
+    const toDigestAfter = await BfpMarketProxy.getAccountDigest(toTrader.accountId, marketId);
+
+    // Before the fromPosition gets merged into the toPosition, we should be realizing the to position.
+    const pnlFromRealizingToPosition = toDigestBefore.position.pnl
+      .add(toDigestBefore.position.accruedFunding)
+      .sub(toDigestBefore.position.accruedUtilization)
+      .sub(toDigestBefore.debtUsd);
+
+    const fromPositionPricePnl = calcPricePnl(
+      fromOrderEvent.args.sizeDelta,
+      order.oraclePrice,
+      fromOrderEvent.args.fillPrice
+    );
+    const pnlFromRealizingFromPosition = fromPositionPricePnl
+      .add(fromOrderEvent.args.accruedFunding)
+      .sub(fromOrderEvent.args.accruedUtilization)
+      .sub(fromOrderEvent.args.accountDebt);
+    const expectedUsdCollateralDiff = wei(pnlFromRealizingToPosition).add(
+      pnlFromRealizingFromPosition
+    );
+
+    const expectedCollateralUsd = fromDigestBefore.collateralUsd
+      .add(toDigestBefore.collateralUsd)
+      .add(expectedUsdCollateralDiff.toBN());
+
+    // Assert the merged position
+    // Expect no debt as we use sUSD collateral.
+    assertBn.isZero(toDigestAfter.debtUsd);
+    assertBn.near(expectedCollateralUsd, toDigestAfter.collateralUsd, bn(0.0001));
+    assertBn.equal(
+      fromOrderEvent.args.sizeDelta.add(toDigestBefore.position.size),
+      toDigestAfter.position.size
+    );
+
+    // Assert from position empty
+    assertBn.isZero(fromDigestAfter.collateralUsd);
+    assertBn.isZero(fromDigestAfter.position.size);
+    assertBn.isZero(fromDigestAfter.debtUsd);
+
+    // Assert event.
+    await assertEvent(
+      fromOrderReceipt,
+      `AccountsMerged(${fromTrader.accountId}, ${toTrader.accountId}, ${marketId})`,
       BfpMarketProxy
     );
   });
