@@ -207,7 +207,7 @@ library GlobalPerpsMarketConfiguration {
         address referrer,
         PerpsMarketFactory.Data storage factory
     ) private returns (uint256 referralFeesSent) {
-        if (referrer == address(0)) {
+        if (fees == 0 || referrer == address(0)) {
             return 0;
         }
 
