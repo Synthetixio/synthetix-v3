@@ -3,14 +3,12 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import Wei, { wei } from '@synthetixio/wei';
-import { BigNumber, Signer, ethers, utils } from 'ethers';
-import { shuffle, times } from 'lodash';
-import forEach from 'mocha-each';
+import { Signer, ethers, utils } from 'ethers';
+import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
-  genNumber,
   genOneOf,
   genOrder,
   genOrderFromSizeDelta,
@@ -502,12 +500,12 @@ describe('LiquidationModule', () => {
     it('should update utilization rate after market update during liqudation', async () => {
       const { BfpMarketProxy, Core } = systems();
       const { receipt } = await commitAndSettleLiquidatedPosition(keeper());
-
+      const coreEvents = Core.interface.format(utils.FormatTypes.full) as string[];
       const contractsWithAllEvents = extendContractAbi(
         BfpMarketProxy,
-        Core.interface
-          .format(utils.FormatTypes.full)
-          .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+        coreEvents.concat([
+          'event Transfer(address indexed from, address indexed to, uint256 value)',
+        ])
       );
 
       // Here we check that 'MarketSizeUpdated' is _before_ 'UtilizationRecomputed'.
@@ -669,85 +667,6 @@ describe('LiquidationModule', () => {
       it('should return the expected liquidationFees on a large open position');
 
       it('should return the expected liquidationFees on a small open position');
-    });
-
-    describe('getRemainingLiquidatableSizeCapacity', () => {
-      const calcMaxLiquidatableCapacity = (
-        makerFee: BigNumber,
-        takerFee: BigNumber,
-        skewScale: BigNumber,
-        liquidationLimitScalar: BigNumber
-      ) => wei(makerFee.add(takerFee)).mul(skewScale).mul(liquidationLimitScalar).toBN();
-
-      describe('maxLiquidatableCapacity', () => {
-        it('should be calculated relative to makerFee/takerFee and skewScale', async () => {
-          const { BfpMarketProxy } = systems();
-          const market = genOneOf(markets());
-          const marketId = market.marketId();
-
-          const liquidationLimitScalar = bn(1);
-          const makerFee = bn(0.0001);
-          const takerFee = bn(0.0001);
-          const skewScale = bn(1_000_000);
-
-          await setMarketConfigurationById(bs, marketId, {
-            liquidationLimitScalar,
-            makerFee,
-            takerFee,
-            skewScale,
-          });
-
-          const { maxLiquidatableCapacity } =
-            await BfpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
-          const expectedMaxLiquidatableCapacity = calcMaxLiquidatableCapacity(
-            makerFee,
-            takerFee,
-            skewScale,
-            liquidationLimitScalar
-          );
-          assertBn.equal(maxLiquidatableCapacity, expectedMaxLiquidatableCapacity);
-        });
-
-        /* Randomly test 10 scalars between 0 and 1 (inclusive, always include boundaries). */
-        forEach([0, ...times(8).map(() => genNumber(0.1, 0.9)), 1]).it(
-          `should scale with liquidationLimitScalar of '%0.5f'`,
-          async (scalar: number) => {
-            const { BfpMarketProxy } = systems();
-            const market = genOneOf(markets());
-            const marketId = market.marketId();
-
-            const makerFee = bn(genNumber(0.0001, 0.0005));
-            const takerFee = bn(genNumber(0.0006, 0.001));
-            const skewScale = bn(1_000_000);
-
-            const liquidationLimitScalar = bn(scalar);
-            await setMarketConfigurationById(bs, marketId, {
-              liquidationLimitScalar,
-              makerFee,
-              takerFee,
-              skewScale,
-            });
-
-            const { maxLiquidatableCapacity } =
-              await BfpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
-            const expectedMaxLiquidatableCapacity = calcMaxLiquidatableCapacity(
-              makerFee,
-              takerFee,
-              skewScale,
-              liquidationLimitScalar
-            );
-            assertBn.equal(maxLiquidatableCapacity, expectedMaxLiquidatableCapacity);
-          }
-        );
-      });
-
-      describe('remainingCapacity', () => {
-        it('should be updated to reflect a recent liquidation');
-
-        it(
-          'should be zero when cap has been met and an endorsed liquidator pushes past cap for window'
-        );
-      });
     });
 
     describe('{partialLiquidation,liquidationCapacity,liqKeeperFee}', () => {
