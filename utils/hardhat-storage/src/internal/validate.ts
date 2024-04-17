@@ -4,7 +4,6 @@ import { validateMutableStateVariables } from './validate-variables';
 
 export interface ValidateParams {
   sourceUnits: SourceUnit[];
-  prevSourceUnits: SourceUnit[];
   skip: string[];
 }
 
