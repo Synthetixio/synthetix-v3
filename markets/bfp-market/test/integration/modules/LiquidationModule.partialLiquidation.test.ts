@@ -100,8 +100,10 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-        await BfpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId);
+        await withExplicitEvmMine(
+          () => BfpMarketProxy.connect(flaggerKeeper).flagPosition(trader.accountId, marketId),
+          provider()
+        );
 
         // Attempt the liquidate. This should complete successfully.
         const { tx, receipt } = await withExplicitEvmMine(
@@ -335,8 +337,10 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-        await BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+        await withExplicitEvmMine(
+          () => BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+          provider()
+        );
 
         let position = await BfpMarketProxy.getPositionDigest(trader.accountId, marketId);
         assertBn.equal(position.size.abs(), order.sizeDelta.abs());
@@ -453,8 +457,10 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-        await BfpMarketProxy.connect(keeper()).flagPosition(trader1.accountId, marketId);
+        await withExplicitEvmMine(
+          () => BfpMarketProxy.connect(keeper()).flagPosition(trader1.accountId, marketId),
+          provider()
+        );
 
         const position = await BfpMarketProxy.getPositionDigest(trader1.accountId, marketId);
         assertBn.equal(position.size.abs(), order1.sizeDelta.abs());
@@ -617,9 +623,13 @@ describe('LiquidationModule', () => {
         assertBn.equal(expectedLiqFee.toBN(), liqKeeperFee);
 
         // Dead.
-        await BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId, {
-          maxPriorityFeePerGas: 0,
-        });
+        await withExplicitEvmMine(
+          () =>
+            BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId, {
+              maxPriorityFeePerGas: 0,
+            }),
+          provider()
+        );
 
         let accLiqRewards = bn(0);
         let remainingSize = bn(-1);
@@ -1078,8 +1088,14 @@ describe('LiquidationModule', () => {
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
         // Flag both users for liquidation.
-        await BfpMarketProxy.connect(flaggerKeeper).flagPosition(trader1.accountId, marketId);
-        await BfpMarketProxy.connect(flaggerKeeper).flagPosition(trader2.accountId, marketId);
+        await withExplicitEvmMine(
+          () => BfpMarketProxy.connect(flaggerKeeper).flagPosition(trader1.accountId, marketId),
+          provider()
+        );
+        await withExplicitEvmMine(
+          () => BfpMarketProxy.connect(flaggerKeeper).flagPosition(trader2.accountId, marketId),
+          provider()
+        );
 
         // Attempt to liquidate both in a single block.
         await provider().send('evm_setAutomine', [false]);
