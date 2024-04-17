@@ -134,27 +134,34 @@ export const withdrawAllCollateral = async (bs: Bs, trader: Trader, marketId: Bi
 
 /** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
-  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
+  { systems, owner, provider }: Pick<Bs, 'systems' | 'owner' | 'provider'>,
   marketId: BigNumber,
   params: Partial<PerpMarketConfiguration.DataStruct>
 ) => {
   const { BfpMarketProxy } = systems();
   const data = await BfpMarketProxy.getMarketConfigurationById(marketId);
-  await BfpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
-    ...data,
-    ...params,
-  });
+  await withExplicitEvmMine(
+    () =>
+      BfpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
+        ...data,
+        ...params,
+      }),
+    provider()
+  );
   return BfpMarketProxy.getMarketConfigurationById(marketId);
 };
 
 /** Generic update on global market data (similar to setMarketConfigurationById). */
 export const setMarketConfiguration = async (
-  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
+  { systems, owner, provider }: Pick<Bs, 'systems' | 'owner' | 'provider'>,
   params: Partial<PerpMarketConfiguration.GlobalDataStruct>
 ) => {
   const { BfpMarketProxy } = systems();
   const data = await BfpMarketProxy.getMarketConfiguration();
-  await BfpMarketProxy.connect(owner()).setMarketConfiguration({ ...data, ...params });
+  await withExplicitEvmMine(
+    () => BfpMarketProxy.connect(owner()).setMarketConfiguration({ ...data, ...params }),
+    provider()
+  );
   return BfpMarketProxy.getMarketConfiguration();
 };
 
