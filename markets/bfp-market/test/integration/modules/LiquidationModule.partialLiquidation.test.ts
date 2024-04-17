@@ -1109,6 +1109,7 @@ describe('LiquidationModule', () => {
           marketId
         );
 
+        await provider().send('evm_mine', []);
         await provider().send('evm_setAutomine', [true]);
 
         const receipt1 = await tx1.wait();
