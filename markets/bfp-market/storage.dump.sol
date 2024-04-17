@@ -736,14 +736,33 @@ contract OrderModule {
 contract PerpAccountModule {
     struct Runtime_splitAccount {
         uint256 oraclePrice;
-        uint256 im;
+        uint256 toIm;
+        uint256 fromIm;
         uint128 debtToMove;
         int128 sizeToMove;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
         uint256 collateralToMove;
+        uint256 newFromAmount;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
+        uint256 fromCollateralUsd;
+        uint256 toDiscountedCollateralUsd;
+        uint256 fromDiscountedCollateralUsd;
+        uint256 collateralPrice;
+    }
+    struct Runtime_mergeAccounts {
+        uint256 oraclePrice;
+        uint256 pythPrice;
+        uint256 im;
+        uint256 fromCollateralUsd;
+        uint256 fromMarginUsd;
+        uint256 toMarginUsd;
+        uint256 mergedCollateralUsd;
+        uint256 mergedDiscountedCollateralUsd;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 fromAccountCollateral;
     }
 }
 
@@ -904,6 +923,7 @@ library Position {
     struct TradeParams {
         int128 sizeDelta;
         uint256 oraclePrice;
+        uint256 pythPrice;
         uint256 fillPrice;
         uint128 makerFee;
         uint128 takerFee;
@@ -932,9 +952,9 @@ library Position {
     }
     struct Data {
         int128 size;
-        uint256 entryTime;
         int256 entryFundingAccrued;
         uint256 entryUtilizationAccrued;
+        uint256 entryPythPrice;
         uint256 entryPrice;
     }
 }
