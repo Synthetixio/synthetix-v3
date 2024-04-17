@@ -270,7 +270,7 @@ contract PerpAccountModule is IPerpAccountModule {
                     runtime.collateralPrice
                 );
 
-                // Keep track of both fromCollateralUsd and fromCollateralDiscountedUsd.
+                // Keep track of both toCollateralUsd and toDiscountedCollateralUsd.
                 runtime.toCollateralUsd += collateralToMoveUsd;
                 // Calculate `toDiscountedCollateralUsd` based on the new collateral amount.
                 runtime.toDiscountedCollateralUsd += runtime.collateralToMove.mulDecimal(
