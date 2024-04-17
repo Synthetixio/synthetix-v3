@@ -41,7 +41,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
         uint256 collateralToMove;
-        uint256 newFromAmount;
+        uint256 newFromAmountCollateral;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
         uint256 fromCollateralUsd;
@@ -285,11 +285,13 @@ contract PerpAccountModule is IPerpAccountModule {
                 // Keep track of both fromCollateralUsd and fromCollateralDiscountedUsd.
                 runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
                 // Calculate the discounted price for the new from amount.
-                runtime.newFromAmount = runtime.fromAccountCollateral - runtime.collateralToMove;
+                runtime.newFromAmountCollateral =
+                    runtime.fromAccountCollateral -
+                    runtime.collateralToMove;
 
-                runtime.fromDiscountedCollateralUsd += runtime.newFromAmount.mulDecimal(
+                runtime.fromDiscountedCollateralUsd += runtime.newFromAmountCollateral.mulDecimal(
                     Margin.getDiscountedPriceFromCollateralPrice(
-                        runtime.newFromAmount,
+                        runtime.newFromAmountCollateral,
                         runtime.collateralPrice,
                         runtime.synthMarketId,
                         globalConfig

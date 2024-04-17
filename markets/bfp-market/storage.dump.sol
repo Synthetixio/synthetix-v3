@@ -743,7 +743,7 @@ contract PerpAccountModule {
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
         uint256 collateralToMove;
-        uint256 newFromAmount;
+        uint256 newFromAmountCollateral;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
         uint256 fromCollateralUsd;
