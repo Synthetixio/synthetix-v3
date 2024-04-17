@@ -41,9 +41,13 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
         uint256 collateralToMove;
+        uint256 newFromAmount;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
         uint256 fromCollateralUsd;
+        uint256 toDiscountedCollateralUsd;
+        uint256 fromDiscountedCollateralUsd;
+        uint256 collateralPrice;
     }
 
     struct Runtime_mergeAccounts {
@@ -54,6 +58,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 fromMarginUsd;
         uint256 toMarginUsd;
         uint256 mergedCollateralUsd;
+        uint256 mergedDiscountedCollateralUsd;
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
         uint256 fromAccountCollateral;
@@ -252,17 +257,44 @@ contract PerpAccountModule is IPerpAccountModule {
                 runtime.collateralToMove = runtime.fromAccountCollateral.mulDecimal(proportion);
                 toAccountMargin.collaterals[runtime.synthMarketId] = runtime.collateralToMove;
                 fromAccountMargin.collaterals[runtime.synthMarketId] -= runtime.collateralToMove;
-                uint256 collateralPrice = globalMarginConfig.getCollateralPrice(
+                runtime.collateralPrice = globalMarginConfig.getCollateralPrice(
                     runtime.synthMarketId,
                     globalConfig
                 );
-                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
-                    collateralPrice
-                );
-                uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(collateralPrice);
 
+                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
+                    runtime.collateralPrice
+                );
+
+                uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(
+                    runtime.collateralPrice
+                );
+
+                // Keep track of both fromCollateralUsd and fromCollateralDiscountedUsd.
                 runtime.toCollateralUsd += collateralToMoveUsd;
+                // Calculate `toDiscountedCollateralUsd` based on the new collateral amount.
+                runtime.toDiscountedCollateralUsd += runtime.collateralToMove.mulDecimal(
+                    Margin.getDiscountedPriceFromCollateralPrice(
+                        runtime.collateralToMove,
+                        runtime.collateralPrice,
+                        runtime.synthMarketId,
+                        globalConfig
+                    )
+                );
+
+                // Keep track of both fromCollateralUsd and fromCollateralDiscountedUsd.
                 runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
+                // Calculate the discounted price for the new from amount.
+                runtime.newFromAmount = runtime.fromAccountCollateral - runtime.collateralToMove;
+
+                runtime.fromDiscountedCollateralUsd += runtime.newFromAmount.mulDecimal(
+                    Margin.getDiscountedPriceFromCollateralPrice(
+                        runtime.newFromAmount,
+                        runtime.collateralPrice,
+                        runtime.synthMarketId,
+                        globalConfig
+                    )
+                );
             }
 
             unchecked {
@@ -305,7 +337,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         if (
-            runtime.toCollateralUsd.toInt() +
+            runtime.toDiscountedCollateralUsd.toInt() +
                 Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
             runtime.toIm.toInt()
         ) {
@@ -321,7 +353,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 marketConfig
             );
             if (
-                runtime.fromCollateralUsd.toInt() +
+                runtime.fromDiscountedCollateralUsd.toInt() +
                     Margin.getPnlAdjustmentUsd(fromId, market, runtime.oraclePrice) <
                 runtime.fromIm.toInt()
             ) {
@@ -473,7 +505,8 @@ contract PerpAccountModule is IPerpAccountModule {
         );
         delete market.positions[fromId];
 
-        runtime.mergedCollateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
+        (runtime.mergedCollateralUsd, runtime.mergedDiscountedCollateralUsd) = Margin
+            .getCollateralUsd(toId, marketId);
         (runtime.im, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
@@ -482,7 +515,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         if (
-            runtime.mergedCollateralUsd.toInt() +
+            runtime.mergedDiscountedCollateralUsd.toInt() +
                 Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
             runtime.im.toInt()
         ) {
