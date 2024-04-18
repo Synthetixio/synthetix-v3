@@ -67,6 +67,22 @@ describe('MarketConfigurationModule', async () => {
   });
 
   describe('setMarketConfigurationById', () => {
+    it('should revert when skewScale is 0', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        skewScale: bn(0),
+      };
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        'ZeroAmount()',
+        BfpMarketProxy
+      );
+    });
+
     it('should configure market by id', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();
