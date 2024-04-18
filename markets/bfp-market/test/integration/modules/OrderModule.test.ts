@@ -1803,15 +1803,17 @@ describe('OrderModule', () => {
       }
     );
 
-    it('should revert if account can be liquidated due to debt', async () => {
+    it('should revert when account can be liquidated due to debt', async () => {
       const { BfpMarketProxy } = systems();
       const { trader, collateralDepositAmount, collateral, market, marketId } = await depositMargin(
         bs,
         genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
       );
-      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+      });
       await commitAndSettle(bs, marketId, trader, openOrder);
-      // Price moves, causing a 10% loss.
+      // Price moves, causing a 20% loss.
       const newPrice = openOrder.sizeDelta.gt(0)
         ? wei(openOrder.oraclePrice).mul(0.8)
         : wei(openOrder.oraclePrice).mul(1.2);
@@ -1829,8 +1831,11 @@ describe('OrderModule', () => {
       assertBn.gt(accountDebt, 0);
 
       // Collateral price where debt is equal to collateralUsd.
-      const newCollateralPrice = wei(accountDebt).div(collateralDepositAmount).add(1);
-      // We now have debt and no position, lower collteral price 99% causing margin to become liquidatable
+      const newCollateralPrice = wei(accountDebt)
+        .div(collateralDepositAmount)
+        // Add 1% higher, which makes the collateralUsd > debt but the discountedCollateralUsd < debt.
+        .mul(1.01);
+
       await collateral.setPrice(newCollateralPrice.toBN());
 
       const marginDigest = await BfpMarketProxy.getMarginDigest(trader.accountId, marketId);
