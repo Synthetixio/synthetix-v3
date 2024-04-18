@@ -314,33 +314,6 @@ contract LiquidationModule is ILiquidationModule {
         );
     }
 
-    /// @dev Returns the reward for liquidating margin.
-    function getMarginLiquidationOnlyReward(
-        uint256 collateralValue,
-        PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
-        uint256 ethPrice = globalConfig
-            .oracleManager
-            .process(globalConfig.ethOracleNodeId)
-            .price
-            .toUint();
-        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(
-            block.basefee * globalConfig.keeperLiquidateMarginGasUnits
-        );
-
-        uint256 liqFeeInUsd = MathUtil.max(
-            liqExecutionCostInUsd.mulDecimal(
-                DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
-            ),
-            liqExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
-        );
-        uint256 liqFeeWithRewardInUsd = liqFeeInUsd +
-            collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
-
-        return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
-    }
-
     /// @inheritdoc ILiquidationModule
     function liquidateMarginOnly(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN_ONLY);
@@ -367,7 +340,7 @@ contract LiquidationModule is ILiquidationModule {
         );
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint256 keeperReward = getMarginLiquidationOnlyReward(
+        uint256 keeperReward = Margin.getMarginLiquidationOnlyReward(
             marginValues.collateralUsd,
             PerpMarketConfiguration.load(marketId),
             globalConfig

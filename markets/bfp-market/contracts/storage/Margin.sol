@@ -369,6 +369,33 @@ library Margin {
         return price.mulDecimal(DecimalMath.UNIT - discount);
     }
 
+    /// @dev Returns the reward for liquidating margin.
+    function getMarginLiquidationOnlyReward(
+        uint256 collateralValue,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(
+            block.basefee * globalConfig.keeperLiquidateMarginGasUnits
+        );
+
+        uint256 liqFeeInUsd = MathUtil.max(
+            liqExecutionCostInUsd.mulDecimal(
+                DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+            ),
+            liqExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
+        );
+        uint256 liqFeeWithRewardInUsd = liqFeeInUsd +
+            collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
+
+        return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
+    }
+
     /// @dev Returns whether an account in a specific market's margin can be liquidated.
     function isMarginLiquidatable(
         uint128 accountId,
@@ -382,6 +409,15 @@ library Margin {
 
         // Ensure that there is collateralUsd on the account to ensure this account margin can be liquidated.
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, price);
-        return marginValues.discountedMarginUsd == 0 && marginValues.collateralUsd != 0;
+
+        return
+            marginValues.discountedMarginUsd.toInt() -
+                getMarginLiquidationOnlyReward(
+                    marginValues.collateralUsd,
+                    PerpMarketConfiguration.load(market.id),
+                    PerpMarketConfiguration.load()
+                ).toInt() <=
+            0 &&
+            marginValues.collateralUsd != 0;
     }
 }
