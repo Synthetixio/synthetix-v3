@@ -104,6 +104,34 @@ describe('OrderModule', () => {
 
     it('should emit all events in correct order');
 
+    it('should revert when keeperFeeBufferUsd is larger than margin', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const {
+        trader,
+        market,
+        marketId,
+        collateral,
+        collateralDepositAmount,
+        marginUsdDepositAmount,
+      } = await depositMargin(bs, genTrader(bs, { desiredMarginUsdDepositAmount: 100 }));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredKeeperFeeBufferUsd: genNumber(101, 1000),
+      });
+      await assertRevert(
+        BfpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          order.sizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd,
+          []
+        ),
+        `KeeperBufferFeeTooLarge("${order.keeperFeeBufferUsd}", "${marginUsdDepositAmount}")`,
+        BfpMarketProxy
+      );
+    });
+
     it('should revert insufficient margin when margin is less than initial margin', async () => {
       const { BfpMarketProxy } = systems();
 

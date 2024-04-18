@@ -188,6 +188,13 @@ library Position {
             params.oraclePrice
         );
 
+        if (params.keeperFeeBufferUsd > marginValuesForLiqValidation.discountedMarginUsd) {
+            revert ErrorUtil.KeeperBufferFeeTooLarge(
+                params.keeperFeeBufferUsd,
+                marginValuesForLiqValidation.discountedMarginUsd
+            );
+        }
+
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
         if (currentPosition.size != 0) {
             // Position is frozen due to prior flagged for liquidation.
