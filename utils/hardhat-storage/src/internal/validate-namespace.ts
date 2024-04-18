@@ -11,8 +11,6 @@ import { iterateSlotAssignments } from './iterators';
 import { isPresent } from './misc';
 
 interface Params {
-  /** fully qualified names of the contracts to validate */
-  artifacts: string[];
   /** all source units, including the ones in artifacts and all the imported ones */
   sourceUnits: SourceUnit[];
 }

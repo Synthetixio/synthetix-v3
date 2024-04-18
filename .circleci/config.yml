@@ -274,9 +274,9 @@ jobs:
             # if there are no tests, terminate execution after this step
             if [ -s "/tmp/tests.txt" ]; then
               echo cat "/tmp/tests.txt"
-              cat "/tmp/tests.txt" 
+              cat "/tmp/tests.txt"
             else
-              echo "SKIP: No tests found" 
+              echo "SKIP: No tests found"
               circleci-agent step halt
             fi
 
@@ -695,6 +695,12 @@ workflows:
           dir: "./utils/core-utils"
           parallelism: 2
           batch-size: 5
+
+      - test-contracts:
+          name: "test-hardhat-storage"
+          workspace: "@synthetixio/hardhat-storage"
+          parallelism: 1
+          batch-size: 1
 
       - test-forge:
           name: "test-rewards-distributor"

@@ -1,6 +1,7 @@
 import { Node, YulNode } from 'solidity-ast/node';
 import {
   ArrayTypeName,
+  BinaryOperation,
   Block,
   ContractDefinition,
   ElementaryTypeName,
@@ -18,7 +19,6 @@ import {
   PragmaDirective,
   StructDefinition,
   UnaryOperation,
-  BinaryOperation,
   UserDefinedTypeName,
   VariableDeclaration,
   VariableDeclarationStatement,

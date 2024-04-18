@@ -4,6 +4,7 @@ import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { HardhatPluginError } from 'hardhat/plugins';
 import { dumpStorage } from '../internal/dump';
+import { validateSlotNamespaceCollisions } from '../internal/validate-namespace';
 import { validateMutableStateVariables } from '../internal/validate-variables';
 import { writeInChunks } from '../internal/write-in-chunks';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS, TASK_STORAGE_GENERATE } from '../task-names';
@@ -59,6 +60,7 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
         artifacts: allContracts,
         sourceUnits,
       }),
+      ...validateSlotNamespaceCollisions({ sourceUnits }),
     ];
 
     errors.forEach((err) => console.error(err, '\n'));

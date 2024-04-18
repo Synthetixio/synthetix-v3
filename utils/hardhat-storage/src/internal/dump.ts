@@ -33,7 +33,7 @@ export async function dumpStorage(
     const constDeclarations = findAll(
       contractNode,
       'VariableDeclaration',
-      (node) => node.mutability === 'constant'
+      (node) => node.mutability === 'constant' || node.mutability === 'immutable'
     );
     const enumDefinitions = findAll(contractNode, 'EnumDefinition');
     const structDefinitions = findAll(contractNode, 'StructDefinition');
