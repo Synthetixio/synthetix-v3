@@ -170,6 +170,7 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage toPosition = market.positions[toId];
+        Position.Data storage fromPosition = market.positions[fromId];
 
         if (proportion > DecimalMath.UNIT) {
             revert ErrorUtil.AccountSplitProportionTooLarge();
@@ -184,6 +185,9 @@ contract PerpAccountModule is IPerpAccountModule {
         if (toPosition.size != 0) {
             revert ErrorUtil.PositionFound(toId, marketId);
         }
+        if (fromPosition.size == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
         // Verify the `toId` account is empty. We asset has collateral but we don't need to check debt as
         // it is impossible for a trader to have debt and zero collateral.
         if (Margin.hasCollateralDeposited(toId, marketId)) {
@@ -195,7 +199,6 @@ contract PerpAccountModule is IPerpAccountModule {
 
         runtime.oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        Position.Data storage fromPosition = market.positions[fromId];
 
         // From account should not be liquidatable.
         if (
