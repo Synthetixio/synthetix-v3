@@ -1803,6 +1803,61 @@ describe('OrderModule', () => {
       }
     );
 
+    it('should revert if account can be liquidated due to debt', async () => {
+      const { BfpMarketProxy } = systems();
+      const { trader, collateralDepositAmount, collateral, market, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+      );
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitAndSettle(bs, marketId, trader, openOrder);
+      // Price moves, causing a 10% loss.
+      const newPrice = openOrder.sizeDelta.gt(0)
+        ? wei(openOrder.oraclePrice).mul(0.8)
+        : wei(openOrder.oraclePrice).mul(1.2);
+      await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+
+      const { receipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+      const orderSettledEvent = findEventSafe(receipt, 'OrderSettled', BfpMarketProxy);
+
+      // Make sure we have some debt.
+      const accountDebt = orderSettledEvent.args.accountDebt;
+      assertBn.gt(accountDebt, 0);
+
+      // Collateral price where debt is equal to collateralUsd.
+      const newCollateralPrice = wei(accountDebt).div(collateralDepositAmount).add(1);
+      // We now have debt and no position, lower collteral price 99% causing margin to become liquidatable
+      await collateral.setPrice(newCollateralPrice.toBN());
+
+      const marginDigest = await BfpMarketProxy.getMarginDigest(trader.accountId, marketId);
+
+      // Assert that collateral is bigger than debt but the discounted collateral is smaller.
+      assertBn.gt(marginDigest.collateralUsd, accountDebt);
+      assertBn.gt(accountDebt, marginDigest.discountedCollateralUsd);
+
+      // Assert we can liquidate margin.
+      const canLiqMargin = BfpMarketProxy.isMarginLiquidatable(trader.accountId, marketId);
+      assert.ok(canLiqMargin, 'Accounts margin should be liquidatable');
+
+      const failingOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await assertRevert(
+        BfpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          failingOrder.sizeDelta,
+          failingOrder.limitPrice,
+          failingOrder.keeperFeeBufferUsd,
+          []
+        ),
+        'InsufficientMargin()',
+        BfpMarketProxy
+      );
+    });
+
     it('should revert when a second trader causes a extreme skew leading to a bad fill price', async () => {
       const { BfpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
