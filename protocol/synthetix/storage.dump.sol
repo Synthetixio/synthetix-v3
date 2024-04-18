@@ -3,37 +3,22 @@ pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
-    bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
         address owner;
         address nominatedOwner;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_OWNABLE_STORAGE;
-        assembly {
-            store.slot := s
-        }
     }
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol:ProxyStorage
 contract ProxyStorage {
-    bytes32 private constant _SLOT_PROXY_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
     struct ProxyStore {
         address implementation;
         bool simulatingUpgrade;
-    }
-    function _proxyStore() internal pure returns (ProxyStore storage store) {
-        bytes32 s = _SLOT_PROXY_STORAGE;
-        assembly {
-            store.slot := s
-        }
     }
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC20Storage.sol:ERC20Storage
 library ERC20Storage {
-    bytes32 private constant _SLOT_ERC20_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
     struct Data {
         string name;
         string symbol;
@@ -42,34 +27,20 @@ library ERC20Storage {
         mapping(address => mapping(address => uint256)) allowance;
         uint256 totalSupply;
     }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_ERC20_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721EnumerableStorage.sol:ERC721EnumerableStorage
 library ERC721EnumerableStorage {
-    bytes32 private constant _SLOT_ERC721_ENUMERABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC721Enumerable"));
     struct Data {
         mapping(uint256 => uint256) ownedTokensIndex;
         mapping(uint256 => uint256) allTokensIndex;
         mapping(address => mapping(uint256 => uint256)) ownedTokens;
         uint256[] allTokens;
     }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_ERC721_ENUMERABLE_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721Storage.sol:ERC721Storage
 library ERC721Storage {
-    bytes32 private constant _SLOT_ERC721_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC721"));
     struct Data {
         string name;
         string symbol;
@@ -79,34 +50,10 @@ library ERC721Storage {
         mapping(uint256 => address) tokenApprovals;
         mapping(address => mapping(address => bool)) operatorApprovals;
     }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_ERC721_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
-// @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
-library DecimalMath {
-    uint256 public constant UNIT = 1e18;
-    int256 public constant UNIT_INT = int256(UNIT);
-    uint128 public constant UNIT_UINT128 = uint128(UNIT);
-    int128 public constant UNIT_INT128 = int128(UNIT_INT);
-    uint256 public constant UNIT_PRECISE = 1e27;
-    int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
-    int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
-    uint256 public constant PRECISION_FACTOR = 9;
-}
-
-// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
-library ERC2771Context {
-    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
-    uint256 private constant _ROOT_INDEX = 1;
     struct Data {
         uint128 idCount;
         Node[] nodes;
@@ -121,10 +68,12 @@ library HeapUtil {
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/SetUtil.sol:SetUtil
 library SetUtil {
     struct UintSet {
-        Bytes32Set raw;
+        bytes32[] raw___values;
+        mapping(bytes32 => uint256) raw___positions;
     }
     struct AddressSet {
-        Bytes32Set raw;
+        bytes32[] raw___values;
+        mapping(bytes32 => uint256) raw___positions;
     }
     struct Bytes32Set {
         bytes32[] _values;
@@ -132,26 +81,12 @@ library SetUtil {
     }
 }
 
-// @custom:artifact @synthetixio/core-modules/contracts/modules/NftModule.sol:NftModule
-contract NftModule {
-    bytes32 internal constant _INITIALIZED_NAME = "NftModule";
-}
-
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
-    bytes32 public constant KIND_ERC20 = "erc20";
-    bytes32 public constant KIND_ERC721 = "erc721";
-    bytes32 public constant KIND_UNMANAGED = "unmanaged";
     struct Data {
         address proxy;
         address impl;
         bytes32 kind;
-    }
-    function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.AssociatedSystem", id));
-        assembly {
-            store.slot := s
-        }
     }
 }
 
@@ -161,14 +96,9 @@ library FeatureFlag {
         bytes32 name;
         bool allowAll;
         bool denyAll;
-        SetUtil.AddressSet permissionedAddresses;
+        bytes32[] permissionedAddresses__raw___values;
+        mapping(bytes32 => uint256) permissionedAddresses__raw___positions;
         address[] deniers;
-    }
-    function load(bytes32 featureName) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
-        assembly {
-            store.slot := s
-        }
     }
 }
 
@@ -176,12 +106,6 @@ library FeatureFlag {
 library Initialized {
     struct Data {
         bool initialized;
-    }
-    function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
-        assembly {
-            store.slot := s
-        }
     }
 }
 
@@ -195,14 +119,15 @@ contract PythStructs {
     }
     struct PriceFeed {
         bytes32 id;
-        Price price;
-        Price emaPrice;
+        int64 price__price;
+        uint64 price__conf;
+        int32 price__expo;
+        uint256 price__publishTime;
+        int64 emaPrice__price;
+        uint64 emaPrice__conf;
+        int32 emaPrice__expo;
+        uint256 emaPrice__publishTime;
     }
-}
-
-// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ChainlinkNode.sol:ChainlinkNode
-library ChainlinkNode {
-    uint256 public constant PRECISION = 18;
 }
 
 // @custom:artifact @synthetixio/oracle-manager/contracts/nodes/ReducerNode.sol:ReducerNode
@@ -218,21 +143,6 @@ library ReducerNode {
         MULDECIMAL,
         DIVDECIMAL
     }
-}
-
-// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/UniswapNode.sol:UniswapNode
-library UniswapNode {
-    uint8 public constant PRECISION = 18;
-}
-
-// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythNode.sol:PythNode
-library PythNode {
-    int256 public constant PRECISION = 18;
-}
-
-// @custom:artifact @synthetixio/oracle-manager/contracts/nodes/pyth/PythOffchainLookupNode.sol:PythOffchainLookupNode
-library PythOffchainLookupNode {
-    int256 public constant PRECISION = 18;
 }
 
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
@@ -254,12 +164,6 @@ library NodeDefinition {
         bytes parameters;
         bytes32[] parents;
     }
-    function load(bytes32 id) internal pure returns (Data storage node) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
-        assembly {
-            node.slot := s
-        }
-    }
 }
 
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeOutput.sol:NodeOutput
@@ -270,14 +174,6 @@ library NodeOutput {
         uint256 __slotAvailableForFutureUse1;
         uint256 __slotAvailableForFutureUse2;
     }
-}
-
-// @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
-library TickMath {
-    int24 internal constant MIN_TICK = -887272;
-    int24 internal constant MAX_TICK = -MIN_TICK;
-    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
-    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
 
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
@@ -297,130 +193,28 @@ interface ILiquidationModule {
     }
 }
 
-// @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
-contract AccountModule {
-    bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
-    bytes32 private constant _CREATE_ACCOUNT_FEATURE_FLAG = "createAccount";
-}
-
-// @custom:artifact contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule
-contract AssociateDebtModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _ASSOCIATE_DEBT_FEATURE_FLAG = "associateDebt";
-}
-
-// @custom:artifact contracts/modules/core/CollateralModule.sol:CollateralModule
-contract CollateralModule {
-    bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
-    bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
-    bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
-}
-
-// @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
-contract CrossChainUSDModule {
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
-}
-
-// @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
-contract IssueUSDModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
-    bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
-    bytes32 private constant _CONFIG_MINT_FEE_RATIO = "mintUsd_feeRatio";
-    bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
-    bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
-    bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
-}
-
-// @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
-contract LiquidationModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _LIQUIDATE_FEATURE_FLAG = "liquidate";
-    bytes32 private constant _LIQUIDATE_VAULT_FEATURE_FLAG = "liquidateVault";
-}
-
-// @custom:artifact contracts/modules/core/MarketCollateralModule.sol:MarketCollateralModule
-contract MarketCollateralModule {
-    bytes32 private constant _DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG = "depositMarketCollateral";
-    bytes32 private constant _WITHDRAW_MARKET_COLLATERAL_FEATURE_FLAG = "withdrawMarketCollateral";
-}
-
-// @custom:artifact contracts/modules/core/MarketManagerModule.sol:MarketManagerModule
-contract MarketManagerModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
-    bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
-    bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
-    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
-}
-
-// @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
-contract PoolModule {
-    bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
-}
-
-// @custom:artifact contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule
-contract RewardsManagerModule {
-    uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
-    bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
-}
-
-// @custom:artifact contracts/modules/core/UtilsModule.sol:UtilsModule
-contract UtilsModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-}
-
-// @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule
-contract VaultModule {
-    bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
-}
-
-// @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
-contract USDTokenModule {
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-}
-
 // @custom:artifact contracts/storage/Account.sol:Account
 library Account {
     struct Data {
         uint128 id;
-        AccountRBAC.Data rbac;
+        address rbac__owner;
+        mapping(address => SetUtil.Bytes32Set) rbac__permissions;
+        bytes32[] rbac__permissionAddresses__raw___values;
+        mapping(bytes32 => uint256) rbac__permissionAddresses__raw___positions;
         uint64 lastInteraction;
         uint64 __slotAvailableForFutureUse;
         uint128 __slot2AvailableForFutureUse;
         mapping(address => Collateral.Data) collaterals;
     }
-    function load(uint128 id) internal pure returns (Data storage account) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
-        assembly {
-            account.slot := s
-        }
-    }
 }
 
 // @custom:artifact contracts/storage/AccountRBAC.sol:AccountRBAC
 library AccountRBAC {
-    bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
-    bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
-    bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
-    bytes32 internal constant _MINT_PERMISSION = "MINT";
-    bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
-    bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
-    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
-    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
-        SetUtil.AddressSet permissionAddresses;
+        bytes32[] permissionAddresses__raw___values;
+        mapping(bytes32 => uint256) permissionAddresses__raw___positions;
     }
 }
 
@@ -428,14 +222,14 @@ library AccountRBAC {
 library Collateral {
     struct Data {
         uint256 amountAvailableForDelegationD18;
-        SetUtil.UintSet pools;
+        bytes32[] pools__raw___values;
+        mapping(bytes32 => uint256) pools__raw___positions;
         CollateralLock.Data[] locks;
     }
 }
 
 // @custom:artifact contracts/storage/CollateralConfiguration.sol:CollateralConfiguration
 library CollateralConfiguration {
-    bytes32 private constant _SLOT_AVAILABLE_COLLATERALS = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals"));
     struct Data {
         bool depositingEnabled;
         uint256 issuanceRatioD18;
@@ -444,18 +238,6 @@ library CollateralConfiguration {
         bytes32 oracleNodeId;
         address tokenAddress;
         uint256 minDelegationD18;
-    }
-    function load(address token) internal pure returns (Data storage collateralConfiguration) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
-        assembly {
-            collateralConfiguration.slot := s
-        }
-    }
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage availableCollaterals) {
-        bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
-        assembly {
-            availableCollaterals.slot := s
-        }
     }
 }
 
@@ -476,18 +258,12 @@ library Config {
 
 // @custom:artifact contracts/storage/CrossChain.sol:CrossChain
 library CrossChain {
-    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
     struct Data {
         address ccipRouter;
-        SetUtil.UintSet supportedNetworks;
+        bytes32[] supportedNetworks__raw___values;
+        mapping(bytes32 => uint256) supportedNetworks__raw___positions;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-    }
-    function load() internal pure returns (Data storage crossChain) {
-        bytes32 s = _SLOT_CROSS_CHAIN;
-        assembly {
-            crossChain.slot := s
-        }
     }
 }
 
@@ -516,9 +292,15 @@ library Market {
         int128 netIssuanceD18;
         int128 creditCapacityD18;
         int128 lastDistributedMarketBalanceD18;
-        HeapUtil.Data inRangePools;
-        HeapUtil.Data outRangePools;
-        Distribution.Data poolsDebtDistribution;
+        uint128 inRangePools__idCount;
+        Node[] inRangePools__nodes;
+        mapping(uint128 => uint256) inRangePools__indices;
+        uint128 outRangePools__idCount;
+        Node[] outRangePools__nodes;
+        mapping(uint128 => uint256) outRangePools__indices;
+        uint128 poolsDebtDistribution__totalSharesD18;
+        int128 poolsDebtDistribution__valuePerShareD27;
+        mapping(bytes32 => DistributionActor.Data) poolsDebtDistribution__actorInfo;
         mapping(uint128 => MarketPoolInfo.Data) pools;
         DepositedCollateral[] depositedCollateral;
         mapping(address => uint256) maximumDepositableD18;
@@ -533,12 +315,6 @@ library Market {
         address collateralType;
         uint256 amountD18;
     }
-    function load(uint128 id) internal pure returns (Data storage market) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Market", id));
-        assembly {
-            market.slot := s
-        }
-    }
 }
 
 // @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
@@ -552,16 +328,9 @@ library MarketConfiguration {
 
 // @custom:artifact contracts/storage/MarketCreator.sol:MarketCreator
 library MarketCreator {
-    bytes32 private constant _SLOT_MARKET_CREATOR = keccak256(abi.encode("io.synthetix.synthetix.Markets"));
     struct Data {
         mapping(address => uint128[]) marketIdsForAddress;
         uint128 lastCreatedMarketId;
-    }
-    function getMarketStore() internal pure returns (Data storage marketStore) {
-        bytes32 s = _SLOT_MARKET_CREATOR;
-        assembly {
-            marketStore.slot := s
-        }
     }
 }
 
@@ -575,21 +344,13 @@ library MarketPoolInfo {
 
 // @custom:artifact contracts/storage/OracleManager.sol:OracleManager
 library OracleManager {
-    bytes32 private constant _SLOT_ORACLE_MANAGER = keccak256(abi.encode("io.synthetix.synthetix.OracleManager"));
     struct Data {
         address oracleManagerAddress;
-    }
-    function load() internal pure returns (Data storage oracleManager) {
-        bytes32 s = _SLOT_ORACLE_MANAGER;
-        assembly {
-            oracleManager.slot := s
-        }
     }
 }
 
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
-    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;
@@ -598,7 +359,9 @@ library Pool {
         uint128 totalWeightsD18;
         int128 totalVaultDebtsD18;
         MarketConfiguration.Data[] marketConfigurations;
-        Distribution.Data vaultsDebtDistribution;
+        uint128 vaultsDebtDistribution__totalSharesD18;
+        int128 vaultsDebtDistribution__valuePerShareD27;
+        mapping(bytes32 => DistributionActor.Data) vaultsDebtDistribution__actorInfo;
         mapping(address => Vault.Data) vaults;
         uint64 lastConfigurationTime;
         uint64 __reserved1;
@@ -607,17 +370,10 @@ library Pool {
         mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
         bool collateralDisabledByDefault;
     }
-    function load(uint128 id) internal pure returns (Data storage pool) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
-        assembly {
-            pool.slot := s
-        }
-    }
 }
 
 // @custom:artifact contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
 library PoolCollateralConfiguration {
-    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
     struct Data {
         uint256 collateralLimitD18;
         uint256 issuanceRatioD18;
@@ -657,32 +413,19 @@ library ScalableMapping {
 
 // @custom:artifact contracts/storage/SystemAccountConfiguration.sol:SystemAccountConfiguration
 library SystemAccountConfiguration {
-    bytes32 private constant _SLOT_SYSTEM_ACCOUNT_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemAccountConfiguration"));
     struct Data {
         uint64 accountIdOffset;
-    }
-    function load() internal pure returns (Data storage systemAccountConfiguration) {
-        bytes32 s = _SLOT_SYSTEM_ACCOUNT_CONFIGURATION;
-        assembly {
-            systemAccountConfiguration.slot := s
-        }
     }
 }
 
 // @custom:artifact contracts/storage/SystemPoolConfiguration.sol:SystemPoolConfiguration
 library SystemPoolConfiguration {
-    bytes32 private constant _SLOT_SYSTEM_POOL_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
     struct Data {
         uint256 minLiquidityRatioD18;
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
-        SetUtil.UintSet approvedPools;
-    }
-    function load() internal pure returns (Data storage systemPoolConfiguration) {
-        bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
-        assembly {
-            systemPoolConfiguration.slot := s
-        }
+        bytes32[] approvedPools__raw___values;
+        mapping(bytes32 => uint256) approvedPools__raw___positions;
     }
 }
 
@@ -694,7 +437,8 @@ library Vault {
         int128 _unused_prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
-        SetUtil.Bytes32Set rewardIds;
+        bytes32[] rewardIds___values;
+        mapping(bytes32 => uint256) rewardIds___positions;
     }
     struct PositionSelector {
         uint128 accountId;
@@ -708,8 +452,12 @@ library VaultEpoch {
     struct Data {
         int128 unconsolidatedDebtD18;
         int128 totalConsolidatedDebtD18;
-        Distribution.Data accountsDebtDistribution;
-        ScalableMapping.Data collateralAmounts;
+        uint128 accountsDebtDistribution__totalSharesD18;
+        int128 accountsDebtDistribution__valuePerShareD27;
+        mapping(bytes32 => DistributionActor.Data) accountsDebtDistribution__actorInfo;
+        uint128 collateralAmounts__totalSharesD18;
+        int128 collateralAmounts__scaleModifierD27;
+        mapping(bytes32 => uint256) collateralAmounts__sharesD18;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
     }
@@ -717,7 +465,6 @@ library VaultEpoch {
 
 // @custom:artifact contracts/utils/CcipClient.sol:CcipClient
 library CcipClient {
-    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
     struct EVMTokenAmount {
         address token;
         uint256 amount;

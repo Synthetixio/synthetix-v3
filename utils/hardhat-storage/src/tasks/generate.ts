@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
 import { getContractsFullyQualifiedNames } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
@@ -26,19 +28,19 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
   .addOptionalParam(
     'output',
     'Storage dump output file relative to the root of the project',
-    'storage.dump.json'
+    'storage.dump.sol'
   )
   .addFlag('noCompile', 'Do not execute hardhat compile before build')
   .addFlag('log', 'log json result to the console')
   .setAction(async (params: Required<Params>, hre) => {
     const artifacts = params.artifacts.length > 0 ? params.artifacts : hre.config.storage.artifacts;
-    const { noCompile, log } = params;
+    const { output, noCompile, log } = params;
 
     if (log) {
       logger.quiet = true;
     }
 
-    // const now = Date.now();
+    const now = Date.now();
     logger.subtitle('Generating storage dump');
 
     for (const contract of artifacts) {
@@ -71,13 +73,13 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
 
     const dump = await dumpStorage(sourceUnits);
 
-    // if (output) {
-    //   const target = path.resolve(hre.config.paths.root, output);
-    //   await fs.mkdir(path.dirname(target), { recursive: true });
-    //   await fs.writeFile(target, dump);
+    if (output) {
+      const target = path.resolve(hre.config.paths.root, output);
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.writeFile(target, dump);
 
-    //   logger.success(`Storage dump written to ${output} in ${Date.now() - now}ms`);
-    // }
+      logger.success(`Storage dump written to ${output} in ${Date.now() - now}ms`);
+    }
 
     if (log) {
       writeInChunks(dump);

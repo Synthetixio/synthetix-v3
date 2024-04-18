@@ -14,11 +14,19 @@ import { findAll as _findAll } from 'solidity-ast/utils';
  * Get all the contract definitions on the given node
  */
 export function findAll<T extends NodeType | YulNodeType>(
-  astNode: Node | YulNode,
+  astNode: Node | YulNode | (Node | YulNode)[],
   nodeType: T | T[],
   filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
 ) {
   const result: (NodeTypeMap & YulNodeTypeMap)[T][] = [];
+
+  if (Array.isArray(astNode)) {
+    for (const sourceUnit of astNode) {
+      result.push(...findAll(sourceUnit, nodeType, filterFn));
+    }
+
+    return result;
+  }
 
   for (const node of _findAll(nodeType, astNode)) {
     if (filterFn(node)) result.push(node);
