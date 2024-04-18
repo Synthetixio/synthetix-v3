@@ -35,9 +35,6 @@ library Order {
         uint256 price
     ) internal pure returns (uint256) {
         int256 ss = skewScale.toInt();
-        if (ss == 0) {
-            return price;
-        }
         int256 p = price.toInt();
 
         // Calculate pd (premium/discount) before and after trade.

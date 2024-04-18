@@ -352,16 +352,16 @@ library Position {
         // At max capacity for current liquidation window.
         if (runtime.remainingCapacity == 0) {
             uint128 skewScale = marketConfig.skewScale;
-            uint128 pd = marketConfig.skewScale == 0
-                ? 0
-                : MathUtil.abs(market.skew).divDecimal(skewScale).to128();
             uint128 liquidationMaxPd = marketConfig.liquidationMaxPd;
 
             // Allow max capacity to be bypassed if the following holds true:
             //  1. remainingCapacity is zero (as parent)
             //  2. This liquidation is _not_ in the same block as the most recent liquidation
             //  3. The current market premium/discount does not exceed a configurable maxPd.
-            if (runtime.lastLiquidationTime != block.timestamp && pd < liquidationMaxPd) {
+            if (
+                runtime.lastLiquidationTime != block.timestamp &&
+                MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd
+            ) {
                 runtime.remainingCapacity = runtime.oldPositionSizeAbs >
                     runtime.maxLiquidatableCapacity
                     ? runtime.maxLiquidatableCapacity
