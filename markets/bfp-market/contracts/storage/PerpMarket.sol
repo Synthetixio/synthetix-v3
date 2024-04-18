@@ -274,10 +274,6 @@ library PerpMarket {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         int128 skewScale = marketConfig.skewScale.toInt();
 
-        // Avoid a panic due to div by zero. Return 0 immediately.
-        if (skewScale == 0) {
-            return 0;
-        }
         // proportional skew
         int256 pSkew = self.skew.divDecimal(skewScale);
         if (MathUtil.abs(pSkew) < marketConfig.fundingVelocityClamp) {
