@@ -1,20 +1,27 @@
-import { filterContracts } from '@synthetixio/core-utils/utils/hardhat/contracts';
-import { getFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { VariableDeclaration } from 'solidity-ast/types';
+import {
+  findContractDependencies,
+  findContractNodeWithAst,
+} from '@synthetixio/core-utils/utils/ast/finders';
+import { onlyUnique } from '@synthetixio/core-utils/utils/misc/array';
+import { SourceUnit, VariableDeclaration } from 'solidity-ast/types';
 import { createError } from './error';
-import { iterateContracts, iterateVariables } from './iterators';
-import { ValidateParams } from './validate';
+import { iterateVariables } from './iterators';
 
-export function validateMutableStateVariables({ sourceUnits, skip }: ValidateParams) {
-  const contractNodes = [
-    // Filter out contracts that are marked to be skipped
-    ...iterateContracts(sourceUnits, (sourceUnit, contractNode) => {
-      const sourceName = sourceUnit.absolutePath;
-      const contractName = contractNode.name;
-      const fqName = getFullyQualifiedName(sourceName, contractName);
-      return filterContracts([fqName, sourceName, contractName], skip).length === 0;
-    }),
-  ];
+interface Params {
+  /** fully qualified names of the contracts to validate */
+  artifacts: string[];
+  /** all source units, including the ones in artifacts and all the imported ones */
+  sourceUnits: SourceUnit[];
+}
+
+export function validateMutableStateVariables({ artifacts, sourceUnits }: Params) {
+  // Find for all the dependencies also
+  const fqNames = artifacts
+    .map((fqName) => findContractDependencies(fqName, sourceUnits))
+    .flat()
+    .filter(onlyUnique);
+
+  const contractNodes = fqNames.map((fqName) => findContractNodeWithAst(fqName, sourceUnits));
 
   // Find state variables
   const invalidVars = [...iterateVariables(contractNodes, _isMutableStateVariable)];

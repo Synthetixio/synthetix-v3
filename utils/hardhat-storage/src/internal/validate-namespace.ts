@@ -1,12 +1,23 @@
 import { findOne } from '@synthetixio/core-utils/utils/ast/finders';
 import { Node, YulNode } from 'solidity-ast/node';
-import { FunctionCall, FunctionDefinition, VariableDeclaration } from 'solidity-ast/types';
+import {
+  FunctionCall,
+  FunctionDefinition,
+  SourceUnit,
+  VariableDeclaration,
+} from 'solidity-ast/types';
 import { createError } from './error';
 import { iterateSlotAssignments } from './iterators';
 import { isPresent } from './misc';
-import { ValidateParams } from './validate';
 
-export function validateSlotNamespaceCollisions({ sourceUnits }: ValidateParams) {
+interface Params {
+  /** fully qualified names of the contracts to validate */
+  artifacts: string[];
+  /** all source units, including the ones in artifacts and all the imported ones */
+  sourceUnits: SourceUnit[];
+}
+
+export function validateSlotNamespaceCollisions({ sourceUnits }: Params) {
   const slots: string[] = [];
 
   return [...iterateSlotAssignments(sourceUnits)]

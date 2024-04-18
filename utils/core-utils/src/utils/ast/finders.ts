@@ -207,6 +207,25 @@ export function findContractNode(contractFullyQualifiedName: string, astNodes: S
 }
 
 /**
+ * Find a contracts node on the ASTs trees, and returns both
+ */
+export function findContractNodeWithAst(
+  contractFullyQualifiedName: string,
+  astNodes: SourceUnit[]
+): [SourceUnit, ContractDefinition] {
+  const { contractNode, sourceUnitNode } = _findContractSourceByFullyQualifiedName(
+    contractFullyQualifiedName,
+    astNodes
+  );
+
+  if (!contractNode) {
+    throw new Error(`Could not find contract node for "${contractFullyQualifiedName}"`);
+  }
+
+  return [sourceUnitNode, contractNode];
+}
+
+/**
  * Get the fully qualified name of a local contract on a given AST node. Takes
  * into account any possible aliases given to it during import.
  */
