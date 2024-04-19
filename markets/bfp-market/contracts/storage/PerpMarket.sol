@@ -177,7 +177,7 @@ library PerpMarket {
             marketConfig.minCreditPercent.to256()
         );
         if (lockedCollateralUsd == 0) {
-            // If we dont have any postions open, we're at 0% utilization.
+            // If we dont have any positions open, we're at 0% utilization.
             return 0;
         }
 

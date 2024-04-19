@@ -85,7 +85,7 @@ library Order {
     }
 
     /**
-     * @dev Returns the order keeper fee; paid to keepers for order executions and liquidations (in USD).
+     * @dev Returns the order keeper fee; paid to keepers for order executions (in USD).
      *
      * This order keeper fee is calculated as follows:
      *
