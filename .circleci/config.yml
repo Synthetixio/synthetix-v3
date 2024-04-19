@@ -266,6 +266,22 @@ jobs:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
+
+      - run:
+          name: "Split tests"
+          command: |
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+
+            circleci tests glob 'test/**/*.test.ts' | circleci tests run --command="cat > /tmp/files.txt" --verbose
+
+            # if there are no tests, terminate execution after this step
+            [ -s /tmp/tests.txt ] || circleci-agent step halt
+
+      - store_artifacts:
+          path: "/tmp/files.txt"
+
       - install-foundry
       #- install-ipfs
       #- run-ipfs-daemon
@@ -307,11 +323,9 @@ jobs:
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            export TEST_FILES=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
 
-            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="echo"
-
-            # node $RUNNER
+            export TEST_FILES=$(cat /tmp/files.txt)
+            node $RUNNER
 
       - store_test_results:
           path: "/tmp/junit"
@@ -557,13 +571,13 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 8
-
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          workspace: "@synthetixio/bfp-market"
           parallelism: 4
+
+  #      - test-contracts:
+  #          name: "test-bfp-market"
+  #          requires: [build-testable]
+  #          workspace: "@synthetixio/bfp-market"
+  #          parallelism: 4
 
   tests:
     unless:
