@@ -137,6 +137,81 @@ describe('PerpMarketFactoryModule Utilization', () => {
       assertBn.equal(withdrawable2, totalCollateralValueUsd2);
     });
 
+    it('should have utilization capped to one when delegated collateral < lockedCollateral', async () => {
+      const { BfpMarketProxy, Core } = systems();
+
+      const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
+      const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
+      const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
+      const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
+
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+
+      // Change staking to the minimum about
+      const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
+      const { minDelegationD18 } = await Core.getCollateralConfiguration(
+        stakedCollateral().address
+      );
+      const stakedCollateralAddress = stakedCollateral().address;
+      await Core.connect(staker()).delegateCollateral(
+        stakerAccountId,
+        poolId,
+        stakedCollateralAddress,
+        minDelegationD18,
+        bn(1)
+      );
+
+      // Create one trade that will win more than the delegated collateral
+      const { collateral, collateralDepositAmount, trader } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: market })
+      );
+
+      // Create a long position
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Price 10x, causing large profits for the trader
+      const newMarketOraclePrice = wei(order1.oraclePrice).mul(10).toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      // Get delegated usd amount
+      const withdrawable = await Core.getWithdrawableMarketUsd(market.marketId());
+      const { totalCollateralValueUsd, size, oraclePrice } = await BfpMarketProxy.getMarketDigest(
+        market.marketId()
+      );
+      const { minCreditPercent } = await BfpMarketProxy.getMarketConfigurationById(
+        market.marketId()
+      );
+      const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
+      const lockedCollateralUsd = wei(size).mul(oraclePrice).mul(minCreditPercent);
+      const utilizationWithoutCap = delegatedAmountUsd.div(lockedCollateralUsd);
+      // Assert that the uncapped utilization is above 1
+      assertBn.gt(utilizationWithoutCap.toBN(), 1);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.recomputeUtilization(marketId),
+        provider()
+      );
+      const recomputeUtilizationEvent = findEventSafe(
+        receipt,
+        'UtilizationRecomputed',
+        BfpMarketProxy
+      );
+
+      // Calculate the expected utilization rate, assuming utilization was capped at 1.
+      const expectedUtilization = 1;
+      const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);
+      const highPart = highUtilizationSlopePercent
+        .mul(wei(expectedUtilization).sub(utilizationBreakpointPercent))
+        .mul(100);
+      const expectedUtilizationRate = lowPart.add(highPart).toBN();
+
+      assertBn.equal(expectedUtilizationRate, recomputeUtilizationEvent.args.utilizationRate);
+    });
+
     it('should support collateral utilization above 100%', async () => {
       const { BfpMarketProxy, Core } = systems();
 
