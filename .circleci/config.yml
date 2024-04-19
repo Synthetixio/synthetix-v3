@@ -559,10 +559,10 @@ jobs:
 workflows:
   version: 2.1
 
-  Rerun-failed-tests-only:
+  skip:
     when:
       or:
-        - equal: ["Rerun-failed-tests-only", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
     jobs:
       - build-testable
 
@@ -581,7 +581,7 @@ workflows:
   tests:
     unless:
       or:
-        - equal: ["Rerun-failed-tests-only", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
