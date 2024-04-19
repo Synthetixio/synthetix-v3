@@ -497,6 +497,11 @@ describe('PerpAccountModule splitAccount', () => {
     // Assert from account.
     assertBn.isZero(fromAccountDigestAfter.debtUsd);
     assertBn.isZero(fromAccountDigestAfter.collateralUsd);
+
+    // Position should be cleared.
     assertBn.isZero(fromAccountDigestAfter.position.size);
+    assertBn.isZero(fromAccountDigestAfter.position.entryPrice);
+    assertBn.isZero(fromAccountDigestAfter.position.accruedFunding);
+    assertBn.isZero(fromAccountDigestAfter.position.accruedUtilization);
   });
 });

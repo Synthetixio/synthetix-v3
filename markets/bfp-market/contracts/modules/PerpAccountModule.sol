@@ -172,27 +172,38 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage toPosition = market.positions[toId];
         Position.Data storage fromPosition = market.positions[fromId];
 
+        // Cannot split more than what's available.
         if (proportion > DecimalMath.UNIT) {
             revert ErrorUtil.AccountSplitProportionTooLarge();
         }
+
+        // Disallow no-ops.
         if (proportion == 0) {
             revert ErrorUtil.ZeroProportion();
         }
+
         // Ensure there are no pending orders from both to/from accounts.
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        // Account to split into must be empty.
         if (toPosition.size != 0) {
             revert ErrorUtil.PositionFound(toId, marketId);
         }
+
+        // Can only split from an account that has a position.
         if (fromPosition.size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
+
         // Verify the `toId` account is empty. We asset has collateral but we don't need to check debt as
         // it is impossible for a trader to have debt and zero collateral.
         if (Margin.hasCollateralDeposited(toId, marketId)) {
             revert ErrorUtil.CollateralFound();
         }
+
+        // Cannot split a position flagged for liquidation.
         if (market.flaggedLiquidations[fromId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }
@@ -303,6 +314,9 @@ contract PerpAccountModule is IPerpAccountModule {
             ) {
                 revert ErrorUtil.InsufficientMargin();
             }
+        } else if (proportion == DecimalMath.UNIT) {
+            // Clear out the `fromPosition` if the split is 1.
+            delete market.positions[fromId];
         }
 
         emit AccountSplit(fromId, toId, marketId);
