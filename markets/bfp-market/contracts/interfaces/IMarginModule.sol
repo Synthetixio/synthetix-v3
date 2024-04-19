@@ -68,6 +68,7 @@ interface IMarginModule is IBasePerpMarket {
     /// @notice Pay debt belonging to `accountId` and `marketId` with sUSD available in margin. Users can partially pay
     ///         off their debt. If the amount is larger than the available debt, only the delta will be withdrawn from
     ///         margin.
+    /// @notice sUSD held in margin takes precedence over those in the caller's wallet.
     /// @param accountId Account of the margin to pay debt on
     /// @param marketId Market of the margin to pay debt on
     /// @param amount USD amount of debt to pay off
