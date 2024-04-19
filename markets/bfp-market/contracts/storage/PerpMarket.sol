@@ -290,7 +290,7 @@ library PerpMarket {
     function getProportionalFundingElapsed(
         PerpMarket.Data storage self
     ) internal view returns (int256) {
-        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     /// @dev Returns the proportional time elapsed since last utilization.
