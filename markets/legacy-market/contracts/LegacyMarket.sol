@@ -20,6 +20,8 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
+import "./RedeemableToken.sol";
+
 contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     using DecimalMath for uint256;
 
@@ -32,6 +34,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
+		IRedeemableToken public redeemableToken;
 
     error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
@@ -46,13 +49,19 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      */
     function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
-        IV3CoreProxy v3SystemAddress
+        IV3CoreProxy v3SystemAddress,
+				IRedeemableToken redeemableTokenAddress
     ) external onlyOwner returns (bool didInitialize) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
+				redeemableToken = redeemableTokenAddress;
 
+				// allow redeemable token to be sent to v3 system always
+				redeemableToken.approve(address(v3SystemAddress), type(uint256).max);
+
+				// allow synthetix tokens to be sent to redeemable token contract always
         IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(
-            address(v3SystemAddress),
+            address(redeemableTokenAddress),
             type(uint256).max
         );
 
@@ -173,9 +182,6 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         // find out how much debt is on the v2x system
         tmpLockedDebt = reportedDebt(marketId);
 
-        // get the address of the synthetix v2x proxy contract so we can manipulate the debt
-        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
-
         // ensure liquidator rewards are collected (have to do it here so escrow is up to date)
         ILiquidatorRewards(v2xResolver.getAddress("LiquidatorRewards")).getReward(staker);
 
@@ -187,17 +193,21 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         // transfer all collateral from the user to our account
         (uint256 collateralMigrated, uint256 debtValueMigrated) = _gatherFromV2(staker);
 
+				// create a "redeemable token", which effectively allows for us to bridge the behavior between v2x and v3 when it comes to debt allocation
+				redeemableToken.addRedemption(staker, debtValueMigrated, collateralMigrated);
+
         // put the collected collateral into their v3 account
-        v3System.deposit(accountId, address(oldSynthetix), collateralMigrated);
+        v3System.deposit(accountId, address(redeemableToken), debtValueMigrated);
 
         // create the most-equivalent mechanism for v3 to match the vesting entries: a "lock"
         uint256 curTime = block.timestamp;
         for (uint256 i = 0; i < oldEscrows.length; i++) {
             if (oldEscrows[i].endTime > curTime) {
+								// figure out the appropriate "proportion" of redeemable token to lock and lock it
                 v3System.createLock(
                     accountId,
-                    address(oldSynthetix),
-                    oldEscrows[i].escrowAmount,
+                    address(redeemableToken),
+                    debtValueMigrated * oldEscrows[i].escrowAmount / collateralMigrated,
                     oldEscrows[i].endTime
                 );
             }
@@ -210,7 +220,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         v3System.delegateCollateral(
             accountId,
             preferredPoolId,
-            address(oldSynthetix),
+            address(redeemableToken),
             collateralMigrated,
             DecimalMath.UNIT
         );
@@ -222,7 +232,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         v3System.associateDebt(
             marketId,
             preferredPoolId,
-            address(oldSynthetix),
+            address(redeemableToken),
             accountId,
             debtValueMigrated
         );

@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./external/IAddressResolver.sol";
 import "./external/IV3CoreProxy.sol";
+import "./IRedeemableToken.sol";
 
 /**
  * @title Market enabling the V3 system to back debt issued by the V2 system, migrate positions from V2 to V3, and convert stablecoins issued from V2 into stablecoins issued by V3.
@@ -84,7 +85,8 @@ interface ILegacyMarket {
      */
     function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
-        IV3CoreProxy v3SystemAddress
+        IV3CoreProxy v3SystemAddress,
+				IRedeemableToken redeemableTokenAddress
     ) external returns (bool didInitialize);
 
     /**
