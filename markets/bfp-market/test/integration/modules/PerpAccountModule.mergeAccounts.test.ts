@@ -1,4 +1,4 @@
-import { ethers, utils } from 'ethers';
+import { BigNumber, ethers, utils } from 'ethers';
 import { shuffle } from 'lodash';
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -532,12 +532,12 @@ describe('PerpAccountModule mergeAccounts', () => {
       genTrader(bs, {
         desiredTrader: toTrader,
         desiredMarket: market,
-        desiredMarginUsdDepositAmount: 500,
+        desiredMarginUsdDepositAmount: 2000,
       })
     );
 
     const toOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-      desiredSize: bn(4000),
+      desiredLeverage: 8,
     });
 
     await commitAndSettle(bs, marketId, toTrader, toOrder);
@@ -549,11 +549,11 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredTrader: fromTrader,
         desiredCollateral: collateral,
         desiredMarket: market,
-        desiredMarginUsdDepositAmount: 500,
+        desiredMarginUsdDepositAmount: 2000,
       })
     );
     const fromOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-      desiredSize: bn(500),
+      desiredSize: bn(2000),
       desiredHooks: [MergeAccountSettlementHookMock.address],
     });
 
@@ -566,12 +566,14 @@ describe('PerpAccountModule mergeAccounts', () => {
 
     // Increase minMarginUsd to make IM checks fail and to avoid CanLiquidate revert.
     await setMarketConfigurationById(bs, market.marketId(), {
-      minMarginUsd: bn(700),
+      minMarginUsd: bn(2800),
     });
 
     await assertRevert(
       BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
         value: updateFee,
+        maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
+        gasLimit: BigNumber.from(10_000_000), // Sometimes gas estimation is not high enough.
       }),
       `InsufficientMargin()`,
       BfpMarketProxy

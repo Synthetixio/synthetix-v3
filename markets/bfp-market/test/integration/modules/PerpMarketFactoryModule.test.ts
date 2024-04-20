@@ -922,11 +922,12 @@ describe('PerpMarketFactoryModule', () => {
       } = await depositMargin(
         bs,
         genTrader(bs, {
-          desiredMarginUsdDepositAmount: 100,
           desiredMarket: market,
           desiredTrader: trader2,
         })
       );
+
+      // Increase the short position.
       const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2, {
         desiredSide: -1,
         desiredKeeperFeeBufferUsd: 0,
@@ -967,6 +968,7 @@ describe('PerpMarketFactoryModule', () => {
           desiredKeeperFeeBufferUsd: 0,
         })
       );
+
       const event1 = findEventSafe(receipt1, 'OrderSettled', BfpMarketProxy);
       const event2 = findEventSafe(receipt2, 'OrderSettled', BfpMarketProxy);
       const {

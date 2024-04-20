@@ -1019,7 +1019,7 @@ describe('MarginModule', async () => {
         const { collateralDepositAmount } = await depositMargin(
           bs,
           genTrader(bs, {
-            desiredMarginUsdDepositAmount: 300,
+            desiredMarginUsdDepositAmount: 1000,
             desiredCollateral: collateral,
             desiredTrader: trader,
             desiredMarket: market,
@@ -1027,7 +1027,7 @@ describe('MarginModule', async () => {
         );
 
         const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount.div(2), {
-          desiredLeverage: 10,
+          desiredLeverage: 8,
           desiredSide: 1,
         });
         await commitAndSettle(bs, marketId, trader, openOrder);
@@ -1038,15 +1038,13 @@ describe('MarginModule', async () => {
         const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
         await commitAndSettle(bs, marketId, trader, closeOrder);
 
-        const { depositedCollaterals } = await BfpMarketProxy.getAccountDigest(accountId, marketId);
-
         // Attempt to withdraw all collateral even though there's debt on the account.
         await assertRevert(
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             accountId,
             marketId,
             collateral.synthMarketId(),
-            depositedCollaterals[2].available.mul(-1)
+            collateralDepositAmount.mul(-1)
           ),
           `InsufficientMargin()`,
           BfpMarketProxy
@@ -1059,7 +1057,7 @@ describe('MarginModule', async () => {
           await depositMargin(bs, genTrader(bs));
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: -1,
-          desiredLeverage: 10,
+          desiredLeverage: 8,
         });
 
         // Open leveraged position
