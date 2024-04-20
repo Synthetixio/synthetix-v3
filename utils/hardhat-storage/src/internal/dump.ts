@@ -31,14 +31,31 @@ export async function dumpStorage(
     const resultNode = clone(contractNode);
 
     const enumDefinitions = findAll(contractNode, 'EnumDefinition');
-    const structDefinitions = findAll(contractNode, 'StructDefinition').map((structDefinition) =>
-      _flattenNestedStructDefinitions(sourceUnits, structDefinition)
-    );
+    const structDefinitions = findAll(contractNode, 'StructDefinition');
 
-    // TODO: handle changes on enums
+    // Look for all the children structs, and flatten them
+    for (const structDefinition of structDefinitions) {
+      structDefinition.members = _flattenNestedStructDefinitions(
+        sourceUnits,
+        structDefinition.members
+      );
+    }
+
+    // TODO: handle enums, should not change storage size:
+    /**
+       function calculateEnumStorageSize(numValues: number): number {
+          // Calculate the minimal number of bits needed to represent all enum values
+          const bitsRequired = Math.ceil(Math.log2(numValues));
+
+          // Convert bits to bytes, each byte holds 8 bits
+          const bytesRequired = Math.ceil(bitsRequired / 8);
+
+          return bytesRequired;
+        }
+       */
     // TODO: handle contracts references (should they be converted to addresses?)
-    // TODO: handle array of custom values
-    // TODO: handle mappings of custom values
+    // TODO: handle array and mappings with custom values
+    // TODO: check how fixed arrays interact
 
     // Filter all the contract nodes to only include Structs
     resultNode.nodes = [...enumDefinitions, ...structDefinitions];
@@ -65,30 +82,26 @@ function _renderPragmaDirective(sourceUnits: SourceUnit[]) {
 
 function _flattenNestedStructDefinitions(
   sourceUnits: SourceUnit[],
-  structDefinition: StructDefinition
-) {
-  const result = clone(structDefinition);
-
+  structDefinitionMembers: StructDefinition['members']
+): StructDefinition['members'] {
   // Replace type references of the structs to the actual members of the child
-  result.members = structDefinition.members
+  return structDefinitionMembers
     .map((member) => {
       if (member.nodeType !== 'VariableDeclaration') return member;
       if (member.typeName?.nodeType !== 'UserDefinedTypeName') return member;
       if (!member.typeName.typeDescriptions.typeString?.startsWith('struct ')) return member;
 
-      const child = clone(_findStructDefinitionByReference(sourceUnits, member.typeName));
-      const childStruct = _flattenNestedStructDefinitions(sourceUnits, child);
+      const childStruct = clone(_findStructDefinitionByReference(sourceUnits, member.typeName));
+      const childMembers = _flattenNestedStructDefinitions(sourceUnits, childStruct.members);
 
-      // Use child struct members
-      return childStruct.members.map((variableDeclaration) => {
-        // prefix variable name with parent struct name
+      // prefix variable name with parent struct name
+      for (const variableDeclaration of childMembers) {
         variableDeclaration.name = `${member.name}__${variableDeclaration.name}`;
-        return variableDeclaration;
-      });
+      }
+
+      return childMembers;
     })
     .flat();
-
-  return result;
 }
 
 function _findStructDefinitionByReference(
