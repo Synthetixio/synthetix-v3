@@ -82,6 +82,14 @@ const _colons = {
   ],
 };
 
+const _normalize = {
+  int: 'int256',
+  uint: 'uint256',
+  byte: 'bytes1',
+  ufixed: 'ufixed128x18',
+  fixed: 'fixed128x18',
+};
+
 const _render = {
   PragmaDirective(node: PragmaDirective) {
     const [solidity, ...version] = node.literals;
@@ -113,7 +121,12 @@ const _render = {
   },
 
   ElementaryTypeName(node: ElementaryTypeName) {
-    return node.name;
+    const key = node.name as keyof typeof _normalize;
+    return _normalize[key] || key;
+  },
+
+  ElementaryTypeNameExpression(node: ElementaryTypeNameExpression): string {
+    return render(node.typeName);
   },
 
   EnumDefinition(node: EnumDefinition) {
@@ -231,10 +244,6 @@ const _render = {
 
   YulIdentifier(node: YulIdentifier) {
     return node.name;
-  },
-
-  ElementaryTypeNameExpression(node: ElementaryTypeNameExpression) {
-    return node.typeName.name;
   },
 
   MemberAccess(node: MemberAccess): string {

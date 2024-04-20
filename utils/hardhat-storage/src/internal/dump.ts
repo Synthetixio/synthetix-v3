@@ -34,8 +34,11 @@ export async function dumpStorage(
     const structDefinitions = findAll(contractNode, 'StructDefinition').map((structDefinition) =>
       _flattenNestedStructDefinitions(sourceUnits, structDefinition)
     );
+
     // TODO: handle changes on enums
     // TODO: handle contracts references (should they be converted to addresses?)
+    // TODO: handle array of custom values
+    // TODO: handle mappings of custom values
 
     // Filter all the contract nodes to only include Structs
     resultNode.nodes = [...enumDefinitions, ...structDefinitions];
@@ -45,7 +48,9 @@ export async function dumpStorage(
     // Render the contract only including storage definitions
     const contract = render(resultNode);
 
-    result.push(`// @custom:artifact ${fqName}`, contract, '');
+    result.push(`// @custom:artifact ${fqName}`);
+    result.push(contract);
+    result.push('');
   }
 
   return result.join('\n');
@@ -109,4 +114,20 @@ function _findStructDefinitionByReference(
   }
 
   return definitions[0];
+}
+
+/**
+ * Parse a previous generated storage dump
+ */
+export function parseStorageDump(source: string) {
+  const [header, ...contractChunks] = source.split('// @custom:artifact ');
+
+  const contents: { [fqName: string]: string } = {};
+  for (const chunk of contractChunks) {
+    const [fqName] = chunk.split('\n', 1);
+    const sourceCode = chunk.slice(fqName.length);
+    contents[fqName.trim()] = `${header}${sourceCode.trim()}\n`;
+  }
+
+  return contents;
 }

@@ -6,6 +6,7 @@ import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { HardhatPluginError } from 'hardhat/plugins';
 import { dumpStorage } from '../internal/dump';
+import { quietCompile } from '../internal/quiet-compile';
 import { validateSlotNamespaceCollisions } from '../internal/validate-namespace';
 import { validateMutableStateVariables } from '../internal/validate-variables';
 import { writeInChunks } from '../internal/write-in-chunks';
@@ -48,7 +49,7 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
     }
 
     if (!noCompile) {
-      await hre.run('compile', { quiet: true, force: true });
+      await quietCompile(hre, true);
     }
 
     const allContracts = await getContractsFullyQualifiedNames(hre, artifacts);
