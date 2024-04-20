@@ -127,7 +127,4 @@ library ErrorUtil {
 
     /// @notice Thrown when passed incorrect parameter.
     error InvalidParameter(string parameter, string reason);
-
-    /// @notice Thrown when user trying commit an order with `keeperFeeBufferUsd` larger than margin.
-    error KeeperBufferFeeTooLarge(uint256 keeperFeeBufferUsd, uint256 max);
 }
