@@ -24,9 +24,11 @@ import {
   getFastForwardTimestamp,
   getPythPriceDataByMarketId,
   isSusdCollateral,
+  setBaseFeePerGas,
   setMarketConfiguration,
   withExplicitEvmMine,
 } from '../../helpers';
+import { calcOrderFees } from '../../calculations';
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
@@ -149,7 +151,7 @@ describe('OrderModule Cancelations', () => {
       );
     });
 
-    it('should allow anyone to cancel a stale order', async () => {
+    it('should allow account owner to cancel a stale order', async () => {
       const { BfpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
@@ -168,12 +170,17 @@ describe('OrderModule Cancelations', () => {
       assert.equal(orderDigestBefore.isStale, true);
 
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
-      const signer = genOneOf([trader.signer, keeper()]);
+
       const { receipt } = await withExplicitEvmMine(
         () =>
-          BfpMarketProxy.connect(signer).cancelOrder(trader.accountId, marketId, updateData, {
-            value: updateFee,
-          }),
+          BfpMarketProxy.connect(trader.signer).cancelOrder(
+            trader.accountId,
+            marketId,
+            updateData,
+            {
+              value: updateFee,
+            }
+          ),
         provider()
       );
 
@@ -189,6 +196,61 @@ describe('OrderModule Cancelations', () => {
 
       // We expect no transfer event because the order was canceled by caller
       assert.throws(() => findEventSafe(receipt, 'Transfer', BfpMarketProxy));
+    });
+
+    it('should allow keeper to cancel a stale order', async () => {
+      const { BfpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredTrader: tradersGenerator.next().value })
+      );
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        // Use a large `keeperFeeBufferUsd`, we expect this do not affect cancellation keeper fees.
+        desiredKeeperFeeBufferUsd: 1000,
+      });
+
+      await commitOrder(bs, marketId, trader, order);
+      const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      await fastForwardTo(expireTime, provider());
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+      const orderDigestBefore = await BfpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assert.equal(orderDigestBefore.isStale, true);
+
+      assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
+
+      // `keeperFeeBufferUsd` is always 0 for cancellation keeper fees.
+      const cancellationKeeperBaseFee = bn(0);
+      const { calcKeeperOrderSettlementFee } = await calcOrderFees(
+        bs,
+        marketId,
+        order.sizeDelta,
+        cancellationKeeperBaseFee
+      );
+
+      const baseFee = await setBaseFeePerGas(1, provider());
+      const expectedKeeperFee = calcKeeperOrderSettlementFee(baseFee);
+      const signer = keeper();
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.connect(signer).cancelOrder(trader.accountId, marketId, updateData, {
+            value: updateFee,
+          }),
+        provider()
+      );
+
+      const orderDigestAfter = await BfpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.isZero(orderDigestAfter.sizeDelta);
+      assert.equal(orderDigestAfter.isStale, false);
+
+      const canceledEvent = findEventSafe(receipt, 'OrderCanceled', BfpMarketProxy);
+
+      assertBn.equal(canceledEvent.args.accountId, trader.accountId);
+      assertBn.equal(canceledEvent.args.marketId, marketId);
+      assertBn.equal(canceledEvent.args.keeperFee, expectedKeeperFee);
+      assertBn.equal(canceledEvent.args.commitmentTime, orderDigestBefore.commitmentTime);
     });
 
     it('should cancel order when within settlement window but price exceeds tolerance', async () => {

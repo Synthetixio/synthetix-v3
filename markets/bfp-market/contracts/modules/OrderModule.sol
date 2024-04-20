@@ -449,10 +449,10 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        // If `isAccountOwner` then 0 else chargeFee.
+        // If `isAccountOwner` then 0 else chargeFee. Also note that we pass 0 for `keeperFeeBufferUsd`, to avoid some edgecase scenarios that can lead to bad debt.
         uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
             ? 0
-            : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+            : Order.getSettlementKeeperFee(0);
 
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
