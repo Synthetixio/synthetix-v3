@@ -2,6 +2,7 @@ const fs = require('fs');
 const { task } = require('hardhat/config');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
+const createQueue = require('fastq');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
@@ -265,6 +266,30 @@ task('governance:generate-merkle-tree-from-debts')
     const tree = parseBalanceMap(content.debts);
 
     console.log(JSON.stringify(tree, null, 2));
+  });
+
+task('governance:generate-contracts-accounts')
+  .addPositionalParam('file', 'Debts json file location')
+  .setAction(async ({ file }, hre) => {
+    const content = JSON.parse(fs.readFileSync(file).toString());
+
+    console.log('{');
+
+    const queue = createQueue.promise(async function (address) {
+      const code = await hre.ethers.provider.getCode(address);
+      if (code !== '0x') {
+        const debt = content.debts[address];
+        console.log(`  "${address}": "${debt}",`);
+      }
+    }, 5);
+
+    for (const address of Object.keys(content.debts)) {
+      queue.push(address);
+    }
+
+    await queue.drained();
+
+    console.log('}');
   });
 
 async function initCouncils(hre, instance) {
