@@ -75,7 +75,7 @@ export const genBootstrap = () => ({
     minOrderAge: 12,
     maxOrderAge: 60,
     minKeeperFeeUsd: bn(genNumber(10, 15)),
-    maxKeeperFeeUsd: bn(genNumber(50, 100)),
+    maxKeeperFeeUsd: bn(genNumber(300, 500)),
     keeperProfitMarginUsd: bn(genNumber(5, 20)),
     keeperProfitMarginPercent: bn(genNumber(0.1, 0.2)),
     keeperSettlementGasUnits: 1_200_000,
@@ -113,7 +113,7 @@ export const genMarket = () => ({
     takerFee: bn(genNumber(0.0006, 0.0008)), // 1 - 8bps
     maxMarketSize: bn(genNumber(20_000, 50_000)),
     maxFundingVelocity: bn(genNumber(3, 9)),
-    minMarginUsd: bn(genNumber(50, 60)),
+    minMarginUsd: bn(genNumber(500, 100)),
     minCreditPercent: bn(genNumber(1, 1.1)),
     skewScale: bn(genNumber(100_000, 500_000)),
     fundingVelocityClamp: bn(genNumber(0.000001, 0.00001)),

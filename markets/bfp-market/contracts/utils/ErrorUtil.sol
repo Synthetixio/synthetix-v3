@@ -127,4 +127,7 @@ library ErrorUtil {
 
     /// @notice Thrown when passed incorrect parameter.
     error InvalidParameter(string parameter, string reason);
+
+    /// @notice Thrown when `minMargin` is smaller than `maxKeeperFeeUsd`.
+    error InvalidMinMargin();
 }
