@@ -113,7 +113,7 @@ export const genMarket = () => ({
     takerFee: bn(genNumber(0.0006, 0.0008)), // 1 - 8bps
     maxMarketSize: bn(genNumber(20_000, 50_000)),
     maxFundingVelocity: bn(genNumber(3, 9)),
-    minMarginUsd: bn(genNumber(500, 100)),
+    minMarginUsd: bn(genNumber(500, 600)),
     minCreditPercent: bn(genNumber(1, 1.1)),
     skewScale: bn(genNumber(100_000, 500_000)),
     fundingVelocityClamp: bn(genNumber(0.000001, 0.00001)),
