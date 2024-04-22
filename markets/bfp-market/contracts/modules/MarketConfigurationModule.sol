@@ -6,6 +6,7 @@ import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC277
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
     /// @inheritdoc IMarketConfigurationModule
@@ -52,6 +53,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
         PerpMarket.exists(marketId);
+
+        if (data.skewScale == 0) {
+            revert ErrorUtil.InvalidParameter("skewScale", "ZeroAmount");
+        }
 
         config.oracleNodeId = data.oracleNodeId;
         config.pythPriceFeedId = data.pythPriceFeedId;

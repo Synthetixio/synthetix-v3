@@ -124,4 +124,7 @@ library ErrorUtil {
 
     /// @notice Thrown when user trying to merge accounts with positions on opposite sides.
     error InvalidPositionSide();
+
+    /// @notice Thrown when passed incorrect parameter.
+    error InvalidParameter(string parameter, string reason);
 }
