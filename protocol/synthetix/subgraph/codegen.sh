@@ -38,7 +38,6 @@ codegen base-mainnet-andromeda 8453 "synthetix-omnibus:latest@andromeda"
 
 # Mainnet EVM & OP
 codegen mainnet 1 "synthetix-omnibus:latest@main"
-codegen sepolia 11155111 "synthetix-omnibus:latest@main"
 codegen optimism-mainnet 10 "synthetix-omnibus:latest@main"
 
 # Arbitrum
