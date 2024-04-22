@@ -49,10 +49,11 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external {
         OwnableStorage.onlyOwner();
 
-        PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
         PerpMarket.exists(marketId);
+
+        PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         if (data.minMarginUsd < globalConfig.maxKeeperFeeUsd) {
             revert ErrorUtil.InvalidParameter("minMarginUsd", "Smaller than maxKeeperFeeUsd");
