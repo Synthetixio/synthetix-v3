@@ -249,22 +249,6 @@ library PerpsAccount {
         }
     }
 
-    function payDebt(Data storage self, uint256 amount) internal {
-        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
-        perpsMarketFactory.synthetix.depositMarketUsd(
-            perpsMarketFactory.perpsMarketId,
-            ERC2771Context._msgSender(),
-            amount
-        );
-
-        if (self.debt < amount) {
-            self.debt = 0;
-            updateCollateralAmount(self, SNX_USD_MARKET_ID, (amount - self.debt).toInt());
-        } else {
-            self.debt -= amount;
-        }
-    }
-
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
