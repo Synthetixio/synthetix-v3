@@ -55,7 +55,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpMarket.exists(marketId);
 
         if (data.skewScale == 0) {
-            revert ErrorUtil.ZeroAmount();
+            revert ErrorUtil.InvalidParameter("skewScale", "ZeroAmount");
         }
 
         config.oracleNodeId = data.oracleNodeId;

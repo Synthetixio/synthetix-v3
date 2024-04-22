@@ -78,7 +78,7 @@ describe('MarketConfigurationModule', async () => {
       };
       await assertRevert(
         BfpMarketProxy.setMarketConfigurationById(marketId, config),
-        'ZeroAmount()',
+        'InvalidParameter("skewScale", "ZeroAmount")',
         BfpMarketProxy
       );
     });
