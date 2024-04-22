@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./goerli/schema.graphql
+  file: ./sepolia/schema.graphql
 dataSources:
   - kind: ethereum
-    network: goerli
+    network: sepolia
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0x895CE54BBA4f14FeFbF0624673DC303054De0652"
-      startBlock: 9893744
+      address: "0x76490713314fCEC173f44e99346F54c6e92a8E42"
+      startBlock: 3846410
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./goerli/index.ts
+      file: ./sepolia/index.ts
       abis:
         - name: CoreProxy
-          file: ./goerli/deployments/system/CoreProxy.json
+          file: ./sepolia/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
