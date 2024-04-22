@@ -83,6 +83,23 @@ describe('MarketConfigurationModule', async () => {
       );
     });
 
+    it('should revert when minMarginUsd is smaller then maxKeeperFeeUsd', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+      const globalConfig = await BfpMarketProxy.getMarketConfiguration();
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        minMarginUsd: globalConfig.maxKeeperFeeUsd.sub(bn(1)),
+      };
+
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        `InvalidParameter("minMarginUsd", "minMarginUsd can't be smaller than maxKeeperFeeUsd")`,
+        BfpMarketProxy
+      );
+    });
+
     it('should configure market by id', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();

@@ -56,7 +56,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         if (data.minMarginUsd < globalConfig.maxKeeperFeeUsd) {
-            revert ErrorUtil.InvalidParameter("minMarginUsd", "Smaller than maxKeeperFeeUsd");
+            revert ErrorUtil.InvalidParameter(
+                "minMarginUsd",
+                "minMarginUsd can't be smaller than maxKeeperFeeUsd"
+            );
         }
 
         if (data.skewScale == 0) {
