@@ -267,6 +267,11 @@ library PerpsAccount {
         }
 
         int256 withdrawableMarginUsd = getWithdrawableMargin(self, PerpsPrice.Tolerance.STRICT);
+        // Note: this can only happen if account is liquidatable
+        if (withdrawableMarginUsd < 0) {
+            revert AccountLiquidatable(self.id);
+        }
+
         uint256 amountToWithdrawUsd;
         if (collateralId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
