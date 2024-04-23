@@ -27,6 +27,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperProfitMarginUsd = data.keeperProfitMarginUsd;
         config.keeperSettlementGasUnits = data.keeperSettlementGasUnits;
         config.keeperLiquidationGasUnits = data.keeperLiquidationGasUnits;
+        config.keeperCancellationGasUnits = data.keeperCancellationGasUnits;
         config.keeperFlagGasUnits = data.keeperFlagGasUnits;
         config.keeperLiquidateMarginGasUnits = data.keeperLiquidateMarginGasUnits;
         config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;

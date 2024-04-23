@@ -79,6 +79,7 @@ export const genBootstrap = () => ({
     keeperProfitMarginUsd: bn(genNumber(5, 20)),
     keeperProfitMarginPercent: bn(genNumber(0.1, 0.2)),
     keeperSettlementGasUnits: 1_200_000,
+    keeperCancellationGasUnits: 600_000,
     keeperFlagGasUnits: 1_200_000,
     keeperLiquidateMarginGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,

@@ -45,6 +45,7 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperFlagGasUnits, global.keeperFlagGasUnits);
       assert.equal(config.keeperLiquidationEndorsed, global.keeperLiquidationEndorsed);
       assert.equal(config.keeperLiquidateMarginGasUnits, global.keeperLiquidateMarginGasUnits);
+      assert.equal(config.keeperCancellationGasUnits, global.keeperCancellationGasUnits);
 
       await assertEvent(
         receipt,
