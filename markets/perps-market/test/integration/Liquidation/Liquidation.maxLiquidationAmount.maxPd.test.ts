@@ -122,7 +122,8 @@ describe('Liquidation - max pd', () => {
     });
 
     before('call liquidate', async () => {
-      await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      const f = () => systems().PerpsMarket.connect(keeper()).liquidate(2);
+      await withExplicitEvmMine(f, provider());
     });
 
     it('liquidated 25 OP more', async () => {
@@ -157,7 +158,8 @@ describe('Liquidation - max pd', () => {
 
     describe('next block', () => {
       before('call liquidate again', async () => {
-        await systems().PerpsMarket.connect(keeper()).liquidate(2);
+        const f = () => systems().PerpsMarket.connect(keeper()).liquidate(2);
+        await withExplicitEvmMine(f, provider());
       });
 
       it('liquidated 25 OP more', async () => {
