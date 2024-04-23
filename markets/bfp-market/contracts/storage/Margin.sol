@@ -400,15 +400,12 @@ library Margin {
     function isMarginLiquidatable(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        Margin.MarginValues memory marginValues
     ) internal view returns (bool) {
         // Cannot liquidate margin when there is an open position.
         if (market.positions[accountId].size != 0) {
             return false;
         }
-
-        // Ensure that there is collateralUsd on the account to ensure this account margin can be liquidated.
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, price);
 
         return
             marginValues.discountedMarginUsd.toInt() -
@@ -417,7 +414,6 @@ library Margin {
                     PerpMarketConfiguration.load(market.id),
                     PerpMarketConfiguration.load()
                 ).toInt() <=
-            0 &&
-            marginValues.collateralUsd != 0;
+            0;
     }
 }

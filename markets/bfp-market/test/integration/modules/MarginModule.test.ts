@@ -724,13 +724,13 @@ describe('MarginModule', async () => {
               ),
             provider()
           );
-
+          const coreEvents = Core.interface.format(utils.FormatTypes.full) as string[];
           // Create a contract that can parse all events emitted.
           const contractsWithAllEvents = extendContractAbi(
             BfpMarketProxy,
-            Core.interface
-              .format(utils.FormatTypes.full)
-              .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+            coreEvents.concat([
+              'event Transfer(address indexed from, address indexed to, uint256 value)',
+            ])
           );
 
           let expectedEvents: Array<string | RegExp> = [
@@ -1052,6 +1052,58 @@ describe('MarginModule', async () => {
             marketId,
             collateral.synthMarketId(),
             depositedCollateralAmount.mul(-1)
+          ),
+          `InsufficientMargin()`,
+          BfpMarketProxy
+        );
+      });
+
+      it('should revert when remaining discounted collateral < debt due to keeper fees', async () => {
+        const { BfpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const accountId = trader.accountId;
+        const collateral = genOneOf(collateralsWithoutSusd());
+
+        // Market ETH-PERP and set price at $3500
+        const market = genOneOf(markets());
+        const marketId = market.marketId();
+        await market.aggregator().mockSetCurrentPrice(bn(3500)); // market.getOraclePrice()
+
+        const { collateralDepositAmount, collateralPrice } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarginUsdDepositAmount: 300,
+            desiredCollateral: collateral,
+            desiredTrader: trader,
+            desiredMarket: market,
+          })
+        );
+
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount.div(2), {
+          desiredLeverage: 10,
+          desiredSide: 1,
+        });
+        await commitAndSettle(bs, marketId, trader, openOrder);
+
+        // Set market price to be at a loss.
+        await market.aggregator().mockSetCurrentPrice(bn(3300));
+
+        const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
+        await commitAndSettle(bs, marketId, trader, closeOrder);
+        const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
+          trader.accountId,
+          marketId
+        );
+        const liqMarginReward = liqMarginRewardUsd.div(collateralPrice);
+        // Attempt to withdraw collateral - liqMarginReward, this should cause a revert due to the keeper rewards.
+        const withdrawAmount = collateralDepositAmount.sub(liqMarginReward).mul(-1);
+        await assertRevert(
+          BfpMarketProxy.connect(trader.signer).modifyCollateral(
+            accountId,
+            marketId,
+            collateral.synthMarketId(),
+            withdrawAmount
           ),
           `InsufficientMargin()`,
           BfpMarketProxy
