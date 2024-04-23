@@ -28,7 +28,8 @@ import {
   setMarketConfiguration,
   withExplicitEvmMine,
 } from '../../helpers';
-import { calcOrderFees } from '../../calculations';
+import { calcKeeperCancellationFee } from '../../calculations';
+import { BigNumber } from 'ethers';
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
@@ -206,10 +207,7 @@ describe('OrderModule Cancelations', () => {
         bs,
         genTrader(bs, { desiredTrader: tradersGenerator.next().value })
       );
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        // Use a large `keeperFeeBufferUsd`, we expect this do not affect cancellation keeper fees.
-        desiredKeeperFeeBufferUsd: 1000,
-      });
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       await commitOrder(bs, marketId, trader, order);
       const { publishTime, expireTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -221,22 +219,15 @@ describe('OrderModule Cancelations', () => {
 
       assertBn.equal(order.sizeDelta, orderDigestBefore.sizeDelta);
 
-      // `keeperFeeBufferUsd` is always 0 for cancellation keeper fees.
-      const cancellationKeeperBaseFee = bn(0);
-      const { calcKeeperOrderSettlementFee } = await calcOrderFees(
-        bs,
-        marketId,
-        order.sizeDelta,
-        cancellationKeeperBaseFee
-      );
-
-      const baseFee = await setBaseFeePerGas(1, provider());
-      const expectedKeeperFee = calcKeeperOrderSettlementFee(baseFee);
+      // Set a high base fee to ensure we above minimum keeper fee.
+      const baseFee = await setBaseFeePerGas(100, provider());
+      const expectedKeeperFee = await calcKeeperCancellationFee(bs, baseFee);
       const signer = keeper();
       const { receipt } = await withExplicitEvmMine(
         () =>
           BfpMarketProxy.connect(signer).cancelOrder(trader.accountId, marketId, updateData, {
             value: updateFee,
+            maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
           }),
         provider()
       );
@@ -251,6 +242,9 @@ describe('OrderModule Cancelations', () => {
       assertBn.equal(canceledEvent.args.marketId, marketId);
       assertBn.equal(canceledEvent.args.keeperFee, expectedKeeperFee);
       assertBn.equal(canceledEvent.args.commitmentTime, orderDigestBefore.commitmentTime);
+
+      // Reset base fee
+      await setBaseFeePerGas(1, provider());
     });
 
     it('should cancel order when within settlement window but price exceeds tolerance', async () => {

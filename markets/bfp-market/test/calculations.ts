@@ -128,6 +128,38 @@ export const calcOrderFees = async (
   return { notional, orderFee, calcKeeperOrderSettlementFee };
 };
 
+export const calcKeeperCancellationFee = async (bs: Bs, blockBaseFeePerGas: BigNumber) => {
+  const { systems, ethOracleNode } = bs;
+  const { BfpMarketProxy } = systems();
+  // Grab market configuration to infer price.
+  const {
+    keeperCancellationGasUnits,
+    keeperProfitMarginPercent,
+    minKeeperFeeUsd,
+    maxKeeperFeeUsd,
+  } = await BfpMarketProxy.getMarketConfiguration();
+  const { answer: ethPrice } = await ethOracleNode().agg.latestRoundData();
+
+  // Perform calc bounding by min/max to prevent going over/under.
+
+  const baseKeeperFeeUsd = calcTransactionCostInUsd(
+    blockBaseFeePerGas,
+    keeperCancellationGasUnits,
+    ethPrice
+  );
+
+  // Base keeperFee + profit margin.
+  const baseKeeperFeePlusProfit = wei(baseKeeperFeeUsd).mul(wei(1).add(keeperProfitMarginPercent));
+
+  // Ensure keeper fee doesn't exceed min/max bounds.
+  const boundedKeeperFeeUsd = Wei.min(
+    Wei.max(wei(minKeeperFeeUsd), baseKeeperFeePlusProfit),
+    wei(maxKeeperFeeUsd)
+  ).toBN();
+
+  return boundedKeeperFeeUsd;
+};
+
 export const calcTransactionCostInUsd = (
   baseFeePerGas: BigNumber, // in gwei
   gasUnitsForTx: BigNumber, // in gwei
