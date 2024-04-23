@@ -16,7 +16,7 @@ exports.findDeploymentBlock = getStartBlock;
 async function findAll() {
   const data = await Promise.all([
     getStartBlock({ namespace: 'mainnet', networkName: 'mainnet' }),
-    getStartBlock({ namespace: 'speolia', networkName: 'sepolia' }),
+    getStartBlock({ namespace: 'sepolia', networkName: 'sepolia' }),
     getStartBlock({ namespace: 'optimism-mainnet', networkName: 'optimism-mainnet' }),
     getStartBlock({ namespace: 'base-sepolia-andromeda', networkName: 'base-sepolia' }),
     getStartBlock({ namespace: 'base-mainnet-andromeda', networkName: 'base-mainnet' }),
