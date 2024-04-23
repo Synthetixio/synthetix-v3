@@ -2,7 +2,7 @@ import { BigNumber, ethers } from 'ethers';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import { withExplicitEvmMine } from '../../../../bfp-market/test/helpers';
+import { mineBlock } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('Liquidation - max pd', () => {
   const { systems, provider, owner, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
@@ -122,8 +122,8 @@ describe('Liquidation - max pd', () => {
     });
 
     before('call liquidate', async () => {
-      const f = () => systems().PerpsMarket.connect(keeper()).liquidate(2);
-      await withExplicitEvmMine(f, provider());
+      await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      await mineBlock(provider());
     });
 
     it('liquidated 25 OP more', async () => {
@@ -135,19 +135,18 @@ describe('Liquidation - max pd', () => {
   describe('more liquidation of trader 1 since under max pd', () => {
     describe('same block', () => {
       before('call liquidate twice more since under max pd', async () => {
-        const f = () =>
-          systems().TrustedMulticallForwarder.aggregate([
-            {
-              target: systems().PerpsMarket.address,
-              callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-            },
-            {
-              target: systems().PerpsMarket.address,
-              callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-            },
-          ]);
+        await systems().TrustedMulticallForwarder.aggregate([
+          {
+            target: systems().PerpsMarket.address,
+            callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+          },
+          {
+            target: systems().PerpsMarket.address,
+            callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+          },
+        ]);
 
-        await withExplicitEvmMine(f, provider());
+        await mineBlock(provider());
       });
 
       it('liquidated 25 OP more', async () => {
@@ -158,8 +157,8 @@ describe('Liquidation - max pd', () => {
 
     describe('next block', () => {
       before('call liquidate again', async () => {
-        const f = () => systems().PerpsMarket.connect(keeper()).liquidate(2);
-        await withExplicitEvmMine(f, provider());
+        await systems().PerpsMarket.connect(keeper()).liquidate(2);
+        await mineBlock(provider());
       });
 
       it('liquidated 25 OP more', async () => {
