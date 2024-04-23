@@ -110,7 +110,7 @@ describe('ModifyCollateral', () => {
         systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountIds[0], nonExistingSynthMarketId, bn(2)),
-        `SynthNotEnabledForCollateral("${nonExistingSynthMarketId}")`
+        `InvalidId("${nonExistingSynthMarketId}")`
       );
     });
 
