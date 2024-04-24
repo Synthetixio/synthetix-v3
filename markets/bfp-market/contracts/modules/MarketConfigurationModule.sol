@@ -59,7 +59,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         if (data.minMarginUsd < globalConfig.maxKeeperFeeUsd) {
             revert ErrorUtil.InvalidParameter(
                 "minMarginUsd",
-                "minMarginUsd can't be smaller than maxKeeperFeeUsd"
+                "minMarginUsd cannot be less than maxKeeperFeeUsd"
             );
         }
 
