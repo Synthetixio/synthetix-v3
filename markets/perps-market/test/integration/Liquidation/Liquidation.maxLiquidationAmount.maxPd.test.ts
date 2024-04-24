@@ -72,14 +72,14 @@ describe('Liquidation - max premium discount', () => {
     assertBn.equal(initialSize, bn(90));
 
     // liquidate
-    await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
 
     // liquidated 25 OP
     const [, , sizeAfterLiquidation] = await getTrader1Position();
     assertBn.equal(sizeAfterLiquidation, bn(65));
 
     // call liquidate again
-    await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
 
     // liquidates no more OP
     const [, , sizeAfterSecondLiquidation] = await getTrader1Position();
@@ -125,32 +125,37 @@ describe('Liquidation - max premium discount', () => {
 
   it('should liquidate more of trader 1 since under max premium discount', async () => {
     // call liquidate twice more since under max premium discount
-    await provider().send('evm_setAutomine', [false]);
+    // await provider().send('evm_setAutomine', [false]);
+    // await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
+    // await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
 
-    await systems().TrustedMulticallForwarder.aggregate([
-      {
-        target: systems().PerpsMarket.address,
-        callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-      },
-      {
-        target: systems().PerpsMarket.address,
-        callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-      },
-    ]);
+    await (
+      await systems().TrustedMulticallForwarder.aggregate([
+        {
+          target: systems().PerpsMarket.address,
+          callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+        },
+        {
+          target: systems().PerpsMarket.address,
+          callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+        },
+      ])
+    ).wait();
 
     // TODO: figure out why we dont liquidate in the same block
     // liquidated 25 OP more in the same block
     // const [, , sizeOnSameBlock] = await getTrader1Position();
     // assertBn.equal(sizeOnSameBlock, bn(15));
 
-    await provider().send('evm_setAutomine', [true]);
+    // await provider().send('evm_setAutomine', [true]);
 
-    await provider().send('evm_mine', []);
+    // await provider().send('evm_mine', []);
     const [, , sizeOnNextBlock] = await getTrader1Position();
     assertBn.equal(sizeOnNextBlock, bn(15));
 
     // liquidated 25 OP more in the next block
-    await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
+    // await systems().PerpsMarket.connect(keeper()).liquidate(2);
     const [, , sizeOnNextBlock2] = await getTrader1Position();
     assertBn.equal(sizeOnNextBlock2, bn(0));
   });
