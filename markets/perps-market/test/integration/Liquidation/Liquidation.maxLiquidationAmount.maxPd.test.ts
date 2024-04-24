@@ -88,12 +88,15 @@ describe('Liquidation - max premium discount', () => {
 
   /**
    * Scenario
-   * Trader 1 position left to be liquidated = 75
+   * Trader 1 position left to be liquidated = 65
    * maxPD set to 0.06 so under 60 OP skew is required for more liquidation otherwise trader has to wait for window to be liquidated
    * Trader 2 opens position which moves skew under 60 OP
    * Trader 1 can now be liquidated again by 25 OP
    */
   it('with max premium discount', async () => {
+    const [, , initialSize] = await getTrader1Position();
+    assertBn.equal(initialSize, bn(65));
+
     // set max premium discount
     await systems().PerpsMarket.connect(owner()).setMaxLiquidationParameters(
       perpsMarket.marketId(),
