@@ -514,7 +514,7 @@ describe('LiquidationModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Price falls/rises between 20% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       await market.aggregator().mockSetCurrentPrice(
