@@ -1018,7 +1018,7 @@ describe('MarginModule', async () => {
         const { collateralDepositAmount } = await depositMargin(
           bs,
           genTrader(bs, {
-            desiredMarginUsdDepositAmount: 300,
+            desiredMarginUsdDepositAmount: 1000,
             desiredCollateral: collateral,
             desiredTrader: trader,
             desiredMarket: market,
@@ -1026,7 +1026,7 @@ describe('MarginModule', async () => {
         );
 
         const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount.div(2), {
-          desiredLeverage: 10,
+          desiredLeverage: 8,
           desiredSide: 1,
         });
         await commitAndSettle(bs, marketId, trader, openOrder);
@@ -1064,7 +1064,7 @@ describe('MarginModule', async () => {
           await depositMargin(bs, genTrader(bs));
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: -1,
-          desiredLeverage: 10,
+          desiredLeverage: 8,
         });
 
         // Open leveraged position

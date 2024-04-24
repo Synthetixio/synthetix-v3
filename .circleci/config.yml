@@ -138,19 +138,18 @@ commands:
             fi
 jobs:
   build-testable:
+    parameters:
+      wat:
+        type: string
+        default: "--all"
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    environment:
-      #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
       - install-foundry
-      #- install-ipfs
-      #- run-ipfs-daemon
       - yarn-install
-      #- wait-for-ipfs
 
-      - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run build:ts
 
       - restore_cache:
           keys:
@@ -172,7 +171,7 @@ jobs:
 
       - run:
           name: "Generate testable contracts sources"
-          command: yarn workspaces foreach --all --topological-dev --verbose run generate-testable
+          command: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run generate-testable
       - save_cache:
           key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -183,7 +182,7 @@ jobs:
           name: "Build testable contracts"
           environment:
             CANNON_REGISTRY_PRIORITY: "local"
-          command: yarn workspaces foreach --all --topological-dev --verbose run build-testable
+          command: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run build-testable
 
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -245,7 +244,7 @@ jobs:
 
   test-contracts:
     parameters:
-      workspace:
+      dir:
         type: string
       parallelism:
         type: integer
@@ -266,6 +265,24 @@ jobs:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
+
+      - run:
+          name: "Split tests"
+          working_directory: "<< parameters.dir >>"
+          command: |
+            circleci tests glob 'test/**/*.test.ts' | circleci tests run --command=">/tmp/tests.txt xargs echo" --verbose
+            # if there are no tests, terminate execution after this step
+            if [ -s "/tmp/tests.txt" ]; then
+              echo cat "/tmp/tests.txt"
+              cat "/tmp/tests.txt" 
+            else
+              echo "SKIP: No tests found" 
+              circleci-agent step halt
+            fi
+
+      - store_artifacts:
+          path: "/tmp/files.txt"
+
       - install-foundry
       #- install-ipfs
       #- run-ipfs-daemon
@@ -288,10 +305,11 @@ jobs:
 
       - run:
           name: "Compile TS"
-          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from $(node -p "require('./package.json').name") run build:ts
 
       - run:
           name: "Run tests"
+          working_directory: "<< parameters.dir >>"
           environment:
             REPORT_GAS: true
             CANNON_REGISTRY_PRIORITY: local
@@ -301,13 +319,10 @@ jobs:
             TS_NODE_TRANSPILE_ONLY: true
             TS_NODE_TYPE_CHECK: false
           command: |
-            set -eo pipefail
-            export RUNNER=$PWD/.circleci/test-batch.js
-            export PATH=$PATH:$PWD/node_modules/.bin
-            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
-            echo "Workspace: $_dir"
-            cd $_dir
-            export TEST_FILES=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            set -eou pipefail
+            export RUNNER=$HOME/project/.circleci/test-batch.js
+            export PATH=$PATH:$HOME/project/node_modules/.bin
+            export TEST_FILES=$(cat /tmp/tests.txt)
             node $RUNNER
 
       - store_test_results:
@@ -543,23 +558,24 @@ jobs:
 workflows:
   version: 2.1
 
-  anvil-per-test:
+  skip:
     when:
       or:
         - equal: ["skip", << pipeline.git.branch >>]
     jobs:
-      - build-testable
+      - build-testable:
+          wat: "--recursive --from '@synthetixio/perps-market'"
 
       - test-contracts:
           name: "test-perps-market"
           requires: [build-testable]
-          workspace: "@synthetixio/perps-market"
+          dir: "./markets/perps-market"
           parallelism: 8
 
       - test-contracts:
           name: "test-bfp-market"
           requires: [build-testable]
-          workspace: "@synthetixio/bfp-market"
+          dir: "./markets/bfp-market"
           parallelism: 4
 
   tests:
@@ -580,66 +596,56 @@ workflows:
       - test-contracts:
           name: "test-main"
           requires: [build-testable]
-          workspace: "@synthetixio/main"
+          dir: "./protocol/synthetix"
           parallelism: 2
           batch-size: 8
 
       - test-contracts:
           name: "test-oracle-manager"
           requires: [build-testable]
-          workspace: "@synthetixio/oracle-manager"
+          dir: "./protocol/oracle-manager"
           parallelism: 1
           batch-size: 5
-
-      #- test-contracts: TODO: enable when we have some tests
-      #    name: "test-governance"
-      #    requires: [build-testable]
-      #    workspace: "@synthetixio/governance"
 
       - test-contracts:
           name: "test-spot-market"
           requires: [build-testable]
-          workspace: "@synthetixio/spot-market"
+          dir: "./markets/spot-market"
           parallelism: 2
           batch-size: 3
 
       - test-contracts:
           name: "test-perps-market"
           requires: [build-testable]
-          workspace: "@synthetixio/perps-market"
+          dir: "./markets/perps-market"
           parallelism: 8
           batch-size: 1
 
       - test-contracts:
           name: "test-bfp-market"
           requires: [build-testable]
-          workspace: "@synthetixio/bfp-market"
+          dir: "./markets/bfp-market"
           parallelism: 6
           batch-size: 1
 
       - test-contracts:
           name: "test-core-modules"
-          workspace: "@synthetixio/core-modules"
+          dir: "./utils/core-modules"
           parallelism: 1
           batch-size: 5
 
       - test-contracts:
           name: "test-core-contracts"
           requires: [build-testable]
-          workspace: "@synthetixio/core-contracts"
+          dir: "./utils/core-contracts"
           parallelism: 2
           batch-size: 5
 
       - test-contracts:
           name: "test-core-utils"
-          workspace: "@synthetixio/core-utils"
+          dir: "./utils/core-utils"
           parallelism: 2
           batch-size: 5
-
-      #- test-contracts: TODO: enable when tests are fixed
-      #    name: "test-legacy-market"
-      #    requires: [build-testable]
-      #    workspace: "@synthetixio/legacy-market"
 
       - test-forge:
           name: "test-rewards-distributor"

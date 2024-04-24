@@ -7,6 +7,7 @@ import { uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
+import hre from 'hardhat';
 
 const DISABLE_EXPLICIT_EVM_MINE = ['true', '1', 'True', 'yes'].includes(
   process.env.DISABLE_EXPLICIT_EVM_MINE as string
@@ -23,7 +24,7 @@ declare module 'ethers' {
     [customInspectSymbol]?: () => string;
   }
 }
-ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
+hre.ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
   return `${fgCyan}BigNumber( ${fgYellow}${fgGreen}${this.toString()} ${fgYellow}${wei(
     this
   ).toNumber()}${fgCyan} )${fgReset}`;

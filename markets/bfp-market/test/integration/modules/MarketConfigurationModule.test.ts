@@ -45,6 +45,7 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperFlagGasUnits, global.keeperFlagGasUnits);
       assert.equal(config.keeperLiquidationEndorsed, global.keeperLiquidationEndorsed);
       assert.equal(config.keeperLiquidateMarginGasUnits, global.keeperLiquidateMarginGasUnits);
+      assert.equal(config.keeperCancellationGasUnits, global.keeperCancellationGasUnits);
 
       await assertEvent(
         receipt,
@@ -67,6 +68,39 @@ describe('MarketConfigurationModule', async () => {
   });
 
   describe('setMarketConfigurationById', () => {
+    it('should revert when skewScale is 0', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        skewScale: bn(0),
+      };
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        'InvalidParameter("skewScale", "ZeroAmount")',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when minMarginUsd less than maxKeeperFeeUsd', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+      const globalConfig = await BfpMarketProxy.getMarketConfiguration();
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        minMarginUsd: globalConfig.maxKeeperFeeUsd.sub(bn(1)),
+      };
+
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        `InvalidParameter("minMarginUsd", "minMarginUsd cannot be less than maxKeeperFeeUsd")`,
+        BfpMarketProxy
+      );
+    });
+
     it('should configure market by id', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();

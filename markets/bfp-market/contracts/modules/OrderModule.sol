@@ -449,10 +449,10 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        // If `isAccountOwner` then 0 else chargeFee.
+        // If `isAccountOwner` then 0 else charge cancellation fee.
         uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
             ? 0
-            : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+            : Order.getCancellationKeeperFee();
 
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).debtUsd += keeperFee.to128();

@@ -20,6 +20,7 @@ interface IMarketConfigurationModule {
         uint128 keeperProfitMarginPercent;
         uint128 keeperProfitMarginUsd;
         uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
         uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
