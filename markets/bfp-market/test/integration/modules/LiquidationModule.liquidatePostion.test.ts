@@ -542,14 +542,14 @@ describe('LiquidationModule', () => {
         genTrader(bs)
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredLeverage: 8,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
-
+      // Price moves 20%
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.8 : 1.2)
           .toBN()
       );
 
