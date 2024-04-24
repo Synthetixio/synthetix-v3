@@ -162,6 +162,22 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return PerpMarket.load().activeMarketIds;
     }
 
+    function getUtilizationDigest(
+        uint128 marketId
+    ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint128 utilization = market.getUtilization(market.getOraclePrice(), globalConfig);
+        return
+            IPerpMarketFactoryModule.UtilizationDigest(
+                market.currentUtilizationRateComputed,
+                market.lastUtilizationTime,
+                PerpMarket.getCurrentUtilizationRate(utilization, globalConfig),
+                utilization
+            );
+    }
+
     /// @inheritdoc IPerpMarketFactoryModule
     function getMarketDigest(
         uint128 marketId

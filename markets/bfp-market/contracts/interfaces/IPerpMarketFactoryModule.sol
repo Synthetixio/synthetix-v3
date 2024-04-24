@@ -23,6 +23,17 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         uint256 available;
     }
 
+    struct UtilizationDigest {
+        /// Last computed utilization rate.
+        uint256 lastComputedUtilizationRate;
+        /// Timestamp of last computed utilization rate.
+        uint256 lastComputedTimestamp;
+        /// Utilization rate, will become active is anyone call recomputeUtilization.
+        uint256 currentUtilizationRate;
+        /// Current utilisation. Will be used to calculate the utilization rate is anyone call recomputeUtilization.
+        uint256 utilization;
+    }
+
     struct MarketDigest {
         /// Array of supported collaterals and amounts.
         IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
@@ -96,6 +107,11 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     function getMarketDigest(
         uint128 marketId
     ) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
+
+    /// @notice Returns a digest of utilisation data.
+    function getUtilizationDigest(
+        uint128 marketId
+    ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory);
 
     /// @notice Returns all created market ids in the system.
     /// @return getActiveMarketIds An array of market ids
