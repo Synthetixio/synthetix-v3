@@ -162,6 +162,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return PerpMarket.load().activeMarketIds;
     }
 
+    /// @inheritdoc IPerpMarketFactoryModule
     function getUtilizationDigest(
         uint128 marketId
     ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory) {
