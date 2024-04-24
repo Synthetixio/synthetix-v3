@@ -120,6 +120,28 @@ library Order {
         return boundedKeeperFeeUsd;
     }
 
+    /// @dev Returns the keeper fee in USD for order cancellations.
+    function getCancellationKeeperFee() internal view returns (uint256) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
+            globalConfig.keeperCancellationGasUnits * block.basefee
+        );
+        uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
+            DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+        );
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
+            globalConfig.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
+    }
+
     /// @dev Returns a copy of the hooks present in order. Array of empty length is if none.
     function cloneSettlementHooks(
         Order.Data storage self

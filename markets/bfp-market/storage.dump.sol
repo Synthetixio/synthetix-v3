@@ -570,6 +570,7 @@ interface IMarketConfigurationModule {
         uint128 keeperProfitMarginPercent;
         uint128 keeperProfitMarginUsd;
         uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
         uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
@@ -852,6 +853,7 @@ library PerpMarketConfiguration {
         uint128 keeperProfitMarginUsd;
         uint128 keeperProfitMarginPercent;
         uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
         uint128 keeperFlagGasUnits;
         uint128 keeperLiquidateMarginGasUnits;

@@ -343,10 +343,10 @@ describe('OrderModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredLeverage: 8,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order1);
@@ -580,7 +580,7 @@ describe('OrderModule', () => {
         //
         // The idea of this very specific number is that it would pass the initial margin requirement but still be
         // liquidatable, the really bad skew/fill price.
-        desiredLeverage: 14.3,
+        desiredLeverage: 14.15,
         desiredSide: 1,
         desiredKeeperFeeBufferUsd: 0,
       });

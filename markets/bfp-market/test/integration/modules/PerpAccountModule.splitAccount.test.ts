@@ -305,12 +305,12 @@ describe('PerpAccountModule splitAccount', () => {
     });
     await commitAndSettle(bs, marketId, fromTrader, openOrder);
 
-    await market.aggregator().mockSetCurrentPrice(
+    const tx = await market.aggregator().mockSetCurrentPrice(
       wei(openOrder.oraclePrice)
         .mul(openOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
         .toBN()
     );
-
+    await tx.wait();
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
