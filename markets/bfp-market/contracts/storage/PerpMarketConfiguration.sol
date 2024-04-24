@@ -49,7 +49,7 @@ library PerpMarketConfiguration {
         uint128 keeperProfitMarginPercent;
         /// Number of gas units required to perform an order settlement by a keeper.
         uint128 keeperSettlementGasUnits;
-        /// Number of gas units required to perform a cancellation of an order.
+        /// Number of gas units required to perform an order cancellation by a keeper.
         uint128 keeperCancellationGasUnits;
         /// Number of gas units required to liquidate a position by a keeper.
         uint128 keeperLiquidationGasUnits;
