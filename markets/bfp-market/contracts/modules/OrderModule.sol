@@ -449,7 +449,7 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        // If `isAccountOwner` then 0 else chargeFee. Also note that we pass 0 for `keeperFeeBufferUsd`, to avoid some edgecase scenarios that can lead to bad debt.
+        // If `isAccountOwner` then 0 else charge cancellation fee.
         uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
             ? 0
             : Order.getCancellationKeeperFee();
