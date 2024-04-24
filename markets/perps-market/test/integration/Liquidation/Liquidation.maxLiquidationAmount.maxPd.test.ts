@@ -2,6 +2,7 @@ import { BigNumber, ethers } from 'ethers';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Liquidation - max premium discount', () => {
   const { systems, provider, owner, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
@@ -35,8 +36,12 @@ describe('Liquidation - max premium discount', () => {
     traderAccountIds: [2, 3],
   });
 
+  const restore = snapshotCheckpoint(provider);
+
   let perpsMarket: PerpsMarket;
   before(async () => {
+    await restore();
+
     perpsMarket = perpsMarkets()[0];
 
     // add collateral to margin
