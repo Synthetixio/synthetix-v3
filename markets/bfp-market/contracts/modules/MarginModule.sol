@@ -127,12 +127,7 @@ contract MarginModule is IMarginModule {
         ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
             ? ITokenModule(globalConfig.usdToken)
             : ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-
         synth.approve(address(globalConfig.synthetix), amount);
-        synth.approve(address(globalConfig.spotMarket), amount);
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            synth.approve(address(this), amount);
-        }
     }
 
     /// @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.

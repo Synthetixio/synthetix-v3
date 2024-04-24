@@ -103,12 +103,6 @@ library PerpMarket {
         market.pastLiquidations.push([0, 0]);
     }
 
-    /// @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
-    function updatePythPrice(bytes[] calldata updateData) internal {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
-    }
-
     // --- Member (mutations) --- //
 
     /// @dev Updates the debt correction given an `oldPosition` and `newPosition`.
@@ -177,7 +171,7 @@ library PerpMarket {
             marketConfig.minCreditPercent.to256()
         );
         if (lockedCollateralUsd == 0) {
-            // If we dont have any postions open, we're at 0% utilization.
+            // If we dont have any positions open, we're at 0% utilization.
             return 0;
         }
 
@@ -292,7 +286,7 @@ library PerpMarket {
     function getProportionalFundingElapsed(
         PerpMarket.Data storage self
     ) internal view returns (int256) {
-        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     /// @dev Returns the proportional time elapsed since last utilization.

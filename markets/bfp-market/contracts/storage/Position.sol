@@ -236,7 +236,7 @@ library Position {
             bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
                 MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
             if (!positionDecreasing) {
-                // We need discounted margin collateral as as we're verifying for liquidation here.
+                // We need discounted margin collateral as we're verifying for liquidation here.
                 //
                 // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
                 // incurred fees hence get `getNextMarginUsd` -fees.

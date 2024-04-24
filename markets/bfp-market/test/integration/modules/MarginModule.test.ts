@@ -34,7 +34,6 @@ import {
   withExplicitEvmMine,
   getSusdCollateral,
   isSusdCollateral,
-  SYNTHETIX_USD_MARKET_ID,
   findOrThrow,
   setMarketConfiguration,
   SECONDS_ONE_DAY,
@@ -1038,13 +1037,21 @@ describe('MarginModule', async () => {
         const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
         await commitAndSettle(bs, marketId, trader, closeOrder);
 
+        // Get deposited collateral and attempt to withdraw the full amount.
+        const { depositedCollaterals } = await BfpMarketProxy.getAccountDigest(accountId, marketId);
+        const depositedCollateral = depositedCollaterals.find((c) =>
+          c.synthMarketId.eq(collateral.synthMarketId())
+        );
+        const depositedCollateralAmount = depositedCollateral?.available ?? bn(0);
+        assertBn.gt(depositedCollateralAmount, bn(0));
+
         // Attempt to withdraw all collateral even though there's debt on the account.
         await assertRevert(
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             accountId,
             marketId,
             collateral.synthMarketId(),
-            collateralDepositAmount.mul(-1)
+            depositedCollateralAmount.mul(-1)
           ),
           `InsufficientMargin()`,
           BfpMarketProxy
@@ -1888,16 +1895,12 @@ describe('MarginModule', async () => {
 
       for (const [_i, configuredCollateral] of Object.entries(configuredCollaterals)) {
         const idx = parseInt(_i);
-        const { contract: synth, synthMarketId } = newCollaterals[idx];
+        const { contract: synth } = newCollaterals[idx];
 
-        const perpAllowance = await synth.allowance(BfpMarketProxy.address, BfpMarketProxy.address);
         const coreAllowance = await synth.allowance(
           BfpMarketProxy.address,
           bs.systems().Core.address
         );
-        if (synthMarketId().eq(SYNTHETIX_USD_MARKET_ID)) {
-          assertBn.equal(ethers.constants.MaxUint256, perpAllowance);
-        }
         assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
         assertBn.equal(configuredCollateral.maxAllowable, newMaxAllowables[idx]);
       }

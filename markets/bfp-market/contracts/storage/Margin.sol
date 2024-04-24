@@ -306,7 +306,7 @@ library Margin {
 
     // --- Member (views) --- //
 
-    /// @dev Helper to call oraclerManager.process for `synthMarketId`. Can revert if `synthMarketId` not found.
+    /// @dev Helper to call oracleManager.process for `synthMarketId`. Can revert if `synthMarketId` not found.
     function getOracleCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,
