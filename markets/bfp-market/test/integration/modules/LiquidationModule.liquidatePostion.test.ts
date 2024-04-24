@@ -310,14 +310,14 @@ describe('LiquidationModule', () => {
         genTrader(bs)
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredLeverage: 8,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.8 : 1.2)
           .toBN()
       );
 
@@ -407,7 +407,7 @@ describe('LiquidationModule', () => {
         })
       );
       const order1 = await genOrder(bs, market, collateral, gTrader1.collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredLeverage: 8,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order1);
@@ -415,7 +415,7 @@ describe('LiquidationModule', () => {
       const { answer: marketOraclePrice1 } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice1)
-          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.8 : 1.2)
           .toBN()
       );
       await BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
@@ -508,18 +508,18 @@ describe('LiquidationModule', () => {
         genTrader(bs)
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredLeverage: 8,
         desiredSide: orderSide,
       });
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      // Price falls/rises between 20% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.8 : 1.2)
           .toBN()
       );
 
