@@ -96,7 +96,7 @@ describe('MarketConfigurationModule', async () => {
 
       await assertRevert(
         BfpMarketProxy.setMarketConfigurationById(marketId, config),
-        `InvalidParameter("minMarginUsd", "minMarginUsd can't be smaller than maxKeeperFeeUsd")`,
+        `InvalidParameter("minMarginUsd", "minMarginUsd cannot be less than maxKeeperFeeUsd")`,
         BfpMarketProxy
       );
     });
