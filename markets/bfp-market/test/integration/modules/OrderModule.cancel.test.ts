@@ -5,6 +5,7 @@ import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assert from 'assert';
 import { shuffle } from 'lodash';
+import { BigNumber } from 'ethers';
 import { assertEvents } from '../../assert';
 import { bootstrap } from '../../bootstrap';
 import {
@@ -29,7 +30,6 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 import { calcKeeperCancellationFee } from '../../calculations';
-import { BigNumber } from 'ethers';
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
