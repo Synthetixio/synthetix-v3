@@ -84,7 +84,7 @@ describe('MarketConfigurationModule', async () => {
       );
     });
 
-    it('should revert when minMarginUsd is smaller then maxKeeperFeeUsd', async () => {
+    it('should revert when minMarginUsd less than maxKeeperFeeUsd', async () => {
       const { BfpMarketProxy } = systems();
       const marketId = genOneOf(markets()).marketId();
       const globalConfig = await BfpMarketProxy.getMarketConfiguration();
