@@ -475,17 +475,17 @@ describe('OrderModule', () => {
         genTrader(bs)
       );
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 8,
+        desiredLeverage: 10,
         desiredSide: orderSide,
       });
 
       await commitAndSettle(bs, marketId, trader, order1);
 
-      // Price falls/rises between 20% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       const newMarketOraclePrice = wei(order1.oraclePrice)
-        .mul(orderSide === 1 ? 0.8 : 1.2)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 

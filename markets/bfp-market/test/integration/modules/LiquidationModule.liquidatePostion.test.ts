@@ -310,14 +310,14 @@ describe('LiquidationModule', () => {
         genTrader(bs)
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 8,
+        desiredLeverage: 10,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.8 : 1.2)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -352,7 +352,7 @@ describe('LiquidationModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -407,7 +407,7 @@ describe('LiquidationModule', () => {
         })
       );
       const order1 = await genOrder(bs, market, collateral, gTrader1.collateralDepositAmount, {
-        desiredLeverage: 8,
+        desiredLeverage: 10,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order1);
@@ -415,7 +415,7 @@ describe('LiquidationModule', () => {
       const { answer: marketOraclePrice1 } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice1)
-          .mul(orderSide === 1 ? 0.8 : 1.2)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
       await BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
@@ -508,7 +508,7 @@ describe('LiquidationModule', () => {
         genTrader(bs)
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 8,
+        desiredLeverage: 10,
         desiredSide: orderSide,
       });
 
@@ -519,7 +519,7 @@ describe('LiquidationModule', () => {
       // Whether it goes up or down depends on the side of the order.
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.8 : 1.2)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -542,14 +542,14 @@ describe('LiquidationModule', () => {
         genTrader(bs)
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 8,
+        desiredLeverage: 10,
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
-      // Price moves 20%
+      // Price moves 10%
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.8 : 1.2)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
