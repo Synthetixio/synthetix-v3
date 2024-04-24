@@ -168,7 +168,7 @@ export const genTrader = async (
   // Randomly provide test collateral to trader.
   const marginUsdDepositAmount = !isNil(options?.desiredMarginUsdDepositAmount)
     ? wei(options?.desiredMarginUsdDepositAmount)
-    : wei(genOneOf([1000, 5000, 10_000, 15_000]));
+    : wei(genOneOf([2000, 5000, 10_000, 15_000]));
   const collateralPrice = await collateral.getPrice();
   const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
