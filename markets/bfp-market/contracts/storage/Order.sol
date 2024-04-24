@@ -120,6 +120,7 @@ library Order {
         return boundedKeeperFeeUsd;
     }
 
+    /// @dev Returns the keeper fee in USD for order cancellations.
     function getCancellationKeeperFee() internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
