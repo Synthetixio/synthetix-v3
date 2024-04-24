@@ -143,11 +143,6 @@ describe('PerpMarketFactoryModule Utilization', () => {
     it('should have utilization capped to one when delegated collateral < lockedCollateral', async () => {
       const { BfpMarketProxy, Core } = systems();
 
-      const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
-      const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
-      const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
-      const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
-
       const market = genOneOf(markets());
       const marketId = market.marketId();
 
@@ -188,6 +183,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const { minCreditPercent } = await BfpMarketProxy.getMarketConfigurationById(
         market.marketId()
       );
+
       const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
       const lockedCollateralUsd = wei(size).mul(oraclePrice).mul(minCreditPercent);
       const utilizationWithoutCap = delegatedAmountUsd.div(lockedCollateralUsd);
@@ -206,13 +202,12 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
       // Calculate the expected utilization rate, assuming utilization was capped at 1.
       const expectedUtilization = 1;
-      const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);
-      const highPart = highUtilizationSlopePercent
-        .mul(wei(expectedUtilization).sub(utilizationBreakpointPercent))
-        .mul(100);
-      const expectedUtilizationRate = lowPart.add(highPart).toBN();
+      const expectedUtilizationRate = await calcUtilizationRate(bs, wei(expectedUtilization));
 
-      assertBn.equal(expectedUtilizationRate, recomputeUtilizationEvent.args.utilizationRate);
+      assertBn.equal(
+        expectedUtilizationRate.toBN(),
+        recomputeUtilizationEvent.args.utilizationRate
+      );
     });
 
     it('should support collateral utilization above 100%', async () => {
@@ -220,11 +215,6 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
       const market = genOneOf(markets());
       const marketId = market.marketId();
-
-      const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
-      const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
-      const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
-      const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
 
       // Change staking to the minimum about
       const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
@@ -282,13 +272,12 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
       // We expect max utilization rate, which is based on the slope configs.
       const expectedUtilization = 1;
-      const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);
-      const highPart = highUtilizationSlopePercent
-        .mul(wei(expectedUtilization).sub(utilizationBreakpointPercent))
-        .mul(100);
-      const expectedUtilizationRate = lowPart.add(highPart).toBN();
+      const expectedUtilizationRate = await calcUtilizationRate(bs, wei(expectedUtilization));
 
-      assertBn.equal(expectedUtilizationRate, recomputeUtilizationEvent1.args.utilizationRate);
+      assertBn.equal(
+        expectedUtilizationRate.toBN(),
+        recomputeUtilizationEvent1.args.utilizationRate
+      );
 
       const closeOrder2 = await genOrder(bs, market, collateral2, collateralDepositAmount2, {
         desiredSize: order2.sizeDelta.mul(-1),
