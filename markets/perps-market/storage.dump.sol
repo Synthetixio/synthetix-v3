@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -694,7 +694,7 @@ library GlobalPerpsMarketConfiguration {
     struct Data {
         address feeCollector;
         mapping(address => uint256) referrerShare;
-        mapping(uint128 => uint256) __unused_1;
+        mapping(uint128 => uint256) maxCollateralAmounts;
         uint128[] synthDeductionPriority;
         uint256 minKeeperRewardUsd;
         uint256 maxKeeperRewardUsd;
@@ -706,8 +706,6 @@ library GlobalPerpsMarketConfiguration {
         uint128 lowUtilizationInterestRateGradient;
         uint128 interestRateGradientBreakpoint;
         uint128 highUtilizationInterestRateGradient;
-        uint128 collateralLiquidateRewardRatioD18;
-        address rewardDistributorImplementation;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -794,7 +792,6 @@ library PerpsAccount {
         uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
-        uint256 debt;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
@@ -892,7 +889,6 @@ library PerpsMarketFactory {
         address spotMarket;
         uint128 perpsMarketId;
         string name;
-        address liquidationAssetManager;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
@@ -964,4 +960,9 @@ library BigNumber {
 library Flags {
     bytes32 public constant PERPS_SYSTEM = "perpsSystem";
     bytes32 public constant CREATE_MARKET = "createMarket";
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
 }
