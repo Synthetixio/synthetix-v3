@@ -1,10 +1,9 @@
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { collateralValue, depositCollateral, discountedValue, openPosition } from '../helpers';
+import { depositCollateral, discountedValue, openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { SpotMarketProxy } from '@synthetixio/spot-market/test/generated/typechain';
 
 const accountId = 4;
 const perpsMarketConfig = [
@@ -62,19 +61,22 @@ const ethDiscountConfig = {
   skewScale: bn(10_000),
 };
 
+const ETH_SYNTH_PRICE = bn(2000),
+  BTC_SYNTH_PRICE = bn(30_000);
+
 const synthMarketsConfig = [
   {
     name: 'btc',
     token: 'snxBTC',
-    buyPrice: bn(20_000),
-    sellPrice: bn(20_000),
+    buyPrice: BTC_SYNTH_PRICE,
+    sellPrice: BTC_SYNTH_PRICE,
     ...btcDiscountConfig,
   },
   {
     name: 'eth',
     token: 'snxETH',
-    buyPrice: bn(2_000),
-    sellPrice: bn(2_000),
+    buyPrice: ETH_SYNTH_PRICE,
+    sellPrice: ETH_SYNTH_PRICE,
     ...ethDiscountConfig,
   },
 ];
@@ -126,16 +128,9 @@ describe('Account margins - Multicollateral', () => {
     });
   });
 
-  let btcAmount: Wei,
-    ethAmount: Wei,
-    btcMarketId: ethers.BigNumber,
-    ethMarketId: ethers.BigNumber,
-    spotMarket: SpotMarketProxy;
+  let btcAmount: Wei, ethAmount: Wei, btcMarketId: ethers.BigNumber;
 
   before('identify', async () => {
-    spotMarket = systems().SpotMarket;
-    btcMarketId = synthMarkets()[0].marketId();
-    ethMarketId = synthMarkets()[1].marketId();
     btcAmount = wei(
       await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
     );
@@ -146,8 +141,8 @@ describe('Account margins - Multicollateral', () => {
 
   let totalCollateralValue: Wei;
   it('has correct withdrawable margin', async () => {
-    const btcValue = await collateralValue(btcAmount, btcMarketId, spotMarket);
-    const ethValue = await collateralValue(ethAmount, ethMarketId, spotMarket);
+    const btcValue = btcAmount.mul(wei(BTC_SYNTH_PRICE));
+    const ethValue = ethAmount.mul(wei(ETH_SYNTH_PRICE));
     totalCollateralValue = btcValue.add(ethValue);
     assertBn.equal(
       totalCollateralValue.toBN(),
@@ -164,21 +159,18 @@ describe('Account margins - Multicollateral', () => {
 
   let availableTradingMargin: Wei;
   it('has correct available trading margin', async () => {
-    availableTradingMargin = await discountedValue(
-      [
-        {
-          amount: btcAmount,
-          synthId: btcMarketId,
-          config: btcDiscountConfig,
-        },
-        {
-          amount: ethAmount,
-          synthId: ethMarketId,
-          config: ethDiscountConfig,
-        },
-      ],
-      spotMarket
-    );
+    availableTradingMargin = await discountedValue([
+      {
+        amount: btcAmount,
+        price: wei(BTC_SYNTH_PRICE),
+        config: btcDiscountConfig,
+      },
+      {
+        amount: ethAmount,
+        price: wei(ETH_SYNTH_PRICE),
+        config: ethDiscountConfig,
+      },
+    ]);
 
     assertBn.equal(
       await systems().PerpsMarket.getAvailableMargin(accountId),

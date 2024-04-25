@@ -4,7 +4,6 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { depositCollateral, discountedValue, openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { SpotMarketProxy } from '@synthetixio/spot-market/test/generated/typechain';
 
 const accountId = 4;
 const perpsMarketConfig = [
@@ -36,12 +35,14 @@ const btcDiscountConfig = {
   skewScale: bn(100),
 };
 
+const SYNTH_BTC_PRICE = bn(20_000);
+
 const synthMarketsConfig = [
   {
     name: 'btc',
     token: 'snxBTC',
-    buyPrice: bn(20_000),
-    sellPrice: bn(20_000),
+    buyPrice: SYNTH_BTC_PRICE,
+    sellPrice: SYNTH_BTC_PRICE,
     ...btcDiscountConfig,
   },
 ];
@@ -73,7 +74,7 @@ describe('Account margins - Multicollateral - InsufficientCollateralAvailableFor
     });
   });
 
-  let btcAmount: Wei, btcMarketId: ethers.BigNumber, spotMarket: SpotMarketProxy;
+  let btcAmount: Wei, btcMarketId: ethers.BigNumber;
 
   before('identify', async () => {
     spotMarket = systems().SpotMarket;
@@ -85,16 +86,13 @@ describe('Account margins - Multicollateral - InsufficientCollateralAvailableFor
 
   let availableTradingMargin: Wei;
   it('has correct available trading margin', async () => {
-    availableTradingMargin = await discountedValue(
-      [
-        {
-          amount: btcAmount,
-          synthId: btcMarketId,
-          config: btcDiscountConfig,
-        },
-      ],
-      spotMarket
-    );
+    availableTradingMargin = await discountedValue([
+      {
+        amount: btcAmount,
+        config: btcDiscountConfig,
+        price: wei(SYNTH_BTC_PRICE),
+      },
+    ]);
 
     assertBn.equal(
       await systems().PerpsMarket.getAvailableMargin(accountId),
