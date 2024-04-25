@@ -36,6 +36,7 @@ library GlobalPerpsMarketConfiguration {
         /**
          * @dev previously maxCollateralAmounts[collateralId] was used in storage slot
          */
+        // solhint-disable-next-line var-name-mixedcase
         mapping(uint128 => uint256) __unused_1;
         /**
          * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
@@ -202,13 +203,11 @@ library GlobalPerpsMarketConfiguration {
         return notionalValue.mulDecimal(self.collateralLiquidateRewardRatioD18);
     }
 
-    function updateCollateralMax(
+    function updateSupportedCollaterals(
         Data storage self,
         uint128 collateralId,
         uint256 maxCollateralAmount
     ) internal {
-        PerpsCollateralConfiguration.load(collateralId).setMax(collateralId, maxCollateralAmount);
-
         bool isSupportedCollateral = self.supportedCollateralTypes.contains(collateralId);
         if (maxCollateralAmount > 0 && !isSupportedCollateral) {
             self.supportedCollateralTypes.add(collateralId.to256());

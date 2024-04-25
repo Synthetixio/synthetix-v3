@@ -56,6 +56,18 @@ interface ICollateralConfigurationModule {
      */
     function getCollateralConfiguration(
         uint128 collateralId
+    ) external view returns (uint256 maxCollateralAmount);
+
+    /**
+     * @notice Gets the full configuration for collateral.  The above function exists for backwards compatibility; encourage all integrators to use this function
+     * @param collateralId Synth market id, 0 for snxUSD.
+     * @return maxCollateralAmount max collateral amount of the specified synth market id
+     * @return upperLimitDiscount upper bound for max discount on a collateral
+     * @return lowerLimitDiscount lower bound for min discount on a collateral
+     * @return discountScalar scaling value on the impactOnSkew of the collateral (via spot market)
+     */
+    function getCollateralConfigurationFull(
+        uint128 collateralId
     )
         external
         view

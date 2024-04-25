@@ -7,16 +7,9 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {LiquidationAssetManager} from "../storage/LiquidationAssetManager.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
-import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {RewardsDistributor} from "@synthetixio/rewards-distributor/src/RewardsDistributor.sol";
-
-import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
-import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-import {IDistributorErrors} from "../interfaces/IDistributorErrors.sol";
 
 /**
  * @title Module for collateral configuration setters/getters.
@@ -40,15 +33,15 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         uint256 discountScalar
     ) external override {
         OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.load().updateCollateralMax(
+        PerpsCollateralConfiguration.Data storage collateralConfig = PerpsCollateralConfiguration
+            .load(collateralId);
+
+        collateralConfig.setMax(collateralId, maxCollateralAmount);
+        collateralConfig.setDiscounts(upperLimitDiscount, lowerLimitDiscount, discountScalar);
+
+        GlobalPerpsMarketConfiguration.load().updateSupportedCollaterals(
             collateralId,
             maxCollateralAmount
-        );
-
-        PerpsCollateralConfiguration.load(collateralId).setDiscounts(
-            upperLimitDiscount,
-            lowerLimitDiscount,
-            discountScalar
         );
 
         emit CollateralConfigurationSet(
@@ -64,6 +57,15 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      * @inheritdoc ICollateralConfigurationModule
      */
     function getCollateralConfiguration(
+        uint128 collateralId
+    ) external view override returns (uint256 maxCollateralAmount) {
+        return PerpsCollateralConfiguration.load(collateralId).maxAmount;
+    }
+
+    /**
+     * @inheritdoc ICollateralConfigurationModule
+     */
+    function getCollateralConfigurationFull(
         uint128 collateralId
     )
         external

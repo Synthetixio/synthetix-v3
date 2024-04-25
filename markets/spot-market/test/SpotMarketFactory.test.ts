@@ -130,6 +130,27 @@ describe('SpotMarketFactory', () => {
       assert.equal(priceData[2], priceTolerance);
     });
 
+    describe('index price', () => {
+      it('reverts if you send wrong transaction type', async () => {
+        await assertRevert(
+          systems().SpotMarket.connect(marketOwner).indexPrice(marketId(), 12, 0),
+          'InvalidTransactionType'
+        );
+      });
+
+      it('returns price with valid args', async () => {
+        const buyPrice = await systems()
+          .SpotMarket.connect(marketOwner)
+          .indexPrice(marketId(), 1, 0); // buy feed
+        const sellPrice = await systems()
+          .SpotMarket.connect(marketOwner)
+          .indexPrice(marketId(), 2, 0); // buy feed
+
+        assertBn.equal(buyPrice, 100);
+        assertBn.equal(sellPrice, 200);
+      });
+    });
+
     after(restore);
   });
 

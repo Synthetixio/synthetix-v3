@@ -6,6 +6,7 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 library Transaction {
     error InvalidAsyncTransactionType(Type transactionType);
+    error InvalidTransactionTypeIndex(uint128 txnType);
 
     enum Type {
         NULL, // reserved for 0 (default value)
@@ -15,6 +16,16 @@ library Transaction {
         ASYNC_SELL,
         WRAP,
         UNWRAP
+    }
+
+    function loadValidTransactionType(uint128 txnType) internal pure returns (Type) {
+        // solhint-disable-next-line numcast/safe-cast
+        uint128 txnTypeMax = uint128(Type.UNWRAP);
+        if (txnType > txnTypeMax) {
+            revert InvalidTransactionTypeIndex(txnType);
+        }
+
+        return Type(txnType);
     }
 
     function validateAsyncTransaction(Type orderType) internal pure {
