@@ -144,11 +144,13 @@ library PerpsCollateralConfiguration {
             );
         }
         // first get value of collateral in usd
-        (uint256 valueWithoutDiscount, ) = spotMarket.quoteSellExactIn(
+        uint128 sellTxnType = 2;
+        uint256 collateralPrice = spotMarket.indexPrice(
             self.id,
-            amount,
+            sellTxnType,
             Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
         );
+        uint256 valueWithoutDiscount = amount.mulDecimal(collateralPrice);
 
         // if discount is 0, this just gets multiplied by 1
         collateralValueInUsd = valueWithoutDiscount.mulDecimal(DecimalMath.UNIT - discount);
