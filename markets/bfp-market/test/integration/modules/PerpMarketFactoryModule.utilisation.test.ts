@@ -210,7 +210,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       );
     });
 
-    it('should support collateral utilization above 100% due to delegatedCollateral being negative ', async () => {
+    it('should support collateral utilization above 100% due to delegatedCollateral being negative', async () => {
       const { BfpMarketProxy, Core } = systems();
 
       const market = genOneOf(markets());
