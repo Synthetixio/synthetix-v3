@@ -141,6 +141,18 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    function indexPrice(
+        uint128 marketId,
+        uint128 transactionType,
+        Price.Tolerance priceTolerance
+    ) external view override returns (uint256 price) {
+        Transaction.Type txnType = Transaction.loadValidTransactionType(transactionType);
+        return Price.getCurrentPrice(marketId, txnType, priceTolerance);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function getSynth(uint128 marketId) external view override returns (address synthAddress) {
         return address(SynthUtil.getToken(marketId));
     }
