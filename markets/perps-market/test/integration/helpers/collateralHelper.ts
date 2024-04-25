@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
-import { Systems, bn } from '../bootstrap';
+import { Systems } from '../bootstrap';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
-import { SpotMarketProxy } from '@synthetixio/spot-market/test/generated/typechain';
 import Wei, { wei } from '@synthetixio/wei';
 
 type CollateralSynthData = {
@@ -130,14 +129,14 @@ type CollateralConfig = {
 
 type ValueInputs = {
   amount: Wei;
-  synthId: ethers.BigNumber;
   config: CollateralConfig;
+  price: Wei;
 }[];
 
-export const discountedValue = async (inputs: ValueInputs, spotMarket: SpotMarketProxy) => {
+export const discountedValue = async (inputs: ValueInputs) => {
   return await inputs.reduce(
     async (total, input) => {
-      const { amount, synthId, config } = input;
+      const { amount, config, price } = input;
       const { skewScale, discountScalar, lowerLimitDiscount, upperLimitDiscount } = config;
       const impactOnSkew = amount.div(wei(skewScale)).mul(wei(discountScalar));
       const discount = Wei.max(
@@ -145,20 +144,11 @@ export const discountedValue = async (inputs: ValueInputs, spotMarket: SpotMarke
         wei(upperLimitDiscount)
       );
 
-      const collValue = await collateralValue(amount, synthId, spotMarket);
+      const collValue = price.mul(amount);
       const quote = collValue.mul(wei(1).sub(discount));
 
       return (await total).add(quote);
     },
     Promise.resolve(wei(0))
   );
-};
-
-export const collateralValue = async (
-  amount: Wei,
-  synthId: ethers.BigNumber,
-  spotMarket: SpotMarketProxy
-) => {
-  const { returnAmount } = await spotMarket.quoteSellExactIn(synthId, amount.toBN(), bn(0));
-  return wei(returnAmount);
 };
