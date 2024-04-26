@@ -327,8 +327,8 @@ contract LiquidationModule is ILiquidationModule {
             oraclePrice
         );
         if (
-            !Margin.isMarginLiquidatable(accountId, market, marginValues) ||
-            marginValues.collateralUsd == 0
+            marginValues.collateralUsd == 0 ||
+            !Margin.isMarginLiquidatable(accountId, market, marginValues)
         ) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
