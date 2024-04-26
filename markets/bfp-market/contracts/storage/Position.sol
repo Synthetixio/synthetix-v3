@@ -129,8 +129,9 @@ library Position {
     ) internal view {
         uint256 minimumCredit = market.minimumCredit(marketConfig, oraclePrice);
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(globalConfig);
+
         if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
-            ErrorUtil.InsufficientLiquidity();
+            revert ErrorUtil.InsufficientLiquidity();
         }
     }
     /**

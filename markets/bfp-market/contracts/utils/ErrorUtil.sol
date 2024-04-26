@@ -129,5 +129,5 @@ library ErrorUtil {
     error InvalidParameter(string parameter, string reason);
 
     /// @notice Thrown there's not enough liquidity to open a position.
-    error InsufficientLiquidity(string parameter, string reason);
+    error InsufficientLiquidity();
 }
