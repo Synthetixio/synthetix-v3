@@ -130,6 +130,75 @@ describe('OrderModule', () => {
       );
     });
 
+    it('should revert when delegated collateral is smaller than minCredit', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const tradersGenerator = toRoundRobinGenerators(traders());
+      // Change CORE staking/delegation to the minimum amount.
+      const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
+      const { minDelegationD18 } = await Core.getCollateralConfiguration(
+        stakedCollateral().address
+      );
+      const stakedCollateralAddress = stakedCollateral().address;
+      await Core.connect(staker()).delegateCollateral(
+        stakerAccountId,
+        poolId,
+        stakedCollateralAddress,
+        minDelegationD18,
+        bn(1)
+      );
+
+      const {
+        trader: trader1,
+        market,
+        marketId,
+        collateral: collateral1,
+        collateralDepositAmount: collateralDepositAmount1,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: tradersGenerator.next().value,
+          desiredMarginUsdDepositAmount: 15_000,
+        })
+      );
+      const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
+        desiredLeverage: 10,
+      });
+      await commitAndSettle(bs, marketId, trader1, order1);
+
+      // Price falls/rises between 50% to create large profits.
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(order1.sizeDelta.gt(0) ? 0.5 : 1.5)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Start creating an order for another trade.
+      // Given the low amount of liquidity and profit from previous trader, when the new trader tries to commit an order we should be reverting.
+      const trader2 = tradersGenerator.next().value;
+
+      const { collateral: collateral2, collateralDepositAmount: collateralDepositAmount2 } =
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: trader2,
+            desiredMarket: market,
+          })
+        );
+      const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2);
+
+      await assertRevert(
+        BfpMarketProxy.connect(trader2.signer).commitOrder(
+          trader2.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd,
+          order2.hooks
+        ),
+        'InsufficientLiquidity()',
+        BfpMarketProxy
+      );
+    });
+
     it('should revert insufficient margin when margin is less than initial margin due to debt', async () => {
       const { BfpMarketProxy } = systems();
 
