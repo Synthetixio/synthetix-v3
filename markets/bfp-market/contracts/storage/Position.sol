@@ -248,8 +248,8 @@ library Position {
             // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
             // avoid this completely due to positions at min margin would never be allowed to lower size.
             if (
-                !MathUtil.sameSide(currentPosition.size, newPosition.size) &&
-                MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size)
+                MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+                MathUtil.abs(newPosition.size) > MathUtil.abs(currentPosition.size)
             ) {
                 // We need discounted margin collateral as we're verifying for liquidation here.
                 //
