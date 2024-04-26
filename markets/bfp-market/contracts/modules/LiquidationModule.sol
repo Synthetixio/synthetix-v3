@@ -320,11 +320,11 @@ contract LiquidationModule is ILiquidationModule {
 
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        uint256 oraclePrice = market.getOraclePrice();
+
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            oraclePrice
+            market.getOraclePrice()
         );
         if (
             marginValues.collateralUsd == 0 ||
