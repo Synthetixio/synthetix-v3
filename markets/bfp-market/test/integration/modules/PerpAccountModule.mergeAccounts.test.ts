@@ -86,7 +86,7 @@ describe('PerpAccountModule mergeAccounts', () => {
     return { fromTrader, toTrader };
   };
 
-  it('should revert if toId and fromId is the same', async () => {
+  it('should revert when toId and fromId are the same', async () => {
     const { BfpMarketProxy } = systems();
 
     const fromTrader = genOneOf(traders());

@@ -152,6 +152,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint128 proportion
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.SPLIT_ACCOUNT);
+
         Account.loadAccountAndValidatePermission(
             fromId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
