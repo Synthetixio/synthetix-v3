@@ -164,4 +164,13 @@ interface IMarginModule is IBasePerpMarket {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256);
+
+    /// @notice Returns the keeper reward for liquidating a position's margin
+    /// @param accountId Account of the margin to be liquidated
+    /// @param marketId Market of the margin to be liquidated
+    /// @return getMarginLiquidationOnlyReward Amount of keeper rewards in USD
+    function getMarginLiquidationOnlyReward(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256);
 }
