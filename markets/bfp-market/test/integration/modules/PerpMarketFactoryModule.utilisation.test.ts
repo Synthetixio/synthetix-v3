@@ -146,7 +146,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const market = genOneOf(markets());
       const marketId = market.marketId();
 
-      // Change staking to the minimum about
+      // Change CORE staking/delegation to the minimum amount.
       const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
       const { minDelegationD18 } = await Core.getCollateralConfiguration(
         stakedCollateral().address
@@ -160,7 +160,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
         bn(1)
       );
 
-      // Create one trade that will win more than the delegated collateral
+      // Create one trade that will win more than the delegated collateral.
       const { collateral, collateralDepositAmount, trader } = await depositMargin(
         bs,
         genTrader(bs, { desiredMarket: market })
@@ -172,10 +172,10 @@ describe('PerpMarketFactoryModule Utilization', () => {
       });
       await commitAndSettle(bs, marketId, trader, order1);
 
-      // Price 10x, causing large profits for the trader
+      // Price 10x, causing large profits for the trader.
       const newMarketOraclePrice = wei(order1.oraclePrice).mul(10).toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-      // Get delegated usd amount
+      // Get delegated usd amount.
       const withdrawable = await Core.getWithdrawableMarketUsd(market.marketId());
       const { totalCollateralValueUsd, size, oraclePrice } = await BfpMarketProxy.getMarketDigest(
         market.marketId()
@@ -187,7 +187,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
       const lockedCollateralUsd = wei(size).mul(oraclePrice).mul(minCreditPercent);
       const utilizationWithoutCap = delegatedAmountUsd.div(lockedCollateralUsd);
-      // Assert that the uncapped utilization is above 1
+      // Assert that the uncapped utilization is above 1.
       assertBn.gt(utilizationWithoutCap.toBN(), 1);
 
       const { receipt } = await withExplicitEvmMine(
