@@ -28,7 +28,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         uint256 lastComputedUtilizationRate;
         /// Timestamp of last computed utilization rate.
         uint256 lastComputedTimestamp;
-        /// Utilization rate, will become active is anyone call recomputeUtilization.
+        /// The current instantaneous utilization rate.
         uint256 currentUtilizationRate;
         /// The current instantaneous collateral utilization.
         uint256 utilization;
