@@ -1073,7 +1073,6 @@ describe('MarginModule', async () => {
         const { collateralDepositAmount, collateralPrice } = await depositMargin(
           bs,
           genTrader(bs, {
-            desiredMarginUsdDepositAmount: 300,
             desiredCollateral: collateral,
             desiredTrader: trader,
             desiredMarket: market,
