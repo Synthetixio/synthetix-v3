@@ -325,14 +325,9 @@ contract PerpAccountModule is IPerpAccountModule {
     /// @inheritdoc IPerpAccountModule
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
-        Account.loadAccountAndValidatePermission(
-            fromId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
-        );
-        Account.loadAccountAndValidatePermission(
-            toId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
-        );
+
+        Account.exists(fromId);
+        Account.exists(toId);
 
         if (toId == fromId) {
             revert ErrorUtil.DuplicateAccountIds();
@@ -375,7 +370,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 oraclePrice = market.getOraclePrice();
         Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
 
-        // Prevent merging for is liquidatable positions.
+        // Prevent merging for `isLiquidatable` positions.
         if (
             Position.isLiquidatable(toPosition, market, oraclePrice, marketConfig, toMarginValues)
         ) {
@@ -387,6 +382,7 @@ contract PerpAccountModule is IPerpAccountModule {
             market,
             toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );
+
         // Stack to deep.
         {
             uint256 supportedSynthMarketIdsLength = globalMarginConfig

@@ -86,24 +86,6 @@ describe('PerpAccountModule mergeAccounts', () => {
     return { fromTrader, toTrader };
   };
 
-  it('should revert when either account does not exist/has missing permission', async () => {
-    const { BfpMarketProxy } = systems();
-
-    const invalidAccountId = 42069;
-    const validAccountId = genOneOf(traders()).accountId;
-
-    await assertRevert(
-      BfpMarketProxy.mergeAccounts(invalidAccountId, validAccountId, 1),
-      `PermissionDenied`,
-      BfpMarketProxy
-    );
-    await assertRevert(
-      BfpMarketProxy.mergeAccounts(validAccountId, invalidAccountId, 1),
-      `PermissionDenied`,
-      BfpMarketProxy
-    );
-  });
-
   it('should revert if toId and fromId is the same', async () => {
     const { BfpMarketProxy } = systems();
 
@@ -115,6 +97,38 @@ describe('PerpAccountModule mergeAccounts', () => {
         1
       ),
       `DuplicateAccountIds`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert when toId account does not exist', async () => {
+    const { BfpMarketProxy } = systems();
+
+    const marketId = genOneOf(markets()).marketId();
+    const trader = genOneOf(traders());
+
+    const fromId = trader.accountId;
+    const toId = 69696969;
+
+    await assertRevert(
+      BfpMarketProxy.connect(trader.signer).mergeAccounts(fromId, toId, marketId),
+      `AccountNotFound("${toId}")`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert when fromId account does not exist', async () => {
+    const { BfpMarketProxy } = systems();
+
+    const marketId = genOneOf(markets()).marketId();
+    const trader = genOneOf(traders());
+
+    const fromId = 69696969;
+    const toId = trader.accountId;
+
+    await assertRevert(
+      BfpMarketProxy.connect(trader.signer).mergeAccounts(fromId, toId, marketId),
+      `AccountNotFound("${fromId}")`,
       BfpMarketProxy
     );
   });
@@ -583,7 +597,9 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should merge two accounts', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
-    // Use nonUSD collateral to make sure we still have some debt. And use a generator to make sure we have two different collaterals for the fromAccount.
+
+    // Use nonUSD collateral to make sure we still have some debt and use a generator to make sure we have two different
+    // collaterals for the fromAccount.
     const collateralGenerator = toRoundRobinGenerators(shuffle(collateralsWithoutSusd()));
     const market = genOneOf(markets());
     const side = genSide();
@@ -632,6 +648,7 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredCollateral: collateralGenerator.next().value,
       })
     );
+
     // Make sure we have two different collaterals.
     await depositMargin(
       bs,
