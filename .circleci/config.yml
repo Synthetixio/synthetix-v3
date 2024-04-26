@@ -616,7 +616,7 @@ workflows:
   skip:
     when:
       or:
-        - equal: ["Fix-Liquidation-test", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
     jobs:
       - build-testable:
           wat: "--recursive --from '@synthetixio/perps-market'"
@@ -627,16 +627,10 @@ workflows:
           dir: "./markets/perps-market"
           test: "test/integration/Liquidation/Liquidation.maxLiquidationAmount.maxPd.test.ts"
 
-  #      - test-contracts:
-  #          name: "test-bfp-market"
-  #          requires: [build-testable]
-  #          dir: "./markets/bfp-market"
-  #          parallelism: 4
-
   tests:
     unless:
       or:
-        - equal: ["Fix-Liquidation-test", << pipeline.git.branch >>]
+        - equal: ["skip", << pipeline.git.branch >>]
         - equal: ["update-subgraphs", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
