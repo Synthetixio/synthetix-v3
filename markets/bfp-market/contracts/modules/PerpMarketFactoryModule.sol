@@ -140,10 +140,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        return
-            market.size.mulDecimal(market.getOraclePrice()).mulDecimal(
-                marketConfig.minCreditPercent
-            );
+        return market.minimumCredit(marketConfig, market.getOraclePrice());
     }
 
     /// @inheritdoc IERC165
