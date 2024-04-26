@@ -121,6 +121,18 @@ library Position {
         }
     }
 
+    function validateMinimumCredit(
+        PerpMarket.Data storage market,
+        uint256 oraclePrice,
+        PerpMarketConfiguration.GlobalData storage globalConfig,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view {
+        uint256 minimumCredit = market.minimumCredit(marketConfig, oraclePrice);
+        int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(globalConfig);
+        if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
+            ErrorUtil.InsufficientLiquidity();
+        }
+    }
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
@@ -171,6 +183,8 @@ library Position {
     function validateTrade(
         uint128 accountId,
         PerpMarket.Data storage market,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig,
         Position.TradeParams memory params
     ) internal view returns (Position.ValidatedTrade memory) {
         // Empty order is a no.
@@ -179,7 +193,6 @@ library Position {
         }
 
         Position.Data storage currentPosition = market.positions[accountId];
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // --- Existing position validation --- //
 
@@ -234,9 +247,10 @@ library Position {
         {
             // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
             // avoid this completely due to positions at min margin would never be allowed to lower size.
-            bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
-                MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-            if (!positionDecreasing) {
+            if (
+                !MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+                MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size)
+            ) {
                 // We need discounted margin collateral as we're verifying for liquidation here.
                 //
                 // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
@@ -274,6 +288,8 @@ library Position {
                     currentPosition.size,
                     newPosition.size
                 );
+
+                validateMinimumCredit(market, params.oraclePrice, globalConfig, marketConfig);
             }
         }
 
