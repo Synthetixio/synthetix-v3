@@ -133,39 +133,34 @@ describe('Liquidation - max premium discount', () => {
 
   it('should liquidate more of trader 1 since under max premium discount', async () => {
     // call liquidate twice more since under max premium discount
-    // await provider().send('evm_setAutomine', [false]);
-    // await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
-    // await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
+    await provider().send('evm_setAutomine', [false]);
+    // Same block multiple liquidations are ignored and only one is effective
+    const tx1 = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    const tx2 = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    const tx3 = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    const tx4 = await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    await provider().send('evm_setAutomine', [true]);
+    await provider().send('evm_mine', []);
+    await provider().send('evm_mine', []);
+    await provider().send('evm_mine', []);
+    await provider().send('evm_mine', []);
 
-    await (
-      await systems().TrustedMulticallForwarder.aggregate([
-        {
-          target: systems().PerpsMarket.address,
-          callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-        },
-        {
-          target: systems().PerpsMarket.address,
-          callData: systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
-        },
-      ])
-    ).wait();
+    // Make sure all the liquidation txns are finalised
+    await Promise.all([tx1.wait(), tx2.wait(), tx3.wait(), tx4.wait()]);
 
-    // TODO: figure out why we dont liquidate in the same block
-    // liquidated 25 OP more in the same block
-    // const [, , sizeOnSameBlock] = await getTrader1Position();
-    // assertBn.equal(sizeOnSameBlock, bn(15));
+    // liquidated 25 OP more in the same block (only one liquidation on the same block was actually effective)
+    const [, , sizeOnSameBlock] = await getTrader1Position();
+    assertBn.equal(sizeOnSameBlock, bn(15));
 
-    // await provider().send('evm_setAutomine', [true]);
-
-    // await provider().send('evm_mine', []);
-    const [, , sizeOnNextBlock] = await getTrader1Position();
-    assertBn.equal(sizeOnNextBlock, bn(15));
+    // const [, , sizeOnNextBlock] = await getTrader1Position();
+    // assertBn.equal(sizeOnNextBlock, bn(15));
 
     // liquidated 25 OP more in the next block
     await (await systems().PerpsMarket.connect(keeper()).liquidate(2)).wait();
+
     // await systems().PerpsMarket.connect(keeper()).liquidate(2);
-    const [, , sizeOnNextBlock2] = await getTrader1Position();
-    assertBn.equal(sizeOnNextBlock2, bn(0));
+    const [, , sizeOnNextBlock] = await getTrader1Position();
+    assertBn.equal(sizeOnNextBlock, bn(0));
   });
 
   it('should liquidate trader 2', async () => {
