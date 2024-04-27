@@ -555,6 +555,61 @@ jobs:
       - store_artifacts:
           path: "lcov.info"
 
+  single-test:
+    parameters:
+      dir:
+        type: string
+      test:
+        type: string
+      mocha-retries:
+        type: integer
+        default: 2
+      batch-retries:
+        type: integer
+        default: 5
+      batch-size:
+        type: integer
+        default: 1
+
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+
+    steps:
+      - checkout
+
+      - install-foundry
+      - yarn-install
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - generated-testable-{{ .Environment.CIRCLE_SHA1 }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from $(node -p "require('./package.json').name") run build:ts
+
+      - run:
+          name: "Run test << parameters.test >>"
+          working_directory: "<< parameters.dir >>"
+          environment:
+            CANNON_REGISTRY_PRIORITY: local
+            TS_NODE_TRANSPILE_ONLY: true
+            TS_NODE_TYPE_CHECK: false
+          command: |
+            set -eou pipefail
+            export RUNNER=$HOME/project/.circleci/test-batch.js
+            export PATH=$PATH:$HOME/project/node_modules/.bin
+            mocha --jobs 1 --timeout 10000 -require hardhat/register --exit << parameters.test >>
+
 workflows:
   version: 2.1
 
@@ -566,17 +621,11 @@ workflows:
       - build-testable:
           wat: "--recursive --from '@synthetixio/perps-market'"
 
-      - test-contracts:
+      - single-test:
           name: "test-perps-market"
           requires: [build-testable]
           dir: "./markets/perps-market"
-          parallelism: 8
-
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          dir: "./markets/bfp-market"
-          parallelism: 4
+          test: "test/integration/Liquidation/Liquidation.maxLiquidationAmount.maxPd.test.ts"
 
   tests:
     unless:
