@@ -689,7 +689,7 @@ library GlobalPerpsMarketConfiguration {
     struct Data {
         address feeCollector;
         mapping(address => uint256) referrerShare;
-        mapping(uint128 => uint256) maxCollateralAmounts;
+        mapping(uint128 => uint256) __unused_1;
         uint128[] synthDeductionPriority;
         uint256 minKeeperRewardUsd;
         uint256 maxKeeperRewardUsd;
@@ -701,6 +701,8 @@ library GlobalPerpsMarketConfiguration {
         uint128 lowUtilizationInterestRateGradient;
         uint128 interestRateGradientBreakpoint;
         uint128 highUtilizationInterestRateGradient;
+        uint128 collateralLiquidateRewardRatioD18;
+        address rewardDistributorImplementation;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -778,6 +780,7 @@ library PerpsAccount {
         uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
+        uint256 debt;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
@@ -857,6 +860,7 @@ library PerpsMarketFactory {
         address spotMarket;
         uint128 perpsMarketId;
         string name;
+        address liquidationAssetManager;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
