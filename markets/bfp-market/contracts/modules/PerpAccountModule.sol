@@ -6,14 +6,14 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {Position} from "../storage/Position.sol";
-import {Margin} from "../storage/Margin.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Flags} from "../utils/Flags.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
+import {Position} from "../storage/Position.sol";
+import {Margin} from "../storage/Margin.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
@@ -52,7 +52,6 @@ contract PerpAccountModule is IPerpAccountModule {
 
     struct Runtime_mergeAccounts {
         uint256 oraclePrice;
-        uint256 pythPrice;
         uint256 im;
         uint256 fromCollateralUsd;
         uint256 fromMarginUsd;
@@ -381,9 +380,11 @@ contract PerpAccountModule is IPerpAccountModule {
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
+        // Cannot merge the same two accounts.
         if (toId == fromId) {
             revert ErrorUtil.DuplicateAccountIds();
         }
+
         Runtime_mergeAccounts memory runtime;
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -395,9 +396,12 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage fromPosition = market.positions[fromId];
         Position.Data storage toPosition = market.positions[toId];
 
+        // Cannot merge when either accounts have an open order.
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        // Cannot merge unless accounts are on the same side.
         if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
             revert ErrorUtil.InvalidPositionSide();
         }
@@ -423,7 +427,7 @@ contract PerpAccountModule is IPerpAccountModule {
             runtime.oraclePrice
         );
 
-        // Prevent merging for liquidatable positions.
+        // Prevent merging into a liquidatable position.
         if (
             Position.isLiquidatable(
                 toPosition,
@@ -476,6 +480,7 @@ contract PerpAccountModule is IPerpAccountModule {
         runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
         runtime.synthMarketId;
         runtime.fromAccountCollateral;
+
         for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
             runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             runtime.fromAccountCollateral = fromAccountMargin.collaterals[runtime.synthMarketId];
@@ -500,8 +505,9 @@ contract PerpAccountModule is IPerpAccountModule {
                 toPosition.size + fromPosition.size,
                 market.currentFundingAccruedComputed,
                 market.currentUtilizationAccruedComputed,
-                runtime.pythPrice, // entryPythPrice
-                runtime.pythPrice // entryPrice
+                // Use the just settled fromAccount's raw Pyth price as both the entry and raw.
+                fromPosition.entryPythPrice,
+                fromPosition.entryPythPrice
             )
         );
         delete market.positions[fromId];
