@@ -641,6 +641,7 @@ interface IPerpAccountModule {
         int256 pnl;
         int256 accruedFunding;
         uint256 accruedUtilization;
+        uint256 entryPythPrice;
         uint256 entryPrice;
         uint256 oraclePrice;
         int128 size;
@@ -753,7 +754,6 @@ contract PerpAccountModule {
     }
     struct Runtime_mergeAccounts {
         uint256 oraclePrice;
-        uint256 pythPrice;
         uint256 im;
         uint256 fromCollateralUsd;
         uint256 fromMarginUsd;
