@@ -144,7 +144,7 @@ describe('SpotMarketFactory', () => {
           .indexPrice(marketId(), 1, 0); // buy feed
         const sellPrice = await systems()
           .SpotMarket.connect(marketOwner)
-          .indexPrice(marketId(), 2, 0); // buy feed
+          .indexPrice(marketId(), 2, 0); // sell feed
 
         assertBn.equal(buyPrice, 100);
         assertBn.equal(sellPrice, 200);
