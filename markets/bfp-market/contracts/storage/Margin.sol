@@ -161,7 +161,7 @@ library Margin {
                     synthMarketId,
                     globalConfig
                 );
-                discountedCollateralPrice = getDiscountedPriceFromCollateralPrice(
+                discountedCollateralPrice = getDiscountedCollateralPrice(
                     available,
                     collateralPrice,
                     synthMarketId,
@@ -364,9 +364,9 @@ library Margin {
      * which may be different position to position. The larger `amountAvailable`, the larger the discount
      * however, capped between a min/max.
      */
-    function getDiscountedPriceFromCollateralPrice(
+    function getDiscountedCollateralPrice(
         uint256 amountAvailable,
-        uint256 price,
+        uint256 collateralPrice,
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
@@ -390,8 +390,8 @@ library Margin {
                 globalConfig.maxCollateralDiscount
             );
 
-        // Apply discount on price by the discount.
-        return price.mulDecimal(DecimalMath.UNIT - discount);
+        // Apply discount on `collateralPrice` by the capped discount.
+        return collateralPrice.mulDecimal(DecimalMath.UNIT - discount);
     }
 
     /// @dev Returns whether an account in a specific market's margin can be liquidated.

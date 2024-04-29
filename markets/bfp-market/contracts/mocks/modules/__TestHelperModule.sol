@@ -23,4 +23,18 @@ contract __TestHelperModule {
         market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] += creditAmountUsd;
         accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += creditAmountUsd;
     }
+
+    function __test_addDebtUsdToAccountMargin(
+        uint128 accountId,
+        uint128 marketId,
+        uint128 debtAmountUsd
+    ) external {
+        OwnableStorage.onlyOwner();
+
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
+        market.totalTraderDebtUsd += debtAmountUsd;
+        accountMargin.debtUsd += debtAmountUsd;
+    }
 }

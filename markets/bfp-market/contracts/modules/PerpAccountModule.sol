@@ -215,9 +215,8 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.PositionNotFound();
         }
 
-        // Verify the `toId` account is empty. We asset has collateral but we don't need to check debt as
-        // it is impossible for a trader to have debt and zero collateral.
-        if (Margin.hasCollateralDeposited(toId, marketId)) {
+        // `toId` account must be empty (i.e. no debt or collateral).
+        if (Margin.hasCollateralDeposited(toId, marketId) || toAccountMargin.debtUsd != 0) {
             revert ErrorUtil.CollateralFound();
         }
 
@@ -272,9 +271,10 @@ contract PerpAccountModule is IPerpAccountModule {
 
                 // Keep track of both toCollateralUsd and toDiscountedCollateralUsd.
                 runtime.toCollateralUsd += collateralToMoveUsd;
+
                 // Calculate `toDiscountedCollateralUsd` based on the new collateral amount.
                 runtime.toDiscountedCollateralUsd += runtime.collateralToMove.mulDecimal(
-                    Margin.getDiscountedPriceFromCollateralPrice(
+                    Margin.getDiscountedCollateralPrice(
                         runtime.collateralToMove,
                         runtime.collateralPrice,
                         runtime.synthMarketId,
@@ -284,13 +284,14 @@ contract PerpAccountModule is IPerpAccountModule {
 
                 // Keep track of both fromCollateralUsd and fromCollateralDiscountedUsd.
                 runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
+
                 // Calculate the discounted price for the new from amount.
                 runtime.newFromAmountCollateral =
                     runtime.fromAccountCollateral -
                     runtime.collateralToMove;
 
                 runtime.fromDiscountedCollateralUsd += runtime.newFromAmountCollateral.mulDecimal(
-                    Margin.getDiscountedPriceFromCollateralPrice(
+                    Margin.getDiscountedCollateralPrice(
                         runtime.newFromAmountCollateral,
                         runtime.collateralPrice,
                         runtime.synthMarketId,
