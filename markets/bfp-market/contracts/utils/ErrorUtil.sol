@@ -128,6 +128,6 @@ library ErrorUtil {
     /// @notice Thrown when passed incorrect parameter.
     error InvalidParameter(string parameter, string reason);
 
-    /// @notice Thrown there's not enough liquidity to open a position.
+    /// @notice Thrown when there's not enough liquidity to open a position.
     error InsufficientLiquidity();
 }
