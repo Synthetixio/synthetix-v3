@@ -737,6 +737,11 @@ contract OrderModule {
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams params;
+    }
 }
 
 // @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
