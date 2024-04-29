@@ -153,6 +153,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 healthData.pnl,
                 healthData.accruedFunding,
                 healthData.accruedUtilization,
+                position.entryPythPrice,
                 position.entryPrice,
                 oraclePrice,
                 position.size,

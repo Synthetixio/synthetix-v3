@@ -523,8 +523,10 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should merge two accounts with sUSD collateral', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
+
     const side = genSide();
     const market = genOneOf(markets());
+    const { answer: marketPrice } = await market.aggregator().latestRoundData();
 
     const {
       collateral,
@@ -538,6 +540,7 @@ describe('PerpAccountModule mergeAccounts', () => {
         desiredMarket: market,
       })
     );
+
     // Open position for toAccount.
     const order = await genOrder(bs, market, collateral, collateralDepositAmountTo, {
       desiredSide: side,
@@ -560,8 +563,10 @@ describe('PerpAccountModule mergeAccounts', () => {
     // Assert that the accounts have some collateral.
     assertBn.gt(fromDigestBefore.collateralUsd, 0);
     assertBn.gt(toDigestBefore.collateralUsd, 0);
+
     // The toAccount should also have some debt and an open position.
     assertBn.notEqual(toDigestBefore.position.size, 0);
+
     // Not that the we have debt eventhough we use sUSD collateral, as postions only get realised from settlement when
     assertBn.gt(toDigestBefore.debtUsd, 0);
 
@@ -606,6 +611,7 @@ describe('PerpAccountModule mergeAccounts', () => {
       .add(expectedUsdCollateralDiff.toBN());
 
     // Assert the merged position
+
     // Expect no debt as we use sUSD collateral.
     assertBn.isZero(toDigestAfter.debtUsd);
     assertBn.near(expectedCollateralUsd, toDigestAfter.collateralUsd, bn(0.0001));
@@ -613,6 +619,10 @@ describe('PerpAccountModule mergeAccounts', () => {
       fromOrderEvent.args.sizeDelta.add(toDigestBefore.position.size),
       toDigestAfter.position.size
     );
+
+    // Ensure the merged position has the correct Pyth price at settlement.
+    assertBn.equal(toDigestAfter.position.entryPrice, marketPrice);
+    assertBn.equal(toDigestAfter.position.entryPythPrice, marketPrice);
 
     // Assert from position empty
     assertBn.isZero(fromDigestAfter.collateralUsd);
@@ -630,6 +640,7 @@ describe('PerpAccountModule mergeAccounts', () => {
   it('should merge two accounts', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();
+
     // Use nonUSD collateral to make sure we still have some debt. And use a generator to make sure we have two different collaterals for the fromAccount.
     const collateralGenerator = toRoundRobinGenerators(shuffle(collateralsWithoutSusd()));
     const market = genOneOf(markets());
@@ -788,6 +799,10 @@ describe('PerpAccountModule mergeAccounts', () => {
       fromOrderEvent.args.sizeDelta.add(toDigestBefore.position.size),
       toDigestAfter.position.size
     );
+
+    // Ensure the merged position has the correct Pyth price at settlement.
+    assertBn.equal(toDigestAfter.position.entryPrice, order.oraclePrice);
+    assertBn.equal(toDigestAfter.position.entryPythPrice, order.oraclePrice);
 
     // Assert event.
     await assertEvent(
