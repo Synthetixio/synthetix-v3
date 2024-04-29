@@ -176,45 +176,28 @@ library Margin {
         }
     }
 
-    /// @dev Returns the debt, price pnl, funding, util, and fee adjusted PnL.
+    /**
+     * @dev Returns the debt, price PnL, funding, util, and fee adjusted PnL.
+     *
+     * @notice Accepts two prices. First is a raw oracle price used to calculate funding and utilization. The second,
+     * `pricePnLPrice`, is a price used to calculate the profit or losses incurred just on price PnL; passing `pricePnLPrice`
+     * to `getPricePnl`. You may want to pass `fillPrice` as this argument if you want to calculate the true price PnL
+     * immediately after settlement.
+     */
     function getPnlAdjustmentUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
-    ) internal view returns (int256) {
-        Position.Data storage position = market.positions[accountId];
-        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
-
-        // Zero size means there are no running sums to adjust margin by.
-        return
-            position.size == 0
-                ? -(accountMargin.debtUsd.toInt())
-                : position.getPricePnl(price) +
-                    position.getAccruedFunding(market, price) -
-                    position.getAccruedUtilization(market, price).toInt() -
-                    accountMargin.debtUsd.toInt();
-    }
-
-    /**
-     * @dev Returns the debt, price pnl, funding, util, and fee adjusted PnL.
-     *
-     * This method is very similiar to `getPnlAdjustmentUsd` with the difference being the price PNL is calculated with the fill price.
-     * This is used when realising a just settled position.
-     */
-    function getPnlAdjustmentFillPriceUsd(
-        uint128 accountId,
-        PerpMarket.Data storage market,
         uint256 oraclePrice,
-        uint256 fillPrice
+        uint256 pricePnLPrice
     ) internal view returns (int256) {
         Position.Data storage position = market.positions[accountId];
-
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+
         // Zero size means there are no running sums to adjust margin by.
         return
             position.size == 0
                 ? -(accountMargin.debtUsd.toInt())
-                : position.getPricePnl(fillPrice) +
+                : position.getPricePnl(pricePnLPrice) +
                     position.getAccruedFunding(market, oraclePrice) -
                     position.getAccruedUtilization(market, oraclePrice).toInt() -
                     accountMargin.debtUsd.toInt();
@@ -237,7 +220,7 @@ library Margin {
             accountId,
             market.id
         );
-        int256 adjustment = getPnlAdjustmentUsd(accountId, market, price);
+        int256 adjustment = getPnlAdjustmentUsd(accountId, market, price, price);
 
         marginValues.discountedMarginUsd = MathUtil
             .max(discountedCollateralUsd.toInt() + adjustment, 0)
@@ -317,13 +300,13 @@ library Margin {
     function getNetAssetValue(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 oraclePrice
+        uint256 price
     ) internal view returns (uint256) {
         return
             MathUtil
                 .max(
                     getCollateralUsdWithoutDiscount(accountId, market.id).toInt() +
-                        getPnlAdjustmentUsd(accountId, market, oraclePrice),
+                        getPnlAdjustmentUsd(accountId, market, price, price),
                     0
                 )
                 .toUint();

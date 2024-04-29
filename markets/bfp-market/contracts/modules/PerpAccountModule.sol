@@ -335,11 +335,10 @@ contract PerpAccountModule is IPerpAccountModule {
             runtime.toCollateralUsd,
             marketConfig
         );
-        if (
-            runtime.toDiscountedCollateralUsd.toInt() +
-                Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
-            runtime.toIm.toInt()
-        ) {
+
+        int256 toRemainingMarginUsd = runtime.toDiscountedCollateralUsd.toInt() +
+            Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice);
+        if (toRemainingMarginUsd < runtime.toIm.toInt()) {
             revert ErrorUtil.InsufficientMargin();
         }
 
@@ -351,11 +350,15 @@ contract PerpAccountModule is IPerpAccountModule {
                 runtime.fromCollateralUsd,
                 marketConfig
             );
-            if (
-                runtime.fromDiscountedCollateralUsd.toInt() +
-                    Margin.getPnlAdjustmentUsd(fromId, market, runtime.oraclePrice) <
-                runtime.fromIm.toInt()
-            ) {
+
+            int256 fromRemainingMarginUsd = runtime.fromDiscountedCollateralUsd.toInt() +
+                Margin.getPnlAdjustmentUsd(
+                    fromId,
+                    market,
+                    runtime.oraclePrice,
+                    runtime.oraclePrice
+                );
+            if (fromRemainingMarginUsd < runtime.fromIm.toInt()) {
                 revert ErrorUtil.InsufficientMargin();
             }
         } else if (proportion == DecimalMath.UNIT) {
@@ -433,11 +436,12 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
+        // Realize the fromPosition.
         runtime.fromCollateralUsd = Margin.getCollateralUsdWithoutDiscount(fromId, marketId);
         runtime.fromMarginUsd = MathUtil
             .max(
                 runtime.fromCollateralUsd.toInt() +
-                    Margin.getPnlAdjustmentFillPriceUsd(
+                    Margin.getPnlAdjustmentUsd(
                         fromId,
                         market,
                         runtime.oraclePrice,
@@ -446,16 +450,16 @@ contract PerpAccountModule is IPerpAccountModule {
                 0
             )
             .toUint();
-
-        // Realize the fromPosition.
         fromAccountMargin.realizeAccountPnlAndUpdate(
             market,
             runtime.fromMarginUsd.toInt() - runtime.fromCollateralUsd.toInt()
         );
+
+        // Realize the toPosition.
         runtime.toMarginUsd = MathUtil
             .max(
                 toMarginValues.collateralUsd.toInt() +
-                    Margin.getPnlAdjustmentFillPriceUsd(
+                    Margin.getPnlAdjustmentUsd(
                         toId,
                         market,
                         runtime.oraclePrice,
@@ -464,8 +468,6 @@ contract PerpAccountModule is IPerpAccountModule {
                 0
             )
             .toUint();
-
-        // Realize the toPosition.
         toAccountMargin.realizeAccountPnlAndUpdate(
             market,
             runtime.toMarginUsd.toInt() - toMarginValues.collateralUsd.toInt()
@@ -504,6 +506,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
         delete market.positions[fromId];
 
+        // Ensure the merged account meets IM requirements.
         (runtime.mergedCollateralUsd, runtime.mergedDiscountedCollateralUsd) = Margin
             .getCollateralUsd(toId, marketId);
         (runtime.im, , ) = Position.getLiquidationMarginUsd(
@@ -512,12 +515,9 @@ contract PerpAccountModule is IPerpAccountModule {
             runtime.mergedCollateralUsd,
             marketConfig
         );
-
-        if (
-            runtime.mergedDiscountedCollateralUsd.toInt() +
-                Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
-            runtime.im.toInt()
-        ) {
+        int256 mergedRemainingMarginUsd = runtime.mergedDiscountedCollateralUsd.toInt() +
+            Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice);
+        if (mergedRemainingMarginUsd < runtime.im.toInt()) {
             revert ErrorUtil.InsufficientMargin();
         }
 

@@ -288,7 +288,7 @@ library Position {
                     // still be used here. To compute the margin, we just need to attribute any PnL adjustments
                     // to the collateral (e.g. price PnL, funding, debt etc.).
                     marginValuesForLiqValidation.collateralUsd.toInt() +
-                        Margin.getPnlAdjustmentFillPriceUsd(
+                        Margin.getPnlAdjustmentUsd(
                             accountId,
                             market,
                             params.oraclePrice,
