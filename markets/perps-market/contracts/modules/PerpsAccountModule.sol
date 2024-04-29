@@ -94,7 +94,6 @@ contract PerpsAccountModule is IPerpsAccountModule {
 
     // 1. call depositMarketUsd and deposit amount directly to core system
     // 2. look up account and reduce debt by amount
-    // 3. transfer synth to sender
     // 3b. quoteUnwrap() -> inchQuote -> returnAmount
     function payDebt(uint128 accountId, uint256 amount) external override {
         Account.exists(accountId);
