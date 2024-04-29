@@ -69,7 +69,7 @@ library Position {
         int256 entryFundingAccrued;
         /// The market's accumulated accrued utilization at position settlement.
         uint256 entryUtilizationAccrued;
-        /// The pyth price the order was opened at.
+        /// The raw pyth price the order was settled with.
         uint256 entryPythPrice;
         /// The fill price at which this position was settled with.
         uint256 entryPrice;

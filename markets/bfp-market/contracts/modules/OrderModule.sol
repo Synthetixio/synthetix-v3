@@ -209,13 +209,16 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
+        //
+        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
+        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
         Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
             Position.TradeParams(
                 sizeDelta,
-                oraclePrice, // Note this should be the pyth price, but as we dont have that during commitment lets use the oracle price.
-                oraclePrice,
+                oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+                oraclePrice, // CL oracle price.
                 Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
                 marketConfig.makerFee,
                 marketConfig.takerFee,
