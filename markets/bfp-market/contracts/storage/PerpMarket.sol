@@ -167,7 +167,7 @@ library PerpMarket {
         return self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent);
     }
 
-    /// dev Returns the markets delegated collateral value in USD.
+    /// @dev Returns the markets delegated collateral value in USD.
     function getDelegatedCollateralValueUsd(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.GlobalData storage globalConfig
