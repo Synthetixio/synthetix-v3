@@ -9,6 +9,7 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
@@ -70,12 +71,13 @@ library GlobalPerpsMarket {
     }
 
     function utilizationRate(
-        Data storage self
+        Data storage self,
+        PerpsPrice.Tolerance minCreditPriceTolerance
     ) internal view returns (uint128 rate, uint256 delegatedCollateralValue, uint256 lockedCredit) {
         uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
         int256 delegatedCollateralValueInt = withdrawableUsd.toInt() -
             totalCollateralValue(self).toInt();
-        lockedCredit = minimumCredit(self);
+        lockedCredit = minimumCredit(self, minCreditPriceTolerance);
         if (delegatedCollateralValueInt <= 0) {
             return (DecimalMath.UNIT_UINT128, 0, lockedCredit);
         }
@@ -86,13 +88,14 @@ library GlobalPerpsMarket {
     }
 
     function minimumCredit(
-        Data storage self
+        Data storage self,
+        PerpsPrice.Tolerance priceTolerance
     ) internal view returns (uint256 accumulatedMinimumCredit) {
         uint256 activeMarketsLength = self.activeMarkets.length();
         for (uint256 i = 1; i <= activeMarketsLength; i++) {
             uint128 marketId = self.activeMarkets.valueAt(i).to128();
 
-            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId);
+            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId, priceTolerance);
         }
     }
 

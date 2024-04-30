@@ -14,8 +14,11 @@ library PerpsPrice {
 
     enum Tolerance {
         DEFAULT,
-        STRICT
+        STRICT,
+        ONE_MONTH
     }
+
+    uint256 private constant ONE_MONTH = 2592000;
 
     struct Data {
         /**
@@ -43,18 +46,18 @@ library PerpsPrice {
         Data storage self = load(marketId);
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         NodeOutput.Data memory output;
-        if (priceTolerance == Tolerance.STRICT) {
+        if (priceTolerance == Tolerance.DEFAULT) {
+            output = INodeModule(factory.oracle).process(self.feedId);
+        } else {
             bytes32[] memory runtimeKeys = new bytes32[](1);
             bytes32[] memory runtimeValues = new bytes32[](1);
             runtimeKeys[0] = bytes32("stalenessTolerance");
-            runtimeValues[0] = bytes32(self.strictStalenessTolerance);
+            runtimeValues[0] = toleranceBytes(self, priceTolerance);
             output = INodeModule(factory.oracle).processWithRuntime(
                 self.feedId,
                 runtimeKeys,
                 runtimeValues
             );
-        } else {
-            output = INodeModule(factory.oracle).process(self.feedId);
         }
 
         return output.price.toUint();
@@ -63,5 +66,18 @@ library PerpsPrice {
     function update(Data storage self, bytes32 feedId, uint256 strictStalenessTolerance) internal {
         self.feedId = feedId;
         self.strictStalenessTolerance = strictStalenessTolerance;
+    }
+
+    function toleranceBytes(
+        Data storage self,
+        Tolerance tolerance
+    ) internal view returns (bytes32) {
+        if (tolerance == Tolerance.STRICT) {
+            return bytes32(self.strictStalenessTolerance);
+        } else if (tolerance == Tolerance.ONE_MONTH) {
+            return bytes32(ONE_MONTH);
+        } else {
+            return bytes32(0);
+        }
     }
 }
