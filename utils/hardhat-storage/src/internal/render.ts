@@ -140,10 +140,6 @@ const _render = {
   },
 
   UserDefinedTypeName(node: UserDefinedTypeName) {
-    if (node.typeDescriptions.typeString?.startsWith('contract ')) {
-      return 'address';
-    }
-
     return node.pathNode!.name;
   },
 
