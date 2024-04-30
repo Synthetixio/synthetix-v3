@@ -7,11 +7,18 @@ import {NodeDefinition} from "../storage/NodeDefinition.sol";
 
 contract MockPythExternalNode is IExternalNode {
     uint256 private _price;
+    uint256 private _monthlyTolerancePrice;
+
+    uint256 private constant ONE_MONTH = 2592000;
 
     error OracleDataRequired();
 
     function mockSetCurrentPrice(uint256 currentPrice) external {
         _price = currentPrice;
+    }
+
+    function mockSetMonthlyTolerancePrice(uint256 price) external {
+        _monthlyTolerancePrice = price;
     }
 
     function getCurrentPrice() external view returns (uint256) {
@@ -30,6 +37,11 @@ contract MockPythExternalNode is IExternalNode {
             uint256 strictTolerance = 50;
             if (runtimeValues[0] == bytes32(strictTolerance)) {
                 revert OracleDataRequired();
+            }
+
+            if (runtimeValues[0] == bytes32(ONE_MONTH)) {
+                // solhint-disable-next-line numcast/safe-cast
+                return NodeOutput.Data(int(_monthlyTolerancePrice), block.timestamp, 0, 0);
             }
         }
         // solhint-disable-next-line numcast/safe-cast
