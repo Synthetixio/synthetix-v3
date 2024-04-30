@@ -47,7 +47,6 @@ contract MarginModule is IMarginModule {
     function validateAccountAndPositionOnWithdrawal(
         uint128 accountId,
         PerpMarket.Data storage market,
-        Margin.Data storage accountMargin,
         Position.Data storage position,
         uint256 oraclePrice
     ) private view {
@@ -57,8 +56,8 @@ contract MarginModule is IMarginModule {
             oraclePrice
         );
 
-        // No position, just ensure if debt exists then remaining discounted collateral covers debt.
-        if (position.size == 0 && marginValues.discountedCollateralUsd < accountMargin.debtUsd) {
+        // Make sure margin isn't liquidatable due to debt.
+        if (Margin.isMarginLiquidatable(accountId, market, marginValues)) {
             revert ErrorUtil.InsufficientMargin();
         }
 
@@ -316,13 +315,7 @@ contract MarginModule is IMarginModule {
             // Verify account and position remain solvent.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0 || accountMargin.debtUsd != 0) {
-                validateAccountAndPositionOnWithdrawal(
-                    accountId,
-                    market,
-                    accountMargin,
-                    position,
-                    oraclePrice
-                );
+                validateAccountAndPositionOnWithdrawal(accountId, market, position, oraclePrice);
             }
 
             // Perform the actual withdraw & transfer from Synthetix Core to msg.sender.
@@ -620,5 +613,21 @@ contract MarginModule is IMarginModule {
         // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
         // because both the liq and flag rewards can change based on chain usage.
         return MathUtil.max(marginValues.discountedMarginUsd.toInt() - im.toInt(), 0).toUint();
+    }
+
+    /// @inheritdoc IMarginModule
+    function getMarginLiquidationOnlyReward(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.exists(marketId);
+
+        return
+            Margin.getMarginLiquidationOnlyReward(
+                Margin.getCollateralUsdWithoutDiscount(accountId, marketId),
+                PerpMarketConfiguration.load(marketId),
+                PerpMarketConfiguration.load()
+            );
     }
 }

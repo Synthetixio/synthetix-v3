@@ -659,6 +659,12 @@ interface IPerpMarketFactoryModule {
         uint128 synthMarketId;
         uint256 available;
     }
+    struct UtilizationDigest {
+        uint256 lastComputedUtilizationRate;
+        uint256 lastComputedTimestamp;
+        uint256 currentUtilizationRate;
+        uint256 utilization;
+    }
     struct MarketDigest {
         IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
         bytes32 name;

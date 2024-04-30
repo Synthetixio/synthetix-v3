@@ -247,3 +247,34 @@ export const calcDiscountedCollateralPrice = (
   );
   return w_collateralPrice.mul(wei(1).sub(discount)).toBN();
 };
+
+export const calcUtilization = async (bs: Bs, marketId: BigNumber) => {
+  const { BfpMarketProxy, Core } = bs.systems();
+
+  // Get delegated usd amount
+  const withdrawable = await Core.getWithdrawableMarketUsd(marketId);
+  const { totalCollateralValueUsd } = await BfpMarketProxy.getMarketDigest(marketId);
+  const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
+  const { size, oraclePrice } = await BfpMarketProxy.getMarketDigest(marketId);
+  const lockedCollateralUsd = wei(size).mul(oraclePrice);
+
+  return Wei.min(lockedCollateralUsd.div(delegatedAmountUsd), wei(1));
+};
+
+export const calcUtilizationRate = async (bs: Bs, utilization: Wei) => {
+  const { BfpMarketProxy } = bs.systems();
+  const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
+  const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
+  const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
+  const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
+
+  if (utilization.lt(utilizationBreakpointPercent)) {
+    return wei(lowUtilizationSlopePercent).mul(utilization).mul(100);
+  } else {
+    const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);
+    const highPart = highUtilizationSlopePercent
+      .mul(wei(utilization).sub(utilizationBreakpointPercent))
+      .mul(100);
+    return lowPart.add(highPart);
+  }
+};
