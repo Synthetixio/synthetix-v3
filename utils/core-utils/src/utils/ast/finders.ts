@@ -21,8 +21,8 @@ export function findAll<T extends NodeType | YulNodeType>(
   const result: (NodeTypeMap & YulNodeTypeMap)[T][] = [];
 
   if (Array.isArray(astNode)) {
-    for (const sourceUnit of astNode) {
-      result.push(...findAll(sourceUnit, nodeType, filterFn));
+    for (const node of astNode) {
+      result.push(...findAll(node, nodeType, filterFn));
     }
 
     return result;
@@ -36,12 +36,19 @@ export function findAll<T extends NodeType | YulNodeType>(
 }
 
 export function findOne<T extends NodeType | YulNodeType>(
-  astNode: Node | YulNode,
+  astNode: Node | YulNode | (Node | YulNode)[],
   nodeType: T | T[],
   filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
 ) {
-  for (const node of _findAll(nodeType, astNode)) {
-    if (filterFn(node)) return node;
+  if (Array.isArray(astNode)) {
+    for (const node of astNode) {
+      const result = findOne(node, nodeType, filterFn) as (NodeTypeMap & YulNodeTypeMap)[T];
+      if (result) return result;
+    }
+  } else {
+    for (const node of _findAll(nodeType, astNode)) {
+      if (filterFn(node)) return node;
+    }
   }
 }
 

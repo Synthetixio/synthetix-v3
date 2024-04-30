@@ -1,4 +1,4 @@
-import { findAll } from '@synthetixio/core-utils/utils/ast/finders';
+import { findAll, findOne } from '@synthetixio/core-utils/utils/ast/finders';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
 import { SourceUnit, StructDefinition, UserDefinedTypeName } from 'solidity-ast/types';
 import { iterateContracts } from './iterators';
@@ -74,10 +74,15 @@ export async function dumpStorage(
 }
 
 function _renderPragmaDirective(sourceUnits: SourceUnit[]) {
-  const sourceUnit = sourceUnits[sourceUnits.length - 1];
   // TODO: calculate the best solc version based on all the files, instead of using
   // the one from the last file
-  for (const node of findAll(sourceUnit, 'PragmaDirective')) return render(node);
+  const node = findOne(sourceUnits.reverse(), 'PragmaDirective');
+
+  if (!node) {
+    throw new Error('Could not find pragma directive on dump file');
+  }
+
+  return render(node);
 }
 
 function _flattenNestedStructDefinitions(
