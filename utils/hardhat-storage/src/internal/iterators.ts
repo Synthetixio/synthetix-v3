@@ -1,4 +1,5 @@
 import { findAll } from '@synthetixio/core-utils/utils/ast/finders';
+import { NodeType, NodeTypeMap, YulNodeType, YulNodeTypeMap } from 'solidity-ast/node';
 import {
   ContractDefinition,
   FunctionDefinition,
@@ -7,17 +8,25 @@ import {
   YulAssignment,
 } from 'solidity-ast/types';
 
+export function* iterateNodes<T extends NodeType | YulNodeType>(
+  sourceUnits: SourceUnit[],
+  nodeType: T | T[],
+  filter: (sourceUnit: SourceUnit, node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
+): Generator<[SourceUnit, (NodeTypeMap & YulNodeTypeMap)[T]]> {
+  for (const sourceUnit of sourceUnits) {
+    for (const node of findAll(sourceUnit, nodeType)) {
+      if (filter(sourceUnit, node)) {
+        yield [sourceUnit, node];
+      }
+    }
+  }
+}
+
 export function* iterateContracts(
   sourceUnits: SourceUnit[],
   filter?: (sourceUnit: SourceUnit, contractNode: ContractDefinition) => boolean
 ): Generator<[SourceUnit, ContractDefinition]> {
-  for (const sourceUnit of sourceUnits) {
-    for (const contractNode of findAll(sourceUnit, 'ContractDefinition')) {
-      if (!filter || filter(sourceUnit, contractNode)) {
-        yield [sourceUnit, contractNode];
-      }
-    }
-  }
+  yield* iterateNodes(sourceUnits, 'ContractDefinition', filter);
 }
 
 export function* iterateVariables(

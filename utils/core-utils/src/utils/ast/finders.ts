@@ -52,17 +52,35 @@ export function findOne<T extends NodeType | YulNodeType>(
   }
 }
 
+export function findOneById<T extends NodeType | YulNodeType>(
+  astNode: Node | YulNode | (Node | YulNode)[],
+  nodeType: T | T[],
+  nodeId: number,
+  filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
+) {
+  const result = findOne(
+    astNode,
+    nodeType,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (node) => typeof (node as any).id === 'number' && (node as any).id === nodeId && filterFn(node)
+  );
+
+  if (!result) throw new Error(`Could not find node with id "${nodeId}"`);
+
+  return result;
+}
+
 // Helper function to find nodes as direct children in a SourceUnit,
 // Using this function you can avoid having to loop the whole tree when you know
 // where are you looking for stuff
-export function findChildren<T extends SourceUnit['nodes'][number]['nodeType']>(
+export function findChildren<T extends NodeType | YulNodeType>(
   sourceUnit: SourceUnit,
   nodeType: T,
   filterFn: (node: SourceUnit['nodes'][number]) => boolean = () => true
 ) {
   return sourceUnit.nodes.filter(
     (node) => node.nodeType === nodeType && filterFn(node)
-  ) as NodeTypeMap[T][];
+  ) as (NodeTypeMap & YulNodeTypeMap)[T][];
 }
 
 /**

@@ -1,6 +1,6 @@
-import { findAll, findOne } from '@synthetixio/core-utils/utils/ast/finders';
+import { findAll, findChildren, findOne } from '@synthetixio/core-utils/utils/ast/finders';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
-import { SourceUnit, StructDefinition, UserDefinedTypeName } from 'solidity-ast/types';
+import { ContractDefinition, SourceUnit } from 'solidity-ast/types';
 import { iterateContracts } from './iterators';
 import { render } from './render';
 
@@ -28,18 +28,20 @@ export async function dumpStorage(
     const contractName = contractNode.name;
     const fqName = `${sourceName}:${contractName}`;
 
+    // if (contractNode.name !== 'Vault') continue;
+
     const resultNode = clone(contractNode);
 
     const enumDefinitions = findAll(contractNode, 'EnumDefinition');
     const structDefinitions = findAll(contractNode, 'StructDefinition');
 
-    // Look for all the children structs, and flatten them
-    for (const structDefinition of structDefinitions) {
-      structDefinition.members = _flattenNestedStructDefinitions(
-        sourceUnits,
-        structDefinition.members
-      );
-    }
+    const dependencies = _getDependencySourceUnits(sourceUnits, contractNode);
+    const importDirectives = findChildren(sourceUnit, 'ImportDirective').filter((importDirective) =>
+      dependencies.some((dependency) => dependency.id === importDirective.sourceUnit)
+    );
+
+    // Filter all the contract nodes to only include Structs
+    resultNode.nodes = [...enumDefinitions, ...structDefinitions];
 
     // TODO: handle enums, should not change storage size:
     /**
@@ -53,12 +55,14 @@ export async function dumpStorage(
           return bytesRequired;
         }
        */
-    // TODO: handle contracts references (should they be converted to addresses?)
+    // TODO: handle contracts references, they should be converted to address
+    /**
+        if (node.typeDescriptions.typeString?.startsWith('contract ')) {
+          return 'address';
+        }
+     */
     // TODO: handle array and mappings with custom values
     // TODO: check how fixed arrays interact
-
-    // Filter all the contract nodes to only include Structs
-    resultNode.nodes = [...enumDefinitions, ...structDefinitions];
 
     if (!resultNode.nodes.length) continue;
 
@@ -66,6 +70,7 @@ export async function dumpStorage(
     const contract = render(resultNode);
 
     result.push(`// @custom:artifact ${fqName}`);
+    result.push(...importDirectives.map(render));
     result.push(contract);
     result.push('');
   }
@@ -85,53 +90,28 @@ function _renderPragmaDirective(sourceUnits: SourceUnit[]) {
   return render(node);
 }
 
-function _flattenNestedStructDefinitions(
-  sourceUnits: SourceUnit[],
-  structDefinitionMembers: StructDefinition['members']
-): StructDefinition['members'] {
-  // Replace type references of the structs to the actual members of the child
-  return structDefinitionMembers
-    .map((member) => {
-      if (member.nodeType !== 'VariableDeclaration') return member;
-      if (member.typeName?.nodeType !== 'UserDefinedTypeName') return member;
-      if (!member.typeName.typeDescriptions.typeString?.startsWith('struct ')) return member;
+function _getDependencySourceUnits(sourceUnits: SourceUnit[], contractNode: ContractDefinition) {
+  const results: SourceUnit[] = [];
 
-      const childStruct = clone(_findStructDefinitionByReference(sourceUnits, member.typeName));
-      const childMembers = _flattenNestedStructDefinitions(sourceUnits, childStruct.members);
+  for (const reference of findAll(contractNode, 'UserDefinedTypeName')) {
+    const sourceUnit = sourceUnits.find((sourceUnit) => {
+      return !!findOne(
+        sourceUnit,
+        ['StructDefinition', 'EnumDefinition'],
+        (node) => node.id === reference.referencedDeclaration
+      );
+    });
 
-      // prefix variable name with parent struct name
-      for (const variableDeclaration of childMembers) {
-        variableDeclaration.name = `${member.name}__${variableDeclaration.name}`;
-      }
+    if (!sourceUnit) {
+      throw new Error(`SourceUnit not found for "${reference.pathNode?.name}"`);
+    }
 
-      return childMembers;
-    })
-    .flat();
-}
-
-function _findStructDefinitionByReference(
-  sourceUnits: SourceUnit[],
-  typeName: UserDefinedTypeName
-) {
-  const definitions = findAll(
-    sourceUnits,
-    'StructDefinition',
-    (node) => node.id === typeName.referencedDeclaration
-  );
-
-  if (!definitions.length) {
-    throw new Error(
-      `Could not find nested struct definition corresponding to "${typeName.typeDescriptions.typeString}"`
-    );
+    if (!results.some((node) => node.id === sourceUnit.id)) {
+      results.push(sourceUnit);
+    }
   }
 
-  if (definitions.length > 1) {
-    throw new Error(
-      `Found more than one struct definition corresponding to "${typeName.typeDescriptions.typeString}"`
-    );
-  }
-
-  return definitions[0];
+  return results;
 }
 
 /**

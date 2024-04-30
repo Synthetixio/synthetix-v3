@@ -11,6 +11,7 @@ import {
   FunctionCall,
   FunctionDefinition,
   Identifier,
+  ImportDirective,
   InlineAssembly,
   Literal,
   Mapping,
@@ -252,6 +253,10 @@ const _render = {
 
   BinaryOperation(node: BinaryOperation): string {
     return `${render(node.leftExpression)} ${node.operator} ${render(node.rightExpression)}`;
+  },
+
+  ImportDirective(node: ImportDirective): string {
+    return `import "${node.absolutePath}";`;
   },
 };
 
