@@ -27,7 +27,7 @@ library MarketConfiguration {
         /**
          * @dev Maximum value per share that a pool will tolerate for this market.
          *
-         * If the the limit is met, the markets exceeding debt will be distributed, and it will be disconnected from the pool that no longer provides credit to it.
+         * If the limit is met, the markets exceeding debt will be distributed, and it will be disconnected from the pool that no longer provides credit to it.
          *
          * Note: This value will have no effect if the system wide limit is hit first. See `PoolConfiguration.minLiquidityRatioD18`.
          */
