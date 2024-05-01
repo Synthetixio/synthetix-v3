@@ -231,9 +231,14 @@ contract OrderModule is IOrderModule {
             market,
             Position.TradeParams(
                 sizeDelta,
-                oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
-                oraclePrice, // CL oracle price.
-                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+                runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+                runtime.oraclePrice, // CL oracle price.
+                Order.getFillPrice(
+                    market.skew,
+                    marketConfig.skewScale,
+                    sizeDelta,
+                    runtime.oraclePrice
+                ),
                 marketConfig.makerFee,
                 marketConfig.takerFee,
                 limitPrice,
