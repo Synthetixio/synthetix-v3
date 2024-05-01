@@ -651,6 +651,65 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
+  it('should update debt correction when merging', async () => {
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
+    const { fromTrader } = await createAccountsToMerge();
+
+    const { collateral, market, collateralDepositAmount, marketId } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+      })
+    );
+    const marketDigest1 = await BfpMarketProxy.getMarketDigest(marketId);
+
+    assertBn.isZero(marketDigest1.debtCorrection);
+
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredHooks: [MergeAccountSettlementHookMock.address],
+    });
+    const { receipt } = await commitAndSettle(bs, marketId, fromTrader, order);
+    const orderSettleEvent = findEventSafe(receipt, 'OrderSettled', BfpMarketProxy);
+
+    const marketDigest = await BfpMarketProxy.getMarketDigest(marketId);
+
+    // Calculate expected debtCorrection.
+    // `debtCorrection` = `prevDebtCorrection` + `fundingDelta` + `notionalDelta` + `totalPositionPnl`
+    // First calculate `debtCorrection` for the first order
+    const prevDebtCorrection = wei(0);
+    const sizeDelta = orderSettleEvent.args.sizeDelta;
+    const fundingDelta = wei(0);
+    const notionalDelta = wei(orderSettleEvent.args.fillPrice).mul(sizeDelta).toBN();
+    const totalPositionPnl = wei(0);
+
+    const expectedDebtCorrectionBeforeMerge = prevDebtCorrection
+      .add(fundingDelta)
+      .add(notionalDelta)
+      .add(totalPositionPnl);
+
+    // Calculate `debtCorrection` from realizing `from` position.
+    const sizeDelta2 = wei(0).sub(orderSettleEvent.args.sizeDelta);
+    const fundingDelta2 = wei(0);
+    const notionalDelta2 = wei(order.oraclePrice).mul(sizeDelta2).toBN();
+    const totalPositionPnl2 = calcPricePnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+    const expectedDebtCorrectionAfterFrom = expectedDebtCorrectionBeforeMerge
+      .add(fundingDelta2)
+      .add(notionalDelta2)
+      .add(totalPositionPnl2);
+
+    // Calculate `debtCorrection` from realizing `to` position.
+    const sizeDelta3 = orderSettleEvent.args.sizeDelta;
+    const fundingDelta3 = wei(0);
+    const notionalDelta3 = wei(order.oraclePrice).mul(sizeDelta3).toBN();
+    const totalPositionPnl3 = wei(0);
+    const expectedDebtCorrection = expectedDebtCorrectionAfterFrom
+      .add(fundingDelta3)
+      .add(notionalDelta3)
+      .add(totalPositionPnl3);
+
+    assertBn.equal(marketDigest.debtCorrection, expectedDebtCorrection.toBN());
+  });
+
   it('should merge two accounts', async () => {
     const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
     const { fromTrader, toTrader } = await createAccountsToMerge();

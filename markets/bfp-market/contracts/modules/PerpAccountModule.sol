@@ -496,17 +496,34 @@ contract PerpAccountModule is IPerpAccountModule {
         toAccountMargin.debtUsd += fromAccountMargin.debtUsd;
         fromAccountMargin.debtUsd = 0;
 
-        // Update position accounting `from` -> `to`.
-        toPosition.update(
+        // Update debt correction for `from` position.
+        market.updateDebtCorrection(
+            fromPosition,
             Position.Data(
-                toPosition.size + fromPosition.size,
+                0,
                 market.currentFundingAccruedComputed,
                 market.currentUtilizationAccruedComputed,
-                // Use the just settled fromAccount's raw Pyth price as both the entry and raw.
                 fromPosition.entryPythPrice,
                 fromPosition.entryPythPrice
             )
         );
+
+        Position.Data memory mergedPosition = Position.Data(
+            toPosition.size + fromPosition.size,
+            market.currentFundingAccruedComputed,
+            market.currentUtilizationAccruedComputed,
+            // Use the just settled fromAccount's raw Pyth price as both the entry and raw.
+            fromPosition.entryPythPrice,
+            fromPosition.entryPythPrice
+        );
+
+        // Update debt correction for `to` position.
+        market.updateDebtCorrection(toPosition, mergedPosition);
+
+        // Update position accounting `from` -> `to`.
+        toPosition.update(mergedPosition);
+
+        // Delete from position.
         delete market.positions[fromId];
 
         // Ensure the merged account meets IM requirements.
