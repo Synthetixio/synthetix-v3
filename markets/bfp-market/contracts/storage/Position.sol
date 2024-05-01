@@ -291,6 +291,7 @@ library Position {
                     newPosition.size
                 );
 
+                // Check the minimum credit requirements are still met.
                 validateMinimumCredit(market, params.oraclePrice, globalConfig, marketConfig);
             }
         }
