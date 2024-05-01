@@ -6,14 +6,14 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {Position} from "../storage/Position.sol";
-import {Margin} from "../storage/Margin.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Flags} from "../utils/Flags.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
+import {Position} from "../storage/Position.sol";
+import {Margin} from "../storage/Margin.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
@@ -41,9 +41,26 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 supportedSynthMarketIdsLength;
         uint128 synthMarketId;
         uint256 collateralToMove;
+        uint256 newFromAmountCollateral;
         uint256 fromAccountCollateral;
         uint256 toCollateralUsd;
         uint256 fromCollateralUsd;
+        uint256 toDiscountedCollateralUsd;
+        uint256 fromDiscountedCollateralUsd;
+        uint256 collateralPrice;
+    }
+
+    struct Runtime_mergeAccounts {
+        uint256 oraclePrice;
+        uint256 im;
+        uint256 fromCollateralUsd;
+        uint256 fromMarginUsd;
+        uint256 toMarginUsd;
+        uint256 mergedCollateralUsd;
+        uint256 mergedDiscountedCollateralUsd;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 fromAccountCollateral;
     }
 
     /// @inheritdoc IPerpAccountModule
@@ -136,6 +153,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 healthData.pnl,
                 healthData.accruedFunding,
                 healthData.accruedUtilization,
+                position.entryPythPrice,
                 position.entryPrice,
                 oraclePrice,
                 position.size,
@@ -197,9 +215,8 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.PositionNotFound();
         }
 
-        // Verify the `toId` account is empty. We asset has collateral but we don't need to check debt as
-        // it is impossible for a trader to have debt and zero collateral.
-        if (Margin.hasCollateralDeposited(toId, marketId)) {
+        // `toId` account must be empty (i.e. no debt or collateral).
+        if (Margin.hasCollateralDeposited(toId, marketId) || toAccountMargin.debtUsd != 0) {
             revert ErrorUtil.CollateralFound();
         }
 
@@ -211,7 +228,7 @@ contract PerpAccountModule is IPerpAccountModule {
         runtime.oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        // From account should not be liquidatable.
+        // `fromAccount` position should not be liquidatable.
         if (
             Position.isLiquidatable(
                 fromPosition,
@@ -224,7 +241,7 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        // Move collaterals from `from` -> `to`.
+        // Move collaterals `from` -> `to`.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -234,22 +251,50 @@ contract PerpAccountModule is IPerpAccountModule {
         for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
             runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             runtime.fromAccountCollateral = fromAccountMargin.collaterals[runtime.synthMarketId];
+
             if (runtime.fromAccountCollateral > 0) {
-                // Move collateral `from` -> `to`.
+                // Move available collateral `from` -> `to`.
                 runtime.collateralToMove = runtime.fromAccountCollateral.mulDecimal(proportion);
                 toAccountMargin.collaterals[runtime.synthMarketId] = runtime.collateralToMove;
                 fromAccountMargin.collaterals[runtime.synthMarketId] -= runtime.collateralToMove;
-                uint256 collateralPrice = globalMarginConfig.getCollateralPrice(
+                runtime.collateralPrice = globalMarginConfig.getCollateralPrice(
                     runtime.synthMarketId,
                     globalConfig
                 );
-                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
-                    collateralPrice
-                );
-                uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(collateralPrice);
 
+                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
+                    runtime.collateralPrice
+                );
+                uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(
+                    runtime.collateralPrice
+                );
+
+                // Track both toCollateralUsd and toDiscountedCollateralUsd.
                 runtime.toCollateralUsd += collateralToMoveUsd;
+                runtime.toDiscountedCollateralUsd += runtime.collateralToMove.mulDecimal(
+                    Margin.getDiscountedCollateralPrice(
+                        runtime.collateralToMove,
+                        runtime.collateralPrice,
+                        runtime.synthMarketId,
+                        globalConfig
+                    )
+                );
+
+                // Track both fromCollateralUsd and fromCollateralDiscountedUsd.
                 runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
+
+                // Calculate the discounted price for the new from amount.
+                runtime.newFromAmountCollateral =
+                    runtime.fromAccountCollateral -
+                    runtime.collateralToMove;
+                runtime.fromDiscountedCollateralUsd += runtime.newFromAmountCollateral.mulDecimal(
+                    Margin.getDiscountedCollateralPrice(
+                        runtime.newFromAmountCollateral,
+                        runtime.collateralPrice,
+                        runtime.synthMarketId,
+                        globalConfig
+                    )
+                );
             }
 
             unchecked {
@@ -258,13 +303,13 @@ contract PerpAccountModule is IPerpAccountModule {
         }
 
         if (fromAccountMargin.debtUsd > 0) {
-            // Move debt from `from` -> `to`.
+            // Move debt `from` -> `to`.
             runtime.debtToMove = fromAccountMargin.debtUsd.mulDecimal(proportion).to128();
             toAccountMargin.debtUsd = runtime.debtToMove;
             fromAccountMargin.debtUsd -= runtime.debtToMove;
         }
 
-        // Move position from `from` -> `to`.
+        // Move position `from` -> `to`.
         runtime.sizeToMove = fromPosition.size.mulDecimal(proportion.toInt()).to128();
 
         if (fromPosition.size < 0) {
@@ -276,14 +321,14 @@ contract PerpAccountModule is IPerpAccountModule {
         toPosition.update(
             Position.Data(
                 runtime.sizeToMove,
-                fromPosition.entryTime,
                 fromPosition.entryFundingAccrued,
                 fromPosition.entryUtilizationAccrued,
+                fromPosition.entryPythPrice,
                 fromPosition.entryPrice
             )
         );
 
-        // Make sure the `toAccount` has enough margin for IM.
+        // Ensure `toAccount` has enough margin to meet IM.
         (runtime.toIm, , ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
@@ -291,15 +336,13 @@ contract PerpAccountModule is IPerpAccountModule {
             marketConfig
         );
 
-        if (
-            runtime.toCollateralUsd.toInt() +
-                Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice) <
-            runtime.toIm.toInt()
-        ) {
+        int256 toRemainingMarginUsd = runtime.toDiscountedCollateralUsd.toInt() +
+            Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice);
+        if (toRemainingMarginUsd < runtime.toIm.toInt()) {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        // Ensure we validate remaining margin > IM when position in `fromAccount` is still open.
+        // Ensure we validate remaining `fromAccount` margin > IM when position still remains.
         if (proportion < DecimalMath.UNIT) {
             (runtime.fromIm, , ) = Position.getLiquidationMarginUsd(
                 fromPosition.size,
@@ -307,15 +350,19 @@ contract PerpAccountModule is IPerpAccountModule {
                 runtime.fromCollateralUsd,
                 marketConfig
             );
-            if (
-                runtime.fromCollateralUsd.toInt() +
-                    Margin.getPnlAdjustmentUsd(fromId, market, runtime.oraclePrice) <
-                runtime.fromIm.toInt()
-            ) {
+
+            int256 fromRemainingMarginUsd = runtime.fromDiscountedCollateralUsd.toInt() +
+                Margin.getPnlAdjustmentUsd(
+                    fromId,
+                    market,
+                    runtime.oraclePrice,
+                    runtime.oraclePrice
+                );
+            if (fromRemainingMarginUsd < runtime.fromIm.toInt()) {
                 revert ErrorUtil.InsufficientMargin();
             }
         } else if (proportion == DecimalMath.UNIT) {
-            // Clear out the `fromPosition` if the split is 1.
+            // Clear out the `fromPosition` when the split is 1.
             delete market.positions[fromId];
         }
 
@@ -334,22 +381,28 @@ contract PerpAccountModule is IPerpAccountModule {
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
+        // Cannot merge the same two accounts.
         if (toId == fromId) {
             revert ErrorUtil.DuplicateAccountIds();
         }
 
+        Runtime_mergeAccounts memory runtime;
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
+        Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage fromPosition = market.positions[fromId];
         Position.Data storage toPosition = market.positions[toId];
 
+        // Cannot merge when either accounts have an open order.
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+
+        // Cannot merge unless accounts are on the same side.
         if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
             revert ErrorUtil.InvalidPositionSide();
         }
@@ -362,50 +415,84 @@ contract PerpAccountModule is IPerpAccountModule {
             revert ErrorUtil.PositionFlagged();
         }
 
-        // Prevent merging positions that are not within the same block.
-        if (fromPosition.entryTime != block.timestamp) {
-            revert ErrorUtil.PositionTooOld();
-        }
-
         // Only settlement hooks are allowed to merge accounts.
         if (!SettlementHookConfiguration.load().whitelisted[msg.sender]) {
             revert ErrorUtil.InvalidHook(msg.sender);
         }
 
-        uint256 oraclePrice = market.getOraclePrice();
-        Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(toId, market, oraclePrice);
+        runtime.oraclePrice = market.getOraclePrice();
 
-        // Prevent merging for is liquidatable positions.
+        Margin.MarginValues memory toMarginValues = Margin.getMarginUsd(
+            toId,
+            market,
+            runtime.oraclePrice
+        );
+
+        // Prevent merging into a liquidatable position.
         if (
-            Position.isLiquidatable(toPosition, market, oraclePrice, marketConfig, toMarginValues)
+            Position.isLiquidatable(
+                toPosition,
+                market,
+                runtime.oraclePrice,
+                marketConfig,
+                toMarginValues
+            )
         ) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
+        // Realize the fromPosition.
+        runtime.fromCollateralUsd = Margin.getCollateralUsdWithoutDiscount(fromId, marketId);
+        runtime.fromMarginUsd = MathUtil
+            .max(
+                runtime.fromCollateralUsd.toInt() +
+                    Margin.getPnlAdjustmentUsd(
+                        fromId,
+                        market,
+                        runtime.oraclePrice,
+                        fromPosition.entryPythPrice
+                    ),
+                0
+            )
+            .toUint();
+        fromAccountMargin.realizeAccountPnlAndUpdate(
+            market,
+            runtime.fromMarginUsd.toInt() - runtime.fromCollateralUsd.toInt()
+        );
+
         // Realize the toPosition.
+        runtime.toMarginUsd = MathUtil
+            .max(
+                toMarginValues.collateralUsd.toInt() +
+                    Margin.getPnlAdjustmentUsd(
+                        toId,
+                        market,
+                        runtime.oraclePrice,
+                        fromPosition.entryPythPrice
+                    ),
+                0
+            )
+            .toUint();
         toAccountMargin.realizeAccountPnlAndUpdate(
             market,
-            toMarginValues.marginUsd.toInt() - toMarginValues.collateralUsd.toInt()
+            runtime.toMarginUsd.toInt() - toMarginValues.collateralUsd.toInt()
         );
-        // Stack to deep.
-        {
-            uint256 supportedSynthMarketIdsLength = globalMarginConfig
-                .supportedSynthMarketIds
-                .length;
-            uint128 currentSynthMarketId;
-            uint256 fromAccountCollateral;
-            for (uint256 i = 0; i < supportedSynthMarketIdsLength; ) {
-                currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-                fromAccountCollateral = fromAccountMargin.collaterals[currentSynthMarketId];
-                if (fromAccountCollateral > 0) {
-                    // Move collateral `from` -> `to`.
-                    toAccountMargin.collaterals[currentSynthMarketId] += fromAccountCollateral;
-                    fromAccountMargin.collaterals[currentSynthMarketId] = 0;
-                }
 
-                unchecked {
-                    ++i;
-                }
+        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
+        runtime.synthMarketId;
+        runtime.fromAccountCollateral;
+
+        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
+            runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            runtime.fromAccountCollateral = fromAccountMargin.collaterals[runtime.synthMarketId];
+            if (runtime.fromAccountCollateral > 0) {
+                // Move collateral `from` -> `to`.
+                toAccountMargin.collaterals[runtime.synthMarketId] += runtime.fromAccountCollateral;
+                fromAccountMargin.collaterals[runtime.synthMarketId] = 0;
+            }
+
+            unchecked {
+                ++i;
             }
         }
 
@@ -417,30 +504,28 @@ contract PerpAccountModule is IPerpAccountModule {
         toPosition.update(
             Position.Data(
                 toPosition.size + fromPosition.size,
-                block.timestamp,
                 market.currentFundingAccruedComputed,
                 market.currentUtilizationAccruedComputed,
-                oraclePrice
+                // Use the just settled fromAccount's raw Pyth price as both the entry and raw.
+                fromPosition.entryPythPrice,
+                fromPosition.entryPythPrice
             )
         );
         delete market.positions[fromId];
 
-        // Stack too deep.
-        {
-            uint256 collateralUsd = Margin.getCollateralUsdWithoutDiscount(toId, marketId);
-            (uint256 im, , ) = Position.getLiquidationMarginUsd(
-                toPosition.size,
-                oraclePrice,
-                collateralUsd,
-                marketConfig
-            );
-
-            if (
-                collateralUsd.toInt() + Margin.getPnlAdjustmentUsd(toId, market, oraclePrice) <
-                im.toInt()
-            ) {
-                revert ErrorUtil.InsufficientMargin();
-            }
+        // Ensure the merged account meets IM requirements.
+        (runtime.mergedCollateralUsd, runtime.mergedDiscountedCollateralUsd) = Margin
+            .getCollateralUsd(toId, marketId);
+        (runtime.im, , ) = Position.getLiquidationMarginUsd(
+            toPosition.size,
+            runtime.oraclePrice,
+            runtime.mergedCollateralUsd,
+            marketConfig
+        );
+        int256 mergedRemainingMarginUsd = runtime.mergedDiscountedCollateralUsd.toInt() +
+            Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice);
+        if (mergedRemainingMarginUsd < runtime.im.toInt()) {
+            revert ErrorUtil.InsufficientMargin();
         }
 
         emit AccountsMerged(fromId, toId, marketId);

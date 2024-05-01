@@ -570,7 +570,7 @@ contract MarginModule is IMarginModule {
             .load();
 
         return
-            Margin.getDiscountedPriceFromCollateralPrice(
+            Margin.getDiscountedCollateralPrice(
                 amount,
                 globalMarginConfig.getCollateralPrice(synthMarketId, globalMarketConfig),
                 synthMarketId,
