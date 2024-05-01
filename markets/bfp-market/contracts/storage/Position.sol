@@ -121,6 +121,7 @@ library Position {
         }
     }
 
+    /// @dev validates whether the market minimum credit has been met.
     function validateMinimumCredit(
         PerpMarket.Data storage market,
         uint256 oraclePrice,
