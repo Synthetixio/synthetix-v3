@@ -209,46 +209,37 @@ contract OrderModule is IOrderModule {
         runtime.oraclePrice = market.getOraclePrice();
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
+        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
         runtime.params = Position.TradeParams(
             sizeDelta,
-            runtime.oraclePrice,
+            runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+            runtime.oraclePrice, // CL oracle price.
             Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, runtime.oraclePrice),
             marketConfig.makerFee,
             marketConfig.takerFee,
             limitPrice,
             keeperFeeBufferUsd
         );
+
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        //
-        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
-        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
         runtime.trade = Position.validateTrade(
             accountId,
             market,
-            Position.TradeParams(
-                sizeDelta,
-                runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
-                runtime.oraclePrice, // CL oracle price.
-                Order.getFillPrice(
-                    market.skew,
-                    marketConfig.skewScale,
-                    sizeDelta,
-                    runtime.oraclePrice
-                ),
-                marketConfig.makerFee,
-                marketConfig.takerFee,
-                limitPrice,
-                keeperFeeBufferUsd
-            )
+            marketConfig,
+            PerpMarketConfiguration.load(),
+            runtime.params
         );
 
         market.orders[accountId].update(
             Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
         );
+
         emit OrderCommitted(
             accountId,
             marketId,

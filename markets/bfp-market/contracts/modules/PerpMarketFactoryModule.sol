@@ -141,7 +141,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         return
-            market.minimumCredit(PerpMarketConfiguration.load(marketId), market.getOraclePrice());
+            market.getMinimumCredit(
+                PerpMarketConfiguration.load(marketId),
+                market.getOraclePrice()
+            );
     }
 
     /// @inheritdoc IERC165
