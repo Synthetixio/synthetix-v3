@@ -159,7 +159,8 @@ library PerpMarket {
         }
     }
 
-    function minimumCredit(
+    /// @dev Returns the market's required minimum backing credit in USD.
+    function getMinimumCredit(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price
