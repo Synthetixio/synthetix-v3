@@ -128,7 +128,7 @@ library Position {
         PerpMarketConfiguration.GlobalData storage globalConfig,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
-        uint256 minimumCredit = market.minimumCredit(marketConfig, oraclePrice);
+        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice);
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(globalConfig);
 
         if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
