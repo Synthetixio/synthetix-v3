@@ -130,7 +130,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when delegated collateral is smaller than minCredit', async () => {
+    it('should revert when delegated collateral is less than minimumCredit', async () => {
       const { BfpMarketProxy, Core } = systems();
       const tradersGenerator = toRoundRobinGenerators(traders());
       // Change CORE staking/delegation to the minimum amount.
