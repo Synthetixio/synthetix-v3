@@ -165,14 +165,8 @@ describe('OrderModule', () => {
       });
       await commitAndSettle(bs, marketId, trader1, order1);
 
-      // Price falls/rises between 50% to create large profits.
-      const newMarketOraclePrice = wei(order1.oraclePrice)
-        .mul(order1.sizeDelta.gt(0) ? 0.5 : 1.5)
-        .toBN();
-      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-
-      // Start creating an order for another trade.
-      // Given the low amount of liquidity and profit from previous trader, when the new trader tries to commit an order we should be reverting.
+      // Start creating an order for another trader.
+      // With low amount of liquidity in Core and the previous trader having a large position, we expect revert when committing this new order.
       const trader2 = tradersGenerator.next().value;
 
       const { collateral: collateral2, collateralDepositAmount: collateralDepositAmount2 } =
