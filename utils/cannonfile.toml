@@ -1,0 +1,13 @@
+name = "synthetix-governance"
+description = "cross-chain-test"
+version = "<%= package.version %>"
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
+
+
+[contract.WormholeCrossChainModule]
+artifact = "contracts/modules/core/WormholeCrossChainModule.sol:WormholeCrossChainModule"
+
+[router.CoreRouter]
+contracts = [
+    "WormholeCrossChainModule",
+]
