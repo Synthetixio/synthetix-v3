@@ -170,6 +170,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint128 proportion
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.SPLIT_ACCOUNT);
+
         Account.loadAccountAndValidatePermission(
             fromId,
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
@@ -372,14 +373,9 @@ contract PerpAccountModule is IPerpAccountModule {
     /// @inheritdoc IPerpAccountModule
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
-        Account.loadAccountAndValidatePermission(
-            fromId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
-        );
-        Account.loadAccountAndValidatePermission(
-            toId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
-        );
+
+        Account.exists(fromId);
+        Account.exists(toId);
 
         // Cannot merge the same two accounts.
         if (toId == fromId) {
@@ -428,7 +424,7 @@ contract PerpAccountModule is IPerpAccountModule {
             runtime.oraclePrice
         );
 
-        // Prevent merging into a liquidatable position.
+        // Prevent merging for `isLiquidatable` positions.
         if (
             Position.isLiquidatable(
                 toPosition,
