@@ -598,7 +598,11 @@ contract MarginModule is IMarginModule {
         // When there is no position then we can ignore all running losses/profits but still need to include debt
         // as they may have realized a prior negative PnL.
         if (size == 0) {
-            return marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd;
+            return
+                MathUtil.max(
+                    marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd,
+                    0
+                );
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
