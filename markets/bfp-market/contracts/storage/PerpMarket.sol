@@ -187,7 +187,13 @@ library PerpMarket {
             return DecimalMath.UNIT.to128();
         }
 
-        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()).to128();
+        return
+            MathUtil
+                .min(
+                    lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()),
+                    DecimalMath.UNIT
+                )
+                .to128();
     }
 
     /// @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).

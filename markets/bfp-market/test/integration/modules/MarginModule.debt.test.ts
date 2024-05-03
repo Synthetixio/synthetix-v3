@@ -25,6 +25,7 @@ import {
   getSusdCollateral,
   mintAndApprove,
   setBaseFeePerGas,
+  setMarketConfiguration,
   withExplicitEvmMine,
 } from '../../helpers';
 
@@ -410,6 +411,62 @@ describe('MarginModule Debt', async () => {
         marketId
       );
       assert.equal(isMarginLiquidatable, false);
+    });
+
+    it('should return true when margin can be liquidated due to keeper fees', async () => {
+      const { BfpMarketProxy } = systems();
+      const { trader, collateralDepositAmount, collateral, market, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+      );
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Price moves, causing a 20% loss.
+      const newPrice = openOrder.sizeDelta.gt(0)
+        ? wei(openOrder.oraclePrice).mul(0.8)
+        : wei(openOrder.oraclePrice).mul(1.2);
+      await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+
+      const { receipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+      const orderSettledEvent = findEventSafe(receipt, 'OrderSettled', BfpMarketProxy);
+
+      // Make sure we have some debt.
+      const accountDebt = orderSettledEvent.args.accountDebt;
+      assertBn.gt(accountDebt, 0);
+
+      // Collateral price where debt is equal to collateralUsd.
+      const newCollateralPrice = wei(accountDebt)
+        .div(collateralDepositAmount)
+        // Increase price 0.1% to make the margin not liquidatable unless keeper fees are turned on.
+        .mul(1.001);
+      await collateral.setPrice(newCollateralPrice.toBN());
+
+      // Turn off collateral discount and keeper fees.
+      await setMarketConfiguration(bs, { maxKeeperFeeUsd: 0, maxCollateralDiscount: bn(0) });
+
+      const isMarginLiquidatableWithNoKeeperFees = await BfpMarketProxy.isMarginLiquidatable(
+        trader.accountId,
+        marketId
+      );
+      // Should not be liquidatable without keeper fees.
+      assert.equal(isMarginLiquidatableWithNoKeeperFees, false);
+
+      // Add back keeper fees.
+      await setMarketConfiguration(bs, { maxKeeperFeeUsd: bn(100) });
+
+      const isMarginLiquidatable = await BfpMarketProxy.isMarginLiquidatable(
+        trader.accountId,
+        marketId
+      );
+      // Should be liquidatable with keeper fees.
+      assert.equal(isMarginLiquidatable, true);
     });
 
     it('should return true when margin can be liquidated', async () => {

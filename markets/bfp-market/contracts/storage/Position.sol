@@ -27,6 +27,7 @@ library Position {
     struct TradeParams {
         int128 sizeDelta;
         uint256 oraclePrice;
+        uint256 pythPrice;
         uint256 fillPrice;
         uint128 makerFee;
         uint128 takerFee;
@@ -64,12 +65,12 @@ library Position {
     struct Data {
         /// Size (in native units e.g. swstETH)
         int128 size;
-        /// Block timestamp when position was opened or modified.
-        uint256 entryTime;
         /// The market's accumulated accrued funding at position settlement.
         int256 entryFundingAccrued;
         /// The market's accumulated accrued utilization at position settlement.
         uint256 entryUtilizationAccrued;
+        /// The raw pyth price the order was settled with.
+        uint256 entryPythPrice;
         /// The fill price at which this position was settled with.
         uint256 entryPrice;
     }
@@ -222,10 +223,10 @@ library Position {
         uint256 keeperFee = Order.getSettlementKeeperFee(params.keeperFeeBufferUsd);
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
-            block.timestamp,
             market.currentFundingAccruedComputed,
             // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
             market.currentUtilizationAccruedComputed + market.getUnrecordedUtilization(),
+            params.pythPrice,
             params.fillPrice
         );
 
@@ -287,7 +288,12 @@ library Position {
                     // still be used here. To compute the margin, we just need to attribute any PnL adjustments
                     // to the collateral (e.g. price PnL, funding, debt etc.).
                     marginValuesForLiqValidation.collateralUsd.toInt() +
-                        Margin.getPnlAdjustmentUsd(accountId, market, params.fillPrice),
+                        Margin.getPnlAdjustmentUsd(
+                            accountId,
+                            market,
+                            params.oraclePrice,
+                            params.fillPrice
+                        ),
                     0
                 )
                 .toUint(),
@@ -384,9 +390,9 @@ library Position {
             oldPosition.size > 0
                 ? oldPosition.size - liqSize.toInt()
                 : oldPosition.size + liqSize.toInt(),
-            block.timestamp,
             oldPosition.entryFundingAccrued,
             oldPosition.entryUtilizationAccrued,
+            oldPosition.entryPythPrice,
             oldPosition.entryPrice
         );
     }
@@ -638,9 +644,9 @@ library Position {
     /// @dev Clears the current position struct in-place of any stored data.
     function update(Position.Data storage self, Position.Data memory data) internal {
         self.size = data.size;
-        self.entryTime = data.entryTime;
         self.entryFundingAccrued = data.entryFundingAccrued;
         self.entryUtilizationAccrued = data.entryUtilizationAccrued;
+        self.entryPythPrice = data.entryPythPrice;
         self.entryPrice = data.entryPrice;
     }
 }

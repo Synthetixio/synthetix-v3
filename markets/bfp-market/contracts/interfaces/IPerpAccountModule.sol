@@ -41,7 +41,9 @@ interface IPerpAccountModule {
         int256 accruedFunding;
         /// Utilization accrued in USD.
         uint256 accruedUtilization;
-        /// Entry price of the position (either at open or on modification).
+        /// Raw Pyth entry price of position (at open or on modification).
+        uint256 entryPythPrice;
+        /// pd-adjusted entry price of position (at open or on modification).
         uint256 entryPrice;
         /// Current oracle price of market this position.
         uint256 oraclePrice;

@@ -8,7 +8,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('PerpAccountModule splitAccount', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, systems, restore, provider } = bs;
+  const { markets, traders, owner, systems, restore, provider } = bs;
 
   beforeEach(restore);
 
@@ -197,6 +197,47 @@ describe('PerpAccountModule splitAccount', () => {
     };
     await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     await depositMargin(bs, genTrader(bs, { desiredTrader: toTrader, desiredMarket: market }));
+
+    await assertRevert(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId,
+        bn(genNumber(0.1, 1))
+      ),
+      `CollateralFound()`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert when toAccount has debt', async () => {
+    const { BfpMarketProxy } = systems();
+
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    await commitAndSettle(
+      bs,
+      marketId,
+      fromTrader,
+      genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+
+    // Assign debt to the toAccount.
+    await BfpMarketProxy.connect(owner()).__test_addDebtUsdToAccountMargin(
+      toTraderAccountId,
+      marketId,
+      bn(1)
+    );
 
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
