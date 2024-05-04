@@ -1,6 +1,6 @@
 import { findAll, findChildren, findOne } from '@synthetixio/core-utils/utils/ast/finders';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
-import { ContractDefinition, SourceUnit } from 'solidity-ast/types';
+import { SourceUnit, StructDefinition } from 'solidity-ast/types';
 import { iterateContracts } from './iterators';
 import { render } from './render';
 
@@ -28,14 +28,15 @@ export async function dumpStorage(
     const contractName = contractNode.name;
     const fqName = `${sourceName}:${contractName}`;
 
-    // if (contractNode.name !== 'Vault') continue;
-
     const resultNode = clone(contractNode);
 
     const enumDefinitions = findAll(contractNode, 'EnumDefinition');
     const structDefinitions = findAll(contractNode, 'StructDefinition');
 
-    const dependencies = _getDependencySourceUnits(sourceUnits, contractNode);
+    // This function mutates the given nodes
+    _replaceContractReferencesForAddresses(structDefinitions);
+
+    const dependencies = _getDependencySourceUnits(sourceUnits, structDefinitions);
     const importDirectives = findChildren(sourceUnit, 'ImportDirective').filter((importDirective) =>
       dependencies.some((dependency) => dependency.id === importDirective.sourceUnit)
     );
@@ -90,24 +91,68 @@ function _renderPragmaDirective(sourceUnits: SourceUnit[]) {
   return render(node);
 }
 
-function _getDependencySourceUnits(sourceUnits: SourceUnit[], contractNode: ContractDefinition) {
+function _replaceContractReferencesForAddresses(structDefinitions: StructDefinition[]) {
   const results: SourceUnit[] = [];
 
-  for (const reference of findAll(contractNode, 'UserDefinedTypeName')) {
-    const sourceUnit = sourceUnits.find((sourceUnit) => {
-      return !!findOne(
-        sourceUnit,
-        ['StructDefinition', 'EnumDefinition'],
-        (node) => node.id === reference.referencedDeclaration
+  for (const structDefinition of structDefinitions) {
+    for (const ref of findAll(structDefinition, 'UserDefinedTypeName')) {
+      if (!ref.typeDescriptions.typeString?.startsWith('contract ')) continue;
+
+      const parent = findOne(
+        structDefinition,
+        'VariableDeclaration',
+        (variable) => variable.typeName?.id === ref.id
       );
-    });
 
-    if (!sourceUnit) {
-      throw new Error(`SourceUnit not found for "${reference.pathNode?.name}"`);
+      if (!parent) {
+        throw new Error(`Parent VariableDeclaration not found for ${JSON.stringify(ref)}`);
+      }
+
+      parent.typeDescriptions = {
+        typeIdentifier: 't_address',
+        typeString: 'address',
+      };
+
+      parent.typeName = {
+        id: ref.id,
+        nodeType: 'ElementaryTypeName',
+        name: 'address',
+        src: ref.src,
+        stateMutability: 'nonpayable',
+        typeDescriptions: {
+          typeIdentifier: 't_address',
+          typeString: 'address',
+        },
+      };
     }
+  }
 
-    if (!results.some((node) => node.id === sourceUnit.id)) {
-      results.push(sourceUnit);
+  return results;
+}
+
+function _getDependencySourceUnits(
+  sourceUnits: SourceUnit[],
+  structDefinitions: StructDefinition[]
+) {
+  const results: SourceUnit[] = [];
+
+  for (const structDefinition of structDefinitions) {
+    for (const reference of findAll(structDefinition, 'UserDefinedTypeName')) {
+      const sourceUnit = sourceUnits.find((sourceUnit) => {
+        return !!findOne(
+          sourceUnit,
+          ['StructDefinition', 'EnumDefinition'],
+          (node) => node.id === reference.referencedDeclaration
+        );
+      });
+
+      if (!sourceUnit) {
+        throw new Error(`SourceUnit not found for "${reference.pathNode?.name}"`);
+      }
+
+      if (!results.some((node) => node.id === sourceUnit.id)) {
+        results.push(sourceUnit);
+      }
     }
   }
 
