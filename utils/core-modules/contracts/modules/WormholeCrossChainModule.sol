@@ -27,17 +27,35 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         wh.registeredContracts[chainId] = emitterAddress;
     }
 
-    function receiveWormholeMessages(
-        bytes memory payload,
-        bytes[] memory, // additionalVaas
-        bytes32, // address that called 'sendPayloadToEvm' (HelloWormhole contract address)
+    function receiveEncodedMsg(
+        bytes memory encodedMsg,
+        bytes[] memory additionalVaas, // additionalVaas
+        bytes32 sender, // address that called 'sendPayloadToEvm' (HelloWormhole contract address)
         uint16 sourceChain,
-        bytes32 // unique identifier of delivery
+        bytes32 deliveryId
     ) public payable override {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        require(msg.sender == address(wh.wormhole), "Only relayer allowed");
+        // require(msg.sender == address(wh.wormhole), "Only relayer allowed");
 
-        // Parse the payload and do the corresponding actions!
-        (address sender, string memory greeting) = abi.decode(payload, (address, string));
+        (IWormhole.VM memory vm, bool valid, string memory reason) = wh.wormhole.parseAndVerifyVM(
+            encodedMsg
+        );
+
+        //1. Check Wormhole Guardian Signatures
+        //  If the VM is NOT valid, will return the reason it's not valid
+        //  If the VM IS valid, reason will be blank
+        require(valid, reason);
+
+        //2. Check if the Emitter Chain contract is registered
+        require(
+            wh.registeredContracts[vm.emitterChainId] == vm.emitterAddress,
+            "Invalid Emitter Address!"
+        );
+
+        //3. Check that the message hasn't already been processed
+        require(!wh.hasProcessedMessage[vm.hash], "Message already processed");
+        wh.hasProcessedMessage[vm.hash] = true;
+
+        // do the thing!
     }
 }

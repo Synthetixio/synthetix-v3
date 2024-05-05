@@ -8,6 +8,7 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
+import {IWormhole} from "@synthetixio/core-modules/contracts/interfaces/IWormhole.sol";
 import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {Council} from "../../storage/Council.sol";
@@ -41,6 +42,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
+        IWormhole wormholeRouter,
         uint8 minimumActiveMembers,
         uint64 initialNominationPeriodStartDate, // timestamp
         uint64 administrationPeriodDuration, // days

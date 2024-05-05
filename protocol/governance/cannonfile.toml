@@ -24,14 +24,17 @@ defaultValue = "15" # days
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.CrossChainModule]
-artifact = "contracts/modules/core/CrossChainModule.sol:CrossChainModule"
+[contract.WormholeCrossChainModule]
+artifact = "contracts/modules/core/WormholeCrossChainModule.sol:WormholeCrossChainModule"
 
 [contract.ElectionInspectorModule]
 artifact = "contracts/modules/core/ElectionInspectorModule.sol:ElectionInspectorModule"
 
 [contract.ElectionModule]
 artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
+
+[contract.WormholeElectionModule]
+artifact = "contracts/modules/core/WormholeElectionModule.sol:WormholeElectionModule"
 
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
@@ -43,8 +46,10 @@ artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
 contracts = [
     "AssociatedSystemsModule",
     "CrossChainModule",
+    "WormholeCrossChainModule",
     "ElectionInspectorModule",
     "ElectionModule",
+    "WormholeElectionModule",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
     "CcipReceiverModule",

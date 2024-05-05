@@ -27,8 +27,14 @@ artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystems
 [contract.CrossChainModule]
 artifact = "contracts/modules/core/CrossChainModule.sol:CrossChainModule"
 
+[contract.WormholeCrossChainModule]
+artifact = "contracts/modules/core/WormholeCrossChainModule.sol:WormholeCrossChainModule"
+
 [contract.ElectionModuleSatellite]
 artifact = "contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite"
+
+[contract.WormholeElectionModuleSatellite]
+artifact = "contracts/modules/core/WormholeElectionModuleSatellite.sol:WormholeElectionModuleSatellite"
 
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
@@ -40,7 +46,9 @@ artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
 contracts = [
     "AssociatedSystemsModule",
     "CrossChainModule",
+    "WormholeCrossChainModule",
     "ElectionModuleSatellite",
+    "WormholeElectionModuleSatellite",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
     "CcipReceiverModule"

@@ -3,20 +3,20 @@ pragma solidity ^0.8.0;
 
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {WormholeCrossChain} from "@synthetixio/core-modules/contracts/storage/WormholeCrossChain.sol";
-import {WormholeCrossChainModule} from "@synthetixio/core-modules/contracts/modules/WormholeCrossChain.sol";
+import {WormholeCrossChainModule} from "./WormholeCrossChainModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
-import {IWormhole} from "../../interfaces/IWormhole.sol";
+import {IWormhole} from "@synthetixio/core-modules/contracts/interfaces/IWormhole.sol";
 import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 import {Council} from "../../storage/Council.sol";
 import {Epoch} from "../../storage/Epoch.sol";
 
-contract ElectionModuleSatellite is
+contract WormholeElectionModuleSatellite is
     IElectionModuleSatellite,
     InitializableMixin,
     ElectionCredentials,
@@ -38,7 +38,7 @@ contract ElectionModuleSatellite is
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
-        address wormholeRouter,
+        IWormhole wormholeRouter,
         address[] calldata councilMembers
     ) external virtual {
         OwnableStorage.onlyOwner();
@@ -52,8 +52,8 @@ contract ElectionModuleSatellite is
 
         council.initialized = true;
 
-        if (wh.wormhole == address(0)) {
-            wh.wormhole = IWormhole(wormholeRouter);
+        if (address(wh.wormhole) == address(0)) {
+            wh.wormhole = wormholeRouter;
         }
 
         _setupEpoch(
@@ -92,7 +92,7 @@ contract ElectionModuleSatellite is
         }
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        wh.sendMessage(
+        sendMessage(
             wh.wormhole,
             abi.encodeWithSelector(
                 IElectionModule._recvCast.selector,

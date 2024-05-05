@@ -266,6 +266,11 @@ contract ElectionModuleSatellite {
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 }
 
+// @custom:artifact contracts/modules/core/WormholeElectionModule.sol:WormholeElectionModule
+contract WormholeElectionModule {
+    uint8 private constant _MAX_BALLOT_SIZE = 1;
+}
+
 // @custom:artifact contracts/storage/Ballot.sol:Ballot
 library Ballot {
     struct Data {

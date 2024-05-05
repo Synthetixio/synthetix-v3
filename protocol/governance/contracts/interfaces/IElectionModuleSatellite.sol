@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IWormhole} from "@synthetixio/core-modules/contracts/interfaces/IWormhole.sol";
+
 /// @title Election module council with minimal logic to be deployed on Satellite chains
 interface IElectionModuleSatellite {
     error NoVotingPower(address sender, uint256 currentEpoch);
@@ -14,6 +16,7 @@ interface IElectionModuleSatellite {
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
+        IWormhole wormholeRouter,
         address[] calldata councilMembers
     ) external;
 
