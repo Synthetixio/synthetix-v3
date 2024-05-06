@@ -58,7 +58,9 @@ library AccountRBAC {
             permission != AccountRBAC._REWARDS_PERMISSION &&
             permission != AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION &&
             permission != AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION &&
-            permission != AccountRBAC._BURN_PERMISSION
+            permission != AccountRBAC._BURN_PERMISSION &&
+            permission != AccountRBAC._PERPS_PAY_DEBT_PERMISSION &&
+            permission != AccountRBAC._PERPS_SPLIT_ACCOUNT_PERMISSION
         ) {
             revert InvalidPermission(permission);
         }
