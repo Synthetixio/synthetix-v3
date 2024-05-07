@@ -17,7 +17,7 @@ describe('PerpMarketFactoryModule minimumCredit', () => {
 
   beforeEach(restore);
 
-  it('should include OI - sUSD collateral', async () => {
+  it('should include OI + sUSD collateral', async () => {
     const { BfpMarketProxy } = systems();
     const sUSDCollateral = getSusdCollateral(collaterals());
     const collateral = genOneOf(collateralsWithoutSusd());
