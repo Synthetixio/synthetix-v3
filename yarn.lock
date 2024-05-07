@@ -3062,6 +3062,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/erc-4626-to-assets-ratio-oracle@workspace:auxiliary/ERC4626ToAssetsRatioOracle":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/erc-4626-to-assets-ratio-oracle@workspace:auxiliary/ERC4626ToAssetsRatioOracle"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/main": "workspace:*"
+    "@synthetixio/router": "npm:3.3.7"
+    "@synthetixio/wei": "npm:^2.74.4"
+    "@usecannon/cli": "npm:2.13.0"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/governance@workspace:protocol/governance":
   version: 0.0.0-use.local
   resolution: "@synthetixio/governance@workspace:protocol/governance"
