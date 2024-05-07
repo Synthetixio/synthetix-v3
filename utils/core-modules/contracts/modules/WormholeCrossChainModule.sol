@@ -57,5 +57,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         wh.hasProcessedMessage[vm.hash] = true;
 
         // do the thing!
+        (bool success, bytes memory result) = address(this).call(vm.payload);
+        require(success, "Failed to execute payload");
     }
 }
