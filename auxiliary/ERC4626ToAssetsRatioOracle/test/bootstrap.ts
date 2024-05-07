@@ -1,23 +1,23 @@
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import { createStakedPool } from '@synthetixio/main/test/common';
-import type { ERC4626ToAssetsRatioOracle, WstETHMock } from '../typechain-types';
-import { AggregatorV3Mock } from '../typechain-types/contracts/mocks';
+import type { ERC4626ToAssetsRatioOracle } from '../typechain-types';
+import { ERC20Mock, ERC4626Mock } from '../typechain-types/contracts/mocks';
 
 type CreateStakePoolSystems = ReturnType<Parameters<typeof createStakedPool>[0]['systems']>;
 type OracleManager = CreateStakePoolSystems['OracleManager'];
 
 interface Contracts {
   ERC4626ToAssetsRatioOracle: ERC4626ToAssetsRatioOracle;
-  WstETHMock: WstETHMock;
-  StEthAggregatorV3MockOracleNode: AggregatorV3Mock;
+  ERC20Mock: ERC20Mock;
+  ERC4626Mock: ERC4626Mock;
   ['synthetix.oracle_manager.Proxy']: OracleManager;
 }
 
 interface Systems {
   ERC4626ToAssetsRatioOracle: ERC4626ToAssetsRatioOracle;
-  WstETHMock: WstETHMock;
-  StEthAggregatorV3MockOracleNode: AggregatorV3Mock;
+  ERC20Mock: ERC20Mock;
+  ERC4626Mock: ERC4626Mock;
   OracleManager: OracleManager;
 }
 
@@ -38,8 +38,8 @@ export const bootstrap = () => {
 
     systems = {
       ERC4626ToAssetsRatioOracle: getContract('ERC4626ToAssetsRatioOracle'),
-      WstETHMock: getContract('WstETHMock'),
-      StEthAggregatorV3MockOracleNode: getContract('StEthAggregatorV3MockOracleNode'),
+      ERC20Mock: getContract('ERC20Mock'),
+      ERC4626Mock: getContract('ERC4626Mock'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     };
   });

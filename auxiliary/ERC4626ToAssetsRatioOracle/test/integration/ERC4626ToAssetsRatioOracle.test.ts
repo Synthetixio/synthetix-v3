@@ -1,22 +1,19 @@
-/*
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../bootstrap';
 
 const bn = (n: number) => wei(n).toBN();
 const genNumber = (min = 0, max = 1) => Math.random() * (max - min) + min;
-*/
 
 describe('ERC4626ToAssetsRatioOracleNode', () => {
-  //const { systems, extras } = bootstrap();
+  const { systems, extras } = bootstrap();
 
   describe('process', () => {
-    /*
     const configureOracleNodes = async (options?: {
       desiredStEthPrice?: number;
       desiredStEthToWstEth?: number;
     }) => {
-      const { WstETHMock, StEthAggregatorV3MockOracleNode } = systems();
+      const { ERC20Mock, ERC4626Mock } = systems();
 
       const stEthPrice = bn(options?.desiredStEthPrice ?? genNumber(2500, 3000));
       const stEthToWstEth = bn(options?.desiredStEthToWstEth ?? genNumber(1.1, 1.1568));
@@ -84,6 +81,5 @@ describe('ERC4626ToAssetsRatioOracleNode', () => {
       const { price } = await OracleManager.process(wstEthOracleNodeId);
       assertBn.isZero(price);
     });
-  */
   });
 });

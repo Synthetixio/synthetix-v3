@@ -6,7 +6,7 @@ import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutp
 import {IExternalNode} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {IERC20Metadata} from "./interfaces/IERC20Metadata.sol";
 import {IERC4626} from "./interfaces/IERC4626.sol";
 
 contract ERC4626ToAssetsRatioOracle is IExternalNode {
@@ -20,8 +20,8 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
     constructor(address _vaultAddress) {
         vaultAddress = _vaultAddress;
         assetAddress = IERC4626(vaultAddress).asset();
-        uint256 vaultDecimals = IERC20(vaultAddress).decimals();
-        uint256 assetDecimals = IERC20(assetAddress).decimals();
+        uint256 vaultDecimals = IERC20Metadata(vaultAddress).decimals();
+        uint256 assetDecimals = IERC20Metadata(assetAddress).decimals();
     }
 
     function process(
