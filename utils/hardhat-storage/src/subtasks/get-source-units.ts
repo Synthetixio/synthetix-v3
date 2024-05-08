@@ -1,47 +1,55 @@
-import { getContractsAsts } from '@synthetixio/core-utils/utils/hardhat/contracts';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import * as parser from '@solidity-parser/parser';
 import { subtask } from 'hardhat/config';
-import { iterateFunctions } from '../internal/iterators';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { localPathToSourceName, localSourceNameToPath } from 'hardhat/utils/source-names';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS } from '../task-names';
-import 'hardhat/types/runtime';
 
-// Flag added by solidity-coverage module, necessary so we can check if it is being used
-declare module 'hardhat/types/runtime' {
-  export interface HardhatRuntimeEnvironment {
-    __SOLIDITY_COVERAGE_RUNNING?: boolean;
-  }
-}
+import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
 
 interface Params {
   artifacts: string[];
 }
 
 subtask(SUBTASK_STORAGE_GET_SOURCE_UNITS).setAction(async ({ artifacts }: Params, hre) => {
-  const sourceUnits = await getContractsAsts(hre, artifacts);
-
-  // When running coverage, remove function calls added by solidity-coverage
-  if (hre.__SOLIDITY_COVERAGE_RUNNING) {
-    for (const [, contractNode, functionNode] of iterateFunctions(sourceUnits)) {
-      // Remove function added to the contract
-      if (functionNode.name.startsWith('c_')) {
-        contractNode.nodes = contractNode.nodes.filter((node) => node !== functionNode);
-        continue;
-      }
-
-      // Remove the function calls to the previously deleted coverage functions
-      if (Array.isArray(functionNode.body?.statements)) {
-        functionNode.body!.statements = functionNode.body!.statements.filter((node) => {
-          if (node.nodeType !== 'ExpressionStatement') return true;
-          const e = node.expression;
-          const isCoverage =
-            e.nodeType === 'FunctionCall' &&
-            e.kind === 'functionCall' &&
-            e.expression.nodeType === 'Identifier' &&
-            e.expression.name.startsWith('c_');
-          return !isCoverage;
-        });
-      }
-    }
-  }
+  const sourceUnits = await Promise.all(
+    artifacts.map(async (fqName) => {
+      const { sourceName } = parseFullyQualifiedName(fqName);
+      const sourcePath = localSourceNameToPath(
+        hre.config.paths.root,
+        await localPathToSourceName(hre.config.paths.root, sourceName)
+      );
+      const source = await fs.readFile(sourcePath, { encoding: 'utf8' });
+      const sourceUnit = parser.parse(source);
+      await _transformImportDirectives(hre.config.paths.root, sourcePath, sourceUnit);
+      return sourceUnit;
+    })
+  );
 
   return sourceUnits;
 });
+
+function _isExplicitRelativePath(sourceName: string): boolean {
+  const [base] = sourceName.split('/', 1);
+  return base === '.' || base === '..';
+}
+
+async function _transformImportDirectives(
+  projectRoot: string,
+  sourcePath: string,
+  sourceUnit: SourceUnit
+) {
+  parser.visit(sourceUnit, {
+    ImportDirective: async function (node) {
+      if (!_isExplicitRelativePath(node.path)) return;
+      const target = await localPathToSourceName(
+        projectRoot,
+        path.resolve(path.dirname(sourcePath), node.path)
+      );
+      node.path = target;
+      node.pathLiteral.value = target;
+      node.pathLiteral.parts = [target];
+    },
+  });
+}

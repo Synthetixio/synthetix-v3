@@ -1,6 +1,8 @@
 import { task } from 'hardhat/config';
 import { SUBTASK_STORAGE_LOAD_DUMP, TASK_STORAGE_VERIFY } from '../task-names';
 
+import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+
 interface Params {
   previous: string;
   current: string;
@@ -21,9 +23,9 @@ task(
     'storage.dump.sol'
   )
   .setAction(async (params: Required<Params>, hre) => {
-    const currSourceUnits = await hre.run(SUBTASK_STORAGE_LOAD_DUMP, {
+    const currSourceUnits: SourceUnit[] = await hre.run(SUBTASK_STORAGE_LOAD_DUMP, {
       filepath: params.current,
     });
 
-    console.log(currSourceUnits);
+    console.log(JSON.stringify(currSourceUnits, null, 2));
   });

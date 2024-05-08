@@ -31,6 +31,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
+    "@solidity-parser/parser": "^0.18.0",
     "@synthetixio/core-utils": "workspace:*",
     "mustache": "^4.2.0",
     "solidity-ast": "^0.4.55"

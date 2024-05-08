@@ -3,9 +3,10 @@ import {
   findContractNodeWithAst,
 } from '@synthetixio/core-utils/utils/ast/finders';
 import { onlyUnique } from '@synthetixio/core-utils/utils/misc/array';
-import { SourceUnit, VariableDeclaration } from 'solidity-ast/types';
 import { createError } from './error';
 import { iterateVariables } from './iterators';
+
+import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
 
 interface Params {
   /** fully qualified names of the contracts to validate */

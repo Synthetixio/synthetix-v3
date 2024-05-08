@@ -12,6 +12,8 @@ import { validateMutableStateVariables } from '../internal/validate-variables';
 import { writeInChunks } from '../internal/write-in-chunks';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS, TASK_STORAGE_GENERATE } from '../task-names';
 
+import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+
 interface Params {
   artifacts?: string[];
   output: string;
@@ -54,7 +56,7 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
 
     const allContracts = await getContractsFullyQualifiedNames(hre, artifacts);
 
-    const sourceUnits = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
+    const sourceUnits: SourceUnit[] = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
       artifacts: allContracts,
     });
 

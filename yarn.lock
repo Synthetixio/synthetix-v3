@@ -3095,6 +3095,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/hardhat-storage@workspace:utils/hardhat-storage"
   dependencies:
+    "@solidity-parser/parser": "npm:^0.18.0"
     "@synthetixio/core-utils": "workspace:*"
     "@types/jest": "npm:^29.5.12"
     "@types/mustache": "npm:^4.2.5"
