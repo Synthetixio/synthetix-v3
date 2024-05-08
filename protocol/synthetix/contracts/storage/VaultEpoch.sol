@@ -64,12 +64,7 @@ library VaultEpoch {
          * and directly when users mint or burn USD, or repay debt.
          */
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
-        /**
-         * @dev Tracks last time a user delegated to this vault.
-         *
-         * Needed to validate min delegation time compliance to prevent small scale debt pool frontrunning
-         */
-        mapping(uint128 => uint64) lastDelegationTime;
+        mapping(uint128 => uint64) __unused_legacy_slot;
     }
 
     /**

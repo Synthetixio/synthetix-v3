@@ -102,8 +102,29 @@ contract MockMarket is IMarket {
         _price = newPrice;
     }
 
-    function setMinDelegationTime(uint32 minDelegationTime) external {
-        IMarketManagerModule(_proxy).setMarketMinDelegateTime(_marketId, minDelegationTime);
+    function setUndelegateCollateralDelay(uint32 undelegateCollateralDelay) external {
+        IMarketManagerModule(_proxy).setUndelegateCollateralDelay(
+            _marketId,
+            undelegateCollateralDelay
+        );
+    }
+
+    function setUndelegateCollateralWindow(uint32 undelegateCollateralWindow) external {
+        IMarketManagerModule(_proxy).setUndelegateCollateralWindow(
+            _marketId,
+            undelegateCollateralWindow
+        );
+    }
+
+    function setDelegateCollateralDelay(uint32 delegateCollateralDelay) external {
+        IMarketManagerModule(_proxy).setDelegateCollateralDelay(_marketId, delegateCollateralDelay);
+    }
+
+    function setDelegateCollateralWindow(uint32 delegateCollateralWindow) external {
+        IMarketManagerModule(_proxy).setDelegateCollateralWindow(
+            _marketId,
+            delegateCollateralWindow
+        );
     }
 
     function price() external view returns (uint256) {

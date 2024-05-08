@@ -138,11 +138,16 @@ library Market {
          * @dev The maximum amount of market provided collateral, per type, that this market can deposit.
          */
         mapping(address => uint256) maximumDepositableD18;
-        uint32 minDelegateTime;
+        /**
+         * @dev Delegation/Undelegation frontrunning protection.
+         */
+        uint32 __unusedLegacyStorageSlot;
+        uint32 undelegateCollateralDelay;
+        uint32 undelegateCollateralWindow;
+        uint32 delegateCollateralDelay;
+        uint32 delegateCollateralWindow;
         uint32 __reservedForLater1;
         uint64 __reservedForLater2;
-        uint64 __reservedForLater3;
-        uint64 __reservedForLater4;
         /**
          * @dev Market-specific override of the minimum liquidity ratio
          */

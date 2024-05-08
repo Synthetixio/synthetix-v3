@@ -23,6 +23,11 @@ interface IVaultModule {
     error InvalidCollateralAmount();
 
     /**
+     * @notice Thrown when the specified intent is not related to the account id.
+     */
+    error InvalidDelegationIntent();
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
@@ -40,9 +45,33 @@ interface IVaultModule {
         address indexed sender
     );
 
+    // /**
+    //  * @notice Updates an account's delegated collateral amount for the specified pool and collateral type pair.
+    //  * @param accountId The id of the account associated with the position that will be updated.
+    //  * @param poolId The id of the pool associated with the position.
+    //  * @param collateralType The address of the collateral used in the position.
+    //  * @param amount The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
+    //  * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
+    //  *
+    //  * Requirements:
+    //  *
+    //  * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+    //  * - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+    //  * - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+    //  *
+    //  * Emits a {DelegationUpdated} event.
+    //  */
+    // function delegateCollateral(
+    //     uint128 accountId,
+    //     uint128 poolId,
+    //     address collateralType,
+    //     uint256 amount,
+    //     uint256 leverage
+    // ) external;
+
     /**
-     * @notice Updates an account's delegated collateral amount for the specified pool and collateral type pair.
-     * @param accountId The id of the account associated with the position that will be updated.
+     * @notice Declare an intent to update the delegated amount for the specified pool and collateral type pair.
+     * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param poolId The id of the pool associated with the position.
      * @param collateralType The address of the collateral used in the position.
      * @param amount The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
@@ -56,13 +85,36 @@ interface IVaultModule {
      *
      * Emits a {DelegationUpdated} event.
      */
-    function delegateCollateral(
+    function declareIntentToDelegateCollateral(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         uint256 amount,
         uint256 leverage
     ) external;
+
+    /**
+     * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by intent ids.
+     * @param accountId The id of the account associated with the position that intends to update the collateral amount.
+     * @param intentIds An array of intents to attempt to process.
+     * Requirements:
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function processIntentToDelegateCollateralByIntents(
+        uint128 accountId,
+        uint256[] calldata intentIds
+    ) external;
+
+    /**
+     * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by pool/accountID pair.
+     * @param accountId The id of the account associated with the position that intends to update the collateral amount.
+     * @param poolId The ID of the pool for which the intent of the account to delegate a new amount of collateral is being processed
+     * Requirements:
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function processIntentToDelegateCollateralByPair(uint128 accountId, uint128 poolId) external;
 
     /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.

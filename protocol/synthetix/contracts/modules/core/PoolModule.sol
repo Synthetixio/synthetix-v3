@@ -148,7 +148,9 @@ contract PoolModule is IPoolModule {
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
-        pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
+        // TODO LJM
+
+        // pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
