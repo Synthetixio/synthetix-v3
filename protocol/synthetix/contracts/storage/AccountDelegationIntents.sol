@@ -58,9 +58,7 @@ library AccountDelegationIntents {
         self.intentsId.add(delegationIntent.id);
         self
             .intentsByPair[
-                keccak256(
-                    abi.encodePacked(delegationIntent.poolId, delegationIntent.collateralType)
-                )
+                keccak256(abi.encodePacked(delegationIntent.poolId, delegationIntent.accountId))
             ]
             .add(delegationIntent.id);
 
@@ -94,9 +92,7 @@ library AccountDelegationIntents {
         self.intentsId.remove(delegationIntent.id);
         self
             .intentsByPair[
-                keccak256(
-                    abi.encodePacked(delegationIntent.poolId, delegationIntent.collateralType)
-                )
+                keccak256(abi.encodePacked(delegationIntent.poolId, delegationIntent.accountId))
             ]
             .remove(delegationIntent.id);
 
