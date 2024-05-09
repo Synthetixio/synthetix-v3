@@ -49,9 +49,9 @@ describe('Market Minimum Credit', () => {
   });
 
   describe('with no positions', () => {
-    it('should report total minimumCredit as zero', async () => {
+    it('should report total minimumCredit as snxUSD value owed to traders', async () => {
       const minimumCredit = await systems().PerpsMarket.minimumCredit(superMarketId());
-      assertBn.equal(minimumCredit, bn(0));
+      assertBn.equal(minimumCredit, bn(20_000));
     });
   });
 
@@ -87,7 +87,12 @@ describe('Market Minimum Credit', () => {
       const ethExpectedMinCredit = wei(150).mul(_ETH_PRICE).mul(wei(0.01)); // size * price * lockedOiRatio
       const btcExpectedMinCredit = wei(5).mul(_BTC_PRICE).mul(wei(0.02));
 
-      assertBn.equal(minimumCredit, ethExpectedMinCredit.add(btcExpectedMinCredit).bn);
+      const snxUSDDeposited = await systems().PerpsMarket.globalCollateralValue(0);
+
+      assertBn.equal(
+        minimumCredit,
+        ethExpectedMinCredit.add(btcExpectedMinCredit).add(snxUSDDeposited).bn
+      );
     });
   });
 });
