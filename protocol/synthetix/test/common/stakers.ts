@@ -74,7 +74,7 @@ export const stake = async (
   await Core.connect(user).deposit(accountId, CollateralMock.address, delegateAmount.mul(300));
 
   // invest in the pool
-  await Core.connect(user).delegateCollateral(
+  await Core.connect(user).declareIntentToDelegateCollateral(
     accountId,
     poolId,
     CollateralMock.address,
@@ -82,12 +82,16 @@ export const stake = async (
     ethers.utils.parseEther('1')
   );
 
+  await Core.connect(user).processIntentToDelegateCollateralByPair(accountId, poolId);
+
   // also for convenience invest in the 0 pool
-  await Core.connect(user).delegateCollateral(
+  await Core.connect(user).declareIntentToDelegateCollateral(
     accountId,
     0,
     CollateralMock.address,
     delegateAmount,
     ethers.utils.parseEther('1')
   );
+
+  await Core.connect(user).processIntentToDelegateCollateralByPair(accountId, 0);
 };

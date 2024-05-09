@@ -11,6 +11,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 library AccountDelegationIntents {
     using SafeCastI256 for int256;
     using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
     using SetUtil for SetUtil.UintSet;
 
     error InvalidAccountDelegationIntents();
@@ -20,10 +21,12 @@ library AccountDelegationIntents {
         SetUtil.UintSet intentsId;
         mapping(bytes32 => SetUtil.UintSet) intentsByPair; // poolId/collateralId => intentIds[]
         // accounting for the intents collateral delegated
+        SetUtil.UintSet delegatedPools;
         mapping(uint128 => uint256) delegatedCollateralAmountPerPool; // poolId => delegatedCollateralAmount
-        uint256 delegateCollateralCache;
+        uint256 delegateAcountCachedCollateral;
         mapping(uint128 => uint256) undelegatedCollateralAmountPerPool; // poolId => undelegatedCollateralAmount
-        uint256 undelegateCollateralCachePerAccount;
+        uint256 undelegateAcountCachedCollateral;
+        int256 netAcountCachedDelegatedCollateral;
     }
 
     /**
@@ -39,8 +42,12 @@ library AccountDelegationIntents {
     /**
      * @dev Returns the account delegation intents stored at the specified account id. Checks if it's valid
      */
-    function loadValid(uint128 id) internal view returns (Data storage accountDelegationIntents) {
+    function getValid(uint128 id) internal returns (Data storage accountDelegationIntents) {
         accountDelegationIntents = load(id);
+        if (accountDelegationIntents.accountId == 0) {
+            // Uninitialized storage will have a 0 accountId
+            accountDelegationIntents.accountId = id;
+        }
 
         if (accountDelegationIntents.accountId != id) {
             revert InvalidAccountDelegationIntents();
@@ -61,13 +68,19 @@ library AccountDelegationIntents {
             self.delegatedCollateralAmountPerPool[delegationIntent.poolId] += delegationIntent
                 .collateralDeltaAmountD18
                 .toUint();
-            self.delegateCollateralCache += delegationIntent.collateralDeltaAmountD18.toUint();
+            self.delegateAcountCachedCollateral += delegationIntent
+                .collateralDeltaAmountD18
+                .toUint();
         } else {
             self.undelegatedCollateralAmountPerPool[delegationIntent.poolId] += (delegationIntent
                 .collateralDeltaAmountD18 * -1).toUint();
-            self.undelegateCollateralCachePerAccount += (delegationIntent.collateralDeltaAmountD18 *
+            self.undelegateAcountCachedCollateral += (delegationIntent.collateralDeltaAmountD18 *
                 -1).toUint();
         }
+        if (!self.delegatedPools.contains(delegationIntent.poolId)) {
+            self.delegatedPools.add(delegationIntent.poolId);
+        }
+        self.netAcountCachedDelegatedCollateral += delegationIntent.collateralDeltaAmountD18;
     }
 
     function removeIntent(
@@ -91,13 +104,16 @@ library AccountDelegationIntents {
             self.delegatedCollateralAmountPerPool[delegationIntent.poolId] -= delegationIntent
                 .collateralDeltaAmountD18
                 .toUint();
-            self.delegateCollateralCache -= delegationIntent.collateralDeltaAmountD18.toUint();
+            self.delegateAcountCachedCollateral -= delegationIntent
+                .collateralDeltaAmountD18
+                .toUint();
         } else {
             self.undelegatedCollateralAmountPerPool[delegationIntent.poolId] -= (delegationIntent
                 .collateralDeltaAmountD18 * -1).toUint();
-            self.undelegateCollateralCachePerAccount -= (delegationIntent.collateralDeltaAmountD18 *
+            self.undelegateAcountCachedCollateral -= (delegationIntent.collateralDeltaAmountD18 *
                 -1).toUint();
         }
+        self.netAcountCachedDelegatedCollateral += delegationIntent.collateralDeltaAmountD18;
     }
 
     /**
@@ -111,11 +127,26 @@ library AccountDelegationIntents {
         return self.intentsByPair[keccak256(abi.encodePacked(poolId, accountId))].values();
     }
 
+    /**
+     * @dev Cleans all intents related to the account. This should be called upon liquidation.
+     */
     function cleanAllIntents(Data storage self) internal {
         uint256[] memory intentIds = self.intentsId.values();
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             removeIntent(self, intent);
+        }
+
+        self.netAcountCachedDelegatedCollateral = 0;
+        self.delegateAcountCachedCollateral = 0;
+        self.undelegateAcountCachedCollateral = 0;
+
+        // Clear the cached collateral per pool
+        uint256[] memory pools = self.delegatedPools.values();
+        for (uint256 i = 0; i < pools.length; i++) {
+            self.delegatedCollateralAmountPerPool[pools[i].to128()] = 0;
+            self.undelegatedCollateralAmountPerPool[pools[i].to128()] = 0;
+            self.delegatedPools.remove(pools[i]);
         }
     }
 }

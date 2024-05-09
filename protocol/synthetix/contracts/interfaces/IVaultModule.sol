@@ -97,6 +97,7 @@ interface IVaultModule {
      * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by intent ids.
      * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param intentIds An array of intents to attempt to process.
+     * @dev The intents that are not executable at this time will be ignored and am event will be emitted to show that.
      * Requirements:
      *
      * Emits a {DelegationUpdated} event.
@@ -110,6 +111,7 @@ interface IVaultModule {
      * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by pool/accountID pair.
      * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param poolId The ID of the pool for which the intent of the account to delegate a new amount of collateral is being processed
+     * @dev The intents that are not executable at this time will be ignored and am event will be emitted to show that.
      * Requirements:
      *
      * Emits a {DelegationUpdated} event.

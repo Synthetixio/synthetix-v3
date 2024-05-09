@@ -173,8 +173,20 @@ contract VaultModule is IVaultModule {
         uint256 newCollateralAmountD18,
         uint256 leverage
     ) external override {
+        // 1- Ensure the caller is authorized to represent the account.
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+
+        // 1.1- Input checks
+        // System only supports leverage of 1.0 for now.
+        if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
+
+        // 2- Verify the account holds enough collateral to execute the intent.
+        // Get previous intents cache
+        AccountDelegationIntents.Data storage accountIntents = AccountDelegationIntents.getValid(
+            accountId
+        );
+        // TODO LJM Continue from here...
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -184,9 +196,6 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18
             );
         }
-
-        // System only supports leverage of 1.0 for now.
-        if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
 
         // Identify the vault that corresponds to this collateral type and pool id.
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
@@ -199,6 +208,12 @@ contract VaultModule is IVaultModule {
         // );
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+
+        // 3- Check the validity of the collateral amount to be delegated, respecting the caches that track outstanding intents to delegate or undelegate collateral.
+        // 4- Update the appropriate caches to reflect the collateral amount declared in the intent for the identified account and pool.
+        // 5- Update the intentNoncesByAccount to include the new intent nonce associated with the account.
+        // 6- Update the intentByNonce to represent the newly declared intent using the specific nonce.
+        // 7- Emit a DelegateCollateralIntentDeclared event.
 
         // Ensure current collateral amount differs from the new collateral amount.
         if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
@@ -267,7 +282,7 @@ contract VaultModule is IVaultModule {
         intent.processingEndTime = intent.processingStartTime + requiredWindowTime;
 
         // Add intent to the account's delegation intents.
-        AccountDelegationIntents.loadValid(accountId).addIntent(intent);
+        AccountDelegationIntents.getValid(accountId).addIntent(intent);
 
         // TODO LJM emit an event
     }
@@ -282,6 +297,10 @@ contract VaultModule is IVaultModule {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            if (!intent.isExecutable()) {
+                // TODO LJM emit an event
+                continue;
+            }
 
             // Ensure the intent is valid.
             if (intent.accountId != accountId) revert InvalidDelegationIntent();
@@ -299,7 +318,7 @@ contract VaultModule is IVaultModule {
             );
 
             // Remove the intent.
-            AccountDelegationIntents.loadValid(accountId).removeIntent(intent);
+            AccountDelegationIntents.getValid(accountId).removeIntent(intent);
 
             // TODO LJM emit an event
         }
@@ -314,7 +333,7 @@ contract VaultModule is IVaultModule {
     ) external override {
         processIntentToDelegateCollateralByIntents(
             accountId,
-            AccountDelegationIntents.loadValid(accountId).intentIdsByPair(poolId, accountId)
+            AccountDelegationIntents.getValid(accountId).intentIdsByPair(poolId, accountId)
         );
     }
 
