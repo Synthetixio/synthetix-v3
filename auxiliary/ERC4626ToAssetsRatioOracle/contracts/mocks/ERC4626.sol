@@ -3,12 +3,10 @@
 
 pragma solidity >=0.8.11 <0.9.0;
 
-import {ERC20, IERC20} from "@synthetixio/core-contracts/contracts/token/ERC20.sol";
-import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
-import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {IERC20, IERC20Metadata, ERC20} from "./ERC4626/ERC20.sol";
+import {SafeERC20} from "./ERC4626/SafeERC20.sol";
 import {IERC4626} from "../interfaces/IERC4626.sol";
-import {IERC20Metadata} from "../interfaces/IERC20Metadata.sol";
-import {FullMath} from "@synthetixio/oracle-manager/contracts/utils/FullMath.sol";
+import {Math} from "./ERC4626/Math.sol";
 
 /**
  * @dev Implementation of the ERC-4626 "Tokenized Vault Standard" as defined in
@@ -48,7 +46,7 @@ import {FullMath} from "@synthetixio/oracle-manager/contracts/utils/FullMath.sol
  * ====
  */
 abstract contract ERC4626 is ERC20, IERC4626 {
-    using FullMath for uint256;
+    using Math for uint256;
 
     IERC20 private immutable _asset;
     uint8 private immutable _underlyingDecimals;
@@ -121,12 +119,14 @@ abstract contract ERC4626 is ERC20, IERC4626 {
 
     /** @dev See {IERC4626-convertToShares}. */
     function convertToShares(uint256 assets) public view virtual returns (uint256) {
-        return _convertToShares(assets, FullMath.Rounding.Floor);
+        return _convertToShares(assets, 
+        Math.Rounding.Floor);
     }
 
     /** @dev See {IERC4626-convertToAssets}. */
     function convertToAssets(uint256 shares) public view virtual returns (uint256) {
-        return _convertToAssets(shares, FullMath.Rounding.Floor);
+        return _convertToAssets(shares, 
+        Math.Rounding.Floor);
     }
 
     /** @dev See {IERC4626-maxDeposit}. */
@@ -141,7 +141,8 @@ abstract contract ERC4626 is ERC20, IERC4626 {
 
     /** @dev See {IERC4626-maxWithdraw}. */
     function maxWithdraw(address owner) public view virtual returns (uint256) {
-        return _convertToAssets(balanceOf(owner), FullMath.Rounding.Floor);
+        return _convertToAssets(balanceOf(owner), 
+        Math.Rounding.Floor);
     }
 
     /** @dev See {IERC4626-maxRedeem}. */
@@ -151,22 +152,26 @@ abstract contract ERC4626 is ERC20, IERC4626 {
 
     /** @dev See {IERC4626-previewDeposit}. */
     function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-        return _convertToShares(assets, FullMath.Rounding.Floor);
+        return _convertToShares(assets, 
+        Math.Rounding.Floor);
     }
 
     /** @dev See {IERC4626-previewMint}. */
     function previewMint(uint256 shares) public view virtual returns (uint256) {
-        return _convertToAssets(shares, FullMath.Rounding.Ceil);
+        return _convertToAssets(shares, 
+        Math.Rounding.Ceil);
     }
 
     /** @dev See {IERC4626-previewWithdraw}. */
     function previewWithdraw(uint256 assets) public view virtual returns (uint256) {
-        return _convertToShares(assets, FullMath.Rounding.Ceil);
+        return _convertToShares(assets, 
+        Math.Rounding.Ceil);
     }
 
     /** @dev See {IERC4626-previewRedeem}. */
     function previewRedeem(uint256 shares) public view virtual returns (uint256) {
-        return _convertToAssets(shares, FullMath.Rounding.Floor);
+        return _convertToAssets(shares, 
+        Math.Rounding.Floor);
     }
 
     /** @dev See {IERC4626-deposit}. */
@@ -177,7 +182,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         }
 
         uint256 shares = previewDeposit(assets);
-        _deposit(ERC2771Context._msgSender(), receiver, assets, shares);
+        _deposit(_msgSender(), receiver, assets, shares);
 
         return shares;
     }
@@ -190,7 +195,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         }
 
         uint256 assets = previewMint(shares);
-        _deposit(ERC2771Context._msgSender(), receiver, assets, shares);
+        _deposit(_msgSender(), receiver, assets, shares);
 
         return assets;
     }
@@ -207,7 +212,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         }
 
         uint256 shares = previewWithdraw(assets);
-        _withdraw(ERC2771Context._msgSender(), receiver, owner, assets, shares);
+        _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         return shares;
     }
@@ -224,7 +229,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         }
 
         uint256 assets = previewRedeem(shares);
-        _withdraw(ERC2771Context._msgSender(), receiver, owner, assets, shares);
+        _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         return assets;
     }
@@ -234,7 +239,8 @@ abstract contract ERC4626 is ERC20, IERC4626 {
      */
     function _convertToShares(
         uint256 assets,
-        FullMath.Rounding rounding
+        
+        Math.Rounding rounding
     ) internal view virtual returns (uint256) {
         return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
     }
@@ -244,7 +250,8 @@ abstract contract ERC4626 is ERC20, IERC4626 {
      */
     function _convertToAssets(
         uint256 shares,
-        FullMath.Rounding rounding
+        
+        Math.Rounding rounding
     ) internal view virtual returns (uint256) {
         return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
     }
@@ -265,7 +272,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
         // assets are transferred and before the shares are minted, which is a valid state.
         // slither-disable-next-line reentrancy-no-eth
-        ERC20Helper.safeTransferFrom(_asset, caller, address(this), assets);
+        SafeERC20.safeTransferFrom(_asset, caller, address(this), assets);
         _mint(receiver, shares);
 
         emit Deposit(caller, receiver, assets, shares);
@@ -292,7 +299,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
         // shares are burned and after the assets are transferred, which is a valid state.
         _burn(owner, shares);
-        ERC20Helper.safeTransfer(_asset, receiver, assets);
+        SafeERC20.safeTransfer(_asset, receiver, assets);
 
         emit Withdraw(caller, receiver, owner, assets, shares);
     }

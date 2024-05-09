@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {ERC20, IERC20} from "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import {ERC20, IERC20} from "./ERC4626/ERC20.sol";
 import {ERC4626} from "./ERC4626.sol";
 
 contract ERC4626Mock is ERC4626 {
