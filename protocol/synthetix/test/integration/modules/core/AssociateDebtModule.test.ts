@@ -119,13 +119,17 @@ describe('AssociateDebtModule', function () {
           .Core.connect(user2)
           .deposit(user2AccountId, collateralAddress(), depositAmount.mul(2));
 
-        await systems().Core.connect(user2).delegateCollateral(
+        await systems().Core.connect(user2).declareIntentToDelegateCollateral(
           user2AccountId,
           poolId,
           collateralAddress(),
           depositAmount, // user1 50%, user2 50%
           ethers.utils.parseEther('1')
         );
+
+        await systems()
+          .Core.connect(user2)
+          .processIntentToDelegateCollateralByPair(user2AccountId, poolId);
       });
 
       describe('when the market reported debt is 100', function () {
