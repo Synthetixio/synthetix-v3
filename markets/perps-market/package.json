@@ -33,7 +33,7 @@
     "@synthetixio/router": "3.3.7",
     "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
-    "@usecannon/cli": "2.13.0",
+    "@usecannon/cli": "2.13.3",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
