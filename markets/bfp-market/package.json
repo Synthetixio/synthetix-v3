@@ -30,7 +30,6 @@
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "3.3.7",
-    "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
     "@types/lodash": "^4.14.199",
     "@types/mocha-each": "2.0.1",
