@@ -28,4 +28,4 @@ args = [
 ]
 var.erc_4626_to_assets_ratio_oracle_node_id.event = "NodeRegistered"
 var.erc_4626_to_assets_ratio_oracle_node_id.arg = 0
-depends = ["deploy.ERC4626Mock","deploy.ERC4626ToAssetsRatioOracle"]
+depends = ["deploy.ERC4626Mock", "deploy.ERC4626ToAssetsRatioOracle"]

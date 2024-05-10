@@ -28,12 +28,14 @@ contract ERC4626Mock {
         return _convertToAssets(shares, Math.Rounding.Floor);
     }
 
-    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view virtual returns (uint256) {
+    function _convertToAssets(
+        uint256 shares,
+        Math.Rounding rounding
+    ) internal view virtual returns (uint256) {
         return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
     }
 
     function _decimalsOffset() internal view returns (uint8) {
         return 0;
     }
-
 }

@@ -13,16 +13,16 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
     using SafeCastU256 for uint256;
     using DecimalMath for uint256;
 
-    address public immutable vaultAddress;
-    address public immutable assetAddress;
-    uint256 public immutable vaultDecimals;
-    uint256 public immutable assetDecimals;
+    address public immutable VAULT_ADDRESS;
+    address public immutable ASSET_ADDRESS;
+    uint256 public immutable VAULT_DECIMALS;
+    uint256 public immutable ASSET_DECIMALS;
 
     constructor(address _vaultAddress) {
-        vaultAddress = _vaultAddress;
-        assetAddress = IERC4626(vaultAddress).asset();
-        vaultDecimals = IERC20Metadata(vaultAddress).decimals();
-        assetDecimals = IERC20Metadata(assetAddress).decimals();
+        VAULT_ADDRESS = _vaultAddress;
+        ASSET_ADDRESS = IERC4626(VAULT_ADDRESS).asset();
+        VAULT_DECIMALS = IERC20Metadata(VAULT_ADDRESS).decimals();
+        ASSET_DECIMALS = IERC20Metadata(ASSET_ADDRESS).decimals();
     }
 
     function process(
@@ -31,14 +31,14 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
         bytes32[] memory,
         bytes32[] memory
     ) external view returns (NodeOutput.Data memory) {
-        uint256 baseUnit = 10 ** vaultDecimals;
-        uint256 assetsInVault = IERC4626(vaultAddress).convertToAssets(baseUnit);
+        uint256 baseUnit = 10 ** VAULT_DECIMALS;
+        uint256 assetsInVault = IERC4626(VAULT_ADDRESS).convertToAssets(baseUnit);
         uint256 adjustedRatio;
-        
-        if (assetDecimals > 18) {
-            adjustedRatio = DecimalMath.downscale(assetsInVault, assetDecimals - 18);
-        } else if (assetDecimals < 18) {
-            adjustedRatio = DecimalMath.upscale(assetsInVault, 18 - assetDecimals);
+
+        if (ASSET_DECIMALS > 18) {
+            adjustedRatio = DecimalMath.downscale(assetsInVault, ASSET_DECIMALS - 18);
+        } else if (ASSET_DECIMALS < 18) {
+            adjustedRatio = DecimalMath.upscale(assetsInVault, 18 - ASSET_DECIMALS);
         } else {
             adjustedRatio = assetsInVault;
         }
@@ -57,7 +57,7 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
             return false;
         }
 
-        IERC4626(vaultAddress).convertToAssets(10 ** vaultDecimals).toInt();
+        IERC4626(VAULT_ADDRESS).convertToAssets(10 ** VAULT_DECIMALS).toInt();
 
         return true;
     }

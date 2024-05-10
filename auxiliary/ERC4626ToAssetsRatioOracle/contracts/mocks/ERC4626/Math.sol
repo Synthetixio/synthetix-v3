@@ -141,7 +141,11 @@ library Math {
      * Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv) with further edits by
      * Uniswap Labs also under MIT license.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 result) {
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
         unchecked {
             // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2²⁵⁶ and mod 2²⁵⁶ - 1, then use
             // use the Chinese Remainder Theorem to reconstruct the 512 bit result. The result is stored in two 256
@@ -163,7 +167,9 @@ library Math {
 
             // Make sure the result is less than 2²⁵⁶. Also prevents denominator == 0.
             if (denominator <= prod1) {
-                Panic.panic(ternary(denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW));
+                Panic.panic(
+                    ternary(denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW)
+                );
             }
 
             ///////////////////////////////////////////////
@@ -225,8 +231,15 @@ library Math {
     /**
      * @dev Calculates x * y / denominator with full precision, following the selected rounding direction.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator, Rounding rounding) internal pure returns (uint256) {
-        return mulDiv(x, y, denominator) + SafeCast.toUint(unsignedRoundsUp(rounding) && mulmod(x, y, denominator) > 0);
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator,
+        Rounding rounding
+    ) internal pure returns (uint256) {
+        return
+            mulDiv(x, y, denominator) +
+            SafeCast.toUint(unsignedRoundsUp(rounding) && mulmod(x, y, denominator) > 0);
     }
 
     /**
@@ -279,11 +292,13 @@ library Math {
                     // Decrement the coefficient of n.
                     // Can overflow, but the result is casted to uint256 so that the
                     // next value of y is "wrapped around" to a value between 0 and n - 1.
+                    // solhint-disable-next-line numcast/safe-cast
                     x - y * int256(quotient)
                 );
             }
 
             if (gcd != 1) return 0; // No inverse exists.
+            // solhint-disable-next-line numcast/safe-cast
             return ternary(x < 0, n - uint256(-x), uint256(x)); // Wrap the result if it's negative.
         }
     }
@@ -319,7 +334,11 @@ library Math {
      * https://eips.ethereum.org/EIPS/eip-198[EIP-198]. Otherwise, the underlying function will succeed given the lack
      * of a revert, but the result may be incorrectly interpreted as 0.
      */
-    function tryModExp(uint256 b, uint256 e, uint256 m) internal view returns (bool success, uint256 result) {
+    function tryModExp(
+        uint256 b,
+        uint256 e,
+        uint256 m
+    ) internal view returns (bool success, uint256 result) {
         if (m == 0) return (false, 0);
         /// @solidity memory-safe-assembly
         assembly {
@@ -349,7 +368,11 @@ library Math {
     /**
      * @dev Variant of {modExp} that supports inputs of arbitrary length.
      */
-    function modExp(bytes memory b, bytes memory e, bytes memory m) internal view returns (bytes memory) {
+    function modExp(
+        bytes memory b,
+        bytes memory e,
+        bytes memory m
+    ) internal view returns (bytes memory) {
         (bool success, bytes memory result) = tryModExp(b, e, m);
         if (!success) {
             Panic.panic(Panic.DIVISION_BY_ZERO);
@@ -659,7 +682,8 @@ library Math {
     function log256(uint256 value, Rounding rounding) internal pure returns (uint256) {
         unchecked {
             uint256 result = log256(value);
-            return result + SafeCast.toUint(unsignedRoundsUp(rounding) && 1 << (result << 3) < value);
+            return
+                result + SafeCast.toUint(unsignedRoundsUp(rounding) && 1 << (result << 3) < value);
         }
     }
 
@@ -667,6 +691,7 @@ library Math {
      * @dev Returns whether a provided rounding mode is considered rounding up for unsigned integers.
      */
     function unsignedRoundsUp(Rounding rounding) internal pure returns (bool) {
+        // solhint-disable-next-line numcast/safe-cast
         return uint8(rounding) % 2 == 1;
     }
 }
