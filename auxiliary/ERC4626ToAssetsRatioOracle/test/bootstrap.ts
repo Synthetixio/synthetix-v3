@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { ethers } from 'ethers';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import type { ERC4626ToAssetsRatioOracle } from '../typechain-types';

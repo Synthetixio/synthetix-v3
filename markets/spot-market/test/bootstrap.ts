@@ -9,7 +9,7 @@ import {
 } from '@synthetixio/main/test/generated/typechain';
 import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
 import { MockPythERC7412Wrapper } from '../typechain-types';
