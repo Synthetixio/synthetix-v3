@@ -30,6 +30,13 @@ contract PerpAccountModule is IPerpAccountModule {
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
 
+    // --- Immutables --- //
+
+    address immutable SYNTHETIX_SUSD;
+
+    constructor(address _synthetix_susd) {
+        SYNTHETIX_SUSD = _synthetix_susd;
+    }
     // --- Runtime structs --- //
 
     struct Runtime_splitAccount {
@@ -38,8 +45,8 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 fromIm;
         uint128 debtToMove;
         int128 sizeToMove;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
+        uint256 supportedCollateralsLength;
+        address collateralAddress;
         uint256 collateralToMove;
         uint256 newFromAmountCollateral;
         uint256 fromAccountCollateral;
@@ -58,8 +65,8 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 toMarginUsd;
         uint256 mergedCollateralUsd;
         uint256 mergedDiscountedCollateralUsd;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
+        uint256 supportedCollateralsLength;
+        address collateralAddress;
         uint256 fromAccountCollateral;
     }
 
@@ -75,18 +82,21 @@ contract PerpAccountModule is IPerpAccountModule {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint256 length = globalMarginConfig.supportedCollaterals.length;
         IPerpAccountModule.DepositedCollateral[]
             memory depositedCollaterals = new DepositedCollateral[](length);
-        uint128 synthMarketId;
+        address collateralAddress;
         uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            collateralPrice = globalMarginConfig.getCollateralPrice(synthMarketId, globalConfig);
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            collateralPrice = globalMarginConfig.getCollateralPrice(
+                collateralAddress,
+                globalConfig
+            );
             depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
-                synthMarketId,
-                accountMargin.collaterals[synthMarketId],
+                collateralAddress,
+                accountMargin.collaterals[collateralAddress],
                 collateralPrice
             );
 
@@ -247,19 +257,22 @@ contract PerpAccountModule is IPerpAccountModule {
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
+        runtime.supportedCollateralsLength = globalMarginConfig.supportedCollaterals.length;
 
-        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
-            runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            runtime.fromAccountCollateral = fromAccountMargin.collaterals[runtime.synthMarketId];
+        for (uint256 i = 0; i < runtime.supportedCollateralsLength; ) {
+            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            runtime.fromAccountCollateral = fromAccountMargin.collaterals[
+                runtime.collateralAddress
+            ];
 
             if (runtime.fromAccountCollateral > 0) {
                 // Move available collateral `from` -> `to`.
                 runtime.collateralToMove = runtime.fromAccountCollateral.mulDecimal(proportion);
-                toAccountMargin.collaterals[runtime.synthMarketId] = runtime.collateralToMove;
-                fromAccountMargin.collaterals[runtime.synthMarketId] -= runtime.collateralToMove;
+                toAccountMargin.collaterals[runtime.collateralAddress] = runtime.collateralToMove;
+                fromAccountMargin.collaterals[runtime.collateralAddress] -= runtime
+                    .collateralToMove;
                 runtime.collateralPrice = globalMarginConfig.getCollateralPrice(
-                    runtime.synthMarketId,
+                    runtime.collateralAddress,
                     globalConfig
                 );
 
@@ -276,8 +289,9 @@ contract PerpAccountModule is IPerpAccountModule {
                     Margin.getDiscountedCollateralPrice(
                         runtime.collateralToMove,
                         runtime.collateralPrice,
-                        runtime.synthMarketId,
-                        globalConfig
+                        runtime.collateralAddress,
+                        globalConfig,
+                        globalMarginConfig
                     )
                 );
 
@@ -292,8 +306,9 @@ contract PerpAccountModule is IPerpAccountModule {
                     Margin.getDiscountedCollateralPrice(
                         runtime.newFromAmountCollateral,
                         runtime.collateralPrice,
-                        runtime.synthMarketId,
-                        globalConfig
+                        runtime.collateralAddress,
+                        globalConfig,
+                        globalMarginConfig
                     )
                 );
             }
@@ -453,7 +468,8 @@ contract PerpAccountModule is IPerpAccountModule {
             .toUint();
         fromAccountMargin.realizeAccountPnlAndUpdate(
             market,
-            runtime.fromMarginUsd.toInt() - runtime.fromCollateralUsd.toInt()
+            runtime.fromMarginUsd.toInt() - runtime.fromCollateralUsd.toInt(),
+            SYNTHETIX_SUSD
         );
 
         // Realize the toPosition.
@@ -471,20 +487,24 @@ contract PerpAccountModule is IPerpAccountModule {
             .toUint();
         toAccountMargin.realizeAccountPnlAndUpdate(
             market,
-            runtime.toMarginUsd.toInt() - toMarginValues.collateralUsd.toInt()
+            runtime.toMarginUsd.toInt() - toMarginValues.collateralUsd.toInt(),
+            SYNTHETIX_SUSD
         );
 
-        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
-        runtime.synthMarketId;
+        runtime.supportedCollateralsLength = globalMarginConfig.supportedCollaterals.length;
+        runtime.collateralAddress;
         runtime.fromAccountCollateral;
 
-        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
-            runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            runtime.fromAccountCollateral = fromAccountMargin.collaterals[runtime.synthMarketId];
+        for (uint256 i = 0; i < runtime.supportedCollateralsLength; ) {
+            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            runtime.fromAccountCollateral = fromAccountMargin.collaterals[
+                runtime.collateralAddress
+            ];
             if (runtime.fromAccountCollateral > 0) {
                 // Move collateral `from` -> `to`.
-                toAccountMargin.collaterals[runtime.synthMarketId] += runtime.fromAccountCollateral;
-                fromAccountMargin.collaterals[runtime.synthMarketId] = 0;
+                toAccountMargin.collaterals[runtime.collateralAddress] += runtime
+                    .fromAccountCollateral;
+                fromAccountMargin.collaterals[runtime.collateralAddress] = 0;
             }
 
             unchecked {

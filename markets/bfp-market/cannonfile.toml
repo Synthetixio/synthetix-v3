@@ -26,11 +26,11 @@ preset = "<%= settings.synthetixPreset %>"
 
 [contract.OrderModule]
 artifact = "OrderModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
@@ -42,11 +42,11 @@ args = []
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.MarginModule]
 artifact = "MarginModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"

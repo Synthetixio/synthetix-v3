@@ -8,7 +8,6 @@ import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetix
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
@@ -36,12 +35,6 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
         globalConfig.usdToken = ITokenModule(usdTokenAddress);
         globalConfig.oracleManager = synthetix.getOracleManager();
-    }
-
-    /// @inheritdoc IPerpMarketFactoryModule
-    function setSpotMarket(ISpotMarketSystem spotMarket) external {
-        OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.load().spotMarket = spotMarket;
     }
 
     /// @inheritdoc IPerpMarketFactoryModule
@@ -189,16 +182,16 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market
             .getRemainingLiquidatableSizeCapacity(marketConfig);
 
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint256 length = globalMarginConfig.supportedCollaterals.length;
         IPerpMarketFactoryModule.DepositedCollateral[]
             memory depositedCollaterals = new DepositedCollateral[](length);
-        uint128 synthMarketId;
+        address collateralAddress;
 
         for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
             depositedCollaterals[i] = IPerpMarketFactoryModule.DepositedCollateral(
-                synthMarketId,
-                market.depositedCollateral[synthMarketId]
+                collateralAddress,
+                market.depositedCollateral[collateralAddress]
             );
 
             unchecked {

@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
@@ -64,8 +64,8 @@ library PerpMarket {
         mapping(uint128 => Position.Data) positions;
         /// {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
-        /// {synthMarketId: collateralAmount} (# collateral deposited to market).
-        mapping(uint128 => uint256) depositedCollateral;
+        /// {collateralAddress: collateralAmount} (# collateral deposited to market).
+        mapping(address => uint256) depositedCollateral;
         /// An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
         uint128[2][] pastLiquidations;
     }
@@ -143,7 +143,8 @@ library PerpMarket {
     function updateDebtAndCollateral(
         PerpMarket.Data storage self,
         int128 debtAmountDeltaUsd,
-        int128 sUsdCollateralDelta
+        int128 sUsdCollateralDelta,
+        address sUsdAddress
     ) internal {
         if (debtAmountDeltaUsd != 0) {
             // debtAmountDeltaUsd is a "delta", so if it's is positive we want to increase the debt.
@@ -152,10 +153,9 @@ library PerpMarket {
                 : self.totalTraderDebtUsd - MathUtil.abs(debtAmountDeltaUsd).to128();
         }
         if (sUsdCollateralDelta != 0) {
-            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] = sUsdCollateralDelta >= 0
-                ? self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] + sUsdCollateralDelta.toUint()
-                : self.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -
-                    MathUtil.abs(sUsdCollateralDelta).to128();
+            self.depositedCollateral[sUsdAddress] = sUsdCollateralDelta >= 0
+                ? self.depositedCollateral[sUsdAddress] + sUsdCollateralDelta.toUint()
+                : self.depositedCollateral[sUsdAddress] - MathUtil.abs(sUsdCollateralDelta).to128();
         }
     }
 
@@ -455,19 +455,19 @@ library PerpMarket {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 synthMarketId;
+        uint256 length = globalMarginConfig.supportedCollaterals.length;
+        address collateralAddress;
         uint256 totalValueUsd;
         uint256 collateralAvailable;
         uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            collateralAvailable = self.depositedCollateral[synthMarketId];
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            collateralAvailable = self.depositedCollateral[collateralAddress];
 
             if (collateralAvailable > 0) {
                 collateralPrice = globalMarginConfig.getCollateralPrice(
-                    synthMarketId,
+                    collateralAddress,
                     globalConfig
                 );
                 totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);

@@ -8,12 +8,14 @@ interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct ConfiguredCollateral {
-        /// Id of the synth market.
-        uint128 synthMarketId;
+        /// Address of the collateral asset.
+        address collateralAddress;
         /// The underlying spot market synth sell oracle node id.
         bytes32 oracleNodeId;
         /// Maximum allowable deposited amount.
         uint128 maxAllowable;
+        /// Skew skewScale for the collateral.
+        uint128 skewScale;
         /// Address of the associated reward distributor.
         address rewardDistributor;
     }
@@ -24,24 +26,24 @@ interface IMarginModule is IBasePerpMarket {
     /// @param from Address of depositor
     /// @param to Address of recipient of deposit
     /// @param value Amount of assets deposited
-    /// @param synthMarketId Id of deposited synth asset
+    /// @param collateralAddress Address of collateral deposited
     event MarginDeposit(
         address indexed from,
         address indexed to,
         uint256 value,
-        uint128 synthMarketId
+        address collateralAddress
     );
 
     /// @notice Emitted when margin is withdrawn from market to user.
     /// @param from Address of recipient of withdraw
     /// @param to Address where asset withdrawn from
     /// @param value Amount of assets withdrawn
-    /// @param synthMarketId Id of withdrawn synth asset
+    /// @param collateralAddress Address of withdrawn asset
     event MarginWithdraw(
         address indexed from,
         address indexed to,
         uint256 value,
-        uint128 synthMarketId
+        address collateralAddress
     );
 
     /// @notice Emitted when collateral is configured.
@@ -80,39 +82,41 @@ interface IMarginModule is IBasePerpMarket {
     /// @dev Will revert if account has open positions, pending orders, or any unpaid debt.
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external;
 
-    /// @notice Modifies the `synthMarketId` margin for `accountId` on `marketId` by the `amountDelta`. A negative amount
+    /// @notice Modifies the `collateralAddress` margin for `accountId` on `marketId` by the `amountDelta`. A negative amount
     ///         signifies a withdraw and positive is deposit. A variety of errors are thrown if limits or collateral
     ///         issues are found.
     /// @param accountId Account to modify margin collateral against
     /// @param marketId Market to modify margin collateral against
-    /// @param synthMarketId Id of modified synth asset
+    /// @param collateralAddress Address of collateral to deposit or withdraw
     /// @param amountDelta Amount of synths to deposit or withdraw
     /// @dev Modifying collateral will immediately deposit collateral into the Synthetix core system.
     function modifyCollateral(
         uint128 accountId,
         uint128 marketId,
-        uint128 synthMarketId,
+        address collateralAddress,
         int256 amountDelta
     ) external;
 
-    /// @notice Configure with collateral types (synth ids), their max allowables (deposits), and reward
+    /// @notice Configure with collateral types, their max allowables (deposits),their skewScale and reward
     ///         distributors. This function will reconfigure _all_ collaterals and replace the existing
     ///         collateral set with new collaterals supplied.
-    /// @param synthMarketIds An array of synth asset ids to configure
+    /// @param collateralAddresses An array of collateral addresses.
     /// @param oracleNodeIds An array of oracle nods for each collateral
     /// @param maxAllowables An array of integers to indicate the global maximum deposit amount
+    /// @param skewScales An array of integers for skew scales for each collateral
     /// @param rewardDistributors An array of addresses to each reward distributor
     function setMarginCollateralConfiguration(
-        uint128[] calldata synthMarketIds,
+        address[] calldata collateralAddresses,
         bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables,
+        uint128[] calldata skewScales,
         address[] calldata rewardDistributors
     ) external;
 
-    /// @notice Set the max allowable for existing collateral by `synthMarketId`.
-    /// @param synthMarketId Synth asset to configure
+    /// @notice Set the max allowable for existing collateral by `collateralAddress`.
+    /// @param collateralAddress Collateral asset to configure
     /// @param maxAllowable New max deposit amount for the synth
-    function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external;
+    function setCollateralMaxAllowable(address collateralAddress, uint128 maxAllowable) external;
 
     // --- Views --- //
 
@@ -143,14 +147,14 @@ interface IMarginModule is IBasePerpMarket {
         uint256 oraclePrice
     ) external view returns (uint256);
 
-    /// @notice Returns the discount adjusted oracle price based on `amount` of synth for `synthMarketId`. `amount` is
+    /// @notice Returns the discount adjusted oracle price based on `amount` of collateral for `collateralAddress`. `amount` is
     ///         necessary here as it simulates if `amount` were sold, what would be the impact on the skew, and
     ///         hence the discount.
-    /// @param synthMarketId Id of synth collateral asset
+    /// @param collateralAddress Address of collateral asset
     /// @param amount Amount of synth asset to sell
     /// @return getDiscountedCollateralPrice Discounted collateral price in USD
     function getDiscountedCollateralPrice(
-        uint128 synthMarketId,
+        address collateralAddress,
         uint256 amount
     ) external view returns (uint256);
 

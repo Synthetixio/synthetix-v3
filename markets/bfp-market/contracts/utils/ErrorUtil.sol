@@ -72,7 +72,7 @@ library ErrorUtil {
     error CanLiquidatePosition();
 
     /// @notice Thrown when an account has insufficient collateral to transfer.
-    error InsufficientCollateral(uint128 synthMarketId, uint256 available, uint256 value);
+    error InsufficientCollateral(address collateralAddress, uint256 available, uint256 value);
 
     /// @notice Thrown when an account tries to withdrawAll without having any collateral.
     error NilCollateral();
@@ -87,13 +87,13 @@ library ErrorUtil {
     error MaxCollateralExceeded(uint256 value, uint256 max);
 
     /// @notice Thrown when the supplied collateral is unsupported.
-    error UnsupportedCollateral(uint128 synthMarketId);
+    error UnsupportedCollateral(address collateralAddress);
 
     /// @notice Thrown when the input arrays have mismatched lengths.
     error ArrayLengthMismatch();
 
     /// @notice Thrown when configuring margin where a previously added collateral was wrongly removed.
-    error MissingRequiredCollateral(uint128 synthMarketId);
+    error MissingRequiredCollateral(address collateralAddress);
 
     /// @notice Thrown when and action is only allowed by account owner.
     error OnlyAccountOwner();

@@ -6,10 +6,6 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
-
-/// @dev A static uint128 of the sUSD marketId.
-uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
 
 library PerpMarketConfiguration {
     using SafeCastI256 for int256;
@@ -19,8 +15,6 @@ library PerpMarketConfiguration {
     struct GlobalData {
         /// A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
-        /// A reference to the core Synthetix v3 spot market system.
-        ISpotMarketSystem spotMarket;
         /// A reference to the Synthetix USD stablecoin.
         ITokenModule usdToken;
         /// A reference to the Synthetix oracle manager (used to fetch market prices).

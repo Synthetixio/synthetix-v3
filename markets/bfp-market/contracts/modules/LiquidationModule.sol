@@ -12,7 +12,7 @@ import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -25,12 +25,19 @@ contract LiquidationModule is ILiquidationModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
+    // --- Immutables --- //
+    address immutable SYNTHETIX_SUSD;
+
+    constructor(address _synthetix_susd) {
+        SYNTHETIX_SUSD = _synthetix_susd;
+    }
+
     // --- Runtime structs --- //
 
     struct Runtime_liquidateCollateral {
         uint256 availableSusd;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
+        uint256 supportedCollateralssLength;
+        address collateralAddress;
         uint256 availableAccountCollateral;
         uint128 poolId;
         uint256 poolCollateralTypesLength;
@@ -96,12 +103,12 @@ contract LiquidationModule is ILiquidationModule {
     ) private {
         Runtime_liquidateCollateral memory runtime;
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID];
+        runtime.availableSusd = accountMargin.collaterals[SYNTHETIX_SUSD];
 
         // Clear out sUSD associated with the account of the liquidated position.
         if (runtime.availableSusd > 0) {
-            market.depositedCollateral[SYNTHETIX_USD_MARKET_ID] -= runtime.availableSusd;
-            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+            market.depositedCollateral[SYNTHETIX_SUSD] -= runtime.availableSusd;
+            accountMargin.collaterals[SYNTHETIX_SUSD] = 0;
         }
         // Clear out debt.
         if (accountMargin.debtUsd > 0) {
@@ -112,25 +119,26 @@ contract LiquidationModule is ILiquidationModule {
         // For non-sUSD collateral, send to their respective reward distributor, create new distribution per collateral,
         // and then wipe out all associated collateral on the account.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        runtime.supportedSynthMarketIdsLength = globalMarginConfig.supportedSynthMarketIds.length;
+        runtime.supportedCollateralssLength = globalMarginConfig.supportedCollaterals.length;
 
         // Iterate over all supported margin collateral types to see if any should be distributed to LPs.
-        for (uint256 i = 0; i < runtime.supportedSynthMarketIdsLength; ) {
-            runtime.synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            runtime.availableAccountCollateral = accountMargin.collaterals[runtime.synthMarketId];
+        for (uint256 i = 0; i < runtime.supportedCollateralssLength; ) {
+            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            runtime.availableAccountCollateral = accountMargin.collaterals[
+                runtime.collateralAddress
+            ];
 
             // Found a deposited collateral that must be distributed.
             if (runtime.availableAccountCollateral > 0) {
-                address synth = globalConfig.spotMarket.getSynth(runtime.synthMarketId);
                 globalConfig.synthetix.withdrawMarketCollateral(
                     marketId,
-                    synth,
+                    runtime.collateralAddress,
                     runtime.availableAccountCollateral
                 );
                 IPerpRewardDistributor distributor = IPerpRewardDistributor(
-                    globalMarginConfig.supported[runtime.synthMarketId].rewardDistributor
+                    globalMarginConfig.supported[runtime.collateralAddress].rewardDistributor
                 );
-                ITokenModule(synth).transfer(
+                ITokenModule(runtime.collateralAddress).transfer(
                     address(distributor),
                     runtime.availableAccountCollateral
                 );
@@ -180,9 +188,9 @@ contract LiquidationModule is ILiquidationModule {
                 }
 
                 // Clear out non-sUSD collateral associated with the account of the liquidated position.
-                market.depositedCollateral[runtime.synthMarketId] -= runtime
+                market.depositedCollateral[runtime.collateralAddress] -= runtime
                     .availableAccountCollateral;
-                accountMargin.collaterals[runtime.synthMarketId] = 0;
+                accountMargin.collaterals[runtime.collateralAddress] = 0;
             }
 
             unchecked {

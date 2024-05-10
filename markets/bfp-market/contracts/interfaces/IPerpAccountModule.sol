@@ -5,8 +5,8 @@ interface IPerpAccountModule {
     // --- Structs --- //
 
     struct DepositedCollateral {
-        /// Id of the spot synth market collateral.
-        uint128 synthMarketId;
+        /// Address of the collateral.
+        address collateralAddress;
         /// Amount of available collateral deposited (unrelated to position).
         uint256 available;
         /// Unadjusted oracle price of collateral.

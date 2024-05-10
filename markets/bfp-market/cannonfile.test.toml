@@ -13,12 +13,6 @@ defaultValue = "main"
 [setting.synthetixPackage]
 defaultValue = "synthetix:latest"
 
-[setting.spotMarketPreset]
-defaultValue = "main"
-
-[setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:latest"
-
 [setting.salt]
 defaultValue = "snax"
 
@@ -28,10 +22,6 @@ defaultValue = "snax"
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
-[import.spotMarket]
-source = "<%= settings.spotMarketPackage %>"
-preset = "<%= settings.spotMarketPreset %>"
-
 [import.pyth]
 source = "pyth"
 args = [120, 1] # 120s, 1wei
@@ -40,11 +30,11 @@ args = [120, 1] # 120s, 1wei
 
 [contract.OrderModule]
 artifact = "OrderModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
@@ -56,11 +46,11 @@ args = []
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.MarginModule]
 artifact = "MarginModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
@@ -96,7 +86,7 @@ salt = "<%= settings.salt %>"
 
 [contract.__TestHelperModule]
 artifact = "contracts/mocks/modules/__TestHelperModule.sol:__TestHelperModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 # --- Core router --- #
 
@@ -208,12 +198,6 @@ target = ["BfpMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthetix"
 args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
-
-[invoke.set_spot_market]
-target = ["BfpMarketProxy"]
-fromCall.func = "owner"
-func = "setSpotMarket"
-args = ["<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
 
 [invoke.set_pyth]
 target = ["BfpMarketProxy"]

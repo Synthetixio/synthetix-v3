@@ -34,6 +34,13 @@ contract OrderModule is IOrderModule {
     using PerpMarket for PerpMarket.Data;
     using Margin for Margin.Data;
 
+    // --- Immutables --- //
+    address immutable SYNTHETIX_SUSD;
+
+    constructor(address _synthetix_susd) {
+        SYNTHETIX_SUSD = _synthetix_susd;
+    }
+
     // --- Runtime structs --- //
 
     struct Runtime_settleOrder {
@@ -328,7 +335,8 @@ contract OrderModule is IOrderModule {
 
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
-                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt()
+                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt(),
+                SYNTHETIX_SUSD
             );
         }
         // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
