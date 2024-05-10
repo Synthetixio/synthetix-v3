@@ -100,6 +100,16 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/utils/FullMath.sol:FullMath
+library FullMath {
+    enum Rounding {
+        Floor,
+        Ceil,
+        Trunc,
+        Expand
+    }
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
 library TickMath {
     int24 internal constant MIN_TICK = -887272;

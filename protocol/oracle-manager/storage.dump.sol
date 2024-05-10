@@ -130,6 +130,16 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact contracts/utils/FullMath.sol:FullMath
+library FullMath {
+    enum Rounding {
+        Floor,
+        Ceil,
+        Trunc,
+        Expand
+    }
+}
+
 // @custom:artifact contracts/utils/TickMath.sol:TickMath
 library TickMath {
     int24 internal constant MIN_TICK = -887272;

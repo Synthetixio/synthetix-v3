@@ -3,7 +3,7 @@ version = "<%= package.version %>"
 description = "<%= package.description %>"
 
 [setting.vault]
-defaultValue = ""
+defaultValue = "0x0000000000000000000000000000000000000000"
 
 [contract.ERC4626ToAssetsRatioOracle]
 artifact = "contracts/ERC4626ToAssetsRatioOracle.sol:ERC4626ToAssetsRatioOracle"
