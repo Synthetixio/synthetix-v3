@@ -487,73 +487,13 @@ library TickMath {
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
 
-// @custom:artifact @synthetixio/spot-market/contracts/storage/OrderFees.sol:OrderFees
-library OrderFees {
-    struct Data {
-        uint256 fixedFees;
-        uint256 utilizationFees;
-        int256 skewFees;
-        int256 wrapperFees;
-    }
-}
-
-// @custom:artifact @synthetixio/spot-market/contracts/storage/Price.sol:Price
-library Price {
-    enum Tolerance {
-        DEFAULT,
-        STRICT
-    }
-    struct Data {
-        bytes32 buyFeedId;
-        bytes32 sellFeedId;
-        uint256 strictStalenessTolerance;
-    }
-    function load(uint128 marketId) internal pure returns (Data storage price) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
-        assembly {
-            price.slot := s
-        }
-    }
-}
-
-// @custom:artifact @synthetixio/spot-market/contracts/storage/SpotMarketFactory.sol:SpotMarketFactory
-library SpotMarketFactory {
-    bytes32 private constant _SLOT_SPOT_MARKET_FACTORY = keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
-    struct Data {
-        address usdToken;
-        address oracle;
-        address synthetix;
-        address synthImplementation;
-        mapping(uint128 => address) marketOwners;
-        mapping(uint128 => address) nominatedMarketOwners;
-    }
-    function load() internal pure returns (Data storage spotMarketFactory) {
-        bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
-        assembly {
-            spotMarketFactory.slot := s
-        }
-    }
-}
-
-// @custom:artifact @synthetixio/spot-market/contracts/utils/TransactionUtil.sol:Transaction
-library Transaction {
-    enum Type {
-        NULL,
-        BUY,
-        SELL,
-        ASYNC_BUY,
-        ASYNC_SELL,
-        WRAP,
-        UNWRAP
-    }
-}
-
 // @custom:artifact contracts/interfaces/IMarginModule.sol:IMarginModule
 interface IMarginModule {
     struct ConfiguredCollateral {
-        uint128 synthMarketId;
+        address collateralAddress;
         bytes32 oracleNodeId;
         uint128 maxAllowable;
+        uint128 skewScale;
         address rewardDistributor;
     }
 }
@@ -622,7 +562,7 @@ interface IOrderModule {
 // @custom:artifact contracts/interfaces/IPerpAccountModule.sol:IPerpAccountModule
 interface IPerpAccountModule {
     struct DepositedCollateral {
-        uint128 synthMarketId;
+        address collateralAddress;
         uint256 available;
         uint256 oraclePrice;
     }
@@ -656,7 +596,7 @@ interface IPerpMarketFactoryModule {
         bytes32 name;
     }
     struct DepositedCollateral {
-        uint128 synthMarketId;
+        address collateralAddress;
         uint256 available;
     }
     struct UtilizationDigest {
@@ -704,8 +644,8 @@ interface ISettlementHookModule {
 contract LiquidationModule {
     struct Runtime_liquidateCollateral {
         uint256 availableSusd;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
+        uint256 supportedCollateralssLength;
+        address collateralAddress;
         uint256 availableAccountCollateral;
         uint128 poolId;
         uint256 poolCollateralTypesLength;
@@ -719,7 +659,8 @@ contract MarginModule {
         uint256 lengthBefore;
         uint256 lengthAfter;
         uint256 maxApproveAmount;
-        uint128[] previousSupportedSynthMarketIds;
+        address[] previousSupportedCollaterals;
+        uint256 i;
     }
 }
 
@@ -747,8 +688,8 @@ contract PerpAccountModule {
         uint256 fromIm;
         uint128 debtToMove;
         int128 sizeToMove;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
+        uint256 supportedCollateralsLength;
+        address collateralAddress;
         uint256 collateralToMove;
         uint256 newFromAmountCollateral;
         uint256 fromAccountCollateral;
@@ -766,8 +707,8 @@ contract PerpAccountModule {
         uint256 toMarginUsd;
         uint256 mergedCollateralUsd;
         uint256 mergedDiscountedCollateralUsd;
-        uint256 supportedSynthMarketIdsLength;
-        uint128 synthMarketId;
+        uint256 supportedCollateralsLength;
+        address collateralAddress;
         uint256 fromAccountCollateral;
     }
 }
@@ -777,6 +718,7 @@ library Margin {
     struct CollateralType {
         bytes32 oracleNodeId;
         uint128 maxAllowable;
+        uint128 skewScale;
         address rewardDistributor;
         bool exists;
     }
@@ -787,11 +729,11 @@ library Margin {
         uint256 collateralUsd;
     }
     struct GlobalData {
-        mapping(uint128 => CollateralType) supported;
-        uint128[] supportedSynthMarketIds;
+        mapping(address => CollateralType) supported;
+        address[] supportedCollaterals;
     }
     struct Data {
-        mapping(uint128 => uint256) collaterals;
+        mapping(address => uint256) collaterals;
         uint128 debtUsd;
     }
     function load() internal pure returns (Margin.GlobalData storage d) {
@@ -840,7 +782,7 @@ library PerpMarket {
         mapping(uint128 => Order.Data) orders;
         mapping(uint128 => Position.Data) positions;
         mapping(uint128 => address) flaggedLiquidations;
-        mapping(uint128 => uint256) depositedCollateral;
+        mapping(address => uint256) depositedCollateral;
         uint128[][] pastLiquidations;
     }
     function load() internal pure returns (GlobalData storage d) {
@@ -861,7 +803,6 @@ library PerpMarket {
 library PerpMarketConfiguration {
     struct GlobalData {
         address synthetix;
-        address spotMarket;
         address usdToken;
         address oracleManager;
         address pyth;
