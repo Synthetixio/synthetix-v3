@@ -14,6 +14,7 @@ import { bn, genOneOf } from './generators';
 import { ADDRESS0 } from './helpers';
 import { formatBytes32String } from 'ethers/lib/utils';
 import { GeneratedBootstrap } from './typed';
+import { wei } from '@synthetixio/wei';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PythMock = any; // Cannon imported modules don't generate types via typechain...
@@ -130,13 +131,13 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       MergeAccountSettlementHookMock: getContract('MergeAccountSettlementHookMock'),
     };
   });
+  // Staked pool will use `CollateralMock`, make sure our prices align.
+  const stakedCollateralPrice = MARGIN_COLLATERALS_TO_CONFIGURE[0].initialPrice;
+  // Stake $50m
+  const stakedCollateralAmount = wei(50_000_000).div(stakedCollateralPrice).toBN();
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
-  const stakedPool = createStakedPool(
-    core,
-    args.pool.stakedCollateralPrice,
-    args.pool.stakedAmount
-  );
+  const stakedPool = createStakedPool(core, stakedCollateralPrice, stakedCollateralAmount);
 
   let ethOracleNodeId: string;
   let ethOracleAgg: AggregatorV3Mock;

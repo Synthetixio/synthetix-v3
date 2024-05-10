@@ -64,11 +64,6 @@ export const genBoolean = () => genOneOf([true, false]);
 
 export const genBootstrap = () => ({
   initialEthPrice: bn(genNumber(1900, 2500)),
-  pool: {
-    // 50M USD of staked collateral.
-    stakedCollateralPrice: bn(100),
-    stakedAmount: bn(500_000),
-  },
   global: {
     pythPublishTimeMin: 12,
     pythPublishTimeMax: 60,
