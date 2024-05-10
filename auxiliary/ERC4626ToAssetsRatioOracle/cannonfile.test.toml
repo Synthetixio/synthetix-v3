@@ -9,7 +9,7 @@ artifact = "contracts/mocks/ERC20Mock.sol:ERC20Mock"
 
 [deploy.ERC4626Mock]
 artifact = "contracts/mocks/ERC4626Mock.sol:ERC4626Mock"
-args = ["<%= contracts.ERC20.address %>"]
+args = ["<%= contracts.ERC20Mock.address %>"]
 
 [deploy.ERC4626ToAssetsRatioOracle]
 artifact = "contracts/ERC4626ToAssetsRatioOracle.sol:ERC4626ToAssetsRatioOracle"
@@ -26,3 +26,4 @@ args = [
     [
     ],
 ]
+depends = ["deploy.ERC4626Mock","deploy.ERC4626ToAssetsRatioOracle"]
