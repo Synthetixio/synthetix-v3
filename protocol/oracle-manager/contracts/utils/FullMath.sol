@@ -10,13 +10,6 @@ library FullMath {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
-    enum Rounding {
-        Floor, // Toward negative infinity
-        Ceil, // Toward positive infinity
-        Trunc, // Toward zero
-        Expand // Away from zero
-    }
-
     /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier

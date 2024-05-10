@@ -12,10 +12,11 @@ describe('ERC4626ToAssetsRatioOracleNode', () => {
 
     it('should provide the appropriate amount of asset tokens per vault token', async () => {
       const { OracleManager } = systems();
-      // const { erc_4626_to_assets_ratio_oracle_node_id: nodeId } = extras();
+      //const { erc_4626_to_assets_ratio_oracle_node_id: nodeId } = extras();
+      //console.log(nodeId)
 
       // totalSupply of vault is 200 (w/ 6 decimals)
-      // asset.balanceOf(vault) is 120 (w/ 6 decimals)
+      // totalAssets is 120 (w/ 6 decimals)
       // it should return 0.6 (w/ 18 decimals)
       const { price } = await OracleManager.process("0x2452589138778bed0323ca3104cdef52d85767ff689a1b914e72df5a4719580f");
       const expectedPrice = wei(0.6).toBN();
