@@ -33,7 +33,7 @@ import { calcKeeperCancellationFee } from '../../calculations';
 
 describe('OrderModule Cancelations', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, traders, collateralsWithoutSusd, spotMarket } = bs;
+  const { systems, restore, provider, keeper, traders, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
@@ -248,7 +248,7 @@ describe('OrderModule Cancelations', () => {
     });
 
     it('should cancel order when within settlement window but price exceeds tolerance', async () => {
-      const { BfpMarketProxy, SpotMarket } = systems();
+      const { BfpMarketProxy } = systems();
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
@@ -258,9 +258,12 @@ describe('OrderModule Cancelations', () => {
 
       // Eliminate skewFee on the non-sUSD collateral sale.
       if (!isSusdCollateral(collateral)) {
-        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-          collateral.synthMarketId(),
-          bn(0)
+        await BfpMarketProxy.setMarginCollateralConfiguration(
+          [collateral.address()],
+          [collateral.oracleNodeId()],
+          [collateral.max],
+          [bn(0)], // skewScale
+          [collateral.rewardDistributorAddress()]
         );
       }
 

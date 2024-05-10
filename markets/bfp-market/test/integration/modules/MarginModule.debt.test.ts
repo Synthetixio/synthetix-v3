@@ -320,7 +320,7 @@ describe('MarginModule Debt', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            sUSDcollateral.synthMarketId(),
+            sUSDcollateral.address(),
             amountToBePaidOffByCollateral
           ),
         bs.provider()
