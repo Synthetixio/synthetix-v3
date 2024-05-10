@@ -11,6 +11,7 @@ import {IERC4626} from "./interfaces/IERC4626.sol";
 
 contract ERC4626ToAssetsRatioOracle is IExternalNode {
     using SafeCastU256 for uint256;
+    using DecimalMath for uint256;
 
     address public immutable vaultAddress;
     address public immutable assetAddress;
@@ -20,8 +21,8 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
     constructor(address _vaultAddress) {
         vaultAddress = _vaultAddress;
         assetAddress = IERC4626(vaultAddress).asset();
-        uint256 vaultDecimals = IERC20Metadata(vaultAddress).decimals();
-        uint256 assetDecimals = IERC20Metadata(assetAddress).decimals();
+        vaultDecimals = IERC20Metadata(vaultAddress).decimals();
+        assetDecimals = IERC20Metadata(assetAddress).decimals();
     }
 
     function process(
@@ -33,7 +34,7 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
         uint256 baseUnit = 10 ** vaultDecimals;
         uint256 assetsInVault = IERC4626(vaultAddress).convertToAssets(baseUnit);
         uint256 adjustedRatio;
-
+        
         if (assetDecimals > 18) {
             adjustedRatio = DecimalMath.downscale(assetsInVault, assetDecimals - 18);
         } else if (assetDecimals < 18) {
@@ -41,8 +42,6 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
         } else {
             adjustedRatio = assetsInVault;
         }
-
-        adjustedRatio = DecimalMath.divDecimal(adjustedRatio, baseUnit);
 
         return NodeOutput.Data(adjustedRatio.toInt(), block.timestamp, 0, 0);
     }
