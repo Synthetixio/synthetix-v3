@@ -34,7 +34,7 @@ args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"

@@ -166,7 +166,7 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for utilization recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (uint256 utilizationRate, ) = market.recomputeUtilization(price);
+        (uint256 utilizationRate, ) = market.recomputeUtilization(price, SYNTHETIX_SUSD);
         emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
     }
 
@@ -231,7 +231,8 @@ contract OrderModule is IOrderModule {
                 marketConfig.takerFee,
                 limitPrice,
                 keeperFeeBufferUsd
-            )
+            ),
+            SYNTHETIX_SUSD
         );
 
         market.orders[accountId].update(
@@ -299,7 +300,7 @@ contract OrderModule is IOrderModule {
         );
         recomputeFunding(market, runtime.params.oraclePrice);
 
-        runtime.trade = Position.validateTrade(accountId, market, runtime.params);
+        runtime.trade = Position.validateTrade(accountId, market, runtime.params, SYNTHETIX_SUSD);
 
         runtime.updatedMarketSize = (market.size.to256() +
             MathUtil.abs(runtime.trade.newPosition.size) -

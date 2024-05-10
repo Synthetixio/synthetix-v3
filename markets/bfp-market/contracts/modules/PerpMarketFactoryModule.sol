@@ -24,6 +24,13 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using SafeCastU128 for uint128;
     using PerpMarket for PerpMarket.Data;
 
+    // --- Immutables --- //
+    address public immutable SYNTHETIX_SUSD;
+
+    constructor(address _synthetix_susd) {
+        SYNTHETIX_SUSD = _synthetix_susd;
+    }
+
     // --- Mutations --- //
 
     /// @inheritdoc IPerpMarketFactoryModule
@@ -32,8 +39,6 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         globalConfig.synthetix = synthetix;
-        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
-        globalConfig.usdToken = ITokenModule(usdTokenAddress);
         globalConfig.oracleManager = synthetix.getOracleManager();
     }
 
@@ -75,7 +80,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeUtilization(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        (uint256 utilizationRate, ) = market.recomputeUtilization(market.getOraclePrice());
+        (uint256 utilizationRate, ) = market.recomputeUtilization(
+            market.getOraclePrice(),
+            SYNTHETIX_SUSD
+        );
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
     }
 
@@ -100,7 +108,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        int256 totalCollateralValueUsd = market.getTotalCollateralValueUsd().toInt();
+        int256 totalCollateralValueUsd = market.getTotalCollateralValueUsd(SYNTHETIX_SUSD).toInt();
         int128 skew = market.skew;
         int256 marketReportedDebt;
 
@@ -162,7 +170,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint128 utilization = market.getUtilization(market.getOraclePrice(), globalConfig);
+        uint128 utilization = market.getUtilization(
+            market.getOraclePrice(),
+            globalConfig,
+            SYNTHETIX_SUSD
+        );
         return
             IPerpMarketFactoryModule.UtilizationDigest(
                 market.currentUtilizationRateComputed,
@@ -212,7 +224,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 remainingCapacity,
                 lastLiquidationTime,
                 market.totalTraderDebtUsd,
-                market.getTotalCollateralValueUsd(),
+                market.getTotalCollateralValueUsd(SYNTHETIX_SUSD),
                 market.debtCorrection
             );
     }

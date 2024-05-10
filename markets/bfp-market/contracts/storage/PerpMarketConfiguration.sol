@@ -15,8 +15,6 @@ library PerpMarketConfiguration {
     struct GlobalData {
         /// A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
-        /// A reference to the Synthetix USD stablecoin.
-        ITokenModule usdToken;
         /// A reference to the Synthetix oracle manager (used to fetch market prices).
         INodeModule oracleManager;
         /// A reference to the Pyth EVM contract.

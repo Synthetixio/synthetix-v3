@@ -60,6 +60,16 @@ library Position {
         uint128 lastLiquidationTime;
     }
 
+    struct Runtime_validateTrade {
+        uint256 orderFee;
+        uint256 keeperFee;
+        bool positionDecreasing;
+        uint256 discountedNextMarginUsd;
+        uint256 im;
+        uint256 mm;
+        Position.Data newPosition;
+    }
+
     // --- Storage --- //
 
     struct Data {
@@ -82,12 +92,14 @@ library Position {
      * a market can have on either side.
      */
     function validateMaxOi(
+        PerpMarket.Data storage market,
         uint256 maxMarketSize,
-        int256 marketSkew,
-        uint256 marketSize,
         int256 currentSize,
         int256 newSize
-    ) internal pure {
+    ) internal view {
+        uint256 marketSize = market.size;
+        int256 marketSkew = market.skew;
+
         // Allow users to reduce an order no matter the market conditions.
         if (
             MathUtil.sameSide(currentSize, newSize) &&
@@ -171,7 +183,8 @@ library Position {
     function validateTrade(
         uint128 accountId,
         PerpMarket.Data storage market,
-        Position.TradeParams memory params
+        Position.TradeParams memory params,
+        address SYNTHETIX_SUSD
     ) internal view returns (Position.ValidatedTrade memory) {
         // Empty order is a no.
         if (params.sizeDelta == 0) {
@@ -181,12 +194,15 @@ library Position {
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
+        Runtime_validateTrade memory runtime;
+
         // --- Existing position validation --- //
 
         Margin.MarginValues memory marginValuesForLiqValidation = Margin.getMarginUsd(
             accountId,
             market,
-            params.oraclePrice
+            params.oraclePrice,
+            SYNTHETIX_SUSD
         );
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
@@ -213,15 +229,15 @@ library Position {
         // --- New position validation (as though the order settled) --- //
 
         // Derive fees incurred and next position if this order were to be settled successfully.
-        uint256 orderFee = Order.getOrderFee(
+        runtime.orderFee = Order.getOrderFee(
             params.sizeDelta,
             params.fillPrice,
             market.skew,
             params.makerFee,
             params.takerFee
         );
-        uint256 keeperFee = Order.getSettlementKeeperFee(params.keeperFeeBufferUsd);
-        Position.Data memory newPosition = Position.Data(
+        runtime.keeperFee = Order.getSettlementKeeperFee(params.keeperFeeBufferUsd);
+        runtime.newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
             // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
@@ -234,78 +250,77 @@ library Position {
         {
             // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
             // avoid this completely due to positions at min margin would never be allowed to lower size.
-            bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
-                MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-            if (!positionDecreasing) {
+            runtime.positionDecreasing =
+                MathUtil.sameSide(currentPosition.size, runtime.newPosition.size) &&
+                MathUtil.abs(runtime.newPosition.size) < MathUtil.abs(currentPosition.size);
+            if (!runtime.positionDecreasing) {
                 // We need discounted margin collateral as we're verifying for liquidation here.
                 //
                 // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
                 // incurred fees hence get `getNextMarginUsd` -fees.
-                uint256 discountedNextMarginUsd = getNextMarginUsd(
+                runtime.discountedNextMarginUsd = getNextMarginUsd(
                     marginValuesForLiqValidation.discountedMarginUsd,
-                    orderFee,
-                    keeperFee
+                    runtime.orderFee,
+                    runtime.keeperFee
                 );
-                (uint256 im, uint256 mm, ) = getLiquidationMarginUsd(
-                    newPosition.size,
+                (runtime.im, runtime.mm, ) = getLiquidationMarginUsd(
+                    runtime.newPosition.size,
                     params.oraclePrice,
                     marginValuesForLiqValidation.collateralUsd,
                     marketConfig
                 );
 
                 // Check new position initial margin validations.
-                if (discountedNextMarginUsd < im) {
+                if (runtime.discountedNextMarginUsd < runtime.im) {
                     revert ErrorUtil.InsufficientMargin();
                 }
 
                 // Check new position margin validations.
                 validateNextPositionEnoughMargin(
-                    newPosition,
+                    runtime.newPosition,
                     params.oraclePrice,
-                    mm,
-                    discountedNextMarginUsd
+                    runtime.mm,
+                    runtime.discountedNextMarginUsd
                 );
 
                 // Check the new position hasn't hit max OI on either side.
                 validateMaxOi(
+                    market,
                     marketConfig.maxMarketSize,
-                    market.skew,
-                    market.size,
                     currentPosition.size,
-                    newPosition.size
+                    runtime.newPosition.size
                 );
             }
         }
 
-        // NOTE: Notice the lack of discount here as `settleOrder` requires the next non-discounted margin
-        // to realize any PnL against the new position post settlement.
-        //
-        // Refer to `settleOrder` for more details.
-        uint256 nextMarginUsd = getNextMarginUsd(
-            MathUtil
-                .max(
-                    // Even though these marginValues are for liquidation checks, the `collateralUsd` can
-                    // still be used here. To compute the margin, we just need to attribute any PnL adjustments
-                    // to the collateral (e.g. price PnL, funding, debt etc.).
-                    marginValuesForLiqValidation.collateralUsd.toInt() +
-                        Margin.getPnlAdjustmentUsd(
-                            accountId,
-                            market,
-                            params.oraclePrice,
-                            params.fillPrice
-                        ),
-                    0
-                )
-                .toUint(),
-            orderFee,
-            keeperFee
-        );
         return
             Position.ValidatedTrade(
-                newPosition,
-                orderFee,
-                keeperFee,
-                nextMarginUsd,
+                runtime.newPosition,
+                runtime.orderFee,
+                runtime.keeperFee,
+                // NOTE: Notice the lack of discount here as `settleOrder` requires the next non-discounted margin
+                // to realize any PnL against the new position post settlement.
+                //
+                // Refer to `settleOrder` for more details.;
+                getNextMarginUsd(
+                    MathUtil
+                        .max(
+                            // Even though these marginValues are for liquidation checks, the `collateralUsd` can
+                            // still be used here. To compute the margin, we just need to attribute any PnL adjustments
+                            // to the collateral (e.g. price PnL, funding, debt etc.).
+                            marginValuesForLiqValidation.collateralUsd.toInt() +
+                                Margin.getPnlAdjustmentUsd(
+                                    accountId,
+                                    market,
+                                    params.oraclePrice,
+                                    params.fillPrice
+                                ),
+                            0
+                        )
+                        .toUint(),
+                    runtime.orderFee,
+                    runtime.keeperFee
+                ),
                 marginValuesForLiqValidation.collateralUsd
             );
     }

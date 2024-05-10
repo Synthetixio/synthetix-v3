@@ -62,7 +62,8 @@ contract MarginModule is IMarginModule {
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            oraclePrice
+            oraclePrice,
+            SYNTHETIX_SUSD
         );
 
         // Make sure margin isn't liquidatable due to debt.
@@ -201,7 +202,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, SYNTHETIX_SUSD);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -286,7 +287,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, SYNTHETIX_SUSD);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
@@ -553,7 +554,7 @@ contract MarginModule is IMarginModule {
     ) external view returns (Margin.MarginValues memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice(), SYNTHETIX_SUSD);
     }
 
     /// @inheritdoc IMarginModule
@@ -568,7 +569,8 @@ contract MarginModule is IMarginModule {
             Margin.getNetAssetValue(
                 accountId,
                 market,
-                oraclePrice == 0 ? market.getOraclePrice() : oraclePrice
+                oraclePrice == 0 ? market.getOraclePrice() : oraclePrice,
+                SYNTHETIX_SUSD
             );
     }
 
@@ -584,10 +586,15 @@ contract MarginModule is IMarginModule {
         return
             Margin.getDiscountedCollateralPrice(
                 amount,
-                globalMarginConfig.getCollateralPrice(collateralAddress, globalMarketConfig),
+                globalMarginConfig.getCollateralPrice(
+                    collateralAddress,
+                    globalMarketConfig,
+                    SYNTHETIX_SUSD
+                ),
                 collateralAddress,
                 globalMarketConfig,
-                globalMarginConfig
+                globalMarginConfig,
+                SYNTHETIX_SUSD
             );
     }
 
@@ -603,7 +610,8 @@ contract MarginModule is IMarginModule {
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            oraclePrice
+            oraclePrice,
+            SYNTHETIX_SUSD
         );
         Position.Data storage position = market.positions[accountId];
         int128 size = position.size;
@@ -645,7 +653,7 @@ contract MarginModule is IMarginModule {
 
         return
             Margin.getMarginLiquidationOnlyReward(
-                Margin.getCollateralUsdWithoutDiscount(accountId, marketId),
+                Margin.getCollateralUsdWithoutDiscount(accountId, marketId, SYNTHETIX_SUSD),
                 PerpMarketConfiguration.load(marketId),
                 PerpMarketConfiguration.load()
             );

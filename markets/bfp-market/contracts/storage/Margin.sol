@@ -46,6 +46,14 @@ library Margin {
         uint256 collateralUsd;
     }
 
+    // --- Runtime structs --- //
+
+    struct Runtime_getCollateralUsd {
+        address collateralAddress;
+        uint256 available;
+        uint256 collateralPrice;
+    }
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -134,40 +142,39 @@ library Margin {
     /// @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
     function getCollateralUsd(
         uint128 accountId,
-        uint128 marketId
+        uint128 marketId,
+        address sUsdAddress,
+        PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256 collateralUsd, uint256 discountedCollateralUsd) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        // Variable declaration outside of loop to be more gas efficient.
-        uint256 length = globalMarginConfig.supportedCollaterals.length;
-        address collateralAddress;
-        uint256 available;
+        Runtime_getCollateralUsd memory runtime;
 
-        uint256 collateralPrice;
-        uint256 discountedCollateralPrice;
-
-        for (uint256 i = 0; i < length; ) {
-            collateralAddress = globalMarginConfig.supportedCollaterals[i];
-            available = accountMargin.collaterals[collateralAddress];
+        for (uint256 i = 0; i < globalMarginConfig.supportedCollaterals.length; ) {
+            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            runtime.available = accountMargin.collaterals[runtime.collateralAddress];
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
-            if (available > 0) {
-                collateralPrice = getCollateralPrice(
+            if (runtime.available > 0) {
+                uint256 collateralPrice = getCollateralPrice(
                     globalMarginConfig,
-                    collateralAddress,
-                    globalConfig
-                );
-                discountedCollateralPrice = getDiscountedCollateralPrice(
-                    available,
-                    collateralPrice,
-                    collateralAddress,
+                    runtime.collateralAddress,
                     globalConfig,
-                    globalMarginConfig
+                    sUsdAddress
                 );
-                collateralUsd += available.mulDecimal(collateralPrice);
-                discountedCollateralUsd += available.mulDecimal(discountedCollateralPrice);
+
+                collateralUsd += runtime.available.mulDecimal(collateralPrice);
+                discountedCollateralUsd += runtime.available.mulDecimal(
+                    getDiscountedCollateralPrice(
+                        runtime.available,
+                        collateralPrice,
+                        runtime.collateralAddress,
+                        globalConfig,
+                        globalMarginConfig,
+                        sUsdAddress
+                    )
+                );
             }
             unchecked {
                 ++i;
@@ -213,11 +220,14 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 price,
+        address SYNTHETIX_SUSD
     ) internal view returns (MarginValues memory marginValues) {
         (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(
             accountId,
-            market.id
+            market.id,
+            SYNTHETIX_SUSD,
+            PerpMarketConfiguration.load()
         );
         int256 adjustment = getPnlAdjustmentUsd(accountId, market, price, price);
 
@@ -264,7 +274,8 @@ library Margin {
      */
     function getCollateralUsdWithoutDiscount(
         uint128 accountId,
-        uint128 marketId
+        uint128 marketId,
+        address sUsdAddress
     ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -284,7 +295,8 @@ library Margin {
                 collateralPrice = getCollateralPrice(
                     globalMarginConfig,
                     collateralAddress,
-                    globalConfig
+                    globalConfig,
+                    sUsdAddress
                 );
                 collateralUsd += available.mulDecimal(collateralPrice);
             }
@@ -299,12 +311,13 @@ library Margin {
     function getNetAssetValue(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 price,
+        address SYNTHETIX_SUSD
     ) internal view returns (uint256) {
         return
             MathUtil
                 .max(
-                    getCollateralUsdWithoutDiscount(accountId, market.id).toInt() +
+                    getCollateralUsdWithoutDiscount(accountId, market.id, SYNTHETIX_SUSD).toInt() +
                         getPnlAdjustmentUsd(accountId, market, price, price),
                     0
                 )
@@ -331,10 +344,11 @@ library Margin {
     function getCollateralPrice(
         Margin.GlobalData storage self,
         address collateralAddress,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        PerpMarketConfiguration.GlobalData storage globalConfig,
+        address sUsdAddress
     ) internal view returns (uint256) {
         return
-            collateralAddress == address(globalConfig.usdToken)
+            collateralAddress == sUsdAddress
                 ? DecimalMath.UNIT
                 : getOracleCollateralPrice(self, collateralAddress, globalConfig);
     }
@@ -351,9 +365,10 @@ library Margin {
         uint256 collateralPrice,
         address collateralAddress,
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        Margin.GlobalData storage globalMarginConfig
+        Margin.GlobalData storage globalMarginConfig,
+        address sUsdAddress
     ) internal view returns (uint256) {
-        if (collateralAddress == address(globalConfig.usdToken)) {
+        if (collateralAddress == sUsdAddress) {
             return DecimalMath.UNIT;
         }
 

@@ -163,7 +163,8 @@ library PerpMarket {
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        PerpMarketConfiguration.GlobalData storage globalConfig,
+        address sUsdAddress
     ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
@@ -182,7 +183,7 @@ library PerpMarket {
         //
         // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
         int256 delegatedCollateralValueUsd = withdrawableUsd.toInt() -
-            getTotalCollateralValueUsd(self).toInt();
+            getTotalCollateralValueUsd(self, sUsdAddress).toInt();
         if (delegatedCollateralValueUsd <= 0) {
             return DecimalMath.UNIT.to128();
         }
@@ -232,11 +233,12 @@ library PerpMarket {
     /// @dev Recompute and store utilization rate given current market conditions.
     function recomputeUtilization(
         PerpMarket.Data storage self,
-        uint256 price
+        uint256 price,
+        address sUsdAddress
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
-            getUtilization(self, price, globalConfig),
+            getUtilization(self, price, globalConfig, sUsdAddress),
             globalConfig
         );
         unrecordedUtilization = getUnrecordedUtilization(self);
@@ -450,7 +452,8 @@ library PerpMarket {
 
     /// @dev Returns the total USD value of all collaterals if we were to spot sell everything.
     function getTotalCollateralValueUsd(
-        PerpMarket.Data storage self
+        PerpMarket.Data storage self,
+        address sUsdAddress
     ) internal view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -468,7 +471,8 @@ library PerpMarket {
             if (collateralAvailable > 0) {
                 collateralPrice = globalMarginConfig.getCollateralPrice(
                     collateralAddress,
-                    globalConfig
+                    globalConfig,
+                    sUsdAddress
                 );
                 totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);
             }
