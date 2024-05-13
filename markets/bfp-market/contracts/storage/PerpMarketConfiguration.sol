@@ -8,7 +8,7 @@ import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/I
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 
-// @dev A static uint128 of the sUSD marketId.
+/// @dev A static uint128 of the sUSD marketId.
 uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
 
 library PerpMarketConfiguration {
@@ -16,101 +16,103 @@ library PerpMarketConfiguration {
 
     // --- Storage --- //
 
-    // @dev Perp market configuration shared across all markets
     struct GlobalData {
-        // A reference to the core Synthetix v3 system.
+        /// A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
-        // A reference to the core Synthetix v3 spot market system.
+        /// A reference to the core Synthetix v3 spot market system.
         ISpotMarketSystem spotMarket;
-        // A reference to the Synthetix USD stablecoin.
+        /// A reference to the Synthetix USD stablecoin.
         ITokenModule usdToken;
-        // A reference to the Synthetix oracle manager (used to fetch market prices).
+        /// A reference to the Synthetix oracle manager (used to fetch market prices).
         INodeModule oracleManager;
-        // A reference to the Pyth EVM contract.
+        /// A reference to the Pyth EVM contract.
         IPyth pyth;
-        // Oracle node id for for eth/usd.
+        /// Oracle node id for for eth/usd.
         bytes32 ethOracleNodeId;
-        // Address of generic PerpRewardDistributor contract.
+        /// Address of generic PerpRewardDistributor contract.
         address rewardDistributorImplementation;
-        // Minimum acceptable publishTime from Pyth WH VAA price update data.
+        /// Minimum acceptable publishTime from Pyth WH VAA price update data.
         uint64 pythPublishTimeMin;
-        // Max acceptable publishTime from Pyth.
+        /// Max acceptable publishTime from Pyth.
         uint64 pythPublishTimeMax;
-        // Minimum amount of time (in seconds) required for an order to exist before settlement.
+        /// Minimum amount of time (in seconds) required for an order to exist before settlement.
         uint128 minOrderAge;
-        // Maximum order age (in seconds) before the order becomes stale.
+        /// Maximum order age (in seconds) before the order becomes stale.
         uint128 maxOrderAge;
-        // The min amount in USD a keeper should receive on settlements (currently not used for liquidations).
+        /// The min amount in USD a keeper should receive on settlements (currently not used for liquidations).
         uint256 minKeeperFeeUsd;
-        // The maximum amount in USD a keeper should receive on settlements/liquidations.
+        /// The maximum amount in USD a keeper should receive on settlements/liquidations.
         uint256 maxKeeperFeeUsd;
-        // This is used to ensure we have incentives to liquidate small positions
+        /// This is used to ensure we have incentives to liquidate small positions
         uint128 keeperProfitMarginUsd;
-        // A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
+        /// A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
         uint128 keeperProfitMarginPercent;
-        // Number of gas units required to perform an order settlement by a keeper.
+        /// Number of gas units required to perform an order settlement by a keeper.
         uint128 keeperSettlementGasUnits;
-        // Number of gas units required to liquidate a position by a keeper.
+        /// Number of gas units required to perform an order cancellation by a keeper.
+        uint128 keeperCancellationGasUnits;
+        /// Number of gas units required to liquidate a position by a keeper.
         uint128 keeperLiquidationGasUnits;
-        // Number of gas units required to flag a position by a keeper.
+        /// Number of gas units required to flag a position by a keeper.
         uint128 keeperFlagGasUnits;
-        // Number of gas units required to liquidate margin only by a keeper.
+        /// Number of gas units required to liquidate margin only by a keeper.
         uint128 keeperLiquidateMarginGasUnits;
-        // A fixed fee sent to the liquidator upon position liquidation.
+        /// A fixed fee sent to the liquidator upon position liquidation.
         uint256 keeperLiquidationFeeUsd;
-        // Address of endorsed liquidation keeper to exceed liq caps.
+        /// Address of endorsed liquidation keeper to exceed liq caps.
         address keeperLiquidationEndorsed;
-        // A scalar applied on the collateral amount as part of discount adjustment.
+        /// A scalar applied on the collateral amount as part of discount adjustment.
         uint128 collateralDiscountScalar;
-        // Minimum discount applied on deposited margin collateral.
+        /// Minimum discount applied on deposited margin collateral.
         uint128 minCollateralDiscount;
-        // Maximum discount applied on deposited margin collateral.
+        /// Maximum discount applied on deposited margin collateral.
         uint128 maxCollateralDiscount;
-        // Maximum slippage on collateral sold for negative pnl position modifications.
+        /// Maximum slippage on collateral sold for negative pnl position modifications.
         uint128 sellExactInMaxSlippagePercent;
-        // Dictates wheter or not the utilization rate should use high or low slope
+        /// Dictates wheter or not the utilization rate should use high or low slope
         uint128 utilizationBreakpointPercent;
-        // Used for utilization interest when below utilization breakpoint
+        /// Used for utilization interest when below utilization breakpoint
         uint128 lowUtilizationSlopePercent;
-        // Used for utilization interest when above utilization breakpoint
+        /// Used for utilization interest when above utilization breakpoint
         uint128 highUtilizationSlopePercent;
     }
 
-    // @dev Perp market configuration specific to a market
     struct Data {
-        // Oracle node id for price feed data.
+        /// Oracle node id for price feed data.
         bytes32 oracleNodeId;
-        // The Pyth price feedId for this market.
+        /// The Pyth price feedId for this market.
         bytes32 pythPriceFeedId;
-        // Fee paid (in bps) when the order _decreases_ skew.
+        /// Fee paid (in bps) when the order _decreases_ skew.
         uint128 makerFee;
-        // Fee paid (in bps) when the order _increases_ skew.
+        /// Fee paid (in bps) when the order _increases_ skew.
         uint128 takerFee;
-        // Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
+        /// Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
         uint128 maxMarketSize;
-        // The maximum velocity funding rate can change by.
+        /// The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
-        // Skew scaling denominator constant.
+        /// Skew scaling denominator constant.
         uint128 skewScale;
-        // If the absolute proportional skew abs(skew/skewScale) is below this value, the funding velocity will be 0
+        /// If the absolute proportional skew abs(skew/skewScale) is below this value, the funding velocity will be 0
         uint128 fundingVelocityClamp;
-        // A multiplier on OI * price * minCreditPercent to increase/decrease min credit for market.
+        /// A multiplier on OI * price * minCreditPercent to increase/decrease min credit for market.
         uint128 minCreditPercent;
-        // Minimum margin in USD added to MM and IM.
+        /// Minimum margin in USD added to MM and IM.
         uint256 minMarginUsd;
-        // Used in addition with IMR to determine IM and MM.
+        /// Used in addition with IMR to determine IM and MM.
         uint256 minMarginRatio;
-        // Scalar is used to dynamically infer the initial margin.
+        /// Scalar is used to dynamically infer the initial margin.
         uint256 incrementalMarginScalar;
-        // MMS used to dynamically infer the MMR' based on IMR'.
+        /// MMS used to dynamically infer the MMR' based on IMR'.
         uint256 maintenanceMarginScalar;
-        // Used to infer a % of position notional as liquidation reward.
+        /// A max cap on the IMR.
+        uint256 maxInitialMarginRatio;
+        /// Used to infer a % of position notional as liquidation reward.
         uint256 liquidationRewardPercent;
-        // An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
+        /// An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
         uint128 liquidationLimitScalar;
-        // Liquidation window duration in seconds (e.g. 30s -> 30, <>30e18)
+        /// Liquidation window duration in seconds (e.g. 30s -> 30, <>30e18)
         uint128 liquidationWindowDuration;
-        // If below, allows further liquidations of pd is below this maximum and caps are reached.
+        /// If below, allows further liquidations of pd is below this maximum and caps are reached.
         uint128 liquidationMaxPd;
     }
 

@@ -25,6 +25,8 @@ import {
   commitAndSettle,
   depositMargin,
   fastForwardBySec,
+  findEventSafe,
+  getSusdCollateral,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
@@ -32,6 +34,7 @@ import {
 import { Collateral, Market, Trader } from '../../typed';
 import { isSameSide } from '../../calculations';
 import { shuffle, times } from 'lodash';
+import { IPerpAccountModule } from '../../../typechain-types';
 
 describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -50,13 +53,13 @@ describe('PerpMarketFactoryModule', () => {
 
   describe('setSynthetix', () => {
     it('should revert when invalid synthetix addr (due to needing USD token)', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       const address = genAddress();
       try {
         // assertRevert couldn't handle this error.
-        await PerpMarketProxy.connect(from).setSynthetix(address);
+        await BfpMarketProxy.connect(from).setSynthetix(address);
         assert.fail('should have reverted');
       } catch (error) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,131 +68,131 @@ describe('PerpMarketFactoryModule', () => {
     });
 
     it('should revert when not owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer;
       const address = genAddress();
       await assertRevert(
-        PerpMarketProxy.connect(from).setSynthetix(address),
+        BfpMarketProxy.connect(from).setSynthetix(address),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('setSpotMarket', () => {
     it('should set successfully', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       const address = genAddress();
-      await PerpMarketProxy.connect(from).setSpotMarket(address);
-      const config = await PerpMarketProxy.getMarketConfiguration();
+      await BfpMarketProxy.connect(from).setSpotMarket(address);
+      const config = await BfpMarketProxy.getMarketConfiguration();
 
       assert(config.spotMarket, address);
     });
 
     it('should revert when not owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer;
       const address = genAddress();
       await assertRevert(
-        PerpMarketProxy.connect(from).setSpotMarket(address),
+        BfpMarketProxy.connect(from).setSpotMarket(address),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('setPyth', () => {
     it('should set successfully', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       const address = genAddress();
-      await PerpMarketProxy.connect(from).setPyth(address);
-      const config = await PerpMarketProxy.getMarketConfiguration();
+      await BfpMarketProxy.connect(from).setPyth(address);
+      const config = await BfpMarketProxy.getMarketConfiguration();
 
       assert(config.pyth, address);
     });
 
     it('should revert when not owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer;
       const address = genAddress();
       await assertRevert(
-        PerpMarketProxy.connect(from).setPyth(address),
+        BfpMarketProxy.connect(from).setPyth(address),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('setEthOracleNodeId', () => {
     it('should set successfully', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       const nodeId = genBytes32();
-      await PerpMarketProxy.connect(from).setEthOracleNodeId(nodeId);
-      const config = await PerpMarketProxy.getMarketConfiguration();
+      await BfpMarketProxy.connect(from).setEthOracleNodeId(nodeId);
+      const config = await BfpMarketProxy.getMarketConfiguration();
 
       assert(config.ethOracleNodeId, nodeId);
     });
 
     it('should revert when not owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer;
       const nodeId = genBytes32();
       await assertRevert(
-        PerpMarketProxy.connect(from).setEthOracleNodeId(nodeId),
+        BfpMarketProxy.connect(from).setEthOracleNodeId(nodeId),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('setRewardDistributorImplementation', async () => {
     it('should set successfully', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       const implementation = genAddress();
-      await PerpMarketProxy.connect(from).setRewardDistributorImplementation(implementation);
-      const config = await PerpMarketProxy.getMarketConfiguration();
+      await BfpMarketProxy.connect(from).setRewardDistributorImplementation(implementation);
+      const config = await BfpMarketProxy.getMarketConfiguration();
 
       assert(config.rewardDistributorImplementation, implementation);
     });
 
     it('should revert when not owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer;
       const implementation = genAddress();
       await assertRevert(
-        PerpMarketProxy.connect(from).setRewardDistributorImplementation(implementation),
+        BfpMarketProxy.connect(from).setRewardDistributorImplementation(implementation),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('getActiveMarketIds', () => {
     it('should return market ids', async () => {
-      const { PerpMarketProxy } = systems();
-      const marketIds = await PerpMarketProxy.getActiveMarketIds();
+      const { BfpMarketProxy } = systems();
+      const marketIds = await BfpMarketProxy.getActiveMarketIds();
       assertBn.equal(marketIds.length, markets().length);
     });
   });
 
   describe('getMarketDigest', () => {
     it('should revert when marketId does not exist', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       const invalidMarketId = bn(genNumber(42069, 50_000));
 
       await assertRevert(
-        PerpMarketProxy.getMarketDigest(invalidMarketId),
+        BfpMarketProxy.getMarketDigest(invalidMarketId),
         `MarketNotFound("${invalidMarketId}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
@@ -214,10 +217,11 @@ describe('PerpMarketFactoryModule', () => {
       };
 
       it('should have 0 velocity if skew is small enough', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
         const market = genOneOf(markets());
-        const { fundingVelocityClamp, skewScale } =
-          await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const { fundingVelocityClamp, skewScale } = await BfpMarketProxy.getMarketConfigurationById(
+          market.marketId()
+        );
         const minSkewFundingVelocity = wei(fundingVelocityClamp).mul(skewScale);
 
         const { answer: marketPrice } = await market.aggregator().latestRoundData();
@@ -244,7 +248,7 @@ describe('PerpMarketFactoryModule', () => {
         });
         await commitAndSettle(bs, marketId, trader, order);
 
-        const { fundingVelocity } = await PerpMarketProxy.getMarketDigest(marketId);
+        const { fundingVelocity } = await BfpMarketProxy.getMarketDigest(marketId);
         // Assert fundingVelocity is not zero
         assertBn.notEqual(fundingVelocity, bn(0));
 
@@ -269,7 +273,7 @@ describe('PerpMarketFactoryModule', () => {
           })
         );
         const { fundingVelocity: fundingVelocity1 } =
-          await PerpMarketProxy.getMarketDigest(marketId);
+          await BfpMarketProxy.getMarketDigest(marketId);
 
         assertBn.equal(fundingVelocity1, 0);
       });
@@ -279,7 +283,7 @@ describe('PerpMarketFactoryModule', () => {
         //
         // @see: https://github.com/davidvuong/perpsv2-funding/blob/master/main.ipynb
         // @see: https://github.com/Synthetixio/synthetix/blob/develop/test/contracts/PerpsV2Market.js#L3631
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         // Use static market and traders for concrete example.
         const market = markets()[0];
@@ -337,7 +341,7 @@ describe('PerpMarketFactoryModule', () => {
         );
 
         let lastFundingRate = bn(0);
-        const { minOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+        const { minOrderAge } = await BfpMarketProxy.getMarketConfiguration();
 
         for (const trade of trades) {
           const {
@@ -356,7 +360,7 @@ describe('PerpMarketFactoryModule', () => {
           });
           await commitAndSettle(bs, market.marketId(), account, order);
 
-          const { fundingVelocity, fundingRate } = await PerpMarketProxy.getMarketDigest(
+          const { fundingVelocity, fundingRate } = await BfpMarketProxy.getMarketDigest(
             market.marketId()
           );
 
@@ -368,7 +372,7 @@ describe('PerpMarketFactoryModule', () => {
 
         // No change in skew (zero) and velocity/funding should remain the same.
         await fastForward(SECONDS_ONE_DAY, provider()); // 1 day
-        const { fundingVelocity, fundingRate } = await PerpMarketProxy.getMarketDigest(
+        const { fundingVelocity, fundingRate } = await BfpMarketProxy.getMarketDigest(
           market.marketId()
         );
 
@@ -377,10 +381,11 @@ describe('PerpMarketFactoryModule', () => {
       });
 
       it('should demonstrate a balance market can have a non-zero funding', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
         const market = genOneOf(markets());
-        const { fundingVelocityClamp, skewScale } =
-          await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const { fundingVelocityClamp, skewScale } = await BfpMarketProxy.getMarketConfigurationById(
+          market.marketId()
+        );
         const minSkewFundingVelocity = wei(fundingVelocityClamp).mul(skewScale);
 
         const { answer: marketPrice } = await market.aggregator().latestRoundData();
@@ -408,7 +413,7 @@ describe('PerpMarketFactoryModule', () => {
         await commitAndSettle(bs, market.marketId(), trader1, order1);
         await fastForwardBySec(provider(), genNumber(15_000, 30_000));
 
-        const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const d1 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
         assert.notEqual(d1.fundingRate.toString(), '0');
         const { trader: trader2 } = await depositMargin(
@@ -427,18 +432,18 @@ describe('PerpMarketFactoryModule', () => {
         await commitAndSettle(bs, market.marketId(), trader2, order2);
         await fastForwardBySec(provider(), genNumber(15_000, 30_000));
 
-        const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const d2 = await BfpMarketProxy.getMarketDigest(market.marketId());
         assert.notEqual(d2.fundingRate.toString(), '0');
       });
 
       it('should have zero funding when market is new and empty', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         // Use static market and traders for concrete example.
         const market = genOneOf(markets());
 
         // Expect zero values.
-        const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const d1 = await BfpMarketProxy.getMarketDigest(market.marketId());
         assertBn.isZero(d1.size);
         assertBn.isZero(d1.fundingRate);
         assertBn.isZero(d1.fundingVelocity);
@@ -446,14 +451,14 @@ describe('PerpMarketFactoryModule', () => {
         await fastForward(60 * 60 * 24, provider());
 
         // Should still be zero values with no market changes.
-        const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const d2 = await BfpMarketProxy.getMarketDigest(market.marketId());
         assertBn.isZero(d2.size);
         assertBn.isZero(d2.fundingRate);
         assertBn.isZero(d2.fundingVelocity);
       });
 
       it('should change funding direction when skew flips', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         const market = genOneOf(markets());
         const collateral = genOneOf(collaterals());
@@ -468,8 +473,9 @@ describe('PerpMarketFactoryModule', () => {
           })
         );
 
-        const { fundingVelocityClamp, skewScale } =
-          await PerpMarketProxy.getMarketConfigurationById(market.marketId());
+        const { fundingVelocityClamp, skewScale } = await BfpMarketProxy.getMarketConfigurationById(
+          market.marketId()
+        );
         const minSkewFundingVelocity = wei(fundingVelocityClamp).mul(skewScale);
 
         // Go short.
@@ -485,7 +491,7 @@ describe('PerpMarketFactoryModule', () => {
         );
         await commitAndSettle(bs, market.marketId(), trader, order1);
         await fastForwardBySec(provider(), SECONDS_ONE_DAY);
-        const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const d1 = await BfpMarketProxy.getMarketDigest(market.marketId());
         assertBn.lt(d1.fundingRate, bn(0));
 
         // Go long.
@@ -506,7 +512,7 @@ describe('PerpMarketFactoryModule', () => {
         );
         await commitAndSettle(bs, market.marketId(), trader, order2);
         await fastForwardBySec(provider(), SECONDS_ONE_DAY);
-        const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const d2 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
         // New funding rate should be trending towards zero or positive.
         assertBn.gt(d2.fundingRate, d1.fundingRate);
@@ -515,7 +521,7 @@ describe('PerpMarketFactoryModule', () => {
       forEach(['long', 'short']).it(
         'should result in max funding velocity when %s skewed',
         async (side: string) => {
-          const { PerpMarketProxy } = systems();
+          const { BfpMarketProxy } = systems();
 
           const market = genOneOf(markets());
           const collateral = genOneOf(collaterals());
@@ -547,10 +553,10 @@ describe('PerpMarketFactoryModule', () => {
           });
           await commitAndSettle(bs, market.marketId(), trader, order);
 
-          const { maxFundingVelocity } = await PerpMarketProxy.getMarketConfigurationById(
+          const { maxFundingVelocity } = await BfpMarketProxy.getMarketConfigurationById(
             market.marketId()
           );
-          const { fundingVelocity } = await PerpMarketProxy.getMarketDigest(market.marketId());
+          const { fundingVelocity } = await BfpMarketProxy.getMarketDigest(market.marketId());
 
           assertBn.equal(fundingVelocity.abs(), maxFundingVelocity);
         }
@@ -559,7 +565,7 @@ describe('PerpMarketFactoryModule', () => {
       forEach(['long', 'short']).it(
         'should continue to increase (%s) funding in same direction insofar as market is skewed',
         async (side: string) => {
-          const { PerpMarketProxy } = systems();
+          const { BfpMarketProxy } = systems();
 
           const market = genOneOf(markets());
           const collateral = genOneOf(collaterals());
@@ -584,11 +590,11 @@ describe('PerpMarketFactoryModule', () => {
 
           await fastForwardBySec(provider(), SECONDS_ONE_HR);
 
-          const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+          const d1 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
           await fastForwardBySec(provider(), SECONDS_ONE_DAY);
 
-          const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+          const d2 = await BfpMarketProxy.getMarketDigest(market.marketId());
 
           // Funding rate should be expanding from skew in the same direction.
           assert.ok(isSameSide(d1.fundingRate, d2.fundingRate));
@@ -599,24 +605,24 @@ describe('PerpMarketFactoryModule', () => {
 
   describe('reportedDebt', () => {
     const getTotalPositionPnl = async (traders: Trader[], marketId: BigNumber) => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const positions = await Promise.all(
-        traders.map((t) => PerpMarketProxy.getPositionDigest(t.accountId, marketId))
+        traders.map((t) => BfpMarketProxy.getPositionDigest(t.accountId, marketId))
       );
-      return positions.reduce((acc, p) => acc.add(p.pnl).sub(p.accruedFeesUsd), bn(0));
+      return positions.reduce((acc, p) => acc.add(p.pnl), bn(0));
     };
 
     it('should have a debt of zero when first initialized', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       const market = genOneOf(markets());
-      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+      const reportedDebt = await BfpMarketProxy.reportedDebt(market.marketId());
 
       assertBn.isZero(reportedDebt);
     });
 
     it('should report usd value of margin as report when depositing into system', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       // Remove any collateral discount to minimise subtle differences in deposit values.
       await setMarketConfiguration(bs, {
@@ -625,13 +631,13 @@ describe('PerpMarketFactoryModule', () => {
       });
 
       const { market, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+      const reportedDebt = await BfpMarketProxy.reportedDebt(market.marketId());
 
       assertBn.near(reportedDebt, marginUsdDepositAmount, bn(0.00001));
     });
 
     it('should expect sum of pnl to eq market debt', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       const collateral = collaterals()[0];
       const { trader, marketId, market, collateralDepositAmount } = await depositMargin(
@@ -645,16 +651,17 @@ describe('PerpMarketFactoryModule', () => {
       });
       await commitAndSettle(bs, marketId, trader, openOrder);
 
-      const d1 = await PerpMarketProxy.getMarketDigest(marketId);
-      const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
-        await getTotalPositionPnl([trader], marketId)
-      );
-      const reportedDebt = await PerpMarketProxy.reportedDebt(market.marketId());
+      const d1 = await BfpMarketProxy.getMarketDigest(marketId);
+      const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd
+        .add(await getTotalPositionPnl([trader], marketId))
+        .sub(d1.totalTraderDebtUsd);
+      const reportedDebt = await BfpMarketProxy.reportedDebt(market.marketId());
+
       assertBn.near(reportedDebt, expectedReportedDebtAfterOpen, bn(0.0000000001));
     });
 
     it('should expect sum of remaining all pnl to eq market debt (multiple markets)', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
 
       const reportedDebts: BigNumber[] = [];
       let accumulatedReportedDebt = bn(0);
@@ -670,11 +677,11 @@ describe('PerpMarketFactoryModule', () => {
         });
         await commitAndSettle(bs, marketId, trader, openOrder);
 
-        const d1 = await PerpMarketProxy.getMarketDigest(marketId);
-        const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd.add(
-          await getTotalPositionPnl([trader], marketId)
-        );
-        const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+        const d1 = await BfpMarketProxy.getMarketDigest(marketId);
+        const expectedReportedDebtAfterOpen = d1.totalCollateralValueUsd
+          .add(await getTotalPositionPnl([trader], marketId))
+          .sub(d1.totalTraderDebtUsd);
+        const reportedDebt = await BfpMarketProxy.reportedDebt(marketId);
         assertBn.near(reportedDebt, expectedReportedDebtAfterOpen, bn(0.0000000001));
 
         reportedDebts.push(reportedDebt);
@@ -687,10 +694,314 @@ describe('PerpMarketFactoryModule', () => {
 
     it('should expect sum of remaining all pnl to eq debt after a long period of trading');
 
-    it('should expect reportedDebt/totalDebt to be updated appropriately sUSD (concrete)');
+    it('should expect reportedDebt/totalDebt to be updated appropriately sUSD due to order fees (concrete)', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const collateral = getSusdCollateral(collaterals());
+      const market = markets()[1]; // ETHPERP.
+      const marketId = market.marketId();
+      const trader = traders()[0];
 
-    it('should expect reportedDebt/totalDebt to be updated appropriately non-sUSD (concrete)', async () => {
-      const { PerpMarketProxy, Core } = systems();
+      // Create a frictionless market for simplicity.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: bn(0.01), // 1% fees to make calculations easier.
+        takerFee: bn(0.01), // 1% fees to make calculations easier.
+        maxFundingVelocity: bn(0), // Not testing funding is this test.
+        skewScale: bn(1_000_000_000), // An extremely large skewScale to minimise price impact.
+      });
+      // Cap keeper fees to $10.
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(10),
+        maxKeeperFeeUsd: bn(10),
+      });
+
+      // Set market price to $1.
+      await market.aggregator().mockSetCurrentPrice(bn(1));
+
+      // Deposit 1k USD
+      const { collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 1000,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredTrader: trader,
+        })
+      );
+      // No debt should be in the same system.
+      assertBn.equal(await BfpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
+      assertBn.isZero(await Core.getMarketTotalDebt(marketId));
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Open a 1x long with deposit.
+      //
+      // NOTE: There is a slight extra in debt correction due to a tiny price impact incurred on the open order.
+      //
+      //
+      // fundingDelta     = 0
+      // notionalDelta    = 1 * 1000
+      // totalPositionPnl = pricePnl + accruedFunding
+      //                  = 0 + 0
+      // debtCorrection  += (fundingDelta + notionalDelta + totalPositionPnl)
+      //                  = 0 + 1000
+      //                  = 1000
+      // totalTraderDebt  = 20 (order + keeper fee)
+      // reportedDebt     = collateralValue + skew * (price + funding) - debtCorrection - totalTraderDebt
+      //                  = 1000 + 1000 * (1 + 0) - 1000 - 20
+      //                  = 980
+      // netIssuance      = oldNetIssuance + keeperFee
+      //                  = -1000 + 10
+      //                  = -990
+      // totalDebt        = reportedDebt + netIssuance - collateralValueCore
+      //                  = 980 + -990 - 0
+      //                  = -10
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(980), bn(0.01));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-10), bn(0.01));
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+        desiredKeeperFeeBufferUsd: 0,
+      });
+
+      // Close order.
+      //
+      // NOTE: There is a slight extra in debt correction due to a tiny price impact incurred on the open order.
+      //
+      //
+      // fundingDelta     = 0
+      // notionalDelta    = 1 * -1000
+      // totalPositionPnl = pricePnl + accruedFunding
+      //                  = 0 + 0
+      //                  = 0
+      // debtCorrection   = prevDebtCorrection + fundingDelta + notionalDelta + totalPositionPnl
+      //                  = 1000 + 0 + -1000 + 0
+      //                  = 0
+      // collateralValue  = Initial Margin - Open + Close Fees
+      //                  = 1000 - 40
+      //                  = 960
+      // reportedDebt     = collateralValue + skew * (price + funding) - debtCorrection - totalTraderDebt
+      //                  = 1000 + 0 * (1 + 0) - 0 - 0
+      //                  = 960
+      //
+      // netIssuance      = oldNetIssuance + keeperFee
+      //                  = -990 + 10
+      //                  = -980
+      // totalDebt        = reportedDebt + netIssuance - collateralValueCore
+      //                  = 960 + -980 - 0
+      //                  = -20
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(960), bn(0.01));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-20), bn(0.01));
+
+      // Withdraw all margin.
+      //
+      // debtCorrection  = prevDebtCorrection
+      //                 = 0
+      // collateralValue = 0
+      // reportedDebt    = collateralValue + skew * (price + funding) - debtCorrection - totalTraderDebt
+      //                 = 0 + 0 * (1 + 0) - 0 - 0
+      //                 = -40
+      //                 = 0
+      //
+      // netIssuance     = prevNetIssuance + initial margin - open + close fees
+      //                 = -980 + 1000 - 20 - 20
+      //                 = -20
+      // totalDebt       = reportedDebt + netIssuance - collateralValueCore
+      //                 = 0 + -20 - 0
+      //                 = -20
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+        provider()
+      );
+      const {
+        args: { value: amountWithdrawn },
+      } = findEventSafe(receipt, 'MarginWithdraw', BfpMarketProxy);
+      // Initial margin minus open and close fees.
+      assertBn.near(amountWithdrawn, bn(960), bn(0.001));
+
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(0), bn(0.01));
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-20), bn(0.01));
+      // Deposit 1k USD again
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 1000,
+          desiredCollateral: collateral,
+          desiredMarket: market,
+          desiredTrader: trader,
+        })
+      );
+
+      assertBn.equal(await BfpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
+      // Assert that the market has earned $20 in order fees.
+      assertBn.near(await Core.getMarketTotalDebt(marketId), bn(-20), bn(0.01));
+    });
+
+    it('should expect totalDebt and reportedDebt to reflect pnl, funding, and utilization', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+      const trader1 = tradersGenerator.next().value;
+      const trader2 = tradersGenerator.next().value;
+
+      /** Calculates the sum of all PnL (inc. funding/util/price) for n position digests. */
+      const calcSumPricePnlAccruedFunding = (
+        positionDigests: IPerpAccountModule.PositionDigestStructOutput[]
+      ) =>
+        positionDigests
+          .map((d) => wei(d.pnl).add(d.accruedFunding).sub(d.accruedUtilization))
+          .reduce((a, b) => a.add(b), wei(0));
+
+      // Remove order/keeper fees on settlement.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: bn(0),
+        takerFee: bn(0),
+      });
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(0),
+        maxKeeperFeeUsd: bn(0),
+      });
+
+      const {
+        collateralDepositAmount: collateralDepositAmount1,
+        marginUsdDepositAmount: marginUsdDepositAmount1,
+        collateral: collateral1,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 100_000,
+          desiredMarket: market,
+          desiredTrader: trader1,
+        })
+      );
+
+      // No debt should be in the same system and reportedDebt == collateralValue.
+      assertBn.near(
+        await BfpMarketProxy.reportedDebt(marketId),
+        marginUsdDepositAmount1,
+        bn(0.0001)
+      );
+      assertBn.isZero(await Core.getMarketTotalDebt(marketId));
+
+      const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
+        desiredSide: -1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader1, order1);
+
+      // Fast forward 0 - 100 days.
+      await fastForward(SECONDS_ONE_DAY * genNumber(0, 100), provider());
+
+      const totalPnl1 = calcSumPricePnlAccruedFunding([
+        await BfpMarketProxy.getPositionDigest(trader1.accountId, marketId),
+      ]).toBN();
+
+      // Market is 100% skewed in one direction, position takes losses on funding.
+      //
+      // Hence debt is positive (i.e. no debt) and eq to funding accrued.
+      assertBn.near(
+        await BfpMarketProxy.reportedDebt(marketId),
+        totalPnl1.add(marginUsdDepositAmount1),
+        bn(0.001)
+      );
+      assertBn.near(await Core.getMarketTotalDebt(marketId), totalPnl1, bn(0.001));
+
+      const {
+        collateral: collateral2,
+        collateralDepositAmount: collateralDepositAmount2,
+        marginUsdDepositAmount: marginUsdDepositAmount2,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredTrader: trader2,
+        })
+      );
+
+      // Increase the short position.
+      const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2, {
+        desiredSide: -1,
+        desiredKeeperFeeBufferUsd: 0,
+      });
+      await commitAndSettle(bs, marketId, trader2, order2);
+
+      // Fast forward again, now with two traders in the system.
+      await fastForward(SECONDS_ONE_DAY * genNumber(0, 100), provider());
+
+      const totalPnl2 = calcSumPricePnlAccruedFunding([
+        await BfpMarketProxy.getPositionDigest(trader1.accountId, marketId),
+        await BfpMarketProxy.getPositionDigest(trader2.accountId, marketId),
+      ]).toBN();
+
+      assertBn.near(await Core.getMarketTotalDebt(marketId), totalPnl2, bn(0.01));
+      assertBn.near(
+        await BfpMarketProxy.reportedDebt(marketId),
+        totalPnl2.add(marginUsdDepositAmount1).add(marginUsdDepositAmount2),
+        bn(0.01)
+      );
+
+      // Close both positions.
+      const { receipt: receipt1 } = await commitAndSettle(
+        bs,
+        marketId,
+        trader1,
+        genOrder(bs, market, collateral1, collateralDepositAmount1, {
+          desiredSize: order1.sizeDelta.mul(-1),
+          desiredKeeperFeeBufferUsd: 0,
+        })
+      );
+      const { receipt: receipt2 } = await commitAndSettle(
+        bs,
+        marketId,
+        trader2,
+        genOrder(bs, market, collateral1, collateralDepositAmount1, {
+          desiredSize: order2.sizeDelta.mul(-1),
+          desiredKeeperFeeBufferUsd: 0,
+        })
+      );
+
+      const event1 = findEventSafe(receipt1, 'OrderSettled', BfpMarketProxy);
+      const event2 = findEventSafe(receipt2, 'OrderSettled', BfpMarketProxy);
+      const {
+        accruedFunding: accruedFunding1,
+        pnl: pnl1,
+        accruedUtilization: accruedUtilization1,
+      } = event1.args;
+      const {
+        accruedFunding: accruedFunding2,
+        pnl: pnl2,
+        accruedUtilization: accruedUtilization2,
+      } = event2.args;
+
+      const totalCollateralUsd = wei(marginUsdDepositAmount1).add(marginUsdDepositAmount2);
+      const expectedTotalDebt = wei(accruedFunding1)
+        .add(pnl1)
+        .add(accruedFunding2)
+        .add(pnl2)
+        .sub(accruedUtilization1)
+        .sub(accruedUtilization2);
+
+      const expectedReportedDebt = totalCollateralUsd.add(expectedTotalDebt);
+
+      assertBn.near(await Core.getMarketTotalDebt(marketId), expectedTotalDebt.toBN(), bn(0.001));
+      assertBn.near(
+        await BfpMarketProxy.reportedDebt(marketId),
+        expectedReportedDebt.toBN(),
+        bn(0.001)
+      );
+    });
+
+    it('should expect reportedDebt/totalDebt to be updated appropriately due to price pnl non-sUSD (concrete)', async () => {
+      const { BfpMarketProxy, Core } = systems();
 
       const collateral = collateralsWithoutSusd()[0];
       const market = markets()[1]; // ETHPERP.
@@ -726,7 +1037,7 @@ describe('PerpMarketFactoryModule', () => {
       );
 
       // No debt should be in the same system.
-      assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
+      assertBn.equal(await BfpMarketProxy.reportedDebt(marketId), marginUsdDepositAmount);
       assertBn.isZero(await Core.getMarketTotalDebt(marketId));
 
       const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
@@ -739,28 +1050,28 @@ describe('PerpMarketFactoryModule', () => {
       //
       // NOTE: There is a slight extra in debt correction due to a tiny price impact incurred on the open order.
       //
-      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection - totalTraderDebt
       //              = 1000 + 0.5 * (2000 + 0) - 1000
       //              = 1000
       //
-      // totalDebt = reportedDebt + netIssuance - collateralValue
+      // totalDebt = reportedDebt + netIssuance - collateralValueCore
       //           = 1000 + 0 - 1000
       //           = 0
       await commitAndSettle(bs, marketId, trader, openOrder);
-      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(1000), bn(0.0001));
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(1000), bn(0.0001));
       assertBn.near(await Core.getMarketTotalDebt(marketId), bn(0), bn(0.0001));
 
       // Market does a 2x. Debt should increase appropriately.
       //
-      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection
-      //              = 1000 + 0.5 * (4000 + 0) - 1000
+      // reportedDebt = collateralValue + skew * (price + funding) - debtCorrection - totalTraderDebt
+      //              = 1000 + 0.5 * (4000 + 0) - 1000 - 0
       //              = 2000
       //
-      // totalDebt = reportedDebt + netIssuance - collateralValue
+      // totalDebt = reportedDebt + netIssuance - collateralValueCore
       //           = 2000 + 0 - 1000
       //           = 1000
       await market.aggregator().mockSetCurrentPrice(bn(4000));
-      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(2000), bn(0.0001));
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(2000), bn(0.0001));
       assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
 
       // Close out the position without withdrawing profits.
@@ -771,30 +1082,27 @@ describe('PerpMarketFactoryModule', () => {
         desiredKeeperFeeBufferUsd: 0,
       });
       await commitAndSettle(bs, marketId, trader, closeOrder);
-      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(2000), bn(0.0001));
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(2000), bn(0.0001));
       assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
 
       // Withdraw all margin and exit.
       //
       // Expecting debt to stay at 1000 but also netIssuance to increase.
       //
-      // reportedDebt = collateralValue + 0 * (price + funding) - debtCorrection
-      //              = 0 + 0 - 0
+      // reportedDebt = collateralValue + 0 * (price + funding) - debtCorrection - totalTraderDebt
+      //              = 0 + 0 - 0 - 0
       //              = 0
       //
-      // totalDebt = reportedDebt + netIssuance - collateralValue
+      // totalDebt = reportedDebt + netIssuance - collateralValueCore
       //           = 0 + 1000 - 0
       //           = 1000
-      await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
-        trader.accountId,
-        marketId
-      );
-      assertBn.near(await PerpMarketProxy.reportedDebt(marketId), bn(0), bn(0.0001));
+      await BfpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+      assertBn.near(await BfpMarketProxy.reportedDebt(marketId), bn(0), bn(0.0001));
       assertBn.near(await Core.getMarketTotalDebt(marketId), bn(1000), bn(0.0001));
     });
 
     it('should incur debt when a profitable position exits and withdraws all', async () => {
-      const { PerpMarketProxy, Core } = systems();
+      const { BfpMarketProxy, Core } = systems();
 
       const orderSide = genSide();
       const marginUsdDepositAmount = 10_000;
@@ -822,18 +1130,18 @@ describe('PerpMarketFactoryModule', () => {
       await commitAndSettle(bs, marketId, trader, closeOrder);
 
       // Verify there is no position.
-      assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
+      assertBn.isZero((await BfpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
 
       // Withdraw all collateral out of perp market.
       await withExplicitEvmMine(
         () =>
-          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          BfpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
         provider()
       );
 
       // Note reportedDebt is ZERO however total market debt is gt 0.
-      const reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
-      assertBn.isZero(reportedDebt);
+      const reportedDebt = await BfpMarketProxy.reportedDebt(marketId);
+      assertBn.near(reportedDebt, 0, bn(0.000001));
 
       // Market reportable debt includes issued sUSD paid out to the trader.
       const totalMarketDebt = await Core.getMarketTotalDebt(marketId);
@@ -841,10 +1149,35 @@ describe('PerpMarketFactoryModule', () => {
       assertBn.lt(totalMarketDebt, bn(marginUsdDepositAmount));
     });
 
+    it('should report the same debt after recomputing funding', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const { trader, marketId, market, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: 10_000 })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Fast-forward time to accrue funding.
+      await fastForwardBySec(provider(), SECONDS_ONE_DAY);
+
+      const reportedDebtBeforeCompute = await BfpMarketProxy.reportedDebt(market.marketId());
+      await withExplicitEvmMine(() => BfpMarketProxy.recomputeFunding(marketId), provider());
+      const reportedDebtAfterCompute = await BfpMarketProxy.reportedDebt(market.marketId());
+
+      assertBn.near(reportedDebtBeforeCompute, reportedDebtAfterCompute, bn(0.01));
+    });
+
     forEach(times(5, () => genNumber(0.1, 0.3) * genOneOf([1, -1]))).it(
       'should reported same debt when skew=0 but with price fluctuations (%0.5f)',
       async (priceDeviation: number) => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
         const trader1 = tradersGenerator.next().value;
@@ -896,12 +1229,14 @@ describe('PerpMarketFactoryModule', () => {
         );
         await commitAndSettle(bs, marketId, trader2, order2);
 
-        const { skew, debtCorrection, totalCollateralValueUsd } =
-          await PerpMarketProxy.getMarketDigest(marketId);
-        const expectedReportedDebt = totalCollateralValueUsd.sub(debtCorrection);
+        const { skew, debtCorrection, totalCollateralValueUsd, totalTraderDebtUsd } =
+          await BfpMarketProxy.getMarketDigest(marketId);
+        const expectedReportedDebt = totalCollateralValueUsd
+          .sub(debtCorrection)
+          .sub(totalTraderDebtUsd);
 
         assertBn.isZero(skew);
-        assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
+        assertBn.equal(await BfpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
 
         // Move the price.
         await market.aggregator().mockSetCurrentPrice(
@@ -911,12 +1246,12 @@ describe('PerpMarketFactoryModule', () => {
         );
 
         // Expect reportedDebt to not change.
-        assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
+        assertBn.equal(await BfpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
       }
     );
 
-    it('should report collateral - debtCorrection when skew is zero (dn market, some positions)', async () => {
-      const { PerpMarketProxy } = systems();
+    it('should report collateral less debtCorrection when skew is zero (dn market, some positions)', async () => {
+      const { BfpMarketProxy } = systems();
 
       const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
       const trader1 = tradersGenerator.next().value;
@@ -968,11 +1303,13 @@ describe('PerpMarketFactoryModule', () => {
       );
       await commitAndSettle(bs, marketId, trader2, order2);
 
-      const { skew, debtCorrection, totalCollateralValueUsd } =
-        await PerpMarketProxy.getMarketDigest(marketId);
-      const expectedReportedDebt = totalCollateralValueUsd.sub(debtCorrection);
+      const { skew, debtCorrection, totalCollateralValueUsd, totalTraderDebtUsd } =
+        await BfpMarketProxy.getMarketDigest(marketId);
+      const expectedReportedDebt = totalCollateralValueUsd
+        .sub(debtCorrection)
+        .sub(totalTraderDebtUsd);
       assertBn.isZero(skew);
-      assertBn.equal(await PerpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
+      assertBn.equal(await BfpMarketProxy.reportedDebt(marketId), expectedReportedDebt);
     });
 
     it('should incur debt when trader is paid funding to hold position');
@@ -992,12 +1329,12 @@ describe('PerpMarketFactoryModule', () => {
     it('should incur small debt proportional to skew with high price volatility');
 
     it('should revert when marketId does not exist', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const invalidMarketId = 42069;
       await assertRevert(
-        PerpMarketProxy.reportedDebt(invalidMarketId),
+        BfpMarketProxy.reportedDebt(invalidMarketId),
         `MarketNotFound("${invalidMarketId}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });

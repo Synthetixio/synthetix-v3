@@ -33,7 +33,7 @@ dataSources:
           handler: handleSynthWrapped
         - event: SynthUnwrapped(indexed
             uint256,uint256,(uint256,uint256,int256,int256),uint256)
-          handler: handleSynthUnWrapped
+          handler: handleSynthUnwrapped
         - event:
             OrderCommitted(indexed uint128,indexed uint8,uint256,uint128,indexed
             address,address)

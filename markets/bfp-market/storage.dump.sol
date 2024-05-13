@@ -31,6 +31,25 @@ contract ProxyStorage {
     }
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/token/ERC20Storage.sol:ERC20Storage
+library ERC20Storage {
+    bytes32 private constant _SLOT_ERC20_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
+    struct Data {
+        string name;
+        string symbol;
+        uint8 decimals;
+        mapping(address => uint256) balanceOf;
+        mapping(address => mapping(address => uint256)) allowance;
+        uint256 totalSupply;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = _SLOT_ERC20_STORAGE;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
 library DecimalMath {
     uint256 public constant UNIT = 1e18;
@@ -541,7 +560,7 @@ interface IMarginModule {
 
 // @custom:artifact contracts/interfaces/IMarketConfigurationModule.sol:IMarketConfigurationModule
 interface IMarketConfigurationModule {
-    struct ConfigureParameters {
+    struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
         uint128 minOrderAge;
@@ -551,6 +570,7 @@ interface IMarketConfigurationModule {
         uint128 keeperProfitMarginPercent;
         uint128 keeperProfitMarginUsd;
         uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
         uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
@@ -578,6 +598,7 @@ interface IMarketConfigurationModule {
         uint256 minMarginRatio;
         uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
+        uint256 maxInitialMarginRatio;
         uint256 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
@@ -618,9 +639,9 @@ interface IPerpAccountModule {
         uint256 healthFactor;
         uint256 notionalValueUsd;
         int256 pnl;
-        uint256 accruedFeesUsd;
         int256 accruedFunding;
         uint256 accruedUtilization;
+        uint256 entryPythPrice;
         uint256 entryPrice;
         uint256 oraclePrice;
         int128 size;
@@ -637,6 +658,12 @@ interface IPerpMarketFactoryModule {
     struct DepositedCollateral {
         uint128 synthMarketId;
         uint256 available;
+    }
+    struct UtilizationDigest {
+        uint256 lastComputedUtilizationRate;
+        uint256 lastComputedTimestamp;
+        uint256 currentUtilizationRate;
+        uint256 utilization;
     }
     struct MarketDigest {
         IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
@@ -667,7 +694,7 @@ interface IPerpRewardDistributorFactoryModule {
 
 // @custom:artifact contracts/interfaces/ISettlementHookModule.sol:ISettlementHookModule
 interface ISettlementHookModule {
-    struct ConfigureParameters {
+    struct SettlementHookConfigureParameters {
         address[] whitelistedHookAddresses;
         uint32 maxHooksPerOrder;
     }
@@ -687,6 +714,7 @@ contract LiquidationModule {
 
 // @custom:artifact contracts/modules/MarginModule.sol:MarginModule
 contract MarginModule {
+    uint256 private constant MAX_SUPPORTED_MARGIN_COLLATERALS = 10;
     struct Runtime_setMarginCollateralConfiguration {
         uint256 lengthBefore;
         uint256 lengthAfter;
@@ -700,13 +728,47 @@ contract OrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
-        int256 pnl;
+        uint256 accruedUtilization;
+        int256 pricePnl;
         uint256 fillPrice;
-        uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
+        uint128 totalFees;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
+    }
+}
+
+// @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
+contract PerpAccountModule {
+    struct Runtime_splitAccount {
+        uint256 oraclePrice;
+        uint256 toIm;
+        uint256 fromIm;
+        uint128 debtToMove;
+        int128 sizeToMove;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 collateralToMove;
+        uint256 newFromAmountCollateral;
+        uint256 fromAccountCollateral;
+        uint256 toCollateralUsd;
+        uint256 fromCollateralUsd;
+        uint256 toDiscountedCollateralUsd;
+        uint256 fromDiscountedCollateralUsd;
+        uint256 collateralPrice;
+    }
+    struct Runtime_mergeAccounts {
+        uint256 oraclePrice;
+        uint256 im;
+        uint256 fromCollateralUsd;
+        uint256 fromMarginUsd;
+        uint256 toMarginUsd;
+        uint256 mergedCollateralUsd;
+        uint256 mergedDiscountedCollateralUsd;
+        uint256 supportedSynthMarketIdsLength;
+        uint128 synthMarketId;
+        uint256 fromAccountCollateral;
     }
 }
 
@@ -814,6 +876,7 @@ library PerpMarketConfiguration {
         uint128 keeperProfitMarginUsd;
         uint128 keeperProfitMarginPercent;
         uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
         uint128 keeperFlagGasUnits;
         uint128 keeperLiquidateMarginGasUnits;
@@ -841,6 +904,7 @@ library PerpMarketConfiguration {
         uint256 minMarginRatio;
         uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
+        uint256 maxInitialMarginRatio;
         uint256 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
@@ -865,6 +929,7 @@ library Position {
     struct TradeParams {
         int128 sizeDelta;
         uint256 oraclePrice;
+        uint256 pythPrice;
         uint256 fillPrice;
         uint128 makerFee;
         uint128 takerFee;
@@ -876,7 +941,7 @@ library Position {
         uint256 orderFee;
         uint256 keeperFee;
         uint256 newMarginUsd;
-        Margin.MarginValues marginValues;
+        uint256 collateralUsd;
     }
     struct HealthData {
         uint256 healthFactor;
@@ -895,8 +960,8 @@ library Position {
         int128 size;
         int256 entryFundingAccrued;
         uint256 entryUtilizationAccrued;
+        uint256 entryPythPrice;
         uint256 entryPrice;
-        uint256 accruedFeesUsd;
     }
 }
 
@@ -928,4 +993,6 @@ library Flags {
     bytes32 public constant LIQUIDATE_POSITION = "liquidatePosition";
     bytes32 public constant PAY_DEBT = "payDebt";
     bytes32 public constant LIQUIDATE_MARGIN_ONLY = "liquidateMarginOnly";
+    bytes32 public constant MERGE_ACCOUNT = "mergeAccount";
+    bytes32 public constant SPLIT_ACCOUNT = "splitAccount";
 }

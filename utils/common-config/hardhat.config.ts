@@ -50,6 +50,7 @@ const config = {
       url: 'http://localhost:8545',
       chainId: 31337,
       gas: 12000000, // Prevent gas estimation for better error results in tests
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : 'remote',
     },
     hardhat: {
       gas: 12000000, // Prevent gas estimation for better error results in tests
@@ -129,6 +130,18 @@ const config = {
   },
   typechain: {
     target: 'ethers-v5',
+  },
+  storage: {
+    artifacts: [
+      'contracts/**',
+      '!contracts/routers/**',
+      '!contracts/generated/**',
+      '!contracts/mocks/**',
+    ],
+    skip: [
+      '@openzeppelin/contracts/**',
+      '@synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor',
+    ],
   },
 };
 

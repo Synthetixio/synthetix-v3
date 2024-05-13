@@ -731,7 +731,7 @@ export class MarketInfo extends Entity {
   }
 }
 
-export class WrappSynth extends Entity {
+export class WrapSynth extends Entity {
   constructor(id: string) {
     super();
     this.set('id', Value.fromString(id));
@@ -739,18 +739,18 @@ export class WrappSynth extends Entity {
 
   save(): void {
     let id = this.get('id');
-    assert(id != null, 'Cannot save WrappSynth entity without an ID');
+    assert(id != null, 'Cannot save WrapSynth entity without an ID');
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        `Entities of type WrappSynth must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        `Entities of type WrapSynth must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set('WrappSynth', id.toString(), this);
+      store.set('WrapSynth', id.toString(), this);
     }
   }
 
-  static load(id: string): WrappSynth | null {
-    return changetype<WrappSynth | null>(store.get('WrappSynth', id));
+  static load(id: string): WrapSynth | null {
+    return changetype<WrapSynth | null>(store.get('WrapSynth', id));
   }
 
   get id(): string {

@@ -7,6 +7,7 @@ import { uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
+import hre from 'hardhat';
 
 const DISABLE_EXPLICIT_EVM_MINE = ['true', '1', 'True', 'yes'].includes(
   process.env.DISABLE_EXPLICIT_EVM_MINE as string
@@ -23,7 +24,7 @@ declare module 'ethers' {
     [customInspectSymbol]?: () => string;
   }
 }
-ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
+hre.ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
   return `${fgCyan}BigNumber( ${fgYellow}${fgGreen}${this.toString()} ${fgYellow}${wei(
     this
   ).toNumber()}${fgCyan} )${fgReset}`;
@@ -67,7 +68,7 @@ export const mintAndApprove = async (
   to: ethers.Signer
 ) => {
   const { systems, provider } = bs;
-  const { PerpMarketProxy, SpotMarket } = systems();
+  const { BfpMarketProxy, SpotMarket } = systems();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
   const synth = collateral.contract;
@@ -81,7 +82,7 @@ export const mintAndApprove = async (
     ]);
 
     await synth.connect(synthOwner).mint(to.getAddress(), amount);
-    await synth.connect(to).approve(PerpMarketProxy.address, amount);
+    await synth.connect(to).approve(BfpMarketProxy.address, amount);
     await synth.connect(to).approve(SpotMarket.address, amount);
 
     return synth;
@@ -98,7 +99,7 @@ export const mintAndApproveWithTrader = async (bs: Bs, gTrader: GeneratedTrader)
 /** Returns a generated trader with collateral and market details. */
 export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   const { systems, provider } = bs;
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
   // Provision collateral and approve for access.
   const { market, trader, collateral, collateralDepositAmount } = await mintAndApproveWithTrader(
@@ -108,7 +109,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   await withExplicitEvmMine(
     () =>
       // Perform the deposit.
-      PerpMarketProxy.connect(trader.signer).modifyCollateral(
+      BfpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
         collateral.synthMarketId(),
@@ -120,30 +121,49 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   return gTrader;
 };
 
+export const withdrawAllCollateral = async (bs: Bs, trader: Trader, marketId: BigNumber) => {
+  const { systems, provider } = bs;
+  const { BfpMarketProxy } = systems();
+  const { collateralUsd } = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+  if (collateralUsd.gt(0)) {
+    await withExplicitEvmMine(
+      () => BfpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+      provider()
+    );
+  }
+};
+
 /** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
-  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
+  { systems, owner, provider }: Pick<Bs, 'systems' | 'owner' | 'provider'>,
   marketId: BigNumber,
   params: Partial<PerpMarketConfiguration.DataStruct>
 ) => {
-  const { PerpMarketProxy } = systems();
-  const data = await PerpMarketProxy.getMarketConfigurationById(marketId);
-  await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
-    ...data,
-    ...params,
-  });
-  return PerpMarketProxy.getMarketConfigurationById(marketId);
+  const { BfpMarketProxy } = systems();
+  const data = await BfpMarketProxy.getMarketConfigurationById(marketId);
+  await withExplicitEvmMine(
+    () =>
+      BfpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
+        ...data,
+        ...params,
+      }),
+    provider()
+  );
+  return BfpMarketProxy.getMarketConfigurationById(marketId);
 };
 
 /** Generic update on global market data (similar to setMarketConfigurationById). */
 export const setMarketConfiguration = async (
-  { systems, owner }: Pick<Bs, 'systems' | 'owner'>,
+  { systems, owner, provider }: Pick<Bs, 'systems' | 'owner' | 'provider'>,
   params: Partial<PerpMarketConfiguration.GlobalDataStruct>
 ) => {
-  const { PerpMarketProxy } = systems();
-  const data = await PerpMarketProxy.getMarketConfiguration();
-  await PerpMarketProxy.connect(owner()).setMarketConfiguration({ ...data, ...params });
-  return PerpMarketProxy.getMarketConfiguration();
+  const { BfpMarketProxy } = systems();
+  const data = await BfpMarketProxy.getMarketConfiguration();
+  await withExplicitEvmMine(
+    () => BfpMarketProxy.connect(owner()).setMarketConfiguration({ ...data, ...params }),
+    provider()
+  );
+  return BfpMarketProxy.getMarketConfiguration();
 };
 
 /** Returns a Pyth updateData blob and the update fee in wei. */
@@ -154,13 +174,13 @@ export const getPythPriceDataByMarketId = async (
   priceExpo = 6,
   priceConfidence = 1
 ) => {
-  const { PerpMarketProxy } = bs.systems();
+  const { BfpMarketProxy } = bs.systems();
 
   // Default price to the current market oraclePrice.
-  const price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
+  const price = wei(await BfpMarketProxy.getOraclePrice(marketId)).toNumber();
 
   // Use the pythPriceFeedId from the market if priceFeedId not provided.
-  const priceFeedId = (await PerpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
+  const priceFeedId = (await BfpMarketProxy.getMarketConfigurationById(marketId)).pythPriceFeedId;
 
   return getPythPriceData(bs, price, priceFeedId, publishTime, priceExpo, priceConfidence);
 };
@@ -196,11 +216,11 @@ export const getFastForwardTimestamp = async (
   marketId: BigNumber,
   trader: Trader
 ) => {
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
-  const order = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+  const order = await BfpMarketProxy.getOrderDigest(trader.accountId, marketId);
   const commitmentTime = order.commitmentTime.toNumber();
-  const config = await PerpMarketProxy.getMarketConfiguration();
+  const config = await BfpMarketProxy.getMarketConfiguration();
   const minOrderAge = config.minOrderAge.toNumber();
   const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
   const pythPublishTimeMax = config.pythPublishTimeMax.toNumber();
@@ -224,11 +244,11 @@ export const commitOrder = async (
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>
 ) => {
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
   const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await order;
   return withExplicitEvmMine(
     () =>
-      PerpMarketProxy.connect(trader.signer).commitOrder(
+      BfpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
         sizeDelta,
@@ -260,7 +280,7 @@ export const commitAndSettle = async (
   }
 ) => {
   const { systems, provider, keeper } = bs;
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
   await commitOrder(bs, marketId, trader, order);
 
@@ -275,16 +295,11 @@ export const commitAndSettle = async (
 
   const { tx, receipt } = await withExplicitEvmMine(
     () =>
-      PerpMarketProxy.connect(settlementKeeper).settleOrder(
-        trader.accountId,
-        marketId,
-        updateData,
-        {
-          value: updateFee,
-          maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
-          gasLimit: BigNumber.from(1000000), // Sometimes gas estimation is not big enough, add a large one to be safe.
-        }
-      ),
+      BfpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, updateData, {
+        value: updateFee,
+        maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
+        gasLimit: BigNumber.from(10_000_000), // Sometimes gas estimation is not high enough.
+      }),
     provider()
   );
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
@@ -294,14 +309,14 @@ export const commitAndSettle = async (
 
 export const payDebt = async (bs: Bs, marketId: BigNumber, trader: Trader) => {
   const { collaterals, systems } = bs;
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
   const sUsdCollateral = getSusdCollateral(collaterals());
-  const { debtUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+  const { debtUsd } = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
   if (debtUsd.eq(0)) return;
   await mintAndApprove(bs, sUsdCollateral, debtUsd, trader.signer);
   return withExplicitEvmMine(
-    () => PerpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debtUsd),
+    () => BfpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, debtUsd),
     bs.provider()
   );
 };
@@ -318,7 +333,7 @@ export const setBaseFeePerGas = async (
 };
 
 /** Updates the provided `contract` with more ABI details. */
-export const extendContractAbi = (contract: Contract, abi: string[]) => {
+export const extendContractAbi = (contract: Contract, abi: string | string[]) => {
   const contractAbi = contract.interface.format(utils.FormatTypes.full) as string[];
   const newContract = new Contract(
     contract.address,

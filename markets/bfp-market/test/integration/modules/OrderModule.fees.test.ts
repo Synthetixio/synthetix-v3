@@ -6,7 +6,7 @@ import { BigNumber, ethers } from 'ethers';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { calcOrderFees } from '../../calculations';
-import { PerpMarketProxy } from '../../generated/typechain';
+import { BfpMarketProxy } from '../../generated/typechain';
 import { bn, genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
   commitAndSettle,
@@ -36,7 +36,7 @@ describe('OrderModule fees', () => {
         [LiquidtyLeader.TAKER, 'expanding'],
         [LiquidtyLeader.BOTH, 'reducing then expanding'],
       ]).it('should charge %s fees when %s skew', async (leader: LiquidtyLeader) => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         const marginUsdDepositAmount = genNumber(5000, 10_000);
         const leverage = 1;
@@ -99,7 +99,7 @@ describe('OrderModule fees', () => {
         });
 
         // Retrieve fees associated with this new order.
-        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, bn(0));
+        const { orderFee } = await BfpMarketProxy.getOrderFees(marketId, order2.sizeDelta, bn(0));
         const { orderFee: expectedOrderFee } = await calcOrderFees(
           bs,
           marketId,
@@ -111,7 +111,7 @@ describe('OrderModule fees', () => {
       });
 
       it('should charge the appropriate maker/taker fee (concrete)', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         // Use explicit values to test a concrete example.
         const trader = traders()[0];
@@ -149,7 +149,7 @@ describe('OrderModule fees', () => {
           desiredSide: 1, // 1 = long, -1 = short
           desiredKeeperFeeBufferUsd: keeperFeeBufferUsd,
         });
-        const { orderFee: orderFee1 } = await PerpMarketProxy.getOrderFees(
+        const { orderFee: orderFee1 } = await BfpMarketProxy.getOrderFees(
           marketId,
           order1.sizeDelta,
           BigNumber.from(keeperFeeBufferUsd)
@@ -178,7 +178,7 @@ describe('OrderModule fees', () => {
             desiredKeeperFeeBufferUsd: keeperFeeBufferUsd,
           }
         );
-        const { orderFee: orderFee2 } = await PerpMarketProxy.getOrderFees(
+        const { orderFee: orderFee2 } = await BfpMarketProxy.getOrderFees(
           marketId,
           order2.sizeDelta,
           BigNumber.from(keeperFeeBufferUsd)
@@ -192,30 +192,30 @@ describe('OrderModule fees', () => {
       });
 
       it('should revert when marketId does not exist', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         const invalidMarketId = 42069;
         await assertRevert(
-          PerpMarketProxy.getOrderFees(invalidMarketId, bn(0), bn(0)),
+          BfpMarketProxy.getOrderFees(invalidMarketId, bn(0), bn(0)),
           `MarketNotFound("${invalidMarketId}")`,
-          PerpMarketProxy
+          BfpMarketProxy
         );
       });
     });
 
     describe('keeperFee', () => {
       const getKeeperFee = (
-        PerpMarketProxy: PerpMarketProxy,
+        BfpMarketProxy: BfpMarketProxy,
         receipt: ethers.ContractReceipt
-      ): BigNumber => findEventSafe(receipt, 'OrderSettled', PerpMarketProxy)?.args.keeperFee;
+      ): BigNumber => findEventSafe(receipt, 'OrderSettled', BfpMarketProxy)?.args.keeperFee;
 
       it('should calculate keeper fees proportional to block.baseFee and profit margin', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         const { trader, marketId, market, collateral, collateralDepositAmount } =
           await depositMargin(bs, genTrader(bs));
         const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-        const { orderFee } = await PerpMarketProxy.getOrderFees(
+        const { orderFee } = await BfpMarketProxy.getOrderFees(
           marketId,
           order.sizeDelta,
           order.keeperFeeBufferUsd
@@ -233,7 +233,7 @@ describe('OrderModule fees', () => {
           order
         );
 
-        const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
+        const keeperFee = getKeeperFee(BfpMarketProxy, receipt);
         const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
         assertBn.equal(expectedKeeperFee, keeperFee);
         const block = await provider().getBlock(receipt.blockNumber);
@@ -241,13 +241,13 @@ describe('OrderModule fees', () => {
 
         await assertEvent(
           tx,
-          `OrderSettled(${trader.accountId}, ${marketId}, ${timestamp}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, 0, 0, 0, ${order.fillPrice}, 0)`,
-          PerpMarketProxy
+          `OrderSettled(${trader.accountId}, ${marketId}, ${timestamp}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, 0, 0, 0, ${order.fillPrice}, ${orderFee.add(expectedKeeperFee)})`,
+          BfpMarketProxy
         );
       });
 
       it('should cap the keeperFee by its max usd when exceeds ceiling', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         // Cap the max keeperFee to $50 USD
         const maxKeeperFeeUsd = bn(50);
@@ -267,7 +267,7 @@ describe('OrderModule fees', () => {
         await setBaseFeePerGas(100, provider());
         const { receipt, lastBaseFeePerGas } = await commitAndSettle(bs, marketId, trader, order);
 
-        const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
+        const keeperFee = getKeeperFee(BfpMarketProxy, receipt);
         const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
 
         assertBn.equal(keeperFee, expectedKeeperFee);
@@ -276,7 +276,7 @@ describe('OrderModule fees', () => {
       });
 
       it('should cap the keeperFee by its min usd when below floor', async () => {
-        const { PerpMarketProxy } = systems();
+        const { BfpMarketProxy } = systems();
 
         // Lower the min requirements to reduce fees fairly significantly.
         const minKeeperFeeUsd = bn(60);
@@ -301,7 +301,7 @@ describe('OrderModule fees', () => {
 
         const { receipt, lastBaseFeePerGas } = await commitAndSettle(bs, marketId, trader, order);
 
-        const keeperFee = getKeeperFee(PerpMarketProxy, receipt);
+        const keeperFee = getKeeperFee(BfpMarketProxy, receipt);
         const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas);
 
         assertBn.equal(keeperFee, expectedKeeperFee);

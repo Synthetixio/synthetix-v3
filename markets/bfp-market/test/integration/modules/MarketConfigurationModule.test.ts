@@ -14,15 +14,15 @@ describe('MarketConfigurationModule', async () => {
 
   describe('setMarketConfiguration', () => {
     it('should configure market', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       const { global } = genBootstrap();
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(from).setMarketConfiguration(global),
+        () => BfpMarketProxy.connect(from).setMarketConfiguration(global),
         provider()
       );
-      const config = await PerpMarketProxy.getMarketConfiguration();
+      const config = await BfpMarketProxy.getMarketConfiguration();
 
       assert.equal(config.pythPublishTimeMin, global.pythPublishTimeMin);
       assert.equal(config.pythPublishTimeMax, global.pythPublishTimeMax);
@@ -45,30 +45,64 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperFlagGasUnits, global.keeperFlagGasUnits);
       assert.equal(config.keeperLiquidationEndorsed, global.keeperLiquidationEndorsed);
       assert.equal(config.keeperLiquidateMarginGasUnits, global.keeperLiquidateMarginGasUnits);
+      assert.equal(config.keeperCancellationGasUnits, global.keeperCancellationGasUnits);
 
       await assertEvent(
         receipt,
-        `ConfigurationUpdated("${await from.getAddress()}")`,
-        PerpMarketProxy
+        `GlobalMarketConfigured("${await from.getAddress()}")`,
+        BfpMarketProxy
       );
     });
 
     it('should revert when non-owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer;
 
       const { global } = genBootstrap();
       await assertRevert(
-        PerpMarketProxy.connect(from).setMarketConfiguration(global),
+        BfpMarketProxy.connect(from).setMarketConfiguration(global),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });
 
   describe('setMarketConfigurationById', () => {
+    it('should revert when skewScale is 0', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        skewScale: bn(0),
+      };
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        'InvalidParameter("skewScale", "ZeroAmount")',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when minMarginUsd less than maxKeeperFeeUsd', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+      const globalConfig = await BfpMarketProxy.getMarketConfiguration();
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        minMarginUsd: globalConfig.maxKeeperFeeUsd.sub(bn(1)),
+      };
+
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        `InvalidParameter("minMarginUsd", "minMarginUsd cannot be less than maxKeeperFeeUsd")`,
+        BfpMarketProxy
+      );
+    });
+
     it('should configure market by id', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
 
       // Randomly select a market currently available and new params for said market.
@@ -76,11 +110,11 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       const { receipt } = await withExplicitEvmMine(
-        () => PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        () => BfpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
         provider()
       );
 
-      const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      const config = await BfpMarketProxy.getMarketConfigurationById(marketId);
 
       assert.equal(specific.oracleNodeId, config.oracleNodeId);
       assert.equal(specific.pythPriceFeedId, config.pythPriceFeedId);
@@ -96,19 +130,20 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.minMarginRatio, config.minMarginRatio);
       assertBn.equal(specific.incrementalMarginScalar, config.incrementalMarginScalar);
       assertBn.equal(specific.maintenanceMarginScalar, config.maintenanceMarginScalar);
+      assertBn.equal(specific.maxInitialMarginRatio, config.maxInitialMarginRatio);
       assertBn.equal(specific.liquidationRewardPercent, config.liquidationRewardPercent);
       assertBn.equal(specific.liquidationLimitScalar, config.liquidationLimitScalar);
       assertBn.equal(specific.liquidationWindowDuration, config.liquidationWindowDuration);
 
       await assertEvent(
         receipt,
-        `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`,
-        PerpMarketProxy
+        `MarketConfigured(${marketId}, "${await from.getAddress()}")`,
+        BfpMarketProxy
       );
     });
 
     it('should revert when non-owner', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = traders()[0].signer; // not owner.
 
       // Randomly select a market currently available and new params for said market.
@@ -116,22 +151,22 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        BfpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
         `Unauthorized("${await from.getAddress()}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
 
     it('should revert when marketId does not exist', async () => {
-      const { PerpMarketProxy } = systems();
+      const { BfpMarketProxy } = systems();
       const from = owner();
       const notFoundMarketId = bn(4206969);
       const { specific } = genMarket();
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setMarketConfigurationById(notFoundMarketId, specific),
+        BfpMarketProxy.connect(from).setMarketConfigurationById(notFoundMarketId, specific),
         `MarketNotFound("${notFoundMarketId}")`,
-        PerpMarketProxy
+        BfpMarketProxy
       );
     });
   });

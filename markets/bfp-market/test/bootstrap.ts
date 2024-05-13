@@ -3,8 +3,13 @@ import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import { PerpMarketProxy, PerpAccountProxy } from './generated/typechain';
-import { CollateralMock, SettlementHookMock, AggregatorV3Mock } from '../typechain-types';
+import { BfpMarketProxy, PerpAccountProxy } from './generated/typechain';
+import {
+  CollateralMock,
+  SettlementHookMock,
+  AggregatorV3Mock,
+  MergeAccountSettlementHookMock,
+} from '../typechain-types';
 import { bn, genOneOf } from './generators';
 import { bootstrapSynthMarkets } from './external/bootstrapSynthMarkets';
 import { ADDRESS0, SYNTHETIX_USD_MARKET_ID } from './helpers';
@@ -19,7 +24,7 @@ type PythMock = any; // Cannon imported modules don't generate types via typecha
 // A set of available contracts during testing. We extend that which is already available through
 // `createStakePool` and we add more bfp-market specific contracts.
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
-  PerpMarketProxy: PerpMarketProxy;
+  BfpMarketProxy: BfpMarketProxy;
   SpotMarket: SynthSystems['SpotMarket'];
   Synth: SynthSystems['Synth'];
   PythMock: PythMock;
@@ -27,6 +32,8 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   CollateralMockD8: CollateralMock;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
+  MergeAccountSettlementHookMock: MergeAccountSettlementHookMock;
+  Account: PerpAccountProxy;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -45,10 +52,11 @@ export interface Contracts {
   Collateral2Mock: CollateralMock;
   CollateralMockD18: CollateralMock;
   CollateralMockD8: CollateralMock;
-  PerpMarketProxy: PerpMarketProxy;
+  BfpMarketProxy: BfpMarketProxy;
   PerpAccountProxy: PerpAccountProxy;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
+  MergeAccountSettlementHookMock: MergeAccountSettlementHookMock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -61,7 +69,7 @@ export interface Contracts {
 // @see: https://github.com/Synthetixio/synthetix-router/blob/master/src/utils/tests.ts#L23
 // @see: https://github.com/usecannon/cannon/blob/main/packages/hardhat-cannon/src/tasks/build.ts
 // @see: https://github.com/foundry-rs/foundry/commit/b02dcd26ff2aabc305cee61cd2fa3f7c3a85aad2
-const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
+const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.test.toml' });
 const restoreSnapshot = _bootstraped.createSnapshot();
 
 export interface PerpCollateral {
@@ -116,7 +124,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   before('load core and perp contracts', () => {
     systems = {
       Account: getContract('PerpAccountProxy'),
-      PerpMarketProxy: getContract('PerpMarketProxy'),
+      BfpMarketProxy: getContract('BfpMarketProxy'),
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
@@ -130,6 +138,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       CollateralMockD8: getContract('CollateralMockD8'),
       SettlementHookMock: getContract('SettlementHookMock'),
       SettlementHook2Mock: getContract('SettlementHook2Mock'),
+      MergeAccountSettlementHookMock: getContract('MergeAccountSettlementHookMock'),
     };
   });
 
@@ -170,11 +179,18 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const traders: { signer: Signer; accountId: number }[] = [];
 
   before('perp market bootstrap', async () => {
-    const { Core, PerpMarketProxy, SettlementHookMock, SettlementHook2Mock, OracleManager, USD } =
-      systems;
+    const {
+      Core,
+      BfpMarketProxy,
+      SettlementHookMock,
+      SettlementHook2Mock,
+      MergeAccountSettlementHookMock,
+      OracleManager,
+      USD,
+    } = systems;
 
     // Configure global markets.
-    await PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
+    await BfpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
 
     // Configure ETH/USD price oracle node.
     const { oracleNodeId, aggregator } = await createOracleNode(
@@ -182,7 +198,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       args.initialEthPrice,
       OracleManager
     );
-    await PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
+    await BfpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
 
     ethOracleNodeId = oracleNodeId;
     ethOracleAgg = aggregator;
@@ -201,11 +217,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       );
 
       // Create market.
-      const marketId = await PerpMarketProxy.callStatic.createMarket({ name });
-      await PerpMarketProxy.createMarket({ name });
+      const marketId = await BfpMarketProxy.callStatic.createMarket({ name });
+      await BfpMarketProxy.createMarket({ name });
 
       // Configure market.
-      await PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+      await BfpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
         ...specific,
         // Override the generic supplied oracleNodeId with the one that was just created.
         oracleNodeId,
@@ -218,8 +234,12 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     }
 
     // Configure settlement hooks.
-    await PerpMarketProxy.setSettlementHookConfiguration({
-      whitelistedHookAddresses: [SettlementHookMock.address, SettlementHook2Mock.address],
+    await BfpMarketProxy.setSettlementHookConfiguration({
+      whitelistedHookAddresses: [
+        SettlementHookMock.address,
+        SettlementHook2Mock.address,
+        MergeAccountSettlementHookMock.address,
+      ],
       maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
     });
 
@@ -278,8 +298,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       };
 
       const distributor =
-        await PerpMarketProxy.connect(getOwner()).callStatic.createRewardDistributor(createArgs);
-      await PerpMarketProxy.connect(getOwner()).createRewardDistributor(createArgs);
+        await BfpMarketProxy.connect(getOwner()).callStatic.createRewardDistributor(createArgs);
+      await BfpMarketProxy.connect(getOwner()).createRewardDistributor(createArgs);
 
       // After creation, register the RewardDistributor with each pool collateral.
       for (const collateralType of poolCollateralTypes) {
@@ -291,7 +311,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       }
       rewardDistributors.push(distributor);
     }
-    await PerpMarketProxy.connect(getOwner()).setMarginCollateralConfiguration(
+    await BfpMarketProxy.connect(getOwner()).setMarginCollateralConfiguration(
       synthMarketIds,
       oracleNodeIds,
       maxAllowances,
@@ -395,13 +415,13 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     for (const [i, signer] of [trader1, trader2, trader3, trader4, trader5].entries()) {
       const accountId = i + 10;
-      await PerpMarketProxy.connect(signer)['createAccount(uint128)'](accountId);
+      await BfpMarketProxy.connect(signer)['createAccount(uint128)'](accountId);
 
       traders.push({ signer, accountId });
     }
 
     // Reconfigure global market - keeper
-    await PerpMarketProxy.connect(getOwner()).setMarketConfiguration({
+    await BfpMarketProxy.connect(getOwner()).setMarketConfiguration({
       ...args.global,
       // Replace the mocked endorsedKeeper with a real designated endorsed keeper.
       keeperLiquidationEndorsed: await endorsedKeeper.getAddress(),

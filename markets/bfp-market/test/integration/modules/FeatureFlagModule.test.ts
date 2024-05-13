@@ -1,3 +1,7 @@
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { wei } from '@synthetixio/wei';
+import assert from 'assert';
 import { formatBytes32String } from 'ethers/lib/utils';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
@@ -11,10 +15,6 @@ import {
   ADDRESS0,
   withExplicitEvmMine,
 } from '../../helpers';
-import assert from 'assert';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { wei } from '@synthetixio/wei';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('FeatureFlagModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -32,49 +32,49 @@ describe('FeatureFlagModule', () => {
   beforeEach(restore);
 
   it('should suspend and enable all features', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     await assertEvent(
-      await PerpMarketProxy.suspendAllFeatures(),
+      await BfpMarketProxy.suspendAllFeatures(),
       `PerpMarketSuspended(true)`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
     await assertRevert(
-      PerpMarketProxy['createAccount()'](),
+      BfpMarketProxy['createAccount()'](),
       `FeatureUnavailable("${formatBytes32String('createAccount')}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
     await assertEvent(
-      await PerpMarketProxy.enableAllFeatures(),
+      await BfpMarketProxy.enableAllFeatures(),
       `PerpMarketSuspended(false)`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
-    const tx = await PerpMarketProxy['createAccount()']();
+    const tx = await BfpMarketProxy['createAccount()']();
     assert.ok(tx);
   });
 
   it('should disable create account', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('createAccount');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
     await assertRevert(
-      PerpMarketProxy['createAccount()'](),
+      BfpMarketProxy['createAccount()'](),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable deposit', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('deposit');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const trader = genOneOf(traders());
     const market = genOneOf(markets());
@@ -84,25 +84,25 @@ describe('FeatureFlagModule', () => {
     await mintAndApprove(bs, collateral, amountDelta, trader.signer);
 
     await assertRevert(
-      PerpMarketProxy.connect(trader.signer).modifyCollateral(
+      BfpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
         collateral.synthMarketId(),
         amountDelta
       ),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable withdraw', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('withdraw');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -110,33 +110,33 @@ describe('FeatureFlagModule', () => {
     );
 
     await assertRevert(
-      PerpMarketProxy.connect(trader.signer).modifyCollateral(
+      BfpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
         collateral.synthMarketId(),
         collateralDepositAmount.mul(-1)
       ),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
     await assertRevert(
-      PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
+      BfpMarketProxy.connect(trader.signer).withdrawAllCollateral(
         trader.accountId,
         market.marketId()
       ),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable commitOrder', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('commitOrder');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -144,7 +144,7 @@ describe('FeatureFlagModule', () => {
     );
     const order = await genOrder(bs, market, collateral, collateralDepositAmount);
     await assertRevert(
-      PerpMarketProxy.connect(trader.signer).commitOrder(
+      BfpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
         order.sizeDelta,
@@ -153,18 +153,18 @@ describe('FeatureFlagModule', () => {
         [ADDRESS0]
       ),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable settleOrder', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('settleOrder');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -176,22 +176,22 @@ describe('FeatureFlagModule', () => {
 
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
+      BfpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, updateData, {
         value: updateFee,
       }),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable cancelOrder', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('cancelOrder');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -203,27 +203,27 @@ describe('FeatureFlagModule', () => {
     const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
 
     await assertRevert(
-      PerpMarketProxy.connect(trader.signer).cancelOrder(trader.accountId, marketId, updateData, {
+      BfpMarketProxy.connect(trader.signer).cancelOrder(trader.accountId, marketId, updateData, {
         value: updateFee,
       }),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
     await assertRevert(
-      PerpMarketProxy.connect(trader.signer).cancelStaleOrder(trader.accountId, marketId),
+      BfpMarketProxy.connect(trader.signer).cancelStaleOrder(trader.accountId, marketId),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable payDebt', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('payDebt');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -236,38 +236,70 @@ describe('FeatureFlagModule', () => {
     });
     await commitAndSettle(bs, marketId, trader, closeOrder);
     await assertRevert(
-      PerpMarketProxy.payDebt(trader.accountId, marketId, bn(1)),
+      BfpMarketProxy.payDebt(trader.accountId, marketId, bn(1)),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable liquidateMarginOnly', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('liquidateMarginOnly');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, marketId } = await depositMargin(bs, genTrader(bs));
 
     await assertRevert(
-      PerpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
+      BfpMarketProxy.liquidateMarginOnly(trader.accountId, marketId),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
+    );
+  });
+
+  it('should disable mergeAccounts', async () => {
+    const { BfpMarketProxy } = systems();
+    const feature = formatBytes32String('mergeAccount');
+    const { receipt } = await withExplicitEvmMine(
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
+
+    await assertRevert(
+      BfpMarketProxy.mergeAccounts(1, 2, 3),
+      `FeatureUnavailable("${feature}")`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should disable splitAccount', async () => {
+    const { BfpMarketProxy } = systems();
+    const feature = formatBytes32String('splitAccount');
+    const { receipt } = await withExplicitEvmMine(
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      provider()
+    );
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
+
+    await assertRevert(
+      BfpMarketProxy.splitAccount(1, 2, 3, bn(0.1)),
+      `FeatureUnavailable("${feature}")`,
+      BfpMarketProxy
     );
   });
 
   it('should disable flagPosition', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('flagPosition');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -288,20 +320,20 @@ describe('FeatureFlagModule', () => {
     await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
+      BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 
   it('should disable liquidatePosition', async () => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const feature = formatBytes32String('liquidatePosition');
     const { receipt } = await withExplicitEvmMine(
-      () => PerpMarketProxy.setFeatureFlagDenyAll(feature, true),
+      () => BfpMarketProxy.setFeatureFlagDenyAll(feature, true),
       provider()
     );
-    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, PerpMarketProxy);
+    await assertEvent(receipt, `FeatureFlagDenyAllSet("${feature}", true)`, BfpMarketProxy);
 
     const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
       bs,
@@ -320,11 +352,11 @@ describe('FeatureFlagModule', () => {
       .mul(order.sizeDelta.gt(0) ? 0.9 : 1.1)
       .toBN();
     await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-    await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+    await BfpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
     await assertRevert(
-      PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+      BfpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
       `FeatureUnavailable("${feature}")`,
-      PerpMarketProxy
+      BfpMarketProxy
     );
   });
 });

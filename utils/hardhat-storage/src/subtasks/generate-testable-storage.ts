@@ -14,7 +14,7 @@ subtask(
   .addParam('artifact', 'The artifact to generate a testable version of')
   .addParam('output', 'Where to put the generated code')
   .setAction(async ({ output, artifact }: { output: string; artifact: string }, hre) => {
-    const sourceAstNode = await getContractAst(artifact, hre);
+    const sourceAstNode = await getContractAst(hre, artifact);
 
     logger.subtitle(`Generating testable storage for ${artifact}`);
 

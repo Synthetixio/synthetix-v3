@@ -121,6 +121,28 @@ interface IRewardsManagerModule {
     ) external;
 
     /**
+     * @notice Called by owner of a pool to set rewards for vault participants. This method
+     * of reward setting is generally intended to only be used to recover from a case where the
+     * distributor state is out of sync with the core system state, or if the distributor is only
+     * able to payout and not capable of distributing its own rewards.
+     * @dev Will revert if the caller is not the owner of the pool.
+     * @param poolId The id of the pool to distribute rewards to.
+     * @param collateralType The address of the collateral used in the pool's rewards.
+     * @param rewardsDistributor The address of the reward distributor which pays out the tokens.
+     * @param amount The amount of rewards to be distributed.
+     * @param start The date at which the rewards will begin to be claimable.
+     * @param duration The period after which all distributed rewards will be claimable.
+     */
+    function distributeRewardsByOwner(
+        uint128 poolId,
+        address collateralType,
+        address rewardsDistributor,
+        uint256 amount,
+        uint64 start,
+        uint32 duration
+    ) external;
+
+    /**
      * @notice Allows a user with appropriate permissions to claim rewards associated with a position.
      * @param accountId The id of the account that is to claim the rewards.
      * @param poolId The id of the pool to claim rewards on.

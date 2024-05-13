@@ -10,7 +10,6 @@
     "subgraphgen": "./codegen.sh",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "alchemy:optimism-mainnet": "graph deploy spot-market-optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --version-label v2 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
-    "alchemy:optimism-goerli": "graph deploy spot-market-optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --version-label v2 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "alchemy:base-sepolia-andromeda": "graph deploy spot-market-base-sepolia-andromeda subgraph.base-sepolia-andromeda.yaml --output-dir ./build/base-sepolia-andromeda --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "alchemy:base-mainnet-andromeda": "graph deploy spot-market-base-mainnet-andromeda subgraph.base-mainnet-andromeda.yaml --output-dir ./build/base-mainnet-andromeda --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
@@ -22,7 +21,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.68.0",
     "@graphprotocol/graph-ts": "^0.32.0",
-    "@usecannon/cli": "2.11.20",
+    "@usecannon/cli": "2.13.3",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.6.0",
     "prettier": "^3.2.5"

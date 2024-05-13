@@ -15,21 +15,19 @@ library Order {
     using SafeCastU256 for uint256;
 
     struct Data {
-        // Size in native units to reduce (negative) or increase (positive) by.
+        /// Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;
-        // The block.timestamp this order was committed on.
+        /// The block.timestamp this order was committed on.
         uint256 commitmentTime;
-        // The maximum fillPrice (in USD) this order will accept during settlement.
+        /// The maximum fillPrice (in USD) this order will accept during settlement.
         uint256 limitPrice;
-        // A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
+        /// A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
         uint256 keeperFeeBufferUsd;
-        // Settlement hooks specified on commitment for invocation.
+        /// Settlement hooks specified on commitment for invocation.
         address[] hooks;
     }
 
-    /**
-     * @dev See IOrderModule.fillPrice for more details.
-     */
+    /// @dev See IOrderModule.fillPrice for more details.
     function getFillPrice(
         int128 skew,
         uint128 skewScale,
@@ -51,9 +49,7 @@ library Order {
         return (pBefore + pAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
-    /**
-     * @dev See IOrderModule.orderFee for more details.
-     */
+    /// @dev See IOrderModule.orderFee for more details.
     function getOrderFee(
         int128 sizeDelta,
         uint256 fillPrice,
@@ -89,7 +85,7 @@ library Order {
     }
 
     /**
-     * @dev Returns the order keeper fee; paid to keepers for order executions and liquidations (in USD).
+     * @dev Returns the order keeper fee; paid to keepers for order executions (in USD).
      *
      * This order keeper fee is calculated as follows:
      *
@@ -124,9 +120,29 @@ library Order {
         return boundedKeeperFeeUsd;
     }
 
-    /**
-     * @dev Returns a copy of the hooks present in order. Array of empty length is if none.
-     */
+    /// @dev Returns the keeper fee in USD for order cancellations.
+    function getCancellationKeeperFee() internal view returns (uint256) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
+            globalConfig.keeperCancellationGasUnits * block.basefee
+        );
+        uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
+            DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+        );
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
+            globalConfig.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
+    }
+
+    /// @dev Returns a copy of the hooks present in order. Array of empty length is if none.
     function cloneSettlementHooks(
         Order.Data storage self
     ) internal view returns (address[] memory) {
@@ -147,9 +163,7 @@ library Order {
 
     // --- Member (mutations) --- //
 
-    /**
-     * @dev Updates the current order struct in-place with new data from `data`.
-     */
+    /// @dev Updates the current order struct in-place with new data from `data`.
     function update(Order.Data storage self, Order.Data memory data) internal {
         self.commitmentTime = data.commitmentTime;
         self.limitPrice = data.limitPrice;

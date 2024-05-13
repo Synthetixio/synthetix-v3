@@ -4,7 +4,7 @@
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
-    "build:contracts": "rm -rf contracts/generated && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
@@ -34,7 +34,7 @@
     "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
     "@types/node-fetch": "^2.6.11",
-    "@usecannon/cli": "2.11.20",
+    "@usecannon/cli": "2.13.3",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "node-fetch": "^2.7.0",

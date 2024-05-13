@@ -15,8 +15,16 @@ The primary use case of bfp-market is to create a hyper-stable perp derivative u
 ## Development
 
 ```bash
+# Ensure you're in the root of project.
+cd synthetix-v3
+
+# Install monorepo dependencies.
 yarn
+
+# Generate a testable artifacts.
 yarn generate-testable
 yarn build-testable
+
+# Build and run bfp-market tests.
 yarn workspace @synthetixio/bfp-market {build,test,test:stable}
 ```

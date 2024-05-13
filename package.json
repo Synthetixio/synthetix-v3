@@ -18,6 +18,7 @@
     "generate-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable",
     "compile-contracts": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run compile-contracts",
+    "build:ts": "yarn workspaces foreach --all --topological-dev --verbose run build:ts",
     "build": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build",
     "test": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --all --verbose run coverage",

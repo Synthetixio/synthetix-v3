@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "build": "yarn build:contracts",
-    "build:contracts": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat"
@@ -20,7 +20,7 @@
     "@synthetixio/router": "3.3.7",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
-    "hardhat-cannon": "2.11.20",
+    "hardhat-cannon": "2.13.3",
     "solidity-coverage": "^0.8.7"
   }
 }

@@ -23,40 +23,40 @@ library Margin {
     // --- Structs --- //
 
     struct CollateralType {
-        // Underlying sell oracle used by this spot collateral bytes32(0) if sUSD.
+        /// Underlying sell oracle used by this spot collateral bytes32(0) if sUSD.
         bytes32 oracleNodeId;
-        // Maximum allowable deposited amount for this collateral type.
+        /// Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
-        // Address of the associated reward distributor.
+        /// Address of the associated reward distributor.
         address rewardDistributor;
-        // Adding exists so we can differentiate maxAllowable from 0 and unset in the supported mapping below.
+        /// Adding exists so we can differentiate maxAllowable from 0 and unset in the supported mapping below.
         bool exists;
     }
 
     struct MarginValues {
-        // USD value of deposited collaterals (adjusted collateral price) -fees, -funding, -utilization, +PnL.
+        /// USD value of deposited collaterals (adjusted collateral price) -fees, -funding, -utilization, +PnL.
         uint256 discountedMarginUsd;
-        // USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, -utilization, +PnL.
+        /// USD value of deposited collaterals (unadjusted collateral price) -fees, -funding, -utilization, +PnL.
         uint256 marginUsd;
-        // USD value of deposited collaterals (adjusted collateral price)
+        /// USD value of deposited collaterals (adjusted collateral price)
         uint256 discountedCollateralUsd;
-        // USD value of deposited collaterals  (unadjusted collateral price)
+        /// USD value of deposited collaterals  (unadjusted collateral price)
         uint256 collateralUsd;
     }
 
     // --- Storage --- //
 
     struct GlobalData {
-        // {synthMarketId: CollateralType}.
+        /// {synthMarketId: CollateralType}.
         mapping(uint128 => CollateralType) supported;
-        // Array of supported synth ids useable as collateral for margin (use supported mapping)
+        /// Array of supported synth ids useable as collateral for margin (use supported mapping)
         uint128[] supportedSynthMarketIds;
     }
 
     struct Data {
-        // {synthMarketId: collateralAmount} (amount of collateral deposited into this account).
+        /// {synthMarketId: collateralAmount} (amount of collateral deposited into this account).
         mapping(uint128 => uint256) collaterals;
-        // Debt in USD for this account.
+        /// Debt in USD for this account.
         uint128 debtUsd;
     }
 
@@ -80,13 +80,14 @@ library Margin {
     // --- Mutations --- //
 
     /**
-     * @dev Reevaluates the collateral and debt for `accountId` with `amountDeltaUsd`. When amount is negative,
-     * portion of their collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
-     * account.
+     * @dev Re-evaluates the debt and collateral for `accountMargin` with `amountDeltaUsd`. When amount is negative,
+     * a portion of their sUSD collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
+     * account margin.
      *
-     * NOTE: If `amountDeltaUsd` is margin then expected to include previous debt.
+     * NOTE: `amountDeltaUsd` _must_ consider margin and incorporate `debtUsd`. This also performs a global change
+     * in debt and collateral for the supplied `market`.
      */
-    function updateAccountDebtAndCollateral(
+    function realizeAccountPnlAndUpdate(
         Margin.Data storage accountMargin,
         PerpMarket.Data storage market,
         int256 amountDeltaUsd
@@ -113,7 +114,11 @@ library Margin {
                     .toUint();
                 accountMargin.debtUsd = 0;
             } else {
-                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+                if (availableUsdCollateral > 0) {
+                    accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] = 0;
+                }
+                // Wipe `debtUsd` because we assume the passed `amountDeltaUsd` already attributes debtUsd before
+                // passing the delta as `amountDeltaUsd`.
                 accountMargin.debtUsd = MathUtil.abs(usdCollateralAfterDebtPayment).to128();
             }
         }
@@ -128,9 +133,7 @@ library Margin {
 
     // --- Views --- //
 
-    /**
-     * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
-     */
+    /// @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
     function getCollateralUsd(
         uint128 accountId,
         uint128 marketId
@@ -158,7 +161,7 @@ library Margin {
                     synthMarketId,
                     globalConfig
                 );
-                discountedCollateralPrice = getDiscountedPriceFromCollateralPrice(
+                discountedCollateralPrice = getDiscountedCollateralPrice(
                     available,
                     collateralPrice,
                     synthMarketId,
@@ -174,12 +177,18 @@ library Margin {
     }
 
     /**
-     * @dev Returns the debt, price pnl, funding, util, and fee adjusted PnL.
+     * @dev Returns the debt, price PnL, funding, util, and fee adjusted PnL.
+     *
+     * @notice Accepts two prices. First is a raw oracle price used to calculate funding and utilization. The second,
+     * `pricePnLPrice`, is a price used to calculate the profit or losses incurred just on price PnL; passing `pricePnLPrice`
+     * to `getPricePnl`. You may want to pass `fillPrice` as this argument if you want to calculate the true price PnL
+     * immediately after settlement.
      */
     function getPnlAdjustmentUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 oraclePrice,
+        uint256 pricePnLPrice
     ) internal view returns (int256) {
         Position.Data storage position = market.positions[accountId];
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
@@ -188,11 +197,10 @@ library Margin {
         return
             position.size == 0
                 ? -(accountMargin.debtUsd.toInt())
-                : position.getPricePnl(price) +
-                    position.getAccruedFunding(market, price) -
-                    position.getAccruedUtilization(market, price).toInt() -
-                    position.accruedFeesUsd.toInt() -
-                    accountMargin.debtUsd.to256().toInt();
+                : position.getPricePnl(pricePnLPrice) +
+                    position.getAccruedFunding(market, oraclePrice) -
+                    position.getAccruedUtilization(market, oraclePrice).toInt() -
+                    accountMargin.debtUsd.toInt();
     }
 
     /**
@@ -212,7 +220,7 @@ library Margin {
             accountId,
             market.id
         );
-        int256 adjustment = getPnlAdjustmentUsd(accountId, market, price);
+        int256 adjustment = getPnlAdjustmentUsd(accountId, market, price, price);
 
         marginValues.discountedMarginUsd = MathUtil
             .max(discountedCollateralUsd.toInt() + adjustment, 0)
@@ -222,17 +230,46 @@ library Margin {
         marginValues.collateralUsd = collateralUsd;
     }
 
-    /**
-     * @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
-     */
-    function getNetAssetValue(
+    /// @dev Returns a boolean indicating whether the account has any collateral deposited.
+    function hasCollateralDeposited(
         uint128 accountId,
-        PerpMarket.Data storage market,
-        uint256 price
+        uint128 marketId
+    ) internal view returns (bool) {
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 available;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
+
+            if (available > 0) {
+                return true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @dev Returns the same collateralUsd as `getMarginUsd` without discount collateral.
+     *
+     * Why? It's expensive to fetch spotMarketSkewScale from another contract and although most times
+     * you need both discounted and non-discounted values, sometimes you only need non-discounted.
+     */
+    function getCollateralUsdWithoutDiscount(
+        uint128 accountId,
+        uint128 marketId
     ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, market.id);
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
         uint128 synthMarketId;
@@ -256,18 +293,28 @@ library Margin {
                 ++i;
             }
         }
+        return collateralUsd;
+    }
+
+    /// @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
+    function getNetAssetValue(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (uint256) {
         return
             MathUtil
-                .max(collateralUsd.toInt() + getPnlAdjustmentUsd(accountId, market, price), 0)
+                .max(
+                    getCollateralUsdWithoutDiscount(accountId, market.id).toInt() +
+                        getPnlAdjustmentUsd(accountId, market, price, price),
+                    0
+                )
                 .toUint();
     }
 
     // --- Member (views) --- //
 
-    /**
-     * @dev Helper to call oraclerManager.process on a given `synthMarketId`. Note that this can result in errors
-     * if the `synthMarketId` does not exist.
-     */
+    /// @dev Helper to call oracleManager.process for `synthMarketId`. Can revert if `synthMarketId` not found.
     function getOracleCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,
@@ -281,9 +328,7 @@ library Margin {
                 .toUint();
     }
 
-    /**
-     * @dev Returns the unadjusted raw oracle collateral price.
-     */
+    /// @dev Returns the unadjusted raw oracle collateral price.
     function getCollateralPrice(
         Margin.GlobalData storage self,
         uint128 synthMarketId,
@@ -295,9 +340,16 @@ library Margin {
                 : getOracleCollateralPrice(self, synthMarketId, globalConfig);
     }
 
-    function getDiscountedPriceFromCollateralPrice(
+    /**
+     * @dev Returns the discounted price of a specified collateral by their `synthMarketId`.
+     *
+     * Discount is calculated based on the `spotMarket.skewScale` and is dependent on `amountAvailable`,
+     * which may be different position to position. The larger `amountAvailable`, the larger the discount
+     * however, capped between a min/max.
+     */
+    function getDiscountedCollateralPrice(
         uint256 amountAvailable,
-        uint256 price,
+        uint256 collateralPrice,
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
@@ -321,25 +373,55 @@ library Margin {
                 globalConfig.maxCollateralDiscount
             );
 
-        // Apply discount on price by the discount.
-        return price.mulDecimal(DecimalMath.UNIT - discount);
+        // Apply discount on `collateralPrice` by the capped discount.
+        return collateralPrice.mulDecimal(DecimalMath.UNIT - discount);
     }
 
-    /**
-     * @dev Returns whether an account in a specific market's margin can be liquidated.
-     */
+    /// @dev Returns the reward for liquidating margin.
+    function getMarginLiquidationOnlyReward(
+        uint256 collateralValue,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        uint256 ethPrice = globalConfig
+            .oracleManager
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
+        uint256 liqExecutionCostInUsd = ethPrice.mulDecimal(
+            block.basefee * globalConfig.keeperLiquidateMarginGasUnits
+        );
+
+        uint256 liqFeeInUsd = MathUtil.max(
+            liqExecutionCostInUsd.mulDecimal(
+                DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+            ),
+            liqExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
+        );
+        uint256 liqFeeWithRewardInUsd = liqFeeInUsd +
+            collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
+
+        return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
+    }
+
+    /// @dev Returns whether an account in a specific market's margin can be liquidated.
     function isMarginLiquidatable(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        Margin.MarginValues memory marginValues
     ) internal view returns (bool) {
         // Cannot liquidate margin when there is an open position.
         if (market.positions[accountId].size != 0) {
             return false;
         }
 
-        // Ensure that there is collateralUsd on the account to ensure this account margin can be liquidated.
-        Margin.MarginValues memory marginValues = Margin.getMarginUsd(accountId, market, price);
-        return marginValues.discountedMarginUsd == 0 && marginValues.collateralUsd != 0;
+        return
+            marginValues.discountedMarginUsd.toInt() -
+                getMarginLiquidationOnlyReward(
+                    marginValues.collateralUsd,
+                    PerpMarketConfiguration.load(market.id),
+                    PerpMarketConfiguration.load()
+                ).toInt() <=
+            0;
     }
 }

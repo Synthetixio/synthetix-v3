@@ -25,11 +25,11 @@ describe('PerpRewardDistributor', () => {
   beforeEach(restore);
 
   const createPerpRewardDistributor = async (args: CreateRewardDistributorArgs) => {
-    const { PerpMarketProxy } = systems();
+    const { BfpMarketProxy } = systems();
     const distributor =
-      await PerpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
+      await BfpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
     await withExplicitEvmMine(
-      () => PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+      () => BfpMarketProxy.connect(owner()).createRewardDistributor(args),
       provider()
     );
     return IPerpRewardDistributor__factory.connect(distributor, provider());
@@ -56,7 +56,7 @@ describe('PerpRewardDistributor', () => {
     });
 
     it('should revert when payout token decimals not 18', async () => {
-      const { PerpMarketProxy, CollateralMockD8 } = systems();
+      const { BfpMarketProxy, CollateralMockD8 } = systems();
 
       const args = {
         poolId: pool().id,
@@ -66,7 +66,7 @@ describe('PerpRewardDistributor', () => {
       };
 
       await assertRevert(
-        PerpMarketProxy.connect(owner()).createRewardDistributor(args),
+        BfpMarketProxy.connect(owner()).createRewardDistributor(args),
         `InvalidParameter("payoutToken", "Token decimals expected to be 18")`
       );
     });
@@ -216,7 +216,7 @@ describe('PerpRewardDistributor', () => {
 
   describe('distributeReward', () => {
     it('should distribute after transfer', async () => {
-      const { Core, PerpMarketProxy, CollateralMock, CollateralMockD18 } = systems();
+      const { Core, BfpMarketProxy, CollateralMock, CollateralMockD18 } = systems();
 
       const args = {
         poolId: pool().id,
@@ -232,7 +232,7 @@ describe('PerpRewardDistributor', () => {
         PerpRewardDistributor.address
       );
 
-      await withImpersonate(bs, PerpMarketProxy.address, async (signer) => {
+      await withImpersonate(bs, BfpMarketProxy.address, async (signer) => {
         const amount = bn(genNumber(1, 100));
         await CollateralMockD18.mint(PerpRewardDistributor.address, amount);
         assertBn.equal(await CollateralMockD18.balanceOf(PerpRewardDistributor.address), amount);
@@ -260,7 +260,7 @@ describe('PerpRewardDistributor', () => {
     });
 
     it('should revert when attempting to distribute reward before a transfer', async () => {
-      const { PerpMarketProxy, CollateralMockD18 } = systems();
+      const { BfpMarketProxy, CollateralMockD18 } = systems();
 
       const args = {
         poolId: pool().id,
@@ -270,7 +270,7 @@ describe('PerpRewardDistributor', () => {
       };
       const PerpRewardDistributor = await createPerpRewardDistributor(args);
 
-      await withImpersonate(bs, PerpMarketProxy.address, async (signer) => {
+      await withImpersonate(bs, BfpMarketProxy.address, async (signer) => {
         const amount = bn(1);
         await assertRevert(
           PerpRewardDistributor.connect(signer).distributeRewards(args.collateralTypes[0], amount),

@@ -1,11 +1,11 @@
 {
   "name": "@synthetixio/bfp-market",
-  "version": "3.3.17",
+  "version": "1.0.0-alpha.1",
   "description": "L1 perp market implementation",
   "scripts": {
     "build": "yarn build:contracts",
-    "build:contracts": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
-    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.toml",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",
@@ -34,6 +34,7 @@
     "@synthetixio/wei": "^2.74.4",
     "@types/lodash": "^4.14.199",
     "@types/mocha-each": "2.0.1",
+    "@usecannon/cli": "2.13.3",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "lodash": "^4.17.21",

@@ -75,10 +75,11 @@ export const genBootstrap = () => ({
     minOrderAge: 12,
     maxOrderAge: 60,
     minKeeperFeeUsd: bn(genNumber(10, 15)),
-    maxKeeperFeeUsd: bn(genNumber(50, 100)),
+    maxKeeperFeeUsd: bn(genNumber(300, 500)),
     keeperProfitMarginUsd: bn(genNumber(5, 20)),
     keeperProfitMarginPercent: bn(genNumber(0.1, 0.2)),
     keeperSettlementGasUnits: 1_200_000,
+    keeperCancellationGasUnits: 600_000,
     keeperFlagGasUnits: 1_200_000,
     keeperLiquidateMarginGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
@@ -113,13 +114,14 @@ export const genMarket = () => ({
     takerFee: bn(genNumber(0.0006, 0.0008)), // 1 - 8bps
     maxMarketSize: bn(genNumber(20_000, 50_000)),
     maxFundingVelocity: bn(genNumber(3, 9)),
-    minMarginUsd: bn(genNumber(50, 60)),
+    minMarginUsd: bn(genNumber(500, 600)),
     minCreditPercent: bn(genNumber(1, 1.1)),
     skewScale: bn(genNumber(100_000, 500_000)),
     fundingVelocityClamp: bn(genNumber(0.000001, 0.00001)),
     minMarginRatio: bn(genNumber(0.01, 0.02)),
     incrementalMarginScalar: bn(genNumber(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
+    maxInitialMarginRatio: bn(0.9),
     liquidationRewardPercent: bn(genNumber(0.005, 0.0075)),
     liquidationLimitScalar: bn(genNumber(0.9, 1.2)),
     liquidationWindowDuration: genOneOf([36, 48, 60]), // In seconds
@@ -166,7 +168,7 @@ export const genTrader = async (
   // Randomly provide test collateral to trader.
   const marginUsdDepositAmount = !isNil(options?.desiredMarginUsdDepositAmount)
     ? wei(options?.desiredMarginUsdDepositAmount)
-    : wei(genOneOf([1000, 5000, 10_000, 15_000]));
+    : wei(genOneOf([2000, 5000, 10_000, 15_000]));
   const collateralPrice = await collateral.getPrice();
   const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
@@ -200,7 +202,7 @@ export const genOrder = async (
     desiredHooks?: string[];
   }
 ) => {
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
   const keeperFeeBufferUsd = !isNil(options?.desiredKeeperFeeBufferUsd)
     ? wei(options?.desiredKeeperFeeBufferUsd).toBN()
@@ -212,7 +214,7 @@ export const genOrder = async (
   const collateralPrice = await collateral.getPrice();
   const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
 
-  const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
+  const oraclePrice = await BfpMarketProxy.getOraclePrice(market.marketId());
   let sizeDelta = marginUsd.div(oraclePrice).mul(wei(leverage)).toBN();
 
   // `desiredSide` is specified, just use that.
@@ -229,8 +231,8 @@ export const genOrder = async (
   const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice, {
     desiredPriceImpactPercentage: options?.desiredPriceImpactPercentage,
   });
-  const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
-  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(
+  const fillPrice = await BfpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
+  const { orderFee, keeperFee } = await BfpMarketProxy.getOrderFees(
     market.marketId(),
     sizeDelta,
     keeperFeeBufferUsd
@@ -260,18 +262,18 @@ export const genOrderFromSizeDelta = async (
     desiredPriceImpactPercentage?: number;
   }
 ): ReturnType<typeof genOrder> => {
-  const { PerpMarketProxy } = systems();
+  const { BfpMarketProxy } = systems();
 
   const keeperFeeBufferUsd = !isNil(options?.desiredKeeperFeeBufferUsd)
     ? wei(options?.desiredKeeperFeeBufferUsd).toBN()
     : genKeeperFeeBufferUsd();
 
-  const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
+  const oraclePrice = await BfpMarketProxy.getOraclePrice(market.marketId());
   const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice, {
     desiredPriceImpactPercentage: options?.desiredPriceImpactPercentage,
   });
-  const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
-  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(
+  const fillPrice = await BfpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
+  const { orderFee, keeperFee } = await BfpMarketProxy.getOrderFees(
     market.marketId(),
     sizeDelta,
     keeperFeeBufferUsd

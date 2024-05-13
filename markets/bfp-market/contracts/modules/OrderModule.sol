@@ -6,6 +6,7 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -18,8 +19,6 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
 import {Flags} from "../utils/Flags.sol";
-
-/* solhint-disable meta-transactions/no-msg-sender */
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -40,19 +39,19 @@ contract OrderModule is IOrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int256 accruedFunding;
+        uint256 accruedUtilization;
+        int256 pricePnl;
         uint256 fillPrice;
-        uint128 accountDebt;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
+        uint128 totalFees;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
 
     // --- Helpers --- //
 
-    /**
-     * @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
-     */
+    /// @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
     function isPriceToleranceExceeded(
         int128 sizeDelta,
         uint256 fillPrice,
@@ -77,12 +76,11 @@ contract OrderModule is IOrderModule {
         isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
 
-    /**
-     * @dev Validates that an order can only be settled if time and price are acceptable.
-     */
+    /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
+        uint256 pythPrice,
         Position.TradeParams memory params
     ) private view {
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
@@ -92,7 +90,7 @@ contract OrderModule is IOrderModule {
         if (!isReady) {
             revert ErrorUtil.OrderNotReady();
         }
-        if (params.oraclePrice == 0) {
+        if (pythPrice == 0) {
             revert ErrorUtil.InvalidPrice();
         }
         if (isPriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice)) {
@@ -104,9 +102,7 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /**
-     * @dev Validates that the hooks specified during commitment are valid and acceptable.
-     */
+    /// @dev Validates that the hooks specified during commitment are valid and acceptable.
     function validateOrderHooks(address[] memory hooks) private view {
         uint256 length = hooks.length;
 
@@ -130,9 +126,7 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /**
-     * @dev Executes the hooks supplied in the order commitment.
-     */
+    /// @dev Executes the hooks supplied in the order commitment.
     function executeOrderHooks(
         uint128 accountId,
         uint128 marketId,
@@ -163,17 +157,13 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
+    /// @dev Generic helper for utilization recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
         (uint256 utilizationRate, ) = market.recomputeUtilization(price);
         emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
     }
 
-    /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
+    /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
         (int256 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
@@ -186,9 +176,7 @@ contract OrderModule is IOrderModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function commitOrder(
         uint128 accountId,
         uint128 marketId,
@@ -221,12 +209,16 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
+        //
+        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
+        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
         Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
             Position.TradeParams(
                 sizeDelta,
-                oraclePrice,
+                oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+                oraclePrice, // CL oracle price.
                 Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
                 marketConfig.makerFee,
                 marketConfig.takerFee,
@@ -248,9 +240,7 @@ contract OrderModule is IOrderModule {
         );
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function settleOrder(
         uint128 accountId,
         uint128 marketId,
@@ -285,6 +275,7 @@ contract OrderModule is IOrderModule {
         );
         runtime.params = Position.TradeParams(
             order.sizeDelta,
+            market.getOraclePrice(),
             runtime.pythPrice,
             runtime.fillPrice,
             marketConfig.makerFee,
@@ -293,27 +284,15 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.params);
-        recomputeFunding(market, runtime.pythPrice);
+        validateOrderPriceReadiness(
+            globalConfig,
+            order.commitmentTime,
+            runtime.pythPrice,
+            runtime.params
+        );
+        recomputeFunding(market, runtime.params.oraclePrice);
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
-
-        // We call `getHeathData` here to fetch _current_ accrued utilization before utilization recomputation.
-        Position.HealthData memory healthData = Position.getHealthData(
-            market,
-            position.size,
-            position.entryPrice,
-            position.entryFundingAccrued,
-            position.entryUtilizationAccrued,
-            runtime.fillPrice,
-            marketConfig,
-            // NOTE: The margins passed here are missing the order fee + keeper fee for this trade (as they are calc
-            // before settlement), ref `runtime.trade.newMarginUsd` for correct next marginUsd.
-            //
-            // However, call to `getHealthData` is only for `accruedFunding`, `accruedUtilization` and PnL for the settlement
-            // event below so it's fine to use the old margin values.
-            runtime.trade.marginValues
-        );
 
         runtime.updatedMarketSize = (market.size.to256() +
             MathUtil.abs(runtime.trade.newPosition.size) -
@@ -325,38 +304,54 @@ contract OrderModule is IOrderModule {
         // We want to validateTrade and update market size before we recompute utilization
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
-        recomputeUtilization(market, runtime.pythPrice);
+        recomputeUtilization(market, runtime.params.oraclePrice);
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
 
+        // Account debt and market total trader debt must be updated with fees incurred to settle.
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        runtime.totalFees = (runtime.trade.orderFee + runtime.trade.keeperFee).to128();
+        accountMargin.debtUsd += runtime.totalFees;
+        market.totalTraderDebtUsd += runtime.totalFees;
+
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (position.size != 0) {
-            Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-            accountMargin.updateAccountDebtAndCollateral(
+            accountMargin.realizeAccountPnlAndUpdate(
                 market,
-                // What is `newMarginUsd`?
+                // `newMarginUsd` is (oldMargin - orderFee - keeperFee).
                 //
-                // (oldMargin - orderFee - keeperFee). Where oldMargin has pnl (from entry price changes), accruedFunding,
-                // accruedUtilization, debt, and previous fees taken into account. We use `collateralUsd` and not `marginUsd`
-                // as we dont want price impact to be deducted yet.
+                // Where `oldMargin` includes price PnL, accrued funding/util, account debt, and prev fees. We sub
+                // `collateralUsd` (opposed to `marginUsd`) here because `newMarginUsd` already considers this settlement
+                // fees and we want to avoid attributing price PnL (due to pd adjusted oracle price) now as its already
+                // tracked in the new position price PnL.
                 //
-                // TLDR; This is basically the `total realised PnL` for this position.
-                runtime.trade.newMarginUsd.toInt() -
-                    runtime.trade.marginValues.collateralUsd.toInt()
-            );
 
-            runtime.accountDebt = accountMargin.debtUsd;
+                // The value passed is then just realized profits/losses of previous position, including fees paid during
+                // this order settlement.
+                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt()
+            );
         }
+        // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
+        runtime.accruedFunding = position.getAccruedFunding(market, runtime.params.oraclePrice);
+        runtime.accruedUtilization = position.getAccruedUtilization(
+            market,
+            runtime.params.oraclePrice
+        );
+        runtime.pricePnl = position.getPricePnl(runtime.params.fillPrice);
 
         if (runtime.trade.newPosition.size == 0) {
             delete market.positions[accountId];
         } else {
-            market.positions[accountId].update(runtime.trade.newPosition);
+            position.update(runtime.trade.newPosition);
         }
 
         // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
+            globalConfig.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                runtime.trade.keeperFee
+            );
         }
 
         emit OrderSettled(
@@ -366,11 +361,11 @@ contract OrderModule is IOrderModule {
             runtime.params.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
-            healthData.accruedFunding,
-            healthData.accruedUtilization,
-            healthData.pnl,
+            runtime.accruedFunding,
+            runtime.accruedUtilization,
+            runtime.pricePnl,
             runtime.fillPrice,
-            runtime.accountDebt
+            accountMargin.debtUsd
         );
 
         emit MarketSizeUpdated(marketId, runtime.updatedMarketSize, runtime.updatedMarketSkew);
@@ -384,9 +379,7 @@ contract OrderModule is IOrderModule {
         executeOrderHooks(accountId, marketId, hooks, runtime.pythPrice);
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -407,9 +400,7 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function cancelOrder(
         uint128 accountId,
         uint128 marketId,
@@ -463,17 +454,19 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        // If `isAccountOwner` then 0 else chargeFee.
-        uint256 keeperFee = msg.sender == account.rbac.owner
+        // If `isAccountOwner` then 0 else charge cancellation fee.
+        uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
             ? 0
-            : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+            : Order.getCancellationKeeperFee();
 
         if (keeperFee > 0) {
-            Margin.load(accountId, marketId).updateAccountDebtAndCollateral(
-                market,
-                -keeperFee.toInt()
+            Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
+            market.totalTraderDebtUsd += keeperFee.to128();
+            globalConfig.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                keeperFee
             );
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
         emit OrderCanceled(accountId, marketId, keeperFee, commitmentTime);
@@ -482,9 +475,7 @@ contract OrderModule is IOrderModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getOrderDigest(
         uint128 accountId,
         uint128 marketId
@@ -516,9 +507,7 @@ contract OrderModule is IOrderModule {
             );
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
@@ -542,9 +531,7 @@ contract OrderModule is IOrderModule {
         keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd);
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getFillPrice(uint128 marketId, int128 size) external view returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
@@ -556,9 +543,7 @@ contract OrderModule is IOrderModule {
             );
     }
 
-    /**
-     * @inheritdoc IOrderModule
-     */
+    /// @inheritdoc IOrderModule
     function getOraclePrice(uint128 marketId) external view returns (uint256) {
         return PerpMarket.exists(marketId).getOraclePrice();
     }

@@ -9,6 +9,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
@@ -18,8 +19,6 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 
-/* solhint-disable meta-transactions/no-msg-sender */
-
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
@@ -28,6 +27,10 @@ contract MarginModule is IMarginModule {
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
+
+    // --- Constants --- //
+
+    uint256 private constant MAX_SUPPORTED_MARGIN_COLLATERALS = 10;
 
     // --- Runtime structs --- //
 
@@ -40,20 +43,23 @@ contract MarginModule is IMarginModule {
 
     // --- Helpers --- //
 
-    /**
-     * @dev Post collateral withdraw validation to verify margin requirements are acceptable.
-     */
-    function validatePositionPostWithdraw(
+    /// @dev Validation account and position after accounting update to verify margin requirements are acceptable.
+    function validateAccountAndPositionOnWithdrawal(
         uint128 accountId,
+        PerpMarket.Data storage market,
         Position.Data storage position,
-        PerpMarket.Data storage market
+        uint256 oraclePrice
     ) private view {
-        uint256 oraclePrice = market.getOraclePrice();
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
             oraclePrice
         );
+
+        // Make sure margin isn't liquidatable due to debt.
+        if (Margin.isMarginLiquidatable(accountId, market, marginValues)) {
+            revert ErrorUtil.InsufficientMargin();
+        }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
@@ -68,54 +74,50 @@ contract MarginModule is IMarginModule {
             marginValues.collateralUsd,
             marketConfig
         );
-        // We use the discount adjusted price here due to the explicit liquidation check.
 
+        // We use the discount adjusted price here due to the explicit liquidation check.
         if (marginValues.discountedMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
     }
 
-    /**
-     * @dev Performs a collateral withdraw from Synthetix, ERC20 transfer, and emits event.
-     */
+    /// @dev Performs a collateral withdraw from Synthetix, ERC20 transfer, and emits event.
     function withdrawAndTransfer(
         uint128 marketId,
         uint256 amount,
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
+        address msgSender = ERC2771Context._msgSender();
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, amount);
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
-            synth.transfer(msg.sender, amount);
+            synth.transfer(msgSender, amount);
         }
-        emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
+        emit MarginWithdraw(address(this), msgSender, amount, synthMarketId);
     }
 
-    /**
-     * @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
-     */
+    /// @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
     function transferAndDeposit(
         uint128 marketId,
         uint256 amount,
         uint128 synthMarketId,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
+        address msgSender = ERC2771Context._msgSender();
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amount);
+            globalConfig.synthetix.depositMarketUsd(marketId, msgSender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            synth.transferFrom(msg.sender, address(this), amount);
+            synth.transferFrom(msgSender, address(this), amount);
             globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
-        emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
+        emit MarginDeposit(msgSender, address(this), amount, synthMarketId);
     }
 
-    /**
-     * @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
-     */
+    /// @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
     function approveSynthCollateral(
         uint128 synthMarketId,
         uint256 amount,
@@ -124,17 +126,10 @@ contract MarginModule is IMarginModule {
         ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
             ? ITokenModule(globalConfig.usdToken)
             : ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-
         synth.approve(address(globalConfig.synthetix), amount);
-        synth.approve(address(globalConfig.spotMarket), amount);
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            synth.approve(address(this), amount);
-        }
     }
 
-    /**
-     * @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.
-     */
+    /// @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.
     function isCollateralDeposited(uint128 synthMarketId) private view returns (bool) {
         PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
 
@@ -158,9 +153,7 @@ contract MarginModule is IMarginModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
         Account.loadAccountAndValidatePermission(
@@ -238,9 +231,7 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function modifyCollateral(
         uint128 accountId,
         uint128 marketId,
@@ -295,6 +286,7 @@ contract MarginModule is IMarginModule {
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             FeatureFlag.ensureAccessToFeature(Flags.DEPOSIT);
+
             uint256 maxAllowable = collateral.maxAllowable;
             uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
 
@@ -307,6 +299,7 @@ contract MarginModule is IMarginModule {
             transferAndDeposit(marketId, absAmountDelta, synthMarketId, globalConfig);
         } else {
             FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
+
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
                 revert ErrorUtil.InsufficientCollateral(
@@ -319,22 +312,18 @@ contract MarginModule is IMarginModule {
             accountMargin.collaterals[synthMarketId] -= absAmountDelta;
             market.depositedCollateral[synthMarketId] -= absAmountDelta;
 
-            // If an open position exists, verify this does _not_ place them into instant liquidation.
-            //
-            // Ensure we perform this _after_ the accounting update so marginUsd uses with post withdrawal
-            // collateral amounts.
+            // Verify account and position remain solvent.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0 || accountMargin.debtUsd != 0) {
-                validatePositionPostWithdraw(accountId, position, market);
+                validateAccountAndPositionOnWithdrawal(accountId, market, position, oraclePrice);
             }
 
+            // Perform the actual withdraw & transfer from Synthetix Core to msg.sender.
             withdrawAndTransfer(marketId, absAmountDelta, synthMarketId, globalConfig);
         }
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external {
         OwnableStorage.onlyOwner();
 
@@ -353,9 +342,7 @@ contract MarginModule is IMarginModule {
         revert ErrorUtil.UnsupportedCollateral(synthMarketId);
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function setMarginCollateralConfiguration(
         uint128[] calldata synthMarketIds,
         bytes32[] calldata oracleNodeIds,
@@ -373,6 +360,14 @@ contract MarginModule is IMarginModule {
         runtime.lengthAfter = synthMarketIds.length;
         runtime.maxApproveAmount = type(uint256).max;
         runtime.previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
+
+        // Number of synth collaterals to configure exceeds system maxmium.
+        if (runtime.lengthAfter > MAX_SUPPORTED_MARGIN_COLLATERALS) {
+            revert ErrorUtil.MaxCollateralExceeded(
+                runtime.lengthAfter,
+                MAX_SUPPORTED_MARGIN_COLLATERALS
+            );
+        }
 
         // Ensure all supplied arrays have the same length.
         if (
@@ -456,12 +451,10 @@ contract MarginModule is IMarginModule {
             }
         }
 
-        emit CollateralConfigured(msg.sender, runtime.lengthAfter);
+        emit MarginCollateralConfigured(ERC2771Context._msgSender(), runtime.lengthAfter);
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function payDebt(uint128 accountId, uint128 marketId, uint128 amount) external {
         FeatureFlag.ensureAccessToFeature(Flags.PAY_DEBT);
         if (amount == 0) {
@@ -496,20 +489,22 @@ contract MarginModule is IMarginModule {
         accountMargin.debtUsd -= decreaseDebtAmount;
         market.updateDebtAndCollateral(-decreaseDebtAmount.toInt(), -sUsdToDeduct.toInt());
 
-        // Infer the remaining sUSD to burn from `msg.sender` after attributing sUSD in margin.
+        // Infer the remaining sUSD to burn from `ERC2771Context._msgSender()` after attributing sUSD in margin.
         uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
         if (amountToBurn > 0) {
-            globalConfig.synthetix.depositMarketUsd(marketId, msg.sender, amountToBurn);
+            globalConfig.synthetix.depositMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                amountToBurn
+            );
         }
 
-        emit DebtPaid(debt, accountMargin.debtUsd, sUsdToDeduct);
+        emit DebtPaid(accountId, marketId, debt, accountMargin.debtUsd, sUsdToDeduct);
     }
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getMarginCollateralConfiguration()
         external
         view
@@ -539,9 +534,7 @@ contract MarginModule is IMarginModule {
         return collaterals;
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getMarginDigest(
         uint128 accountId,
         uint128 marketId
@@ -551,13 +544,11 @@ contract MarginModule is IMarginModule {
         return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
-        uint256 price
+        uint256 oraclePrice
     ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -565,13 +556,11 @@ contract MarginModule is IMarginModule {
             Margin.getNetAssetValue(
                 accountId,
                 market,
-                price == 0 ? market.getOraclePrice() : price
+                oraclePrice == 0 ? market.getOraclePrice() : oraclePrice
             );
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getDiscountedCollateralPrice(
         uint128 synthMarketId,
         uint256 amount
@@ -581,7 +570,7 @@ contract MarginModule is IMarginModule {
             .load();
 
         return
-            Margin.getDiscountedPriceFromCollateralPrice(
+            Margin.getDiscountedCollateralPrice(
                 amount,
                 globalMarginConfig.getCollateralPrice(synthMarketId, globalMarketConfig),
                 synthMarketId,
@@ -589,9 +578,7 @@ contract MarginModule is IMarginModule {
             );
     }
 
-    /**
-     * @inheritdoc IMarginModule
-     */
+    /// @inheritdoc IMarginModule
     function getWithdrawableMargin(
         uint128 accountId,
         uint128 marketId
@@ -615,30 +602,32 @@ contract MarginModule is IMarginModule {
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (uint256 im, , uint256 liqFlagReward) = Position.getLiquidationMarginUsd(
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(
             size,
             oraclePrice,
             marginValues.collateralUsd,
             marketConfig
         );
-        uint256 liqKeeperFee = Position.getLiquidationKeeperFee(
-            MathUtil.abs(size).to128(),
-            marketConfig,
-            PerpMarketConfiguration.load()
-        );
 
         // There is a position open. Discount the collateral, deduct running losses (or add profits), reduce
         // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
         // because both the liq and flag rewards can change based on chain usage.
+        return MathUtil.max(marginValues.discountedMarginUsd.toInt() - im.toInt(), 0).toUint();
+    }
+
+    /// @inheritdoc IMarginModule
+    function getMarginLiquidationOnlyReward(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.exists(marketId);
+
         return
-            MathUtil
-                .max(
-                    marginValues.discountedMarginUsd.toInt() -
-                        im.toInt() -
-                        liqFlagReward.toInt() -
-                        liqKeeperFee.toInt(),
-                    0
-                )
-                .toUint();
+            Margin.getMarginLiquidationOnlyReward(
+                Margin.getCollateralUsdWithoutDiscount(accountId, marketId),
+                PerpMarketConfiguration.load(marketId),
+                PerpMarketConfiguration.load()
+            );
     }
 }

@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
@@ -19,6 +19,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for int128;
     using DecimalMath for uint128;
     using DecimalMath for uint256;
+    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
@@ -26,9 +27,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Mutations --- //
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setSynthetix(ISynthetixSystem synthetix) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -39,41 +38,31 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         globalConfig.oracleManager = synthetix.getOracleManager();
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setSpotMarket(ISpotMarketSystem spotMarket) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().spotMarket = spotMarket;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setPyth(IPyth pyth) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().pyth = pyth;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setEthOracleNodeId(bytes32 ethOracleNodeId) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().ethOracleNodeId = ethOracleNodeId;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function setRewardDistributorImplementation(address implementation) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().rewardDistributorImplementation = implementation;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function createMarket(
         IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
     ) external returns (uint128) {
@@ -90,18 +79,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return id;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function recomputeUtilization(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (uint256 utilizationRate, ) = market.recomputeUtilization(market.getOraclePrice());
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
@@ -113,40 +98,42 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         );
     }
 
-    // --- Required functions to be IMarket compatible --- //
-
-    /**
-     * @inheritdoc IMarket
-     */
+    /// @inheritdoc IMarket
     function name(uint128) external pure override returns (string memory) {
         return "BFP Market";
     }
 
-    /**
-     * @inheritdoc IMarket
-     */
+    /// @inheritdoc IMarket
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        uint256 totalCollateralValueUsd = market.getTotalCollateralValueUsd();
 
-        if (market.skew == 0 && market.debtCorrection == 0 && market.totalTraderDebtUsd == 0) {
-            return totalCollateralValueUsd;
+        int256 totalCollateralValueUsd = market.getTotalCollateralValueUsd().toInt();
+        int128 skew = market.skew;
+        int256 marketReportedDebt;
+
+        if (skew == 0) {
+            marketReportedDebt =
+                totalCollateralValueUsd -
+                market.debtCorrection -
+                market.totalTraderDebtUsd.toInt();
+            return MathUtil.max(marketReportedDebt, 0).toUint();
         }
 
         uint256 oraclePrice = market.getOraclePrice();
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
-        int256 priceWithFunding = oraclePrice.toInt() + unrecordedFunding;
-        int256 marketReportedDebt = totalCollateralValueUsd.toInt() +
-            market.skew.mulDecimal(priceWithFunding) -
-            market.debtCorrection +
+        int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
+        int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
+
+        marketReportedDebt =
+            totalCollateralValueUsd +
+            skew.mulDecimal(priceWithFunding) -
+            market.debtCorrection -
             market.totalTraderDebtUsd.toInt();
 
         return MathUtil.max(marketReportedDebt, 0).toUint();
     }
 
-    /**
-     * @inheritdoc IMarket
-     */
+    /// @inheritdoc IMarket
     function minimumCredit(uint128 marketId) external view override returns (uint256) {
         // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
@@ -159,9 +146,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             );
     }
 
-    /**
-     * @inheritdoc IERC165
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
@@ -172,16 +157,29 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Views --- //
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
     function getActiveMarketIds() external view returns (uint128[] memory) {
         return PerpMarket.load().activeMarketIds;
     }
 
-    /**
-     * @inheritdoc IPerpMarketFactoryModule
-     */
+    /// @inheritdoc IPerpMarketFactoryModule
+    function getUtilizationDigest(
+        uint128 marketId
+    ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint128 utilization = market.getUtilization(market.getOraclePrice(), globalConfig);
+        return
+            IPerpMarketFactoryModule.UtilizationDigest(
+                market.currentUtilizationRateComputed,
+                market.lastUtilizationTime,
+                PerpMarket.getCurrentUtilizationRate(utilization, globalConfig),
+                utilization
+            );
+    }
+
+    /// @inheritdoc IPerpMarketFactoryModule
     function getMarketDigest(
         uint128 marketId
     ) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {

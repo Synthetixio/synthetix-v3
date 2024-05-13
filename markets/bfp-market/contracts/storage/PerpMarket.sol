@@ -29,47 +29,44 @@ library PerpMarket {
     // --- Storage --- //
 
     struct GlobalData {
-        // Array all market ids in the system
+        /// Array all market ids in the system
         uint128[] activeMarketIds;
     }
 
     struct Data {
-        // A unique market id for market reference.
+        /// A unique market id for market reference.
         uint128 id;
-        // Human readable name e.g. bytes32(WSTETHPERP).
+        /// Human readable name e.g. bytes32(WSTETHPERP).
         bytes32 name;
-        // sum(positions.map(p => p.size)).
+        /// sum(positions.map(p => p.size)).
         int128 skew;
-        // sum(positions.map(p => abs(p.size))).
+        /// sum(positions.map(p => abs(p.size))).
         uint128 size;
-        // The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
+        /// The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
         uint128 totalTraderDebtUsd;
-        // The value of the funding rate last time this was computed.
+        /// The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
-        // The value (in USD) of total market funding accumulated.
+        /// The value (in USD) of total market funding accumulated.
         int256 currentFundingAccruedComputed;
-        // block.timestamp of when funding was last computed.
+        /// block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
-        // The value of the utilization rate last time this was computed.
+        /// The value of the utilization rate last time this was computed.
         uint256 currentUtilizationRateComputed;
-        // The value (in native units) of total market utilization accumulated.
+        /// The value (in native units) of total market utilization accumulated.
         uint256 currentUtilizationAccruedComputed;
-        // block.timestamp of when utilization was last computed.
+        /// block.timestamp of when utilization was last computed.
         uint256 lastUtilizationTime;
-        // This is needed to perform a fast constant time op for overall market debt.
-        //
-        // debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
-        // marketDebt     = market.skew * (price + nextFundingEntry) + debtCorrection
+        /// Accumulated debt correction on every position modification for reportedDebt.
         int128 debtCorrection;
-        // {accountId: Order}.
+        /// {accountId: Order}.
         mapping(uint128 => Order.Data) orders;
-        // {accountId: Position}.
+        /// {accountId: Position}.
         mapping(uint128 => Position.Data) positions;
-        // {accountId: flaggerAddress}.
+        /// {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
-        // {synthMarketId: collateralAmount} (# collateral deposited to market).
+        /// {synthMarketId: collateralAmount} (# collateral deposited to market).
         mapping(uint128 => uint256) depositedCollateral;
-        // An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
+        /// An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
         uint128[2][] pastLiquidations;
     }
 
@@ -87,9 +84,7 @@ library PerpMarket {
         }
     }
 
-    /**
-     * @dev Reverts if the market does not exist. Otherwise, returns the market.
-     */
+    /// @dev Reverts if the market does not exist. Otherwise, returns the market.
     function exists(uint128 id) internal view returns (Data storage market) {
         Data storage self = load(id);
         if (self.id == 0) {
@@ -98,49 +93,37 @@ library PerpMarket {
         return self;
     }
 
-    /**
-     * @dev Creates a market by updating storage for at `id`.
-     */
+    /// @dev Creates a market by updating storage for at `id`.
     function create(uint128 id, bytes32 name) internal {
         PerpMarket.Data storage market = load(id);
         market.id = id;
         market.name = name;
 
-        // @dev Init the pastLiquidations with an empty liquidation chunk for easier remainingCapacity check.
+        // Init the pastLiquidations with an empty liquidation chunk for easier remainingCapacity check.
         market.pastLiquidations.push([0, 0]);
-    }
-
-    /**
-     * @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
-     */
-    function updatePythPrice(bytes[] calldata updateData) internal {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
     // --- Member (mutations) --- //
 
-    /**
-     * @dev Updates the debt correction given an `oldPosition` and `newPosition`.
-     */
+    /// @dev Updates the debt correction given an `oldPosition` and `newPosition`.
     function updateDebtCorrection(
         PerpMarket.Data storage self,
         Position.Data storage oldPosition,
         Position.Data memory newPosition
     ) internal {
+        // This is needed to perform a fast constant time op for overall market debt.
+        //
+        // debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
+        // reportedDebt   = market.skew * (price + nextFundingEntry) + debtCorrection
         int256 sizeDelta = newPosition.size - oldPosition.size;
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
         int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
-            oldPosition.getAccruedFunding(self, newPosition.entryPrice) +
-            newPosition.accruedFeesUsd.toInt();
-
+            oldPosition.getAccruedFunding(self, newPosition.entryPrice);
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
 
-    /**
-     * @dev Updates the `pastLiquidations` array by either appending a new timestamp or update an existing accumulation.
-     */
+    /// @dev Updates the `pastLiquidations` array by either appending a new timestamp or update an existing accumulation.
     function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
         uint128 currentTime = block.timestamp.to128();
         uint256 length = self.pastLiquidations.length;
@@ -156,9 +139,7 @@ library PerpMarket {
         }
     }
 
-    /**
-     * @dev Updates totalTraderDebtUsd and sUSD collateral. It also calls market.updateDebtAndCollateral to update global debt tracking.
-     */
+    ///  @dev Updates `totalTraderDebtUsd` and sUSD collateral.
     function updateDebtAndCollateral(
         PerpMarket.Data storage self,
         int128 debtAmountDeltaUsd,
@@ -178,9 +159,7 @@ library PerpMarket {
         }
     }
 
-    /**
-     * @dev Returns the collateral utilization bounded by 0 and 1.
-     */
+    /// @dev Returns the collateral utilization bounded by 0 and 1.
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
@@ -192,7 +171,7 @@ library PerpMarket {
             marketConfig.minCreditPercent.to256()
         );
         if (lockedCollateralUsd == 0) {
-            // If we dont have any postions open, we're at 0% utilization.
+            // If we dont have any positions open, we're at 0% utilization.
             return 0;
         }
 
@@ -204,16 +183,20 @@ library PerpMarket {
         // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
         int256 delegatedCollateralValueUsd = withdrawableUsd.toInt() -
             getTotalCollateralValueUsd(self).toInt();
-        if (delegatedCollateralValueUsd < 0) {
+        if (delegatedCollateralValueUsd <= 0) {
             return DecimalMath.UNIT.to128();
         }
 
-        return lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()).to128();
+        return
+            MathUtil
+                .min(
+                    lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()),
+                    DecimalMath.UNIT
+                )
+                .to128();
     }
 
-    /**
-     * @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).
-     */
+    /// @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).
     function getCurrentUtilizationRate(
         uint128 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig
@@ -222,7 +205,7 @@ library PerpMarket {
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         uint128 highUtilizationSlopePercent = globalConfig.highUtilizationSlopePercent;
 
-        if (utilization < utilizationBreakpointPercent) {
+        if (utilization <= utilizationBreakpointPercent) {
             // If utilization is below the breakpoint, use the low utilization slope
             return lowUtilizationSlopePercent.mulDecimalUint128(utilization) * 100;
         } else {
@@ -238,9 +221,7 @@ library PerpMarket {
         }
     }
 
-    /**
-     * @dev Returns the next market collateral utilization value.
-     */
+    /// @dev Returns the next market collateral utilization value.
     function getUnrecordedUtilization(
         PerpMarket.Data storage self
     ) internal view returns (uint256) {
@@ -248,9 +229,7 @@ library PerpMarket {
             self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
     }
 
-    /**
-     * @dev Recompute and store utilization rate given current market conditions.
-     */
+    /// @dev Recompute and store utilization rate given current market conditions.
     function recomputeUtilization(
         PerpMarket.Data storage self,
         uint256 price
@@ -267,9 +246,7 @@ library PerpMarket {
         self.lastUtilizationTime = block.timestamp;
     }
 
-    /**
-     * @dev Recompute and store funding related values given the current market conditions.
-     */
+    /// @dev Recompute and store funding related values given the current market conditions.
     function recomputeFunding(
         PerpMarket.Data storage self,
         uint256 price
@@ -283,28 +260,20 @@ library PerpMarket {
 
     // --- Member (views) --- //
 
-    /**
-     * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
-     */
+    /// @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
     function getOraclePrice(PerpMarket.Data storage self) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         return globalConfig.oracleManager.process(marketConfig.oracleNodeId).price.toUint();
     }
 
-    /**
-     * @dev Returns the rate of funding rate change.
-     */
+    /// @dev Returns the rate of funding rate change.
     function getCurrentFundingVelocity(
         PerpMarket.Data storage self
     ) internal view returns (int256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         int128 skewScale = marketConfig.skewScale.toInt();
 
-        // Avoid a panic due to div by zero. Return 0 immediately.
-        if (skewScale == 0) {
-            return 0;
-        }
         // proportional skew
         int256 pSkew = self.skew.divDecimal(skewScale);
         if (MathUtil.abs(pSkew) < marketConfig.fundingVelocityClamp) {
@@ -319,18 +288,14 @@ library PerpMarket {
         return pSkewBounded.mulDecimal(marketConfig.maxFundingVelocity.toInt());
     }
 
-    /**
-     * @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
-     */
+    /// @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
     function getProportionalFundingElapsed(
         PerpMarket.Data storage self
     ) internal view returns (int256) {
-        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
-    /**
-     * @dev Returns the proportional time elapsed since last utilization.
-     */
+    /// @dev Returns the proportional time elapsed since last utilization.
     function getProportionalUtilizationElapsed(
         PerpMarket.Data storage self
     ) internal view returns (uint256) {
@@ -339,9 +304,7 @@ library PerpMarket {
         return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
     }
 
-    /**
-     * @dev Returns the current funding rate given current market conditions.
-     */
+    /// @dev Returns the current funding rate given current market conditions.
     function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
@@ -364,9 +327,7 @@ library PerpMarket {
             (getCurrentFundingVelocity(self).mulDecimal(getProportionalFundingElapsed(self)));
     }
 
-    /**
-     * @dev Returns the next market funding accrued value.
-     */
+    /// @dev Returns the next market funding accrued value.
     function getUnrecordedFundingWithRate(
         PerpMarket.Data storage self,
         uint256 price
@@ -382,9 +343,7 @@ library PerpMarket {
             .mulDecimal(price.toInt());
     }
 
-    /**
-     * @dev Returns the maximum amount of size that can be liquidated (excluding current cap usage).
-     */
+    /// @dev Returns the maximum amount of size that can be liquidated (excluding current cap usage).
     function getMaxLiquidatableCapacity(
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint128) {
@@ -407,9 +366,7 @@ library PerpMarket {
                 .to128();
     }
 
-    /**
-     * @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
-     */
+    /// @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
     function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
@@ -491,9 +448,7 @@ library PerpMarket {
             .to128();
     }
 
-    /**
-     * @dev Returns the total USD value of all collaterals if we were to spot sell everything.
-     */
+    /// @dev Returns the total USD value of all collaterals if we were to spot sell everything.
     function getTotalCollateralValueUsd(
         PerpMarket.Data storage self
     ) internal view returns (uint256) {
