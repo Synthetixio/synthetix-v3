@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
@@ -164,7 +165,7 @@ library PerpMarket {
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
+        address synthetixCoreAddress,
         address sUsdAddress,
         address oracleManagerAddress
     ) internal view returns (uint128) {
@@ -179,7 +180,9 @@ library PerpMarket {
         }
 
         // This is our market's `creditCapacity + all deposited collateral`.
-        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
+        uint256 withdrawableUsd = ISynthetixSystem(synthetixCoreAddress).getWithdrawableMarketUsd(
+            self.id
+        );
 
         // If we remove collateral deposited from traders we get the delegatedCollateral value.
         //
@@ -236,12 +239,13 @@ library PerpMarket {
     function recomputeUtilization(
         PerpMarket.Data storage self,
         uint256 price,
+        address synthetixCoreAddress,
         address sUsdAddress,
         address oracleManagerAddress
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
-            getUtilization(self, price, globalConfig, sUsdAddress, oracleManagerAddress),
+            getUtilization(self, price, synthetixCoreAddress, sUsdAddress, oracleManagerAddress),
             globalConfig
         );
         unrecordedUtilization = getUnrecordedUtilization(self);

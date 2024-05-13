@@ -6,6 +6,7 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
@@ -27,10 +28,12 @@ contract LiquidationModule is ILiquidationModule {
     using Position for Position.Data;
 
     // --- Immutables --- //
+    address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_susd, address _oracle_manager) {
+    constructor(address _synthetix_core, address _synthetix_susd, address _oracle_manager) {
+        SYNTHETIX_CORE = _synthetix_core;
         SYNTHETIX_SUSD = _synthetix_susd;
         ORACLE_MANAGER = _oracle_manager;
     }
@@ -93,6 +96,7 @@ contract LiquidationModule is ILiquidationModule {
 
         (uint256 utilizationRate, ) = market.recomputeUtilization(
             oraclePrice,
+            SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
         );
@@ -106,8 +110,7 @@ contract LiquidationModule is ILiquidationModule {
     function liquidateCollateral(
         uint128 accountId,
         uint128 marketId,
-        PerpMarket.Data storage market,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        PerpMarket.Data storage market
     ) private {
         Runtime_liquidateCollateral memory runtime;
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -138,7 +141,7 @@ contract LiquidationModule is ILiquidationModule {
 
             // Found a deposited collateral that must be distributed.
             if (runtime.availableAccountCollateral > 0) {
-                globalConfig.synthetix.withdrawMarketCollateral(
+                ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketCollateral(
                     marketId,
                     runtime.collateralAddress,
                     runtime.availableAccountCollateral
@@ -161,10 +164,8 @@ contract LiquidationModule is ILiquidationModule {
                 );
                 uint256 totalCollateralValueUsd;
                 for (uint256 j = 0; j < runtime.poolCollateralTypesLength; ) {
-                    (, uint256 collateralValueUsd) = globalConfig.synthetix.getVaultCollateral(
-                        runtime.poolId,
-                        poolCollateralTypes[j]
-                    );
+                    (, uint256 collateralValueUsd) = ISynthetixSystem(SYNTHETIX_CORE)
+                        .getVaultCollateral(runtime.poolId, poolCollateralTypes[j]);
                     totalCollateralValueUsd += collateralValueUsd;
                     collateralValuesUsd[j] = collateralValueUsd;
 
@@ -269,7 +270,7 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
-        liquidateCollateral(accountId, marketId, market, globalConfig);
+        liquidateCollateral(accountId, marketId, market);
 
         address msgSender = ERC2771Context._msgSender();
 
@@ -277,7 +278,7 @@ contract LiquidationModule is ILiquidationModule {
         market.flaggedLiquidations[accountId] = msgSender;
 
         // Pay flagger.
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, flagReward);
+        ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(marketId, msgSender, flagReward);
 
         emit PositionFlaggedLiquidation(accountId, marketId, msgSender, flagReward, oraclePrice);
     }
@@ -318,7 +319,7 @@ contract LiquidationModule is ILiquidationModule {
         address msgSender = ERC2771Context._msgSender();
 
         // Pay the keeper
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, liqKeeperFee);
+        ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(marketId, msgSender, liqKeeperFee);
 
         emit PositionLiquidated(
             accountId,
@@ -368,10 +369,10 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig
         );
 
-        liquidateCollateral(accountId, marketId, market, PerpMarketConfiguration.load());
+        liquidateCollateral(accountId, marketId, market);
 
         // Pay the caller.
-        globalConfig.synthetix.withdrawMarketUsd(
+        ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
             marketId,
             ERC2771Context._msgSender(),
             keeperReward

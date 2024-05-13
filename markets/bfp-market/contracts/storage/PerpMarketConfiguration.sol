@@ -13,8 +13,6 @@ library PerpMarketConfiguration {
     // --- Storage --- //
 
     struct GlobalData {
-        /// A reference to the core Synthetix v3 system.
-        ISynthetixSystem synthetix;
         /// A reference to the Pyth EVM contract.
         IPyth pyth;
         /// Oracle node id for for eth/usd.

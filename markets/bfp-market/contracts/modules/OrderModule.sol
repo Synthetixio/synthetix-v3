@@ -6,6 +6,7 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
@@ -36,10 +37,12 @@ contract OrderModule is IOrderModule {
     using Margin for Margin.Data;
 
     // --- Immutables --- //
+    address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_susd, address _oracle_manager) {
+    constructor(address _synthetix_core, address _synthetix_susd, address _oracle_manager) {
+        SYNTHETIX_CORE = _synthetix_core;
         SYNTHETIX_SUSD = _synthetix_susd;
         ORACLE_MANAGER = _oracle_manager;
     }
@@ -171,6 +174,7 @@ contract OrderModule is IOrderModule {
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
         (uint256 utilizationRate, ) = market.recomputeUtilization(
             price,
+            SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
         );
@@ -370,7 +374,7 @@ contract OrderModule is IOrderModule {
 
         // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
-            globalConfig.synthetix.withdrawMarketUsd(
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 runtime.trade.keeperFee
@@ -491,7 +495,7 @@ contract OrderModule is IOrderModule {
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
             market.totalTraderDebtUsd += keeperFee.to128();
-            globalConfig.synthetix.withdrawMarketUsd(
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 keeperFee

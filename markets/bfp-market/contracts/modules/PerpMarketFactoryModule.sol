@@ -25,23 +25,17 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using PerpMarket for PerpMarket.Data;
 
     // --- Immutables --- //
+    address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_susd, address _oracle_manager) {
+    constructor(address _synthetix_core, address _synthetix_susd, address _oracle_manager) {
+        SYNTHETIX_CORE = _synthetix_core;
         SYNTHETIX_SUSD = _synthetix_susd;
         ORACLE_MANAGER = _oracle_manager;
     }
 
     // --- Mutations --- //
-
-    /// @inheritdoc IPerpMarketFactoryModule
-    function setSynthetix(ISynthetixSystem synthetix) external {
-        OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        globalConfig.synthetix = synthetix;
-    }
 
     /// @inheritdoc IPerpMarketFactoryModule
     function setPyth(IPyth pyth) external {
@@ -67,9 +61,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     ) external returns (uint128) {
         OwnableStorage.onlyOwner();
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        uint128 id = globalConfig.synthetix.registerMarket(address(this));
+        uint128 id = ISynthetixSystem(SYNTHETIX_CORE).registerMarket(address(this));
 
         PerpMarket.create(id, data.name);
         PerpMarket.load().activeMarketIds.push(id);
@@ -83,6 +75,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (uint256 utilizationRate, ) = market.recomputeUtilization(
             market.getOraclePrice(ORACLE_MANAGER),
+            SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
         );
@@ -176,7 +169,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         uint128 utilization = market.getUtilization(
             market.getOraclePrice(ORACLE_MANAGER),
-            globalConfig,
+            SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
         );

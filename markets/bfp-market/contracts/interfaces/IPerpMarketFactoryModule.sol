@@ -71,10 +71,6 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
 
     // --- Mutations --- //
 
-    /// @notice Stores a reference to the Synthetix core system.
-    /// @param synthetix Address of core Synthetix proxy
-    function setSynthetix(ISynthetixSystem synthetix) external;
-
     /// @notice Stores a reference to the Pyth EVM contract.
     /// @param pyth Address of Pyth verification contract
     function setPyth(IPyth pyth) external;

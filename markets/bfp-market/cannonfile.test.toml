@@ -31,6 +31,7 @@ args = [120, 1] # 120s, 1wei
 [contract.OrderModule]
 artifact = "OrderModule"
 args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
     "<%= imports.synthetix.contracts.USDProxy.address %>",
     "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
 ]
@@ -38,6 +39,7 @@ args = [
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
 args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
     "<%= imports.synthetix.contracts.USDProxy.address %>",
     "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
 ]
@@ -45,6 +47,7 @@ args = [
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
 args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
     "<%= imports.synthetix.contracts.USDProxy.address %>",
     "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
 ]
@@ -63,13 +66,14 @@ args = [
 [contract.MarginModule]
 artifact = "MarginModule"
 args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
     "<%= imports.synthetix.contracts.USDProxy.address %>",
     "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
 ]
 
 [contract.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
@@ -207,12 +211,6 @@ args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "3"
 
 # --- Market Post BFP Deployment Configuration --- #
-
-[invoke.set_synthetix]
-target = ["BfpMarketProxy"]
-fromCall.func = "owner"
-func = "setSynthetix"
-args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [invoke.set_pyth]
 target = ["BfpMarketProxy"]
