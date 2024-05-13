@@ -173,30 +173,24 @@ contract VaultModule is IVaultModule {
         int256 deltaCollateralAmountD18,
         uint256 leverage
     ) external override returns (uint256 intentId) {
-        // 1- Ensure the caller is authorized to represent the account.
+        // Ensure the caller is authorized to represent the account.
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
-        // 1.1- Input checks
+        // Input checks
         // System only supports leverage of 1.0 for now.
         if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
+        // Ensure current collateral amount differs from the new collateral amount.
+        if (deltaCollateralAmountD18 == 0) revert InvalidCollateralAmount();
 
-        // 2- Verify the account holds enough collateral to execute the intent.
+        // Verify the account holds enough collateral to execute the intent.
         // Get previous intents cache
         AccountDelegationIntents.Data storage accountIntents = AccountDelegationIntents.getValid(
             accountId
         );
-        // TODO LJM Continue from here...
 
         // Identify the vault that corresponds to this collateral type and pool id.
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
-
-        // Use account interaction to update its rewards.
-        // TODO LJM Do we need to call this in the intent or just at execution?
-        // uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
-        // uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
-        //     accountId.toBytes32()
-        // );
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
@@ -218,15 +212,7 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18
             );
         }
-
-        // 3- Check the validity of the collateral amount to be delegated, respecting the caches that track outstanding intents to delegate or undelegate collateral.
-        // 4- Update the appropriate caches to reflect the collateral amount declared in the intent for the identified account and pool.
-        // 5- Update the intentNoncesByAccount to include the new intent nonce associated with the account.
-        // 6- Update the intentByNonce to represent the newly declared intent using the specific nonce.
-        // 7- Emit a DelegateCollateralIntentDeclared event.
-
-        // Ensure current collateral amount differs from the new collateral amount.
-        if (deltaCollateralAmountD18 == 0) revert InvalidCollateralAmount();
+        // Check the validity of the collateral amount to be delegated, respecting the caches that track outstanding intents to delegate or undelegate collateral.
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
         else if (newCollateralAmountD18 > currentCollateralAmount) {
@@ -244,30 +230,6 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18 - currentCollateralAmount
             );
         }
-        // TODO LJM more checks from original code
-        // // If decreasing the delegated collateral amount,
-        // // check the account's collateralization ratio.
-        // // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
-        // if (newCollateralAmountD18 < currentCollateralAmount) {
-        //     int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
-
-        //     uint256 minIssuanceRatioD18 = Pool
-        //         .loadExisting(poolId)
-        //         .collateralConfigurations[collateralType]
-        //         .issuanceRatioD18;
-
-        //     // Minimum collateralization ratios are configured in the system per collateral type.abi
-        //     // Ensure that the account's updated position satisfies this requirement.
-        //     CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
-        //         debt < 0 ? 0 : debt.toUint(),
-        //         newCollateralAmountD18.mulDecimal(collateralPrice),
-        //         minIssuanceRatioD18
-        //     );
-
-        //     // Accounts cannot reduce collateral if any of the pool's
-        //     // connected market has its capacity locked.
-        //     _verifyNotCapacityLocked(poolId);
-        // }
 
         // Prepare data for storing the new intent.
         int256 collateralDeltaAmountD18 = newCollateralAmountD18 > currentCollateralAmount
@@ -298,7 +260,19 @@ contract VaultModule is IVaultModule {
         // Add intent to the account's delegation intents.
         AccountDelegationIntents.getValid(intent.accountId).addIntent(intent);
 
-        // TODO LJM emit an event
+        // emit an event
+        emit DelegationIntentDeclared(
+            accountId,
+            poolId,
+            collateralType,
+            collateralDeltaAmountD18,
+            leverage,
+            intentId,
+            intent.declarationTime,
+            intent.processingStartTime,
+            intent.processingEndTime,
+            ERC2771Context._msgSender()
+        );
     }
 
     /**
@@ -312,7 +286,26 @@ contract VaultModule is IVaultModule {
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (!intent.isExecutable()) {
-                // TODO LJM emit an event
+                // Remove the intent.
+                if (intent.windowIsClosed()) {
+                    AccountDelegationIntents.getValid(accountId).removeIntent(intent);
+                    emit DelegationIntentRemoved(
+                        intent.id,
+                        accountId,
+                        intent.poolId,
+                        intent.collateralType
+                    );
+                }
+
+                // emit an event
+                emit DelegationIntentSkipped(
+                    intent.id,
+                    accountId,
+                    intent.poolId,
+                    intent.collateralType
+                );
+
+                // skip to the next intent
                 continue;
             }
 
@@ -333,8 +326,20 @@ contract VaultModule is IVaultModule {
 
             // Remove the intent.
             AccountDelegationIntents.getValid(accountId).removeIntent(intent);
+            emit DelegationIntentRemoved(
+                intent.id,
+                accountId,
+                intent.poolId,
+                intent.collateralType
+            );
 
-            // TODO LJM emit an event
+            // emit an event
+            emit DelegationIntentProcessed(
+                intent.id,
+                accountId,
+                intent.poolId,
+                intent.collateralType
+            );
         }
     }
 

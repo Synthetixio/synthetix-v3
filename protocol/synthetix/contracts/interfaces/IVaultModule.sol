@@ -45,6 +45,74 @@ interface IVaultModule {
         address indexed sender
     );
 
+    /**
+     * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     * @param collateralDeltaAmount The new amount of the position, denominated with 18 decimals of precision.
+     * @param leverage The new leverage value of the position, denominated with 18 decimals of precision.
+     * @param intentId The id of the intent to update the position.
+     * @param declarationTime The time at which the intent was declared.
+     * @param processingStartTime The time at which the intent can be processed.
+     * @param processingEndTime The time at which the intent will no longer be able to be processed.
+     * @param sender The address that triggered the update of the position.
+     */
+    event DelegationIntentDeclared(
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType,
+        int256 collateralDeltaAmount,
+        uint256 leverage,
+        uint256 intentId,
+        uint32 declarationTime,
+        uint32 processingStartTime,
+        uint32 processingEndTime,
+        address indexed sender
+    );
+
+    /**
+     * @notice Emitted when an intent is removed (due to succesful execution or expiration).
+     * @param intentId The id of the intent to update the position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     */
+    event DelegationIntentRemoved(
+        uint256 intentId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType
+    );
+
+    /**
+     * @notice Emitted when an intent is skipped due to the intent not being executable at that time.
+     * @param intentId The id of the intent to update the position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     */
+    event DelegationIntentSkipped(
+        uint256 intentId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType
+    );
+
+    /**
+     * @notice Emitted when an intent is processed.
+     * @param intentId The id of the intent to update the position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     */
+    event DelegationIntentProcessed(
+        uint256 intentId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType
+    );
+
     // /**
     //  * @notice Updates an account's delegated collateral amount for the specified pool and collateral type pair.
     //  * @param accountId The id of the account associated with the position that will be updated.
