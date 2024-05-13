@@ -74,7 +74,7 @@ interface IVaultModule {
      * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param poolId The id of the pool associated with the position.
      * @param collateralType The address of the collateral used in the position.
-     * @param amount The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
+     * @param deltaAmountD18 The delta amount of collateral delegated in the position, denominated with 18 decimals of precision.
      * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
      * @return intentId The id of the new intent to update the delegated amount.
      * Requirements:
@@ -89,7 +89,7 @@ interface IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint256 amount,
+        int256 deltaAmountD18,
         uint256 leverage
     ) external returns (uint256 intentId);
 

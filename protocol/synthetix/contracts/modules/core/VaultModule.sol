@@ -170,7 +170,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint256 newCollateralAmountD18,
+        int256 deltaCollateralAmountD18,
         uint256 leverage
     ) external override returns (uint256 intentId) {
         // 1- Ensure the caller is authorized to represent the account.
@@ -188,15 +188,6 @@ contract VaultModule is IVaultModule {
         );
         // TODO LJM Continue from here...
 
-        // Each collateral type may specify a minimum collateral amount that can be delegated.
-        // See CollateralConfiguration.minDelegationD18.
-        if (newCollateralAmountD18 > 0) {
-            CollateralConfiguration.requireSufficientDelegation(
-                collateralType,
-                newCollateralAmountD18
-            );
-        }
-
         // Identify the vault that corresponds to this collateral type and pool id.
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
@@ -209,6 +200,25 @@ contract VaultModule is IVaultModule {
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
+        uint256 newCollateralAmountD18 = deltaCollateralAmountD18 +
+            accountIntents.netDelegatedAmountPerCollateral[collateralType] >
+            0
+            ? currentCollateralAmount +
+                (deltaCollateralAmountD18 +
+                    accountIntents.netDelegatedAmountPerCollateral[collateralType]).toUint()
+            : currentCollateralAmount -
+                (deltaCollateralAmountD18 +
+                    accountIntents.netDelegatedAmountPerCollateral[collateralType]).toUint();
+
+        // Each collateral type may specify a minimum collateral amount that can be delegated.
+        // See CollateralConfiguration.minDelegationD18.
+        if (newCollateralAmountD18 > 0) {
+            CollateralConfiguration.requireSufficientDelegation(
+                collateralType,
+                newCollateralAmountD18
+            );
+        }
+
         // 3- Check the validity of the collateral amount to be delegated, respecting the caches that track outstanding intents to delegate or undelegate collateral.
         // 4- Update the appropriate caches to reflect the collateral amount declared in the intent for the identified account and pool.
         // 5- Update the intentNoncesByAccount to include the new intent nonce associated with the account.
@@ -216,7 +226,7 @@ contract VaultModule is IVaultModule {
         // 7- Emit a DelegateCollateralIntentDeclared event.
 
         // Ensure current collateral amount differs from the new collateral amount.
-        if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
+        if (deltaCollateralAmountD18 == 0) revert InvalidCollateralAmount();
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
         else if (newCollateralAmountD18 > currentCollateralAmount) {
@@ -266,7 +276,11 @@ contract VaultModule is IVaultModule {
 
         (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
             .loadExisting(poolId)
-            .getRequiredDelegationDelayAndWindow(collateralDeltaAmountD18 > 0);
+            .getRequiredDelegationDelayAndWindow(
+                collateralDeltaAmountD18 +
+                    accountIntents.netDelegatedCollateralAmountPerPool[poolId] >
+                    0
+            );
 
         // Create a new delegation intent.
         intentId = DelegationIntent.nextId();
@@ -282,7 +296,7 @@ contract VaultModule is IVaultModule {
         intent.processingEndTime = intent.processingStartTime + requiredWindowTime;
 
         // Add intent to the account's delegation intents.
-        AccountDelegationIntents.getValid(accountId).addIntent(intent);
+        AccountDelegationIntents.getValid(intent.accountId).addIntent(intent);
 
         // TODO LJM emit an event
     }

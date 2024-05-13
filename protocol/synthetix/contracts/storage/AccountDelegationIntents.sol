@@ -24,12 +24,14 @@ library AccountDelegationIntents {
         // accounting for the intents collateral delegated
         // Per Pool
         SetUtil.UintSet delegatedPools;
+        mapping(uint128 => int256) netDelegatedCollateralAmountPerPool; // poolId => net delegatedCollateralAmount
         mapping(uint128 => uint256) delegatedCollateralAmountPerPool; // poolId => delegatedCollateralAmount
         uint256 delegateAcountCachedCollateral;
         mapping(uint128 => uint256) undelegatedCollateralAmountPerPool; // poolId => undelegatedCollateralAmount
         uint256 undelegateAcountCachedCollateral;
         // Per Collateral
         SetUtil.AddressSet delegatedCollaterals;
+        mapping(address => int256) netDelegatedAmountPerCollateral; // poolId => net delegatedCollateralAmount
         mapping(address => uint256) delegatedAmountPerCollateral; // collateralType => delegatedCollateralAmount
         mapping(address => uint256) undelegatedAmountPerCollateral; // collateralType => undelegatedCollateralAmount
         // Global
@@ -88,6 +90,10 @@ library AccountDelegationIntents {
             self.undelegateAcountCachedCollateral += (delegationIntent.collateralDeltaAmountD18 *
                 -1).toUint();
         }
+        self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
+            .collateralDeltaAmountD18;
+        self.netDelegatedCollateralAmountPerPool[delegationIntent.poolId] += delegationIntent
+            .collateralDeltaAmountD18;
 
         if (!self.delegatedPools.contains(delegationIntent.poolId)) {
             self.delegatedPools.add(delegationIntent.poolId);
@@ -134,7 +140,12 @@ library AccountDelegationIntents {
             self.undelegateAcountCachedCollateral -= (delegationIntent.collateralDeltaAmountD18 *
                 -1).toUint();
         }
-        self.netAcountCachedDelegatedCollateral += delegationIntent.collateralDeltaAmountD18;
+        self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
+            .collateralDeltaAmountD18;
+        self.netDelegatedCollateralAmountPerPool[delegationIntent.poolId] -= delegationIntent
+            .collateralDeltaAmountD18;
+
+        self.netAcountCachedDelegatedCollateral -= delegationIntent.collateralDeltaAmountD18;
     }
 
     /**
@@ -167,6 +178,8 @@ library AccountDelegationIntents {
         for (uint256 i = 0; i < pools.length; i++) {
             self.delegatedCollateralAmountPerPool[pools[i].to128()] = 0;
             self.undelegatedCollateralAmountPerPool[pools[i].to128()] = 0;
+            self.netDelegatedCollateralAmountPerPool[pools[i].to128()] = 0;
+
             self.delegatedPools.remove(pools[i]);
         }
 
@@ -175,6 +188,8 @@ library AccountDelegationIntents {
         for (uint256 i = 0; i < addresses.length; i++) {
             self.delegatedAmountPerCollateral[addresses[i]] = 0;
             self.undelegatedAmountPerCollateral[addresses[i]] = 0;
+            self.netDelegatedAmountPerCollateral[addresses[i]] = 0;
+
             self.delegatedCollaterals.remove(addresses[i]);
         }
     }
