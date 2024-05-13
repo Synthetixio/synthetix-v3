@@ -415,7 +415,7 @@ contract MarketManagerModule is IMarketManagerModule {
 
         market.delegateCollateralWindow = delegateCollateralWindow;
 
-        emit SetUndelegateCollateralWindow(marketId, delegateCollateralWindow);
+        emit SetDelegateCollateralWindow(marketId, delegateCollateralWindow);
     }
 
     /**
