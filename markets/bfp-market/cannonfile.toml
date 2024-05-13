@@ -26,15 +26,24 @@ preset = "<%= settings.synthetixPreset %>"
 
 [contract.OrderModule]
 artifact = "OrderModule"
-args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+args = [
+    "<%= imports.synthetix.contracts.USDProxy.address %>",
+    "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+]
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
-args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+args = [
+    "<%= imports.synthetix.contracts.USDProxy.address %>",
+    "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+]
 
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
-args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+args = [
+    "<%= imports.synthetix.contracts.USDProxy.address %>",
+    "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+]
 
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
@@ -42,11 +51,17 @@ args = []
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
-args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+args = [
+    "<%= imports.synthetix.contracts.USDProxy.address %>",
+    "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+]
 
 [contract.MarginModule]
 artifact = "MarginModule"
-args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+args = [
+    "<%= imports.synthetix.contracts.USDProxy.address %>",
+    "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+]
 
 [contract.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
