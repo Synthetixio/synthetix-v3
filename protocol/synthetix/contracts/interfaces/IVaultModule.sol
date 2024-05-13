@@ -76,7 +76,7 @@ interface IVaultModule {
      * @param collateralType The address of the collateral used in the position.
      * @param amount The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
      * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
-     *
+     * @return intentId The id of the new intent to update the delegated amount.
      * Requirements:
      *
      * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
@@ -91,7 +91,7 @@ interface IVaultModule {
         address collateralType,
         uint256 amount,
         uint256 leverage
-    ) external;
+    ) external returns (uint256 intentId);
 
     /**
      * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by intent ids.

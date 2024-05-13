@@ -172,7 +172,7 @@ contract VaultModule is IVaultModule {
         address collateralType,
         uint256 newCollateralAmountD18,
         uint256 leverage
-    ) external override {
+    ) external override returns (uint256 intentId) {
         // 1- Ensure the caller is authorized to represent the account.
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
@@ -269,7 +269,7 @@ contract VaultModule is IVaultModule {
             .getRequiredDelegationDelayAndWindow(collateralDeltaAmountD18 > 0);
 
         // Create a new delegation intent.
-        uint256 intentId = DelegationIntent.nextId();
+        intentId = DelegationIntent.nextId();
         DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
         intent.id = intentId;
         intent.accountId = accountId;

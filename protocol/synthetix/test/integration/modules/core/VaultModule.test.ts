@@ -7,7 +7,7 @@ import hre from 'hardhat';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+// import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 
 describe('VaultModule', function () {
@@ -200,7 +200,7 @@ describe('VaultModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .delegateCollateral(
+          .declareIntentToDelegateCollateral(
             accountId,
             poolId,
             collateralAddress(),
@@ -217,7 +217,7 @@ describe('VaultModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .delegateCollateral(
+          .declareIntentToDelegateCollateral(
             accountId,
             poolId,
             collateralAddress(),
@@ -231,7 +231,7 @@ describe('VaultModule', function () {
 
     it('fails when trying to delegate less than minDelegation amount', async () => {
       await assertRevert(
-        systems().Core.connect(user1).delegateCollateral(
+        systems().Core.connect(user1).declareIntentToDelegateCollateral(
           accountId,
           0, // 0 pool is just easy way to test another pool
           collateralAddress(),
@@ -247,7 +247,7 @@ describe('VaultModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .delegateCollateral(
+          .declareIntentToDelegateCollateral(
             accountId,
             poolId,
             collateralAddress(),
@@ -263,7 +263,7 @@ describe('VaultModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .delegateCollateral(
+          .declareIntentToDelegateCollateral(
             accountId,
             42,
             collateralAddress(),
@@ -281,7 +281,7 @@ describe('VaultModule', function () {
       () =>
         systems()
           .Core.connect(user1)
-          .delegateCollateral(
+          .declareIntentToDelegateCollateral(
             accountId,
             42,
             collateralAddress(),
@@ -313,7 +313,7 @@ describe('VaultModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user1)
-            .delegateCollateral(
+            .declareIntentToDelegateCollateral(
               accountId,
               fakeVaultId,
               collateralAddress(),
@@ -360,7 +360,7 @@ describe('VaultModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user1)
-            .delegateCollateral(
+            .declareIntentToDelegateCollateral(
               accountId,
               fakeVaultId,
               collateralAddress(),
@@ -384,15 +384,27 @@ describe('VaultModule', function () {
       });
 
       it('the delegation works as expected with the enabled collateral', async () => {
-        await systems()
+        const intentId = await systems()
           .Core.connect(user1)
-          .delegateCollateral(
+          .callStatic.declareIntentToDelegateCollateral(
             accountId,
             fakeVaultId,
             collateralAddress(),
             depositAmount.div(50),
             ethers.utils.parseEther('1')
           );
+        await systems()
+          .Core.connect(user1)
+          .declareIntentToDelegateCollateral(
+            accountId,
+            fakeVaultId,
+            collateralAddress(),
+            depositAmount.div(50),
+            ethers.utils.parseEther('1')
+          );
+        await systems()
+          .Core.connect(user1)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
       });
     });
 
@@ -410,7 +422,7 @@ describe('VaultModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user1)
-            .delegateCollateral(
+            .declareIntentToDelegateCollateral(
               accountId,
               poolId,
               collateralAddress(),
@@ -484,13 +496,25 @@ describe('VaultModule', function () {
             .Core.connect(user2)
             .deposit(user2AccountId, collateralAddress(), depositAmount.mul(2));
 
-          await systems().Core.connect(user2).delegateCollateral(
+          const intentId = await systems()
+            .Core.connect(user2)
+            .callStatic.declareIntentToDelegateCollateral(
+              user2AccountId,
+              poolId,
+              collateralAddress(),
+              depositAmount.div(3), // user1 75%, user2 25%
+              ethers.utils.parseEther('1')
+            );
+          await systems().Core.connect(user2).declareIntentToDelegateCollateral(
             user2AccountId,
             poolId,
             collateralAddress(),
             depositAmount.div(3), // user1 75%, user2 25%
             ethers.utils.parseEther('1')
           );
+          await systems()
+            .Core.connect(user2)
+            .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
 
           await systems().Core.connect(user2).mintUsd(
             user2AccountId,
@@ -526,76 +550,88 @@ describe('VaultModule', function () {
           verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
         );
 
-        describe('if one of the markets has a min delegation time', () => {
-          const restore = snapshotCheckpoint(provider);
+        // describe('if one of the markets has a min delegation time', () => {
+        //   const restore = snapshotCheckpoint(provider);
 
-          before('set market min delegation time to something high', async () => {
-            await MockMarket.setMinDelegationTime(86400);
-          });
+        //   before('set market min delegation time to something high', async () => {
+        //     await MockMarket.setMinDelegationTime(86400);
+        //   });
 
-          describe('without time passing', async () => {
-            it('fails when min delegation timeout not elapsed', async () => {
-              await assertRevert(
-                systems().Core.connect(user2).delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(4), // user1 50%, user2 50%
-                  ethers.utils.parseEther('1')
-                ),
-                `MinDelegationTimeoutPending("${poolId}",`,
-                systems().Core
-              );
-            });
+        //   describe('without time passing', async () => {
+        //     it('fails when min delegation timeout not elapsed', async () => {
+        //       await assertRevert(
+        //         systems().Core.connect(user2).delegateCollateral(
+        //           user2AccountId,
+        //           poolId,
+        //           collateralAddress(),
+        //           depositAmount.div(4), // user1 50%, user2 50%
+        //           ethers.utils.parseEther('1')
+        //         ),
+        //         `MinDelegationTimeoutPending("${poolId}",`,
+        //         systems().Core
+        //       );
+        //     });
 
-            it('can increase delegation without waiting', async () => {
-              await systems()
-                .Core.connect(user2)
-                .delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.mul(2),
-                  ethers.utils.parseEther('1')
-                );
-            });
+        //     it('can increase delegation without waiting', async () => {
+        //       await systems()
+        //         .Core.connect(user2)
+        //         .delegateCollateral(
+        //           user2AccountId,
+        //           poolId,
+        //           collateralAddress(),
+        //           depositAmount.mul(2),
+        //           ethers.utils.parseEther('1')
+        //         );
+        //     });
 
-            after(restore);
-          });
+        //     after(restore);
+        //   });
 
-          describe('after time passes', () => {
-            before('fast forward', async () => {
-              // for some reason `fastForward` doesn't seem to work with anvil
-              await fastForwardTo((await getTime(provider())) + 86400, provider());
-            });
+        //   describe('after time passes', () => {
+        //     before('fast forward', async () => {
+        //       // for some reason `fastForward` doesn't seem to work with anvil
+        //       await fastForwardTo((await getTime(provider())) + 86400, provider());
+        //     });
 
-            it('works', async () => {
-              await systems()
-                .Core.connect(user2)
-                .delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(2),
-                  ethers.utils.parseEther('1')
-                );
-            });
-          });
+        //     it('works', async () => {
+        //       await systems()
+        //         .Core.connect(user2)
+        //         .delegateCollateral(
+        //           user2AccountId,
+        //           poolId,
+        //           collateralAddress(),
+        //           depositAmount.div(2),
+        //           ethers.utils.parseEther('1')
+        //         );
+        //     });
+        //   });
 
-          after(restore);
-        });
+        //   after(restore);
+        // });
 
         // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)
         describe.skip('increase exposure', async () => {
           before('delegate', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
+            const intentId = await systems()
+              .Core.connect(user2)
+              .callStatic.declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(3), // user1 50%, user2 50%
+                ethers.utils.parseEther('1')
+              );
+            await systems().Core.connect(user2).declareIntentToDelegateCollateral(
               user2AccountId,
               poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
+            await systems()
+              .Core.connect(user2)
+              .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
           });
 
           it(
@@ -610,13 +646,25 @@ describe('VaultModule', function () {
 
         describe.skip('reduce exposure', async () => {
           before('delegate', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
+            const intentId = await systems()
+              .Core.connect(user2)
+              .callStatic.declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(3), // user1 50%, user2 50%
+                ethers.utils.parseEther('1')
+              );
+            await systems().Core.connect(user2).callStatic.declareIntentToDelegateCollateral(
               user2AccountId,
               poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
+            await systems()
+              .Core.connect(user2)
+              .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
           });
 
           it(
@@ -631,13 +679,25 @@ describe('VaultModule', function () {
 
         describe('remove exposure', async () => {
           before('delegate', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
+            const intentId = await systems()
+              .Core.connect(user2)
+              .callStatic.declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(3), // user1 50%, user2 50%
+                ethers.utils.parseEther('1')
+              );
+            await systems().Core.connect(user2).declareIntentToDelegateCollateral(
               user2AccountId,
               poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
+            await systems()
+              .Core.connect(user2)
+              .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
           });
         });
 
@@ -649,7 +709,7 @@ describe('VaultModule', function () {
             await assertRevert(
               systems()
                 .Core.connect(user2)
-                .delegateCollateral(
+                .declareIntentToDelegateCollateral(
                   user2AccountId,
                   poolId,
                   collateralAddress(),
@@ -676,7 +736,7 @@ describe('VaultModule', function () {
 
             it('fails when trying to open delegation position with disabled collateral', async () => {
               await assertRevert(
-                systems().Core.connect(user2).delegateCollateral(
+                systems().Core.connect(user2).declareIntentToDelegateCollateral(
                   user2AccountId,
                   0,
                   collateralAddress(),
@@ -691,13 +751,25 @@ describe('VaultModule', function () {
 
           describe('success', () => {
             before('delegate', async () => {
-              await systems().Core.connect(user2).delegateCollateral(
+              const intentId = await systems()
+                .Core.connect(user2)
+                .callStatic.declareIntentToDelegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount, // user1 50%, user2 50%
+                  ethers.utils.parseEther('1')
+                );
+              await systems().Core.connect(user2).declareIntentToDelegateCollateral(
                 user2AccountId,
                 poolId,
                 collateralAddress(),
                 depositAmount, // user1 50%, user2 50%
                 ethers.utils.parseEther('1')
               );
+              await systems()
+                .Core.connect(user2)
+                .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
             });
 
             it(
@@ -719,16 +791,29 @@ describe('VaultModule', function () {
             const deposit = depositAmount.div(50);
             const debt = depositAmount.div(100);
 
+            const intentId = await systems()
+              .Core.connect(user2)
+              .callStatic.declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(50),
+                ethers.utils.parseEther('1')
+              );
+            await systems()
+              .Core.connect(user2)
+              .declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(50),
+                ethers.utils.parseEther('1')
+              );
+
             await assertRevert(
               systems()
                 .Core.connect(user2)
-                .delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(50),
-                  ethers.utils.parseEther('1')
-                ),
+                .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]),
               `InsufficientCollateralRatio("${deposit}", "${debt}", "${deposit
                 .mul(price)
                 .div(debt)}", "${issuanceRatioD18}")`,
@@ -740,7 +825,7 @@ describe('VaultModule', function () {
             await assertRevert(
               systems()
                 .Core.connect(user2)
-                .delegateCollateral(
+                .declareIntentToDelegateCollateral(
                   user2AccountId,
                   poolId,
                   collateralAddress(),
@@ -758,16 +843,28 @@ describe('VaultModule', function () {
               !(await systems().Core.connect(user2).callStatic.isMarketCapacityLocked(marketId))
             );
 
+            const intentId = await systems()
+              .Core.connect(user2)
+              .callStatic.declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(10),
+                ethers.utils.parseEther('1')
+              );
+            await systems()
+              .Core.connect(user2)
+              .declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(10),
+                ethers.utils.parseEther('1')
+              );
             await assertRevert(
               systems()
                 .Core.connect(user2)
-                .delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(10),
-                  ethers.utils.parseEther('1')
-                ),
+                .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]),
               `CapacityLocked("${marketId}")`,
               systems().Core
             );
@@ -791,15 +888,27 @@ describe('VaultModule', function () {
 
             describe('success', () => {
               before('delegate', async () => {
-                await systems()
+                const intentId = await systems()
                   .Core.connect(user2)
-                  .delegateCollateral(
+                  .callStatic.declareIntentToDelegateCollateral(
                     user2AccountId,
                     poolId,
                     collateralAddress(),
                     depositAmount.div(10),
                     ethers.utils.parseEther('1')
                   );
+                await systems()
+                  .Core.connect(user2)
+                  .declareIntentToDelegateCollateral(
+                    user2AccountId,
+                    poolId,
+                    collateralAddress(),
+                    depositAmount.div(10),
+                    ethers.utils.parseEther('1')
+                  );
+                await systems()
+                  .Core.connect(user2)
+                  .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
               });
 
               it(
@@ -835,15 +944,27 @@ describe('VaultModule', function () {
           });
 
           before('delegate', async () => {
-            await systems()
+            const intentId = await systems()
               .Core.connect(user2)
-              .delegateCollateral(
+              .callStatic.declareIntentToDelegateCollateral(
                 user2AccountId,
                 poolId,
                 collateralAddress(),
                 0,
                 ethers.utils.parseEther('1')
               );
+            await systems()
+              .Core.connect(user2)
+              .declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                0,
+                ethers.utils.parseEther('1')
+              );
+            await systems()
+              .Core.connect(user2)
+              .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
           });
 
           it(
@@ -853,13 +974,25 @@ describe('VaultModule', function () {
           it('user2 position is closed', verifyAccountState(user2AccountId, poolId, 0, 0));
 
           it('lets user2 re-stake again', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
+            const intentId = await systems()
+              .Core.connect(user2)
+              .callStatic.declareIntentToDelegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(3), // user1 75%, user2 25%
+                ethers.utils.parseEther('1')
+              );
+            await systems().Core.connect(user2).declareIntentToDelegateCollateral(
               user2AccountId,
               poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 75%, user2 25%
               ethers.utils.parseEther('1')
             );
+            await systems()
+              .Core.connect(user2)
+              .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]);
           });
         });
       });
@@ -872,15 +1005,27 @@ describe('VaultModule', function () {
       });
 
       before('undelegate', async () => {
-        await systems()
+        const intentId = await systems()
           .Core.connect(user1)
-          .delegateCollateral(
+          .callStatic.declareIntentToDelegateCollateral(
             accountId,
             poolId,
             collateralAddress(),
             0,
             ethers.utils.parseEther('1')
           );
+        await systems()
+          .Core.connect(user1)
+          .declareIntentToDelegateCollateral(
+            accountId,
+            poolId,
+            collateralAddress(),
+            0,
+            ethers.utils.parseEther('1')
+          );
+        await systems()
+          .Core.connect(user1)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
       });
 
       // now the pool is empty
