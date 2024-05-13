@@ -111,13 +111,16 @@ describe('LiquidationModule', function () {
           // use the zero pool to get minted USD
           await systems()
             .Core.connect(user2)
-            .delegateCollateral(
+            .declareIntentToDelegateCollateral(
               accountId2,
               poolId,
               collateralAddress(),
               depositAmount.mul(10),
               ethers.utils.parseEther('1')
             );
+          await systems()
+            .Core.connect(user2)
+            .processIntentToDelegateCollateralByPair(accountId2, poolId);
         });
 
         let txn: ethers.providers.TransactionResponse;
@@ -276,13 +279,17 @@ describe('LiquidationModule', function () {
             .deposit(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
           await systems()
             .Core.connect(user2)
-            .delegateCollateral(
+            .declareIntentToDelegateCollateral(
               liquidatorAccountId,
               0,
               collateralAddress(),
               depositAmount.mul(50),
               ethers.utils.parseEther('1')
             );
+          await systems()
+            .Core.connect(user2)
+            .processIntentToDelegateCollateralByPair(liquidatorAccountId, 0);
+
           await systems()
             .Core.connect(user2)
             .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
