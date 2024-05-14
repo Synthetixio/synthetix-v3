@@ -251,7 +251,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       });
       await commitAndSettle(bs, marketId, trader1, closeOrder1);
 
-      // Create a new position with a different trader. This trader will will not incur and profits or losses.
+      // Create a new position with a different trader. This trader will not incur and profits or losses.
       const { collateral: collateral2, collateralDepositAmount: collateralDepositAmount2 } =
         await depositMargin(bs, genTrader(bs, { desiredMarket: market, desiredTrader: trader2 }));
       const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2);
