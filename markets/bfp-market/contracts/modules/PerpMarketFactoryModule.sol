@@ -141,9 +141,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         return
-            market.size.mulDecimal(market.getOraclePrice()).mulDecimal(
-                PerpMarketConfiguration.load(marketId).minCreditPercent
-            ) + market.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
+            market.getMinimumCredit(
+                PerpMarketConfiguration.load(marketId),
+                market.getOraclePrice()
+            );
     }
 
     /// @inheritdoc IERC165

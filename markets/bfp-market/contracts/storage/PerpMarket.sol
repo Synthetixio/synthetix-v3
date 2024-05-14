@@ -165,7 +165,9 @@ library PerpMarket {
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price
     ) internal view returns (uint256) {
-        return self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent);
+        return
+            self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
     }
 
     /// @dev Returns the markets delegated collateral value in USD.
