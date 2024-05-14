@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/common-config",
-  "version": "3.3.17",
+  "version": "3.3.18",
   "publishConfig": {
     "access": "public"
   },
