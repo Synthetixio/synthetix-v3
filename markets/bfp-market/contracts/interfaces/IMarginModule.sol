@@ -88,7 +88,7 @@ interface IMarginModule is IBasePerpMarket {
     /// @param accountId Account to modify margin collateral against
     /// @param marketId Market to modify margin collateral against
     /// @param collateralAddress Address of collateral to deposit or withdraw
-    /// @param amountDelta Amount of synths to deposit or withdraw
+    /// @param amountDelta Amount of collateral to deposit or withdraw
     /// @dev Modifying collateral will immediately deposit collateral into the Synthetix core system.
     function modifyCollateral(
         uint128 accountId,
