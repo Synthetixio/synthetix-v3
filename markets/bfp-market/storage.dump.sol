@@ -735,7 +735,12 @@ contract OrderModule {
         int128 updatedMarketSkew;
         uint128 totalFees;
         Position.ValidatedTrade trade;
-        Position.TradeParams params;
+        Position.TradeParams tradeParams;
+    }
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams tradeParams;
     }
 }
 

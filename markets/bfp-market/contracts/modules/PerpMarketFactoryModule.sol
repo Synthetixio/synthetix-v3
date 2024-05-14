@@ -139,11 +139,12 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
         return
-            market.size.mulDecimal(market.getOraclePrice()).mulDecimal(
-                marketConfig.minCreditPercent
-            ) + market.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
+            market.getMinimumCredit(
+                PerpMarketConfiguration.load(marketId),
+                market.getOraclePrice()
+            );
     }
 
     /// @inheritdoc IERC165

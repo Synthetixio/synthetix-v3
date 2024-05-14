@@ -46,7 +46,12 @@ contract OrderModule is IOrderModule {
         int128 updatedMarketSkew;
         uint128 totalFees;
         Position.ValidatedTrade trade;
-        Position.TradeParams params;
+        Position.TradeParams tradeParams;
+    }
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams tradeParams;
     }
 
     // --- Helpers --- //
@@ -193,6 +198,7 @@ contract OrderModule is IOrderModule {
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Runtime_commitOrder memory runtime;
 
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
@@ -200,43 +206,47 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        uint256 oraclePrice = market.getOraclePrice();
+        runtime.oraclePrice = market.getOraclePrice();
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
+        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
+        runtime.tradeParams = Position.TradeParams(
+            sizeDelta,
+            runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+            runtime.oraclePrice, // CL oracle price.
+            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, runtime.oraclePrice),
+            marketConfig.makerFee,
+            marketConfig.takerFee,
+            limitPrice,
+            keeperFeeBufferUsd
+        );
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        //
-        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
-        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
-        Position.ValidatedTrade memory trade = Position.validateTrade(
+        runtime.trade = Position.validateTrade(
             accountId,
             market,
-            Position.TradeParams(
-                sizeDelta,
-                oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
-                oraclePrice, // CL oracle price.
-                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
-                marketConfig.makerFee,
-                marketConfig.takerFee,
-                limitPrice,
-                keeperFeeBufferUsd
-            )
+            marketConfig,
+            PerpMarketConfiguration.load(),
+            runtime.tradeParams
         );
 
         market.orders[accountId].update(
             Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
         );
+
         emit OrderCommitted(
             accountId,
             marketId,
             block.timestamp,
             sizeDelta,
-            trade.orderFee,
-            trade.keeperFee
+            runtime.trade.orderFee,
+            runtime.trade.keeperFee
         );
     }
 
@@ -273,7 +283,7 @@ contract OrderModule is IOrderModule {
             order.sizeDelta,
             runtime.pythPrice
         );
-        runtime.params = Position.TradeParams(
+        runtime.tradeParams = Position.TradeParams(
             order.sizeDelta,
             market.getOraclePrice(),
             runtime.pythPrice,
@@ -288,11 +298,17 @@ contract OrderModule is IOrderModule {
             globalConfig,
             order.commitmentTime,
             runtime.pythPrice,
-            runtime.params
+            runtime.tradeParams
         );
-        recomputeFunding(market, runtime.params.oraclePrice);
+        recomputeFunding(market, runtime.tradeParams.oraclePrice);
 
-        runtime.trade = Position.validateTrade(accountId, market, runtime.params);
+        runtime.trade = Position.validateTrade(
+            accountId,
+            market,
+            marketConfig,
+            globalConfig,
+            runtime.tradeParams
+        );
 
         runtime.updatedMarketSize = (market.size.to256() +
             MathUtil.abs(runtime.trade.newPosition.size) -
@@ -304,7 +320,7 @@ contract OrderModule is IOrderModule {
         // We want to validateTrade and update market size before we recompute utilization
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
-        recomputeUtilization(market, runtime.params.oraclePrice);
+        recomputeUtilization(market, runtime.tradeParams.oraclePrice);
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
 
@@ -332,12 +348,15 @@ contract OrderModule is IOrderModule {
             );
         }
         // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
-        runtime.accruedFunding = position.getAccruedFunding(market, runtime.params.oraclePrice);
+        runtime.accruedFunding = position.getAccruedFunding(
+            market,
+            runtime.tradeParams.oraclePrice
+        );
         runtime.accruedUtilization = position.getAccruedUtilization(
             market,
-            runtime.params.oraclePrice
+            runtime.tradeParams.oraclePrice
         );
-        runtime.pricePnl = position.getPricePnl(runtime.params.fillPrice);
+        runtime.pricePnl = position.getPricePnl(runtime.tradeParams.fillPrice);
 
         if (runtime.trade.newPosition.size == 0) {
             delete market.positions[accountId];
@@ -358,7 +377,7 @@ contract OrderModule is IOrderModule {
             accountId,
             marketId,
             block.timestamp,
-            runtime.params.sizeDelta,
+            runtime.tradeParams.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
             runtime.accruedFunding,
