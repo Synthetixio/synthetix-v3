@@ -500,7 +500,7 @@ contract PerpAccountModule is IPerpAccountModule {
         market.updateDebtCorrection(
             fromPosition,
             Position.Data(
-                0,
+                0, // Zero because `from` position is deleted after merging.
                 market.currentFundingAccruedComputed,
                 market.currentUtilizationAccruedComputed,
                 fromPosition.entryPythPrice,
