@@ -136,6 +136,28 @@ library Position {
         }
     }
 
+    /// @dev validates whether the market minimum credit has been met.
+    function validateMinimumCredit(
+        PerpMarket.Data storage market,
+        uint256 oraclePrice,
+        PerpMarketConfiguration.GlobalData storage globalConfig,
+        PerpMarketConfiguration.Data storage marketConfig,
+        address synthetixAddress,
+        address sUsdAddress,
+        address oracleManagerAddress
+    ) internal view {
+        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, sUsdAddress);
+        int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(
+            globalConfig,
+            synthetixAddress,
+            sUsdAddress,
+            oracleManagerAddress
+        );
+
+        if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
+            revert ErrorUtil.InsufficientLiquidity();
+        }
+    }
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
@@ -187,6 +209,9 @@ library Position {
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.TradeParams memory params,
+        PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig,
+        address synthetixAddress,
         address sUsdAddress,
         address oracleManagerAddress
     ) internal view returns (Position.ValidatedTrade memory) {
@@ -196,7 +221,6 @@ library Position {
         }
 
         Position.Data storage currentPosition = market.positions[accountId];
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         Runtime_validateTrade memory runtime;
 
@@ -287,6 +311,17 @@ library Position {
             if (runtime.discountedNextMarginUsd < runtime.im) {
                 revert ErrorUtil.InsufficientMargin();
             }
+
+            // Check the minimum credit requirements are still met.
+            validateMinimumCredit(
+                market,
+                params.oraclePrice,
+                globalConfig,
+                marketConfig,
+                synthetixAddress,
+                sUsdAddress,
+                oracleManagerAddress
+            );
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(

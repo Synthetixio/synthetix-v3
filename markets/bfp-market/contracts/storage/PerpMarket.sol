@@ -161,6 +161,31 @@ library PerpMarket {
         }
     }
 
+    /// @dev Returns the market's required minimum backing credit in USD.
+    function getMinimumCredit(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig,
+        uint256 price
+    ) internal view returns (uint256) {
+        return
+            self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
+    }
+
+    /// @dev Returns the markets delegated collateral value in USD.
+    function getDelegatedCollateralValueUsd(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (int256) {
+        // This is our market's `creditCapacity + all deposited collateral`.
+        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
+
+        // If we remove collateral deposited from traders we get the delegatedCollateral value.
+        //
+        // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
+        return withdrawableUsd.toInt() - getTotalCollateralValueUsd(self).toInt();
+    }
+
     /// @dev Returns the collateral utilization bounded by 0 and 1.
     function getUtilization(
         PerpMarket.Data storage self,
@@ -179,16 +204,8 @@ library PerpMarket {
             return 0;
         }
 
-        // This is our market's `creditCapacity + all deposited collateral`.
-        uint256 withdrawableUsd = ISynthetixSystem(synthetixCoreAddress).getWithdrawableMarketUsd(
-            self.id
-        );
+        int256 delegatedCollateralValueUsd = getDelegatedCollateralValueUsd(self, globalConfig);
 
-        // If we remove collateral deposited from traders we get the delegatedCollateral value.
-        //
-        // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
-        int256 delegatedCollateralValueUsd = withdrawableUsd.toInt() -
-            getTotalCollateralValueUsd(self, sUsdAddress, oracleManagerAddress).toInt();
         if (delegatedCollateralValueUsd <= 0) {
             return DecimalMath.UNIT.to128();
         }
