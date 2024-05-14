@@ -78,8 +78,9 @@ contract VaultModule is IVaultModule {
                 (deltaCollateralAmountD18 +
                     accountIntents.netDelegatedAmountPerCollateral[collateralType]).toUint()
             : currentCollateralAmount -
-                (deltaCollateralAmountD18 +
-                    accountIntents.netDelegatedAmountPerCollateral[collateralType]).toUint();
+                (-1 *
+                    (deltaCollateralAmountD18 +
+                        accountIntents.netDelegatedAmountPerCollateral[collateralType])).toUint();
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -109,14 +110,10 @@ contract VaultModule is IVaultModule {
         }
 
         // Prepare data for storing the new intent.
-        int256 collateralDeltaAmountD18 = newCollateralAmountD18 > currentCollateralAmount
-            ? (newCollateralAmountD18 - currentCollateralAmount).toInt()
-            : (currentCollateralAmount - newCollateralAmountD18).toInt();
-
         (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
             .loadExisting(poolId)
             .getRequiredDelegationDelayAndWindow(
-                collateralDeltaAmountD18 +
+                deltaCollateralAmountD18 +
                     accountIntents.netDelegatedCollateralAmountPerPool[poolId] >
                     0
             );
@@ -128,7 +125,7 @@ contract VaultModule is IVaultModule {
         intent.accountId = accountId;
         intent.poolId = poolId;
         intent.collateralType = collateralType;
-        intent.collateralDeltaAmountD18 = collateralDeltaAmountD18;
+        intent.collateralDeltaAmountD18 = deltaCollateralAmountD18;
         intent.leverage = leverage;
         intent.declarationTime = block.timestamp.to32();
         intent.processingStartTime = intent.declarationTime + requiredDelayTime;
@@ -142,7 +139,7 @@ contract VaultModule is IVaultModule {
             accountId,
             poolId,
             collateralType,
-            collateralDeltaAmountD18,
+            deltaCollateralAmountD18,
             leverage,
             intentId,
             intent.declarationTime,
@@ -341,7 +338,7 @@ contract VaultModule is IVaultModule {
 
         uint256 newCollateralAmountD18 = deltaCollateralAmountD18 > 0
             ? vault.currentAccountCollateral(accountId) + deltaCollateralAmountD18.toUint()
-            : vault.currentAccountCollateral(accountId) - deltaCollateralAmountD18.toUint();
+            : vault.currentAccountCollateral(accountId) - (deltaCollateralAmountD18 * -1).toUint();
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
