@@ -202,38 +202,6 @@ library Position {
         }
     }
 
-    /// @dev Creates  Position.ValidatedTrade
-    function createValidatedTrade(
-        uint128 accountId,
-        PerpMarket.Data storage market,
-        Position.TradeParams memory params,
-        Runtime_validateTrade memory runtime
-    ) internal view returns (Position.ValidatedTrade memory) {
-        return
-            Position.ValidatedTrade(
-                runtime.newPosition,
-                runtime.orderFee,
-                runtime.keeperFee,
-                getNextMarginUsd(
-                    MathUtil
-                        .max(
-                            runtime.marginValuesForLiqValidation.collateralUsd.toInt() +
-                                Margin.getPnlAdjustmentUsd(
-                                    accountId,
-                                    market,
-                                    params.oraclePrice,
-                                    params.fillPrice
-                                ),
-                            0
-                        )
-                        .toUint(),
-                    runtime.orderFee,
-                    runtime.keeperFee
-                ),
-                runtime.marginValuesForLiqValidation.collateralUsd
-            );
-    }
-
     /// @dev Validates whether the given `TradeParams` would lead to a valid next position.
     function validateTrade(
         uint128 accountId,
@@ -250,7 +218,6 @@ library Position {
         }
 
         Position.Data storage currentPosition = market.positions[accountId];
-
         Runtime_validateTrade memory runtime;
 
         // --- Existing position validation --- //
@@ -368,7 +335,25 @@ library Position {
             );
         }
 
-        return createValidatedTrade(accountId, market, params, runtime);
+        // Create and return a validated trade struct for downstream processing.
+        int256 marginUsdForNextMarginUsd = runtime
+            .marginValuesForLiqValidation
+            .collateralUsd
+            .toInt() +
+            Margin.getPnlAdjustmentUsd(accountId, market, params.oraclePrice, params.fillPrice);
+        uint256 newMarginUsd = getNextMarginUsd(
+            MathUtil.max(marginUsdForNextMarginUsd, 0).toUint(),
+            runtime.orderFee,
+            runtime.keeperFee
+        );
+        return
+            Position.ValidatedTrade(
+                runtime.newPosition,
+                runtime.orderFee,
+                runtime.keeperFee,
+                newMarginUsd,
+                runtime.marginValuesForLiqValidation.collateralUsd
+            );
     }
 
     /// @dev Validates whether the position at `accountId` and `marketId` would pass liquidation.
