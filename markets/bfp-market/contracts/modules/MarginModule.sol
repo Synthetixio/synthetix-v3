@@ -599,10 +599,13 @@ contract MarginModule is IMarginModule {
         // as they may have realized a prior negative PnL.
         if (size == 0) {
             return
-                MathUtil.max(
-                    marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd,
-                    0
-                );
+                MathUtil
+                    .max(
+                        marginValues.collateralUsd.toInt() -
+                            Margin.load(accountId, marketId).debtUsd.toInt(),
+                        0
+                    )
+                    .toUint();
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
