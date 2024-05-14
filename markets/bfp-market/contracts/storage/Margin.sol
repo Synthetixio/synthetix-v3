@@ -46,6 +46,15 @@ library Margin {
         uint256 collateralUsd;
     }
 
+    // --- Runtime structs --- //
+
+    struct Runtime_getCollateralUsd {
+        address collateralAddress;
+        uint256 available;
+        uint256 collateralPrice;
+        uint256 i;
+    }
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -133,44 +142,42 @@ library Margin {
 
     /// @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
     function getCollateralUsd(
-        uint128 accountId,
-        uint128 marketId
+        address sUsdAddress,
+        address oracleManagerAddress,
+        Margin.Data storage accountMargin,
+        PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256 collateralUsd, uint256 discountedCollateralUsd) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        // Variable declaration outside of loop to be more gas efficient.
-        uint256 length = globalMarginConfig.supportedCollaterals.length;
-        address collateralAddress;
-        uint256 available;
+        Runtime_getCollateralUsd memory runtime;
 
-        uint256 collateralPrice;
-        uint256 discountedCollateralPrice;
-
-        for (uint256 i = 0; i < length; ) {
-            collateralAddress = globalMarginConfig.supportedCollaterals[i];
-            available = accountMargin.collaterals[collateralAddress];
+        for (runtime.i = 0; runtime.i < globalMarginConfig.supportedCollaterals.length; ) {
+            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[runtime.i];
+            runtime.available = accountMargin.collaterals[runtime.collateralAddress];
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
-            if (available > 0) {
-                collateralPrice = getCollateralPrice(
+            if (runtime.available > 0) {
+                runtime.collateralPrice = getCollateralPrice(
                     globalMarginConfig,
-                    collateralAddress,
-                    globalConfig
+                    runtime.collateralAddress,
+                    oracleManagerAddress,
+                    sUsdAddress
                 );
-                discountedCollateralPrice = getDiscountedCollateralPrice(
-                    available,
-                    collateralPrice,
-                    collateralAddress,
-                    globalConfig,
-                    globalMarginConfig
+
+                collateralUsd += runtime.available.mulDecimal(runtime.collateralPrice);
+                discountedCollateralUsd += runtime.available.mulDecimal(
+                    getDiscountedCollateralPrice(
+                        runtime.available,
+                        runtime.collateralPrice,
+                        runtime.collateralAddress,
+                        globalConfig,
+                        globalMarginConfig,
+                        sUsdAddress
+                    )
                 );
-                collateralUsd += available.mulDecimal(collateralPrice);
-                discountedCollateralUsd += available.mulDecimal(discountedCollateralPrice);
             }
             unchecked {
-                ++i;
+                ++runtime.i;
             }
         }
     }
@@ -213,11 +220,15 @@ library Margin {
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 price,
+        address sUsdAddress,
+        address oracleManagerAddress
     ) internal view returns (MarginValues memory marginValues) {
         (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(
-            accountId,
-            market.id
+            sUsdAddress,
+            oracleManagerAddress,
+            Margin.load(accountId, market.id),
+            PerpMarketConfiguration.load()
         );
         int256 adjustment = getPnlAdjustmentUsd(accountId, market, price, price);
 
@@ -263,12 +274,11 @@ library Margin {
      * you need both discounted and non-discounted values, sometimes you only need non-discounted.
      */
     function getCollateralUsdWithoutDiscount(
-        uint128 accountId,
-        uint128 marketId
+        address sUsdAddress,
+        address oracleManagerAddress,
+        Margin.Data storage accountMargin
     ) internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 length = globalMarginConfig.supportedCollaterals.length;
         address collateralAddress;
@@ -284,7 +294,8 @@ library Margin {
                 collateralPrice = getCollateralPrice(
                     globalMarginConfig,
                     collateralAddress,
-                    globalConfig
+                    oracleManagerAddress,
+                    sUsdAddress
                 );
                 collateralUsd += available.mulDecimal(collateralPrice);
             }
@@ -299,13 +310,18 @@ library Margin {
     function getNetAssetValue(
         uint128 accountId,
         PerpMarket.Data storage market,
-        uint256 price
+        uint256 price,
+        address sUsdAddress,
+        address oracleManagerAddress
     ) internal view returns (uint256) {
         return
             MathUtil
                 .max(
-                    getCollateralUsdWithoutDiscount(accountId, market.id).toInt() +
-                        getPnlAdjustmentUsd(accountId, market, price, price),
+                    getCollateralUsdWithoutDiscount(
+                        sUsdAddress,
+                        oracleManagerAddress,
+                        Margin.load(accountId, market.id)
+                    ).toInt() + getPnlAdjustmentUsd(accountId, market, price, price),
                     0
                 )
                 .toUint();
@@ -317,11 +333,10 @@ library Margin {
     function getOracleCollateralPrice(
         Margin.GlobalData storage self,
         address collateralAddress,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        address oracleManagerAddress
     ) internal view returns (uint256) {
         return
-            globalConfig
-                .oracleManager
+            INodeModule(oracleManagerAddress)
                 .process(self.supported[collateralAddress].oracleNodeId)
                 .price
                 .toUint();
@@ -331,12 +346,13 @@ library Margin {
     function getCollateralPrice(
         Margin.GlobalData storage self,
         address collateralAddress,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        address oracleManagerAddress,
+        address sUsdAddress
     ) internal view returns (uint256) {
         return
-            collateralAddress == address(globalConfig.usdToken)
+            collateralAddress == sUsdAddress
                 ? DecimalMath.UNIT
-                : getOracleCollateralPrice(self, collateralAddress, globalConfig);
+                : getOracleCollateralPrice(self, collateralAddress, oracleManagerAddress);
     }
 
     /**
@@ -351,9 +367,10 @@ library Margin {
         uint256 collateralPrice,
         address collateralAddress,
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        Margin.GlobalData storage globalMarginConfig
+        Margin.GlobalData storage globalMarginConfig,
+        address sUsdAddress
     ) internal view returns (uint256) {
-        if (collateralAddress == address(globalConfig.usdToken)) {
+        if (collateralAddress == sUsdAddress) {
             return DecimalMath.UNIT;
         }
 
@@ -380,11 +397,11 @@ library Margin {
     /// @dev Returns the reward for liquidating margin.
     function getMarginLiquidationOnlyReward(
         uint256 collateralValue,
+        address oracleManagerAddress,
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        uint256 ethPrice = globalConfig
-            .oracleManager
+        uint256 ethPrice = INodeModule(oracleManagerAddress)
             .process(globalConfig.ethOracleNodeId)
             .price
             .toUint();
@@ -407,6 +424,7 @@ library Margin {
     /// @dev Returns whether an account in a specific market's margin can be liquidated.
     function isMarginLiquidatable(
         uint128 accountId,
+        address oracleManagerAddress,
         PerpMarket.Data storage market,
         Margin.MarginValues memory marginValues
     ) internal view returns (bool) {
@@ -419,6 +437,7 @@ library Margin {
             marginValues.discountedMarginUsd.toInt() -
                 getMarginLiquidationOnlyReward(
                     marginValues.collateralUsd,
+                    oracleManagerAddress,
                     PerpMarketConfiguration.load(market.id),
                     PerpMarketConfiguration.load()
                 ).toInt() <=

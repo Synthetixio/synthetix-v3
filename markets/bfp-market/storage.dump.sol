@@ -728,6 +728,12 @@ library Margin {
         uint256 discountedCollateralUsd;
         uint256 collateralUsd;
     }
+    struct Runtime_getCollateralUsd {
+        address collateralAddress;
+        uint256 available;
+        uint256 collateralPrice;
+        uint256 i;
+    }
     struct GlobalData {
         mapping(address => CollateralType) supported;
         address[] supportedCollaterals;
@@ -802,9 +808,6 @@ library PerpMarket {
 // @custom:artifact contracts/storage/PerpMarketConfiguration.sol:PerpMarketConfiguration
 library PerpMarketConfiguration {
     struct GlobalData {
-        address synthetix;
-        address usdToken;
-        address oracleManager;
         address pyth;
         bytes32 ethOracleNodeId;
         address rewardDistributorImplementation;
@@ -896,6 +899,17 @@ library Position {
         uint128 maxLiquidatableCapacity;
         uint128 remainingCapacity;
         uint128 lastLiquidationTime;
+    }
+    struct Runtime_validateTrade {
+        uint256 orderFee;
+        uint256 keeperFee;
+        bool positionDecreasing;
+        uint256 discountedNextMarginUsd;
+        uint256 im;
+        uint256 mm;
+        Position.Data newPosition;
+        Margin.MarginValues marginValuesForLiqValidation;
+        uint256 ethPrice;
     }
     struct Data {
         int128 size;

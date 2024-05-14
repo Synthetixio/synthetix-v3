@@ -99,14 +99,12 @@ library Order {
      *
      * See IOrderModule.getOrderFees for more details.
      */
-    function getSettlementKeeperFee(uint256 keeperFeeBufferUsd) internal view returns (uint256) {
+    function getSettlementKeeperFee(
+        uint256 keeperFeeBufferUsd,
+        uint256 ethPrice
+    ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 ethPrice = globalConfig
-            .oracleManager
-            .process(globalConfig.ethOracleNodeId)
-            .price
-            .toUint();
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperSettlementGasUnits * block.basefee
         );
@@ -121,14 +119,9 @@ library Order {
     }
 
     /// @dev Returns the keeper fee in USD for order cancellations.
-    function getCancellationKeeperFee() internal view returns (uint256) {
+    function getCancellationKeeperFee(uint256 ethPrice) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 ethPrice = globalConfig
-            .oracleManager
-            .process(globalConfig.ethOracleNodeId)
-            .price
-            .toUint();
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperCancellationGasUnits * block.basefee
         );

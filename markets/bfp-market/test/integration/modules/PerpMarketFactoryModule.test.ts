@@ -51,34 +51,6 @@ describe('PerpMarketFactoryModule', () => {
 
   beforeEach(restore);
 
-  describe('setSynthetix', () => {
-    it('should revert when invalid synthetix addr (due to needing USD token)', async () => {
-      const { BfpMarketProxy } = systems();
-      const from = owner();
-
-      const address = genAddress();
-      try {
-        // assertRevert couldn't handle this error.
-        await BfpMarketProxy.connect(from).setSynthetix(address);
-        assert.fail('should have reverted');
-      } catch (error) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        assert.ok((error as any).error.reason.includes('transaction reverted in contract unknown'));
-      }
-    });
-
-    it('should revert when not owner', async () => {
-      const { BfpMarketProxy } = systems();
-      const from = traders()[0].signer;
-      const address = genAddress();
-      await assertRevert(
-        BfpMarketProxy.connect(from).setSynthetix(address),
-        `Unauthorized("${await from.getAddress()}")`,
-        BfpMarketProxy
-      );
-    });
-  });
-
   describe('setPyth', () => {
     it('should set successfully', async () => {
       const { BfpMarketProxy } = systems();

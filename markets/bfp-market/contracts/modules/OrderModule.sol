@@ -5,6 +5,8 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
@@ -35,10 +37,14 @@ contract OrderModule is IOrderModule {
     using Margin for Margin.Data;
 
     // --- Immutables --- //
+    address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
+    address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_susd) {
+    constructor(address _synthetix_core, address _synthetix_susd, address _oracle_manager) {
+        SYNTHETIX_CORE = _synthetix_core;
         SYNTHETIX_SUSD = _synthetix_susd;
+        ORACLE_MANAGER = _oracle_manager;
     }
 
     // --- Runtime structs --- //
@@ -166,7 +172,12 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for utilization recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (uint256 utilizationRate, ) = market.recomputeUtilization(price);
+        (uint256 utilizationRate, ) = market.recomputeUtilization(
+            price,
+            SYNTHETIX_CORE,
+            SYNTHETIX_SUSD,
+            ORACLE_MANAGER
+        );
         emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
     }
 
@@ -207,7 +218,7 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        uint256 oraclePrice = market.getOraclePrice();
+        uint256 oraclePrice = market.getOraclePrice(ORACLE_MANAGER);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
@@ -231,7 +242,9 @@ contract OrderModule is IOrderModule {
                 marketConfig.takerFee,
                 limitPrice,
                 keeperFeeBufferUsd
-            )
+            ),
+            SYNTHETIX_SUSD,
+            ORACLE_MANAGER
         );
 
         market.orders[accountId].update(
@@ -282,7 +295,7 @@ contract OrderModule is IOrderModule {
         );
         runtime.params = Position.TradeParams(
             order.sizeDelta,
-            market.getOraclePrice(),
+            market.getOraclePrice(ORACLE_MANAGER),
             runtime.pythPrice,
             runtime.fillPrice,
             marketConfig.makerFee,
@@ -299,7 +312,13 @@ contract OrderModule is IOrderModule {
         );
         recomputeFunding(market, runtime.params.oraclePrice);
 
-        runtime.trade = Position.validateTrade(accountId, market, runtime.params);
+        runtime.trade = Position.validateTrade(
+            accountId,
+            market,
+            runtime.params,
+            SYNTHETIX_SUSD,
+            ORACLE_MANAGER
+        );
 
         runtime.updatedMarketSize = (market.size.to256() +
             MathUtil.abs(runtime.trade.newPosition.size) -
@@ -355,7 +374,7 @@ contract OrderModule is IOrderModule {
 
         // Keeper fees can be set to zero.
         if (runtime.trade.keeperFee > 0) {
-            globalConfig.synthetix.withdrawMarketUsd(
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 runtime.trade.keeperFee
@@ -463,14 +482,20 @@ contract OrderModule is IOrderModule {
         }
 
         // If `isAccountOwner` then 0 else charge cancellation fee.
-        uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
-            ? 0
-            : Order.getCancellationKeeperFee();
+
+        uint256 keeperFee;
+        if (ERC2771Context._msgSender() != account.rbac.owner) {
+            uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+                .process(globalConfig.ethOracleNodeId)
+                .price
+                .toUint();
+            keeperFee = Order.getCancellationKeeperFee(ethPrice);
+        }
 
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
             market.totalTraderDebtUsd += keeperFee.to128();
-            globalConfig.synthetix.withdrawMarketUsd(
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 keeperFee
@@ -523,6 +548,12 @@ contract OrderModule is IOrderModule {
     ) external view returns (uint256 orderFee, uint256 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
 
         orderFee = Order.getOrderFee(
             sizeDelta,
@@ -530,13 +561,13 @@ contract OrderModule is IOrderModule {
                 market.skew,
                 marketConfig.skewScale,
                 sizeDelta,
-                market.getOraclePrice()
+                market.getOraclePrice(ORACLE_MANAGER)
             ),
             market.skew,
             marketConfig.makerFee,
             marketConfig.takerFee
         );
-        keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd);
+        keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd, ethPrice);
     }
 
     /// @inheritdoc IOrderModule
@@ -547,12 +578,12 @@ contract OrderModule is IOrderModule {
                 market.skew,
                 PerpMarketConfiguration.load(marketId).skewScale,
                 size,
-                market.getOraclePrice()
+                market.getOraclePrice(ORACLE_MANAGER)
             );
     }
 
     /// @inheritdoc IOrderModule
     function getOraclePrice(uint128 marketId) external view returns (uint256) {
-        return PerpMarket.exists(marketId).getOraclePrice();
+        return PerpMarket.exists(marketId).getOraclePrice(ORACLE_MANAGER);
     }
 }

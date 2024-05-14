@@ -13,6 +13,14 @@ import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
     using Clones for address;
 
+    // --- Immutables --- //
+
+    address immutable SYNTHETIX_CORE;
+
+    constructor(address _synthetix_core) {
+        SYNTHETIX_CORE = _synthetix_core;
+    }
+
     // --- Mutations --- //
 
     /// @inheritdoc IPerpRewardDistributorFactoryModule
@@ -50,7 +58,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         address distributorAddress = globalConfig.rewardDistributorImplementation.clone();
         IPerpRewardDistributor distributor = IPerpRewardDistributor(distributorAddress);
         distributor.initialize(
-            address(globalConfig.synthetix),
+            SYNTHETIX_CORE,
             address(this),
             data.poolId,
             data.collateralTypes,
