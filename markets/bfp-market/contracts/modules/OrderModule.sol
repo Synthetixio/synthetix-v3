@@ -46,12 +46,12 @@ contract OrderModule is IOrderModule {
         int128 updatedMarketSkew;
         uint128 totalFees;
         Position.ValidatedTrade trade;
-        Position.TradeParams params;
+        Position.TradeParams tradeParams;
     }
     struct Runtime_commitOrder {
         uint256 oraclePrice;
         Position.ValidatedTrade trade;
-        Position.TradeParams params;
+        Position.TradeParams tradeParams;
     }
 
     // --- Helpers --- //
@@ -212,7 +212,7 @@ contract OrderModule is IOrderModule {
 
         // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
         // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
-        runtime.params = Position.TradeParams(
+        runtime.tradeParams = Position.TradeParams(
             sizeDelta,
             runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
             runtime.oraclePrice, // CL oracle price.
@@ -233,7 +233,7 @@ contract OrderModule is IOrderModule {
             market,
             marketConfig,
             PerpMarketConfiguration.load(),
-            runtime.params
+            runtime.tradeParams
         );
 
         market.orders[accountId].update(
@@ -283,7 +283,7 @@ contract OrderModule is IOrderModule {
             order.sizeDelta,
             runtime.pythPrice
         );
-        runtime.params = Position.TradeParams(
+        runtime.tradeParams = Position.TradeParams(
             order.sizeDelta,
             market.getOraclePrice(),
             runtime.pythPrice,
@@ -298,16 +298,16 @@ contract OrderModule is IOrderModule {
             globalConfig,
             order.commitmentTime,
             runtime.pythPrice,
-            runtime.params
+            runtime.tradeParams
         );
-        recomputeFunding(market, runtime.params.oraclePrice);
+        recomputeFunding(market, runtime.tradeParams.oraclePrice);
 
         runtime.trade = Position.validateTrade(
             accountId,
             market,
             marketConfig,
             globalConfig,
-            runtime.params
+            runtime.tradeParams
         );
 
         runtime.updatedMarketSize = (market.size.to256() +
@@ -320,7 +320,7 @@ contract OrderModule is IOrderModule {
         // We want to validateTrade and update market size before we recompute utilization
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
-        recomputeUtilization(market, runtime.params.oraclePrice);
+        recomputeUtilization(market, runtime.tradeParams.oraclePrice);
 
         market.updateDebtCorrection(position, runtime.trade.newPosition);
 
@@ -348,12 +348,15 @@ contract OrderModule is IOrderModule {
             );
         }
         // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
-        runtime.accruedFunding = position.getAccruedFunding(market, runtime.params.oraclePrice);
+        runtime.accruedFunding = position.getAccruedFunding(
+            market,
+            runtime.tradeParams.oraclePrice
+        );
         runtime.accruedUtilization = position.getAccruedUtilization(
             market,
-            runtime.params.oraclePrice
+            runtime.tradeParams.oraclePrice
         );
-        runtime.pricePnl = position.getPricePnl(runtime.params.fillPrice);
+        runtime.pricePnl = position.getPricePnl(runtime.tradeParams.fillPrice);
 
         if (runtime.trade.newPosition.size == 0) {
             delete market.positions[accountId];
@@ -374,7 +377,7 @@ contract OrderModule is IOrderModule {
             accountId,
             marketId,
             block.timestamp,
-            runtime.params.sizeDelta,
+            runtime.tradeParams.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
             runtime.accruedFunding,
