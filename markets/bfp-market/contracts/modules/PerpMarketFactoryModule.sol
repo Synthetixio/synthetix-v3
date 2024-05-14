@@ -142,7 +142,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         return
             market.size.mulDecimal(market.getOraclePrice()).mulDecimal(
-                marketConfig.minCreditPercent
+                PerpMarketConfiguration.load(marketId).minCreditPercent
             ) + market.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
     }
 
