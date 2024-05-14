@@ -278,3 +278,12 @@ export const calcUtilizationRate = async (bs: Bs, utilization: Wei) => {
     return lowPart.add(highPart);
   }
 };
+
+export const calcDebtCorrection = (
+  prevDebtCorrection: Wei,
+  fundingDelta: Wei,
+  notionalDelta: Wei,
+  totalPositionPnl: Wei
+) => {
+  return prevDebtCorrection.add(fundingDelta).add(notionalDelta).add(totalPositionPnl);
+};
