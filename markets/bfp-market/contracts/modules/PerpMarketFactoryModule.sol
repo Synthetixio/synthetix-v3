@@ -10,7 +10,7 @@ import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/I
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
@@ -141,7 +141,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return
             market.getMinimumCredit(
                 PerpMarketConfiguration.load(marketId),
-                market.getOraclePrice()
+                market.getOraclePrice(ORACLE_MANAGER),
+                SYNTHETIX_SUSD
             );
     }
 
@@ -170,6 +171,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         uint128 utilization = market.getUtilization(
             market.getOraclePrice(ORACLE_MANAGER),
+            globalConfig,
             SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER

@@ -165,31 +165,40 @@ library PerpMarket {
     function getMinimumCredit(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
-        uint256 price
+        uint256 price,
+        address sUsdAddress
     ) internal view returns (uint256) {
         return
             self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
-            self.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
+            self.depositedCollateral[sUsdAddress];
     }
 
     /// @dev Returns the markets delegated collateral value in USD.
     function getDelegatedCollateralValueUsd(
         PerpMarket.Data storage self,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        PerpMarketConfiguration.GlobalData storage globalConfig,
+        address synthetixAddress,
+        address sUsdAddress,
+        address oracleManagerAddress
     ) internal view returns (int256) {
         // This is our market's `creditCapacity + all deposited collateral`.
-        uint256 withdrawableUsd = globalConfig.synthetix.getWithdrawableMarketUsd(self.id);
+        uint256 withdrawableUsd = ISynthetixSystem(synthetixAddress).getWithdrawableMarketUsd(
+            self.id
+        );
 
         // If we remove collateral deposited from traders we get the delegatedCollateral value.
         //
         // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
-        return withdrawableUsd.toInt() - getTotalCollateralValueUsd(self).toInt();
+        return
+            withdrawableUsd.toInt() -
+            getTotalCollateralValueUsd(self, sUsdAddress, oracleManagerAddress).toInt();
     }
 
     /// @dev Returns the collateral utilization bounded by 0 and 1.
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
+        PerpMarketConfiguration.GlobalData storage globalConfig,
         address synthetixCoreAddress,
         address sUsdAddress,
         address oracleManagerAddress
@@ -204,7 +213,13 @@ library PerpMarket {
             return 0;
         }
 
-        int256 delegatedCollateralValueUsd = getDelegatedCollateralValueUsd(self, globalConfig);
+        int256 delegatedCollateralValueUsd = getDelegatedCollateralValueUsd(
+            self,
+            globalConfig,
+            synthetixCoreAddress,
+            sUsdAddress,
+            oracleManagerAddress
+        );
 
         if (delegatedCollateralValueUsd <= 0) {
             return DecimalMath.UNIT.to128();
@@ -262,7 +277,14 @@ library PerpMarket {
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
-            getUtilization(self, price, synthetixCoreAddress, sUsdAddress, oracleManagerAddress),
+            getUtilization(
+                self,
+                price,
+                globalConfig,
+                synthetixCoreAddress,
+                sUsdAddress,
+                oracleManagerAddress
+            ),
             globalConfig
         );
         unrecordedUtilization = getUnrecordedUtilization(self);
