@@ -191,6 +191,30 @@ describe('OrderModule', () => {
         'InsufficientLiquidity()',
         BfpMarketProxy
       );
+
+      // sUSD deposited from perps traders should not affect minimum credit
+      // trader1 deposit 1m sUSD
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: trader1,
+          desiredMarginUsdDepositAmount: 1_000_000,
+          desiredCollateral: getSusdCollateral(collaterals()),
+        })
+      );
+      // trader2s commit should still fail.
+      await assertRevert(
+        BfpMarketProxy.connect(trader2.signer).commitOrder(
+          trader2.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd,
+          order2.hooks
+        ),
+        'InsufficientLiquidity()',
+        BfpMarketProxy
+      );
     });
 
     it('should revert insufficient margin when margin is less than initial margin due to debt', async () => {
