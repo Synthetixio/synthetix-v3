@@ -221,7 +221,7 @@ library PerpMarket {
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         uint128 highUtilizationSlopePercent = globalConfig.highUtilizationSlopePercent;
 
-        if (utilization < utilizationBreakpointPercent) {
+        if (utilization <= utilizationBreakpointPercent) {
             // If utilization is below the breakpoint, use the low utilization slope
             return lowUtilizationSlopePercent.mulDecimalUint128(utilization) * 100;
         } else {
