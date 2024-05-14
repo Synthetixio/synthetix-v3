@@ -2760,6 +2760,22 @@ describe('MarginModule', async () => {
       assertBn.equal(margin, expectedMargin);
     });
 
+    it('should return 0 when debt is bigger than collateral', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId, collateralPrice, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+      await BfpMarketProxy.__test_addDebtUsdToAccountMargin(
+        trader.accountId,
+        marketId,
+        wei(collateralDepositAmount).mul(collateralPrice).mul(1.1).toBN()
+      );
+      const margin = await BfpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
+      assertBn.isZero(margin);
+    });
+
     it('should return the discounted marginUsd less IM when position open', async () => {
       const { BfpMarketProxy } = systems();
 
