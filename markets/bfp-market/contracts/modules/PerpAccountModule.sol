@@ -211,9 +211,12 @@ contract PerpAccountModule is IPerpAccountModule {
 
         Account.loadAccountAndValidatePermission(
             fromId,
-            AccountRBAC._PERPS_SPLIT_ACCOUNT_PERMISSION
+            AccountRBAC._BFP_PERPS_SPLIT_ACCOUNT_PERMISSION
         );
-        Account.loadAccountAndValidatePermission(toId, AccountRBAC._PERPS_SPLIT_ACCOUNT_PERMISSION);
+        Account.loadAccountAndValidatePermission(
+            toId,
+            AccountRBAC._BFP_PERPS_SPLIT_ACCOUNT_PERMISSION
+        );
 
         if (toId == fromId) {
             revert ErrorUtil.DuplicateAccountIds();

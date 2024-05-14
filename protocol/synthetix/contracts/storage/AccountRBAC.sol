@@ -23,8 +23,8 @@ library AccountRBAC {
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     bytes32 internal constant _BURN_PERMISSION = "BURN";
-    bytes32 internal constant _PERPS_PAY_DEBT_PERMISSION = "PERPS_PAY_DEBT";
-    bytes32 internal constant _PERPS_SPLIT_ACCOUNT_PERMISSION = "PERPS_SPLIT_ACCOUNT";
+    bytes32 internal constant _BFP_PERPS_PAY_DEBT_PERMISSION = "BFP_PERPS_PAY_DEBT";
+    bytes32 internal constant _BFP_PERPS_SPLIT_ACCOUNT_PERMISSION = "BFP_PERPS_SPLIT_ACCOUNT";
 
     /**
      * @dev Thrown when a permission specified by a user does not exist or is invalid.
@@ -59,8 +59,8 @@ library AccountRBAC {
             permission != AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION &&
             permission != AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION &&
             permission != AccountRBAC._BURN_PERMISSION &&
-            permission != AccountRBAC._PERPS_PAY_DEBT_PERMISSION &&
-            permission != AccountRBAC._PERPS_SPLIT_ACCOUNT_PERMISSION
+            permission != AccountRBAC._BFP_PERPS_PAY_DEBT_PERMISSION &&
+            permission != AccountRBAC._BFP_PERPS_SPLIT_ACCOUNT_PERMISSION
         ) {
             revert InvalidPermission(permission);
         }

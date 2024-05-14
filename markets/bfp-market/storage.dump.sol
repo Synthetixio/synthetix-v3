@@ -140,8 +140,8 @@ library AccountRBAC {
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     bytes32 internal constant _BURN_PERMISSION = "BURN";
-    bytes32 internal constant _PERPS_PAY_DEBT_PERMISSION = "PERPS_PAY_DEBT";
-    bytes32 internal constant _PERPS_SPLIT_ACCOUNT_PERMISSION = "PERPS_SPLIT_ACCOUNT";
+    bytes32 internal constant _BFP_PERPS_PAY_DEBT_PERMISSION = "BFP_PERPS_PAY_DEBT";
+    bytes32 internal constant _BFP_PERPS_SPLIT_ACCOUNT_PERMISSION = "BFP_PERPS_SPLIT_ACCOUNT";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
