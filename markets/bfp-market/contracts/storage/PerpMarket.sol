@@ -176,7 +176,6 @@ library PerpMarket {
     /// @dev Returns the markets delegated collateral value in USD.
     function getDelegatedCollateralValueUsd(
         PerpMarket.Data storage self,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
         address synthetixAddress,
         address sUsdAddress,
         address oracleManagerAddress
@@ -198,7 +197,6 @@ library PerpMarket {
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
         address synthetixCoreAddress,
         address sUsdAddress,
         address oracleManagerAddress
@@ -215,7 +213,6 @@ library PerpMarket {
 
         int256 delegatedCollateralValueUsd = getDelegatedCollateralValueUsd(
             self,
-            globalConfig,
             synthetixCoreAddress,
             sUsdAddress,
             oracleManagerAddress
@@ -277,14 +274,7 @@ library PerpMarket {
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
-            getUtilization(
-                self,
-                price,
-                globalConfig,
-                synthetixCoreAddress,
-                sUsdAddress,
-                oracleManagerAddress
-            ),
+            getUtilization(self, price, synthetixCoreAddress, sUsdAddress, oracleManagerAddress),
             globalConfig
         );
         unrecordedUtilization = getUnrecordedUtilization(self);

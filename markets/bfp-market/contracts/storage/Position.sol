@@ -140,7 +140,6 @@ library Position {
     function validateMinimumCredit(
         PerpMarket.Data storage market,
         uint256 oraclePrice,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
         PerpMarketConfiguration.Data storage marketConfig,
         address synthetixAddress,
         address sUsdAddress,
@@ -148,7 +147,6 @@ library Position {
     ) internal view {
         uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, sUsdAddress);
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(
-            globalConfig,
             synthetixAddress,
             sUsdAddress,
             oracleManagerAddress
@@ -204,13 +202,44 @@ library Position {
         }
     }
 
+    /// @dev Creates  Position.ValidatedTrade
+    function createValidatedTrade(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        Position.TradeParams memory params,
+        Runtime_validateTrade memory runtime
+    ) internal view returns (Position.ValidatedTrade memory) {
+        return
+            Position.ValidatedTrade(
+                runtime.newPosition,
+                runtime.orderFee,
+                runtime.keeperFee,
+                getNextMarginUsd(
+                    MathUtil
+                        .max(
+                            runtime.marginValuesForLiqValidation.collateralUsd.toInt() +
+                                Margin.getPnlAdjustmentUsd(
+                                    accountId,
+                                    market,
+                                    params.oraclePrice,
+                                    params.fillPrice
+                                ),
+                            0
+                        )
+                        .toUint(),
+                    runtime.orderFee,
+                    runtime.keeperFee
+                ),
+                runtime.marginValuesForLiqValidation.collateralUsd
+            );
+    }
+
     /// @dev Validates whether the given `TradeParams` would lead to a valid next position.
     function validateTrade(
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.TradeParams memory params,
         PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
         address synthetixAddress,
         address sUsdAddress,
         address oracleManagerAddress
@@ -316,7 +345,6 @@ library Position {
             validateMinimumCredit(
                 market,
                 params.oraclePrice,
-                globalConfig,
                 marketConfig,
                 synthetixAddress,
                 sUsdAddress,
@@ -340,36 +368,7 @@ library Position {
             );
         }
 
-        return
-            Position.ValidatedTrade(
-                runtime.newPosition,
-                runtime.orderFee,
-                runtime.keeperFee,
-                // NOTE: Notice the lack of discount here as `settleOrder` requires the next non-discounted margin
-                // to realize any PnL against the new position post settlement.
-                //
-                // Refer to `settleOrder` for more details.;
-                getNextMarginUsd(
-                    MathUtil
-                        .max(
-                            // Even though these marginValues are for liquidation checks, the `collateralUsd` can
-                            // still be used here. To compute the margin, we just need to attribute any PnL adjustments
-                            // to the collateral (e.g. price PnL, funding, debt etc.).
-                            runtime.marginValuesForLiqValidation.collateralUsd.toInt() +
-                                Margin.getPnlAdjustmentUsd(
-                                    accountId,
-                                    market,
-                                    params.oraclePrice,
-                                    params.fillPrice
-                                ),
-                            0
-                        )
-                        .toUint(),
-                    runtime.orderFee,
-                    runtime.keeperFee
-                ),
-                runtime.marginValuesForLiqValidation.collateralUsd
-            );
+        return createValidatedTrade(accountId, market, params, runtime);
     }
 
     /// @dev Validates whether the position at `accountId` and `marketId` would pass liquidation.

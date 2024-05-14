@@ -171,7 +171,6 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         uint128 utilization = market.getUtilization(
             market.getOraclePrice(ORACLE_MANAGER),
-            globalConfig,
             SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER

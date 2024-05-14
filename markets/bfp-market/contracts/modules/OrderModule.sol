@@ -251,7 +251,6 @@ contract OrderModule is IOrderModule {
             market,
             runtime.tradeParams,
             marketConfig,
-            PerpMarketConfiguration.load(),
             SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
@@ -328,7 +327,6 @@ contract OrderModule is IOrderModule {
             market,
             runtime.tradeParams,
             marketConfig,
-            globalConfig,
             SYNTHETIX_CORE,
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
