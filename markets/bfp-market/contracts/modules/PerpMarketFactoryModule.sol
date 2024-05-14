@@ -11,7 +11,7 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
@@ -143,7 +143,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return
             market.size.mulDecimal(market.getOraclePrice()).mulDecimal(
                 marketConfig.minCreditPercent
-            );
+            ) + market.depositedCollateral[SYNTHETIX_USD_MARKET_ID];
     }
 
     /// @inheritdoc IERC165
