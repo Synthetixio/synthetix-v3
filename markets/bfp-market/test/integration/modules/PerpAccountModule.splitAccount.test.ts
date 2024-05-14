@@ -1,10 +1,19 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
+import {
+  bn,
+  genBootstrap,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genTrader,
+  toRoundRobinGenerators,
+} from '../../generators';
 import { commitAndSettle, commitOrder, depositMargin, withExplicitEvmMine } from '../../helpers';
 import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { shuffle } from 'lodash';
 
 describe('PerpAccountModule splitAccount', () => {
   const bs = bootstrap(genBootstrap());
@@ -111,6 +120,35 @@ describe('PerpAccountModule splitAccount', () => {
         bn(genNumber(0.1, 1))
       ),
       `MarketNotFound("${invalidMarketId}")`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert if the two account are owned by different signer', async () => {
+    const { BfpMarketProxy } = systems();
+    const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+    const fromTrader = tradersGenerator.next().value;
+    const toTrader = tradersGenerator.next().value;
+
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    await commitAndSettle(
+      bs,
+      marketId,
+      fromTrader,
+      genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+
+    await assertRevert(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId,
+        bn(genNumber(0.1, 1))
+      ),
+      `PermissionDenied`,
       BfpMarketProxy
     );
   });
