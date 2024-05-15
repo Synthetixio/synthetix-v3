@@ -97,7 +97,7 @@ interface IMarginModule is IBasePerpMarket {
         int256 amountDelta
     ) external;
 
-    /// @notice Configure with collateral types, their max allowables (deposits),their skewScale and reward
+    /// @notice Configure with collateral types, their max allowables (deposits), their skewScale and reward
     ///         distributors. This function will reconfigure _all_ collaterals and replace the existing
     ///         collateral set with new collaterals supplied.
     /// @param collateralAddresses An array of collateral addresses.
