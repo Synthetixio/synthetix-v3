@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
@@ -32,12 +33,25 @@ contract PerpAccountModule is IPerpAccountModule {
 
     // --- Immutables --- //
 
+    address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_susd, address _oracle_manager) {
-        SYNTHETIX_SUSD = _synthetix_susd;
-        ORACLE_MANAGER = _oracle_manager;
+    constructor(address _synthetix_core) {
+        SYNTHETIX_CORE = _synthetix_core;
+
+        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
+
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix_core == address(0) ||
+            ORACLE_MANAGER == address(0) ||
+            SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+        }
     }
     // --- Runtime structs --- //
 

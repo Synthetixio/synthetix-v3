@@ -5,6 +5,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ISynthetixSystem} from "../../external/ISynthetixSystem.sol";
 import {IPerpRewardDistributorFactoryModule} from "../../interfaces/IPerpRewardDistributorFactoryModule.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
 import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol";
@@ -14,11 +15,25 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
     using Clones for address;
 
     // --- Immutables --- //
-
     address immutable SYNTHETIX_CORE;
+    address immutable SYNTHETIX_SUSD;
+    address immutable ORACLE_MANAGER;
 
     constructor(address _synthetix_core) {
         SYNTHETIX_CORE = _synthetix_core;
+
+        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
+
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix_core == address(0) ||
+            ORACLE_MANAGER == address(0) ||
+            SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+        }
     }
 
     // --- Mutations --- //

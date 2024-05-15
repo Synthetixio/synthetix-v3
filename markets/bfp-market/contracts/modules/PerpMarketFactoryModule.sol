@@ -13,6 +13,7 @@ import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for int128;
@@ -29,12 +30,22 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_core, address _synthetix_susd, address _oracle_manager) {
+    constructor(address _synthetix_core) {
         SYNTHETIX_CORE = _synthetix_core;
-        SYNTHETIX_SUSD = _synthetix_susd;
-        ORACLE_MANAGER = _oracle_manager;
-    }
 
+        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
+
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix_core == address(0) ||
+            ORACLE_MANAGER == address(0) ||
+            SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+        }
+    }
     // --- Mutations --- //
 
     /// @inheritdoc IPerpMarketFactoryModule
