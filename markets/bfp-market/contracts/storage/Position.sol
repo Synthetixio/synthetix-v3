@@ -100,9 +100,6 @@ library Position {
         int256 currentSize,
         int256 newSize
     ) internal view {
-        uint256 marketSize = market.size;
-        int256 marketSkew = market.skew;
-
         // Allow users to reduce an order no matter the market conditions.
         if (
             MathUtil.sameSide(currentSize, newSize) &&
@@ -113,8 +110,8 @@ library Position {
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
         // we check that the side of the market their order is on would not break the limit.
-        int256 newSkew = marketSkew - currentSize + newSize;
-        int256 newMarketSize = (marketSize - MathUtil.abs(currentSize) + MathUtil.abs(newSize))
+        int256 newSkew = market.skew - currentSize + newSize;
+        int256 newMarketSize = (market.size - MathUtil.abs(currentSize) + MathUtil.abs(newSize))
             .toInt();
 
         int256 newSideSize;
