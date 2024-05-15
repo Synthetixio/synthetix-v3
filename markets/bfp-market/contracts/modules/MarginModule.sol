@@ -153,11 +153,6 @@ contract MarginModule is IMarginModule {
         emit MarginDeposit(msgSender, address(this), amount, collateralAddress);
     }
 
-    /// @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
-    function approveCollateral(address collateralAddress, uint256 amount) private {
-        ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, amount);
-    }
-
     /// @dev Given a `collateral` determine if tokens of collateral has been deposited in any market.
     function isCollateralDeposited(address collateralAddress) private view returns (bool) {
         PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
@@ -419,7 +414,7 @@ contract MarginModule is IMarginModule {
             address collateralAddress = globalMarginConfig.supportedCollaterals[runtime.i];
             delete globalMarginConfig.supported[collateralAddress];
 
-            approveCollateral(collateralAddress, 0);
+            ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, 0);
 
             unchecked {
                 ++runtime.i;
@@ -432,7 +427,7 @@ contract MarginModule is IMarginModule {
         for (runtime.i = 0; runtime.i < runtime.lengthAfter; ) {
             address collateralAddress = collateralAddresses[runtime.i];
             // Perform approve _once_ when this collateral is added as a supported collateral.
-            approveCollateral(collateralAddress, runtime.maxApproveAmount);
+            ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, runtime.maxApproveAmount);
             // sUSD must have a 0x0 reward distributor.
             address distributor = rewardDistributors[runtime.i];
 
