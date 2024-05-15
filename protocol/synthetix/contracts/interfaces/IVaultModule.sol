@@ -28,6 +28,16 @@ interface IVaultModule {
     error InvalidDelegationIntent();
 
     /**
+     * @notice Thrown when the specified intent is not executable due to pending intents.
+     */
+    error ExceedingUndelegateAmount(
+        int256 deltaCollateralAmountD18,
+        int256 cachedDeltaCollateralAmountD18,
+        int256 totalDeltaCollateralAmountD18,
+        uint256 currentCollateralAmount
+    );
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
@@ -185,6 +195,8 @@ interface IVaultModule {
      * Emits a {DelegationUpdated} event.
      */
     function processIntentToDelegateCollateralByPair(uint128 accountId, uint128 poolId) external;
+
+    function deleteAllIntents(uint128 accountId) external;
 
     /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.

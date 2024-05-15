@@ -477,6 +477,7 @@ describe('VaultModule', function () {
       });
 
       it('the delegation works as expected with the enabled collateral', async () => {
+        await systems().Core.connect(user1).deleteAllIntents(accountId);
         await delegateCollateral(
           user1,
           accountId,
@@ -589,6 +590,7 @@ describe('VaultModule', function () {
             .Core.connect(user2)
             .deposit(user2AccountId, collateralAddress(), depositAmount.mul(2));
 
+          await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
           await delegateCollateral(
             user2,
             user2AccountId,
@@ -695,6 +697,7 @@ describe('VaultModule', function () {
         // than 1 are allowed (which might be something we want to do)
         describe.skip('increase exposure', async () => {
           before('delegate', async () => {
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             await delegateCollateral(
               user2,
               user2AccountId,
@@ -717,6 +720,7 @@ describe('VaultModule', function () {
 
         describe.skip('reduce exposure', async () => {
           before('delegate', async () => {
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             await delegateCollateral(
               user2,
               user2AccountId,
@@ -739,6 +743,7 @@ describe('VaultModule', function () {
 
         describe('remove exposure', async () => {
           before('delegate', async () => {
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             await delegateCollateral(
               user2,
               user2AccountId,
@@ -828,6 +833,7 @@ describe('VaultModule', function () {
 
           describe('success', () => {
             before('delegate', async () => {
+              await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
               await delegateCollateral(
                 user2,
                 user2AccountId,
@@ -898,39 +904,22 @@ describe('VaultModule', function () {
           });
 
           it('fails when reducing to below minDelegation amount', async () => {
-            const intentId = await systems()
-              .Core.connect(user2)
-              .callStatic.declareIntentToDelegateCollateral(
-                user2AccountId,
-                poolId,
-                collateralAddress(),
-                await fixedToDeltaAmount(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(51)
-                ),
-                ethers.utils.parseEther('1')
-              );
-            await systems()
-              .Core.connect(user2)
-              .declareIntentToDelegateCollateral(
-                user2AccountId,
-                poolId,
-                collateralAddress(),
-                await fixedToDeltaAmount(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(51)
-                ),
-                ethers.utils.parseEther('1')
-              );
-
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             await assertRevert(
               systems()
                 .Core.connect(user2)
-                .processIntentToDelegateCollateralByIntents(user2AccountId, [intentId]),
+                .declareIntentToDelegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  await fixedToDeltaAmount(
+                    user2AccountId,
+                    poolId,
+                    collateralAddress(),
+                    depositAmount.div(51)
+                  ),
+                  ethers.utils.parseEther('1')
+                ),
               'InsufficientDelegation("20000000000000000000")',
               systems().Core
             );
@@ -938,6 +927,7 @@ describe('VaultModule', function () {
 
           it('fails when market becomes capacity locked', async () => {
             // sanity
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             assert.ok(
               !(await systems().Core.connect(user2).callStatic.isMarketCapacityLocked(marketId))
             );
@@ -997,6 +987,7 @@ describe('VaultModule', function () {
 
             describe('success', () => {
               before('delegate', async () => {
+                await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
                 await delegateCollateral(
                   user2,
                   user2AccountId,
@@ -1040,6 +1031,7 @@ describe('VaultModule', function () {
           });
 
           before('delegate', async () => {
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             await delegateCollateral(
               user2,
               user2AccountId,
@@ -1057,6 +1049,7 @@ describe('VaultModule', function () {
           it('user2 position is closed', verifyAccountState(user2AccountId, poolId, 0, 0));
 
           it('lets user2 re-stake again', async () => {
+            await systems().Core.connect(user2).deleteAllIntents(user2AccountId);
             await delegateCollateral(
               user2,
               user2AccountId,
@@ -1077,6 +1070,7 @@ describe('VaultModule', function () {
       });
 
       before('undelegate', async () => {
+        await systems().Core.connect(user1).deleteAllIntents(accountId);
         await delegateCollateral(
           user1,
           accountId,

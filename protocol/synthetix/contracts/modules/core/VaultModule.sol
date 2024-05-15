@@ -70,17 +70,20 @@ contract VaultModule is IVaultModule {
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+        int256 accumulatedDelta = deltaCollateralAmountD18 +
+            accountIntents.netDelegatedAmountPerCollateral[collateralType];
+        if (accumulatedDelta < 0 && currentCollateralAmount < (-1 * accumulatedDelta).toUint()) {
+            revert ExceedingUndelegateAmount(
+                deltaCollateralAmountD18,
+                accountIntents.netDelegatedAmountPerCollateral[collateralType],
+                accumulatedDelta,
+                currentCollateralAmount
+            );
+        }
 
-        uint256 newCollateralAmountD18 = deltaCollateralAmountD18 +
-            accountIntents.netDelegatedAmountPerCollateral[collateralType] >
-            0
-            ? currentCollateralAmount +
-                (deltaCollateralAmountD18 +
-                    accountIntents.netDelegatedAmountPerCollateral[collateralType]).toUint()
-            : currentCollateralAmount -
-                (-1 *
-                    (deltaCollateralAmountD18 +
-                        accountIntents.netDelegatedAmountPerCollateral[collateralType])).toUint();
+        uint256 newCollateralAmountD18 = accumulatedDelta > 0
+            ? currentCollateralAmount + (accumulatedDelta).toUint()
+            : currentCollateralAmount - (-1 * accumulatedDelta).toUint();
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -228,6 +231,11 @@ contract VaultModule is IVaultModule {
             accountId,
             AccountDelegationIntents.getValid(accountId).intentIdsByPair(poolId, accountId)
         );
+    }
+
+    function deleteAllIntents(uint128 accountId) external override {
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        AccountDelegationIntents.getValid(accountId).cleanAllIntents();
     }
 
     /**
