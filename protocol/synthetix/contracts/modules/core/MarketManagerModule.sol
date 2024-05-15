@@ -35,20 +35,24 @@ contract MarketManagerModule is IMarketManagerModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
-
     using DecimalMath for uint256;
 
+    /**
+     * @notice USD token slot identifier
+     */
     bytes32 private constant _USD_TOKEN = "USDToken";
+
+    /**
+     * @notice feature flag slot identifiers
+     */
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
+    /**
+     * @notice configuration slot identifiers
+     */
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS =
-        "withdrawMarketUsd_feeAddress";
 
     /**
      * @inheritdoc IMarketManagerModule
@@ -190,11 +194,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external override returns (uint256 feeAmount) {
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
@@ -202,22 +202,12 @@ contract MarketManagerModule is IMarketManagerModule {
         if (ERC2771Context._msgSender() != market.marketAddress)
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
-        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
-        address feeAddress = address(0);
-        address configFeeAddress = Config.readAddress(
-            _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS,
-            address(0)
-        );
-
-        if (feeAmount > 0 && configFeeAddress != address(0)) {
-            feeAddress = configFeeAddress;
-        }
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting.
-        market.creditCapacityD18 += (amount - feeAmount).toInt().to128();
-        market.netIssuanceD18 -= (amount - feeAmount).toInt().to128();
+        market.creditCapacityD18 += amount.toInt().to128();
+        market.netIssuanceD18 -= amount.toInt().to128();
 
         // Burn the incoming USD.
         // Note: Instead of burning, we could transfer USD to and from the MarketManager,
@@ -228,12 +218,6 @@ contract MarketManagerModule is IMarketManagerModule {
             ERC2771Context._msgSender(),
             amount
         );
-
-        if (feeAmount > 0 && feeAddress != address(0)) {
-            IUSDTokenModule(address(usdToken)).mint(feeAddress, feeAmount);
-
-            emit MarketSystemFeePaid(marketId, feeAmount);
-        }
 
         emit MarketUsdDeposited(
             marketId,
@@ -249,11 +233,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external override returns (uint256 feeAmount) {
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -262,32 +242,16 @@ contract MarketManagerModule is IMarketManagerModule {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
         // Ensure that the market's balance allows for this withdrawal.
-        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
-        if (amount + feeAmount > getWithdrawableMarketUsd(marketId))
+        if (amount > getWithdrawableMarketUsd(marketId)) {
             revert NotEnoughLiquidity(marketId, amount);
-
-        address feeAddress = address(0);
-        address configFeeAddress = Config.readAddress(
-            _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS,
-            address(0)
-        );
-
-        if (feeAmount > 0 && configFeeAddress != address(0)) {
-            feeAddress = configFeeAddress;
         }
 
         // Adjust accounting.
-        marketData.creditCapacityD18 -= (amount + feeAmount).toInt().to128();
-        marketData.netIssuanceD18 += (amount + feeAmount).toInt().to128();
+        marketData.creditCapacityD18 -= amount.toInt().to128();
+        marketData.netIssuanceD18 += amount.toInt().to128();
 
         // Mint the requested USD.
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
-
-        if (feeAmount > 0 && feeAddress != address(0)) {
-            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
-
-            emit MarketSystemFeePaid(marketId, feeAmount);
-        }
 
         emit MarketUsdWithdrawn(
             marketId,
@@ -297,22 +261,6 @@ contract MarketManagerModule is IMarketManagerModule {
             marketData.creditCapacityD18,
             marketData.netIssuanceD18,
             marketData.getDepositedCollateralValue()
-        );
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function getMarketFees(
-        uint128,
-        uint256 amount
-    ) external view override returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount) {
-        depositFeeAmount = amount.mulDecimal(
-            Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0)
-        );
-
-        withdrawFeeAmount = amount.mulDecimal(
-            Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0)
         );
     }
 
