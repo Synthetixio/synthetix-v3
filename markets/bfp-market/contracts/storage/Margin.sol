@@ -276,10 +276,9 @@ library Margin {
     function getCollateralUsdWithoutDiscount(
         address sUsdAddress,
         address oracleManagerAddress,
-        Margin.Data storage accountMargin
+        Margin.Data storage accountMargin,
+        Margin.GlobalData storage globalMarginConfig
     ) internal view returns (uint256) {
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-
         uint256 length = globalMarginConfig.supportedCollaterals.length;
         address collateralAddress;
         uint256 available;
@@ -320,7 +319,8 @@ library Margin {
                     getCollateralUsdWithoutDiscount(
                         sUsdAddress,
                         oracleManagerAddress,
-                        Margin.load(accountId, market.id)
+                        Margin.load(accountId, market.id),
+                        Margin.load()
                     ).toInt() + getPnlAdjustmentUsd(accountId, market, price, price),
                     0
                 )

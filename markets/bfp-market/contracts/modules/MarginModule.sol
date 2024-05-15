@@ -688,7 +688,8 @@ contract MarginModule is IMarginModule {
                 Margin.getCollateralUsdWithoutDiscount(
                     SYNTHETIX_SUSD,
                     ORACLE_MANAGER,
-                    Margin.load(accountId, marketId)
+                    Margin.load(accountId, marketId),
+                    Margin.load()
                 ),
                 ORACLE_MANAGER,
                 PerpMarketConfiguration.load(marketId),

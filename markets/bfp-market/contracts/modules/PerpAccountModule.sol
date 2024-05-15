@@ -497,7 +497,8 @@ contract PerpAccountModule is IPerpAccountModule {
         runtime.fromCollateralUsd = Margin.getCollateralUsdWithoutDiscount(
             SYNTHETIX_SUSD,
             ORACLE_MANAGER,
-            Margin.load(fromId, marketId)
+            Margin.load(fromId, marketId),
+            globalMarginConfig
         );
         runtime.fromMarginUsd = MathUtil
             .max(
