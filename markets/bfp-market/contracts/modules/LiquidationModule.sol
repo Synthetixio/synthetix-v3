@@ -53,7 +53,7 @@ contract LiquidationModule is ILiquidationModule {
 
     struct Runtime_liquidateCollateral {
         uint256 availableSusd;
-        uint256 supportedCollateralssLength;
+        uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 availableAccountCollateral;
         uint128 poolId;
@@ -141,10 +141,10 @@ contract LiquidationModule is ILiquidationModule {
         // For non-sUSD collateral, send to their respective reward distributor, create new distribution per collateral,
         // and then wipe out all associated collateral on the account.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        runtime.supportedCollateralssLength = globalMarginConfig.supportedCollaterals.length;
+        runtime.supportedCollateralsLength = globalMarginConfig.supportedCollaterals.length;
 
         // Iterate over all supported margin collateral types to see if any should be distributed to LPs.
-        for (uint256 i = 0; i < runtime.supportedCollateralssLength; ) {
+        for (uint256 i = 0; i < runtime.supportedCollateralsLength; ) {
             runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
             runtime.availableAccountCollateral = accountMargin.collaterals[
                 runtime.collateralAddress
