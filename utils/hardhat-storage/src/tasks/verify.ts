@@ -1,8 +1,8 @@
 import { task } from 'hardhat/config';
+import { render } from '../internal/render';
 import { SUBTASK_STORAGE_LOAD_DUMP, TASK_STORAGE_VERIFY } from '../task-names';
 
 import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
-
 interface Params {
   previous: string;
   current: string;
@@ -27,5 +27,8 @@ task(
       filepath: params.current,
     });
 
-    console.log(JSON.stringify(currSourceUnits, null, 2));
+    for (const sourceUnit of currSourceUnits) {
+      console.log(JSON.stringify(sourceUnit, null, 2));
+      console.log(render(sourceUnit));
+    }
   });

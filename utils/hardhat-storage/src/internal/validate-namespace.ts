@@ -1,91 +1,71 @@
-import { findOne } from '@synthetixio/core-utils/utils/ast/finders';
-import { Node, YulNode } from 'solidity-ast/node';
 import {
-  FunctionCall,
+  ASTNode,
+  ContractDefinition,
   FunctionDefinition,
-  SourceUnit,
+  Identifier,
   VariableDeclaration,
-} from 'solidity-ast/types';
+} from '@solidity-parser/parser/src/ast-types';
+import { StorageArtifact } from '../types';
 import { createError } from './error';
+import { findOne } from './finders';
 import { iterateSlotAssignments } from './iterators';
 import { isPresent } from './misc';
 
 interface Params {
-  /** all source units, including the ones in artifacts and all the imported ones */
-  sourceUnits: SourceUnit[];
+  artifacts: StorageArtifact[];
 }
 
-export function validateSlotNamespaceCollisions({ sourceUnits }: Params) {
+export function validateSlotNamespaceCollisions({ artifacts }: Params) {
   const slots: string[] = [];
+  const sourceUnits = artifacts.map(({ ast }) => ast);
 
   return [...iterateSlotAssignments(sourceUnits)]
     .map(([sourceUnit, contractNode, functionNode, yulAssignment]) => {
-      const _error = (message: string, ...nodes: (Node | YulNode)[]) => ({
+      const { sourceName } = artifacts.find(
+        ({ ast, contractName }) => ast === sourceUnit && contractName === contractNode.name
+      )!;
+
+      const _error = (message: string, ...nodes: ASTNode[]) => ({
         message,
-        sourceUnit,
+        sourceName,
         nodes: [contractNode, functionNode, ...nodes],
       });
 
-      const val = yulAssignment.value;
+      const val = yulAssignment.expression;
 
       // The assignment of the .slot value should be an existing variable
-      if (val.nodeType !== 'YulIdentifier') {
+      if (val.type !== 'AssemblyCall') {
         return _error(
           'Store assignments can only be assignments to a constant value in the contract',
           yulAssignment
         );
       }
 
-      // Find when the value is declared inside the current function
-      const varStatement = _findVariableDeclarationStatementOf(functionNode, val.name);
+      // Find the declaration of the value
+      const varStatement = _findVariableDeclarationStatementOf(
+        contractNode,
+        functionNode,
+        val.functionName
+      );
 
       if (!varStatement) {
-        return _error(`Could not find variable declaration value for "${val.name}"`, val);
+        return _error(`Could not find variable declaration value for "${val.functionName}"`, val);
       }
 
       if (!varStatement.initialValue) {
         return _error('Slot value not initialized', varStatement);
       }
 
-      let slotValue: FunctionCall;
+      const slotValue = findOne(varStatement, 'StringLiteral');
 
-      // If the slot value is a function call, is a dynamic value initialized inside
-      // the function
-      if (varStatement.initialValue.nodeType === 'FunctionCall') {
-        slotValue = varStatement.initialValue;
-        // If it is an identifier, it should be pointing to a contract constant
-      } else if (varStatement.initialValue.nodeType === 'Identifier') {
-        const slotName = varStatement.initialValue.name;
-
-        const constantDeclaration = contractNode.nodes.find(
-          (node) =>
-            node.nodeType === 'VariableDeclaration' && node.constant && node.name === slotName
-        ) as VariableDeclaration | undefined;
-
-        if (!constantDeclaration?.value || constantDeclaration.value.nodeType !== 'FunctionCall') {
-          return _error(
-            'Slot value should be a contract constant with a value initialized',
-            varStatement
-          );
-        }
-
-        slotValue = constantDeclaration.value;
-      } else {
-        return _error(
-          'Slot value should be a contract constant or a dynamic local value',
-          varStatement
-        );
-      }
-
-      // Get the first string key value from keccak256(abi.encode("slot-name", ...))
-      const slotKey = _getSlotValueFromFunctionCall(slotValue);
-
-      if (!slotKey) {
+      if (!slotValue) {
         return _error(
           'Store slot definition should have the format keccak256(abi.encode("your-slot-name", ...))',
           val
         );
       }
+
+      const slotKey = slotValue.value;
 
       if (slots.includes(slotKey)) {
         return _error(`Store slot name repeated: ${slotKey}`, val);
@@ -97,29 +77,30 @@ export function validateSlotNamespaceCollisions({ sourceUnits }: Params) {
     .map((err) => createError(err));
 }
 
-function _findVariableDeclarationStatementOf(functionNode: FunctionDefinition, varName: string) {
-  return findOne(functionNode, 'VariableDeclarationStatement', (declarationStatement) => {
-    return !!findOne(declarationStatement, 'VariableDeclaration', ({ name }) => name === varName);
+function _findVariableDeclarationStatementOf(
+  contractNode: ContractDefinition,
+  functionNode: FunctionDefinition,
+  varName: string
+) {
+  const res = findOne(functionNode, 'VariableDeclarationStatement', (declarationStatement) => {
+    return (
+      declarationStatement.variables.length === 1 &&
+      declarationStatement.variables[0]?.type === 'VariableDeclaration' &&
+      (declarationStatement.variables[0] as VariableDeclaration).name === varName
+    );
   });
-}
 
-function _getSlotValueFromFunctionCall(slotValue: FunctionCall) {
-  if (slotValue.nodeType !== 'FunctionCall') return;
-  if (slotValue.typeDescriptions.typeString !== 'bytes32') return;
+  if (!res || !res.initialValue) return;
 
-  const { expression } = slotValue;
-  if (expression.nodeType !== 'Identifier' || expression.name !== 'keccak256') return;
-  if (slotValue.arguments.length !== 1 || slotValue.arguments[0].nodeType !== 'FunctionCall')
-    return;
+  if (res.initialValue.type === 'Identifier') {
+    return findOne(contractNode, 'StateVariableDeclaration', (stateVariable) => {
+      return !!findOne(
+        stateVariable,
+        'VariableDeclaration',
+        ({ name }) => name === (res.initialValue as Identifier).name
+      );
+    });
+  }
 
-  const encode = slotValue.arguments[0];
-  if (encode.expression.nodeType !== 'MemberAccess' || encode.expression.memberName !== 'encode')
-    return;
-
-  if (encode.arguments.length === 0) return;
-  const [slotKey] = encode.arguments;
-  if (slotKey.nodeType !== 'Literal' || slotKey.kind !== 'string') return;
-  if (typeof slotKey.value !== 'string' || !slotKey.value) return;
-
-  return slotKey.value;
+  return res;
 }

@@ -11,8 +11,7 @@ import { validateSlotNamespaceCollisions } from '../internal/validate-namespace'
 import { validateMutableStateVariables } from '../internal/validate-variables';
 import { writeInChunks } from '../internal/write-in-chunks';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS, TASK_STORAGE_GENERATE } from '../task-names';
-
-import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+import { StorageArtifact } from '../types';
 
 interface Params {
   artifacts?: string[];
@@ -50,22 +49,19 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
       logger.info(contract);
     }
 
-    if (!noCompile) {
-      await quietCompile(hre, true);
-    }
-
     const allContracts = await getContractsFullyQualifiedNames(hre, artifacts);
 
-    const sourceUnits: SourceUnit[] = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
-      artifacts: allContracts,
+    const storageArtifacts: StorageArtifact[] = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
+      fqNames: allContracts,
     });
 
     const errors = [
       ...validateMutableStateVariables({
-        artifacts: allContracts,
-        sourceUnits,
+        artifacts: storageArtifacts,
       }),
-      ...validateSlotNamespaceCollisions({ sourceUnits }),
+      ...validateSlotNamespaceCollisions({
+        artifacts: storageArtifacts,
+      }),
     ];
 
     errors.forEach((err) => console.error(err, '\n'));
@@ -74,19 +70,19 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
       throw new HardhatPluginError('hardhat-storage', 'Storage validation failed');
     }
 
-    const dump = await dumpStorage(sourceUnits);
+    // const dump = await dumpStorage(sourceUnits);
 
-    if (output) {
-      const target = path.resolve(hre.config.paths.root, output);
-      await fs.mkdir(path.dirname(target), { recursive: true });
-      await fs.writeFile(target, dump);
+    // if (output) {
+    //   const target = path.resolve(hre.config.paths.root, output);
+    //   await fs.mkdir(path.dirname(target), { recursive: true });
+    //   await fs.writeFile(target, dump);
 
-      logger.success(`Storage dump written to ${output} in ${Date.now() - now}ms`);
-    }
+    //   logger.success(`Storage dump written to ${output} in ${Date.now() - now}ms`);
+    // }
 
-    if (log) {
-      writeInChunks(dump);
-    }
+    // if (log) {
+    //   writeInChunks(dump);
+    // }
 
-    return dump;
+    // return dump;
   });

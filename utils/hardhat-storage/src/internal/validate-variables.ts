@@ -1,46 +1,45 @@
-import {
-  findContractDependencies,
-  findContractNodeWithAst,
-} from '@synthetixio/core-utils/utils/ast/finders';
-import { onlyUnique } from '@synthetixio/core-utils/utils/misc/array';
-import { createError } from './error';
-import { iterateVariables } from './iterators';
+import { StorageArtifact } from '../types';
+import { createError, ValidationError } from './error';
+import { findAll, findOne } from './finders';
 
-import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+import type {
+  StateVariableDeclarationVariable,
+  VariableDeclaration,
+} from '@solidity-parser/parser/src/ast-types';
 
 interface Params {
-  /** fully qualified names of the contracts to validate */
-  artifacts: string[];
-  /** all source units, including the ones in artifacts and all the imported ones */
-  sourceUnits: SourceUnit[];
+  artifacts: StorageArtifact[];
 }
 
-export function validateMutableStateVariables({ artifacts, sourceUnits }: Params) {
-  // Find for all the dependencies also
-  const fqNames = artifacts
-    .map((fqName) => findContractDependencies(fqName, sourceUnits))
-    .flat()
-    .filter(onlyUnique);
+export function validateMutableStateVariables({ artifacts }: Params) {
+  const errors: ValidationError[] = [];
 
-  const contractNodes = fqNames.map((fqName) => findContractNodeWithAst(fqName, sourceUnits));
+  for (const { sourceName, contractName, ast } of artifacts) {
+    const contractNode = findOne(ast, 'ContractDefinition', (node) => node.name === contractName);
 
-  // Find state variables
-  const invalidVars = [...iterateVariables(contractNodes, _isMutableStateVariable)];
+    if (!contractNode) {
+      throw new Error(`Contract with name "${contractName}" not found`);
+    }
 
-  return invalidVars.map(([sourceUnit, contractNode, variableNode]) =>
-    createError({
-      message:
-        'Unsafe state variable declaration. Mutable state variables cannot be declared on a contract behind a Proxy',
-      sourceUnit,
-      nodes: [contractNode, variableNode],
-    })
-  );
+    for (const node of findAll(ast, 'VariableDeclaration', _isMutableStateVariable)) {
+      errors.push(
+        createError({
+          message:
+            'Unsafe state variable declaration. Mutable state variables cannot be declared on a contract behind a Proxy',
+          sourceName,
+          nodes: [contractNode, node],
+        })
+      );
+    }
+  }
+
+  return errors;
 }
 
-function _isMutableStateVariable(variableNode: VariableDeclaration) {
+function _isMutableStateVariable(node: VariableDeclaration) {
   return (
-    variableNode.stateVariable &&
-    variableNode.mutability !== 'constant' &&
-    variableNode.mutability !== 'immutable'
+    node.isStateVar &&
+    !node.isDeclaredConst &&
+    !(node as StateVariableDeclarationVariable).isImmutable
   );
 }
