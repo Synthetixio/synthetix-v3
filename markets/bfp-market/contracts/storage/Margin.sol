@@ -47,15 +47,6 @@ library Margin {
         uint256 collateralUsd;
     }
 
-    // --- Runtime structs --- //
-
-    struct Runtime_getCollateralUsd {
-        address collateralAddress;
-        uint256 available;
-        uint256 collateralPrice;
-        uint256 i;
-    }
-
     // --- Storage --- //
 
     struct GlobalData {
@@ -149,26 +140,28 @@ library Margin {
     ) internal view returns (uint256 collateralUsd, uint256 discountedCollateralUsd) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
-        Runtime_getCollateralUsd memory runtime;
+        address collateralAddress;
+        uint256 available;
+        uint256 collateralPrice;
 
-        for (runtime.i = 0; runtime.i < globalMarginConfig.supportedCollaterals.length; ) {
-            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[runtime.i];
-            runtime.available = accountMargin.collaterals[runtime.collateralAddress];
+        for (uint256 i = 0; i < globalMarginConfig.supportedCollaterals.length; ) {
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            available = accountMargin.collaterals[collateralAddress];
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
-            if (runtime.available > 0) {
-                runtime.collateralPrice = getCollateralPrice(
+            if (available > 0) {
+                collateralPrice = getCollateralPrice(
                     globalMarginConfig,
-                    runtime.collateralAddress,
+                    collateralAddress,
                     addresses
                 );
 
-                collateralUsd += runtime.available.mulDecimal(runtime.collateralPrice);
-                discountedCollateralUsd += runtime.available.mulDecimal(
+                collateralUsd += available.mulDecimal(collateralPrice);
+                discountedCollateralUsd += available.mulDecimal(
                     getDiscountedCollateralPrice(
-                        runtime.available,
-                        runtime.collateralPrice,
-                        runtime.collateralAddress,
+                        available,
+                        collateralPrice,
+                        collateralAddress,
                         globalConfig,
                         globalMarginConfig,
                         addresses
@@ -176,7 +169,7 @@ library Margin {
                 );
             }
             unchecked {
-                ++runtime.i;
+                ++i;
             }
         }
     }
