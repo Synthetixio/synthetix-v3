@@ -9,6 +9,7 @@ import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
+import {AddressRegistry} from "./AddressRegistry.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
@@ -138,16 +139,10 @@ library Position {
         PerpMarket.Data storage market,
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
-        address synthetixAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, sUsdAddress);
-        int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(
-            synthetixAddress,
-            sUsdAddress,
-            oracleManagerAddress
-        );
+        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
+        int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
         if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
             revert ErrorUtil.InsufficientLiquidity();
@@ -205,9 +200,7 @@ library Position {
         PerpMarket.Data storage market,
         Position.TradeParams memory params,
         PerpMarketConfiguration.Data storage marketConfig,
-        address synthetixAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (Position.ValidatedTrade memory) {
         // Empty order is a no.
         if (params.sizeDelta == 0) {
@@ -223,8 +216,7 @@ library Position {
             accountId,
             market,
             params.oraclePrice,
-            sUsdAddress,
-            oracleManagerAddress
+            addresses
         );
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
@@ -242,7 +234,7 @@ library Position {
                     params.oraclePrice,
                     marketConfig,
                     runtime.marginValuesForLiqValidation,
-                    oracleManagerAddress
+                    addresses
                 )
             ) {
                 revert ErrorUtil.CanLiquidatePosition();
@@ -259,7 +251,7 @@ library Position {
             params.makerFee,
             params.takerFee
         );
-        runtime.ethPrice = INodeModule(oracleManagerAddress)
+        runtime.ethPrice = INodeModule(addresses.oracleManager)
             .process(PerpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
@@ -297,7 +289,7 @@ library Position {
                 params.oraclePrice,
                 runtime.marginValuesForLiqValidation.collateralUsd,
                 marketConfig,
-                oracleManagerAddress
+                addresses
             );
 
             // Check new position initial margin validations.
@@ -306,14 +298,7 @@ library Position {
             }
 
             // Check the minimum credit requirements are still met.
-            validateMinimumCredit(
-                market,
-                params.oraclePrice,
-                marketConfig,
-                synthetixAddress,
-                sUsdAddress,
-                oracleManagerAddress
-            );
+            validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(
@@ -483,7 +468,7 @@ library Position {
         uint256 price,
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
@@ -503,7 +488,7 @@ library Position {
         );
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
-        uint256 ethPrice = INodeModule(oracleManagerAddress)
+        uint256 ethPrice = INodeModule(addresses.oracleManager)
             .process(globalConfig.ethOracleNodeId)
             .price
             .toUint();
@@ -580,7 +565,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (Position.HealthData memory healthData) {
         // We can short-circuit entire getHealthData calcs when size is zero.
         if (size == 0) {
@@ -597,10 +582,22 @@ library Position {
                 market.currentUtilizationAccruedComputed -
                 positionEntryUtilizationAccrued
         );
+        // `margin / mm <= 1` means liquidation.
+        (, uint256 mm, ) = getLiquidationMarginUsd(
+            size,
+            price,
+            marginValues.collateralUsd,
+            marketConfig,
+            addresses
+        );
+
+        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(mm);
 
         // Calc the price PnL.
         healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
 
+        return healthData;
+    }
         // `margin / mm <= 1` means liquidation.
         (, uint256 mm, ) = getLiquidationMarginUsd(
             size,
@@ -623,7 +620,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (bool) {
         if (self.size == 0) {
             return false;
@@ -637,7 +634,7 @@ library Position {
             price,
             marketConfig,
             marginValues,
-            oracleManagerAddress
+            addresses
         );
         return healthData.healthFactor <= DecimalMath.UNIT;
     }
