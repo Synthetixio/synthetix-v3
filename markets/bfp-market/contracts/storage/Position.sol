@@ -230,7 +230,6 @@ library Position {
             if (
                 isLiquidatable(
                     currentPosition,
-                    market,
                     params.oraclePrice,
                     marketConfig,
                     runtime.marginValuesForLiqValidation,
@@ -582,6 +581,28 @@ library Position {
                 market.currentUtilizationAccruedComputed -
                 positionEntryUtilizationAccrued
         );
+
+        healthData.healthFactor = getHealthFactor(
+            size,
+            price,
+            marketConfig,
+            marginValues,
+            addresses
+        );
+
+        // Calc the price PnL.
+        healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+
+        return healthData;
+    }
+
+    function getHealthFactor(
+        int128 size,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig,
+        Margin.MarginValues memory marginValues,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
         // `margin / mm <= 1` means liquidation.
         (, uint256 mm, ) = getLiquidationMarginUsd(
             size,
@@ -590,25 +611,7 @@ library Position {
             marketConfig,
             addresses
         );
-
-        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(mm);
-
-        // Calc the price PnL.
-        healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
-
-        return healthData;
-    }
-        // `margin / mm <= 1` means liquidation.
-        (, uint256 mm, ) = getLiquidationMarginUsd(
-            size,
-            price,
-            marginValues.collateralUsd,
-            marketConfig,
-            oracleManagerAddress
-        );
-        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(mm);
-
-        return healthData;
+        return marginValues.discountedMarginUsd.divDecimal(mm);
     }
 
     // --- Member (views) --- //
@@ -616,7 +619,6 @@ library Position {
     /// @dev Returns whether the current position can be liquidated.
     function isLiquidatable(
         Position.Data storage self,
-        PerpMarket.Data storage market,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
@@ -625,18 +627,10 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-        Position.HealthData memory healthData = Position.getHealthData(
-            market,
-            self.size,
-            self.entryPrice,
-            self.entryFundingAccrued,
-            self.entryUtilizationAccrued,
-            price,
-            marketConfig,
-            marginValues,
-            addresses
-        );
-        return healthData.healthFactor <= DecimalMath.UNIT;
+
+        return
+            Position.getHealthFactor(self.size, price, marketConfig, marginValues, addresses) <=
+            DecimalMath.UNIT;
     }
 
     /// @dev Returns the notional profit or loss based on current price and entry price.
