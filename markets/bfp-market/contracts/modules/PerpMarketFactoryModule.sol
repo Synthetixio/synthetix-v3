@@ -10,6 +10,7 @@ import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/I
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
+import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -84,11 +85,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeUtilization(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
         (uint256 utilizationRate, ) = market.recomputeUtilization(
-            market.getOraclePrice(ORACLE_MANAGER),
-            SYNTHETIX_CORE,
-            SYNTHETIX_SUSD,
-            ORACLE_MANAGER
+            market.getOraclePrice(addresses),
+            addresses
         );
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
     }
@@ -96,7 +100,15 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice(ORACLE_MANAGER));
+        (int256 fundingRate, ) = market.recomputeFunding(
+            market.getOraclePrice(
+                AddressRegistry.Data({
+                    synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                    sUsd: SYNTHETIX_SUSD,
+                    oracleManager: ORACLE_MANAGER
+                })
+            )
+        );
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -113,10 +125,12 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IMarket
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        int256 totalCollateralValueUsd = market
-            .getTotalCollateralValueUsd(SYNTHETIX_SUSD, ORACLE_MANAGER)
-            .toInt();
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
+        int256 totalCollateralValueUsd = market.getTotalCollateralValueUsd(addresses).toInt();
         int128 skew = market.skew;
         int256 marketReportedDebt;
 
@@ -128,7 +142,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             return MathUtil.max(marketReportedDebt, 0).toUint();
         }
 
-        uint256 oraclePrice = market.getOraclePrice(ORACLE_MANAGER);
+        uint256 oraclePrice = market.getOraclePrice(addresses);
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
         int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
@@ -148,12 +162,16 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
         return
             market.getMinimumCredit(
                 PerpMarketConfiguration.load(marketId),
-                market.getOraclePrice(ORACLE_MANAGER),
-                SYNTHETIX_SUSD
+                market.getOraclePrice(addresses),
+                addresses
             );
     }
 
@@ -179,13 +197,12 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
-        uint128 utilization = market.getUtilization(
-            market.getOraclePrice(ORACLE_MANAGER),
-            SYNTHETIX_CORE,
-            SYNTHETIX_SUSD,
-            ORACLE_MANAGER
-        );
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
+        uint128 utilization = market.getUtilization(market.getOraclePrice(addresses), addresses);
         return
             IPerpMarketFactoryModule.UtilizationDigest(
                 market.currentUtilizationRateComputed,
@@ -221,6 +238,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 ++i;
             }
         }
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
 
         return
             IPerpMarketFactoryModule.MarketDigest(
@@ -228,14 +250,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.name,
                 market.skew,
                 market.size,
-                market.getOraclePrice(ORACLE_MANAGER),
+                market.getOraclePrice(addresses),
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
                 market.currentUtilizationRateComputed,
                 remainingCapacity,
                 lastLiquidationTime,
                 market.totalTraderDebtUsd,
-                market.getTotalCollateralValueUsd(SYNTHETIX_SUSD, ORACLE_MANAGER),
+                market.getTotalCollateralValueUsd(addresses),
                 market.debtCorrection
             );
     }

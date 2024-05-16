@@ -9,6 +9,7 @@ import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
+import {AddressRegistry} from "./AddressRegistry.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
@@ -100,9 +101,6 @@ library Position {
         int256 currentSize,
         int256 newSize
     ) internal view {
-        uint256 marketSize = market.size;
-        int256 marketSkew = market.skew;
-
         // Allow users to reduce an order no matter the market conditions.
         if (
             MathUtil.sameSide(currentSize, newSize) &&
@@ -113,8 +111,8 @@ library Position {
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
         // we check that the side of the market their order is on would not break the limit.
-        int256 newSkew = marketSkew - currentSize + newSize;
-        int256 newMarketSize = (marketSize - MathUtil.abs(currentSize) + MathUtil.abs(newSize))
+        int256 newSkew = market.skew - currentSize + newSize;
+        int256 newMarketSize = (market.size - MathUtil.abs(currentSize) + MathUtil.abs(newSize))
             .toInt();
 
         int256 newSideSize;
@@ -141,16 +139,10 @@ library Position {
         PerpMarket.Data storage market,
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
-        address synthetixAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, sUsdAddress);
-        int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(
-            synthetixAddress,
-            sUsdAddress,
-            oracleManagerAddress
-        );
+        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
+        int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
         if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
             revert ErrorUtil.InsufficientLiquidity();
@@ -208,9 +200,7 @@ library Position {
         PerpMarket.Data storage market,
         Position.TradeParams memory params,
         PerpMarketConfiguration.Data storage marketConfig,
-        address synthetixAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (Position.ValidatedTrade memory) {
         // Empty order is a no.
         if (params.sizeDelta == 0) {
@@ -226,8 +216,7 @@ library Position {
             accountId,
             market,
             params.oraclePrice,
-            sUsdAddress,
-            oracleManagerAddress
+            addresses
         );
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
@@ -241,11 +230,10 @@ library Position {
             if (
                 isLiquidatable(
                     currentPosition,
-                    market,
                     params.oraclePrice,
                     marketConfig,
                     runtime.marginValuesForLiqValidation,
-                    oracleManagerAddress
+                    addresses
                 )
             ) {
                 revert ErrorUtil.CanLiquidatePosition();
@@ -262,7 +250,7 @@ library Position {
             params.makerFee,
             params.takerFee
         );
-        runtime.ethPrice = INodeModule(oracleManagerAddress)
+        runtime.ethPrice = INodeModule(addresses.oracleManager)
             .process(PerpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
@@ -300,7 +288,7 @@ library Position {
                 params.oraclePrice,
                 runtime.marginValuesForLiqValidation.collateralUsd,
                 marketConfig,
-                oracleManagerAddress
+                addresses
             );
 
             // Check new position initial margin validations.
@@ -309,14 +297,7 @@ library Position {
             }
 
             // Check the minimum credit requirements are still met.
-            validateMinimumCredit(
-                market,
-                params.oraclePrice,
-                marketConfig,
-                synthetixAddress,
-                sUsdAddress,
-                oracleManagerAddress
-            );
+            validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(
@@ -486,7 +467,7 @@ library Position {
         uint256 price,
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
@@ -506,7 +487,7 @@ library Position {
         );
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
-        uint256 ethPrice = INodeModule(oracleManagerAddress)
+        uint256 ethPrice = INodeModule(addresses.oracleManager)
             .process(globalConfig.ethOracleNodeId)
             .price
             .toUint();
@@ -583,7 +564,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (Position.HealthData memory healthData) {
         // We can short-circuit entire getHealthData calcs when size is zero.
         if (size == 0) {
@@ -601,20 +582,36 @@ library Position {
                 positionEntryUtilizationAccrued
         );
 
+        healthData.healthFactor = getHealthFactor(
+            size,
+            price,
+            marketConfig,
+            marginValues,
+            addresses
+        );
+
         // Calc the price PnL.
         healthData.pnl = size.mulDecimal(price.toInt() - positionEntryPrice.toInt());
 
+        return healthData;
+    }
+
+    function getHealthFactor(
+        int128 size,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig,
+        Margin.MarginValues memory marginValues,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
         // `margin / mm <= 1` means liquidation.
         (, uint256 mm, ) = getLiquidationMarginUsd(
             size,
             price,
             marginValues.collateralUsd,
             marketConfig,
-            oracleManagerAddress
+            addresses
         );
-        healthData.healthFactor = marginValues.discountedMarginUsd.divDecimal(mm);
-
-        return healthData;
+        return marginValues.discountedMarginUsd.divDecimal(mm);
     }
 
     // --- Member (views) --- //
@@ -622,27 +619,18 @@ library Position {
     /// @dev Returns whether the current position can be liquidated.
     function isLiquidatable(
         Position.Data storage self,
-        PerpMarket.Data storage market,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (bool) {
         if (self.size == 0) {
             return false;
         }
-        Position.HealthData memory healthData = Position.getHealthData(
-            market,
-            self.size,
-            self.entryPrice,
-            self.entryFundingAccrued,
-            self.entryUtilizationAccrued,
-            price,
-            marketConfig,
-            marginValues,
-            oracleManagerAddress
-        );
-        return healthData.healthFactor <= DecimalMath.UNIT;
+
+        return
+            Position.getHealthFactor(self.size, price, marketConfig, marginValues, addresses) <=
+            DecimalMath.UNIT;
     }
 
     /// @dev Returns the notional profit or loss based on current price and entry price.

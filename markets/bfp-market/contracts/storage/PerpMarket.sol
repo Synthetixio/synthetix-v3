@@ -8,6 +8,7 @@ import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfac
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
+import {AddressRegistry} from "./AddressRegistry.sol";
 import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
@@ -166,40 +167,32 @@ library PerpMarket {
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price,
-        address sUsdAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         return
             self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
-            self.depositedCollateral[sUsdAddress];
+            self.depositedCollateral[addresses.sUsd];
     }
 
     /// @dev Returns the markets delegated collateral value in USD.
     function getDelegatedCollateralValueUsd(
         PerpMarket.Data storage self,
-        address synthetixAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (int256) {
         // This is our market's `creditCapacity + all deposited collateral`.
-        uint256 withdrawableUsd = ISynthetixSystem(synthetixAddress).getWithdrawableMarketUsd(
-            self.id
-        );
+        uint256 withdrawableUsd = addresses.synthetix.getWithdrawableMarketUsd(self.id);
 
         // If we remove collateral deposited from traders we get the delegatedCollateral value.
         //
         // NOTE: When < 0 then from the market's POV we're _above_ full utilization and LPs can be liquidated.
-        return
-            withdrawableUsd.toInt() -
-            getTotalCollateralValueUsd(self, sUsdAddress, oracleManagerAddress).toInt();
+        return withdrawableUsd.toInt() - getTotalCollateralValueUsd(self, addresses).toInt();
     }
 
     /// @dev Returns the collateral utilization bounded by 0 and 1.
     function getUtilization(
         PerpMarket.Data storage self,
         uint256 price,
-        address synthetixCoreAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
@@ -211,12 +204,7 @@ library PerpMarket {
             return 0;
         }
 
-        int256 delegatedCollateralValueUsd = getDelegatedCollateralValueUsd(
-            self,
-            synthetixCoreAddress,
-            sUsdAddress,
-            oracleManagerAddress
-        );
+        int256 delegatedCollateralValueUsd = getDelegatedCollateralValueUsd(self, addresses);
 
         if (delegatedCollateralValueUsd <= 0) {
             return DecimalMath.UNIT.to128();
@@ -268,13 +256,11 @@ library PerpMarket {
     function recomputeUtilization(
         PerpMarket.Data storage self,
         uint256 price,
-        address synthetixCoreAddress,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
-            getUtilization(self, price, synthetixCoreAddress, sUsdAddress, oracleManagerAddress),
+            getUtilization(self, price, addresses),
             globalConfig
         );
         unrecordedUtilization = getUnrecordedUtilization(self);
@@ -301,10 +287,11 @@ library PerpMarket {
     /// @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
     function getOraclePrice(
         PerpMarket.Data storage self,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-        return INodeModule(oracleManagerAddress).process(marketConfig.oracleNodeId).price.toUint();
+        return
+            INodeModule(addresses.oracleManager).process(marketConfig.oracleNodeId).price.toUint();
     }
 
     /// @dev Returns the rate of funding rate change.
@@ -491,8 +478,7 @@ library PerpMarket {
     /// @dev Returns the total USD value of all collaterals if we were to spot sell everything.
     function getTotalCollateralValueUsd(
         PerpMarket.Data storage self,
-        address sUsdAddress,
-        address oracleManagerAddress
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
@@ -509,8 +495,7 @@ library PerpMarket {
             if (collateralAvailable > 0) {
                 collateralPrice = globalMarginConfig.getCollateralPrice(
                     collateralAddress,
-                    oracleManagerAddress,
-                    sUsdAddress
+                    addresses
                 );
                 totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);
             }
