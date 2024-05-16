@@ -18,11 +18,12 @@ library Order {
         /// Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;
         /// The block.timestamp this order was committed on.
-        uint256 commitmentTime;
+        uint64 commitmentTime;
+        uint64 __unused1;
         /// The maximum fillPrice (in USD) this order will accept during settlement.
-        uint256 limitPrice;
+        uint128 limitPrice;
         /// A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         /// Settlement hooks specified on commitment for invocation.
         address[] hooks;
     }

@@ -16,6 +16,9 @@ library SettlementHookConfiguration {
         address[] whitelistedHookAddresses;
         /// Maximum hooks that can be specified during an order commitment.
         uint32 maxHooksPerOrder;
+        uint64 __unused1;
+        uint64 __unused2;
+        uint96 __unused3;
     }
 
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {
