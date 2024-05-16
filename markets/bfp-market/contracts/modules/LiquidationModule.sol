@@ -316,7 +316,7 @@ contract LiquidationModule is ILiquidationModule {
         ISynthetixSystem synthetix = ISynthetixSystem(SYNTHETIX_CORE);
         uint256 oraclePrice = market.getOraclePrice(
             AddressRegistry.Data({
-                synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                synthetix: synthetix,
                 sUsd: SYNTHETIX_SUSD,
                 oracleManager: ORACLE_MANAGER
             })
