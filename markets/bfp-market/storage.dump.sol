@@ -644,7 +644,7 @@ interface ISettlementHookModule {
 contract LiquidationModule {
     struct Runtime_liquidateCollateral {
         uint256 availableSusd;
-        uint256 supportedCollateralssLength;
+        uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 availableAccountCollateral;
         uint128 poolId;
@@ -660,7 +660,6 @@ contract MarginModule {
         uint256 lengthAfter;
         uint256 maxApproveAmount;
         address[] previousSupportedCollaterals;
-        uint256 i;
     }
 }
 
@@ -675,12 +674,6 @@ contract OrderModule {
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
-        Position.ValidatedTrade trade;
-        Position.TradeParams tradeParams;
-    }
-    struct Runtime_commitOrder {
-        uint256 oraclePrice;
-        Position.ValidatedTrade trade;
         Position.TradeParams tradeParams;
     }
 }
@@ -703,6 +696,7 @@ contract PerpAccountModule {
         uint256 toDiscountedCollateralUsd;
         uint256 fromDiscountedCollateralUsd;
         uint256 collateralPrice;
+        uint256 fromAccountCollateralUsd;
     }
     struct Runtime_mergeAccounts {
         uint256 oraclePrice;
@@ -715,6 +709,15 @@ contract PerpAccountModule {
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 fromAccountCollateral;
+    }
+}
+
+// @custom:artifact contracts/storage/AddressRegistry.sol:AddressRegistry
+library AddressRegistry {
+    struct Data {
+        address synthetix;
+        address sUsd;
+        address oracleManager;
     }
 }
 
@@ -732,12 +735,6 @@ library Margin {
         uint256 marginUsd;
         uint256 discountedCollateralUsd;
         uint256 collateralUsd;
-    }
-    struct Runtime_getCollateralUsd {
-        address collateralAddress;
-        uint256 available;
-        uint256 collateralPrice;
-        uint256 i;
     }
     struct GlobalData {
         mapping(address => CollateralType) supported;
@@ -912,8 +909,6 @@ library Position {
         uint256 discountedNextMarginUsd;
         uint256 im;
         uint256 mm;
-        Position.Data newPosition;
-        Margin.MarginValues marginValuesForLiqValidation;
         uint256 ethPrice;
     }
     struct Data {
