@@ -23,6 +23,7 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 import { calcUtilization, calcUtilizationRate } from '../../calculations';
+import { delegateCollateral } from '@synthetixio/main/test/common';
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
@@ -152,7 +153,9 @@ describe('PerpMarketFactoryModule Utilization', () => {
         stakedCollateral().address
       );
       const stakedCollateralAddress = stakedCollateral().address;
-      await Core.connect(staker()).delegateCollateral(
+      await delegateCollateral(
+        systems,
+        staker(),
         stakerAccountId,
         poolId,
         stakedCollateralAddress,
@@ -222,7 +225,9 @@ describe('PerpMarketFactoryModule Utilization', () => {
         stakedCollateral().address
       );
       const stakedCollateralAddress = stakedCollateral().address;
-      await Core.connect(staker()).delegateCollateral(
+      await delegateCollateral(
+        systems,
+        staker(),
         stakerAccountId,
         poolId,
         stakedCollateralAddress,
@@ -377,7 +382,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
   });
   describe('getUtilizationDigest', async () => {
     it('should return utilization data', async () => {
-      const { BfpMarketProxy, Core } = systems();
+      const { BfpMarketProxy } = systems();
       const market = genOneOf(markets());
 
       const { marketId, trader, collateral, collateralDepositAmount } = await depositMargin(
@@ -412,16 +417,14 @@ describe('PerpMarketFactoryModule Utilization', () => {
       await fastForwardBySec(provider(), genNumber(1, SECONDS_ONE_DAY));
       // Decrease amount of staked collateral on the core side.
       const stakedCollateralAddress = stakedCollateral().address;
-      await withExplicitEvmMine(
-        () =>
-          Core.connect(staker()).delegateCollateral(
-            stakerAccountId,
-            poolId,
-            stakedCollateralAddress,
-            wei(stakedAmount).mul(0.9).toBN(),
-            bn(1)
-          ),
-        provider()
+      await delegateCollateral(
+        systems,
+        staker(),
+        stakerAccountId,
+        poolId,
+        stakedCollateralAddress,
+        wei(stakedAmount).mul(0.9).toBN(),
+        bn(1)
       );
 
       const utilizationDigest2 = await BfpMarketProxy.getUtilizationDigest(marketId);
