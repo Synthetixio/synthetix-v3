@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as parser from '@solidity-parser/parser';
 import { StorageArtifact } from '../types';
+import { findAll } from './finders';
 
 export async function getArtifact(projectRoot: string, sourceName: string, contractName: string) {
   const sourceFullPath = path.resolve(projectRoot, sourceName);
@@ -27,15 +28,13 @@ function _normalizeImportDirectives(
   sourceFullPath: string,
   sourceUnit: StorageArtifact['ast']
 ) {
-  parser.visit(sourceUnit, {
-    ImportDirective: async function (node) {
-      if (!_isExplicitRelativePath(node.path)) return;
-      const target = _removeBasePath(projectRoot, sourceFullPath);
-      node.path = target;
-      node.pathLiteral.value = target;
-      node.pathLiteral.parts = [target];
-    },
-  });
+  for (const node of findAll(sourceUnit, 'ImportDirective')) {
+    if (!_isExplicitRelativePath(node.path)) continue;
+    const target = _removeBasePath(projectRoot, sourceFullPath);
+    node.path = target;
+    node.pathLiteral.value = target;
+    node.pathLiteral.parts = [target];
+  }
 }
 
 function _removeBasePath(basePath: string, fullPath: string) {

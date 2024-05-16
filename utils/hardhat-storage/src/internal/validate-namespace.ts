@@ -17,17 +17,12 @@ interface Params {
 
 export function validateSlotNamespaceCollisions({ artifacts }: Params) {
   const slots: string[] = [];
-  const sourceUnits = artifacts.map(({ ast }) => ast);
 
-  return [...iterateSlotAssignments(sourceUnits)]
-    .map(([sourceUnit, contractNode, functionNode, yulAssignment]) => {
-      const { sourceName } = artifacts.find(
-        ({ ast, contractName }) => ast === sourceUnit && contractName === contractNode.name
-      )!;
-
+  return [...iterateSlotAssignments(artifacts)]
+    .map(([artifact, contractNode, functionNode, yulAssignment]) => {
       const _error = (message: string, ...nodes: ASTNode[]) => ({
         message,
-        sourceName,
+        sourceName: artifact.sourceName,
         nodes: [contractNode, functionNode, ...nodes],
       });
 

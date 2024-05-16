@@ -4,22 +4,27 @@ import {
   FunctionDefinition,
   SourceUnit,
 } from '@solidity-parser/parser/src/ast-types';
-import { findAll } from './finders';
+import { StorageArtifact } from '../types';
+import { findAll, findOne } from './finders';
 
 export function* iterateContracts(
-  sourceUnits: SourceUnit[]
-): Generator<[SourceUnit, ContractDefinition]> {
-  for (const sourceUnit of sourceUnits) {
-    for (const contractNode of findAll(sourceUnit, 'ContractDefinition')) {
-      yield [sourceUnit, contractNode];
-    }
+  artifacts: StorageArtifact[]
+): Generator<[StorageArtifact, ContractDefinition]> {
+  for (const artifact of artifacts) {
+    const contractNode = findOne(
+      artifact.ast,
+      'ContractDefinition',
+      (node) => node.name === artifact.contractName
+    );
+    if (!contractNode) throw new Error(`Contract with name "${artifact.contractName}" not found`);
+    yield [artifact, contractNode];
   }
 }
 
 export function* iterateSlotAssignments(
-  sourceUnits: SourceUnit[]
-): Generator<[SourceUnit, ContractDefinition, FunctionDefinition, AssemblyAssignment]> {
-  for (const [sourceUnit, contractNode] of iterateContracts(sourceUnits)) {
+  artifacts: StorageArtifact[]
+): Generator<[StorageArtifact, ContractDefinition, FunctionDefinition, AssemblyAssignment]> {
+  for (const [artifact, contractNode] of iterateContracts(artifacts)) {
     for (const functionNode of findAll(contractNode, 'FunctionDefinition', _isPureInternal)) {
       const assignments = findAll(functionNode, 'AssemblyAssignment', (node) => {
         return (
@@ -32,7 +37,7 @@ export function* iterateSlotAssignments(
         throw new Error('Cannon have a function that assigns slots several times');
       }
 
-      yield [sourceUnit, contractNode, functionNode, assignments[0]];
+      yield [artifact, contractNode, functionNode, assignments[0]];
     }
   }
 }

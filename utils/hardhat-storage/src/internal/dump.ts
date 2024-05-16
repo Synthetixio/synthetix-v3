@@ -1,88 +1,94 @@
-import { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+import { SourceUnit, StructDefinition } from '@solidity-parser/parser/dist/src/ast-types';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
-import { findOne } from './finders';
+import { StorageArtifact } from '../types';
+import { findAll, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
+
+interface Params {
+  artifacts: StorageArtifact[];
+}
 
 /**
  * Generate a single solidity file including all the given contracts but only
  * rendering its storage defintions.
  */
 export async function dumpStorage(
-  sourceUnits: SourceUnit[],
+  artifacts: StorageArtifact[],
   version?: string,
   license = 'UNLICENSED'
 ) {
-  if (!Array.isArray(sourceUnits) || !sourceUnits.length) {
+  if (!Array.isArray(artifacts) || !artifacts.length) {
     throw new Error('No solidity files found');
   }
 
   const result = [
     `// SPDX-License-Identifier: ${license}`,
-    version ? `pragma solidity ${version};` : _renderPragmaDirective(sourceUnits),
+    version ? `pragma solidity ${version};` : _renderPragmaDirective(artifacts),
     '',
   ];
 
-  // for (const [sourceUnit, contractNode] of iterateContracts(sourceUnits)) {
-  //   const sourceName = sourceUnit.absolutePath;
-  //   const contractName = contractNode.name;
-  //   const fqName = `${sourceName}:${contractName}`;
+  for (const [artifact, contractNode] of iterateContracts(artifacts)) {
+    const { sourceName, contractName } = artifact;
+    const fqName = `${sourceName}:${contractName}`;
 
-  //   const resultNode = clone(contractNode);
+    // if (contractName !== 'RewardDistribution') continue;
 
-  //   const enumDefinitions = findAll(contractNode, 'EnumDefinition');
-  //   const structDefinitions = findAll(contractNode, 'StructDefinition');
+    const resultNode = clone(contractNode);
 
-  //   // This function mutates the given nodes
-  //   _replaceContractReferencesForAddresses(structDefinitions);
+    const enumDefinitions = findAll(contractNode, 'EnumDefinition');
+    const structDefinitions = findAll(contractNode, 'StructDefinition');
 
-  //   const dependencies = _getDependencySourceUnits(sourceUnits, structDefinitions);
-  //   const importDirectives = findChildren(sourceUnit, 'ImportDirective').filter((importDirective) =>
-  //     dependencies.some((dependency) => dependency.id === importDirective.sourceUnit)
-  //   );
+    // This function mutates the given nodes
+    _replaceContractReferencesForAddresses(structDefinitions);
 
-  //   // Filter all the contract nodes to only include Structs
-  //   resultNode.nodes = [...enumDefinitions, ...structDefinitions];
+    // const dependencies = _getDependencySourceUnits(sourceUnits, structDefinitions);
+    // const importDirectives = findChildren(sourceUnit, 'ImportDirective').filter((importDirective) =>
+    //   dependencies.some((dependency) => dependency.id === importDirective.sourceUnit)
+    // );
 
-  //   // TODO: handle enums, should not change storage size:
-  //   /**
-  //      function calculateEnumStorageSize(numValues: number): number {
-  //         // Calculate the minimal number of bits needed to represent all enum values
-  //         const bitsRequired = Math.ceil(Math.log2(numValues));
+    // Filter all the contract nodes to only include Structs
+    resultNode.subNodes = [...enumDefinitions, ...structDefinitions];
 
-  //         // Convert bits to bytes, each byte holds 8 bits
-  //         const bytesRequired = Math.ceil(bitsRequired / 8);
+    // TODO: handle enums, should not change storage size:
+    /**
+       function calculateEnumStorageSize(numValues: number): number {
+          // Calculate the minimal number of bits needed to represent all enum values
+          const bitsRequired = Math.ceil(Math.log2(numValues));
 
-  //         return bytesRequired;
-  //       }
-  //      */
-  //   // TODO: handle contracts references, they should be converted to address
-  //   /**
-  //       if (node.typeDescriptions.typeString?.startsWith('contract ')) {
-  //         return 'address';
-  //       }
-  //    */
-  //   // TODO: handle array and mappings with custom values
-  //   // TODO: check how fixed arrays interact
+          // Convert bits to bytes, each byte holds 8 bits
+          const bytesRequired = Math.ceil(bitsRequired / 8);
 
-  //   if (!resultNode.nodes.length) continue;
+          return bytesRequired;
+        }
+       */
+    // TODO: handle contracts references, they should be converted to address
+    /**
+        if (node.typeDescriptions.typeString?.startsWith('contract ')) {
+          return 'address';
+        }
+     */
+    // TODO: handle array and mappings with custom values
+    // TODO: check how fixed arrays interact
 
-  //   // Render the contract only including storage definitions
-  //   const contract = render(resultNode as any);
+    if (!resultNode.subNodes.length) continue;
 
-  //   result.push(`// @custom:artifact ${fqName}`);
-  //   result.push(...(importDirectives as any).map(render));
-  //   result.push(contract);
-  //   result.push('');
-  // }
+    // Render the contract only including storage definitions
+    const contract = render(resultNode as any);
+
+    result.push(`// @custom:artifact ${fqName}`);
+    // result.push(...(importDirectives as any).map(render));
+    result.push(contract);
+    result.push('');
+  }
 
   return result.join('\n');
 }
 
-function _renderPragmaDirective(sourceUnits: SourceUnit[]) {
+function _renderPragmaDirective(artifacts: StorageArtifact[]) {
   // TODO: calculate the best solc version based on all the files, instead of using
   // the one from the last file
-  const node = findOne(sourceUnits[sourceUnits.length - 1], 'PragmaDirective');
+  const node = findOne(artifacts[artifacts.length - 1].ast, 'PragmaDirective');
 
   if (!node) {
     throw new Error('Could not find pragma directive on dump file');
@@ -91,44 +97,45 @@ function _renderPragmaDirective(sourceUnits: SourceUnit[]) {
   return render(node);
 }
 
-// function _replaceContractReferencesForAddresses(structDefinitions: StructDefinition[]) {
-//   const results: SourceUnit[] = [];
+function _replaceContractReferencesForAddresses(structDefinitions: StructDefinition[]) {
+  const results: SourceUnit[] = [];
 
-//   for (const structDefinition of structDefinitions) {
-//     for (const ref of findAll(structDefinition, 'UserDefinedTypeName')) {
-//       if (!ref.typeDescriptions.typeString?.startsWith('contract ')) continue;
+  for (const structDefinition of structDefinitions) {
+    for (const ref of findAll(
+      structDefinition,
+      'VariableDeclaration',
+      (node) => node.typeName?.type === 'UserDefinedTypeName'
+    )) {
+      // console.log(ref);
+      // if (!ref.typeDescriptions.typeString?.startsWith('contract ')) continue;
+      // const parent = findOne(
+      //   structDefinition,
+      //   'VariableDeclaration',
+      //   (variable) => variable.typeName?.id === ref.id
+      // );
+      // if (!parent) {
+      //   throw new Error(`Parent VariableDeclaration not found for ${JSON.stringify(ref)}`);
+      // }
+      // parent.typeDescriptions = {
+      //   typeIdentifier: 't_address',
+      //   typeString: 'address',
+      // };
+      // parent.typeName = {
+      //   id: ref.id,
+      //   nodeType: 'ElementaryTypeName',
+      //   name: 'address',
+      //   src: ref.src,
+      //   stateMutability: 'nonpayable',
+      //   typeDescriptions: {
+      //     typeIdentifier: 't_address',
+      //     typeString: 'address',
+      //   },
+      // };
+    }
+  }
 
-//       const parent = findOne(
-//         structDefinition,
-//         'VariableDeclaration',
-//         (variable) => variable.typeName?.id === ref.id
-//       );
-
-//       if (!parent) {
-//         throw new Error(`Parent VariableDeclaration not found for ${JSON.stringify(ref)}`);
-//       }
-
-//       parent.typeDescriptions = {
-//         typeIdentifier: 't_address',
-//         typeString: 'address',
-//       };
-
-//       parent.typeName = {
-//         id: ref.id,
-//         nodeType: 'ElementaryTypeName',
-//         name: 'address',
-//         src: ref.src,
-//         stateMutability: 'nonpayable',
-//         typeDescriptions: {
-//           typeIdentifier: 't_address',
-//           typeString: 'address',
-//         },
-//       };
-//     }
-//   }
-
-//   return results;
-// }
+  return results;
+}
 
 // function _getDependencySourceUnits(
 //   sourceUnits: SourceUnit[],

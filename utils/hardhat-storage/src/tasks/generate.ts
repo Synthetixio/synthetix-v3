@@ -1,7 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
-import { getContractsFullyQualifiedNames } from '@synthetixio/core-utils/utils/hardhat/contracts';
+import {
+  filterContracts,
+  getContractsFullyQualifiedNames,
+} from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { HardhatPluginError } from 'hardhat/plugins';
@@ -49,11 +52,13 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
       logger.info(contract);
     }
 
-    const allContracts = await getContractsFullyQualifiedNames(hre, artifacts);
+    const allContracts = await hre.artifacts.getAllFullyQualifiedNames();
 
     const storageArtifacts: StorageArtifact[] = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
       fqNames: allContracts,
     });
+
+    const artifactsToValidate = filterContracts(allContracts, artifacts);
 
     const errors = [
       ...validateMutableStateVariables({
@@ -70,7 +75,7 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
       throw new HardhatPluginError('hardhat-storage', 'Storage validation failed');
     }
 
-    // const dump = await dumpStorage(sourceUnits);
+    const dump = await dumpStorage(storageArtifacts);
 
     // if (output) {
     //   const target = path.resolve(hre.config.paths.root, output);
@@ -80,9 +85,9 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
     //   logger.success(`Storage dump written to ${output} in ${Date.now() - now}ms`);
     // }
 
-    // if (log) {
-    //   writeInChunks(dump);
-    // }
+    if (log) {
+      writeInChunks(dump);
+    }
 
-    // return dump;
+    return dump;
   });
