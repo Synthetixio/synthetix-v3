@@ -72,6 +72,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 toDiscountedCollateralUsd;
         uint256 fromDiscountedCollateralUsd;
         uint256 collateralPrice;
+        uint256 fromAccountCollateralUsd;
     }
 
     struct Runtime_mergeAccounts {
@@ -276,7 +277,6 @@ contract PerpAccountModule is IPerpAccountModule {
         if (
             Position.isLiquidatable(
                 fromPosition,
-                market,
                 runtime.oraclePrice,
                 marketConfig,
                 Margin.getMarginUsd(fromId, market, runtime.oraclePrice, addresses),
@@ -310,7 +310,7 @@ contract PerpAccountModule is IPerpAccountModule {
                     addresses
                 );
 
-                uint256 fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
+                runtime.fromAccountCollateralUsd = runtime.fromAccountCollateral.mulDecimal(
                     runtime.collateralPrice
                 );
                 uint256 collateralToMoveUsd = runtime.collateralToMove.mulDecimal(
@@ -331,7 +331,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 );
 
                 // Track both fromCollateralUsd and fromCollateralDiscountedUsd.
-                runtime.fromCollateralUsd += fromAccountCollateralUsd - collateralToMoveUsd;
+                runtime.fromCollateralUsd += runtime.fromAccountCollateralUsd - collateralToMoveUsd;
 
                 // Calculate the discounted price for the new from amount.
                 runtime.newFromAmountCollateral =
@@ -389,9 +389,12 @@ contract PerpAccountModule is IPerpAccountModule {
             addresses
         );
 
-        int256 toRemainingMarginUsd = runtime.toDiscountedCollateralUsd.toInt() +
-            Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice);
-        if (toRemainingMarginUsd < runtime.toIm.toInt()) {
+        // `toRemainingMarginUsd` needs to be greater than or equal to IM.
+        if (
+            runtime.toDiscountedCollateralUsd.toInt() +
+                Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice) <
+            runtime.toIm.toInt()
+        ) {
             revert ErrorUtil.InsufficientMargin();
         }
 
@@ -405,14 +408,17 @@ contract PerpAccountModule is IPerpAccountModule {
                 addresses
             );
 
-            int256 fromRemainingMarginUsd = runtime.fromDiscountedCollateralUsd.toInt() +
-                Margin.getPnlAdjustmentUsd(
-                    fromId,
-                    market,
-                    runtime.oraclePrice,
-                    runtime.oraclePrice
-                );
-            if (fromRemainingMarginUsd < runtime.fromIm.toInt()) {
+            // `fromRemainingMarginUsd` needs to be greater than or equal to IM.
+            if (
+                runtime.fromDiscountedCollateralUsd.toInt() +
+                    Margin.getPnlAdjustmentUsd(
+                        fromId,
+                        market,
+                        runtime.oraclePrice,
+                        runtime.oraclePrice
+                    ) <
+                runtime.fromIm.toInt()
+            ) {
                 revert ErrorUtil.InsufficientMargin();
             }
         } else if (proportion == DecimalMath.UNIT) {
@@ -608,9 +614,13 @@ contract PerpAccountModule is IPerpAccountModule {
             marketConfig,
             addresses
         );
-        int256 mergedRemainingMarginUsd = runtime.mergedDiscountedCollateralUsd.toInt() +
-            Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice);
-        if (mergedRemainingMarginUsd < runtime.im.toInt()) {
+
+        // `mergedRemainingMarginUsd` should be greater than or equal to IM.
+        if (
+            runtime.mergedDiscountedCollateralUsd.toInt() +
+                Margin.getPnlAdjustmentUsd(toId, market, runtime.oraclePrice, runtime.oraclePrice) <
+            runtime.im.toInt()
+        ) {
             revert ErrorUtil.InsufficientMargin();
         }
 

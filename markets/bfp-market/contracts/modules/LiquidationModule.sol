@@ -256,14 +256,15 @@ contract LiquidationModule is ILiquidationModule {
         );
 
         // Cannot flag for liquidation unless they are liquidatable.
-        bool isLiquidatable = position.isLiquidatable(
-            market,
-            oraclePrice,
-            PerpMarketConfiguration.load(marketId),
-            marginValues,
-            addresses
-        );
-        if (!isLiquidatable) {
+
+        if (
+            !position.isLiquidatable(
+                oraclePrice,
+                PerpMarketConfiguration.load(marketId),
+                marginValues,
+                addresses
+            )
+        ) {
             revert ErrorUtil.CannotLiquidatePosition();
         }
 
@@ -486,7 +487,6 @@ contract LiquidationModule is ILiquidationModule {
 
         return
             market.positions[accountId].isLiquidatable(
-                market,
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId),
                 Margin.getMarginUsd(accountId, market, oraclePrice, addresses),
@@ -564,17 +564,13 @@ contract LiquidationModule is ILiquidationModule {
         );
         uint256 oraclePrice = market.getOraclePrice(addresses);
 
-        Position.HealthData memory healthData = Position.getHealthData(
-            market,
-            position.size,
-            position.entryPrice,
-            position.entryFundingAccrued,
-            position.entryUtilizationAccrued,
-            oraclePrice,
-            PerpMarketConfiguration.load(marketId),
-            Margin.getMarginUsd(accountId, market, oraclePrice, addresses),
-            addresses
-        );
-        return healthData.healthFactor;
+        return
+            Position.getHealthFactor(
+                position.size,
+                oraclePrice,
+                PerpMarketConfiguration.load(marketId),
+                Margin.getMarginUsd(accountId, market, oraclePrice, addresses),
+                addresses
+            );
     }
 }

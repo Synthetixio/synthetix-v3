@@ -96,7 +96,7 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
-        if (position.isLiquidatable(market, oraclePrice, marketConfig, marginValues, addresses)) {
+        if (position.isLiquidatable(oraclePrice, marketConfig, marginValues, addresses)) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
