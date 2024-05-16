@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { delegateCollateral } from '@synthetixio/main/test/common';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 const _SECONDS_IN_YEAR = 31557600;
@@ -230,15 +231,15 @@ describe('Position - interest rates', () => {
         systems().CollateralMock.address
       );
       // current assumption = 1000 collateral at $2000 price == $2M delegated collateral value
-      await systems()
-        .Core.connect(staker())
-        .delegateCollateral(
-          1,
-          1,
-          systems().CollateralMock.address,
-          wei(currentCollateralAmount).mul(wei(0.9)).toBN(),
-          ethers.utils.parseEther('1')
-        );
+      await delegateCollateral(
+        systems,
+        staker(),
+        1,
+        1,
+        systems().CollateralMock.address,
+        wei(currentCollateralAmount).mul(wei(0.9)).toBN(),
+        ethers.utils.parseEther('1')
+      );
     });
 
     let updateTxn: ethers.providers.TransactionResponse;

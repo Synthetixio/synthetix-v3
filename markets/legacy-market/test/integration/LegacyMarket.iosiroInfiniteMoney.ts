@@ -6,6 +6,7 @@ import { wei } from '@synthetixio/wei';
 import { snapshotCheckpoint } from '../utils';
 import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { delegateCollateral } from '@synthetixio/main/test/common';
 
 async function getImpersonatedSigner(
   provider: ethers.providers.JsonRpcProvider,
@@ -274,15 +275,17 @@ describe('LegacyMarket (iosiro)', function () {
       await v3System
         .connect(whaleAccount)
         .deposit(whaleAccountId, collateralType, whaleDelegationAmount);
-      await v3System
-        .connect(whaleAccount)
-        .delegateCollateral(
-          whaleAccountId,
-          otherPoolId,
-          collateralType,
-          whaleDelegationAmount,
-          wei(1).toBN()
-        );
+      await delegateCollateral(
+        () => ({
+          Core: v3System,
+        }),
+        whaleAccount,
+        whaleAccountId,
+        otherPoolId,
+        collateralType,
+        whaleDelegationAmount,
+        wei(1).toBN()
+      );
       await v3System
         .connect(whaleAccount)
         .mintUsd(whaleAccountId, otherPoolId, collateralType, wei(3333).toBN());
@@ -325,9 +328,17 @@ describe('LegacyMarket (iosiro)', function () {
         const amountToWithdraw = accountCollateralDetails.totalDeposited;
 
         await fastForward(605000, cannonProvider);
-        await v3System
-          .connect(attacker)
-          .delegateCollateral(accountID, poolId, collateralType, 0, wei(1).toBN());
+        await delegateCollateral(
+          () => ({
+            Core: v3System,
+          }),
+          attacker,
+          accountID,
+          poolId,
+          collateralType,
+          wei(0).toBN(),
+          wei(1).toBN()
+        );
         await v3System.connect(attacker).withdraw(accountID, collateralType, amountToWithdraw);
         // attacker restakes in v2
         await snxV2.connect(attacker).issueMaxSynths();

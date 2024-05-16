@@ -11,6 +11,7 @@ import { LegacyMarket } from '../../typechain-types/contracts/LegacyMarket';
 import Wei, { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '../utils';
+import { delegateCollateral } from '@synthetixio/main/test/common';
 
 async function getImpersonatedSigner(
   provider: ethers.providers.JsonRpcProvider,
@@ -347,15 +348,17 @@ describe('LegacyMarket', function () {
         await v3System.connect(owner).deposit(accountId, snxToken.address, delegateAmount);
 
         // invest in the pool
-        await v3System
-          .connect(owner)
-          .delegateCollateral(
-            accountId,
-            await v3System.getPreferredPool(),
-            snxToken.address,
-            delegateAmount,
-            ethers.utils.parseEther('1')
-          );
+        await delegateCollateral(
+          () => ({
+            Core: v3System,
+          }),
+          owner,
+          accountId,
+          await v3System.getPreferredPool(),
+          snxToken.address,
+          delegateAmount,
+          ethers.utils.parseEther('1')
+        );
 
         // sanity
         assertBn.equal(
