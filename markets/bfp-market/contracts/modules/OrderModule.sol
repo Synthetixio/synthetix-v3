@@ -70,12 +70,6 @@ contract OrderModule is IOrderModule {
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
-        Position.ValidatedTrade trade;
-        Position.TradeParams tradeParams;
-    }
-    struct Runtime_commitOrder {
-        uint256 oraclePrice;
-        Position.ValidatedTrade trade;
         Position.TradeParams tradeParams;
     }
 
@@ -230,7 +224,6 @@ contract OrderModule is IOrderModule {
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Runtime_commitOrder memory runtime;
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -243,17 +236,17 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        runtime.oraclePrice = market.getOraclePrice(addresses);
+        uint256 oraclePrice = market.getOraclePrice(addresses);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
         // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
-        runtime.tradeParams = Position.TradeParams(
+        Position.TradeParams memory tradeParams = Position.TradeParams(
             sizeDelta,
-            runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
-            runtime.oraclePrice, // CL oracle price.
-            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, runtime.oraclePrice),
+            oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+            oraclePrice, // CL oracle price.
+            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
             marketConfig.makerFee,
             marketConfig.takerFee,
             limitPrice,
@@ -265,10 +258,10 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        runtime.trade = Position.validateTrade(
+        Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
-            runtime.tradeParams,
+            tradeParams,
             marketConfig,
             addresses
         );
@@ -282,8 +275,8 @@ contract OrderModule is IOrderModule {
             marketId,
             block.timestamp,
             sizeDelta,
-            runtime.trade.orderFee,
-            runtime.trade.keeperFee
+            trade.orderFee,
+            trade.keeperFee
         );
     }
 
@@ -343,7 +336,7 @@ contract OrderModule is IOrderModule {
         );
         recomputeFunding(market, runtime.tradeParams.oraclePrice);
 
-        runtime.trade = Position.validateTrade(
+        Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
             runtime.tradeParams,
@@ -352,9 +345,9 @@ contract OrderModule is IOrderModule {
         );
 
         runtime.updatedMarketSize = (market.size.to256() +
-            MathUtil.abs(runtime.trade.newPosition.size) -
+            MathUtil.abs(trade.newPosition.size) -
             MathUtil.abs(position.size)).to128();
-        runtime.updatedMarketSkew = market.skew + runtime.trade.newPosition.size - position.size;
+        runtime.updatedMarketSkew = market.skew + trade.newPosition.size - position.size;
         market.skew = runtime.updatedMarketSkew;
         market.size = runtime.updatedMarketSize;
 
@@ -363,11 +356,11 @@ contract OrderModule is IOrderModule {
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
         recomputeUtilization(market, runtime.tradeParams.oraclePrice);
 
-        market.updateDebtCorrection(position, runtime.trade.newPosition);
+        market.updateDebtCorrection(position, trade.newPosition);
 
         // Account debt and market total trader debt must be updated with fees incurred to settle.
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        runtime.totalFees = (runtime.trade.orderFee + runtime.trade.keeperFee).to128();
+        runtime.totalFees = (trade.orderFee + trade.keeperFee).to128();
         accountMargin.debtUsd += runtime.totalFees;
         market.totalTraderDebtUsd += runtime.totalFees;
 
@@ -385,7 +378,7 @@ contract OrderModule is IOrderModule {
 
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
-                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt(),
+                trade.newMarginUsd.toInt() - trade.collateralUsd.toInt(),
                 addresses
             );
         }
@@ -400,28 +393,27 @@ contract OrderModule is IOrderModule {
         );
         runtime.pricePnl = position.getPricePnl(runtime.tradeParams.fillPrice);
 
-        if (runtime.trade.newPosition.size == 0) {
+        if (trade.newPosition.size == 0) {
             delete market.positions[accountId];
         } else {
-            position.update(runtime.trade.newPosition);
+            position.update(trade.newPosition);
         }
 
         // Keeper fees can be set to zero.
-        if (runtime.trade.keeperFee > 0) {
+        if (trade.keeperFee > 0) {
             addresses.synthetix.withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
-                runtime.trade.keeperFee
+                trade.keeperFee
             );
         }
-
         emit OrderSettled(
             accountId,
             marketId,
             block.timestamp,
             runtime.tradeParams.sizeDelta,
-            runtime.trade.orderFee,
-            runtime.trade.keeperFee,
+            trade.orderFee,
+            trade.keeperFee,
             runtime.accruedFunding,
             runtime.accruedUtilization,
             runtime.pricePnl,
