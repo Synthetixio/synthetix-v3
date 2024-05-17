@@ -65,10 +65,10 @@ library Margin {
     }
 
     struct Data {
-        /// {collateralAddress: collateralAmount} (amount of collateral deposited into this account).
-        mapping(address => uint256) collaterals;
         /// Debt in USD for this account.
         uint128 debtUsd;
+        /// {collateralAddress: collateralAmount} (amount of collateral deposited into this account).
+        mapping(address => uint256) collaterals;
     }
 
     function load() internal pure returns (Margin.GlobalData storage d) {

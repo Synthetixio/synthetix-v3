@@ -12,11 +12,11 @@ interface IOrderModule is IBasePerpMarket {
         /// Size to modify when settled
         int128 sizeDelta;
         /// block.timestamp of when the order was committed
-        uint256 commitmentTime;
+        uint64 commitmentTime;
         /// The max acceptable price tolerance for settlement
-        uint256 limitPrice;
+        uint128 limitPrice;
         /// A tip in USD to pay for settlement keepers
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         /// A list of whitelisted hook addresses to invoke after settlement
         address[] hooks;
         /// True if order expired and must be canceled, false otherwise
@@ -37,7 +37,7 @@ interface IOrderModule is IBasePerpMarket {
     event OrderCommitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         int128 sizeDelta,
         uint256 estimatedOrderFee,
         uint256 estimatedKeeperFee
@@ -91,8 +91,8 @@ interface IOrderModule is IBasePerpMarket {
         uint128 accountId,
         uint128 marketId,
         int128 sizeDelta,
-        uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
+        uint128 limitPrice,
+        uint128 keeperFeeBufferUsd,
         address[] memory hooks
     ) external;
 

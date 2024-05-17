@@ -6,9 +6,9 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
@@ -73,6 +73,7 @@ contract OrderModule is IOrderModule {
         Position.ValidatedTrade trade;
         Position.TradeParams tradeParams;
     }
+
     struct Runtime_commitOrder {
         uint256 oraclePrice;
         Position.ValidatedTrade trade;
@@ -218,8 +219,8 @@ contract OrderModule is IOrderModule {
         uint128 accountId,
         uint128 marketId,
         int128 sizeDelta,
-        uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
+        uint128 limitPrice,
+        uint128 keeperFeeBufferUsd,
         address[] memory hooks
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
@@ -273,14 +274,19 @@ contract OrderModule is IOrderModule {
             addresses
         );
 
-        market.orders[accountId].update(
-            Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
-        );
+        Order.Data memory order = Order.Data({
+            sizeDelta: sizeDelta,
+            commitmentTime: block.timestamp.to64(),
+            limitPrice: limitPrice,
+            keeperFeeBufferUsd: keeperFeeBufferUsd,
+            hooks: hooks
+        });
+        market.orders[accountId].update(order);
 
         emit OrderCommitted(
             accountId,
             marketId,
-            block.timestamp,
+            order.commitmentTime,
             sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee
@@ -559,7 +565,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         return

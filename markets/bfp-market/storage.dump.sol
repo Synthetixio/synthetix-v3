@@ -550,9 +550,9 @@ interface IMarketConfigurationModule {
 interface IOrderModule {
     struct OrderDigest {
         int128 sizeDelta;
-        uint256 commitmentTime;
-        uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint64 commitmentTime;
+        uint128 limitPrice;
+        uint128 keeperFeeBufferUsd;
         address[] hooks;
         bool isStale;
         bool isReady;
@@ -752,8 +752,8 @@ library Margin {
         address[] supportedCollaterals;
     }
     struct Data {
-        mapping(address => uint256) collaterals;
         uint128 debtUsd;
+        mapping(address => uint256) collaterals;
     }
     function load() internal pure returns (Margin.GlobalData storage d) {
         bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
@@ -773,9 +773,9 @@ library Margin {
 library Order {
     struct Data {
         int128 sizeDelta;
-        uint256 commitmentTime;
-        uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 limitPrice;
+        uint128 keeperFeeBufferUsd;
+        uint64 commitmentTime;
         address[] hooks;
     }
 }

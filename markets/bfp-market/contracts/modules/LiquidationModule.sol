@@ -6,9 +6,9 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
 import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
