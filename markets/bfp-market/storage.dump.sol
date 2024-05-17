@@ -660,7 +660,6 @@ contract MarginModule {
         uint256 lengthAfter;
         uint256 maxApproveAmount;
         address[] previousSupportedCollaterals;
-        uint256 i;
     }
 }
 
@@ -747,7 +746,6 @@ library Margin {
         address collateralAddress;
         uint256 available;
         uint256 collateralPrice;
-        uint256 i;
     }
     struct GlobalData {
         mapping(address => CollateralType) supported;
