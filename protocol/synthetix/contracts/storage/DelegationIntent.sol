@@ -122,11 +122,7 @@ library DelegationIntent {
             block.timestamp >= self.processingStartTime && block.timestamp < self.processingEndTime;
     }
 
-    function windowIsOpened(Data storage self) internal view returns (bool) {
-        return block.timestamp >= self.processingStartTime;
-    }
-
-    function windowIsClosed(Data storage self) internal view returns (bool) {
-        return block.timestamp < self.processingEndTime;
+    function intentExpired(Data storage self) internal view returns (bool) {
+        return block.timestamp >= self.processingEndTime;
     }
 }

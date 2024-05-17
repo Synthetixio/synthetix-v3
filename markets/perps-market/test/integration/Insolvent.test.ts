@@ -19,7 +19,7 @@ const interestRateParams = {
 };
 
 describe('Position - interest rates', () => {
-  const { systems, perpsMarkets, superMarketId, provider, trader1, keeper, staker } =
+  const { systems, perpsMarkets, superMarketId, provider, owner, trader1, keeper, staker } =
     bootstrapMarkets({
       interestRateParams: {
         lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
@@ -86,6 +86,7 @@ describe('Position - interest rates', () => {
     // very low amount to make market insolvent
     await delegateCollateral(
       systems,
+      owner(),
       staker(),
       1,
       1,

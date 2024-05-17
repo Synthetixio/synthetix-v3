@@ -279,6 +279,7 @@ describe('LegacyMarket (iosiro)', function () {
         () => ({
           Core: v3System,
         }),
+        owner,
         whaleAccount,
         whaleAccountId,
         otherPoolId,
@@ -332,6 +333,7 @@ describe('LegacyMarket (iosiro)', function () {
           () => ({
             Core: v3System,
           }),
+          owner,
           attacker,
           accountID,
           poolId,

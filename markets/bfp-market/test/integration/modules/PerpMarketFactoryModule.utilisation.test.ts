@@ -155,6 +155,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const stakedCollateralAddress = stakedCollateral().address;
       await delegateCollateral(
         systems,
+        owner(),
         staker(),
         stakerAccountId,
         poolId,
@@ -227,6 +228,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const stakedCollateralAddress = stakedCollateral().address;
       await delegateCollateral(
         systems,
+        owner(),
         staker(),
         stakerAccountId,
         poolId,
@@ -419,6 +421,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const stakedCollateralAddress = stakedCollateral().address;
       await delegateCollateral(
         systems,
+        owner(),
         staker(),
         stakerAccountId,
         poolId,

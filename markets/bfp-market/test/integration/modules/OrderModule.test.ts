@@ -45,6 +45,7 @@ describe('OrderModule', () => {
     systems,
     restore,
     provider,
+    owner,
     keeper,
     collateralsWithoutSusd,
     markets,
@@ -1405,6 +1406,7 @@ describe('OrderModule', () => {
       const newDelegated = wei(stakedAmount).mul(0.5).toBN();
       await delegateCollateral(
         systems,
+        owner(),
         staker(),
         stakerAccountId,
         id,

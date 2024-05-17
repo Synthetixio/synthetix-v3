@@ -23,6 +23,7 @@ export async function expectedToDeltaDelegatedCollateral(
 
 export async function declareDelegateIntent(
   systems: () => SystemArgs,
+  owner: ethers.Signer,
   signer: ethers.Signer,
   accountId: number,
   poolId: number,
@@ -32,7 +33,7 @@ export async function declareDelegateIntent(
   shouldCleanBefore: boolean = true
 ): Promise<BigNumber> {
   if (shouldCleanBefore) {
-    await systems().Core.connect(signer).deleteAllIntents(accountId);
+    await systems().Core.connect(owner).forceDeleteAllAccountIntents(accountId);
   }
   const intentId = await systems()
     .Core.connect(signer)
@@ -69,6 +70,7 @@ export async function declareDelegateIntent(
 
 export async function delegateCollateral(
   systems: () => SystemArgs,
+  owner: ethers.Signer,
   signer: ethers.Signer,
   accountId: number,
   poolId: number,
@@ -79,6 +81,7 @@ export async function delegateCollateral(
 ): Promise<void> {
   const intentId = await declareDelegateIntent(
     systems,
+    owner,
     signer,
     accountId,
     poolId,

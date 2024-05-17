@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
@@ -164,7 +165,7 @@ contract VaultModule is IVaultModule {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (!intent.isExecutable()) {
                 // Remove the intent.
-                if (intent.windowIsClosed()) {
+                if (intent.intentExpired()) {
                     AccountDelegationIntents.getValid(accountId).removeIntent(intent);
                     emit DelegationIntentRemoved(
                         intent.id,
@@ -233,9 +234,36 @@ contract VaultModule is IVaultModule {
         );
     }
 
-    function deleteAllIntents(uint128 accountId) external override {
+    function forceDeleteAllAccountIntents(uint128 accountId) external override {
+        OwnableStorage.onlyOwner();
+        AccountDelegationIntents.getValid(accountId).cleanAllIntents();
+    }
+
+    function forceDeleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
+        OwnableStorage.onlyOwner();
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            AccountDelegationIntents.getValid(accountId).removeIntent(intent);
+        }
+    }
+
+    function deleteAllExpiredIntents(uint128 accountId) external override {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
         AccountDelegationIntents.getValid(accountId).cleanAllIntents();
+    }
+
+    function deleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            if (intent.accountId != accountId) {
+                revert InvalidDelegationIntent();
+            }
+            if (!intent.intentExpired()) {
+                revert DelegationIntentNotExpired(intent.id);
+            }
+            AccountDelegationIntents.getValid(accountId).removeIntent(intent);
+        }
     }
 
     /**

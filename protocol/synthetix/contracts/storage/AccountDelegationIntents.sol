@@ -14,6 +14,7 @@ library AccountDelegationIntents {
     using SafeCastU256 for uint256;
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.AddressSet;
+    using DelegationIntent for DelegationIntent.Data;
 
     error InvalidAccountDelegationIntents();
 
@@ -162,6 +163,20 @@ library AccountDelegationIntents {
     /**
      * @dev Cleans all intents related to the account. This should be called upon liquidation.
      */
+    function cleanAllExpiredIntents(Data storage self) internal {
+        uint256[] memory intentIds = self.intentsId.values();
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            if (intent.intentExpired()) {
+                removeIntent(self, intent);
+            }
+            removeIntent(self, intent);
+        }
+    }
+
+    /**
+     * @dev Cleans all intents related to the account. This should be called upon liquidation.
+     */
     function cleanAllIntents(Data storage self) internal {
         uint256[] memory intentIds = self.intentsId.values();
         for (uint256 i = 0; i < intentIds.length; i++) {
@@ -169,6 +184,7 @@ library AccountDelegationIntents {
             removeIntent(self, intent);
         }
 
+        // Sanity clean all the cached values
         self.netAcountCachedDelegatedCollateral = 0;
         self.delegateAcountCachedCollateral = 0;
         self.undelegateAcountCachedCollateral = 0;
