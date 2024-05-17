@@ -64,7 +64,6 @@ contract MarginModule is IMarginModule {
         uint256 lengthAfter;
         uint256 maxApproveAmount;
         address[] previousSupportedCollaterals;
-        uint256 i;
     }
 
     // --- Helpers --- //
@@ -413,26 +412,26 @@ contract MarginModule is IMarginModule {
         }
 
         // Clear existing collateral configuration to be replaced with new.
-        for (runtime.i = 0; runtime.i < runtime.lengthBefore; ) {
-            address collateralAddress = globalMarginConfig.supportedCollaterals[runtime.i];
+        for (uint256 i = 0; i < runtime.lengthBefore; ) {
+            address collateralAddress = globalMarginConfig.supportedCollaterals[i];
             delete globalMarginConfig.supported[collateralAddress];
 
             ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, 0);
 
             unchecked {
-                ++runtime.i;
+                ++i;
             }
         }
         delete globalMarginConfig.supportedCollaterals;
 
         // Update with passed in configuration.
         address[] memory newSupportedCollaterals = new address[](runtime.lengthAfter);
-        for (runtime.i = 0; runtime.i < runtime.lengthAfter; ) {
-            address collateralAddress = collateralAddresses[runtime.i];
+        for (uint256 i = 0; i < runtime.lengthAfter; ) {
+            address collateralAddress = collateralAddresses[i];
             // Perform approve _once_ when this collateral is added as a supported collateral.
             ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, runtime.maxApproveAmount);
             // sUSD must have a 0x0 reward distributor.
-            address distributor = rewardDistributors[runtime.i];
+            address distributor = rewardDistributors[i];
 
             if (collateralAddress == SYNTHETIX_SUSD) {
                 if (distributor != address(0)) {
@@ -452,22 +451,22 @@ contract MarginModule is IMarginModule {
                 }
             }
             globalMarginConfig.supported[collateralAddress] = Margin.CollateralType(
-                oracleNodeIds[runtime.i],
-                maxAllowables[runtime.i],
-                skewScales[runtime.i],
-                rewardDistributors[runtime.i],
+                oracleNodeIds[i],
+                maxAllowables[i],
+                skewScales[i],
+                rewardDistributors[i],
                 true
             );
-            newSupportedCollaterals[runtime.i] = collateralAddress;
+            newSupportedCollaterals[i] = collateralAddress;
 
             unchecked {
-                ++runtime.i;
+                ++i;
             }
         }
         globalMarginConfig.supportedCollaterals = newSupportedCollaterals;
 
-        for (runtime.i = 0; runtime.i < runtime.lengthBefore; ) {
-            address collateral = runtime.previousSupportedCollaterals[runtime.i];
+        for (uint256 i = 0; i < runtime.lengthBefore; ) {
+            address collateral = runtime.previousSupportedCollaterals[i];
 
             // Removing a collateral with a non-zero deposit amount is _not_ allowed. To wind down a collateral,
             // the market owner can set `maxAllowable=0` to disable deposits but to ensure traders can always withdraw
@@ -480,7 +479,7 @@ contract MarginModule is IMarginModule {
             }
 
             unchecked {
-                ++runtime.i;
+                ++i;
             }
         }
 

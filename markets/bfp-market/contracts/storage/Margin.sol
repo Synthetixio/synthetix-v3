@@ -53,7 +53,6 @@ library Margin {
         address collateralAddress;
         uint256 available;
         uint256 collateralPrice;
-        uint256 i;
     }
 
     // --- Storage --- //
@@ -151,8 +150,8 @@ library Margin {
 
         Runtime_getCollateralUsd memory runtime;
 
-        for (runtime.i = 0; runtime.i < globalMarginConfig.supportedCollaterals.length; ) {
-            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[runtime.i];
+        for (uint256 i = 0; i < globalMarginConfig.supportedCollaterals.length; ) {
+            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
             runtime.available = accountMargin.collaterals[runtime.collateralAddress];
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
@@ -176,7 +175,7 @@ library Margin {
                 );
             }
             unchecked {
-                ++runtime.i;
+                ++i;
             }
         }
     }
