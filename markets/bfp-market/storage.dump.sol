@@ -644,7 +644,7 @@ interface ISettlementHookModule {
 contract LiquidationModule {
     struct Runtime_liquidateCollateral {
         uint256 availableSusd;
-        uint256 supportedCollateralssLength;
+        uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 availableAccountCollateral;
         uint128 poolId;
@@ -703,6 +703,7 @@ contract PerpAccountModule {
         uint256 toDiscountedCollateralUsd;
         uint256 fromDiscountedCollateralUsd;
         uint256 collateralPrice;
+        uint256 fromAccountCollateralUsd;
     }
     struct Runtime_mergeAccounts {
         uint256 oraclePrice;
@@ -715,6 +716,15 @@ contract PerpAccountModule {
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 fromAccountCollateral;
+    }
+}
+
+// @custom:artifact contracts/storage/AddressRegistry.sol:AddressRegistry
+library AddressRegistry {
+    struct Data {
+        address synthetix;
+        address sUsd;
+        address oracleManager;
     }
 }
 
