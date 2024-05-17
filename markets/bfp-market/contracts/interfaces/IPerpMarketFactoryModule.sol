@@ -43,21 +43,21 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         /// Market OI in native units.
         uint128 size;
         /// Current oracle price (not accounting for pd adjustments).
-        uint256 oraclePrice;
+        uint128 oraclePrice;
         /// Current rate of funding velocity.
-        int256 fundingVelocity;
+        int128 fundingVelocity;
         /// Current funding rate as a function of funding velocity.
-        int256 fundingRate;
+        int128 fundingRate;
         /// Current utilization rate
-        uint256 utilizationRate;
+        uint128 utilizationRate;
         /// Amount of size remaining last recorded in current window.
-        uint256 remainingLiquidatableSizeCapacity;
+        uint128 remainingLiquidatableSizeCapacity;
         /// block.timestamp of when the last liqudation had occurred.
         uint128 lastLiquidationTime;
         /// All traders unsettled debt in USD.
         uint128 totalTraderDebtUsd;
         /// Total value in USD of all market depositedCollateral if sold on spot.
-        uint256 totalCollateralValueUsd;
+        uint128 totalCollateralValueUsd;
         /// Most recently calculated debt entry for reportedDebt calc.
         int128 debtCorrection;
     }

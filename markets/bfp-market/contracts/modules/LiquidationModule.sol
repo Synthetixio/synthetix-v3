@@ -23,6 +23,7 @@ import {Flags} from "../utils/Flags.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint256;
+    using DecimalMath for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
@@ -50,10 +51,10 @@ contract LiquidationModule is ILiquidationModule {
     // --- Runtime structs --- //
 
     struct Runtime_liquidateCollateral {
-        uint256 availableSusd;
+        uint128 availableSusd;
         uint256 supportedCollateralsLength;
         address collateralAddress;
-        uint256 availableAccountCollateral;
+        uint128 availableAccountCollateral;
         uint128 poolId;
         uint256 poolCollateralTypesLength;
     }
@@ -65,17 +66,17 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId,
         PerpMarket.Data storage market,
-        uint256 oraclePrice,
+        uint128 oraclePrice,
         PerpMarketConfiguration.GlobalData storage globalConfig
     )
         private
         returns (
             Position.Data storage oldPosition,
             Position.Data memory newPosition,
-            uint256 liqKeeperFee
+            uint128 liqKeeperFee
         )
     {
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -244,7 +245,7 @@ contract LiquidationModule is ILiquidationModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
@@ -273,12 +274,13 @@ contract LiquidationModule is ILiquidationModule {
         }
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+        uint128 ethPrice = INodeModule(ORACLE_MANAGER)
             .process(globalConfig.ethOracleNodeId)
             .price
-            .toUint();
-        uint256 flagReward = Position.getLiquidationFlagReward(
-            MathUtil.abs(size).mulDecimal(oraclePrice),
+            .toUint()
+            .to128();
+        uint128 flagReward = Position.getLiquidationFlagReward(
+            MathUtil.abs(size).to128().mulDecimalUint128(oraclePrice),
             marginValues.collateralUsd,
             ethPrice,
             PerpMarketConfiguration.load(marketId),
@@ -311,7 +313,7 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.PositionNotFound();
         }
         ISynthetixSystem synthetix = ISynthetixSystem(SYNTHETIX_CORE);
-        uint256 oraclePrice = market.getOraclePrice(
+        uint128 oraclePrice = market.getOraclePrice(
             AddressRegistry.Data({
                 synthetix: synthetix,
                 sUsd: SYNTHETIX_SUSD,
@@ -339,7 +341,7 @@ contract LiquidationModule is ILiquidationModule {
 
         address msgSender = ERC2771Context._msgSender();
 
-        // Pay the keeper
+        // Pay the keeper.
         synthetix.withdrawMarketUsd(marketId, msgSender, liqKeeperFee);
 
         emit PositionLiquidated(
@@ -386,7 +388,7 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint256 keeperReward = Margin.getMarginLiquidationOnlyReward(
+        uint128 keeperReward = Margin.getMarginLiquidationOnlyReward(
             marginValues.collateralUsd,
             PerpMarketConfiguration.load(marketId),
             globalConfig,
@@ -414,7 +416,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        uint256 absSize = MathUtil.abs(market.positions[accountId].size);
+        uint128 absSize = MathUtil.abs(market.positions[accountId].size).to128();
 
         // Return empty when a position does not exist.
         if (absSize == 0) {
@@ -426,27 +428,28 @@ contract LiquidationModule is ILiquidationModule {
             oracleManager: ORACLE_MANAGER
         });
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
             oraclePrice,
             addresses
         );
-        uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+        uint128 ethPrice = INodeModule(ORACLE_MANAGER)
             .process(globalConfig.ethOracleNodeId)
             .price
-            .toUint();
+            .toUint()
+            .to128();
 
         flagKeeperReward = Position.getLiquidationFlagReward(
-            absSize.mulDecimal(oraclePrice),
+            absSize.mulDecimalUint128(oraclePrice),
             marginValues.collateralUsd,
             ethPrice,
             marketConfig,
             globalConfig
         );
         liqKeeperFee = Position.getLiquidationKeeperFee(
-            absSize.to128(),
+            absSize,
             ethPrice,
             marketConfig,
             globalConfig
@@ -480,7 +483,7 @@ contract LiquidationModule is ILiquidationModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
 
         return
             market.positions[accountId].isLiquidatable(
@@ -532,8 +535,8 @@ contract LiquidationModule is ILiquidationModule {
             oracleManager: ORACLE_MANAGER
         });
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
-        (uint256 collateralUsd, ) = Margin.getCollateralUsd(
+        uint128 oraclePrice = market.getOraclePrice(addresses);
+        (uint128 collateralUsd, ) = Margin.getCollateralUsd(
             Margin.load(accountId, marketId),
             PerpMarketConfiguration.load(),
             addresses
@@ -559,7 +562,7 @@ contract LiquidationModule is ILiquidationModule {
             SYNTHETIX_SUSD,
             ORACLE_MANAGER
         );
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
 
         return
             Position.getHealthFactor(

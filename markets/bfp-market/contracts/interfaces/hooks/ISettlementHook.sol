@@ -10,5 +10,5 @@ interface ISettlementHook is IERC165 {
     /// @param oraclePrice Pyth price used for settlement (note: not the entry fill price)
     /// @dev Implementers should verify the calling `msg.sender` is Synthetix BFP Market Proxy and
     ///      be highly recommended that it should also be idempotent.
-    function onSettle(uint128 accountId, uint128 marketId, uint256 oraclePrice) external;
+    function onSettle(uint128 accountId, uint128 marketId, uint128 oraclePrice) external;
 }

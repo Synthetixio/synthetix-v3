@@ -29,6 +29,10 @@ library PerpMarket {
     using Order for Order.Data;
     using Margin for Margin.GlobalData;
 
+    // --- Constants --- //
+
+    uint256 private constant AVG_SEC_PER_YEAR = 31556952; // 4 year avg to include leap year.
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -48,17 +52,17 @@ library PerpMarket {
         /// The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
         uint128 totalTraderDebtUsd;
         /// The value of the funding rate last time this was computed.
-        int256 currentFundingRateComputed;
+        int128 currentFundingRateComputed;
         /// The value (in USD) of total market funding accumulated.
-        int256 currentFundingAccruedComputed;
+        int128 currentFundingAccruedComputed;
         /// block.timestamp of when funding was last computed.
-        uint256 lastFundingTime;
+        uint64 lastFundingTime;
         /// The value of the utilization rate last time this was computed.
-        uint256 currentUtilizationRateComputed;
+        uint128 currentUtilizationRateComputed;
         /// The value (in native units) of total market utilization accumulated.
-        uint256 currentUtilizationAccruedComputed;
+        uint128 currentUtilizationAccruedComputed;
         /// block.timestamp of when utilization was last computed.
-        uint256 lastUtilizationTime;
+        uint64 lastUtilizationTime;
         /// Accumulated debt correction on every position modification for reportedDebt.
         int128 debtCorrection;
         /// {accountId: Order}.
@@ -68,7 +72,7 @@ library PerpMarket {
         /// {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
         /// {collateralAddress: collateralAmount} (# collateral deposited to market).
-        mapping(address => uint256) depositedCollateral;
+        mapping(address => uint128) depositedCollateral;
         /// An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
         uint128[2][] pastLiquidations;
     }
@@ -166,7 +170,7 @@ library PerpMarket {
     function getMinimumCredit(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
-        uint256 price,
+        uint128 price,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         return
@@ -191,7 +195,7 @@ library PerpMarket {
     /// @dev Returns the collateral utilization bounded by 0 and 1.
     function getUtilization(
         PerpMarket.Data storage self,
-        uint256 price,
+        uint128 price,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
@@ -223,7 +227,7 @@ library PerpMarket {
     function getCurrentUtilizationRate(
         uint128 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         uint128 highUtilizationSlopePercent = globalConfig.highUtilizationSlopePercent;
@@ -247,17 +251,19 @@ library PerpMarket {
     /// @dev Returns the next market collateral utilization value.
     function getUnrecordedUtilization(
         PerpMarket.Data storage self
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         return
-            self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
+            self.currentUtilizationRateComputed.mulDecimalUint128(
+                getProportionalUtilizationElapsed(self)
+            );
     }
 
     /// @dev Recompute and store utilization rate given current market conditions.
     function recomputeUtilization(
         PerpMarket.Data storage self,
-        uint256 price,
+        uint128 price,
         AddressRegistry.Data memory addresses
-    ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
+    ) internal returns (uint128 utilizationRate, uint128 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
             getUtilization(self, price, addresses),
@@ -267,19 +273,19 @@ library PerpMarket {
 
         self.currentUtilizationRateComputed = utilizationRate;
         self.currentUtilizationAccruedComputed += unrecordedUtilization;
-        self.lastUtilizationTime = block.timestamp;
+        self.lastUtilizationTime = block.timestamp.to64();
     }
 
     /// @dev Recompute and store funding related values given the current market conditions.
     function recomputeFunding(
         PerpMarket.Data storage self,
-        uint256 price
-    ) internal returns (int256 fundingRate, int256 unrecordingFunding) {
+        uint128 price
+    ) internal returns (int128 fundingRate, int128 unrecordingFunding) {
         (fundingRate, unrecordingFunding) = getUnrecordedFundingWithRate(self, price);
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed += unrecordingFunding;
-        self.lastFundingTime = block.timestamp;
+        self.lastFundingTime = block.timestamp.to64();
     }
 
     // --- Member (views) --- //
@@ -288,18 +294,22 @@ library PerpMarket {
     function getOraclePrice(
         PerpMarket.Data storage self,
         AddressRegistry.Data memory addresses
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         return
-            INodeModule(addresses.oracleManager).process(marketConfig.oracleNodeId).price.toUint();
+            INodeModule(addresses.oracleManager)
+                .process(marketConfig.oracleNodeId)
+                .price
+                .toUint()
+                .to128();
     }
 
     /// @dev Returns the rate of funding rate change.
     function getCurrentFundingVelocity(
         PerpMarket.Data storage self
-    ) internal view returns (int256) {
+    ) internal view returns (int128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-        int128 skewScale = marketConfig.skewScale.toInt();
+        int256 skewScale = marketConfig.skewScale.toInt();
 
         // proportional skew
         int256 pSkew = self.skew.divDecimal(skewScale);
@@ -312,27 +322,25 @@ library PerpMarket {
             (DecimalMath.UNIT).toInt()
         );
 
-        return pSkewBounded.mulDecimal(marketConfig.maxFundingVelocity.toInt());
+        return pSkewBounded.to128().mulDecimalInt128(marketConfig.maxFundingVelocity.toInt());
     }
 
     /// @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
     function getProportionalFundingElapsed(
         PerpMarket.Data storage self
-    ) internal view returns (int256) {
-        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
+    ) internal view returns (uint128) {
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).to128();
     }
 
     /// @dev Returns the proportional time elapsed since last utilization.
     function getProportionalUtilizationElapsed(
         PerpMarket.Data storage self
-    ) internal view returns (uint256) {
-        // 4 years which includes leap
-        uint256 AVERAGE_SECONDS_PER_YEAR = 31556952;
-        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
+    ) internal view returns (uint128) {
+        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SEC_PER_YEAR).to128();
     }
 
     /// @dev Returns the current funding rate given current market conditions.
-    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
+    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int128) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
         //  - velocity         = proportionalSkew * maxFundingVelocity
@@ -349,25 +357,29 @@ library PerpMarket {
         // currentFundingRate = 0 + 0.0025 * (29,000 / 86,400)
         //                    = 0 + 0.0025 * 0.33564815
         //                    = 0.00083912
-        return
-            self.currentFundingRateComputed +
-            (getCurrentFundingVelocity(self).mulDecimal(getProportionalFundingElapsed(self)));
+        int128 velocityAdjustedRate = getCurrentFundingVelocity(self).mulDecimalInt128(
+            getProportionalFundingElapsed(self).toInt()
+        );
+        return self.currentFundingRateComputed + velocityAdjustedRate;
     }
 
     /// @dev Returns the next market funding accrued value.
     function getUnrecordedFundingWithRate(
         PerpMarket.Data storage self,
-        uint256 price
-    ) internal view returns (int256 fundingRate, int256 unrecordedFunding) {
+        uint128 price
+    ) internal view returns (int128 fundingRate, int128 unrecordedFunding) {
         fundingRate = getCurrentFundingRate(self);
+
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
+
         // Calculate the additive accrued funding delta for the next funding accrued value.
         unrecordedFunding = avgFundingRate
-            .mulDecimal(getProportionalFundingElapsed(self))
-            .mulDecimal(price.toInt());
+            .mulDecimal(getProportionalFundingElapsed(self).toInt())
+            .mulDecimal(price.toInt())
+            .to128();
     }
 
     /// @dev Returns the maximum amount of size that can be liquidated (excluding current cap usage).
@@ -479,14 +491,14 @@ library PerpMarket {
     function getTotalCollateralValueUsd(
         PerpMarket.Data storage self,
         AddressRegistry.Data memory addresses
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         uint256 length = globalMarginConfig.supportedCollaterals.length;
         address collateralAddress;
-        uint256 totalValueUsd;
-        uint256 collateralAvailable;
-        uint256 collateralPrice;
+        uint128 totalValueUsd;
+        uint128 collateralAvailable;
+        uint128 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
@@ -497,7 +509,7 @@ library PerpMarket {
                     collateralAddress,
                     addresses
                 );
-                totalValueUsd += collateralAvailable.mulDecimal(collateralPrice);
+                totalValueUsd += collateralAvailable.mulDecimalUint128(collateralPrice);
             }
 
             unchecked {

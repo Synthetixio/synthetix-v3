@@ -13,14 +13,16 @@ contract __TestHelperModule {
 
     address immutable SYNTHETIX_SUSD;
 
-    constructor(address _synthetix_susd) {
-        SYNTHETIX_SUSD = _synthetix_susd;
+    constructor(address _synthetixSusd) {
+        SYNTHETIX_SUSD = _synthetixSusd;
     }
+
+    // --- Mutations --- //
 
     function __test_creditAccountMarginProfitUsd(
         uint128 accountId,
         uint128 marketId,
-        uint256 creditAmountUsd
+        uint128 creditAmountUsd
     ) external {
         OwnableStorage.onlyOwner();
 

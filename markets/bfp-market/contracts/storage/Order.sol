@@ -9,10 +9,13 @@ import {MathUtil} from "../utils/MathUtil.sol";
 library Order {
     using DecimalMath for uint256;
     using DecimalMath for int256;
+    using DecimalMath for uint128;
     using DecimalMath for int128;
     using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
+
+    // --- Storage --- //
 
     /// @dev Order.Data structs are stored in the PerpMarket.Data struct.
     struct Data {
@@ -33,8 +36,8 @@ library Order {
         int128 skew,
         uint128 skewScale,
         int128 size,
-        uint256 price
-    ) internal pure returns (uint256) {
+        uint128 price
+    ) internal pure returns (uint128) {
         int256 ss = skewScale.toInt();
         int256 p = price.toInt();
 
@@ -47,18 +50,18 @@ library Order {
         int256 pAfter = p + p.mulDecimal(pdAfter);
 
         // `fillPrice` is the average of those prices.
-        return (pBefore + pAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+        return (pBefore + pAfter).toUint().divDecimal(DecimalMath.UNIT * 2).to128();
     }
 
     /// @dev See IOrderModule.orderFee for more details.
     function getOrderFee(
         int128 sizeDelta,
-        uint256 fillPrice,
+        uint128 fillPrice,
         int128 skew,
         uint128 makerFee,
         uint128 takerFee
-    ) internal pure returns (uint256) {
-        int256 notional = sizeDelta.mulDecimal(fillPrice.toInt());
+    ) internal pure returns (uint128) {
+        int128 notional = sizeDelta.mulDecimalInt128(fillPrice.toInt());
 
         // Does this trade keep the skew on one side?
         if (MathUtil.sameSide(skew + sizeDelta, skew)) {
@@ -67,7 +70,7 @@ library Order {
             // If the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
             uint128 staticRate = MathUtil.sameSide(notional, skew) ? takerFee : makerFee;
-            return MathUtil.abs(notional.mulDecimal(staticRate.toInt()));
+            return MathUtil.abs(notional.mulDecimal(staticRate.toInt())).to128();
         }
 
         // This trade flips the skew.
@@ -79,10 +82,10 @@ library Order {
         // Proportion of size that's on the other direction.
         uint256 takerSize = MathUtil.abs((skew + sizeDelta).divDecimal(sizeDelta));
         uint256 makerSize = DecimalMath.UNIT - takerSize;
-
-        return
-            MathUtil.abs(notional).mulDecimal(takerSize).mulDecimal(takerFee) +
+        uint256 orderFee = MathUtil.abs(notional).mulDecimal(takerSize).mulDecimal(takerFee) +
             MathUtil.abs(notional).mulDecimal(makerSize).mulDecimal(makerFee);
+
+        return orderFee.to128();
     }
 
     /**
@@ -101,9 +104,9 @@ library Order {
      * See IOrderModule.getOrderFees for more details.
      */
     function getSettlementKeeperFee(
-        uint256 keeperFeeBufferUsd,
-        uint256 ethPrice
-    ) internal view returns (uint256) {
+        uint128 keeperFeeBufferUsd,
+        uint128 ethPrice
+    ) internal view returns (uint128) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
@@ -116,11 +119,11 @@ library Order {
             MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
             globalConfig.maxKeeperFeeUsd
         );
-        return boundedKeeperFeeUsd;
+        return boundedKeeperFeeUsd.to128();
     }
 
     /// @dev Returns the keeper fee in USD for order cancellations.
-    function getCancellationKeeperFee(uint256 ethPrice) internal view returns (uint256) {
+    function getCancellationKeeperFee(uint128 ethPrice) internal view returns (uint128) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
@@ -133,7 +136,7 @@ library Order {
             MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
             globalConfig.maxKeeperFeeUsd
         );
-        return boundedKeeperFeeUsd;
+        return boundedKeeperFeeUsd.to128();
     }
 
     /// @dev Returns a copy of the hooks present in order. Array of empty length is if none.

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastU256, SafeCastI256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
@@ -15,9 +15,9 @@ library PythUtil {
     function parsePythPrice(
         PerpMarketConfiguration.GlobalData storage globalConfig,
         PerpMarketConfiguration.Data storage marketConfig,
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         bytes calldata priceUpdateData
-    ) internal returns (uint256 price) {
+    ) internal returns (uint128) {
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = marketConfig.pythPriceFeedId;
 
@@ -34,19 +34,20 @@ library PythUtil {
             .parsePriceFeedUpdatesUnique{value: msg.value}(
             updateData,
             priceIds,
-            commitmentTime.to64() + globalConfig.pythPublishTimeMin,
-            commitmentTime.to64() + globalConfig.pythPublishTimeMax
+            commitmentTime + globalConfig.pythPublishTimeMin,
+            commitmentTime + globalConfig.pythPublishTimeMax
         );
 
         PythStructs.PriceFeed memory pythData = priceFeeds[0];
-        price = getScaledPrice(pythData.price.price, pythData.price.expo);
+        return getScaledPrice(pythData.price.price, pythData.price.expo);
     }
 
     /// @dev gets scaled price to 18 decimals. Borrowed from PythNode.sol.
-    function getScaledPrice(int64 price, int32 expo) private pure returns (uint256) {
+    function getScaledPrice(int64 price, int32 expo) private pure returns (uint128) {
         int256 factor = 18 + expo;
         return
             (factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint()))
-                .toUint();
+                .toUint()
+                .to128();
     }
 }

@@ -140,8 +140,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             return MathUtil.max(marketReportedDebt, 0).toUint();
         }
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
+        (, int128 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
         int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
 

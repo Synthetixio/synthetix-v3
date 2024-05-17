@@ -59,11 +59,11 @@ contract OrderModule is IOrderModule {
     // --- Runtime structs --- //
 
     struct Runtime_settleOrder {
-        uint256 pythPrice;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
-        int256 pricePnl;
-        uint256 fillPrice;
+        uint128 pythPrice;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
+        int128 pricePnl;
+        uint128 fillPrice;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
@@ -72,7 +72,7 @@ contract OrderModule is IOrderModule {
     }
 
     struct Runtime_commitOrder {
-        uint256 oraclePrice;
+        uint128 oraclePrice;
         Position.ValidatedTrade trade;
         Position.TradeParams tradeParams;
     }
@@ -82,8 +82,8 @@ contract OrderModule is IOrderModule {
     /// @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
     function isPriceToleranceExceeded(
         int128 sizeDelta,
-        uint256 fillPrice,
-        uint256 limitPrice
+        uint128 fillPrice,
+        uint128 limitPrice
     ) private pure returns (bool) {
         return
             (sizeDelta > 0 && fillPrice > limitPrice) || (sizeDelta < 0 && fillPrice < limitPrice);
@@ -96,10 +96,10 @@ contract OrderModule is IOrderModule {
      * A ready order is one where time that has passed must be at least the minimum order age (>=).
      */
     function isOrderStaleOrReady(
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private view returns (bool isStale, bool isReady) {
-        uint256 timestamp = block.timestamp;
+        uint64 timestamp = block.timestamp.to64();
         isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
         isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
@@ -107,8 +107,8 @@ contract OrderModule is IOrderModule {
     /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        uint256 commitmentTime,
-        uint256 pythPrice,
+        uint64 commitmentTime,
+        uint128 pythPrice,
         Position.TradeParams memory params
     ) private view {
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
@@ -159,7 +159,7 @@ contract OrderModule is IOrderModule {
         uint128 accountId,
         uint128 marketId,
         address[] memory hooks,
-        uint256 oraclePrice
+        uint128 oraclePrice
     ) private {
         uint256 length = hooks.length;
         if (length == 0) {
@@ -186,7 +186,7 @@ contract OrderModule is IOrderModule {
     }
 
     /// @dev Generic helper for utilization recomputation during order management.
-    function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
+    function recomputeUtilization(PerpMarket.Data storage market, uint128 price) private {
         (uint256 utilizationRate, ) = market.recomputeUtilization(
             price,
             AddressRegistry.Data({
@@ -199,8 +199,8 @@ contract OrderModule is IOrderModule {
     }
 
     /// @dev Generic helper for funding recomputation during order management.
-    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
+    function recomputeFunding(PerpMarket.Data storage market, uint128 price) private {
+        (int128 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
             market.id,
             market.skew,
@@ -242,7 +242,6 @@ contract OrderModule is IOrderModule {
         validateOrderHooks(hooks);
 
         runtime.oraclePrice = market.getOraclePrice(addresses);
-
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
@@ -453,7 +452,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
 
         if (!isStale) {
@@ -482,7 +481,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         if (!isReady) {
@@ -496,13 +495,13 @@ contract OrderModule is IOrderModule {
             );
 
             // Order is within settlement window. Check if price tolerance has exceeded.
-            uint256 pythPrice = PythUtil.parsePythPrice(
+            uint128 pythPrice = PythUtil.parsePythPrice(
                 globalConfig,
                 marketConfig,
                 commitmentTime,
                 priceUpdateData
             );
-            uint256 fillPrice = Order.getFillPrice(
+            uint128 fillPrice = Order.getFillPrice(
                 market.skew,
                 marketConfig.skewScale,
                 order.sizeDelta,
@@ -519,19 +518,19 @@ contract OrderModule is IOrderModule {
         }
 
         // If `isAccountOwner` then 0 else charge cancellation fee.
-
-        uint256 keeperFee;
+        uint128 keeperFee;
         if (ERC2771Context._msgSender() != account.rbac.owner) {
-            uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+            uint128 ethPrice = INodeModule(ORACLE_MANAGER)
                 .process(globalConfig.ethOracleNodeId)
                 .price
-                .toUint();
+                .toUint()
+                .to128();
             keeperFee = Order.getCancellationKeeperFee(ethPrice);
         }
 
         if (keeperFee > 0) {
-            Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
-            market.totalTraderDebtUsd += keeperFee.to128();
+            Margin.load(accountId, marketId).debtUsd += keeperFee;
+            market.totalTraderDebtUsd += keeperFee;
             ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
@@ -581,16 +580,17 @@ contract OrderModule is IOrderModule {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
-    ) external view returns (uint256 orderFee, uint256 keeperFee) {
+        uint128 keeperFeeBufferUsd
+    ) external view returns (uint128 orderFee, uint128 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+        uint128 ethPrice = INodeModule(ORACLE_MANAGER)
             .process(globalConfig.ethOracleNodeId)
             .price
-            .toUint();
+            .toUint()
+            .to128();
 
         orderFee = Order.getOrderFee(
             sizeDelta,

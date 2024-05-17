@@ -69,7 +69,7 @@ contract MarginModule is IMarginModule {
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data storage position,
-        uint256 oraclePrice
+        uint128 oraclePrice
     ) private view {
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -95,7 +95,7 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (uint128 im, , ) = Position.getLiquidationMarginUsd(
             position.size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -213,8 +213,8 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.DebtFound(accountId, marketId);
         }
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -222,15 +222,15 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         uint256 length = globalMarginConfig.supportedCollaterals.length;
         address collateralAddress;
-        uint256 available;
-        uint256 total;
+        uint128 available;
+        uint128 total;
 
         for (uint256 i = 0; i < length; ++i) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
@@ -299,10 +299,11 @@ contract MarginModule is IMarginModule {
         }
 
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        uint256 absAmountDelta = MathUtil.abs(amountDelta);
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        uint128 absAmountDelta = MathUtil.abs(amountDelta).to128();
+        uint128 oraclePrice = market.getOraclePrice(addresses);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
+
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -310,7 +311,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
@@ -358,9 +359,12 @@ contract MarginModule is IMarginModule {
         OwnableStorage.onlyOwner();
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
+
+        address currentCollateral;
         uint256 length = globalMarginConfig.supportedCollaterals.length;
+
         for (uint256 i = 0; i < length; ) {
-            address currentCollateral = globalMarginConfig.supportedCollaterals[i];
+            currentCollateral = globalMarginConfig.supportedCollaterals[i];
             if (currentCollateral == collateralAddress) {
                 globalMarginConfig.supported[currentCollateral].maxAllowable = maxAllowable;
                 return;
@@ -504,7 +508,7 @@ contract MarginModule is IMarginModule {
         }
         uint128 decreaseDebtAmount = MathUtil.min(amount, debt).to128();
 
-        uint128 availableSusd = accountMargin.collaterals[SYNTHETIX_SUSD].to128();
+        uint128 availableSusd = accountMargin.collaterals[SYNTHETIX_SUSD];
 
         // Infer the amount of sUSD to deduct from margin.
         uint128 sUsdToDeduct = 0;
@@ -586,8 +590,8 @@ contract MarginModule is IMarginModule {
     function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
-        uint256 oraclePrice
-    ) external view returns (uint256) {
+        uint128 oraclePrice
+    ) external view returns (uint128) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
@@ -607,8 +611,8 @@ contract MarginModule is IMarginModule {
     /// @inheritdoc IMarginModule
     function getDiscountedCollateralPrice(
         address collateralAddress,
-        uint256 amount
-    ) external view returns (uint256) {
+        uint128 amount
+    ) external view returns (uint128) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration
             .load();
@@ -632,7 +636,7 @@ contract MarginModule is IMarginModule {
     function getWithdrawableMargin(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (uint256) {
+    ) external view returns (uint128) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
@@ -640,7 +644,7 @@ contract MarginModule is IMarginModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        uint128 oraclePrice = market.getOraclePrice(addresses);
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
@@ -650,21 +654,16 @@ contract MarginModule is IMarginModule {
         Position.Data storage position = market.positions[accountId];
         int128 size = position.size;
 
-        // When there is no position then we can ignore all running losses/profits but still need to include debt
+        // When there's no position then we can ignore all running losses/profits but still need to include debt
         // as they may have realized a prior negative PnL.
         if (size == 0) {
-            return
-                MathUtil
-                    .max(
-                        marginValues.collateralUsd.toInt() -
-                            Margin.load(accountId, marketId).debtUsd.toInt(),
-                        0
-                    )
-                    .toUint();
+            int128 withdrawableMargin = marginValues.collateralUsd.toInt() -
+                Margin.load(accountId, marketId).debtUsd.toInt();
+            return MathUtil.max(withdrawableMargin, 0).toUint().to128();
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (uint128 im, , ) = Position.getLiquidationMarginUsd(
             size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -675,7 +674,8 @@ contract MarginModule is IMarginModule {
         // There is a position open. Discount the collateral, deduct running losses (or add profits), reduce
         // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
         // because both the liq and flag rewards can change based on chain usage.
-        return MathUtil.max(marginValues.discountedMarginUsd.toInt() - im.toInt(), 0).toUint();
+        return
+            MathUtil.max(marginValues.discountedMarginUsd.toInt() - im.toInt(), 0).toUint().to128();
     }
 
     /// @inheritdoc IMarginModule

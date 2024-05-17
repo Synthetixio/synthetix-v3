@@ -144,8 +144,8 @@ interface IMarginModule is IBasePerpMarket {
     function getNetAssetValue(
         uint128 accountId,
         uint128 marketId,
-        uint256 oraclePrice
-    ) external view returns (uint256);
+        uint128 oraclePrice
+    ) external view returns (uint128);
 
     /// @notice Returns the discount adjusted oracle price based on `amount` of collateral for `collateralAddress`. `amount` is
     ///         necessary here as it simulates if `amount` were sold, what would be the impact on the skew, and
@@ -155,8 +155,8 @@ interface IMarginModule is IBasePerpMarket {
     /// @return getDiscountedCollateralPrice Discounted collateral price in USD
     function getDiscountedCollateralPrice(
         address collateralAddress,
-        uint256 amount
-    ) external view returns (uint256);
+        uint128 amount
+    ) external view returns (uint128);
 
     /// @notice Returns the withdrawable margin given the discounted margin for `accountId` accounting for any open
     ///         position. Callers can invoke `getMarginDigest` to retrieve the available margin (i.e. discounted margin
@@ -167,7 +167,7 @@ interface IMarginModule is IBasePerpMarket {
     function getWithdrawableMargin(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (uint256);
+    ) external view returns (uint128);
 
     /// @notice Returns the keeper reward for liquidating a position's margin
     /// @param accountId Account of the margin to be liquidated

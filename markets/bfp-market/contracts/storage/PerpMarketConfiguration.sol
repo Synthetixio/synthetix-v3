@@ -85,15 +85,15 @@ library PerpMarketConfiguration {
         /// A multiplier on OI * price * minCreditPercent to increase/decrease min credit for market.
         uint128 minCreditPercent;
         /// Minimum margin in USD added to MM and IM.
-        uint256 minMarginUsd;
+        uint128 minMarginUsd;
         /// Used in addition with IMR to determine IM and MM.
-        uint256 minMarginRatio;
+        uint128 minMarginRatio;
         /// Scalar is used to dynamically infer the initial margin.
-        uint256 incrementalMarginScalar;
+        uint128 incrementalMarginScalar;
         /// MMS used to dynamically infer the MMR' based on IMR'.
-        uint256 maintenanceMarginScalar;
+        uint128 maintenanceMarginScalar;
         /// A max cap on the IMR.
-        uint256 maxInitialMarginRatio;
+        uint128 maxInitialMarginRatio;
         /// Used to infer a % of position notional as liquidation reward.
         uint256 liquidationRewardPercent;
         /// An optional multiplier (1 to be optional) on top of maker+taker / skewScale.

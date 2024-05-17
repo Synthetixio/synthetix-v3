@@ -150,8 +150,8 @@ interface IOrderModule is IBasePerpMarket {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
-    ) external view returns (uint256 orderFee, uint256 keeperFee);
+        uint128 keeperFeeBufferUsd
+    ) external view returns (uint128 orderFee, uint128 keeperFee);
 
     /// @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
     /// @param marketId Market to query against

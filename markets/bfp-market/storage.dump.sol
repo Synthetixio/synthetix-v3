@@ -505,14 +505,14 @@ interface IMarketConfigurationModule {
         uint64 pythPublishTimeMax;
         uint128 minOrderAge;
         uint128 maxOrderAge;
-        uint256 minKeeperFeeUsd;
-        uint256 maxKeeperFeeUsd;
+        uint128 minKeeperFeeUsd;
+        uint128 maxKeeperFeeUsd;
         uint128 keeperProfitMarginPercent;
         uint128 keeperProfitMarginUsd;
         uint128 keeperSettlementGasUnits;
         uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
-        uint256 keeperLiquidationFeeUsd;
+        uint128 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
         uint128 keeperLiquidateMarginGasUnits;
         address keeperLiquidationEndorsed;
@@ -534,12 +534,12 @@ interface IMarketConfigurationModule {
         uint128 skewScale;
         uint128 fundingVelocityClamp;
         uint128 minCreditPercent;
-        uint256 minMarginUsd;
-        uint256 minMarginRatio;
-        uint256 incrementalMarginScalar;
-        uint256 maintenanceMarginScalar;
-        uint256 maxInitialMarginRatio;
-        uint256 liquidationRewardPercent;
+        uint128 minMarginUsd;
+        uint128 minMarginRatio;
+        uint128 incrementalMarginScalar;
+        uint128 maintenanceMarginScalar;
+        uint128 maxInitialMarginRatio;
+        uint128 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
         uint128 liquidationMaxPd;
@@ -610,14 +610,14 @@ interface IPerpMarketFactoryModule {
         bytes32 name;
         int128 skew;
         uint128 size;
-        uint256 oraclePrice;
-        int256 fundingVelocity;
-        int256 fundingRate;
-        uint256 utilizationRate;
-        uint256 remainingLiquidatableSizeCapacity;
+        uint128 oraclePrice;
+        int128 fundingVelocity;
+        int128 fundingRate;
+        uint128 utilizationRate;
+        uint128 remainingLiquidatableSizeCapacity;
         uint128 lastLiquidationTime;
         uint128 totalTraderDebtUsd;
-        uint256 totalCollateralValueUsd;
+        uint128 totalCollateralValueUsd;
         int128 debtCorrection;
     }
 }
@@ -643,10 +643,10 @@ interface ISettlementHookModule {
 // @custom:artifact contracts/modules/LiquidationModule.sol:LiquidationModule
 contract LiquidationModule {
     struct Runtime_liquidateCollateral {
-        uint256 availableSusd;
+        uint128 availableSusd;
         uint256 supportedCollateralsLength;
         address collateralAddress;
-        uint256 availableAccountCollateral;
+        uint128 availableAccountCollateral;
         uint128 poolId;
         uint256 poolCollateralTypesLength;
     }
@@ -666,11 +666,11 @@ contract MarginModule {
 // @custom:artifact contracts/modules/OrderModule.sol:OrderModule
 contract OrderModule {
     struct Runtime_settleOrder {
-        uint256 pythPrice;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
-        int256 pricePnl;
-        uint256 fillPrice;
+        uint128 pythPrice;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
+        int128 pricePnl;
+        uint128 fillPrice;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
@@ -678,7 +678,7 @@ contract OrderModule {
         Position.TradeParams tradeParams;
     }
     struct Runtime_commitOrder {
-        uint256 oraclePrice;
+        uint128 oraclePrice;
         Position.ValidatedTrade trade;
         Position.TradeParams tradeParams;
     }
@@ -687,34 +687,31 @@ contract OrderModule {
 // @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
 contract PerpAccountModule {
     struct Runtime_splitAccount {
-        uint256 oraclePrice;
-        uint256 toIm;
-        uint256 fromIm;
-        uint128 debtToMove;
+        uint128 oraclePrice;
+        uint128 toIm;
+        uint128 fromIm;
         int128 sizeToMove;
         uint256 supportedCollateralsLength;
         address collateralAddress;
-        uint256 collateralToMove;
-        uint256 newFromAmountCollateral;
-        uint256 fromAccountCollateral;
-        uint256 toCollateralUsd;
-        uint256 fromCollateralUsd;
-        uint256 toDiscountedCollateralUsd;
-        uint256 fromDiscountedCollateralUsd;
-        uint256 collateralPrice;
-        uint256 fromAccountCollateralUsd;
+        uint128 collateralToMove;
+        uint128 newFromAmountCollateral;
+        uint128 fromAccountCollateral;
+        uint128 toCollateralUsd;
+        uint128 fromCollateralUsd;
+        uint128 toDiscountedCollateralUsd;
+        uint128 fromDiscountedCollateralUsd;
+        uint128 collateralPrice;
+        uint128 fromAccountCollateralUsd;
     }
     struct Runtime_mergeAccounts {
-        uint256 oraclePrice;
-        uint256 im;
-        uint256 fromCollateralUsd;
-        uint256 fromMarginUsd;
-        uint256 toMarginUsd;
-        uint256 mergedCollateralUsd;
-        uint256 mergedDiscountedCollateralUsd;
+        uint128 oraclePrice;
+        uint128 im;
+        uint128 fromCollateralUsd;
+        uint128 mergedCollateralUsd;
+        uint128 mergedDiscountedCollateralUsd;
+        uint128 fromAccountCollateral;
         uint256 supportedCollateralsLength;
         address collateralAddress;
-        uint256 fromAccountCollateral;
     }
 }
 
@@ -737,15 +734,15 @@ library Margin {
         bool exists;
     }
     struct MarginValues {
-        uint256 discountedMarginUsd;
-        uint256 marginUsd;
-        uint256 discountedCollateralUsd;
-        uint256 collateralUsd;
+        uint128 discountedMarginUsd;
+        uint128 marginUsd;
+        uint128 discountedCollateralUsd;
+        uint128 collateralUsd;
     }
     struct Runtime_getCollateralUsd {
         address collateralAddress;
-        uint256 available;
-        uint256 collateralPrice;
+        uint128 available;
+        uint128 collateralPrice;
     }
     struct GlobalData {
         mapping(address => CollateralType) supported;
@@ -753,7 +750,7 @@ library Margin {
     }
     struct Data {
         uint128 debtUsd;
-        mapping(address => uint256) collaterals;
+        mapping(address => uint128) collaterals;
     }
     function load() internal pure returns (Margin.GlobalData storage d) {
         bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
@@ -782,6 +779,7 @@ library Order {
 
 // @custom:artifact contracts/storage/PerpMarket.sol:PerpMarket
 library PerpMarket {
+    uint256 private constant AVG_SEC_PER_YEAR = 31556952;
     struct GlobalData {
         uint128[] activeMarketIds;
     }
@@ -791,17 +789,17 @@ library PerpMarket {
         int128 skew;
         uint128 size;
         uint128 totalTraderDebtUsd;
-        int256 currentFundingRateComputed;
-        int256 currentFundingAccruedComputed;
-        uint256 lastFundingTime;
-        uint256 currentUtilizationRateComputed;
-        uint256 currentUtilizationAccruedComputed;
-        uint256 lastUtilizationTime;
+        int128 currentFundingRateComputed;
+        int128 currentFundingAccruedComputed;
+        uint64 lastFundingTime;
+        uint128 currentUtilizationRateComputed;
+        uint128 currentUtilizationAccruedComputed;
+        uint64 lastUtilizationTime;
         int128 debtCorrection;
         mapping(uint128 => Order.Data) orders;
         mapping(uint128 => Position.Data) positions;
         mapping(uint128 => address) flaggedLiquidations;
-        mapping(address => uint256) depositedCollateral;
+        mapping(address => uint128) depositedCollateral;
         uint128[][] pastLiquidations;
     }
     function load() internal pure returns (GlobalData storage d) {
@@ -857,11 +855,11 @@ library PerpMarketConfiguration {
         uint128 skewScale;
         uint128 fundingVelocityClamp;
         uint128 minCreditPercent;
-        uint256 minMarginUsd;
-        uint256 minMarginRatio;
-        uint256 incrementalMarginScalar;
-        uint256 maintenanceMarginScalar;
-        uint256 maxInitialMarginRatio;
+        uint128 minMarginUsd;
+        uint128 minMarginRatio;
+        uint128 incrementalMarginScalar;
+        uint128 maintenanceMarginScalar;
+        uint128 maxInitialMarginRatio;
         uint256 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
@@ -885,13 +883,13 @@ library PerpMarketConfiguration {
 library Position {
     struct TradeParams {
         int128 sizeDelta;
-        uint256 oraclePrice;
-        uint256 pythPrice;
-        uint256 fillPrice;
+        uint128 oraclePrice;
+        uint128 pythPrice;
+        uint128 fillPrice;
         uint128 makerFee;
         uint128 takerFee;
-        uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 limitPrice;
+        uint128 keeperFeeBufferUsd;
     }
     struct ValidatedTrade {
         Position.Data newPosition;
@@ -922,14 +920,14 @@ library Position {
         uint256 mm;
         Position.Data newPosition;
         Margin.MarginValues marginValuesForLiqValidation;
-        uint256 ethPrice;
+        uint128 ethPrice;
     }
     struct Data {
         int128 size;
-        int256 entryFundingAccrued;
-        uint256 entryUtilizationAccrued;
-        uint256 entryPythPrice;
-        uint256 entryPrice;
+        int128 entryFundingAccrued;
+        uint128 entryUtilizationAccrued;
+        uint128 entryPythPrice;
+        uint128 entryPrice;
     }
 }
 
