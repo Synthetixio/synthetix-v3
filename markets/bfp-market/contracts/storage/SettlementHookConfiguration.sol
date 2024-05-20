@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 library SettlementHookConfiguration {
     // --- Constants --- //
 
-    bytes32 private constant SLOT_NAME =
+    bytes32 private constant GLOBAL_DATA_SLOT_NAME =
         keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
 
     // --- Storage --- //
@@ -23,7 +23,7 @@ library SettlementHookConfiguration {
     }
 
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {
-        bytes32 s = SLOT_NAME;
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }

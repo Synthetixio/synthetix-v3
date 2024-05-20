@@ -10,6 +10,11 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 library PerpMarketConfiguration {
     using SafeCastI256 for int256;
 
+    // --- Constants --- //
+
+    bytes32 constant GLOBAL_DATA_SLOT_NAME =
+        keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -101,7 +106,7 @@ library PerpMarketConfiguration {
     }
 
     function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }

@@ -4,8 +4,8 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
@@ -30,6 +30,9 @@ library PerpMarket {
     using Margin for Margin.GlobalData;
 
     // --- Constants --- //
+
+    bytes32 constant GLOBAL_DATA_SLOT_NAME =
+        keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
 
     /// @dev Average over 4 years, including leap year.
     uint256 constant AVG_SECONDS_PER_YEAR = 31556952;
@@ -83,7 +86,7 @@ library PerpMarket {
     }
 
     function load() internal pure returns (GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }

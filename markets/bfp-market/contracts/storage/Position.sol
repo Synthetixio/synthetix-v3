@@ -74,6 +74,7 @@ library Position {
 
     // --- Storage --- //
 
+    /// @dev Position.Data structs are stored in PerpMarket.Data.positions.
     struct Data {
         /// Size (in native units e.g. swstETH)
         int128 size;
@@ -436,7 +437,6 @@ library Position {
             ),
             flagExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
         );
-
         uint256 flagFeeWithRewardInUsd = flagFeeInUsd +
             MathUtil.max(notionalValueUsd, collateralUsd).mulDecimal(
                 marketConfig.liquidationRewardPercent
@@ -599,6 +599,7 @@ library Position {
         return healthData;
     }
 
+    /// @dev Returns the representation of the safety between margin and position (> 1 then safe).
     function getHealthFactor(
         int128 size,
         uint256 price,
@@ -630,7 +631,6 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-
         return
             Position.getHealthFactor(self.size, price, marketConfig, marginValues, addresses) <=
             DecimalMath.UNIT;

@@ -725,6 +725,7 @@ library AddressRegistry {
 
 // @custom:artifact contracts/storage/Margin.sol:Margin
 library Margin {
+    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
     struct CollateralType {
         bytes32 oracleNodeId;
         uint128 maxAllowable;
@@ -747,7 +748,7 @@ library Margin {
         mapping(address => uint256) collaterals;
     }
     function load() internal pure returns (Margin.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }
@@ -773,6 +774,7 @@ library Order {
 
 // @custom:artifact contracts/storage/PerpMarket.sol:PerpMarket
 library PerpMarket {
+    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
     uint256 internal constant AVG_SECONDS_PER_YEAR = 31556952;
     struct GlobalData {
         uint128[] activeMarketIds;
@@ -801,7 +803,7 @@ library PerpMarket {
         uint128[][] pastLiquidations;
     }
     function load() internal pure returns (GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }
@@ -816,6 +818,7 @@ library PerpMarket {
 
 // @custom:artifact contracts/storage/PerpMarketConfiguration.sol:PerpMarketConfiguration
 library PerpMarketConfiguration {
+    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
     struct GlobalData {
         address pyth;
         bytes32 ethOracleNodeId;
@@ -862,7 +865,7 @@ library PerpMarketConfiguration {
         uint128 liquidationMaxPd;
     }
     function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }
@@ -927,7 +930,7 @@ library Position {
 
 // @custom:artifact contracts/storage/SettlementHookConfiguration.sol:SettlementHookConfiguration
 library SettlementHookConfiguration {
-    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
+    bytes32 private constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
     struct GlobalData {
         uint32 maxHooksPerOrder;
         uint32 __unused1;
@@ -938,7 +941,7 @@ library SettlementHookConfiguration {
         address[] whitelistedHookAddresses;
     }
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {
-        bytes32 s = SLOT_NAME;
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }

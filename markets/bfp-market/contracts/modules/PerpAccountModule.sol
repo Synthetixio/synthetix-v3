@@ -100,14 +100,15 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 length = globalMarginConfig.supportedCollaterals.length;
         IPerpAccountModule.DepositedCollateral[]
             memory depositedCollaterals = new DepositedCollateral[](length);
-        address collateralAddress;
-        uint256 collateralPrice;
 
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
+
+        address collateralAddress;
+        uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
@@ -122,6 +123,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 ++i;
             }
         }
+
         (uint256 collateralUsd, ) = Margin.getCollateralUsd(accountMargin, globalConfig, addresses);
         return
             IPerpAccountModule.AccountDigest(

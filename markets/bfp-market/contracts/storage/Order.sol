@@ -14,6 +14,7 @@ library Order {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
+    /// @dev Order.Data structs are stored within PerpMarket.Data.orders.
     struct Data {
         /// Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;

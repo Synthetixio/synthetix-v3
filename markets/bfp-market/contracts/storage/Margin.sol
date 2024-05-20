@@ -21,6 +21,11 @@ library Margin {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
+    // --- Constants --- //
+
+    bytes32 constant GLOBAL_DATA_SLOT_NAME =
+        keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
+
     // --- Structs --- //
 
     struct CollateralType {
@@ -57,14 +62,14 @@ library Margin {
     }
 
     struct Data {
-        /// Debt in USD for this account.
+        /// Debt in USD for the account by accountId.
         uint128 debtUsd;
-        /// {collateralAddress: collateralAmount} (amount of collateral deposited into this account).
+        /// {collateralAddress: collateralAmount} (amount deposited collateral).
         mapping(address => uint256) collaterals;
     }
 
     function load() internal pure returns (Margin.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }
