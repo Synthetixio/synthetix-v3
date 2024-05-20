@@ -10,12 +10,12 @@ library SettlementHookConfiguration {
     // --- Storage --- //
 
     struct GlobalData {
+        /// Maximum hooks that can be specified during an order commitment.
+        uint32 maxHooksPerOrder;
         /// {hookAddress => isEnabled}.
         mapping(address => bool) whitelisted;
         /// Array of whitelisted hook contract addresses (use whitelisted mapping).
         address[] whitelistedHookAddresses;
-        /// Maximum hooks that can be specified during an order commitment.
-        uint32 maxHooksPerOrder;
     }
 
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {

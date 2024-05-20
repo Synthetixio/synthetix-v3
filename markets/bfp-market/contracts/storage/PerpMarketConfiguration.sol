@@ -45,8 +45,6 @@ library PerpMarketConfiguration {
         uint128 keeperFlagGasUnits;
         /// Number of gas units required to liquidate margin only by a keeper.
         uint128 keeperLiquidateMarginGasUnits;
-        /// A fixed fee sent to the liquidator upon position liquidation.
-        uint256 keeperLiquidationFeeUsd;
         /// Address of endorsed liquidation keeper to exceed liq caps.
         address keeperLiquidationEndorsed;
         /// A scalar applied on the collateral amount as part of discount adjustment.
@@ -55,8 +53,6 @@ library PerpMarketConfiguration {
         uint128 minCollateralDiscount;
         /// Maximum discount applied on deposited margin collateral.
         uint128 maxCollateralDiscount;
-        /// Maximum slippage on collateral sold for negative pnl position modifications.
-        uint128 sellExactInMaxSlippagePercent;
         /// Dictates wheter or not the utilization rate should use high or low slope
         uint128 utilizationBreakpointPercent;
         /// Used for utilization interest when below utilization breakpoint

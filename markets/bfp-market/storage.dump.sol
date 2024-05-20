@@ -512,14 +512,12 @@ interface IMarketConfigurationModule {
         uint128 keeperSettlementGasUnits;
         uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
-        uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
         uint128 keeperLiquidateMarginGasUnits;
         address keeperLiquidationEndorsed;
         uint128 collateralDiscountScalar;
         uint128 minCollateralDiscount;
         uint128 maxCollateralDiscount;
-        uint128 sellExactInMaxSlippagePercent;
         uint128 utilizationBreakpointPercent;
         uint128 lowUtilizationSlopePercent;
         uint128 highUtilizationSlopePercent;
@@ -741,8 +739,8 @@ library Margin {
         address[] supportedCollaterals;
     }
     struct Data {
-        mapping(address => uint256) collaterals;
         uint128 debtUsd;
+        mapping(address => uint256) collaterals;
     }
     function load() internal pure returns (Margin.GlobalData storage d) {
         bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalMargin"));
@@ -826,12 +824,10 @@ library PerpMarketConfiguration {
         uint128 keeperLiquidationGasUnits;
         uint128 keeperFlagGasUnits;
         uint128 keeperLiquidateMarginGasUnits;
-        uint256 keeperLiquidationFeeUsd;
         address keeperLiquidationEndorsed;
         uint128 collateralDiscountScalar;
         uint128 minCollateralDiscount;
         uint128 maxCollateralDiscount;
-        uint128 sellExactInMaxSlippagePercent;
         uint128 utilizationBreakpointPercent;
         uint128 lowUtilizationSlopePercent;
         uint128 highUtilizationSlopePercent;
@@ -924,9 +920,9 @@ library Position {
 library SettlementHookConfiguration {
     bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
     struct GlobalData {
+        uint32 maxHooksPerOrder;
         mapping(address => bool) whitelisted;
         address[] whitelistedHookAddresses;
-        uint32 maxHooksPerOrder;
     }
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {
         bytes32 s = SLOT_NAME;
