@@ -12,6 +12,10 @@ library SettlementHookConfiguration {
     struct GlobalData {
         /// Maximum hooks that can be specified during an order commitment.
         uint32 maxHooksPerOrder;
+        uint32 __unused1;
+        uint64 __unused2;
+        uint64 __unused3;
+        uint64 __unused4;
         /// {hookAddress => isEnabled}.
         mapping(address => bool) whitelisted;
         /// Array of whitelisted hook contract addresses (use whitelisted mapping).
