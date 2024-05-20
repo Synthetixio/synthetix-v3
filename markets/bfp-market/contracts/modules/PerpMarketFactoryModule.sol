@@ -88,7 +88,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        (uint256 utilizationRate, ) = market.recomputeUtilization(
+        (uint128 utilizationRate, ) = market.recomputeUtilization(
             market.getOraclePrice(addresses),
             addresses
         );
@@ -98,7 +98,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        (int256 fundingRate, ) = market.recomputeFunding(
+        (int128 fundingRate, ) = market.recomputeFunding(
             market.getOraclePrice(
                 AddressRegistry.Data({
                     synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -141,8 +141,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
-        int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
+        (, int128 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
+        int128 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
 
         marketReportedDebt =

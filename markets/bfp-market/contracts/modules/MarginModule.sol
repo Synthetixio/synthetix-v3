@@ -214,7 +214,7 @@ contract MarginModule is IMarginModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -222,7 +222,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -302,7 +302,7 @@ contract MarginModule is IMarginModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -310,7 +310,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // > 0 is a deposit whilst < 0 is a withdrawal.

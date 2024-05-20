@@ -60,8 +60,8 @@ contract OrderModule is IOrderModule {
 
     struct Runtime_settleOrder {
         uint256 pythPrice;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         int256 pricePnl;
         uint256 fillPrice;
         uint128 updatedMarketSize;
@@ -180,7 +180,7 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for utilization recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (uint256 utilizationRate, ) = market.recomputeUtilization(
+        (uint128 utilizationRate, ) = market.recomputeUtilization(
             price,
             AddressRegistry.Data({
                 synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -193,7 +193,7 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
+        (int128 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
             market.id,
             market.skew,
@@ -407,7 +407,7 @@ contract OrderModule is IOrderModule {
         emit OrderSettled(
             accountId,
             marketId,
-            block.timestamp,
+            block.timestamp.to64(),
             runtime.tradeParams.sizeDelta,
             trade.orderFee,
             trade.keeperFee,

@@ -57,12 +57,12 @@ interface IOrderModule is IBasePerpMarket {
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        uint256 settlementTime,
+        uint64 settlementTime,
         int128 sizeDelta,
         uint256 orderFee,
         uint256 keeperFee,
-        int256 accruedFunding,
-        uint256 accruedUtilization,
+        int128 accruedFunding,
+        uint128 accruedUtilization,
         int256 pnl,
         uint256 fillPrice,
         uint128 accountDebt

@@ -577,8 +577,8 @@ interface IPerpAccountModule {
         uint256 healthFactor;
         uint256 notionalValueUsd;
         int256 pnl;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         uint256 entryPythPrice;
         uint256 entryPrice;
         uint256 oraclePrice;
@@ -609,9 +609,9 @@ interface IPerpMarketFactoryModule {
         int128 skew;
         uint128 size;
         uint256 oraclePrice;
-        int256 fundingVelocity;
-        int256 fundingRate;
-        uint256 utilizationRate;
+        int128 fundingVelocity;
+        int128 fundingRate;
+        uint128 utilizationRate;
         uint256 remainingLiquidatableSizeCapacity;
         uint128 lastLiquidationTime;
         uint128 totalTraderDebtUsd;
@@ -665,8 +665,8 @@ contract MarginModule {
 contract OrderModule {
     struct Runtime_settleOrder {
         uint256 pythPrice;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         int256 pricePnl;
         uint256 fillPrice;
         uint128 updatedMarketSize;
@@ -784,10 +784,10 @@ library PerpMarket {
         uint64 lastUtilizationTime;
         uint64 __unused3;
         uint64 __unused4;
-        int256 currentFundingRateComputed;
-        int256 currentFundingAccruedComputed;
-        uint256 currentUtilizationRateComputed;
-        uint256 currentUtilizationAccruedComputed;
+        int128 currentFundingRateComputed;
+        int128 currentFundingAccruedComputed;
+        uint128 currentUtilizationRateComputed;
+        uint128 currentUtilizationAccruedComputed;
         uint128 totalTraderDebtUsd;
         int128 debtCorrection;
         mapping(uint128 => Order.Data) orders;
@@ -892,8 +892,8 @@ library Position {
     }
     struct HealthData {
         uint256 healthFactor;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         int256 pnl;
     }
     struct Runtime_validateLiquidation {
@@ -914,8 +914,8 @@ library Position {
     }
     struct Data {
         int128 size;
-        int256 entryFundingAccrued;
-        uint256 entryUtilizationAccrued;
+        int128 entryFundingAccrued;
+        uint128 entryUtilizationAccrued;
         uint256 entryPythPrice;
         uint256 entryPrice;
     }

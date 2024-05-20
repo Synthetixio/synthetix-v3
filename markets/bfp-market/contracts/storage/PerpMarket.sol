@@ -59,13 +59,13 @@ library PerpMarket {
         uint64 __unused3;
         uint64 __unused4;
         /// The value of the funding rate last time this was computed.
-        int256 currentFundingRateComputed;
+        int128 currentFundingRateComputed;
         /// The value (in USD) of total market funding accumulated.
-        int256 currentFundingAccruedComputed;
+        int128 currentFundingAccruedComputed;
         /// The value of the utilization rate last time this was computed.
-        uint256 currentUtilizationRateComputed;
+        uint128 currentUtilizationRateComputed;
         /// The value (in native units) of total market utilization accumulated.
-        uint256 currentUtilizationAccruedComputed;
+        uint128 currentUtilizationAccruedComputed;
         /// The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
         uint128 totalTraderDebtUsd;
         /// Accumulated debt correction on every position modification for reportedDebt.
@@ -232,7 +232,7 @@ library PerpMarket {
     function getCurrentUtilizationRate(
         uint128 utilization,
         PerpMarketConfiguration.GlobalData storage globalConfig
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
         uint128 highUtilizationSlopePercent = globalConfig.highUtilizationSlopePercent;
@@ -242,12 +242,12 @@ library PerpMarket {
             return lowUtilizationSlopePercent.mulDecimalUint128(utilization) * 100;
         } else {
             uint128 highUtilizationRate = utilization - utilizationBreakpointPercent;
-            uint128 highUtilizationRateInterest = highUtilizationSlopePercent.mulDecimalUint128(
-                highUtilizationRate
-            ) * 100;
-            uint128 lowUtilizationRateInterest = lowUtilizationSlopePercent.mulDecimalUint128(
-                utilizationBreakpointPercent
-            ) * 100;
+            uint128 highUtilizationRateInterest = highUtilizationSlopePercent
+                .mulDecimal(highUtilizationRate)
+                .to128() * 100;
+            uint128 lowUtilizationRateInterest = lowUtilizationSlopePercent
+                .mulDecimal(utilizationBreakpointPercent)
+                .to128() * 100;
 
             return highUtilizationRateInterest + lowUtilizationRateInterest;
         }
@@ -256,9 +256,12 @@ library PerpMarket {
     /// @dev Returns the next market collateral utilization value.
     function getUnrecordedUtilization(
         PerpMarket.Data storage self
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         return
-            self.currentUtilizationRateComputed.mulDecimal(getProportionalUtilizationElapsed(self));
+            self
+                .currentUtilizationRateComputed
+                .mulDecimal(getProportionalUtilizationElapsed(self))
+                .to128();
     }
 
     /// @dev Recompute and store utilization rate given current market conditions.
@@ -266,7 +269,7 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 price,
         AddressRegistry.Data memory addresses
-    ) internal returns (uint256 utilizationRate, uint256 unrecordedUtilization) {
+    ) internal returns (uint128 utilizationRate, uint128 unrecordedUtilization) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
             getUtilization(self, price, addresses),
@@ -283,7 +286,7 @@ library PerpMarket {
     function recomputeFunding(
         PerpMarket.Data storage self,
         uint256 price
-    ) internal returns (int256 fundingRate, int256 unrecordingFunding) {
+    ) internal returns (int128 fundingRate, int128 unrecordingFunding) {
         (fundingRate, unrecordingFunding) = getUnrecordedFundingWithRate(self, price);
 
         self.currentFundingRateComputed = fundingRate;
@@ -306,7 +309,7 @@ library PerpMarket {
     /// @dev Returns the rate of funding rate change.
     function getCurrentFundingVelocity(
         PerpMarket.Data storage self
-    ) internal view returns (int256) {
+    ) internal view returns (int128) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         int128 skewScale = marketConfig.skewScale.toInt();
 
@@ -321,25 +324,26 @@ library PerpMarket {
             (DecimalMath.UNIT).toInt()
         );
 
-        return pSkewBounded.mulDecimal(marketConfig.maxFundingVelocity.toInt());
+        return pSkewBounded.mulDecimal(marketConfig.maxFundingVelocity.toInt()).to128();
     }
 
     /// @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
     function getProportionalFundingElapsed(
         PerpMarket.Data storage self
-    ) internal view returns (int256) {
-        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
+    ) internal view returns (int128) {
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt().to128();
     }
 
     /// @dev Returns the proportional time elapsed since last utilization.
     function getProportionalUtilizationElapsed(
         PerpMarket.Data storage self
-    ) internal view returns (uint256) {
-        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SECONDS_PER_YEAR);
+    ) internal view returns (uint128) {
+        return
+            (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SECONDS_PER_YEAR).to128();
     }
 
     /// @dev Returns the current funding rate given current market conditions.
-    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
+    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int128) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
         //  - velocity         = proportionalSkew * maxFundingVelocity
@@ -356,17 +360,18 @@ library PerpMarket {
         // currentFundingRate = 0 + 0.0025 * (29,000 / 86,400)
         //                    = 0 + 0.0025 * 0.33564815
         //                    = 0.00083912
-        return
-            self.currentFundingRateComputed +
-            (getCurrentFundingVelocity(self).mulDecimal(getProportionalFundingElapsed(self)));
+        int128 velocity = getCurrentFundingVelocity(self);
+        int128 elapsed = getProportionalFundingElapsed(self);
+        return self.currentFundingRateComputed + velocity.mulDecimal(elapsed).to128();
     }
 
     /// @dev Returns the next market funding accrued value.
     function getUnrecordedFundingWithRate(
         PerpMarket.Data storage self,
         uint256 price
-    ) internal view returns (int256 fundingRate, int256 unrecordedFunding) {
+    ) internal view returns (int128 fundingRate, int128 unrecordedFunding) {
         fundingRate = getCurrentFundingRate(self);
+
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
@@ -374,7 +379,8 @@ library PerpMarket {
         // Calculate the additive accrued funding delta for the next funding accrued value.
         unrecordedFunding = avgFundingRate
             .mulDecimal(getProportionalFundingElapsed(self))
-            .mulDecimal(price.toInt());
+            .mulDecimal(price.toInt())
+            .to128();
     }
 
     /// @dev Returns the maximum amount of size that can be liquidated (excluding current cap usage).
