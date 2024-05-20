@@ -550,7 +550,7 @@ interface IOrderModule {
         int128 sizeDelta;
         uint256 commitmentTime;
         uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         address[] hooks;
         bool isStale;
         bool isReady;
@@ -760,9 +760,9 @@ library Margin {
 library Order {
     struct Data {
         int128 sizeDelta;
-        uint256 commitmentTime;
+        uint64 commitmentTime;
         uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         address[] hooks;
     }
 }
@@ -877,7 +877,7 @@ library Position {
         uint128 makerFee;
         uint128 takerFee;
         uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
     }
     struct ValidatedTrade {
         Position.Data newPosition;

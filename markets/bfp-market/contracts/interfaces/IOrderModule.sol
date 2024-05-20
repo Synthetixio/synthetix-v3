@@ -16,7 +16,7 @@ interface IOrderModule is IBasePerpMarket {
         /// The max acceptable price tolerance for settlement
         uint256 limitPrice;
         /// A tip in USD to pay for settlement keepers
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         /// A list of whitelisted hook addresses to invoke after settlement
         address[] hooks;
         /// True if order expired and must be canceled, false otherwise
@@ -92,7 +92,7 @@ interface IOrderModule is IBasePerpMarket {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
+        uint128 keeperFeeBufferUsd,
         address[] memory hooks
     ) external;
 
@@ -150,7 +150,7 @@ interface IOrderModule is IBasePerpMarket {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
+        uint128 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee);
 
     /// @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.

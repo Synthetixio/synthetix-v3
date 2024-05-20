@@ -213,7 +213,7 @@ contract OrderModule is IOrderModule {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
+        uint128 keeperFeeBufferUsd,
         address[] memory hooks
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
@@ -267,7 +267,7 @@ contract OrderModule is IOrderModule {
         );
 
         market.orders[accountId].update(
-            Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
+            Order.Data(sizeDelta, block.timestamp.to64(), limitPrice, keeperFeeBufferUsd, hooks)
         );
 
         emit OrderCommitted(
@@ -570,7 +570,7 @@ contract OrderModule is IOrderModule {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
+        uint128 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);

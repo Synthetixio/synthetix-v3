@@ -18,11 +18,11 @@ library Order {
         /// Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;
         /// The block.timestamp this order was committed on.
-        uint256 commitmentTime;
+        uint64 commitmentTime;
         /// The maximum fillPrice (in USD) this order will accept during settlement.
         uint256 limitPrice;
         /// A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         /// Settlement hooks specified on commitment for invocation.
         address[] hooks;
     }
@@ -100,7 +100,7 @@ library Order {
      * See IOrderModule.getOrderFees for more details.
      */
     function getSettlementKeeperFee(
-        uint256 keeperFeeBufferUsd,
+        uint128 keeperFeeBufferUsd,
         uint256 ethPrice
     ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();

@@ -34,7 +34,7 @@ library Position {
         uint128 makerFee;
         uint128 takerFee;
         uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
     }
 
     struct ValidatedTrade {
