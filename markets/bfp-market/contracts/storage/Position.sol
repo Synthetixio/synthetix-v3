@@ -69,8 +69,6 @@ library Position {
         uint256 discountedNextMarginUsd;
         uint256 im;
         uint256 mm;
-        Position.Data newPosition;
-        Margin.MarginValues marginValuesForLiqValidation;
         uint128 ethPrice;
     }
 
@@ -213,7 +211,7 @@ library Position {
 
         // --- Existing position validation --- //
 
-        runtime.marginValuesForLiqValidation = Margin.getMarginUsd(
+        Margin.MarginValues memory marginValuesForLiqValidation = Margin.getMarginUsd(
             accountId,
             market,
             params.oraclePrice,
@@ -233,7 +231,7 @@ library Position {
                     currentPosition,
                     params.oraclePrice,
                     marketConfig,
-                    runtime.marginValuesForLiqValidation,
+                    marginValuesForLiqValidation,
                     addresses
                 )
             ) {
@@ -261,7 +259,7 @@ library Position {
             runtime.ethPrice
         );
 
-        runtime.newPosition = Position.Data({
+        Position.Data memory newPosition = Position.Data({
             size: currentPosition.size + params.sizeDelta,
             entryFundingAccrued: market.currentFundingAccruedComputed,
             // Since utilization wont be recomputed here we need to manually add the unrecorded utilization.
@@ -274,23 +272,23 @@ library Position {
         // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         runtime.positionDecreasing =
-            MathUtil.sameSide(currentPosition.size, runtime.newPosition.size) &&
-            MathUtil.abs(runtime.newPosition.size) < MathUtil.abs(currentPosition.size);
+            MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!runtime.positionDecreasing) {
             // We need discounted margin collateral as we're verifying for liquidation here.
             //
             // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
             // incurred fees hence get `getNextMarginUsd` -fees.
             runtime.discountedNextMarginUsd = getNextMarginUsd(
-                runtime.marginValuesForLiqValidation.discountedMarginUsd,
+                marginValuesForLiqValidation.discountedMarginUsd,
                 runtime.orderFee,
                 runtime.keeperFee
             );
 
             (runtime.im, runtime.mm, ) = getLiquidationMarginUsd(
-                runtime.newPosition.size,
+                newPosition.size,
                 params.oraclePrice,
-                runtime.marginValuesForLiqValidation.collateralUsd,
+                marginValuesForLiqValidation.collateralUsd,
                 marketConfig,
                 addresses
             );
@@ -305,7 +303,7 @@ library Position {
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(
-                runtime.newPosition,
+                newPosition,
                 params.oraclePrice,
                 runtime.mm,
                 runtime.discountedNextMarginUsd
@@ -316,15 +314,12 @@ library Position {
                 market,
                 marketConfig.maxMarketSize,
                 currentPosition.size,
-                runtime.newPosition.size
+                newPosition.size
             );
         }
 
         // Create and return a validated trade struct for downstream processing.
-        int256 marginUsdForNextMarginUsd = runtime
-            .marginValuesForLiqValidation
-            .collateralUsd
-            .toInt() +
+        int256 marginUsdForNextMarginUsd = marginValuesForLiqValidation.collateralUsd.toInt() +
             Margin.getPnlAdjustmentUsd(accountId, market, params.oraclePrice, params.fillPrice);
         uint256 newMarginUsd = getNextMarginUsd(
             MathUtil.max(marginUsdForNextMarginUsd, 0).toUint(),
@@ -333,11 +328,11 @@ library Position {
         );
         return
             Position.ValidatedTrade(
-                runtime.newPosition,
+                newPosition,
                 runtime.orderFee,
                 runtime.keeperFee,
                 newMarginUsd,
-                runtime.marginValuesForLiqValidation.collateralUsd
+                marginValuesForLiqValidation.collateralUsd
             );
     }
 

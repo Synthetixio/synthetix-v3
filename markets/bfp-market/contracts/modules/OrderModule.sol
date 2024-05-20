@@ -58,23 +58,19 @@ contract OrderModule is IOrderModule {
 
     // --- Runtime structs --- //
 
+    struct Runtime_commitOrder {
+        uint128 oraclePrice;
+        uint64 commitmentTime;
+    }
+
     struct Runtime_settleOrder {
         uint128 pythPrice;
         int128 accruedFunding;
         uint128 accruedUtilization;
         int128 pricePnl;
         uint128 fillPrice;
-        uint128 updatedMarketSize;
-        int128 updatedMarketSkew;
         uint128 totalFees;
-        Position.ValidatedTrade trade;
-        Position.TradeParams tradeParams;
-    }
-
-    struct Runtime_commitOrder {
-        uint128 oraclePrice;
-        Position.ValidatedTrade trade;
-        Position.TradeParams tradeParams;
+        int128 sizeDelta;
     }
 
     // --- Helpers --- //
@@ -158,9 +154,17 @@ contract OrderModule is IOrderModule {
     function executeOrderHooks(
         uint128 accountId,
         uint128 marketId,
-        address[] memory hooks,
+        PerpMarket.Data storage market,
+        Order.Data storage order,
         uint128 oraclePrice
     ) private {
+        // Execute any hooks on the order that may exist.
+        //
+        // First, copying any existing hooks that may be present in the commitment (up to maxHooksPerOrder). Then,
+        // deleting the order from market, and finally invoking each hook's `onSettle` callback.
+        address[] memory hooks = order.cloneSettlementHooks();
+        delete market.orders[accountId];
+
         uint256 length = hooks.length;
         if (length == 0) {
             return;
@@ -209,6 +213,23 @@ contract OrderModule is IOrderModule {
         );
     }
 
+    /// @dev Generic helper for market skew and size update after order settlement.
+    function updateMarketSkewAndSize(
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        Position.Data storage oldPosition,
+        int128 newPositionSize
+    ) private {
+        uint128 updatedMarketSize = (market.size.to256() +
+            MathUtil.abs(newPositionSize) -
+            MathUtil.abs(oldPosition.size)).to128();
+        int128 updatedMarketSkew = market.skew + newPositionSize - oldPosition.size;
+        market.skew = updatedMarketSkew;
+        market.size = updatedMarketSize;
+
+        emit MarketSizeUpdated(marketId, updatedMarketSize, updatedMarketSkew);
+    }
+
     // --- Mutations --- //
 
     /// @inheritdoc IOrderModule
@@ -228,7 +249,6 @@ contract OrderModule is IOrderModule {
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Runtime_commitOrder memory runtime;
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -241,12 +261,13 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
+        Runtime_commitOrder memory runtime;
         runtime.oraclePrice = market.getOraclePrice(addresses);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
         // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
-        runtime.tradeParams = Position.TradeParams(
+        Position.TradeParams memory tradeParams = Position.TradeParams(
             sizeDelta,
             runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
             runtime.oraclePrice, // CL oracle price.
@@ -262,30 +283,32 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        runtime.trade = Position.validateTrade(
+        Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
-            runtime.tradeParams,
+            tradeParams,
             marketConfig,
             addresses
         );
 
-        Order.Data memory order = Order.Data({
-            sizeDelta: sizeDelta,
-            commitmentTime: block.timestamp.to64(),
-            limitPrice: limitPrice,
-            keeperFeeBufferUsd: keeperFeeBufferUsd,
-            hooks: hooks
-        });
-        market.orders[accountId].update(order);
+        runtime.commitmentTime = block.timestamp.to64();
+        market.orders[accountId].update(
+            Order.Data({
+                sizeDelta: sizeDelta,
+                commitmentTime: runtime.commitmentTime,
+                limitPrice: limitPrice,
+                keeperFeeBufferUsd: keeperFeeBufferUsd,
+                hooks: hooks
+            })
+        );
 
         emit OrderCommitted(
             accountId,
             marketId,
-            order.commitmentTime,
+            runtime.commitmentTime,
             sizeDelta,
-            runtime.trade.orderFee,
-            runtime.trade.keeperFee
+            trade.orderFee,
+            trade.keeperFee
         );
     }
 
@@ -296,11 +319,10 @@ contract OrderModule is IOrderModule {
         bytes calldata priceUpdateData
     ) external payable {
         FeatureFlag.ensureAccessToFeature(Flags.SETTLE_ORDER);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
         Position.Data storage position = market.positions[accountId];
-        Runtime_settleOrder memory runtime;
 
         // No order available to settle.
         if (order.sizeDelta == 0) {
@@ -314,6 +336,9 @@ contract OrderModule is IOrderModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
+
+        Runtime_settleOrder memory runtime;
+
         runtime.pythPrice = PythUtil.parsePythPrice(
             globalConfig,
             marketConfig,
@@ -326,7 +351,7 @@ contract OrderModule is IOrderModule {
             order.sizeDelta,
             runtime.pythPrice
         );
-        runtime.tradeParams = Position.TradeParams(
+        Position.TradeParams memory tradeParams = Position.TradeParams(
             order.sizeDelta,
             market.getOraclePrice(addresses),
             runtime.pythPrice,
@@ -341,35 +366,32 @@ contract OrderModule is IOrderModule {
             globalConfig,
             order.commitmentTime,
             runtime.pythPrice,
-            runtime.tradeParams
+            tradeParams
         );
-        recomputeFunding(market, runtime.tradeParams.oraclePrice);
 
-        runtime.trade = Position.validateTrade(
+        recomputeFunding(market, tradeParams.oraclePrice);
+
+        Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
-            runtime.tradeParams,
+            tradeParams,
             marketConfig,
             addresses
         );
 
-        runtime.updatedMarketSize = (market.size.to256() +
-            MathUtil.abs(runtime.trade.newPosition.size) -
-            MathUtil.abs(position.size)).to128();
-        runtime.updatedMarketSkew = market.skew + runtime.trade.newPosition.size - position.size;
-        market.skew = runtime.updatedMarketSkew;
-        market.size = runtime.updatedMarketSize;
+        // Update market size/skew and emit event.
 
-        // We want to validateTrade and update market size before we recompute utilization
-        // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
-        // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
-        recomputeUtilization(market, runtime.tradeParams.oraclePrice);
+        // validateTrade and update market size before recompute utilization.
+        //
+        // 1. validateTrade calls getMargin, this should be the utilization rate up to this point.
+        // 2. New utilization rate is calculated using new market size, hence need to update size before recompute.
+        recomputeUtilization(market, tradeParams.oraclePrice);
 
-        market.updateDebtCorrection(position, runtime.trade.newPosition);
+        market.updateDebtCorrection(position, trade.newPosition);
 
         // Account debt and market total trader debt must be updated with fees incurred to settle.
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        runtime.totalFees = (runtime.trade.orderFee + runtime.trade.keeperFee).to128();
+        runtime.totalFees = (trade.orderFee + trade.keeperFee).to128();
         accountMargin.debtUsd += runtime.totalFees;
         market.totalTraderDebtUsd += runtime.totalFees;
 
@@ -384,46 +406,29 @@ contract OrderModule is IOrderModule {
                 // fees and we want to avoid attributing price PnL (due to pd adjusted oracle price) now as its already
                 // tracked in the new position price PnL.
                 //
-
+                //
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
-                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt(),
+                trade.newMarginUsd.toInt() - trade.collateralUsd.toInt(),
                 addresses
             );
         }
+
         // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
-        runtime.accruedFunding = position.getAccruedFunding(
-            market,
-            runtime.tradeParams.oraclePrice
-        );
+        runtime.accruedFunding = position.getAccruedFunding(market, tradeParams.oraclePrice);
         runtime.accruedUtilization = position.getAccruedUtilization(
             market,
-            runtime.tradeParams.oraclePrice
+            tradeParams.oraclePrice
         );
-        runtime.pricePnl = position.getPricePnl(runtime.tradeParams.fillPrice);
-
-        if (runtime.trade.newPosition.size == 0) {
-            delete market.positions[accountId];
-        } else {
-            position.update(runtime.trade.newPosition);
-        }
-
-        // Keeper fees can be set to zero.
-        if (runtime.trade.keeperFee > 0) {
-            addresses.synthetix.withdrawMarketUsd(
-                marketId,
-                ERC2771Context._msgSender(),
-                runtime.trade.keeperFee
-            );
-        }
+        runtime.pricePnl = position.getPricePnl(tradeParams.fillPrice);
 
         emit OrderSettled(
             accountId,
             marketId,
             block.timestamp,
-            runtime.tradeParams.sizeDelta,
-            runtime.trade.orderFee,
-            runtime.trade.keeperFee,
+            tradeParams.sizeDelta,
+            trade.orderFee,
+            trade.keeperFee,
             runtime.accruedFunding,
             runtime.accruedUtilization,
             runtime.pricePnl,
@@ -431,15 +436,24 @@ contract OrderModule is IOrderModule {
             accountMargin.debtUsd
         );
 
-        emit MarketSizeUpdated(marketId, runtime.updatedMarketSize, runtime.updatedMarketSkew);
+        updateMarketSkewAndSize(marketId, market, position, trade.newPosition.size);
 
-        // Execute any hooks on the order that may exist.
-        //
-        // First, copying any existing hooks that may be present in the commitment (up to maxHooksPerOrder). Then,
-        // deleting the order from market, and finally invoking each hook's `onSettle` callback.
-        address[] memory hooks = order.cloneSettlementHooks();
-        delete market.orders[accountId];
-        executeOrderHooks(accountId, marketId, hooks, runtime.pythPrice);
+        if (trade.newPosition.size == 0) {
+            delete market.positions[accountId];
+        } else {
+            position.update(trade.newPosition);
+        }
+
+        // Keeper fees can only be sent if not zero.
+        if (trade.keeperFee > 0) {
+            addresses.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                trade.keeperFee
+            );
+        }
+
+        executeOrderHooks(accountId, marketId, market, order, runtime.pythPrice);
     }
 
     /// @inheritdoc IOrderModule

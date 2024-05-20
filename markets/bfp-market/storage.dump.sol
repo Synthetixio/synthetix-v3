@@ -643,7 +643,11 @@ interface ISettlementHookModule {
 // @custom:artifact contracts/modules/LiquidationModule.sol:LiquidationModule
 contract LiquidationModule {
     struct Runtime_liquidateCollateral {
+<<<<<<< HEAD
         uint128 availableSusd;
+=======
+        uint256 availableSusd;
+>>>>>>> remove-spot-market
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint128 availableAccountCollateral;
@@ -674,12 +678,15 @@ contract OrderModule {
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
+<<<<<<< HEAD
         Position.ValidatedTrade trade;
         Position.TradeParams tradeParams;
     }
     struct Runtime_commitOrder {
         uint128 oraclePrice;
         Position.ValidatedTrade trade;
+=======
+>>>>>>> remove-spot-market
         Position.TradeParams tradeParams;
     }
 }
@@ -693,6 +700,7 @@ contract PerpAccountModule {
         int128 sizeToMove;
         uint256 supportedCollateralsLength;
         address collateralAddress;
+<<<<<<< HEAD
         uint128 collateralToMove;
         uint128 newFromAmountCollateral;
         uint128 fromAccountCollateral;
@@ -702,6 +710,17 @@ contract PerpAccountModule {
         uint128 fromDiscountedCollateralUsd;
         uint128 collateralPrice;
         uint128 fromAccountCollateralUsd;
+=======
+        uint256 collateralToMove;
+        uint256 newFromAmountCollateral;
+        uint256 fromAccountCollateral;
+        uint256 toCollateralUsd;
+        uint256 fromCollateralUsd;
+        uint256 toDiscountedCollateralUsd;
+        uint256 fromDiscountedCollateralUsd;
+        uint256 collateralPrice;
+        uint256 fromAccountCollateralUsd;
+>>>>>>> remove-spot-market
     }
     struct Runtime_mergeAccounts {
         uint128 oraclePrice;
@@ -712,6 +731,15 @@ contract PerpAccountModule {
         uint128 fromAccountCollateral;
         uint256 supportedCollateralsLength;
         address collateralAddress;
+    }
+}
+
+// @custom:artifact contracts/storage/AddressRegistry.sol:AddressRegistry
+library AddressRegistry {
+    struct Data {
+        address synthetix;
+        address sUsd;
+        address oracleManager;
     }
 }
 
@@ -739,11 +767,14 @@ library Margin {
         uint128 discountedCollateralUsd;
         uint128 collateralUsd;
     }
+<<<<<<< HEAD
     struct Runtime_getCollateralUsd {
         address collateralAddress;
         uint128 available;
         uint128 collateralPrice;
     }
+=======
+>>>>>>> remove-spot-market
     struct GlobalData {
         mapping(address => CollateralType) supported;
         address[] supportedCollaterals;
@@ -918,9 +949,13 @@ library Position {
         uint256 discountedNextMarginUsd;
         uint256 im;
         uint256 mm;
+<<<<<<< HEAD
         Position.Data newPosition;
         Margin.MarginValues marginValuesForLiqValidation;
         uint128 ethPrice;
+=======
+        uint256 ethPrice;
+>>>>>>> remove-spot-market
     }
     struct Data {
         int128 size;

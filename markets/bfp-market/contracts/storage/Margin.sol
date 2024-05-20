@@ -48,14 +48,6 @@ library Margin {
         uint128 collateralUsd;
     }
 
-    // --- Runtime structs --- //
-
-    struct Runtime_getCollateralUsd {
-        address collateralAddress;
-        uint128 available;
-        uint128 collateralPrice;
-    }
-
     // --- Storage --- //
 
     struct GlobalData {
@@ -149,27 +141,30 @@ library Margin {
         PerpMarketConfiguration.GlobalData storage globalConfig,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint128 collateralUsd, uint128 discountedCollateralUsd) {
-        Runtime_getCollateralUsd memory runtime;
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
+        address collateralAddress;
+        uint128 available;
+        uint128 collateralPrice;
+
         for (uint256 i = 0; i < globalMarginConfig.supportedCollaterals.length; ) {
-            runtime.collateralAddress = globalMarginConfig.supportedCollaterals[i];
-            runtime.available = accountMargin.collaterals[runtime.collateralAddress];
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            available = accountMargin.collaterals[collateralAddress];
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
-            if (runtime.available > 0) {
-                runtime.collateralPrice = getCollateralPrice(
+            if (available > 0) {
+                collateralPrice = getCollateralPrice(
                     globalMarginConfig,
-                    runtime.collateralAddress,
+                    collateralAddress,
                     addresses
                 );
 
-                collateralUsd += runtime.available.mulDecimalUint128(runtime.collateralPrice);
-                discountedCollateralUsd += runtime.available.mulDecimalUint128(
+                collateralUsd += available.mulDecimalUint128(collateralPrice);
+                discountedCollateralUsd += available.mulDecimalUint128(
                     getDiscountedCollateralPrice(
-                        runtime.available,
-                        runtime.collateralPrice,
-                        runtime.collateralAddress,
+                        available,
+                        collateralPrice,
+                        collateralAddress,
                         globalConfig,
                         globalMarginConfig,
                         addresses
