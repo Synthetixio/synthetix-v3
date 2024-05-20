@@ -922,6 +922,10 @@ library SettlementHookConfiguration {
     bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SettlementHookConfiguration"));
     struct GlobalData {
         uint32 maxHooksPerOrder;
+        uint32 __unused1;
+        uint64 __unused2;
+        uint64 __unused3;
+        uint64 __unused4;
         mapping(address => bool) whitelisted;
         address[] whitelistedHookAddresses;
     }

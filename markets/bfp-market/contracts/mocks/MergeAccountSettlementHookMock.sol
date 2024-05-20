@@ -34,7 +34,11 @@ contract MergeAccountSettlementHookMock is ISettlementHook {
         shouldRevertOnSettlement = _shouldRevertOnSettlement;
     }
 
-    function onSettle(uint128 accountId, uint128 marketId, uint256) external {
+    function onSettle(
+        uint128 accountId,
+        uint128 marketId,
+        uint256 // oraclePrice
+    ) external {
         if (msg.sender != market) {
             revert PermissionError(msg.sender);
         }
