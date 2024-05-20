@@ -575,65 +575,6 @@ describe('VaultModule', function () {
           verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
         );
 
-        // describe('if one of the markets has a min delegation time', () => {
-        //   const restore = snapshotCheckpoint(provider);
-
-        //   before('set market min delegation time to something high', async () => {
-        //     await MockMarket.setMinDelegationTime(86400);
-        //   });
-
-        //   describe('without time passing', async () => {
-        //     it('fails when min delegation timeout not elapsed', async () => {
-        //       await assertRevert(
-        //         systems().Core.connect(user2).delegateCollateral(
-        //           user2AccountId,
-        //           poolId,
-        //           collateralAddress(),
-        //           depositAmount.div(4), // user1 50%, user2 50%
-        //           ethers.utils.parseEther('1')
-        //         ),
-        //         `MinDelegationTimeoutPending("${poolId}",`,
-        //         systems().Core
-        //       );
-        //     });
-
-        //     it('can increase delegation without waiting', async () => {
-        //       await systems()
-        //         .Core.connect(user2)
-        //         .delegateCollateral(
-        //           user2AccountId,
-        //           poolId,
-        //           collateralAddress(),
-        //           depositAmount.mul(2),
-        //           ethers.utils.parseEther('1')
-        //         );
-        //     });
-
-        //     after(restore);
-        //   });
-
-        //   describe('after time passes', () => {
-        //     before('fast forward', async () => {
-        //       // for some reason `fastForward` doesn't seem to work with anvil
-        //       await fastForwardTo((await getTime(provider())) + 86400, provider());
-        //     });
-
-        //     it('works', async () => {
-        //       await systems()
-        //         .Core.connect(user2)
-        //         .delegateCollateral(
-        //           user2AccountId,
-        //           poolId,
-        //           collateralAddress(),
-        //           depositAmount.div(2),
-        //           ethers.utils.parseEther('1')
-        //         );
-        //     });
-        //   });
-
-        //   after(restore);
-        // });
-
         // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)
         describe.skip('increase exposure', async () => {
