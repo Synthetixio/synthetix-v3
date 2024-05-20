@@ -774,17 +774,21 @@ library PerpMarket {
         uint128[] activeMarketIds;
     }
     struct Data {
-        uint128 id;
         bytes32 name;
+        uint128 id;
+        uint64 __unused1;
+        uint64 __unused2;
         int128 skew;
         uint128 size;
-        uint128 totalTraderDebtUsd;
+        uint64 lastFundingTime;
+        uint64 lastUtilizationTime;
+        uint64 __unused3;
+        uint64 __unused4;
         int256 currentFundingRateComputed;
         int256 currentFundingAccruedComputed;
-        uint256 lastFundingTime;
         uint256 currentUtilizationRateComputed;
         uint256 currentUtilizationAccruedComputed;
-        uint256 lastUtilizationTime;
+        uint128 totalTraderDebtUsd;
         int128 debtCorrection;
         mapping(uint128 => Order.Data) orders;
         mapping(uint128 => Position.Data) positions;

@@ -42,28 +42,32 @@ library PerpMarket {
     }
 
     struct Data {
-        /// A unique market id for market reference.
-        uint128 id;
         /// Human readable name e.g. bytes32(WSTETHPERP).
         bytes32 name;
+        /// A unique market id for market reference.
+        uint128 id;
+        uint64 __unused1;
+        uint64 __unused2;
         /// sum(positions.map(p => p.size)).
         int128 skew;
         /// sum(positions.map(p => abs(p.size))).
         uint128 size;
-        /// The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
-        uint128 totalTraderDebtUsd;
+        /// block.timestamp of when funding was last computed.
+        uint64 lastFundingTime;
+        /// block.timestamp of when utilization was last computed.
+        uint64 lastUtilizationTime;
+        uint64 __unused3;
+        uint64 __unused4;
         /// The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
         /// The value (in USD) of total market funding accumulated.
         int256 currentFundingAccruedComputed;
-        /// block.timestamp of when funding was last computed.
-        uint256 lastFundingTime;
         /// The value of the utilization rate last time this was computed.
         uint256 currentUtilizationRateComputed;
         /// The value (in native units) of total market utilization accumulated.
         uint256 currentUtilizationAccruedComputed;
-        /// block.timestamp of when utilization was last computed.
-        uint256 lastUtilizationTime;
+        /// The sum of all trader debt in USD from losses but not yet settled (i.e. paid).
+        uint128 totalTraderDebtUsd;
         /// Accumulated debt correction on every position modification for reportedDebt.
         int128 debtCorrection;
         /// {accountId: Order}.
@@ -272,7 +276,7 @@ library PerpMarket {
 
         self.currentUtilizationRateComputed = utilizationRate;
         self.currentUtilizationAccruedComputed += unrecordedUtilization;
-        self.lastUtilizationTime = block.timestamp;
+        self.lastUtilizationTime = block.timestamp.to64();
     }
 
     /// @dev Recompute and store funding related values given the current market conditions.
@@ -284,7 +288,7 @@ library PerpMarket {
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed += unrecordingFunding;
-        self.lastFundingTime = block.timestamp;
+        self.lastFundingTime = block.timestamp.to64();
     }
 
     // --- Member (views) --- //
