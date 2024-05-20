@@ -2,11 +2,14 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./Config.sol";
+import "./Pool.sol";
 
 /**
  * @title Represents a delegation (or undelegation) intent.
  */
 library DelegationIntent {
+    using Pool for Pool.Data;
+
     error InvalidDelegationIntentId();
     error DelegationIntentNotReady(uint32 declarationTime, uint32 processingStartTime);
     error DelegationIntentExpired(uint32 declarationTime, uint32 processingEndTime);
@@ -51,7 +54,7 @@ library DelegationIntent {
          * outstanding intent to delegate/undelegate to the pool,
          * denominated with 18 decimals of precision
          */
-        int256 collateralDeltaAmountD18;
+        int256 deltaCollateralAmountD18;
         /**
          * @notice The intended amount of leverage associated with the new
          * amount of collateral that the account has an outstanding intent
@@ -63,21 +66,6 @@ library DelegationIntent {
          * @notice The timestamp at which the intent was declared
          */
         uint32 declarationTime;
-        /**
-         * @notice The timestamp before which the intent cannot be processed
-         * @dev dependent on
-         * {MarketManagerModule.undelegateCollateralDelay} or
-         * {MarketManagerModule.delegateCollateralDelay}
-         */
-        uint32 processingStartTime;
-        /**
-         * @notice The timestamp after which the intent cannot be processed
-         * (i.e., intent expiry)
-         * @dev dependent on
-         * {MarketManagerModule.undelegateCollateralWindow} or
-         * {MarketManagerModule.delegateCollateralWindow}
-         */
-        uint32 processingEndTime;
     }
 
     /**
@@ -110,19 +98,69 @@ library DelegationIntent {
         Config.put(_ATOMIC_VALUE_LATEST_ID, bytes32(id));
     }
 
+    function processingStartTime(Data storage self) internal view returns (uint32) {
+        (uint32 requiredDelayTime, ) = Pool
+            .loadExisting(self.poolId)
+            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 > 0);
+        return self.declarationTime + requiredDelayTime;
+    }
+
+    function processingEndTime(Data storage self) internal view returns (uint32) {
+        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
+            .loadExisting(self.poolId)
+            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 > 0);
+
+        // Apply default (forever) window time if not set
+        if (requiredWindowTime == 0) {
+            requiredWindowTime = 86400 * 360; // 1 year
+        }
+
+        return self.declarationTime + requiredDelayTime + requiredWindowTime;
+    }
+
     function checkIsExecutable(Data storage self) internal view {
-        if (block.timestamp < self.processingStartTime)
-            revert DelegationIntentNotReady(self.declarationTime, self.processingStartTime);
-        if (block.timestamp >= self.processingEndTime)
-            revert DelegationIntentExpired(self.declarationTime, self.processingEndTime);
+        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
+            .loadExisting(self.poolId)
+            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 > 0);
+
+        // Apply default (forever) window time if not set
+        if (requiredWindowTime == 0) {
+            requiredWindowTime = 86400 * 360; // 1 year
+        }
+
+        uint32 _processingStartTime = self.declarationTime + requiredDelayTime;
+        uint32 _processingEndTime = _processingStartTime + requiredWindowTime;
+
+        if (block.timestamp < _processingStartTime)
+            revert DelegationIntentNotReady(self.declarationTime, _processingStartTime);
+        if (block.timestamp >= _processingEndTime)
+            revert DelegationIntentExpired(self.declarationTime, _processingEndTime);
     }
 
     function isExecutable(Data storage self) internal view returns (bool) {
-        return
-            block.timestamp >= self.processingStartTime && block.timestamp < self.processingEndTime;
+        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
+            .loadExisting(self.poolId)
+            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 > 0);
+
+        // Apply default (forever) window time if not set
+        if (requiredWindowTime == 0) {
+            requiredWindowTime = 86400 * 360; // 1 year
+        }
+
+        uint32 _processingStartTime = self.declarationTime + requiredDelayTime;
+        uint32 _processingEndTime = _processingStartTime + requiredWindowTime;
+
+        return block.timestamp >= _processingStartTime && block.timestamp < _processingEndTime;
     }
 
     function intentExpired(Data storage self) internal view returns (bool) {
-        return block.timestamp >= self.processingEndTime;
+        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
+            .loadExisting(self.poolId)
+            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 > 0);
+
+        // Note: here we don't apply the forever defaul if window time is not set to allow the intent to expire. If it's zero it means is not configured, then it can expire immediately.
+
+        uint32 _processingEndTime = self.declarationTime + requiredDelayTime + requiredWindowTime;
+        return block.timestamp >= _processingEndTime;
     }
 }

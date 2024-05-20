@@ -436,45 +436,7 @@ library Pool {
                     : market.delegateCollateralWindow;
             }
         }
-
-        if (requiredWindowTime == 0) {
-            requiredWindowTime = 86400 * 360; // 1 year
-        }
-
-        // TODO use global max delay and window ??
-        // // solhint-disable-next-line numcast/safe-cast
-        // uint32 maxMinDelegateTime = uint32(
-        //     Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
-        // );
-        // return
-        //     maxMinDelegateTime < requiredMinDelegateTime
-        //         ? maxMinDelegateTime
-        //         : requiredMinDelegateTime;
     }
-
-    // TODO LJM
-    // function getRequiredMinDelegationTime(
-    //     Data storage self
-    // ) internal view returns (uint32 requiredMinDelegateTime) {
-    //     for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
-    //         uint32 marketMinDelegateTime = Market
-    //             .load(self.marketConfigurations[i].marketId)
-    //             .minDelegateTime;
-
-    //         if (marketMinDelegateTime > requiredMinDelegateTime) {
-    //             requiredMinDelegateTime = marketMinDelegateTime;
-    //         }
-    //     }
-
-    //     // solhint-disable-next-line numcast/safe-cast
-    //     uint32 maxMinDelegateTime = uint32(
-    //         Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
-    //     );
-    //     return
-    //         maxMinDelegateTime < requiredMinDelegateTime
-    //             ? maxMinDelegateTime
-    //             : requiredMinDelegateTime;
-    // }
 
     /**
      * @dev Returns the debt of the vault that tracks the given collateral type.
@@ -552,21 +514,6 @@ library Pool {
             revert AccessError.Unauthorized(caller);
         }
     }
-
-    // TODO LJM
-    // function requireMinDelegationTimeElapsed(
-    //     Data storage self,
-    //     uint64 lastDelegationTime
-    // ) internal view {
-    //     uint32 requiredMinDelegationTime = getRequiredMinDelegationTime(self);
-    //     if (block.timestamp < lastDelegationTime + requiredMinDelegationTime) {
-    //         revert MinDelegationTimeoutPending(
-    //             self.id,
-    //             // solhint-disable-next-line numcast/safe-cast
-    //             uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
-    //         );
-    //     }
-    // }
 
     function checkPoolCollateralLimit(
         Data storage self,

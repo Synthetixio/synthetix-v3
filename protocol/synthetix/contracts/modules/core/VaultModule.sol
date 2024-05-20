@@ -113,15 +113,6 @@ contract VaultModule is IVaultModule {
             );
         }
 
-        // Prepare data for storing the new intent.
-        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
-            .loadExisting(poolId)
-            .getRequiredDelegationDelayAndWindow(
-                deltaCollateralAmountD18 +
-                    accountIntents.netDelegatedCollateralAmountPerPool[poolId] >
-                    0
-            );
-
         // Create a new delegation intent.
         intentId = DelegationIntent.nextId();
         DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
@@ -129,11 +120,9 @@ contract VaultModule is IVaultModule {
         intent.accountId = accountId;
         intent.poolId = poolId;
         intent.collateralType = collateralType;
-        intent.collateralDeltaAmountD18 = deltaCollateralAmountD18;
+        intent.deltaCollateralAmountD18 = deltaCollateralAmountD18;
         intent.leverage = leverage;
         intent.declarationTime = block.timestamp.to32();
-        intent.processingStartTime = intent.declarationTime + requiredDelayTime;
-        intent.processingEndTime = intent.processingStartTime + requiredWindowTime;
 
         // Add intent to the account's delegation intents.
         AccountDelegationIntents.getValid(intent.accountId).addIntent(intent);
@@ -147,8 +136,8 @@ contract VaultModule is IVaultModule {
             leverage,
             intentId,
             intent.declarationTime,
-            intent.processingStartTime,
-            intent.processingEndTime,
+            intent.processingStartTime(),
+            intent.processingEndTime(),
             ERC2771Context._msgSender()
         );
     }
@@ -198,7 +187,7 @@ contract VaultModule is IVaultModule {
                 accountId,
                 intent.poolId,
                 intent.collateralType,
-                intent.collateralDeltaAmountD18,
+                intent.deltaCollateralAmountD18,
                 intent.leverage
             );
 
@@ -455,7 +444,7 @@ contract VaultModule is IVaultModule {
             collateralType,
             newCollateralAmountD18,
             leverage,
-            ERC2771Context._msgSender() // TODO LJM this is the executor address, not the account owner or authorized (the one that posted the intent)
+            ERC2771Context._msgSender() // this is the executor address, not the account owner or authorized (the one that posted the intent)
         );
 
         vault.updateRewards(
