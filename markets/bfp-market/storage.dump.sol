@@ -769,6 +769,7 @@ library Order {
 
 // @custom:artifact contracts/storage/PerpMarket.sol:PerpMarket
 library PerpMarket {
+    uint256 internal constant AVG_SECONDS_PER_YEAR = 31556952;
     struct GlobalData {
         uint128[] activeMarketIds;
     }

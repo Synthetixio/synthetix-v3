@@ -29,6 +29,11 @@ library PerpMarket {
     using Order for Order.Data;
     using Margin for Margin.GlobalData;
 
+    // --- Constants --- //
+
+    /// @dev Average over 4 years, including leap year.
+    uint256 constant AVG_SECONDS_PER_YEAR = 31556952;
+
     // --- Storage --- //
 
     struct GlobalData {
@@ -326,9 +331,7 @@ library PerpMarket {
     function getProportionalUtilizationElapsed(
         PerpMarket.Data storage self
     ) internal view returns (uint256) {
-        // 4 years which includes leap
-        uint256 AVERAGE_SECONDS_PER_YEAR = 31556952;
-        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVERAGE_SECONDS_PER_YEAR);
+        return (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SECONDS_PER_YEAR);
     }
 
     /// @dev Returns the current funding rate given current market conditions.
