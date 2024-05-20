@@ -314,4 +314,18 @@ interface IVaultModule {
         uint128 poolId,
         address collateralType
     ) external returns (uint256 ratioD18);
+
+    function getAccountIntent(
+        uint128 accountId,
+        uint256 intentId
+    )
+        external
+        view
+        returns (
+            uint128 poolId,
+            address collateralType,
+            int256 collateralDeltaAmount,
+            uint256 leverage,
+            uint32 declarationTime
+        );
 }

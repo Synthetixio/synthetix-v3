@@ -50,17 +50,23 @@ library AccountDelegationIntents {
     }
 
     /**
+     * @dev Returns the account delegation intents stored at the specified account id.
+     */
+    function loadValid(uint128 id) internal view returns (Data storage accountDelegationIntents) {
+        accountDelegationIntents = load(id);
+        if (accountDelegationIntents.accountId != 0 && accountDelegationIntents.accountId != id) {
+            revert InvalidAccountDelegationIntents();
+        }
+    }
+
+    /**
      * @dev Returns the account delegation intents stored at the specified account id. Checks if it's valid
      */
     function getValid(uint128 id) internal returns (Data storage accountDelegationIntents) {
-        accountDelegationIntents = load(id);
+        accountDelegationIntents = loadValid(id);
         if (accountDelegationIntents.accountId == 0) {
             // Uninitialized storage will have a 0 accountId
             accountDelegationIntents.accountId = id;
-        }
-
-        if (accountDelegationIntents.accountId != id) {
-            revert InvalidAccountDelegationIntents();
         }
     }
 
@@ -149,6 +155,16 @@ library AccountDelegationIntents {
         self.netAcountCachedDelegatedCollateral -= delegationIntent.deltaCollateralAmountD18;
     }
 
+    function getIntent(
+        Data storage self,
+        uint256 intentId
+    ) internal view returns (DelegationIntent.Data storage) {
+        if (!self.intentsId.contains(intentId)) {
+            revert DelegationIntent.InvalidDelegationIntentId();
+        }
+        return DelegationIntent.load(intentId);
+    }
+
     /**
      * @dev Returns the delegation intent stored at the specified nonce id.
      */
@@ -170,7 +186,6 @@ library AccountDelegationIntents {
             if (intent.intentExpired()) {
                 removeIntent(self, intent);
             }
-            removeIntent(self, intent);
         }
     }
 

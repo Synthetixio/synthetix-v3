@@ -159,7 +159,6 @@ library DelegationIntent {
             .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 < 0);
 
         // Note: here we don't apply the forever defaul if window time is not set to allow the intent to expire. If it's zero it means is not configured, then it can expire immediately.
-
         uint32 _processingEndTime = self.declarationTime + requiredDelayTime + requiredWindowTime;
         return block.timestamp >= _processingEndTime;
     }

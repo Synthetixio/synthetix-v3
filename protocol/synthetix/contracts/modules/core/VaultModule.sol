@@ -238,7 +238,7 @@ contract VaultModule is IVaultModule {
 
     function deleteAllExpiredIntents(uint128 accountId) external override {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
-        AccountDelegationIntents.getValid(accountId).cleanAllIntents();
+        AccountDelegationIntents.getValid(accountId).cleanAllExpiredIntents();
     }
 
     function deleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
@@ -343,6 +343,22 @@ contract VaultModule is IVaultModule {
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
+    }
+
+    function getAccountIntent(
+        uint128 accountId,
+        uint256 intentId
+    ) external view override returns (uint128, address, int256, uint256, uint32) {
+        DelegationIntent.Data storage intent = AccountDelegationIntents
+            .loadValid(accountId)
+            .getIntent(intentId);
+        return (
+            intent.poolId,
+            intent.collateralType,
+            intent.deltaCollateralAmountD18,
+            intent.leverage,
+            intent.declarationTime
+        );
     }
 
     function _delegateCollateral(

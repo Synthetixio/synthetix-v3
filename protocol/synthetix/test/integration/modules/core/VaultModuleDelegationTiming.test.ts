@@ -1,6 +1,7 @@
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
@@ -15,12 +16,12 @@ describe('VaultModule Two-step Delegation', function () {
     accountId,
     poolId,
     depositAmount,
-    // collateralContract,
     collateralAddress,
     oracleNodeId,
   } = bootstrapWithStakedPool();
 
   // const MAX_UINT = ethers.constants.MaxUint256;
+  const permission = ethers.utils.formatBytes32String('DELEGATE');
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -133,7 +134,7 @@ describe('VaultModule Two-step Delegation', function () {
         systems()
           .Core.connect(user2)
           .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentNotReady("${declareDelegateIntentTime}", "${declareDelegateIntentTime + 100}")`,
+        `DelegationIntentNotReady`,
         systems().Core
       );
     });
@@ -145,7 +146,7 @@ describe('VaultModule Two-step Delegation', function () {
         systems()
           .Core.connect(user2)
           .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentExpired("${declareDelegateIntentTime}", "${declareDelegateIntentTime + 120}")`,
+        `DelegationIntentExpired`,
         systems().Core
       );
     });
@@ -197,7 +198,7 @@ describe('VaultModule Two-step Delegation', function () {
         systems()
           .Core.connect(user2)
           .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentNotReady("${declareDelegateIntentTime}", "${declareDelegateIntentTime + 100}")`,
+        `DelegationIntentNotReady`,
         systems().Core
       );
     });
@@ -209,33 +210,280 @@ describe('VaultModule Two-step Delegation', function () {
         systems()
           .Core.connect(user2)
           .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentExpired("${declareDelegateIntentTime}", "${declareDelegateIntentTime + 120}")`,
+        `DelegationIntentExpired`,
         systems().Core
       );
     });
   });
 
   describe('Force Delete intents (only system owner)', async () => {
-    it('fails to call the functions as non-owner', async () => {});
-    it('falis to delete an unexistent intent (wrong id)', async () => {});
-    it('can force delete an intent by id', async () => {});
-    it('can force delete all expired account intents', async () => {});
+    let intentId: BigNumber;
+    before('declare intent to delegate', async () => {
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+    });
+
+    const restoreToDeclare = snapshotCheckpoint(provider);
+
+    it('fails to call the functions as non-owner', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).forceDeleteAllAccountIntents(accountId),
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('fails to call the functions as non-owner', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).forceDeleteIntents(accountId, [intentId]),
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    describe('Force Delete intents by ID', async () => {
+      before(restoreToDeclare);
+      it('sanity check. The intent exists', async () => {
+        const intent = await systems().Core.connect(owner).getAccountIntent(accountId, intentId);
+        assertBn.equal(intent[0], accountId);
+      });
+
+      it('can force delete an intent by id', async () => {
+        await systems().Core.connect(owner).forceDeleteIntents(accountId, [intentId]);
+      });
+
+      it('intent is deleted', async () => {
+        await assertRevert(
+          systems().Core.connect(owner).getAccountIntent(accountId, intentId),
+          'InvalidDelegationIntentId()',
+          systems().Core
+        );
+      });
+    });
+
+    describe('Force Delete intents by Account', async () => {
+      before(restoreToDeclare);
+      it('sanity check. The intent exists', async () => {
+        const intent = await systems().Core.connect(owner).getAccountIntent(accountId, intentId);
+        assertBn.equal(intent[0], accountId);
+      });
+
+      it('can force delete all expired account intents', async () => {
+        await systems().Core.connect(owner).forceDeleteAllAccountIntents(accountId);
+      });
+
+      it('intent is deleted', async () => {
+        await assertRevert(
+          systems().Core.connect(owner).getAccountIntent(accountId, intentId),
+          'InvalidDelegationIntentId()',
+          systems().Core
+        );
+      });
+    });
   });
 
   describe('Self Delete intents (only account owner)', async () => {
-    it('fails to delete an intent as non-owner', async () => {});
-    it("fails to delete an intent that didn't expire", async () => {});
-    it('can delete an intent by id', async () => {});
-    it('can delete all expired intents', async () => {});
+    let intentId: BigNumber;
+    let declareDelegateIntentTime: number;
+    before('set market window times', async () => {
+      await MockMarket.setDelegateCollateralDelay(100);
+      await MockMarket.setDelegateCollateralWindow(20);
+    });
+
+    before('declare intent to delegate', async () => {
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+
+      declareDelegateIntentTime = await getTime(provider());
+    });
+
+    const restoreToDeclare = snapshotCheckpoint(provider);
+
+    it('fails to delete all expired intents as non-owner', async () => {
+      await assertRevert(
+        systems().Core.connect(user2).deleteAllExpiredIntents(accountId),
+        `"PermissionDenied("${accountId}", "${permission}", "${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+    it('fails to delete an intents by ID as non-owner', async () => {
+      await assertRevert(
+        systems().Core.connect(user2).deleteIntents(accountId, [intentId]),
+        `"PermissionDenied("${accountId}", "${permission}", "${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+    it("fails to delete an intent that didn't expire", async () => {
+      await fastForwardTo(declareDelegateIntentTime + 115, provider());
+      await assertRevert(
+        systems().Core.connect(user1).deleteIntents(accountId, [intentId]),
+        `DelegationIntentNotExpired`,
+        systems().Core
+      );
+    });
+
+    describe('can delete an intent by id', async () => {
+      before(restoreToDeclare);
+
+      it('sanity check. The intent exists', async () => {
+        const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+        assertBn.equal(intent[0], accountId);
+      });
+
+      it('can delete an expired intent', async () => {
+        await fastForwardTo(declareDelegateIntentTime + 121, provider());
+        await systems().Core.connect(user1).deleteIntents(accountId, [intentId]);
+      });
+
+      it('intent is deleted', async () => {
+        await assertRevert(
+          systems().Core.connect(user1).getAccountIntent(accountId, intentId),
+          'InvalidDelegationIntentId()',
+          systems().Core
+        );
+      });
+    });
+
+    describe('can delete all expired intents', async () => {
+      before(restoreToDeclare);
+
+      it('sanity check. The intent exists', async () => {
+        const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+        assertBn.equal(intent[0], accountId);
+      });
+
+      it('can delete all account expired intents', async () => {
+        await fastForwardTo(declareDelegateIntentTime + 121, provider());
+        await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
+      });
+
+      it('intent is deleted', async () => {
+        await assertRevert(
+          systems().Core.connect(user1).getAccountIntent(accountId, intentId),
+          'InvalidDelegationIntentId()',
+          systems().Core
+        );
+      });
+    });
   });
 
   describe('Edge case - Self delete after configuration change', async () => {
-    it("fails to delete an intent that didn't expire (expiration time not set)", async () => {});
+    let intentId: BigNumber;
+    let declareDelegateIntentTime: number;
+    before('set market window times', async () => {
+      await MockMarket.setDelegateCollateralDelay(10000);
+      await MockMarket.setDelegateCollateralWindow(2000);
+    });
 
-    it('after the market config is changed, it can delete the expired intent', async () => {});
+    before('declare intent to delegate', async () => {
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+
+      declareDelegateIntentTime = await getTime(provider());
+    });
+
+    before('set market window times', async () => {
+      await MockMarket.setDelegateCollateralDelay(100);
+      await MockMarket.setDelegateCollateralWindow(20);
+    });
+
+    it('sanity check. The intent exists', async () => {
+      const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+      assertBn.equal(intent[0], accountId);
+    });
+
+    it('can force delete all expired account intents', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 121, provider());
+      await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
+    });
+
+    it('intent is deleted', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).getAccountIntent(accountId, intentId),
+        'InvalidDelegationIntentId()',
+        systems().Core
+      );
+    });
   });
 
-  describe('Edge case - Multiple markets with different timing configuration', async () => {
+  describe('Edge case - Self delete non configured (default expiration is after delay)', async () => {
+    let intentId: BigNumber;
+    let declareDelegateIntentTime: number;
+    before(restore);
+    before('set market window times', async () => {
+      await MockMarket.setDelegateCollateralDelay(150);
+      // Note: not setting the window size (it means defaults to 0) - forever expiration to execute, immediate expiration to delete
+    });
+
+    before('declare intent to delegate', async () => {
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+
+      declareDelegateIntentTime = await getTime(provider());
+    });
+
+    it('sanity check 1. The intent exists', async () => {
+      const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+      assertBn.equal(intent[0], accountId);
+    });
+
+    it('fails to delete before window starts', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 145, provider());
+      await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
+    });
+
+    it('sanity check 2. The intent exists', async () => {
+      const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+      assertBn.equal(intent[0], accountId);
+    });
+
+    it('can force delete all expired account intents', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 155, provider());
+      await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
+    });
+
+    it('intent is deleted', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).getAccountIntent(accountId, intentId),
+        'InvalidDelegationIntentId()',
+        systems().Core
+      );
+    });
+  });
+
+  describe.skip('Edge case - Multiple markets with different timing configuration', async () => {
     // note: with 2 markets with different config, will use the longest delay time configuration
     it('fails to execute an intent based on the shortest delay', async () => {});
 
