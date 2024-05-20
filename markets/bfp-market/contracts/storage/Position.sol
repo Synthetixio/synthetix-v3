@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
@@ -14,12 +14,10 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 library Position {
-    using DecimalMath for uint256;
-    using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint128;
+    using DecimalMath for uint256;
     using SafeCastU128 for uint128;
-    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
@@ -147,6 +145,7 @@ library Position {
             revert ErrorUtil.InsufficientLiquidity();
         }
     }
+
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *

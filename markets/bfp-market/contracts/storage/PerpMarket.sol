@@ -20,7 +20,6 @@ library PerpMarket {
     using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for uint256;
-    using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -209,7 +208,7 @@ library PerpMarket {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
         uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(
-            marketConfig.minCreditPercent.to256()
+            marketConfig.minCreditPercent
         );
         if (lockedCollateralUsd == 0) {
             // If we dont have any positions open, we're at 0% utilization.

@@ -1,15 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 
 library PerpMarketConfiguration {
-    using SafeCastI256 for int256;
-
     // --- Constants --- //
 
     bytes32 constant GLOBAL_DATA_SLOT_NAME =
