@@ -23,9 +23,9 @@ library PerpMarketConfiguration {
         /// Max acceptable publishTime from Pyth.
         uint64 pythPublishTimeMax;
         /// Minimum amount of time (in seconds) required for an order to exist before settlement.
-        uint128 minOrderAge;
+        uint64 minOrderAge;
         /// Maximum order age (in seconds) before the order becomes stale.
-        uint128 maxOrderAge;
+        uint64 maxOrderAge;
         /// The min amount in USD a keeper should receive on settlements (currently not used for liquidations).
         uint256 minKeeperFeeUsd;
         /// The maximum amount in USD a keeper should receive on settlements/liquidations.

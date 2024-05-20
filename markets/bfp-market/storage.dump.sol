@@ -503,8 +503,8 @@ interface IMarketConfigurationModule {
     struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
-        uint128 minOrderAge;
-        uint128 maxOrderAge;
+        uint64 minOrderAge;
+        uint64 maxOrderAge;
         uint256 minKeeperFeeUsd;
         uint256 maxKeeperFeeUsd;
         uint128 keeperProfitMarginPercent;
@@ -825,8 +825,8 @@ library PerpMarketConfiguration {
         address rewardDistributorImplementation;
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
-        uint128 minOrderAge;
-        uint128 maxOrderAge;
+        uint64 minOrderAge;
+        uint64 maxOrderAge;
         uint256 minKeeperFeeUsd;
         uint256 maxKeeperFeeUsd;
         uint128 keeperProfitMarginUsd;

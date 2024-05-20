@@ -94,10 +94,10 @@ contract OrderModule is IOrderModule {
      * A ready order is one where time that has passed must be at least the minimum order age (>=).
      */
     function isOrderStaleOrReady(
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private view returns (bool isStale, bool isReady) {
-        uint256 timestamp = block.timestamp;
+        uint64 timestamp = block.timestamp.to64();
         isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
         isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
@@ -105,7 +105,7 @@ contract OrderModule is IOrderModule {
     /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         uint256 pythPrice,
         Position.TradeParams memory params
     ) private view {
