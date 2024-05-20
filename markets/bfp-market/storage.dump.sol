@@ -548,7 +548,7 @@ interface IMarketConfigurationModule {
 interface IOrderModule {
     struct OrderDigest {
         int128 sizeDelta;
-        uint256 commitmentTime;
+        uint64 commitmentTime;
         uint256 limitPrice;
         uint128 keeperFeeBufferUsd;
         address[] hooks;
@@ -598,9 +598,9 @@ interface IPerpMarketFactoryModule {
         uint256 available;
     }
     struct UtilizationDigest {
-        uint256 lastComputedUtilizationRate;
-        uint256 lastComputedTimestamp;
-        uint256 currentUtilizationRate;
+        uint128 lastComputedUtilizationRate;
+        uint64 lastComputedTimestamp;
+        uint128 currentUtilizationRate;
         uint256 utilization;
     }
     struct MarketDigest {
@@ -612,7 +612,7 @@ interface IPerpMarketFactoryModule {
         int128 fundingVelocity;
         int128 fundingRate;
         uint128 utilizationRate;
-        uint256 remainingLiquidatableSizeCapacity;
+        uint128 remainingLiquidatableSizeCapacity;
         uint128 lastLiquidationTime;
         uint128 totalTraderDebtUsd;
         uint256 totalCollateralValueUsd;
@@ -663,6 +663,10 @@ contract MarginModule {
 
 // @custom:artifact contracts/modules/OrderModule.sol:OrderModule
 contract OrderModule {
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        uint64 commitmentTime;
+    }
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int128 accruedFunding;

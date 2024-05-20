@@ -24,11 +24,11 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
 
     struct UtilizationDigest {
         /// Last computed utilization rate.
-        uint256 lastComputedUtilizationRate;
+        uint128 lastComputedUtilizationRate;
         /// Timestamp of last computed utilization rate.
-        uint256 lastComputedTimestamp;
+        uint64 lastComputedTimestamp;
         /// The current instantaneous utilization rate.
-        uint256 currentUtilizationRate;
+        uint128 currentUtilizationRate;
         /// The current instantaneous collateral utilization.
         uint256 utilization;
     }
@@ -51,7 +51,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         /// Current utilization rate
         uint128 utilizationRate;
         /// Amount of size remaining last recorded in current window.
-        uint256 remainingLiquidatableSizeCapacity;
+        uint128 remainingLiquidatableSizeCapacity;
         /// block.timestamp of when the last liqudation had occurred.
         uint128 lastLiquidationTime;
         /// All traders unsettled debt in USD.

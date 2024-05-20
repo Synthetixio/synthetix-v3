@@ -30,7 +30,7 @@ interface IBasePerpMarket {
         uint128 indexed accountId,
         uint128 indexed marketId,
         uint256 keeperFee,
-        uint256 commitmentTime
+        uint64 commitmentTime
     );
 
     /// @notice Emitted when the market's size is updated either due to orders or liquidations.

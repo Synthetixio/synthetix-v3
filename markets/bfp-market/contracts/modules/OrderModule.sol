@@ -58,6 +58,11 @@ contract OrderModule is IOrderModule {
 
     // --- Runtime structs --- //
 
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        uint64 commitmentTime;
+    }
+
     struct Runtime_settleOrder {
         uint256 pythPrice;
         int128 accruedFunding;
@@ -233,7 +238,9 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        Runtime_commitOrder memory runtime;
+
+        runtime.oraclePrice = market.getOraclePrice(addresses);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
@@ -241,9 +248,9 @@ contract OrderModule is IOrderModule {
         // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
         Position.TradeParams memory tradeParams = Position.TradeParams(
             sizeDelta,
-            oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
-            oraclePrice, // CL oracle price.
-            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+            runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+            runtime.oraclePrice, // CL oracle price.
+            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, runtime.oraclePrice),
             marketConfig.makerFee,
             marketConfig.takerFee,
             limitPrice,
@@ -263,14 +270,15 @@ contract OrderModule is IOrderModule {
             addresses
         );
 
+        runtime.commitmentTime = block.timestamp.to64();
         market.orders[accountId].update(
-            Order.Data(sizeDelta, block.timestamp.to64(), limitPrice, keeperFeeBufferUsd, hooks)
+            Order.Data(sizeDelta, runtime.commitmentTime, limitPrice, keeperFeeBufferUsd, hooks)
         );
 
         emit OrderCommitted(
             accountId,
             marketId,
-            block.timestamp,
+            runtime.commitmentTime,
             sizeDelta,
             trade.orderFee,
             trade.keeperFee
@@ -439,7 +447,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
 
         if (!isStale) {
@@ -468,7 +476,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         if (!isReady) {
@@ -548,7 +556,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         return
