@@ -75,10 +75,11 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
       const config = {
         ...specific,
+        marketId,
         skewScale: bn(0),
       };
       await assertRevert(
-        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        BfpMarketProxy.setMarketConfigurationById(config),
         'InvalidParameter("skewScale", "ZeroAmount")',
         BfpMarketProxy
       );
@@ -91,11 +92,12 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
       const config = {
         ...specific,
+        marketId,
         minMarginUsd: globalConfig.maxKeeperFeeUsd.sub(bn(1)),
       };
 
       await assertRevert(
-        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        BfpMarketProxy.setMarketConfigurationById(config),
         `InvalidParameter("minMarginUsd", "minMarginUsd cannot be less than maxKeeperFeeUsd")`,
         BfpMarketProxy
       );
@@ -110,7 +112,7 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       const { receipt } = await withExplicitEvmMine(
-        () => BfpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        () => BfpMarketProxy.connect(from).setMarketConfigurationById({ ...specific, marketId }),
         provider()
       );
 
@@ -151,7 +153,7 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        BfpMarketProxy.connect(from).setMarketConfigurationById({ ...specific, marketId }),
         `Unauthorized("${await from.getAddress()}")`,
         BfpMarketProxy
       );
@@ -164,7 +166,10 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setMarketConfigurationById(notFoundMarketId, specific),
+        BfpMarketProxy.connect(from).setMarketConfigurationById({
+          ...specific,
+          marketId: notFoundMarketId,
+        }),
         `MarketNotFound("${notFoundMarketId}")`,
         BfpMarketProxy
       );

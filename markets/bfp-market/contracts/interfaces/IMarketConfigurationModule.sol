@@ -37,6 +37,7 @@ interface IMarketConfigurationModule {
 
     /// @notice See PerpMarketConfiguration.Data for more details.
     struct ConfigureByMarketParameters {
+        uint128 marketId;
         bytes32 oracleNodeId;
         bytes32 pythPriceFeedId;
         uint128 makerFee;
@@ -77,10 +78,8 @@ interface IMarketConfigurationModule {
     ) external;
 
     /// @notice Configures a market specific parameters applied to the `marketId`.
-    /// @param marketId Market to configure
     /// @param data A struct of parameters to configure
     function setMarketConfigurationById(
-        uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external;
 

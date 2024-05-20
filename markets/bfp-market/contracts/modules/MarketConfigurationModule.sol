@@ -45,10 +45,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     /// @inheritdoc IMarketConfigurationModule
     function setMarketConfigurationById(
-        uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
+        uint128 marketId = data.marketId;
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
         PerpMarket.exists(marketId);
