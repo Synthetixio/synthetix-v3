@@ -2909,7 +2909,6 @@ __metadata:
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": "npm:3.3.7"
-    "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/lodash": "npm:^4.14.199"
     "@types/mocha-each": "npm:2.0.1"

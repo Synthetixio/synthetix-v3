@@ -22,7 +22,6 @@ import {
 import {
   AVERAGE_SECONDS_PER_YEAR,
   SECONDS_ONE_DAY,
-  SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
   commitOrder,
   depositMargin,
@@ -393,7 +392,7 @@ describe('OrderModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -1038,7 +1037,7 @@ describe('OrderModule', () => {
     });
 
     it('should handle winning position with debt', async () => {
-      const { BfpMarketProxy } = systems();
+      const { BfpMarketProxy, USD } = systems();
 
       const { trader, marketId, collateralDepositAmount, market, collateral } = await depositMargin(
         bs,
@@ -1079,8 +1078,8 @@ describe('OrderModule', () => {
         trader.accountId,
         marketId
       );
-      const usdCollateralBeforeWinningPos = depositedCollaterals.find((c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      const usdCollateralBeforeWinningPos = depositedCollaterals.find(
+        (c) => c.collateralAddress === USD.address
       );
 
       // deposit more collateral to avoid liquidation/ insufficient margin
@@ -1134,8 +1133,8 @@ describe('OrderModule', () => {
 
       const { depositedCollaterals: depositedCollateralsAfter } =
         await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const usdCollateral = depositedCollateralsAfter.find((c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      const usdCollateral = depositedCollateralsAfter.find(
+        (c) => c.collateralAddress === USD.address
       );
       const orderFees = wei(winningOrderOpenEvent.args.orderFee).add(
         closeWinningEvent?.args.orderFee
@@ -1622,7 +1621,7 @@ describe('OrderModule', () => {
     });
 
     it('should realize non-zero sUSD to trader when closing a profitable trade', async () => {
-      const { BfpMarketProxy } = systems();
+      const { BfpMarketProxy, USD } = systems();
 
       // Any collateral except sUSD can be used, we want to make sure a non-zero.
       const collateral = genOneOf(collateralsWithoutSusd());
@@ -1634,8 +1633,8 @@ describe('OrderModule', () => {
       // No prior orders or deposits. Must be zero.
       const d0 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(
-        d0.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+        d0.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === USD.address
         )[0].available
       );
 
@@ -1665,16 +1664,16 @@ describe('OrderModule', () => {
 
       // sUSD must be gt 0.
       assertBn.gt(
-        d1.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+        d1.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === USD.address
         )[0].available,
         bn(0)
       );
 
       // Value of original collateral should also stay the same.
       assertBn.equal(
-        d1.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(collateral.synthMarketId())
+        d1.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === collateral.address()
         )[0].available,
         collateralDepositAmount
       );
@@ -1693,8 +1692,8 @@ describe('OrderModule', () => {
       // No prior orders or deposits. Must be zero.
       const d0 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(
-        d0.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+        d0.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === USD.address
         )[0].available
       );
 
