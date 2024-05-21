@@ -38,33 +38,35 @@ contract OrderModule is IOrderModule {
     using Margin for Margin.Data;
 
     // --- Immutables --- //
+
     address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_core) {
-        SYNTHETIX_CORE = _synthetix_core;
-
-        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
-
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
         SYNTHETIX_SUSD = address(core.getUsdToken());
         ORACLE_MANAGER = address(core.getOracleManager());
 
         if (
-            _synthetix_core == address(0) ||
-            ORACLE_MANAGER == address(0) ||
-            SYNTHETIX_SUSD == address(0)
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
         ) {
-            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
         }
     }
 
     // --- Runtime structs --- //
 
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        uint64 commitmentTime;
+    }
+
     struct Runtime_settleOrder {
         uint256 pythPrice;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         int256 pricePnl;
         uint256 fillPrice;
         uint128 updatedMarketSize;
@@ -92,10 +94,10 @@ contract OrderModule is IOrderModule {
      * A ready order is one where time that has passed must be at least the minimum order age (>=).
      */
     function isOrderStaleOrReady(
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private view returns (bool isStale, bool isReady) {
-        uint256 timestamp = block.timestamp;
+        uint64 timestamp = block.timestamp.to64();
         isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
         isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
@@ -103,7 +105,7 @@ contract OrderModule is IOrderModule {
     /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         uint256 pythPrice,
         Position.TradeParams memory params
     ) private view {
@@ -183,7 +185,7 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for utilization recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (uint256 utilizationRate, ) = market.recomputeUtilization(
+        (uint128 utilizationRate, ) = market.recomputeUtilization(
             price,
             AddressRegistry.Data({
                 synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -196,7 +198,7 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
+        (int128 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
             market.id,
             market.skew,
@@ -213,7 +215,7 @@ contract OrderModule is IOrderModule {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
+        uint128 keeperFeeBufferUsd,
         address[] memory hooks
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
@@ -236,7 +238,9 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
+        Runtime_commitOrder memory runtime;
+
+        runtime.oraclePrice = market.getOraclePrice(addresses);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
@@ -244,9 +248,9 @@ contract OrderModule is IOrderModule {
         // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
         Position.TradeParams memory tradeParams = Position.TradeParams(
             sizeDelta,
-            oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
-            oraclePrice, // CL oracle price.
-            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+            runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+            runtime.oraclePrice, // CL oracle price.
+            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, runtime.oraclePrice),
             marketConfig.makerFee,
             marketConfig.takerFee,
             limitPrice,
@@ -266,14 +270,15 @@ contract OrderModule is IOrderModule {
             addresses
         );
 
+        runtime.commitmentTime = block.timestamp.to64();
         market.orders[accountId].update(
-            Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
+            Order.Data(sizeDelta, runtime.commitmentTime, limitPrice, keeperFeeBufferUsd, hooks)
         );
 
         emit OrderCommitted(
             accountId,
             marketId,
-            block.timestamp,
+            runtime.commitmentTime,
             sizeDelta,
             trade.orderFee,
             trade.keeperFee
@@ -410,7 +415,7 @@ contract OrderModule is IOrderModule {
         emit OrderSettled(
             accountId,
             marketId,
-            block.timestamp,
+            block.timestamp.to64(),
             runtime.tradeParams.sizeDelta,
             trade.orderFee,
             trade.keeperFee,
@@ -442,7 +447,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
 
         if (!isStale) {
@@ -471,7 +476,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         if (!isReady) {
@@ -551,7 +556,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         return
@@ -570,7 +575,7 @@ contract OrderModule is IOrderModule {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
+        uint128 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);

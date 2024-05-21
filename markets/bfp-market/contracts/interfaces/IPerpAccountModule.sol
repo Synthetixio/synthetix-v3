@@ -38,9 +38,9 @@ interface IPerpAccountModule {
         /// Unrealized PnL of position in USD.
         int256 pnl;
         /// Funding accrued in USD.
-        int256 accruedFunding;
+        int128 accruedFunding;
         /// Utilization accrued in USD.
-        uint256 accruedUtilization;
+        uint128 accruedUtilization;
         /// Raw Pyth entry price of position (at open or on modification).
         uint256 entryPythPrice;
         /// pd-adjusted entry price of position (at open or on modification).

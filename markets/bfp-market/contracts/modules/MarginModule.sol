@@ -6,11 +6,11 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
@@ -40,20 +40,16 @@ contract MarginModule is IMarginModule {
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_core) {
-        SYNTHETIX_CORE = _synthetix_core;
-
-        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
-
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
         SYNTHETIX_SUSD = address(core.getUsdToken());
         ORACLE_MANAGER = address(core.getOracleManager());
 
         if (
-            _synthetix_core == address(0) ||
-            ORACLE_MANAGER == address(0) ||
-            SYNTHETIX_SUSD == address(0)
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
         ) {
-            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
         }
     }
 
@@ -218,7 +214,7 @@ contract MarginModule is IMarginModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -226,7 +222,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -306,7 +302,7 @@ contract MarginModule is IMarginModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -314,7 +310,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // > 0 is a deposit whilst < 0 is a withdrawal.

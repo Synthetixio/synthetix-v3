@@ -29,24 +29,21 @@ contract LiquidationModule is ILiquidationModule {
     using Position for Position.Data;
 
     // --- Immutables --- //
+
     address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_core) {
-        SYNTHETIX_CORE = _synthetix_core;
-
-        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
-
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
         SYNTHETIX_SUSD = address(core.getUsdToken());
         ORACLE_MANAGER = address(core.getOracleManager());
 
         if (
-            _synthetix_core == address(0) ||
-            ORACLE_MANAGER == address(0) ||
-            SYNTHETIX_SUSD == address(0)
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
         ) {
-            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
         }
     }
 
@@ -78,7 +75,7 @@ contract LiquidationModule is ILiquidationModule {
             uint256 liqKeeperFee
         )
     {
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -106,7 +103,7 @@ contract LiquidationModule is ILiquidationModule {
 
         emit MarketSizeUpdated(marketId, updatedMarketSize, updatedMarketSkew);
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(
+        (uint128 utilizationRate, ) = market.recomputeUtilization(
             oraclePrice,
             AddressRegistry.Data({
                 synthetix: ISynthetixSystem(SYNTHETIX_CORE),

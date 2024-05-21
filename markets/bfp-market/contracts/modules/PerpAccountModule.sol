@@ -38,22 +38,19 @@ contract PerpAccountModule is IPerpAccountModule {
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_core) {
-        SYNTHETIX_CORE = _synthetix_core;
-
-        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
-
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
         SYNTHETIX_SUSD = address(core.getUsdToken());
         ORACLE_MANAGER = address(core.getOracleManager());
 
         if (
-            _synthetix_core == address(0) ||
-            ORACLE_MANAGER == address(0) ||
-            SYNTHETIX_SUSD == address(0)
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
         ) {
-            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
         }
     }
+
     // --- Runtime structs --- //
 
     struct Runtime_splitAccount {
@@ -103,14 +100,15 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 length = globalMarginConfig.supportedCollaterals.length;
         IPerpAccountModule.DepositedCollateral[]
             memory depositedCollaterals = new DepositedCollateral[](length);
-        address collateralAddress;
-        uint256 collateralPrice;
 
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
+
+        address collateralAddress;
+        uint256 collateralPrice;
 
         for (uint256 i = 0; i < length; ) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
@@ -125,6 +123,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 ++i;
             }
         }
+
         (uint256 collateralUsd, ) = Margin.getCollateralUsd(accountMargin, globalConfig, addresses);
         return
             IPerpAccountModule.AccountDigest(

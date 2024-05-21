@@ -33,11 +33,9 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(config.keeperProfitMarginPercent, global.keeperProfitMarginPercent);
       assert.equal(config.keeperSettlementGasUnits, global.keeperSettlementGasUnits);
       assert.equal(config.keeperLiquidationGasUnits, global.keeperLiquidationGasUnits);
-      assertBn.equal(config.keeperLiquidationFeeUsd, global.keeperLiquidationFeeUsd);
       assertBn.equal(config.collateralDiscountScalar, global.collateralDiscountScalar);
       assertBn.equal(config.minCollateralDiscount, global.minCollateralDiscount);
       assertBn.equal(config.maxCollateralDiscount, global.maxCollateralDiscount);
-      assertBn.equal(config.sellExactInMaxSlippagePercent, global.sellExactInMaxSlippagePercent);
       assertBn.equal(config.utilizationBreakpointPercent, global.utilizationBreakpointPercent);
       assertBn.equal(config.lowUtilizationSlopePercent, global.lowUtilizationSlopePercent);
       assertBn.equal(config.highUtilizationSlopePercent, global.highUtilizationSlopePercent);

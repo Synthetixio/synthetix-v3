@@ -13,9 +13,11 @@ contract __TestHelperModule {
 
     address immutable SYNTHETIX_SUSD;
 
-    constructor(address _synthetix_susd) {
-        SYNTHETIX_SUSD = _synthetix_susd;
+    constructor(address _susd) {
+        SYNTHETIX_SUSD = _susd;
     }
+
+    // --- Mutations --- //
 
     function __test_creditAccountMarginProfitUsd(
         uint128 accountId,

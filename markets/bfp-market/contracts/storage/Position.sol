@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
@@ -14,12 +14,10 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 library Position {
-    using DecimalMath for uint256;
-    using DecimalMath for int256;
     using DecimalMath for int128;
     using DecimalMath for uint128;
+    using DecimalMath for uint256;
     using SafeCastU128 for uint128;
-    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
@@ -34,7 +32,7 @@ library Position {
         uint128 makerFee;
         uint128 takerFee;
         uint256 limitPrice;
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
     }
 
     struct ValidatedTrade {
@@ -47,8 +45,8 @@ library Position {
 
     struct HealthData {
         uint256 healthFactor;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         int256 pnl;
     }
 
@@ -74,13 +72,14 @@ library Position {
 
     // --- Storage --- //
 
+    /// @dev Position.Data structs are stored in PerpMarket.Data.positions.
     struct Data {
         /// Size (in native units e.g. swstETH)
         int128 size;
         /// The market's accumulated accrued funding at position settlement.
-        int256 entryFundingAccrued;
+        int128 entryFundingAccrued;
         /// The market's accumulated accrued utilization at position settlement.
-        uint256 entryUtilizationAccrued;
+        uint128 entryUtilizationAccrued;
         /// The raw pyth price the order was settled with.
         uint256 entryPythPrice;
         /// The fill price at which this position was settled with.
@@ -146,6 +145,7 @@ library Position {
             revert ErrorUtil.InsufficientLiquidity();
         }
     }
+
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
@@ -436,7 +436,6 @@ library Position {
             ),
             flagExecutionCostInUsd + globalConfig.keeperProfitMarginUsd
         );
-
         uint256 flagFeeWithRewardInUsd = flagFeeInUsd +
             MathUtil.max(notionalValueUsd, collateralUsd).mulDecimal(
                 marketConfig.liquidationRewardPercent
@@ -568,14 +567,22 @@ library Position {
 
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
 
-        healthData.accruedFunding = size.mulDecimal(
-            unrecordedFunding + market.currentFundingAccruedComputed - positionEntryFundingAccrued
-        );
-        healthData.accruedUtilization = MathUtil.abs(size).mulDecimal(price).mulDecimal(
-            market.getUnrecordedUtilization() +
-                market.currentUtilizationAccruedComputed -
-                positionEntryUtilizationAccrued
-        );
+        healthData.accruedFunding = size
+            .mulDecimal(
+                unrecordedFunding +
+                    market.currentFundingAccruedComputed -
+                    positionEntryFundingAccrued
+            )
+            .to128();
+        healthData.accruedUtilization = MathUtil
+            .abs(size)
+            .mulDecimal(price)
+            .mulDecimal(
+                market.getUnrecordedUtilization() +
+                    market.currentUtilizationAccruedComputed -
+                    positionEntryUtilizationAccrued
+            )
+            .to128();
 
         healthData.healthFactor = getHealthFactor(
             size,
@@ -591,6 +598,7 @@ library Position {
         return healthData;
     }
 
+    /// @dev Returns the representation of the safety between margin and position (> 1 then safe).
     function getHealthFactor(
         int128 size,
         uint256 price,
@@ -622,7 +630,6 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-
         return
             Position.getHealthFactor(self.size, price, marketConfig, marginValues, addresses) <=
             DecimalMath.UNIT;
@@ -641,17 +648,21 @@ library Position {
         Position.Data storage self,
         PerpMarket.Data storage market,
         uint256 price
-    ) internal view returns (int256) {
+    ) internal view returns (int128) {
         if (self.size == 0) {
             return 0;
         }
 
         (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
-
         return
-            self.size.mulDecimal(
-                unrecordedFunding + market.currentFundingAccruedComputed - self.entryFundingAccrued
-            );
+            self
+                .size
+                .mulDecimal(
+                    unrecordedFunding +
+                        market.currentFundingAccruedComputed -
+                        self.entryFundingAccrued
+                )
+                .to128();
     }
 
     /// @dev Returns the utilization accrued from when the position was opened to now.
@@ -659,19 +670,21 @@ library Position {
         Position.Data storage self,
         PerpMarket.Data storage market,
         uint256 price
-    ) internal view returns (uint256) {
+    ) internal view returns (uint128) {
         if (self.size == 0) {
             return 0;
         }
 
-        uint256 unrecordedUtilization = market.getUnrecordedUtilization();
+        uint128 unrecordedUtilization = market.getUnrecordedUtilization();
         uint256 notional = MathUtil.abs(self.size).mulDecimal(price);
         return
-            notional.mulDecimal(
-                unrecordedUtilization +
-                    market.currentUtilizationAccruedComputed -
-                    self.entryUtilizationAccrued
-            );
+            notional
+                .mulDecimal(
+                    unrecordedUtilization +
+                        market.currentUtilizationAccruedComputed -
+                        self.entryUtilizationAccrued
+                )
+                .to128();
     }
 
     // --- Member (mutations) --- //

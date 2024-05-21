@@ -30,12 +30,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperCancellationGasUnits = data.keeperCancellationGasUnits;
         config.keeperFlagGasUnits = data.keeperFlagGasUnits;
         config.keeperLiquidateMarginGasUnits = data.keeperLiquidateMarginGasUnits;
-        config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
         config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
         config.collateralDiscountScalar = data.collateralDiscountScalar;
         config.minCollateralDiscount = data.minCollateralDiscount;
         config.maxCollateralDiscount = data.maxCollateralDiscount;
-        config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
         config.utilizationBreakpointPercent = data.utilizationBreakpointPercent;
         config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
         config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;

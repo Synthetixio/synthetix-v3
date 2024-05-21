@@ -78,12 +78,10 @@ export const genBootstrap = () => ({
     keeperFlagGasUnits: 1_200_000,
     keeperLiquidateMarginGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
-    keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Temporary dummy address to be reconfigurd later.
     collateralDiscountScalar: bn(1),
     minCollateralDiscount: bn(0.01),
     maxCollateralDiscount: bn(0.05),
-    sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
     utilizationBreakpointPercent: bn(genNumber(0.65, 0.85)),
     lowUtilizationSlopePercent: bn(genNumber(0.0002, 0.0003)),
     highUtilizationSlopePercent: bn(genNumber(0.005, 0.015)),

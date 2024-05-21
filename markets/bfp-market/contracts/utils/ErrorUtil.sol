@@ -95,9 +95,6 @@ library ErrorUtil {
     /// @notice Thrown when configuring margin where a previously added collateral was wrongly removed.
     error MissingRequiredCollateral(address collateralAddress);
 
-    /// @notice Thrown when and action is only allowed by account owner.
-    error OnlyAccountOwner();
-
     /// @notice Thrown when an invalid reward distributor was specified.
     error InvalidRewardDistributor(address distributor);
 
@@ -109,9 +106,6 @@ library ErrorUtil {
 
     /// @notice Thrown when there are too many hooks specified.
     error MaxHooksExceeded();
-
-    /// @notice Thrown when you trying to merge an account with a position that wasn't created in the same block.
-    error PositionTooOld();
 
     /// @notice Thrown when collateral is found when none was expected to exist.
     error CollateralFound();

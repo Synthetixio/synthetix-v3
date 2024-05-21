@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
@@ -21,32 +20,30 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for uint128;
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
+    using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using SafeCastU128 for uint128;
     using PerpMarket for PerpMarket.Data;
 
     // --- Immutables --- //
+
     address immutable SYNTHETIX_CORE;
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
-    constructor(address _synthetix_core) {
-        SYNTHETIX_CORE = _synthetix_core;
-
-        ISynthetixSystem core = ISynthetixSystem(_synthetix_core);
-
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
         SYNTHETIX_SUSD = address(core.getUsdToken());
         ORACLE_MANAGER = address(core.getOracleManager());
 
         if (
-            _synthetix_core == address(0) ||
-            ORACLE_MANAGER == address(0) ||
-            SYNTHETIX_SUSD == address(0)
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
         ) {
-            revert ErrorUtil.InvalidCoreAddress(_synthetix_core);
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
         }
     }
+
     // --- Mutations --- //
 
     /// @inheritdoc IPerpMarketFactoryModule
@@ -90,7 +87,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        (uint256 utilizationRate, ) = market.recomputeUtilization(
+        (uint128 utilizationRate, ) = market.recomputeUtilization(
             market.getOraclePrice(addresses),
             addresses
         );
@@ -100,7 +97,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        (int256 fundingRate, ) = market.recomputeFunding(
+        (int128 fundingRate, ) = market.recomputeFunding(
             market.getOraclePrice(
                 AddressRegistry.Data({
                     synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -143,8 +140,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
-        int256 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
+        (, int128 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
+        int128 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
 
         marketReportedDebt =

@@ -239,7 +239,7 @@ describe('MarginModule Debt', async () => {
       assertBn.isZero(d3.debtUsd);
     });
 
-    it('should allow max sending a bigger amount than the debt', async () => {
+    it('should allow sending an amount greater than the debt', async () => {
       const { BfpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -280,6 +280,7 @@ describe('MarginModule Debt', async () => {
       );
       assertBn.isZero(debtAfter);
     });
+
     it('should remove debt using sUSD collateral when user have some', async () => {
       const { BfpMarketProxy } = systems();
 
