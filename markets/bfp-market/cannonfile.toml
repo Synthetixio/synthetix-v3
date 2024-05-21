@@ -123,6 +123,12 @@ factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
 factory.PerpAccountProxy.event = "AssociatedSystemSet"
 factory.PerpAccountProxy.arg = 2
 
+[invoke.set_reward_distributor_implementation]
+target = ["BfpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = ["<%= contracts.PerpRewardDistributor.address %>"]
+
 # --- Core feature flags --- #
 
 [invoke.add_to_feature_flag_allowlist_register_market]

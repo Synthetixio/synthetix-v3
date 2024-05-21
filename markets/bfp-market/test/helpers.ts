@@ -142,7 +142,8 @@ export const setMarketConfigurationById = async (
   const data = await BfpMarketProxy.getMarketConfigurationById(marketId);
   await withExplicitEvmMine(
     () =>
-      BfpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
+      BfpMarketProxy.connect(owner()).setMarketConfigurationById({
+        marketId,
         ...data,
         ...params,
       }),

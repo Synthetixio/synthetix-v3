@@ -200,8 +200,9 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       await BfpMarketProxy.createMarket({ name });
 
       // Configure market.
-      await BfpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+      await BfpMarketProxy.connect(getOwner()).setMarketConfigurationById({
         ...specific,
+        marketId,
         // Override the generic supplied oracleNodeId with the one that was just created.
         oracleNodeId,
       });

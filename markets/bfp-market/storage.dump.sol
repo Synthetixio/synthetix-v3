@@ -525,6 +525,7 @@ interface IMarketConfigurationModule {
         uint128 highUtilizationSlopePercent;
     }
     struct ConfigureByMarketParameters {
+        uint128 marketId;
         bytes32 oracleNodeId;
         bytes32 pythPriceFeedId;
         uint128 makerFee;
