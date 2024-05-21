@@ -223,11 +223,17 @@ contract VaultModule is IVaultModule {
         );
     }
 
+    /**
+     * @inheritdoc IVaultModule
+     */
     function forceDeleteAllAccountIntents(uint128 accountId) external override {
         OwnableStorage.onlyOwner();
         AccountDelegationIntents.getValid(accountId).cleanAllIntents();
     }
 
+    /**
+     * @inheritdoc IVaultModule
+     */
     function forceDeleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
         OwnableStorage.onlyOwner();
         for (uint256 i = 0; i < intentIds.length; i++) {
@@ -236,11 +242,17 @@ contract VaultModule is IVaultModule {
         }
     }
 
+    /**
+     * @inheritdoc IVaultModule
+     */
     function deleteAllExpiredIntents(uint128 accountId) external override {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
         AccountDelegationIntents.getValid(accountId).cleanAllExpiredIntents();
     }
 
+    /**
+     * @inheritdoc IVaultModule
+     */
     function deleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
         for (uint256 i = 0; i < intentIds.length; i++) {
@@ -345,6 +357,9 @@ contract VaultModule is IVaultModule {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
     }
 
+    /**
+     * @inheritdoc IVaultModule
+     */
     function getAccountIntent(
         uint128 accountId,
         uint256 intentId

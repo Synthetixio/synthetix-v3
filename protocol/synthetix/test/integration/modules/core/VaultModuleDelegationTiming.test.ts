@@ -20,7 +20,6 @@ describe('VaultModule Two-step Delegation', function () {
     oracleNodeId,
   } = bootstrapWithStakedPool();
 
-  // const MAX_UINT = ethers.constants.MaxUint256;
   const permission = ethers.utils.formatBytes32String('DELEGATE');
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;

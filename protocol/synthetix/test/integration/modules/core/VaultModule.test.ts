@@ -12,7 +12,6 @@ import {
   declareDelegateIntent,
   expectedToDeltaDelegatedCollateral,
 } from '../../../common';
-// import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 
 describe('VaultModule', function () {
