@@ -265,4 +265,40 @@ export default function test(): void {
 
   handleRewardsDistributorRemoved(rewardsDistributedEvent3);
   assert.fieldEquals('RewardsDistributor', address2, 'isActive', 'false');
+
+  const snxDistributor = Address.fromString('0x45063dcd92f56138686810eacb1b510c941d6593');
+  const pdao = Address.fromString('0xbb63ca5554dc4ccaca4edd6ecc2837d5efe83c82');
+
+  // Pdao situation
+  const rewardsDistributedFromPdaoEvent = createRewardsDistributedEvent(
+    BigInt.fromI32(1),
+    Address.fromString(address),
+    pdao,
+    BigInt.fromI32(200),
+    BigInt.fromI64(1716127200),
+    BigInt.fromI32(300),
+    1716127200,
+    1716127200 - 1000
+  );
+
+  const rewardsSnxDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
+    BigInt.fromI32(1),
+    Address.fromString(address),
+    snxDistributor,
+    1716127200,
+    1716127200 - 1000
+  );
+
+  handleRewardsDistributorRegistered(rewardsSnxDistributorRegisteredEvent);
+  handleRewardsDistributed(rewardsDistributedFromPdaoEvent);
+
+  assert.fieldEquals('RewardsDistributor', snxDistributor.toHex(), 'isActive', 'true');
+  assert.fieldEquals('RewardsDistribution', `${pdao.toHex()}-1716127200-1`, 'duration', '300');
+  assert.fieldEquals('RewardsDistribution', `${pdao.toHex()}-1716127200-1`, 'start', '1716127200');
+  assert.fieldEquals(
+    'RewardsDistribution',
+    `${pdao.toHex()}-1716127200-1`,
+    'distributor',
+    snxDistributor.toHex()
+  );
 }
