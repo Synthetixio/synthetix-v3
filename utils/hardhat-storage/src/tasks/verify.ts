@@ -3,6 +3,7 @@ import { render } from '../internal/render';
 import { SUBTASK_STORAGE_LOAD_DUMP, TASK_STORAGE_VERIFY } from '../task-names';
 
 import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+
 interface Params {
   previous: string;
   current: string;

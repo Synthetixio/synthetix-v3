@@ -1,6 +1,4 @@
 import * as parser from '@solidity-parser/parser';
-import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { OldStorageArtifact } from '../types';
 
 import type {
   ASTNode,

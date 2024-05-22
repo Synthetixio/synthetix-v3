@@ -1,26 +1,34 @@
 import { SourceUnit, StructDefinition } from '@solidity-parser/parser/dist/src/ast-types';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
-import { OldStorageArtifact } from '../types';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { GetArtifactFunction, StorageArtifact } from '../types';
 import { findAll, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
 
 interface Params {
-  artifacts: OldStorageArtifact[];
+  contracts: string[];
+  getArtifact: GetArtifactFunction;
+  version?: string;
+  license?: string;
 }
 
 /**
  * Generate a single solidity file including all the given contracts but only
  * rendering its storage defintions.
  */
-export async function dumpStorage(
-  artifacts: OldStorageArtifact[],
-  version?: string,
-  license = 'UNLICENSED'
-) {
-  if (!Array.isArray(artifacts) || !artifacts.length) {
-    throw new Error('No solidity files found');
-  }
+export async function dumpStorage({
+  contracts,
+  getArtifact,
+  version,
+  license = 'UNLICENSED',
+}: Params) {
+  const artifacts = await Promise.all(
+    contracts.map(async (fqName) => {
+      const { sourceName } = parseFullyQualifiedName(fqName);
+      return await getArtifact(sourceName);
+    })
+  );
 
   const result = [
     `// SPDX-License-Identifier: ${license}`,
@@ -29,8 +37,7 @@ export async function dumpStorage(
   ];
 
   for (const [artifact, contractNode] of iterateContracts(artifacts)) {
-    const { sourceName, contractName } = artifact;
-    const fqName = `${sourceName}:${contractName}`;
+    const fqName = `${artifact.sourceName}:${contractNode.name}`;
 
     // if (contractName !== 'RewardDistribution') continue;
 
@@ -85,7 +92,7 @@ export async function dumpStorage(
   return result.join('\n');
 }
 
-function _renderPragmaDirective(artifacts: OldStorageArtifact[]) {
+function _renderPragmaDirective(artifacts: StorageArtifact[]) {
   // TODO: calculate the best solc version based on all the files, instead of using
   // the one from the last file
   const node = findOne(artifacts[artifacts.length - 1].ast, 'PragmaDirective');
