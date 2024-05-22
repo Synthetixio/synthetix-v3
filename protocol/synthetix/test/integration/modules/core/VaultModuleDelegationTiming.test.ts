@@ -21,8 +21,6 @@ describe('VaultModule Two-step Delegation', function () {
     oracleNodeId,
   } = bootstrapWithStakedPool();
 
-  const permission = ethers.utils.formatBytes32String('DELEGATE');
-
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let MockMarket: ethers.Contract;
@@ -315,20 +313,6 @@ describe('VaultModule Two-step Delegation', function () {
 
     const restoreToDeclare = snapshotCheckpoint(provider);
 
-    it('fails to delete all expired intents as non-owner', async () => {
-      await assertRevert(
-        systems().Core.connect(user2).deleteAllExpiredIntents(accountId),
-        `"PermissionDenied("${accountId}", "${permission}", "${await user2.getAddress()}")`,
-        systems().Core
-      );
-    });
-    it('fails to delete an intents by ID as non-owner', async () => {
-      await assertRevert(
-        systems().Core.connect(user2).deleteIntents(accountId, [intentId]),
-        `"PermissionDenied("${accountId}", "${permission}", "${await user2.getAddress()}")`,
-        systems().Core
-      );
-    });
     it("fails to delete an intent that didn't expire", async () => {
       await fastForwardTo(declareDelegateIntentTime + 115, provider());
       await assertRevert(
@@ -338,22 +322,22 @@ describe('VaultModule Two-step Delegation', function () {
       );
     });
 
-    describe('can delete an intent by id', async () => {
+    describe('can delete an intent by id (as another user)', async () => {
       before(restoreToDeclare);
 
       it('sanity check. The intent exists', async () => {
-        const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+        const intent = await systems().Core.connect(user2).getAccountIntent(accountId, intentId);
         assertBn.equal(intent[0], accountId);
       });
 
       it('can delete an expired intent', async () => {
         await fastForwardTo(declareDelegateIntentTime + 121, provider());
-        await systems().Core.connect(user1).deleteIntents(accountId, [intentId]);
+        await systems().Core.connect(user2).deleteIntents(accountId, [intentId]);
       });
 
       it('intent is deleted', async () => {
         await assertRevert(
-          systems().Core.connect(user1).getAccountIntent(accountId, intentId),
+          systems().Core.connect(user2).getAccountIntent(accountId, intentId),
           'InvalidDelegationIntentId()',
           systems().Core
         );
@@ -364,18 +348,18 @@ describe('VaultModule Two-step Delegation', function () {
       before(restoreToDeclare);
 
       it('sanity check. The intent exists', async () => {
-        const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+        const intent = await systems().Core.connect(user2).getAccountIntent(accountId, intentId);
         assertBn.equal(intent[0], accountId);
       });
 
       it('can delete all account expired intents', async () => {
         await fastForwardTo(declareDelegateIntentTime + 121, provider());
-        await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
+        await systems().Core.connect(user2).deleteAllExpiredIntents(accountId);
       });
 
       it('intent is deleted', async () => {
         await assertRevert(
-          systems().Core.connect(user1).getAccountIntent(accountId, intentId),
+          systems().Core.connect(user2).getAccountIntent(accountId, intentId),
           'InvalidDelegationIntentId()',
           systems().Core
         );

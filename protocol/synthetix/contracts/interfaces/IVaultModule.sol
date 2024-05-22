@@ -153,10 +153,10 @@ interface IVaultModule {
     ) external returns (uint256 intentId);
 
     /**
-     * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by intent ids.
+     * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by intent ids.
      * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param intentIds An array of intents to attempt to process.
-     * @dev The intents that are not executable at this time will be ignored and am event will be emitted to show that.
+     * @dev The intents that are not executable at this time will be ignored and an event will be emitted to show that.
      * Requirements:
      *
      * Emits a {DelegationUpdated} event.
@@ -167,7 +167,7 @@ interface IVaultModule {
     ) external;
 
     /**
-     * @notice Attempt to process the outstanding intents to udpate the delegated amount of collateral by pool/accountID pair.
+     * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by pool/accountID pair.
      * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param poolId The ID of the pool for which the intent of the account to delegate a new amount of collateral is being processed
      * @dev The intents that are not executable at this time will be ignored and am event will be emitted to show that.
@@ -182,7 +182,6 @@ interface IVaultModule {
      * @param accountId The id of the account owning the intents.
      * @param intentIds Array of ids to attempt to delete.
      * @dev It will only delete expired intents.
-     * @dev Only the owner of the account, or given the DELEGATE permission can execute this call.
      */
     function deleteIntents(uint128 accountId, uint256[] calldata intentIds) external;
 
@@ -190,7 +189,6 @@ interface IVaultModule {
      * @notice Attempt to delete all expired delegation intents from an account.
      * @param accountId The id of the account owning the intents.
      * @dev It will only delete expired intents.
-     * @dev Only the owner of the account, or given the DELEGATE permission can execute this call.
      */
     function deleteAllExpiredIntents(uint128 accountId) external;
 
