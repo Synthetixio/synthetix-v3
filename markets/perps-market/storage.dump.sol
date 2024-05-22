@@ -227,11 +227,13 @@ library Market {
         mapping(uint128 => MarketPoolInfo.Data) pools;
         DepositedCollateral[] depositedCollateral;
         mapping(address => uint256) maximumDepositableD18;
-        uint32 minDelegateTime;
+        uint32 __unusedLegacyStorageSlot;
+        uint32 undelegateCollateralDelay;
+        uint32 undelegateCollateralWindow;
+        uint32 delegateCollateralDelay;
+        uint32 delegateCollateralWindow;
         uint32 __reservedForLater1;
         uint64 __reservedForLater2;
-        uint64 __reservedForLater3;
-        uint64 __reservedForLater4;
         uint256 minLiquidityRatioD18;
     }
     struct DepositedCollateral {
@@ -279,7 +281,6 @@ library OracleManager {
 
 // @custom:artifact @synthetixio/main/contracts/storage/Pool.sol:Pool
 library Pool {
-    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;
@@ -387,7 +388,7 @@ library VaultEpoch {
         Distribution.Data accountsDebtDistribution;
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
-        mapping(uint128 => uint64) lastDelegationTime;
+        mapping(uint128 => uint64) __unused_legacy_slot;
     }
 }
 

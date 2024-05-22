@@ -353,7 +353,6 @@ contract MarketManagerModule {
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
-    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
@@ -403,6 +402,23 @@ library Account {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
             account.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/AccountDelegationIntents.sol:AccountDelegationIntents
+library AccountDelegationIntents {
+    struct Data {
+        uint128 accountId;
+        SetUtil.UintSet intentsId;
+        mapping(bytes32 => SetUtil.UintSet) intentsByPair;
+        SetUtil.AddressSet delegatedCollaterals;
+        mapping(address => int256) netDelegatedAmountPerCollateral;
+    }
+    function load(uint128 id) internal pure returns (Data storage accountDelegationIntents) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.AccountDelegationIntents", id));
+        assembly {
+            accountDelegationIntents.slot := s
         }
     }
 }
@@ -491,6 +507,26 @@ library CrossChain {
     }
 }
 
+// @custom:artifact contracts/storage/DelegationIntent.sol:DelegationIntent
+library DelegationIntent {
+    bytes32 private constant _ATOMIC_VALUE_LATEST_ID = "delegateIntent_idAsNonce";
+    struct Data {
+        uint256 id;
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
+        int256 deltaCollateralAmountD18;
+        uint256 leverage;
+        uint32 declarationTime;
+    }
+    function load(uint256 id) internal pure returns (Data storage delegationIntent) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", id));
+        assembly {
+            delegationIntent.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/storage/Distribution.sol:Distribution
 library Distribution {
     struct Data {
@@ -522,11 +558,13 @@ library Market {
         mapping(uint128 => MarketPoolInfo.Data) pools;
         DepositedCollateral[] depositedCollateral;
         mapping(address => uint256) maximumDepositableD18;
-        uint32 minDelegateTime;
+        uint32 __unusedLegacyStorageSlot;
+        uint32 undelegateCollateralDelay;
+        uint32 undelegateCollateralWindow;
+        uint32 delegateCollateralDelay;
+        uint32 delegateCollateralWindow;
         uint32 __reservedForLater1;
         uint64 __reservedForLater2;
-        uint64 __reservedForLater3;
-        uint64 __reservedForLater4;
         uint256 minLiquidityRatioD18;
     }
     struct DepositedCollateral {
@@ -589,7 +627,6 @@ library OracleManager {
 
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
-    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;
@@ -711,7 +748,7 @@ library VaultEpoch {
         Distribution.Data accountsDebtDistribution;
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
-        mapping(uint128 => uint64) lastDelegationTime;
+        mapping(uint128 => uint64) __unused_legacy_slot;
     }
 }
 
