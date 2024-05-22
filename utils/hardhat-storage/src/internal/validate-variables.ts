@@ -1,6 +1,8 @@
-import { StorageArtifact } from '../types';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { GetArtifactFunction } from '../types';
+import { findContractTree } from './artifacts';
 import { createError, ValidationError } from './error';
-import { findAll, findOne } from './finders';
+import { findAll } from './finders';
 
 import type {
   StateVariableDeclarationVariable,
@@ -8,28 +10,29 @@ import type {
 } from '@solidity-parser/parser/src/ast-types';
 
 interface Params {
-  artifacts: StorageArtifact[];
+  contracts: string[];
+  getArtifact: GetArtifactFunction;
 }
 
-export function validateMutableStateVariables({ artifacts }: Params) {
+export async function validateMutableStateVariables({ contracts, getArtifact }: Params) {
   const errors: ValidationError[] = [];
 
-  for (const { sourceName, contractName, ast } of artifacts) {
-    const contractNode = findOne(ast, 'ContractDefinition', (node) => node.name === contractName);
+  for (const fqName of contracts) {
+    const { sourceName, contractName } = parseFullyQualifiedName(fqName);
+    const artifact = await getArtifact(sourceName);
+    const contractNodes = await findContractTree(getArtifact, artifact, contractName);
 
-    if (!contractNode) {
-      throw new Error(`Contract with name "${contractName}" not found`);
-    }
-
-    for (const node of findAll(ast, 'VariableDeclaration', _isMutableStateVariable)) {
-      errors.push(
-        createError({
-          message:
-            'Unsafe state variable declaration. Mutable state variables cannot be declared on a contract behind a Proxy',
-          sourceName,
-          nodes: [contractNode, node],
-        })
-      );
+    for (const contractNode of contractNodes) {
+      for (const node of findAll(contractNode, 'VariableDeclaration', _isMutableStateVariable)) {
+        errors.push(
+          createError({
+            message:
+              'Unsafe state variable declaration. Mutable state variables cannot be declared on a contract behind a Proxy',
+            sourceName,
+            nodes: [contractNode, node],
+          })
+        );
+      }
     }
   }
 

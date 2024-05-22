@@ -5,18 +5,27 @@ import {
   Identifier,
   VariableDeclaration,
 } from '@solidity-parser/parser/src/ast-types';
-import { StorageArtifact } from '../types';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { GetArtifactFunction } from '../types';
 import { createError } from './error';
 import { findOne } from './finders';
 import { iterateSlotAssignments } from './iterators';
 import { isPresent } from './misc';
 
 interface Params {
-  artifacts: StorageArtifact[];
+  contracts: string[];
+  getArtifact: GetArtifactFunction;
 }
 
-export function validateSlotNamespaceCollisions({ artifacts }: Params) {
+export async function validateSlotNamespaceCollisions({ contracts, getArtifact }: Params) {
   const slots: string[] = [];
+
+  const artifacts = await Promise.all(
+    contracts.map(async (fqName) => {
+      const { sourceName } = parseFullyQualifiedName(fqName);
+      return await getArtifact(sourceName);
+    })
+  );
 
   return [...iterateSlotAssignments(artifacts)]
     .map(([artifact, contractNode, functionNode, yulAssignment]) => {

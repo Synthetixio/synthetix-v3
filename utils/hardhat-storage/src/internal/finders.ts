@@ -1,6 +1,12 @@
 import * as parser from '@solidity-parser/parser';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { OldStorageArtifact } from '../types';
 
-import type { ASTNode, ASTNodeTypeString } from '@solidity-parser/parser/src/ast-types';
+import type {
+  ASTNode,
+  ASTNodeTypeString,
+  ContractDefinition,
+} from '@solidity-parser/parser/src/ast-types';
 
 type ASTMap<U> = { [K in ASTNodeTypeString]: U extends { type: K } ? U : never };
 type ASTTypeMap = ASTMap<ASTNode>;
@@ -61,4 +67,26 @@ export function findOne<T extends ASTNodeTypeString>(
   });
 
   return result;
+}
+
+export function findContract(astNode: ASTNode, contractName: string) {
+  return findOne(astNode, 'ContractDefinition', (node) => node.name === contractName);
+}
+
+export function findContractStrict(astNode: ASTNode, contractName: string) {
+  const contractNode = findContract(astNode, contractName);
+
+  if (!contractNode) {
+    throw new Error(`Contract with name "${contractName}" not found`);
+  }
+
+  return contractNode;
+}
+
+export function getImportAliasSymbolName(astNode: ASTNode, symbolName: string) {
+  for (const imp of findAll(astNode, 'ImportDirective')) {
+    if (!imp.symbolAliases) return;
+    const alias = imp.symbolAliases.find(([, alias]) => alias === symbolName);
+    if (alias) return alias[0];
+  }
 }

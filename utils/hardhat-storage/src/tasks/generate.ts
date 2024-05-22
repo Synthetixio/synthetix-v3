@@ -14,7 +14,7 @@ import { validateSlotNamespaceCollisions } from '../internal/validate-namespace'
 import { validateMutableStateVariables } from '../internal/validate-variables';
 import { writeInChunks } from '../internal/write-in-chunks';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS, TASK_STORAGE_GENERATE } from '../task-names';
-import { StorageArtifact } from '../types';
+import { OldStorageArtifact } from '../types';
 
 interface Params {
   artifacts?: string[];
@@ -38,7 +38,7 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
   .addFlag('noCompile', 'Do not execute hardhat compile before build')
   .addFlag('log', 'log json result to the console')
   .setAction(async (params: Required<Params>, hre) => {
-    const artifacts = params.artifacts.length > 0 ? params.artifacts : hre.config.storage.artifacts;
+    const artifacts = params.artifacts.length ? params.artifacts : hre.config.storage.artifacts;
     const { output, noCompile, log } = params;
 
     if (log) {
@@ -54,11 +54,14 @@ task(TASK_STORAGE_GENERATE, 'Validate state variables usage and dump storage slo
 
     const allContracts = await hre.artifacts.getAllFullyQualifiedNames();
 
-    const storageArtifacts: StorageArtifact[] = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
+    const storageArtifacts: OldStorageArtifact[] = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, {
       fqNames: allContracts,
     });
 
     const artifactsToValidate = filterContracts(allContracts, artifacts);
+
+    console.log(allContracts);
+    console.log(artifactsToValidate);
 
     const errors = [
       ...validateMutableStateVariables({

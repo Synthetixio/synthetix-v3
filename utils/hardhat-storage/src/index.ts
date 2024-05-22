@@ -7,8 +7,9 @@ import './subtasks/get-source-units';
 import './subtasks/parse-contents';
 import './subtasks/parse-dump';
 import './tasks/generate-testable';
-import './tasks/verify';
 import './tasks/generate';
+import './tasks/validate';
+import './tasks/verify';
 
 extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
   config.storage = {

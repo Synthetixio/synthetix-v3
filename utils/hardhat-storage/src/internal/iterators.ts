@@ -11,13 +11,9 @@ export function* iterateContracts(
   artifacts: StorageArtifact[]
 ): Generator<[StorageArtifact, ContractDefinition]> {
   for (const artifact of artifacts) {
-    const contractNode = findOne(
-      artifact.ast,
-      'ContractDefinition',
-      (node) => node.name === artifact.contractName
-    );
-    if (!contractNode) throw new Error(`Contract with name "${artifact.contractName}" not found`);
-    yield [artifact, contractNode];
+    for (const contractNode of findAll(artifact.ast, 'ContractDefinition')) {
+      yield [artifact, contractNode];
+    }
   }
 }
 

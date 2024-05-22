@@ -1,12 +1,12 @@
 import { SourceUnit, StructDefinition } from '@solidity-parser/parser/dist/src/ast-types';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
-import { StorageArtifact } from '../types';
+import { OldStorageArtifact } from '../types';
 import { findAll, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
 
 interface Params {
-  artifacts: StorageArtifact[];
+  artifacts: OldStorageArtifact[];
 }
 
 /**
@@ -14,7 +14,7 @@ interface Params {
  * rendering its storage defintions.
  */
 export async function dumpStorage(
-  artifacts: StorageArtifact[],
+  artifacts: OldStorageArtifact[],
   version?: string,
   license = 'UNLICENSED'
 ) {
@@ -85,7 +85,7 @@ export async function dumpStorage(
   return result.join('\n');
 }
 
-function _renderPragmaDirective(artifacts: StorageArtifact[]) {
+function _renderPragmaDirective(artifacts: OldStorageArtifact[]) {
   // TODO: calculate the best solc version based on all the files, instead of using
   // the one from the last file
   const node = findOne(artifacts[artifacts.length - 1].ast, 'PragmaDirective');
