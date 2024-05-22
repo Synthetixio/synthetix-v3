@@ -1,5 +1,6 @@
 import assert from 'assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { BigNumber, ethers } from 'ethers';
@@ -482,10 +483,122 @@ describe('VaultModule Two-step Delegation', function () {
     });
   });
 
-  describe.skip('Edge case - Multiple markets with different timing configuration', async () => {
+  describe('Edge case - Multiple markets with different timing configuration', async () => {
     // note: with 2 markets with different config, will use the longest delay time configuration
-    it('fails to execute an intent based on the shortest delay', async () => {});
 
-    it('can execute using the longest delay', async () => {});
+    let SecondMockMarket: ethers.Contract;
+    let secondMarketId: BigNumber;
+    let intentId: BigNumber;
+    let declareDelegateIntentTime: number;
+
+    before('deploy and connect a second fake market', async () => {
+      const factory = await hre.ethers.getContractFactory('MockMarket');
+
+      SecondMockMarket = await factory.connect(owner).deploy();
+
+      secondMarketId = await systems()
+        .Core.connect(user1)
+        .callStatic.registerMarket(SecondMockMarket.address);
+
+      await systems().Core.connect(user1).registerMarket(SecondMockMarket.address);
+
+      await SecondMockMarket.connect(owner).initialize(
+        systems().Core.address,
+        secondMarketId,
+        ethers.utils.parseEther('1')
+      );
+
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId, [
+          {
+            marketId: secondMarketId,
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('10000000000000000'),
+          },
+        ]);
+    });
+
+    before('set both market window times', async () => {
+      await MockMarket.setDelegateCollateralDelay(100);
+      await MockMarket.setUndelegateCollateralDelay(100);
+      await MockMarket.setDelegateCollateralWindow(0);
+      await MockMarket.setUndelegateCollateralWindow(0);
+
+      await SecondMockMarket.setDelegateCollateralDelay(200);
+      await SecondMockMarket.setUndelegateCollateralDelay(200);
+      await SecondMockMarket.setDelegateCollateralWindow(20);
+      await SecondMockMarket.setUndelegateCollateralWindow(20);
+    });
+
+    before('declare intent to delegate', async () => {
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+
+      declareDelegateIntentTime = await getTime(provider());
+    });
+
+    it('intent is skipped to execute an intent based on the shortest delay', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 120, provider());
+
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentSkipped(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('can execute using the longest delay', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 210, provider());
+
+      await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+    });
+
+    it('intent is removed (skipped) to execute an intent based on the wrong window', async () => {
+      const newIntentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(1),
+        ethers.utils.parseEther('1')
+      );
+
+      const newDeclareDelegateIntentTime = await getTime(provider());
+
+      await fastForwardTo(newDeclareDelegateIntentTime + 250, provider());
+
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [newIntentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentSkipped(${newIntentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
+        systems().Core
+      );
+
+      await assertEvent(
+        tx,
+        `DelegationIntentRemoved(${newIntentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
+        systems().Core
+      );
+    });
   });
 });
