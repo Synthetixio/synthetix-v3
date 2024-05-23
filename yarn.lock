@@ -3325,7 +3325,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/wei@npm:^2.74.4":
+"@synthetixio/wei@npm:^2.74.1, @synthetixio/wei@npm:^2.74.4":
   version: 2.74.4
   resolution: "@synthetixio/wei@npm:2.74.4"
   dependencies:
@@ -3979,6 +3979,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@usecannon/builder@npm:2.13.0":
+  version: 2.13.0
+  resolution: "@usecannon/builder@npm:2.13.0"
+  dependencies:
+    "@synthetixio/router": "npm:^3.3.7"
+    axios: "npm:^1.6.7"
+    axios-retry: "npm:^4.0.0"
+    buffer: "npm:^6.0.3"
+    debug: "npm:^4.3.4"
+    form-data: "npm:^4.0.0"
+    lodash: "npm:^4.17.21"
+    pako: "npm:^2.1.0"
+    promise-events: "npm:^0.2.4"
+    typedoc-plugin-markdown: "npm:^3.17.1"
+    typestub-ipfs-only-hash: "npm:^4.0.0"
+    viem: "npm:^2.9.26"
+    zod: "npm:^3.22.4"
+  checksum: 10/7a73624009771e70856ca1b16977b0bf09a790ea1d997e1ef68c9ccdf8e8b3b878ecef60b0f9150189c1ee594174a30ca56548f06ab5a3e2917a04d7a82d8725
+  languageName: node
+  linkType: hard
+
 "@usecannon/builder@npm:2.13.6":
   version: 2.13.6
   resolution: "@usecannon/builder@npm:2.13.6"
@@ -3997,6 +4018,35 @@ __metadata:
     viem: "npm:^2.9.26"
     zod: "npm:^3.22.4"
   checksum: 10/6fdff249d7368ad4b351e2a0580b86d825960cb552d67573be96217deea563017632ee12db1239fb0b30d3dbf37b4c9b7eb33f32c5a97b3c5f6e3a288e91db05
+  languageName: node
+  linkType: hard
+
+"@usecannon/cli@npm:2.13.0":
+  version: 2.13.0
+  resolution: "@usecannon/cli@npm:2.13.0"
+  dependencies:
+    "@iarna/toml": "npm:^3.0.0"
+    "@synthetixio/wei": "npm:^2.74.1"
+    "@usecannon/builder": "npm:2.13.0"
+    abitype: "npm:^1.0.0"
+    chalk: "npm:^4.1.2"
+    commander: "npm:^9.5.0"
+    debug: "npm:^4.3.4"
+    eth-provider: "npm:^0.13.6"
+    fastq: "npm:^1.15.0"
+    fs-extra: "npm:^10.1.0"
+    lodash: "npm:^4.17.21"
+    prompts: "npm:^2.4.2"
+    semver: "npm:^7.3.7"
+    table: "npm:^6.8.0"
+    tildify: "npm:2.0.0"
+    untildify: "npm:^4.0.0"
+    viem: "npm:^2.9.26"
+    znv: "npm:^0.4.0"
+    zod: "npm:^3.22.4"
+  bin:
+    cannon: bin/cannon.js
+  checksum: 10/6f56cd69e42b27213b213c069778bd0413197745128f9d775fab72a0a5db0d1e7014f6439f77d5c9c4721a875fe41c4135eaa2260cd10c2bcc8e1eec92623ddd
   languageName: node
   linkType: hard
 
