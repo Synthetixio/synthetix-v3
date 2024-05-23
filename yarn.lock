@@ -2908,7 +2908,6 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/lodash": "npm:^4.14.199"
@@ -2933,7 +2932,6 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
@@ -2982,7 +2980,6 @@ __metadata:
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
   languageName: unknown
@@ -3023,6 +3020,7 @@ __metadata:
     sinon: "npm:^17.0.1"
     solc: "npm:0.8.21"
     solidity-ast: "npm:^0.4.55"
+    typechain: "npm:8.3.2"
     typescript: "npm:^5.3.3"
   peerDependencies:
     "@usecannon/builder": ^2.4.7
@@ -3071,7 +3069,6 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     "@usecannon/cli": "npm:2.13.0"
     ethers: "npm:^5.7.2"
@@ -3135,7 +3132,6 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
@@ -3169,7 +3165,6 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node": "npm:^20.11.17"
     ethers: "npm:^5.7.2"
@@ -3204,7 +3199,6 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     "@usecannon/cli": "npm:2.13.0"
@@ -3319,7 +3313,6 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node-fetch": "npm:^2.6.11"
     "@usecannon/cli": "npm:2.13.0"
@@ -3352,7 +3345,6 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
-    "@synthetixio/router": "npm:3.3.7"
     "@synthetixio/wei": "npm:^2.74.4"
     "@usecannon/cli": "npm:2.13.0"
     ethers: "npm:^5.7.2"
@@ -16183,7 +16175,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typechain@npm:^8.3.2":
+"typechain@npm:8.3.2, typechain@npm:^8.3.2":
   version: 8.3.2
   resolution: "typechain@npm:8.3.2"
   dependencies:
