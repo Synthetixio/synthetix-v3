@@ -496,6 +496,43 @@ describe('RewardsManagerModule', function () {
         });
       });
     });
+
+    describe('distributeRewardsByOwner', () => {
+      before(restore);
+
+      it('reverts if not pool owner', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(await user1.getAddress())
+            .distributeRewardsByOwner(
+              poolId,
+              collateralAddress(),
+              RewardDistributor.address,
+              rewardAmount,
+              0, // timestamp
+              0
+            ),
+          `Unauthorized("${await user1.getAddress()}")`
+        );
+      });
+
+      it('reverts if RD does not exist', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(owner)
+            .distributeRewardsByOwner(
+              poolId,
+              collateralAddress(),
+              await user1.getAddress(),
+              rewardAmount,
+              0, // timestamp
+              0
+            ),
+          'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")'
+        );
+      });
+    });
+
     describe('wallets joining and leaving', () => {});
   });
 

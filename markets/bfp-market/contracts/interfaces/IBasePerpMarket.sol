@@ -10,16 +10,16 @@ interface IBasePerpMarket {
     /// @param fundingVelocity Current instantaneous velocity at the point of recomputation
     event FundingRecomputed(
         uint128 indexed marketId,
-        int256 skew,
-        int256 fundingRate,
-        int256 fundingVelocity
+        int128 skew,
+        int128 fundingRate,
+        int128 fundingVelocity
     );
 
     /// @notice Emitted when utilization is computed.
     /// @param marketId Market that had their utilization recomputed
     /// @param skew Current market skew at the point of recomputation
     /// @param utilizationRate New utilization rate after recomputation
-    event UtilizationRecomputed(uint128 indexed marketId, int256 skew, uint256 utilizationRate);
+    event UtilizationRecomputed(uint128 indexed marketId, int128 skew, uint128 utilizationRate);
 
     /// @notice Emitted when an order is canceled.
     /// @param accountId Account of order that was canceled
@@ -30,7 +30,7 @@ interface IBasePerpMarket {
         uint128 indexed accountId,
         uint128 indexed marketId,
         uint256 keeperFee,
-        uint256 commitmentTime
+        uint64 commitmentTime
     );
 
     /// @notice Emitted when the market's size is updated either due to orders or liquidations.

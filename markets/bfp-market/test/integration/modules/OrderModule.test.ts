@@ -22,7 +22,6 @@ import {
 import {
   AVERAGE_SECONDS_PER_YEAR,
   SECONDS_ONE_DAY,
-  SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
   commitOrder,
   depositMargin,
@@ -126,6 +125,93 @@ describe('OrderModule', () => {
           order.hooks
         ),
         'InsufficientMargin()',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when delegated collateral is less than minimumCredit', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const tradersGenerator = toRoundRobinGenerators(traders());
+      // Change CORE staking/delegation to the minimum amount.
+      const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
+      const { minDelegationD18 } = await Core.getCollateralConfiguration(
+        stakedCollateral().address
+      );
+      const stakedCollateralAddress = stakedCollateral().address;
+      await Core.connect(staker()).delegateCollateral(
+        stakerAccountId,
+        poolId,
+        stakedCollateralAddress,
+        minDelegationD18,
+        bn(1)
+      );
+
+      const {
+        trader: trader1,
+        market,
+        marketId,
+        collateral: collateral1,
+        collateralDepositAmount: collateralDepositAmount1,
+      } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: tradersGenerator.next().value,
+          desiredMarginUsdDepositAmount: 15_000,
+        })
+      );
+      const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
+        desiredLeverage: 10,
+      });
+      await commitAndSettle(bs, marketId, trader1, order1);
+
+      // Start creating an order for another trader.
+      // With low amount of liquidity in Core and the previous trader having a large position, we expect revert when committing this new order.
+      const trader2 = tradersGenerator.next().value;
+
+      const { collateral: collateral2, collateralDepositAmount: collateralDepositAmount2 } =
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: trader2,
+            desiredMarket: market,
+          })
+        );
+      const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2);
+
+      await assertRevert(
+        BfpMarketProxy.connect(trader2.signer).commitOrder(
+          trader2.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd,
+          order2.hooks
+        ),
+        'InsufficientLiquidity()',
+        BfpMarketProxy
+      );
+
+      // sUSD deposited from perps traders should not affect minimum credit
+      // trader1 deposit 1m sUSD
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: trader1,
+          desiredMarginUsdDepositAmount: 1_000_000,
+          desiredCollateral: getSusdCollateral(collaterals()),
+        })
+      );
+      // trader2s commit should still fail.
+      await assertRevert(
+        BfpMarketProxy.connect(trader2.signer).commitOrder(
+          trader2.accountId,
+          marketId,
+          order2.sizeDelta,
+          order2.limitPrice,
+          order2.keeperFeeBufferUsd,
+          order2.hooks
+        ),
+        'InsufficientLiquidity()',
         BfpMarketProxy
       );
     });
@@ -306,7 +392,7 @@ describe('OrderModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -951,7 +1037,7 @@ describe('OrderModule', () => {
     });
 
     it('should handle winning position with debt', async () => {
-      const { BfpMarketProxy } = systems();
+      const { BfpMarketProxy, USD } = systems();
 
       const { trader, marketId, collateralDepositAmount, market, collateral } = await depositMargin(
         bs,
@@ -992,8 +1078,8 @@ describe('OrderModule', () => {
         trader.accountId,
         marketId
       );
-      const usdCollateralBeforeWinningPos = depositedCollaterals.find((c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      const usdCollateralBeforeWinningPos = depositedCollaterals.find(
+        (c) => c.collateralAddress === USD.address
       );
 
       // deposit more collateral to avoid liquidation/ insufficient margin
@@ -1047,8 +1133,8 @@ describe('OrderModule', () => {
 
       const { depositedCollaterals: depositedCollateralsAfter } =
         await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const usdCollateral = depositedCollateralsAfter.find((c) =>
-        c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+      const usdCollateral = depositedCollateralsAfter.find(
+        (c) => c.collateralAddress === USD.address
       );
       const orderFees = wei(winningOrderOpenEvent.args.orderFee).add(
         closeWinningEvent?.args.orderFee
@@ -1535,7 +1621,7 @@ describe('OrderModule', () => {
     });
 
     it('should realize non-zero sUSD to trader when closing a profitable trade', async () => {
-      const { BfpMarketProxy } = systems();
+      const { BfpMarketProxy, USD } = systems();
 
       // Any collateral except sUSD can be used, we want to make sure a non-zero.
       const collateral = genOneOf(collateralsWithoutSusd());
@@ -1547,8 +1633,8 @@ describe('OrderModule', () => {
       // No prior orders or deposits. Must be zero.
       const d0 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(
-        d0.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+        d0.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === USD.address
         )[0].available
       );
 
@@ -1578,16 +1664,16 @@ describe('OrderModule', () => {
 
       // sUSD must be gt 0.
       assertBn.gt(
-        d1.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+        d1.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === USD.address
         )[0].available,
         bn(0)
       );
 
       // Value of original collateral should also stay the same.
       assertBn.equal(
-        d1.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(collateral.synthMarketId())
+        d1.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === collateral.address()
         )[0].available,
         collateralDepositAmount
       );
@@ -1606,8 +1692,8 @@ describe('OrderModule', () => {
       // No prior orders or deposits. Must be zero.
       const d0 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(
-        d0.depositedCollaterals.filter(({ synthMarketId }) =>
-          synthMarketId.eq(SYNTHETIX_USD_MARKET_ID)
+        d0.depositedCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === USD.address
         )[0].available
       );
 

@@ -228,21 +228,21 @@ export const calcLiquidationKeeperFee = (
 export const calcDiscountedCollateralPrice = (
   collateralPrice: BigNumber,
   amount: BigNumber,
-  spotMarketSkewScale: BigNumber,
+  skewScale: BigNumber,
   collateralDiscountScalar: BigNumber,
   min: BigNumber,
   max: BigNumber
 ) => {
   const w_collateralPrice = wei(collateralPrice);
   const w_amount = wei(amount);
-  const w_spotMarketSkewScale = wei(spotMarketSkewScale);
+  const w_skewScale = wei(skewScale);
   const w_collateralDiscountScalar = wei(collateralDiscountScalar);
   const w_min = wei(min);
   const w_max = wei(max);
 
   // price = oraclePrice * (1 - min(max(size / (skewScale * skewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
   const discount = Wei.min(
-    Wei.max(w_amount.mul(w_collateralDiscountScalar).div(w_spotMarketSkewScale), w_min),
+    Wei.max(w_amount.mul(w_collateralDiscountScalar).div(w_skewScale), w_min),
     w_max
   );
   return w_collateralPrice.mul(wei(1).sub(discount)).toBN();
@@ -277,4 +277,13 @@ export const calcUtilizationRate = async (bs: Bs, utilization: Wei) => {
       .mul(100);
     return lowPart.add(highPart);
   }
+};
+
+export const calcDebtCorrection = (
+  prevDebtCorrection: Wei,
+  fundingDelta: Wei,
+  notionalDelta: Wei,
+  totalPositionPnl: Wei
+) => {
+  return prevDebtCorrection.add(fundingDelta).add(notionalDelta).add(totalPositionPnl);
 };
