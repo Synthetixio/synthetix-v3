@@ -16,7 +16,7 @@
     "alchemy:arbitrum-sepolia": "graph deploy synthetix-arbitrum-sepolia subgraph.arbitrum-sepolia.yaml --output-dir ./build/arbitrum-sepolia --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "alchemy:optimism-mainnet": "graph deploy synthetix-optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
-    "coverage": "yarn deployments:mainnets && yarn codegen:mainnet && git diff --exit-code && yarn test --coverage",
+    "coverage": "yarn deployments:mainnet && yarn codegen:mainnet && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
