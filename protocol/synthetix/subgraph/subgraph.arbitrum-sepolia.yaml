@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./optimism-goerli/schema.graphql
+  file: ./arbitrum-sepolia/schema.graphql
 dataSources:
   - kind: ethereum
-    network: optimism-goerli
+    network: arbitrum-one
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0x76490713314fCEC173f44e99346F54c6e92a8E42"
-      startBlock: 5833624
+      address: "0x4Ab09F627fa9706f33178129005300Fd4c00EDF1"
+      startBlock: 190322190
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./optimism-goerli/index.ts
+      file: ./arbitrum-sepolia/index.ts
       abis:
         - name: CoreProxy
-          file: ./optimism-goerli/deployments/system/CoreProxy.json
+          file: ./arbitrum-sepolia/deployments/system/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
@@ -52,13 +52,9 @@ dataSources:
           handler: handlePoolConfigurationSet
         - event: MarketRegistered(indexed address,indexed uint128,indexed address)
           handler: handleMarketCreated
-        - event:
-            MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed
-            address)
+        - event: MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed address,int128,int128,uint256)
           handler: handleMarketUsdDeposited
-        - event:
-            MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed
-            address)
+        - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address,int128,int128,uint256)
           handler: handleMarketUsdWithdrawn
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleCollateralDeposited
@@ -93,8 +89,6 @@ dataSources:
             RewardsDistributorRegistered(indexed uint128,indexed address,indexed
             address)
           handler: handleRewardsDistributorRegistered
-        - event: RewardsDistributorRemoved(indexed uint128,indexed address,indexed address)
-          handler: handleRewardsDistributorRemoved
         - event: Liquidation(indexed uint128,indexed uint128,indexed
             address,(uint256,uint256,uint256),uint128,address)
           handler: handleLiquidation

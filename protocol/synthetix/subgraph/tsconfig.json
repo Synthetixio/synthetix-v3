@@ -2,10 +2,12 @@
   "extends": "@graphprotocol/graph-ts/types/tsconfig.base.json",
   "include": [
     "mainnet",
-    "goerli",
+    "sepolia",
     "optimism-mainnet",
-    "optimism-goerli",
+    "optimism-sepolia",
     "base",
-    "base-goerli"
+    "base-sepolia",
+    "arbitrum",
+    "arbitrum-sepolia"
   ]
 }
