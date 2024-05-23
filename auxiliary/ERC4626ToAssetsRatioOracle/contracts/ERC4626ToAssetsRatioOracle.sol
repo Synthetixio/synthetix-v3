@@ -17,12 +17,14 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
     address public immutable ASSET_ADDRESS;
     uint256 public immutable VAULT_DECIMALS;
     uint256 public immutable ASSET_DECIMALS;
+    uint256 public immutable BASE_UNIT;
 
     constructor(address _vaultAddress) {
         VAULT_ADDRESS = _vaultAddress;
         ASSET_ADDRESS = IERC4626(VAULT_ADDRESS).asset();
         VAULT_DECIMALS = IERC20Metadata(VAULT_ADDRESS).decimals();
         ASSET_DECIMALS = IERC20Metadata(ASSET_ADDRESS).decimals();
+        BASE_UNIT = 10 ** VAULT_DECIMALS;
     }
 
     function process(
@@ -31,8 +33,7 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
         bytes32[] memory,
         bytes32[] memory
     ) external view returns (NodeOutput.Data memory) {
-        uint256 baseUnit = 10 ** VAULT_DECIMALS;
-        uint256 assetsInVault = IERC4626(VAULT_ADDRESS).convertToAssets(baseUnit);
+        uint256 assetsInVault = IERC4626(VAULT_ADDRESS).convertToAssets(BASE_UNIT);
         uint256 adjustedRatio;
 
         if (ASSET_DECIMALS > 18) {
@@ -53,7 +54,7 @@ contract ERC4626ToAssetsRatioOracle is IExternalNode {
         }
 
         // Must have correct length of parameters data.
-        if (nodeDefinition.parameters.length != 32 * 1) {
+        if (nodeDefinition.parameters.length != 32) {
             return false;
         }
 
