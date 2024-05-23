@@ -8,7 +8,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('PerpAccountModule splitAccount', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, systems, restore, provider } = bs;
+  const { markets, traders, owner, systems, restore, provider } = bs;
 
   beforeEach(restore);
 
@@ -40,7 +40,7 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
-  it('should revert if toId and fromId is the same', async () => {
+  it('should revert when toId and fromId are the same', async () => {
     const { BfpMarketProxy } = systems();
     const fromTrader = genOneOf(traders());
 
@@ -210,6 +210,47 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
+  it('should revert when toAccount has debt', async () => {
+    const { BfpMarketProxy } = systems();
+
+    // Create two trader objects with different accountIds but same signer.
+    const fromTrader = genOneOf(traders());
+    const toTraderAccountId = 42069;
+    const toTrader = {
+      signer: fromTrader.signer,
+      accountId: toTraderAccountId,
+    };
+    await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    const { marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, { desiredTrader: fromTrader })
+    );
+    await commitAndSettle(
+      bs,
+      marketId,
+      fromTrader,
+      genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+
+    // Assign debt to the toAccount.
+    await BfpMarketProxy.connect(owner()).__test_addDebtUsdToAccountMargin(
+      toTraderAccountId,
+      marketId,
+      bn(1)
+    );
+
+    await assertRevert(
+      BfpMarketProxy.connect(fromTrader.signer).splitAccount(
+        fromTrader.accountId,
+        toTrader.accountId,
+        marketId,
+        bn(genNumber(0.1, 1))
+      ),
+      `CollateralFound()`,
+      BfpMarketProxy
+    );
+  });
+
   it('should revert when toAccount have a position', async () => {
     const { BfpMarketProxy } = systems();
 
@@ -305,12 +346,12 @@ describe('PerpAccountModule splitAccount', () => {
     });
     await commitAndSettle(bs, marketId, fromTrader, openOrder);
 
-    await market.aggregator().mockSetCurrentPrice(
+    const tx = await market.aggregator().mockSetCurrentPrice(
       wei(openOrder.oraclePrice)
         .mul(openOrder.sizeDelta.gt(0) ? 0.5 : 1.5)
         .toBN()
     );
-
+    await tx.wait();
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -497,6 +538,11 @@ describe('PerpAccountModule splitAccount', () => {
     // Assert from account.
     assertBn.isZero(fromAccountDigestAfter.debtUsd);
     assertBn.isZero(fromAccountDigestAfter.collateralUsd);
+
+    // Position should be cleared.
     assertBn.isZero(fromAccountDigestAfter.position.size);
+    assertBn.isZero(fromAccountDigestAfter.position.entryPrice);
+    assertBn.isZero(fromAccountDigestAfter.position.accruedFunding);
+    assertBn.isZero(fromAccountDigestAfter.position.accruedUtilization);
   });
 });

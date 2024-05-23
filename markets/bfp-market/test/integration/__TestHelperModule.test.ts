@@ -28,4 +28,25 @@ describe('__TestHelperModule.test', () => {
       );
     });
   });
+
+  describe('__test_addDebtUsdToAccountMargin', () => {
+    it('should revert when not owner', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const trader = genOneOf(traders());
+      const traderAddress = await trader.signer.getAddress();
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+
+      await assertRevert(
+        BfpMarketProxy.connect(trader.signer).__test_addDebtUsdToAccountMargin(
+          trader.accountId,
+          marketId,
+          0
+        ),
+        `Unauthorized("${traderAddress}")`,
+        BfpMarketProxy
+      );
+    });
+  });
 });

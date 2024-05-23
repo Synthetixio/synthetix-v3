@@ -716,7 +716,7 @@ describe('LiquidationModule', () => {
           await depositMargin(bs, genTrader(bs, { desiredMarginUsdDepositAmount: 1000 }));
 
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredLeverage: 10, // 10k pos
+          desiredLeverage: 8, // 8k pos
           desiredSide: orderSide,
         });
 
@@ -728,6 +728,12 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        const { liquidationRewardPercent: flagRewardPercent } = await setMarketConfigurationById(
+          bs,
+          marketId,
+          { liquidationRewardPercent: bn(0.0001) } // really small so we dont hit maxKeeperFeeUsd
+        );
         const { keeperProfitMarginPercent, keeperLiquidationGasUnits, keeperFlagGasUnits } =
           await setMarketConfiguration(bs, {
             maxKeeperFeeUsd: bn(1234567), // large max fee to make sure it's not used
@@ -735,14 +741,6 @@ describe('LiquidationModule', () => {
             keeperLiquidationGasUnits: 500_000,
             keeperFlagGasUnits: 500_000,
           });
-
-        const { liquidationRewardPercent: flagRewardPercent } = await setMarketConfigurationById(
-          bs,
-          marketId,
-          {
-            liquidationRewardPercent: bn(0.0001), // really small so we dont hit maxKeeperFeeUsd
-          }
-        );
 
         // Set baseFeePerGas to 1gwei
         const baseFeePerGas = await setBaseFeePerGas(1, provider());
@@ -804,7 +802,7 @@ describe('LiquidationModule', () => {
           await depositMargin(bs, genTrader(bs, { desiredMarginUsdDepositAmount: 1000 }));
 
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredLeverage: 10, // 10k pos
+          desiredLeverage: 8, // 8k pos
           desiredSide: orderSide,
         });
 
@@ -815,6 +813,11 @@ describe('LiquidationModule', () => {
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
         await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+        const { liquidationRewardPercent: flagRewardPercent } = await setMarketConfigurationById(
+          bs,
+          marketId,
+          { liquidationRewardPercent: bn(0.0001) } // really small so we dont hit maxKeeperFeeUsd
+        );
         const { keeperProfitMarginUsd, keeperLiquidationGasUnits, keeperFlagGasUnits } =
           await setMarketConfiguration(bs, {
             maxKeeperFeeUsd: bn(1234567), // large max fee to make sure it's not used
@@ -823,13 +826,6 @@ describe('LiquidationModule', () => {
             keeperFlagGasUnits: 500_000,
           });
 
-        const { liquidationRewardPercent: flagRewardPercent } = await setMarketConfigurationById(
-          bs,
-          marketId,
-          {
-            liquidationRewardPercent: bn(0.0001), // really small so we dont hit maxKeeperFeeUsd
-          }
-        );
         // Set baseFeePerGas to 1gwei
         await setBaseFeePerGas(0, provider());
         const { receipt: flagReceipt } = await withExplicitEvmMine(
@@ -948,7 +944,7 @@ describe('LiquidationModule', () => {
         const tradersToUse = traders().slice(0, 2);
 
         for (const trader of tradersToUse) {
-          const marginUsdDepositAmount = genOneOf([1000, 5000, 10_000]);
+          const marginUsdDepositAmount = genOneOf([2000, 5000, 10_000]);
           const collateral = genOneOf(collaterals());
 
           const { collateralDepositAmount: collateralDepositAmount1 } = await depositMargin(

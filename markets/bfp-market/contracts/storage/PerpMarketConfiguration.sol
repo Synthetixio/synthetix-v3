@@ -1,30 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
-
-/// @dev A static uint128 of the sUSD marketId.
-uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
 
 library PerpMarketConfiguration {
-    using SafeCastI256 for int256;
+    // --- Constants --- //
+
+    bytes32 constant GLOBAL_DATA_SLOT_NAME =
+        keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
 
     // --- Storage --- //
 
     struct GlobalData {
-        /// A reference to the core Synthetix v3 system.
-        ISynthetixSystem synthetix;
-        /// A reference to the core Synthetix v3 spot market system.
-        ISpotMarketSystem spotMarket;
-        /// A reference to the Synthetix USD stablecoin.
-        ITokenModule usdToken;
-        /// A reference to the Synthetix oracle manager (used to fetch market prices).
-        INodeModule oracleManager;
         /// A reference to the Pyth EVM contract.
         IPyth pyth;
         /// Oracle node id for for eth/usd.
@@ -36,9 +23,9 @@ library PerpMarketConfiguration {
         /// Max acceptable publishTime from Pyth.
         uint64 pythPublishTimeMax;
         /// Minimum amount of time (in seconds) required for an order to exist before settlement.
-        uint128 minOrderAge;
+        uint64 minOrderAge;
         /// Maximum order age (in seconds) before the order becomes stale.
-        uint128 maxOrderAge;
+        uint64 maxOrderAge;
         /// The min amount in USD a keeper should receive on settlements (currently not used for liquidations).
         uint256 minKeeperFeeUsd;
         /// The maximum amount in USD a keeper should receive on settlements/liquidations.
@@ -49,14 +36,14 @@ library PerpMarketConfiguration {
         uint128 keeperProfitMarginPercent;
         /// Number of gas units required to perform an order settlement by a keeper.
         uint128 keeperSettlementGasUnits;
+        /// Number of gas units required to perform an order cancellation by a keeper.
+        uint128 keeperCancellationGasUnits;
         /// Number of gas units required to liquidate a position by a keeper.
         uint128 keeperLiquidationGasUnits;
         /// Number of gas units required to flag a position by a keeper.
         uint128 keeperFlagGasUnits;
         /// Number of gas units required to liquidate margin only by a keeper.
         uint128 keeperLiquidateMarginGasUnits;
-        /// A fixed fee sent to the liquidator upon position liquidation.
-        uint256 keeperLiquidationFeeUsd;
         /// Address of endorsed liquidation keeper to exceed liq caps.
         address keeperLiquidationEndorsed;
         /// A scalar applied on the collateral amount as part of discount adjustment.
@@ -65,8 +52,6 @@ library PerpMarketConfiguration {
         uint128 minCollateralDiscount;
         /// Maximum discount applied on deposited margin collateral.
         uint128 maxCollateralDiscount;
-        /// Maximum slippage on collateral sold for negative pnl position modifications.
-        uint128 sellExactInMaxSlippagePercent;
         /// Dictates wheter or not the utilization rate should use high or low slope
         uint128 utilizationBreakpointPercent;
         /// Used for utilization interest when below utilization breakpoint
@@ -115,7 +100,7 @@ library PerpMarketConfiguration {
     }
 
     function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }

@@ -35,7 +35,7 @@ describe('LiquidationModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -162,7 +162,7 @@ describe('LiquidationModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -352,7 +352,7 @@ describe('LiquidationModule', () => {
       const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([2000, 3000, 5000]) })
       );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -546,7 +546,7 @@ describe('LiquidationModule', () => {
         desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
-
+      // Price moves 10%
       await market.aggregator().mockSetCurrentPrice(
         wei(order.oraclePrice)
           .mul(orderSide === 1 ? 0.9 : 1.1)

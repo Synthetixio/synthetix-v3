@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.3.17",
+  "version": "3.3.18",
   "description": "Perps Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -33,7 +33,7 @@
     "@synthetixio/router": "3.3.7",
     "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
-    "@usecannon/cli": "2.12.2",
+    "@usecannon/cli": "2.13.6",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",

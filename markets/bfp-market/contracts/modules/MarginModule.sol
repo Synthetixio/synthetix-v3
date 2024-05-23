@@ -10,11 +10,13 @@ import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFl
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
+import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
@@ -32,13 +34,32 @@ contract MarginModule is IMarginModule {
 
     uint256 private constant MAX_SUPPORTED_MARGIN_COLLATERALS = 10;
 
+    // --- Immutables --- //
+
+    address immutable SYNTHETIX_CORE;
+    address immutable SYNTHETIX_SUSD;
+    address immutable ORACLE_MANAGER;
+
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
+        }
+    }
+
     // --- Runtime structs --- //
 
     struct Runtime_setMarginCollateralConfiguration {
         uint256 lengthBefore;
         uint256 lengthAfter;
         uint256 maxApproveAmount;
-        uint128[] previousSupportedSynthMarketIds;
+        address[] previousSupportedCollaterals;
     }
 
     // --- Helpers --- //
@@ -47,25 +68,30 @@ contract MarginModule is IMarginModule {
     function validateAccountAndPositionOnWithdrawal(
         uint128 accountId,
         PerpMarket.Data storage market,
-        Margin.Data storage accountMargin,
         Position.Data storage position,
         uint256 oraclePrice
     ) private view {
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            oraclePrice
+            oraclePrice,
+            addresses
         );
 
-        // No position, just ensure if debt exists then remaining discounted collateral covers debt.
-        if (position.size == 0 && marginValues.discountedCollateralUsd < accountMargin.debtUsd) {
+        // Make sure margin isn't liquidatable due to debt.
+        if (Margin.isMarginLiquidatable(accountId, market, marginValues, addresses)) {
             revert ErrorUtil.InsufficientMargin();
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
-        if (position.isLiquidatable(market, oraclePrice, marketConfig, marginValues)) {
+        if (position.isLiquidatable(oraclePrice, marketConfig, marginValues, addresses)) {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
@@ -73,7 +99,8 @@ contract MarginModule is IMarginModule {
             position.size,
             oraclePrice,
             marginValues.collateralUsd,
-            marketConfig
+            marketConfig,
+            addresses
         );
 
         // We use the discount adjusted price here due to the explicit liquidation check.
@@ -86,57 +113,46 @@ contract MarginModule is IMarginModule {
     function withdrawAndTransfer(
         uint128 marketId,
         uint256 amount,
-        uint128 synthMarketId,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        address collateralAddress
     ) private {
         address msgSender = ERC2771Context._msgSender();
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msgSender, amount);
+
+        if (collateralAddress == SYNTHETIX_SUSD) {
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(marketId, msgSender, amount);
         } else {
-            ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
-            synth.transfer(msgSender, amount);
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketCollateral(
+                marketId,
+                collateralAddress,
+                amount
+            );
+            ITokenModule(collateralAddress).transfer(msgSender, amount);
         }
-        emit MarginWithdraw(address(this), msgSender, amount, synthMarketId);
+        emit MarginWithdraw(address(this), msgSender, amount, collateralAddress);
     }
 
     /// @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
     function transferAndDeposit(
         uint128 marketId,
         uint256 amount,
-        uint128 synthMarketId,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        address collateralAddress
     ) private {
         address msgSender = ERC2771Context._msgSender();
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.depositMarketUsd(marketId, msgSender, amount);
+
+        if (collateralAddress == SYNTHETIX_SUSD) {
+            ISynthetixSystem(SYNTHETIX_CORE).depositMarketUsd(marketId, msgSender, amount);
         } else {
-            ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            synth.transferFrom(msgSender, address(this), amount);
-            globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
+            ITokenModule(collateralAddress).transferFrom(msgSender, address(this), amount);
+            ISynthetixSystem(SYNTHETIX_CORE).depositMarketCollateral(
+                marketId,
+                collateralAddress,
+                amount
+            );
         }
-        emit MarginDeposit(msgSender, address(this), amount, synthMarketId);
+        emit MarginDeposit(msgSender, address(this), amount, collateralAddress);
     }
 
-    /// @dev Invokes `approve` on synth by their marketId with `amount` for core contracts.
-    function approveSynthCollateral(
-        uint128 synthMarketId,
-        uint256 amount,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private {
-        ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
-            ? ITokenModule(globalConfig.usdToken)
-            : ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-
-        synth.approve(address(globalConfig.synthetix), amount);
-        synth.approve(address(globalConfig.spotMarket), amount);
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            synth.approve(address(this), amount);
-        }
-    }
-
-    /// @dev Given a `synthMarketId` determine if tokens of collateral has been deposited in any market.
-    function isCollateralDeposited(uint128 synthMarketId) private view returns (bool) {
+    /// @dev Given a `collateral` determine if tokens of collateral has been deposited in any market.
+    function isCollateralDeposited(address collateralAddress) private view returns (bool) {
         PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
 
         uint128[] memory activeMarketIds = globalPerpMarket.activeMarketIds;
@@ -147,7 +163,7 @@ contract MarginModule is IMarginModule {
         for (uint256 i = 0; i < activeMarketIdsLength; ) {
             PerpMarket.Data storage market = PerpMarket.load(activeMarketIds[i]);
 
-            if (market.depositedCollateral[synthMarketId] > 0) {
+            if (market.depositedCollateral[collateralAddress] > 0) {
                 return true;
             }
             unchecked {
@@ -186,14 +202,19 @@ contract MarginModule is IMarginModule {
         }
 
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
 
         // Prevent withdraw all when there is unpaid debt owned on the account margin.
         if (accountMargin.debtUsd != 0) {
             revert ErrorUtil.DebtFound(accountId, marketId);
         }
 
-        uint256 oraclePrice = market.getOraclePrice();
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        uint256 oraclePrice = market.getOraclePrice(addresses);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -201,20 +222,19 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        uint128 synthMarketId;
+        uint256 length = globalMarginConfig.supportedCollaterals.length;
+        address collateralAddress;
         uint256 available;
         uint256 total;
 
         for (uint256 i = 0; i < length; ++i) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            available = accountMargin.collaterals[synthMarketId];
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            available = accountMargin.collaterals[collateralAddress];
 
             if (available == 0) {
                 continue;
@@ -223,12 +243,12 @@ contract MarginModule is IMarginModule {
             total += available;
 
             // All collateral withdrawn from `accountMargin`, can be set directly to zero.
-            accountMargin.collaterals[synthMarketId] = 0;
+            accountMargin.collaterals[collateralAddress] = 0;
 
-            market.depositedCollateral[synthMarketId] -= available;
+            market.depositedCollateral[collateralAddress] -= available;
 
-            // Withdraw all available collateral for this `synthMarketId`.
-            withdrawAndTransfer(marketId, available, synthMarketId, globalConfig);
+            // Withdraw all available collateral
+            withdrawAndTransfer(marketId, available, collateralAddress);
         }
 
         // No collateral has been withdrawn. Revert instead of noop.
@@ -241,7 +261,7 @@ contract MarginModule is IMarginModule {
     function modifyCollateral(
         uint128 accountId,
         uint128 marketId,
-        uint128 synthMarketId,
+        address collateralAddress,
         int256 amountDelta
     ) external {
         // Revert on zero amount operations rather than no-op.
@@ -255,13 +275,17 @@ contract MarginModule is IMarginModule {
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        Margin.CollateralType storage collateral = globalMarginConfig.supported[synthMarketId];
+        Margin.CollateralType storage collateral = globalMarginConfig.supported[collateralAddress];
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
 
         // Prevent any operations if this synth isn't supported as collateral.
         if (!collateral.exists) {
-            revert ErrorUtil.UnsupportedCollateral(synthMarketId);
+            revert ErrorUtil.UnsupportedCollateral(collateralAddress);
         }
 
         // Prevent collateral transfers when there's a pending order.
@@ -277,8 +301,8 @@ contract MarginModule is IMarginModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
 
-        uint256 oraclePrice = market.getOraclePrice();
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        uint256 oraclePrice = market.getOraclePrice(addresses);
+        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(
             marketId,
             market.skew,
@@ -286,7 +310,7 @@ contract MarginModule is IMarginModule {
             market.getCurrentFundingVelocity()
         );
 
-        (uint256 utilizationRate, ) = market.recomputeUtilization(oraclePrice);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
@@ -294,85 +318,77 @@ contract MarginModule is IMarginModule {
             FeatureFlag.ensureAccessToFeature(Flags.DEPOSIT);
 
             uint256 maxAllowable = collateral.maxAllowable;
-            uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
+            uint256 totalMarketAvailableAmount = market.depositedCollateral[collateralAddress];
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (totalMarketAvailableAmount + absAmountDelta > maxAllowable) {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
             }
-            accountMargin.collaterals[synthMarketId] += absAmountDelta;
-            market.depositedCollateral[synthMarketId] += absAmountDelta;
-            transferAndDeposit(marketId, absAmountDelta, synthMarketId, globalConfig);
+            accountMargin.collaterals[collateralAddress] += absAmountDelta;
+            market.depositedCollateral[collateralAddress] += absAmountDelta;
+            transferAndDeposit(marketId, absAmountDelta, collateralAddress);
         } else {
             FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
 
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
-            if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
+            if (accountMargin.collaterals[collateralAddress] < absAmountDelta) {
                 revert ErrorUtil.InsufficientCollateral(
-                    synthMarketId,
-                    accountMargin.collaterals[synthMarketId],
+                    collateralAddress,
+                    accountMargin.collaterals[collateralAddress],
                     absAmountDelta
                 );
             }
 
-            accountMargin.collaterals[synthMarketId] -= absAmountDelta;
-            market.depositedCollateral[synthMarketId] -= absAmountDelta;
+            accountMargin.collaterals[collateralAddress] -= absAmountDelta;
+            market.depositedCollateral[collateralAddress] -= absAmountDelta;
 
             // Verify account and position remain solvent.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0 || accountMargin.debtUsd != 0) {
-                validateAccountAndPositionOnWithdrawal(
-                    accountId,
-                    market,
-                    accountMargin,
-                    position,
-                    oraclePrice
-                );
+                validateAccountAndPositionOnWithdrawal(accountId, market, position, oraclePrice);
             }
 
             // Perform the actual withdraw & transfer from Synthetix Core to msg.sender.
-            withdrawAndTransfer(marketId, absAmountDelta, synthMarketId, globalConfig);
+            withdrawAndTransfer(marketId, absAmountDelta, collateralAddress);
         }
     }
 
     /// @inheritdoc IMarginModule
-    function setCollateralMaxAllowable(uint128 synthMarketId, uint128 maxAllowable) external {
+    function setCollateralMaxAllowable(address collateralAddress, uint128 maxAllowable) external {
         OwnableStorage.onlyOwner();
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint256 length = globalMarginConfig.supportedCollaterals.length;
         for (uint256 i = 0; i < length; ) {
-            uint128 currentSynthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            if (currentSynthMarketId == synthMarketId) {
-                globalMarginConfig.supported[currentSynthMarketId].maxAllowable = maxAllowable;
+            address currentCollateral = globalMarginConfig.supportedCollaterals[i];
+            if (currentCollateral == collateralAddress) {
+                globalMarginConfig.supported[currentCollateral].maxAllowable = maxAllowable;
                 return;
             }
             unchecked {
                 ++i;
             }
         }
-        revert ErrorUtil.UnsupportedCollateral(synthMarketId);
+        revert ErrorUtil.UnsupportedCollateral(collateralAddress);
     }
 
     /// @inheritdoc IMarginModule
     function setMarginCollateralConfiguration(
-        uint128[] calldata synthMarketIds,
+        address[] calldata collateralAddresses,
         bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables,
+        uint128[] calldata skewScales,
         address[] calldata rewardDistributors
     ) external {
         OwnableStorage.onlyOwner();
 
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration
-            .load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         Runtime_setMarginCollateralConfiguration memory runtime;
-        runtime.lengthBefore = globalMarginConfig.supportedSynthMarketIds.length;
-        runtime.lengthAfter = synthMarketIds.length;
+        runtime.lengthBefore = globalMarginConfig.supportedCollaterals.length;
+        runtime.lengthAfter = collateralAddresses.length;
         runtime.maxApproveAmount = type(uint256).max;
-        runtime.previousSupportedSynthMarketIds = globalMarginConfig.supportedSynthMarketIds;
-
+        runtime.previousSupportedCollaterals = globalMarginConfig.supportedCollaterals;
         // Number of synth collaterals to configure exceeds system maxmium.
         if (runtime.lengthAfter > MAX_SUPPORTED_MARGIN_COLLATERALS) {
             revert ErrorUtil.MaxCollateralExceeded(
@@ -385,35 +401,35 @@ contract MarginModule is IMarginModule {
         if (
             oracleNodeIds.length != runtime.lengthAfter ||
             maxAllowables.length != runtime.lengthAfter ||
-            rewardDistributors.length != runtime.lengthAfter
+            rewardDistributors.length != runtime.lengthAfter ||
+            skewScales.length != runtime.lengthAfter
         ) {
             revert ErrorUtil.ArrayLengthMismatch();
         }
 
         // Clear existing collateral configuration to be replaced with new.
         for (uint256 i = 0; i < runtime.lengthBefore; ) {
-            uint128 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            delete globalMarginConfig.supported[synthMarketId];
+            address collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            delete globalMarginConfig.supported[collateralAddress];
 
-            approveSynthCollateral(synthMarketId, 0, globalMarketConfig);
+            ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, 0);
 
             unchecked {
                 ++i;
             }
         }
-        delete globalMarginConfig.supportedSynthMarketIds;
+        delete globalMarginConfig.supportedCollaterals;
 
         // Update with passed in configuration.
-        uint128[] memory newSupportedSynthMarketIds = new uint128[](runtime.lengthAfter);
+        address[] memory newSupportedCollaterals = new address[](runtime.lengthAfter);
         for (uint256 i = 0; i < runtime.lengthAfter; ) {
-            uint128 synthMarketId = synthMarketIds[i];
-
+            address collateralAddress = collateralAddresses[i];
             // Perform approve _once_ when this collateral is added as a supported collateral.
-            approveSynthCollateral(synthMarketId, runtime.maxApproveAmount, globalMarketConfig);
-
+            ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, runtime.maxApproveAmount);
             // sUSD must have a 0x0 reward distributor.
             address distributor = rewardDistributors[i];
-            if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+
+            if (collateralAddress == SYNTHETIX_SUSD) {
                 if (distributor != address(0)) {
                     revert ErrorUtil.InvalidRewardDistributor(distributor);
                 }
@@ -430,32 +446,32 @@ contract MarginModule is IMarginModule {
                     revert ErrorUtil.InvalidRewardDistributor(distributor);
                 }
             }
-
-            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(
+            globalMarginConfig.supported[collateralAddress] = Margin.CollateralType(
                 oracleNodeIds[i],
                 maxAllowables[i],
+                skewScales[i],
                 rewardDistributors[i],
                 true
             );
-            newSupportedSynthMarketIds[i] = synthMarketId;
+            newSupportedCollaterals[i] = collateralAddress;
 
             unchecked {
                 ++i;
             }
         }
-        globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
+        globalMarginConfig.supportedCollaterals = newSupportedCollaterals;
 
         for (uint256 i = 0; i < runtime.lengthBefore; ) {
-            uint128 synthMarketId = runtime.previousSupportedSynthMarketIds[i];
+            address collateral = runtime.previousSupportedCollaterals[i];
 
             // Removing a collateral with a non-zero deposit amount is _not_ allowed. To wind down a collateral,
             // the market owner can set `maxAllowable=0` to disable deposits but to ensure traders can always withdraw
             // their deposited collateral, we cannot remove the collateral if deposits still remain.
             if (
-                isCollateralDeposited(synthMarketId) &&
-                !globalMarginConfig.supported[synthMarketId].exists
+                isCollateralDeposited(collateral) &&
+                !globalMarginConfig.supported[collateral].exists
             ) {
-                revert ErrorUtil.MissingRequiredCollateral(synthMarketId);
+                revert ErrorUtil.MissingRequiredCollateral(collateral);
             }
 
             unchecked {
@@ -478,7 +494,6 @@ contract MarginModule is IMarginModule {
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
@@ -488,23 +503,28 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.NoDebt();
         }
         uint128 decreaseDebtAmount = MathUtil.min(amount, debt).to128();
-        uint128 availableSusd = accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID].to128();
+
+        uint128 availableSusd = accountMargin.collaterals[SYNTHETIX_SUSD].to128();
 
         // Infer the amount of sUSD to deduct from margin.
         uint128 sUsdToDeduct = 0;
         if (availableSusd != 0) {
             sUsdToDeduct = MathUtil.min(decreaseDebtAmount, availableSusd).to128();
-            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] -= sUsdToDeduct;
+            accountMargin.collaterals[SYNTHETIX_SUSD] -= sUsdToDeduct;
         }
 
         // Perform account and margin debt updates.
         accountMargin.debtUsd -= decreaseDebtAmount;
-        market.updateDebtAndCollateral(-decreaseDebtAmount.toInt(), -sUsdToDeduct.toInt());
+        market.updateDebtAndCollateral(
+            -decreaseDebtAmount.toInt(),
+            -sUsdToDeduct.toInt(),
+            SYNTHETIX_SUSD
+        );
 
         // Infer the remaining sUSD to burn from `ERC2771Context._msgSender()` after attributing sUSD in margin.
         uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
         if (amountToBurn > 0) {
-            globalConfig.synthetix.depositMarketUsd(
+            ISynthetixSystem(SYNTHETIX_CORE).depositMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 amountToBurn
@@ -524,17 +544,18 @@ contract MarginModule is IMarginModule {
     {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
-        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint256 length = globalMarginConfig.supportedCollaterals.length;
         MarginModule.ConfiguredCollateral[] memory collaterals = new ConfiguredCollateral[](length);
-        uint128 synthMarketId;
+        address collateralAddress;
 
         for (uint256 i = 0; i < length; ) {
-            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
-            Margin.CollateralType storage c = globalMarginConfig.supported[synthMarketId];
+            collateralAddress = globalMarginConfig.supportedCollaterals[i];
+            Margin.CollateralType storage c = globalMarginConfig.supported[collateralAddress];
             collaterals[i] = ConfiguredCollateral(
-                synthMarketId,
+                collateralAddress,
                 c.oracleNodeId,
                 c.maxAllowable,
+                c.skewScale,
                 c.rewardDistributor
             );
 
@@ -553,7 +574,12 @@ contract MarginModule is IMarginModule {
     ) external view returns (Margin.MarginValues memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice(addresses), addresses);
     }
 
     /// @inheritdoc IMarginModule
@@ -564,29 +590,41 @@ contract MarginModule is IMarginModule {
     ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
         return
             Margin.getNetAssetValue(
                 accountId,
                 market,
-                oraclePrice == 0 ? market.getOraclePrice() : oraclePrice
+                oraclePrice == 0 ? market.getOraclePrice(addresses) : oraclePrice,
+                addresses
             );
     }
 
     /// @inheritdoc IMarginModule
     function getDiscountedCollateralPrice(
-        uint128 synthMarketId,
+        address collateralAddress,
         uint256 amount
     ) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration
             .load();
-
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
         return
-            Margin.getDiscountedPriceFromCollateralPrice(
+            Margin.getDiscountedCollateralPrice(
                 amount,
-                globalMarginConfig.getCollateralPrice(synthMarketId, globalMarketConfig),
-                synthMarketId,
-                globalMarketConfig
+                globalMarginConfig.getCollateralPrice(collateralAddress, addresses),
+                collateralAddress,
+                globalMarketConfig,
+                globalMarginConfig,
+                addresses
             );
     }
 
@@ -597,12 +635,17 @@ contract MarginModule is IMarginModule {
     ) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        uint256 oraclePrice = market.getOraclePrice();
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
+        uint256 oraclePrice = market.getOraclePrice(addresses);
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
             market,
-            oraclePrice
+            oraclePrice,
+            addresses
         );
         Position.Data storage position = market.positions[accountId];
         int128 size = position.size;
@@ -610,7 +653,14 @@ contract MarginModule is IMarginModule {
         // When there is no position then we can ignore all running losses/profits but still need to include debt
         // as they may have realized a prior negative PnL.
         if (size == 0) {
-            return marginValues.collateralUsd - Margin.load(accountId, marketId).debtUsd;
+            return
+                MathUtil
+                    .max(
+                        marginValues.collateralUsd.toInt() -
+                            Margin.load(accountId, marketId).debtUsd.toInt(),
+                        0
+                    )
+                    .toUint();
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
@@ -618,12 +668,38 @@ contract MarginModule is IMarginModule {
             size,
             oraclePrice,
             marginValues.collateralUsd,
-            marketConfig
+            marketConfig,
+            addresses
         );
 
         // There is a position open. Discount the collateral, deduct running losses (or add profits), reduce
         // by the IM as well as the liq and flag fee for an approximate withdrawable margin. We call this approx
         // because both the liq and flag rewards can change based on chain usage.
         return MathUtil.max(marginValues.discountedMarginUsd.toInt() - im.toInt(), 0).toUint();
+    }
+
+    /// @inheritdoc IMarginModule
+    function getMarginLiquidationOnlyReward(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.exists(marketId);
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
+        return
+            Margin.getMarginLiquidationOnlyReward(
+                Margin.getCollateralUsdWithoutDiscount(
+                    Margin.load(accountId, marketId),
+                    Margin.load(),
+                    addresses
+                ),
+                PerpMarketConfiguration.load(marketId),
+                PerpMarketConfiguration.load(),
+                addresses
+            );
     }
 }

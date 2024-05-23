@@ -33,11 +33,9 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(config.keeperProfitMarginPercent, global.keeperProfitMarginPercent);
       assert.equal(config.keeperSettlementGasUnits, global.keeperSettlementGasUnits);
       assert.equal(config.keeperLiquidationGasUnits, global.keeperLiquidationGasUnits);
-      assertBn.equal(config.keeperLiquidationFeeUsd, global.keeperLiquidationFeeUsd);
       assertBn.equal(config.collateralDiscountScalar, global.collateralDiscountScalar);
       assertBn.equal(config.minCollateralDiscount, global.minCollateralDiscount);
       assertBn.equal(config.maxCollateralDiscount, global.maxCollateralDiscount);
-      assertBn.equal(config.sellExactInMaxSlippagePercent, global.sellExactInMaxSlippagePercent);
       assertBn.equal(config.utilizationBreakpointPercent, global.utilizationBreakpointPercent);
       assertBn.equal(config.lowUtilizationSlopePercent, global.lowUtilizationSlopePercent);
       assertBn.equal(config.highUtilizationSlopePercent, global.highUtilizationSlopePercent);
@@ -45,6 +43,7 @@ describe('MarketConfigurationModule', async () => {
       assert.equal(config.keeperFlagGasUnits, global.keeperFlagGasUnits);
       assert.equal(config.keeperLiquidationEndorsed, global.keeperLiquidationEndorsed);
       assert.equal(config.keeperLiquidateMarginGasUnits, global.keeperLiquidateMarginGasUnits);
+      assert.equal(config.keeperCancellationGasUnits, global.keeperCancellationGasUnits);
 
       await assertEvent(
         receipt,
@@ -74,11 +73,30 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
       const config = {
         ...specific,
+        marketId,
         skewScale: bn(0),
       };
       await assertRevert(
-        BfpMarketProxy.setMarketConfigurationById(marketId, config),
+        BfpMarketProxy.setMarketConfigurationById(config),
         'InvalidParameter("skewScale", "ZeroAmount")',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when minMarginUsd less than maxKeeperFeeUsd', async () => {
+      const { BfpMarketProxy } = systems();
+      const marketId = genOneOf(markets()).marketId();
+      const globalConfig = await BfpMarketProxy.getMarketConfiguration();
+      const { specific } = genMarket();
+      const config = {
+        ...specific,
+        marketId,
+        minMarginUsd: globalConfig.maxKeeperFeeUsd.sub(bn(1)),
+      };
+
+      await assertRevert(
+        BfpMarketProxy.setMarketConfigurationById(config),
+        `InvalidParameter("minMarginUsd", "minMarginUsd cannot be less than maxKeeperFeeUsd")`,
         BfpMarketProxy
       );
     });
@@ -92,7 +110,7 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       const { receipt } = await withExplicitEvmMine(
-        () => BfpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        () => BfpMarketProxy.connect(from).setMarketConfigurationById({ ...specific, marketId }),
         provider()
       );
 
@@ -133,7 +151,7 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
+        BfpMarketProxy.connect(from).setMarketConfigurationById({ ...specific, marketId }),
         `Unauthorized("${await from.getAddress()}")`,
         BfpMarketProxy
       );
@@ -146,7 +164,10 @@ describe('MarketConfigurationModule', async () => {
       const { specific } = genMarket();
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setMarketConfigurationById(notFoundMarketId, specific),
+        BfpMarketProxy.connect(from).setMarketConfigurationById({
+          ...specific,
+          marketId: notFoundMarketId,
+        }),
         `MarketNotFound("${notFoundMarketId}")`,
         BfpMarketProxy
       );

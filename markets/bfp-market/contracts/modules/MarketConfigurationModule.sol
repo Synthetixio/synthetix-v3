@@ -27,14 +27,13 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperProfitMarginUsd = data.keeperProfitMarginUsd;
         config.keeperSettlementGasUnits = data.keeperSettlementGasUnits;
         config.keeperLiquidationGasUnits = data.keeperLiquidationGasUnits;
+        config.keeperCancellationGasUnits = data.keeperCancellationGasUnits;
         config.keeperFlagGasUnits = data.keeperFlagGasUnits;
         config.keeperLiquidateMarginGasUnits = data.keeperLiquidateMarginGasUnits;
-        config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
         config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
         config.collateralDiscountScalar = data.collateralDiscountScalar;
         config.minCollateralDiscount = data.minCollateralDiscount;
         config.maxCollateralDiscount = data.maxCollateralDiscount;
-        config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
         config.utilizationBreakpointPercent = data.utilizationBreakpointPercent;
         config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
         config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
@@ -44,15 +43,23 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     /// @inheritdoc IMarketConfigurationModule
     function setMarketConfigurationById(
-        uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
-
-        PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
+        uint128 marketId = data.marketId;
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
         PerpMarket.exists(marketId);
+
+        PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        if (data.minMarginUsd < globalConfig.maxKeeperFeeUsd) {
+            revert ErrorUtil.InvalidParameter(
+                "minMarginUsd",
+                "minMarginUsd cannot be less than maxKeeperFeeUsd"
+            );
+        }
 
         if (data.skewScale == 0) {
             revert ErrorUtil.InvalidParameter("skewScale", "ZeroAmount");

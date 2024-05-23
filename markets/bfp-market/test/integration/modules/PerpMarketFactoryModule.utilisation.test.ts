@@ -1,29 +1,23 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
-import { shuffle } from 'lodash';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
+import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
-  bn,
-  genBootstrap,
-  genNumber,
-  genOneOf,
-  genOrder,
-  genTrader,
-  toRoundRobinGenerators,
-} from '../../generators';
-import {
+  SECONDS_ONE_DAY,
   commitAndSettle,
   depositMargin,
+  fastForwardBySec,
   findEventSafe,
   setMarketConfiguration,
   setMarketConfigurationById,
   withExplicitEvmMine,
 } from '../../helpers';
+import { calcUtilization, calcUtilizationRate } from '../../calculations';
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, systems, restore, provider, pool, traders, owner, collateralsWithoutSusd } = bs;
+  const { markets, systems, restore, provider, pool, owner, collateralsWithoutSusd } = bs;
 
   beforeEach(restore);
 
@@ -137,16 +131,81 @@ describe('PerpMarketFactoryModule Utilization', () => {
       assertBn.equal(withdrawable2, totalCollateralValueUsd2);
     });
 
-    it('should support collateral utilization above 100%', async () => {
+    it('should have utilization capped to one when delegated collateral < lockedCollateral', async () => {
       const { BfpMarketProxy, Core } = systems();
 
       const market = genOneOf(markets());
       const marketId = market.marketId();
 
-      const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
-      const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
-      const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
-      const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
+      // Change CORE staking/delegation to the minimum amount.
+      const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
+      const { minDelegationD18 } = await Core.getCollateralConfiguration(
+        stakedCollateral().address
+      );
+      const stakedCollateralAddress = stakedCollateral().address;
+      await Core.connect(staker()).delegateCollateral(
+        stakerAccountId,
+        poolId,
+        stakedCollateralAddress,
+        minDelegationD18,
+        bn(1)
+      );
+
+      // Create one trade that will win more than the delegated collateral.
+      const { collateral, collateralDepositAmount, trader } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: market })
+      );
+
+      // Create a long position
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Price 10x, causing large profits for the trader.
+      const newMarketOraclePrice = wei(order1.oraclePrice).mul(10).toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+      // Get delegated usd amount.
+      const withdrawable = await Core.getWithdrawableMarketUsd(market.marketId());
+      const { totalCollateralValueUsd, size, oraclePrice } = await BfpMarketProxy.getMarketDigest(
+        market.marketId()
+      );
+      const { minCreditPercent } = await BfpMarketProxy.getMarketConfigurationById(
+        market.marketId()
+      );
+
+      const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
+      const lockedCollateralUsd = wei(size).mul(oraclePrice).mul(minCreditPercent);
+      const utilizationWithoutCap = delegatedAmountUsd.div(lockedCollateralUsd);
+      // Assert that the uncapped utilization is above 1.
+      assertBn.gt(utilizationWithoutCap.toBN(), 1);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.recomputeUtilization(marketId),
+        provider()
+      );
+      const recomputeUtilizationEvent = findEventSafe(
+        receipt,
+        'UtilizationRecomputed',
+        BfpMarketProxy
+      );
+
+      // Calculate the expected utilization rate, assuming utilization was capped at 1.
+      const expectedUtilization = 1;
+      const expectedUtilizationRate = await calcUtilizationRate(bs, wei(expectedUtilization));
+
+      assertBn.equal(
+        expectedUtilizationRate.toBN(),
+        recomputeUtilizationEvent.args.utilizationRate
+      );
+    });
+
+    it('should support collateral utilization above 100% due to delegatedCollateral being negative', async () => {
+      const { BfpMarketProxy, Core } = systems();
+
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
 
       // Change staking to the minimum about
       const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
@@ -161,33 +220,27 @@ describe('PerpMarketFactoryModule Utilization', () => {
         minDelegationD18,
         bn(1)
       );
-      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
-      const trader1 = tradersGenerator.next().value;
-      const trader2 = tradersGenerator.next().value;
 
       // Create one trade that will win more than the delegated collateral
-      const { collateral: collateral1, collateralDepositAmount: collateralDepositAmount1 } =
-        await depositMargin(bs, genTrader(bs, { desiredMarket: market, desiredTrader: trader1 }));
+      const { trader, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: market })
+      );
 
       // Create a long position
-      const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSide: 1,
       });
-      await commitAndSettle(bs, marketId, trader1, order1);
+      await commitAndSettle(bs, marketId, trader, order1);
 
       // Price 10x, causing large profits for the trader
       const newMarketOraclePrice = wei(order1.oraclePrice).mul(10).toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
-      const closeOrder1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
-        desiredSize: order1.sizeDelta.mul(-1),
+      const decreaseOrder1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(order1.sizeDelta).mul(-1).mul(0.9).toBN(),
       });
-      await commitAndSettle(bs, marketId, trader1, closeOrder1);
 
-      // Create a new position with a different trader. This trader will will not incur and profits or losses.
-      const { collateral: collateral2, collateralDepositAmount: collateralDepositAmount2 } =
-        await depositMargin(bs, genTrader(bs, { desiredMarket: market, desiredTrader: trader2 }));
-      const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2);
-      await commitAndSettle(bs, marketId, trader2, order2);
+      await commitAndSettle(bs, marketId, trader, decreaseOrder1);
 
       // (1) The market is underwater
       // (2) trader1 has some sUSD allocated to his collateral
@@ -204,18 +257,18 @@ describe('PerpMarketFactoryModule Utilization', () => {
 
       // We expect max utilization rate, which is based on the slope configs.
       const expectedUtilization = 1;
-      const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);
-      const highPart = highUtilizationSlopePercent
-        .mul(wei(expectedUtilization).sub(utilizationBreakpointPercent))
-        .mul(100);
-      const expectedUtilizationRate = lowPart.add(highPart).toBN();
+      const expectedUtilizationRate = await calcUtilizationRate(bs, wei(expectedUtilization));
 
-      assertBn.equal(expectedUtilizationRate, recomputeUtilizationEvent1.args.utilizationRate);
+      assertBn.equal(
+        expectedUtilizationRate.toBN(),
+        recomputeUtilizationEvent1.args.utilizationRate
+      );
 
-      const closeOrder2 = await genOrder(bs, market, collateral2, collateralDepositAmount2, {
-        desiredSize: order2.sizeDelta.mul(-1),
+      const { size } = await BfpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: size.mul(-1),
       });
-      await commitAndSettle(bs, marketId, trader2, closeOrder2);
+      await commitAndSettle(bs, marketId, trader, closeOrder);
 
       // Now there are no more open positions in the market, we expect the utilization to be 0.
       const { receipt: recomputeReceipt2 } = await withExplicitEvmMine(
@@ -307,5 +360,114 @@ describe('PerpMarketFactoryModule Utilization', () => {
         }
       }
     );
+  });
+  describe('getUtilizationDigest', async () => {
+    it('should return utilization data', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const market = genOneOf(markets());
+
+      const { marketId, trader, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: market })
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      const { settlementTime, receipt } = await commitAndSettle(bs, marketId, trader, order);
+
+      const utilizationEvent = findEventSafe(receipt, 'UtilizationRecomputed', BfpMarketProxy);
+      const computedUtilizationRate = utilizationEvent.args.utilizationRate;
+      const expectedUtilization1 = await calcUtilization(bs, marketId);
+      const expectedUtilizationRate1 = await calcUtilizationRate(bs, expectedUtilization1);
+      const utilizationDigest1 = await BfpMarketProxy.getUtilizationDigest(marketId);
+
+      assertBn.equal(utilizationDigest1.utilization, expectedUtilization1.toBN());
+      assertBn.equal(utilizationDigest1.currentUtilizationRate, expectedUtilizationRate1.toBN());
+      assertBn.equal(utilizationDigest1.lastComputedTimestamp, settlementTime + 1);
+      assertBn.equal(utilizationDigest1.lastComputedUtilizationRate, computedUtilizationRate);
+
+      const {
+        stakerAccountId,
+        id: poolId,
+        collateral: stakedCollateral,
+        staker,
+        stakedAmount,
+      } = pool();
+
+      // Some time passes
+      await fastForwardBySec(provider(), genNumber(1, SECONDS_ONE_DAY));
+      // Decrease amount of staked collateral on the core side.
+      const stakedCollateralAddress = stakedCollateral().address;
+      await withExplicitEvmMine(
+        () =>
+          Core.connect(staker()).delegateCollateral(
+            stakerAccountId,
+            poolId,
+            stakedCollateralAddress,
+            wei(stakedAmount).mul(0.9).toBN(),
+            bn(1)
+          ),
+        provider()
+      );
+
+      const utilizationDigest2 = await BfpMarketProxy.getUtilizationDigest(marketId);
+      const expectedUtilization2 = await calcUtilization(bs, marketId);
+      const expectedUtilizationRate2 = await calcUtilizationRate(bs, expectedUtilization2);
+
+      // We now expect `utilization` and `currentUtilizationRate` to have increased, as there's less capital backing the market.
+      assertBn.gt(utilizationDigest2.utilization, utilizationDigest1.utilization);
+      assertBn.gt(
+        utilizationDigest2.currentUtilizationRate,
+        utilizationDigest1.currentUtilizationRate
+      );
+      // `utilization` and `currentUtilizationRate` should reflect the changes.
+      assertBn.equal(utilizationDigest2.utilization, expectedUtilization2.toBN());
+      assertBn.equal(utilizationDigest2.currentUtilizationRate, expectedUtilizationRate2.toBN());
+
+      // We expect `lastComputedTimestamp` and `lastComputedUtilizationRate` to remain the same, as no one has called recomputeUtilization.
+      assertBn.equal(
+        utilizationDigest2.lastComputedTimestamp,
+        utilizationDigest1.lastComputedTimestamp
+      );
+      assertBn.equal(
+        utilizationDigest2.lastComputedUtilizationRate,
+        utilizationDigest1.lastComputedUtilizationRate
+      );
+
+      // Recompute utilization
+      const { receipt: recomputeReceipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.recomputeUtilization(marketId),
+        provider()
+      );
+
+      const utilizationEvent2 = findEventSafe(
+        recomputeReceipt,
+        'UtilizationRecomputed',
+        BfpMarketProxy
+      );
+      const { timestamp } = await provider().getBlock(receipt.blockNumber);
+
+      const utilizationDigest3 = await BfpMarketProxy.getUtilizationDigest(marketId);
+
+      // Utilization and utilization rate should be the same as before recomputeUtilization.
+      assertBn.equal(utilizationDigest3.utilization, utilizationDigest2.utilization);
+      assertBn.equal(
+        utilizationDigest3.currentUtilizationRate,
+        utilizationDigest2.currentUtilizationRate
+      );
+
+      // `lastComputedTimestamp` should have the same value as the timestamp of the recomputeUtilization call.
+      assertBn.equal(utilizationDigest2.lastComputedTimestamp, timestamp);
+      // `lastComputedUtilizationRate` should be larger than before recompute.
+      assertBn.gt(
+        utilizationDigest3.lastComputedUtilizationRate,
+        utilizationDigest2.lastComputedUtilizationRate
+      );
+      // It should also match the rate from the event.
+      assertBn.equal(
+        utilizationDigest3.lastComputedUtilizationRate,
+        utilizationEvent2.args.utilizationRate
+      );
+    });
   });
 });

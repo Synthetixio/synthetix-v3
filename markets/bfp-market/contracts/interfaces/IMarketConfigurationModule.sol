@@ -13,22 +13,21 @@ interface IMarketConfigurationModule {
     struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
-        uint128 minOrderAge;
-        uint128 maxOrderAge;
+        uint64 minOrderAge;
+        uint64 maxOrderAge;
         uint256 minKeeperFeeUsd;
         uint256 maxKeeperFeeUsd;
         uint128 keeperProfitMarginPercent;
         uint128 keeperProfitMarginUsd;
         uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
         uint128 keeperLiquidationGasUnits;
-        uint256 keeperLiquidationFeeUsd;
         uint128 keeperFlagGasUnits;
         uint128 keeperLiquidateMarginGasUnits;
         address keeperLiquidationEndorsed;
         uint128 collateralDiscountScalar;
         uint128 minCollateralDiscount;
         uint128 maxCollateralDiscount;
-        uint128 sellExactInMaxSlippagePercent;
         uint128 utilizationBreakpointPercent;
         uint128 lowUtilizationSlopePercent;
         uint128 highUtilizationSlopePercent;
@@ -36,6 +35,7 @@ interface IMarketConfigurationModule {
 
     /// @notice See PerpMarketConfiguration.Data for more details.
     struct ConfigureByMarketParameters {
+        uint128 marketId;
         bytes32 oracleNodeId;
         bytes32 pythPriceFeedId;
         uint128 makerFee;
@@ -76,10 +76,8 @@ interface IMarketConfigurationModule {
     ) external;
 
     /// @notice Configures a market specific parameters applied to the `marketId`.
-    /// @param marketId Market to configure
     /// @param data A struct of parameters to configure
     function setMarketConfigurationById(
-        uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external;
 

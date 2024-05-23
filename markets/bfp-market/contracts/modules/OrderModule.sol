@@ -5,6 +5,8 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IOrderModule} from "../interfaces/IOrderModule.sol";
@@ -15,6 +17,7 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {Position} from "../storage/Position.sol";
+import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
@@ -34,19 +37,42 @@ contract OrderModule is IOrderModule {
     using PerpMarket for PerpMarket.Data;
     using Margin for Margin.Data;
 
+    // --- Immutables --- //
+
+    address immutable SYNTHETIX_CORE;
+    address immutable SYNTHETIX_SUSD;
+    address immutable ORACLE_MANAGER;
+
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
+        }
+    }
+
     // --- Runtime structs --- //
+
+    struct Runtime_commitOrder {
+        uint256 oraclePrice;
+        uint64 commitmentTime;
+    }
 
     struct Runtime_settleOrder {
         uint256 pythPrice;
-        int256 accruedFunding;
-        uint256 accruedUtilization;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
         int256 pricePnl;
         uint256 fillPrice;
         uint128 updatedMarketSize;
         int128 updatedMarketSkew;
         uint128 totalFees;
-        Position.ValidatedTrade trade;
-        Position.TradeParams params;
+        Position.TradeParams tradeParams;
     }
 
     // --- Helpers --- //
@@ -68,10 +94,10 @@ contract OrderModule is IOrderModule {
      * A ready order is one where time that has passed must be at least the minimum order age (>=).
      */
     function isOrderStaleOrReady(
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private view returns (bool isStale, bool isReady) {
-        uint256 timestamp = block.timestamp;
+        uint64 timestamp = block.timestamp.to64();
         isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
         isReady = timestamp - commitmentTime >= globalConfig.minOrderAge;
     }
@@ -79,7 +105,7 @@ contract OrderModule is IOrderModule {
     /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         uint256 pythPrice,
         Position.TradeParams memory params
     ) private view {
@@ -157,15 +183,22 @@ contract OrderModule is IOrderModule {
         }
     }
 
-    /// @dev Generic helper for funding recomputation during order management.
+    /// @dev Generic helper for utilization recomputation during order management.
     function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
-        (uint256 utilizationRate, ) = market.recomputeUtilization(price);
+        (uint128 utilizationRate, ) = market.recomputeUtilization(
+            price,
+            AddressRegistry.Data({
+                synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                sUsd: SYNTHETIX_SUSD,
+                oracleManager: ORACLE_MANAGER
+            })
+        );
         emit UtilizationRecomputed(market.id, market.skew, utilizationRate);
     }
 
     /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
+        (int128 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
             market.id,
             market.skew,
@@ -182,7 +215,7 @@ contract OrderModule is IOrderModule {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
+        uint128 keeperFeeBufferUsd,
         address[] memory hooks
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
@@ -193,6 +226,11 @@ contract OrderModule is IOrderModule {
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
 
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
@@ -200,9 +238,24 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        uint256 oraclePrice = market.getOraclePrice();
+        Runtime_commitOrder memory runtime;
+
+        runtime.oraclePrice = market.getOraclePrice(addresses);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
+        // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
+        Position.TradeParams memory tradeParams = Position.TradeParams(
+            sizeDelta,
+            runtime.oraclePrice, // Pyth oracle price (but is also CL oracle price on commitment).
+            runtime.oraclePrice, // CL oracle price.
+            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, runtime.oraclePrice),
+            marketConfig.makerFee,
+            marketConfig.takerFee,
+            limitPrice,
+            keeperFeeBufferUsd
+        );
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
@@ -212,24 +265,20 @@ contract OrderModule is IOrderModule {
         Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
-            Position.TradeParams(
-                sizeDelta,
-                oraclePrice,
-                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
-                marketConfig.makerFee,
-                marketConfig.takerFee,
-                limitPrice,
-                keeperFeeBufferUsd
-            )
+            tradeParams,
+            marketConfig,
+            addresses
         );
 
+        runtime.commitmentTime = block.timestamp.to64();
         market.orders[accountId].update(
-            Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd, hooks)
+            Order.Data(sizeDelta, runtime.commitmentTime, limitPrice, keeperFeeBufferUsd, hooks)
         );
+
         emit OrderCommitted(
             accountId,
             marketId,
-            block.timestamp,
+            runtime.commitmentTime,
             sizeDelta,
             trade.orderFee,
             trade.keeperFee
@@ -256,7 +305,11 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
         runtime.pythPrice = PythUtil.parsePythPrice(
             globalConfig,
             marketConfig,
@@ -269,9 +322,10 @@ contract OrderModule is IOrderModule {
             order.sizeDelta,
             runtime.pythPrice
         );
-        runtime.params = Position.TradeParams(
+        runtime.tradeParams = Position.TradeParams(
             order.sizeDelta,
-            market.getOraclePrice(),
+            market.getOraclePrice(addresses),
+            runtime.pythPrice,
             runtime.fillPrice,
             marketConfig.makerFee,
             marketConfig.takerFee,
@@ -283,29 +337,35 @@ contract OrderModule is IOrderModule {
             globalConfig,
             order.commitmentTime,
             runtime.pythPrice,
-            runtime.params
+            runtime.tradeParams
         );
-        recomputeFunding(market, runtime.params.oraclePrice);
+        recomputeFunding(market, runtime.tradeParams.oraclePrice);
 
-        runtime.trade = Position.validateTrade(accountId, market, runtime.params);
+        Position.ValidatedTrade memory trade = Position.validateTrade(
+            accountId,
+            market,
+            runtime.tradeParams,
+            marketConfig,
+            addresses
+        );
 
         runtime.updatedMarketSize = (market.size.to256() +
-            MathUtil.abs(runtime.trade.newPosition.size) -
+            MathUtil.abs(trade.newPosition.size) -
             MathUtil.abs(position.size)).to128();
-        runtime.updatedMarketSkew = market.skew + runtime.trade.newPosition.size - position.size;
+        runtime.updatedMarketSkew = market.skew + trade.newPosition.size - position.size;
         market.skew = runtime.updatedMarketSkew;
         market.size = runtime.updatedMarketSize;
 
         // We want to validateTrade and update market size before we recompute utilization
         // 1. The validateTrade call getMargin to figure out the new margin, this should be using the utilization rate up to this point
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
-        recomputeUtilization(market, runtime.params.oraclePrice);
+        recomputeUtilization(market, runtime.tradeParams.oraclePrice);
 
-        market.updateDebtCorrection(position, runtime.trade.newPosition);
+        market.updateDebtCorrection(position, trade.newPosition);
 
         // Account debt and market total trader debt must be updated with fees incurred to settle.
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        runtime.totalFees = (runtime.trade.orderFee + runtime.trade.keeperFee).to128();
+        runtime.totalFees = (trade.orderFee + trade.keeperFee).to128();
         accountMargin.debtUsd += runtime.totalFees;
         market.totalTraderDebtUsd += runtime.totalFees;
 
@@ -323,39 +383,42 @@ contract OrderModule is IOrderModule {
 
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
-                runtime.trade.newMarginUsd.toInt() - runtime.trade.collateralUsd.toInt()
+                trade.newMarginUsd.toInt() - trade.collateralUsd.toInt(),
+                addresses
             );
         }
         // Before updating/clearing the position, grab accrued funding, accrued util and pnl.
-        runtime.accruedFunding = position.getAccruedFunding(market, runtime.params.oraclePrice);
+        runtime.accruedFunding = position.getAccruedFunding(
+            market,
+            runtime.tradeParams.oraclePrice
+        );
         runtime.accruedUtilization = position.getAccruedUtilization(
             market,
-            runtime.params.oraclePrice
+            runtime.tradeParams.oraclePrice
         );
-        runtime.pricePnl = position.getPricePnl(runtime.params.fillPrice);
+        runtime.pricePnl = position.getPricePnl(runtime.tradeParams.fillPrice);
 
-        if (runtime.trade.newPosition.size == 0) {
+        if (trade.newPosition.size == 0) {
             delete market.positions[accountId];
         } else {
-            position.update(runtime.trade.newPosition);
+            position.update(trade.newPosition);
         }
 
         // Keeper fees can be set to zero.
-        if (runtime.trade.keeperFee > 0) {
-            globalConfig.synthetix.withdrawMarketUsd(
+        if (trade.keeperFee > 0) {
+            addresses.synthetix.withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
-                runtime.trade.keeperFee
+                trade.keeperFee
             );
         }
-
         emit OrderSettled(
             accountId,
             marketId,
-            block.timestamp,
-            runtime.params.sizeDelta,
-            runtime.trade.orderFee,
-            runtime.trade.keeperFee,
+            block.timestamp.to64(),
+            runtime.tradeParams.sizeDelta,
+            trade.orderFee,
+            trade.keeperFee,
             runtime.accruedFunding,
             runtime.accruedUtilization,
             runtime.pricePnl,
@@ -384,7 +447,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
 
         if (!isStale) {
@@ -413,7 +476,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         if (!isReady) {
@@ -449,15 +512,21 @@ contract OrderModule is IOrderModule {
             }
         }
 
-        // If `isAccountOwner` then 0 else chargeFee.
-        uint256 keeperFee = ERC2771Context._msgSender() == account.rbac.owner
-            ? 0
-            : Order.getSettlementKeeperFee(order.keeperFeeBufferUsd);
+        // If `isAccountOwner` then 0 else charge cancellation fee.
+
+        uint256 keeperFee;
+        if (ERC2771Context._msgSender() != account.rbac.owner) {
+            uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+                .process(globalConfig.ethOracleNodeId)
+                .price
+                .toUint();
+            keeperFee = Order.getCancellationKeeperFee(ethPrice);
+        }
 
         if (keeperFee > 0) {
             Margin.load(accountId, marketId).debtUsd += keeperFee.to128();
             market.totalTraderDebtUsd += keeperFee.to128();
-            globalConfig.synthetix.withdrawMarketUsd(
+            ISynthetixSystem(SYNTHETIX_CORE).withdrawMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 keeperFee
@@ -487,7 +556,7 @@ contract OrderModule is IOrderModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 commitmentTime = order.commitmentTime;
+        uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
 
         return
@@ -506,10 +575,16 @@ contract OrderModule is IOrderModule {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
+        uint128 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 ethPrice = INodeModule(ORACLE_MANAGER)
+            .process(globalConfig.ethOracleNodeId)
+            .price
+            .toUint();
 
         orderFee = Order.getOrderFee(
             sizeDelta,
@@ -517,13 +592,19 @@ contract OrderModule is IOrderModule {
                 market.skew,
                 marketConfig.skewScale,
                 sizeDelta,
-                market.getOraclePrice()
+                market.getOraclePrice(
+                    AddressRegistry.Data({
+                        synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                        sUsd: SYNTHETIX_SUSD,
+                        oracleManager: ORACLE_MANAGER
+                    })
+                )
             ),
             market.skew,
             marketConfig.makerFee,
             marketConfig.takerFee
         );
-        keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd);
+        keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd, ethPrice);
     }
 
     /// @inheritdoc IOrderModule
@@ -534,12 +615,25 @@ contract OrderModule is IOrderModule {
                 market.skew,
                 PerpMarketConfiguration.load(marketId).skewScale,
                 size,
-                market.getOraclePrice()
+                market.getOraclePrice(
+                    AddressRegistry.Data({
+                        synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                        sUsd: SYNTHETIX_SUSD,
+                        oracleManager: ORACLE_MANAGER
+                    })
+                )
             );
     }
 
     /// @inheritdoc IOrderModule
     function getOraclePrice(uint128 marketId) external view returns (uint256) {
-        return PerpMarket.exists(marketId).getOraclePrice();
+        return
+            PerpMarket.exists(marketId).getOraclePrice(
+                AddressRegistry.Data({
+                    synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                    sUsd: SYNTHETIX_SUSD,
+                    oracleManager: ORACLE_MANAGER
+                })
+            );
     }
 }

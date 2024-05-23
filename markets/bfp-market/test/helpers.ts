@@ -7,6 +7,7 @@ import { uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
 import { PerpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
+import hre from 'hardhat';
 
 const DISABLE_EXPLICIT_EVM_MINE = ['true', '1', 'True', 'yes'].includes(
   process.env.DISABLE_EXPLICIT_EVM_MINE as string
@@ -23,7 +24,7 @@ declare module 'ethers' {
     [customInspectSymbol]?: () => string;
   }
 }
-ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
+hre.ethers.BigNumber.prototype[customInspectSymbol] = function (this: ethers.BigNumber) {
   return `${fgCyan}BigNumber( ${fgYellow}${fgGreen}${this.toString()} ${fgYellow}${wei(
     this
   ).toNumber()}${fgCyan} )${fgReset}`;
@@ -35,7 +36,6 @@ export const SECONDS_ONE_HR = 60 * 60;
 export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
 export const AVERAGE_SECONDS_PER_YEAR = 31556952; // 4 years which includes leap
 
-export const SYNTHETIX_USD_MARKET_ID = BigNumber.from(0);
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 export const MaxUint128 = BigNumber.from(2).pow(128).sub(1);
 
@@ -66,25 +66,25 @@ export const mintAndApprove = async (
   amount: BigNumber,
   to: ethers.Signer
 ) => {
-  const { systems, provider } = bs;
-  const { BfpMarketProxy, SpotMarket } = systems();
+  const { systems, provider, owner } = bs;
+  const { BfpMarketProxy } = systems();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
-  const synth = collateral.contract;
-  const synthOwnerAddress = await synth.owner();
+  const collateralContract = collateral.contract;
 
-  return withImpersonate(bs, synthOwnerAddress, async () => {
-    const synthOwner = provider().getSigner(synthOwnerAddress);
-    await provider().send('hardhat_setBalance', [
-      await synthOwner.getAddress(),
-      `0x${(1e22).toString(16)}`,
-    ]);
+  // If the collateral is sUSD grab the contract owner from the contract. Collateral mock doesn't have an owner fn, so for those collateral grab the owner from bs.owner().
+  const ownerAddress =
+    'owner' in collateral.contract ? await collateral.contract.owner() : await owner().getAddress();
 
-    await synth.connect(synthOwner).mint(to.getAddress(), amount);
-    await synth.connect(to).approve(BfpMarketProxy.address, amount);
-    await synth.connect(to).approve(SpotMarket.address, amount);
+  return withImpersonate(bs, ownerAddress, async () => {
+    const signer = provider().getSigner(ownerAddress);
 
-    return synth;
+    await provider().send('hardhat_setBalance', [ownerAddress, `0x${(1e22).toString(16)}`]);
+
+    await collateralContract.connect(signer).mint(await to.getAddress(), amount);
+    await collateralContract.connect(to).approve(BfpMarketProxy.address, amount);
+
+    return collateralContract;
   });
 };
 
@@ -111,7 +111,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
       BfpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
-        collateral.synthMarketId(),
+        collateral.address(),
         collateralDepositAmount
       ),
     provider()
@@ -142,7 +142,8 @@ export const setMarketConfigurationById = async (
   const data = await BfpMarketProxy.getMarketConfigurationById(marketId);
   await withExplicitEvmMine(
     () =>
-      BfpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, {
+      BfpMarketProxy.connect(owner()).setMarketConfigurationById({
+        marketId,
         ...data,
         ...params,
       }),
@@ -400,16 +401,13 @@ export const withExplicitEvmMine = async (
 };
 
 export const getSusdCollateral = (collaterals: PerpCollateral[]) => {
-  const sUsdCollateral = collaterals.filter(
-    (c) => c.synthMarketId() === SYNTHETIX_USD_MARKET_ID
-  )[0];
+  const sUsdCollateral = collaterals.filter((c) => c.name === 'sUSD')[0];
   return !sUsdCollateral
-    ? raise('sUSD collateral not found. Did you mistakenly use collatealsWithoutSusd()?')
+    ? raise('sUSD collateral not found. Did you mistakenly use collateralsWithoutSusd()?')
     : sUsdCollateral;
 };
 
-export const isSusdCollateral = (collateral: PerpCollateral) =>
-  collateral.synthMarketId() === SYNTHETIX_USD_MARKET_ID;
+export const isSusdCollateral = (collateral: PerpCollateral) => collateral.name === 'sUSD';
 
 export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
   const found = l.find(p);

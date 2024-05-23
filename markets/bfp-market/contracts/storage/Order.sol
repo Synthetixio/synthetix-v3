@@ -14,15 +14,16 @@ library Order {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
+    /// @dev Order.Data structs are stored within PerpMarket.Data.orders.
     struct Data {
         /// Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;
         /// The block.timestamp this order was committed on.
-        uint256 commitmentTime;
+        uint64 commitmentTime;
         /// The maximum fillPrice (in USD) this order will accept during settlement.
         uint256 limitPrice;
         /// A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         /// Settlement hooks specified on commitment for invocation.
         address[] hooks;
     }
@@ -85,7 +86,7 @@ library Order {
     }
 
     /**
-     * @dev Returns the order keeper fee; paid to keepers for order executions and liquidations (in USD).
+     * @dev Returns the order keeper fee; paid to keepers for order executions (in USD).
      *
      * This order keeper fee is calculated as follows:
      *
@@ -99,20 +100,35 @@ library Order {
      *
      * See IOrderModule.getOrderFees for more details.
      */
-    function getSettlementKeeperFee(uint256 keeperFeeBufferUsd) internal view returns (uint256) {
+    function getSettlementKeeperFee(
+        uint128 keeperFeeBufferUsd,
+        uint256 ethPrice
+    ) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        uint256 ethPrice = globalConfig
-            .oracleManager
-            .process(globalConfig.ethOracleNodeId)
-            .price
-            .toUint();
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperSettlementGasUnits * block.basefee
         );
         uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
             DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
         ) + keeperFeeBufferUsd;
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
+            globalConfig.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
+    }
+
+    /// @dev Returns the keeper fee in USD for order cancellations.
+    function getCancellationKeeperFee(uint256 ethPrice) internal view returns (uint256) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
+            globalConfig.keeperCancellationGasUnits * block.basefee
+        );
+        uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
+            DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+        );
         uint256 boundedKeeperFeeUsd = MathUtil.min(
             MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
             globalConfig.maxKeeperFeeUsd

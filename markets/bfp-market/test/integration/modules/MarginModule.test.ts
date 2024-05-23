@@ -34,7 +34,6 @@ import {
   withExplicitEvmMine,
   getSusdCollateral,
   isSusdCollateral,
-  SYNTHETIX_USD_MARKET_ID,
   findOrThrow,
   setMarketConfiguration,
   SECONDS_ONE_DAY,
@@ -51,7 +50,6 @@ describe('MarginModule', async () => {
     markets,
     collaterals,
     collateralsWithoutSusd,
-    spotMarket,
     traders,
     owner,
     systems,
@@ -86,7 +84,7 @@ describe('MarginModule', async () => {
         BfpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateral.synthMarketId(),
+          collateral.address(),
           collateralDepositAmount.mul(-1)
         ),
         `OrderFound()`,
@@ -106,7 +104,7 @@ describe('MarginModule', async () => {
         BfpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           market.marketId(),
-          collateral.synthMarketId(),
+          collateral.address(),
           amountDelta
         ),
         `ZeroAmount()`,
@@ -145,7 +143,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount2
           ),
         provider()
@@ -180,7 +178,7 @@ describe('MarginModule', async () => {
         BfpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          gTrader2.collateral.synthMarketId(),
+          gTrader2.collateral.address(),
           gTrader2.collateralDepositAmount
         ),
         `OrderFound()`,
@@ -192,7 +190,7 @@ describe('MarginModule', async () => {
         BfpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateral.synthMarketId(),
+          collateral.address(),
           collateralDepositAmount.mul(-1)
         ),
         `OrderFound()`,
@@ -223,7 +221,7 @@ describe('MarginModule', async () => {
         BfpMarketProxy.connect(trader2.signer).modifyCollateral(
           trader1.accountId,
           market.marketId(),
-          collateral.synthMarketId(),
+          collateral.address(),
           collateralDepositAmount
         ),
         `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`,
@@ -251,7 +249,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               market.marketId(),
-              collateral.synthMarketId(),
+              collateral.address(),
               amountDelta
             ),
           provider()
@@ -261,7 +259,7 @@ describe('MarginModule', async () => {
           `"${traderAddress}"`,
           `"${BfpMarketProxy.address}"`,
           amountDelta,
-          collateral.synthMarketId(),
+          `"${collateral.address()}"`,
         ].join(', ');
         await assertEvent(
           receipt,
@@ -295,7 +293,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               market.marketId(),
-              collateral.synthMarketId(),
+              collateral.address(),
               collateralDepositAmount
             ),
           provider()
@@ -324,25 +322,25 @@ describe('MarginModule', async () => {
               BfpMarketProxy.connect(trader.signer).modifyCollateral(
                 trader.accountId,
                 marketId,
-                collateral.synthMarketId(),
+                collateral.address(),
                 collateralDepositAmount
               ),
             provider()
           );
-
+          const coreAbi = Core.interface.format(utils.FormatTypes.full) as string[];
           // Create a contract that can parse all events emitted.
           const contractsWithAllEvents = extendContractAbi(
             BfpMarketProxy,
-            Core.interface
-              .format(utils.FormatTypes.full)
-              .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+            coreAbi.concat([
+              'event Transfer(address indexed from, address indexed to, uint256 value)',
+            ])
           );
 
           const marginDepositEventProperties = [
             `"${traderAddress}"`,
             `"${BfpMarketProxy.address}"`,
             collateralDepositAmount,
-            collateral.synthMarketId(),
+            `"${collateral.address()}"`,
           ].join(', ');
 
           if (isSusdCollateral(collateral)) {
@@ -362,7 +360,7 @@ describe('MarginModule', async () => {
           } else {
             const marketCollateralDepositedEventProperties = [
               marketId,
-              `"${collateral.synthAddress()}"`,
+              `"${collateral.address()}"`,
               collateralDepositAmount,
               `"${BfpMarketProxy.address}"`,
             ].join(', ');
@@ -437,7 +435,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             invalidAccountId,
             market.marketId(),
-            collateral.synthMarketId(),
+            collateral.address(),
             amountDelta
           ),
           `PermissionDenied("${invalidAccountId}"`,
@@ -460,7 +458,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             invalidMarketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount
           ),
           `MarketNotFound("${invalidMarketId}")`,
@@ -473,17 +471,17 @@ describe('MarginModule', async () => {
 
         const trader = genOneOf(traders());
         const market = genOneOf(markets());
-        const invalidSynthMarketId = genNumber(69, 420);
+        const invalidCollateral = genAddress();
         const amountDelta = bn(genNumber(10, 100));
 
         await assertRevert(
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            invalidSynthMarketId,
+            invalidCollateral,
             amountDelta
           ),
-          `UnsupportedCollateral("${invalidSynthMarketId}")`,
+          `UnsupportedCollateral("${invalidCollateral}")`,
           BfpMarketProxy
         );
       });
@@ -503,7 +501,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            collateral.synthMarketId(),
+            collateral.address(),
             depositAmountDelta
           ),
           `MaxCollateralExceeded("${depositAmountDelta}", "${collateral.max}")`,
@@ -530,7 +528,7 @@ describe('MarginModule', async () => {
         await BfpMarketProxy.connect(trader1.signer).modifyCollateral(
           trader1.accountId,
           market.marketId(),
-          collateral.synthMarketId(),
+          collateral.address(),
           depositAmountDelta1
         );
 
@@ -539,7 +537,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader2.signer).modifyCollateral(
             trader2.accountId,
             market.marketId(),
-            collateral.synthMarketId(),
+            collateral.address(),
             depositAmountDelta2
           ),
           `MaxCollateralExceeded("${depositAmountDelta2}", "${collateral.max}")`,
@@ -564,7 +562,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            collateral.synthMarketId(),
+            collateral.address(),
             amountToDeposit
           ),
           `InsufficientAllowance("${amountToDeposit}", "${amountAvailable}")`,
@@ -597,7 +595,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount
           ),
           `PositionFlagged()`,
@@ -618,7 +616,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               marketId,
-              collateral.synthMarketId(),
+              collateral.address(),
               collateralDepositAmount.mul(-1)
             ),
           provider()
@@ -628,7 +626,7 @@ describe('MarginModule', async () => {
           `"${BfpMarketProxy.address}"`,
           `"${traderAddress}"`,
           collateralDepositAmount,
-          collateral.synthMarketId(),
+          `"${collateral.address()}"`,
         ].join(', ');
 
         await assertEvent(
@@ -645,8 +643,9 @@ describe('MarginModule', async () => {
         const configuredCollaterals = await BfpMarketProxy.getMarginCollateralConfiguration();
 
         await BfpMarketProxy.setMarginCollateralConfiguration(
-          configuredCollaterals.map(({ synthMarketId }) => synthMarketId),
+          configuredCollaterals.map(({ collateralAddress }) => collateralAddress),
           configuredCollaterals.map(({ oracleNodeId }) => oracleNodeId),
+          configuredCollaterals.map(({ skewScale }) => skewScale),
           // Set maxAllowable to 0 for all collaterals
           configuredCollaterals.map(() => bn(0)),
           configuredCollaterals.map(({ rewardDistributor }) => rewardDistributor)
@@ -658,7 +657,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               marketId,
-              collateral.synthMarketId(),
+              collateral.address(),
               collateralDepositAmount.mul(-1)
             ),
           provider()
@@ -668,7 +667,7 @@ describe('MarginModule', async () => {
           `"${BfpMarketProxy.address}"`,
           `"${traderAddress}"`,
           collateralDepositAmount,
-          collateral.synthMarketId(),
+          `"${collateral.address()}"`,
         ].join(', ');
 
         await assertEvent(
@@ -694,7 +693,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               marketId,
-              collateral.synthMarketId(),
+              collateral.address(),
               collateralDepositAmount.mul(-1)
             ),
           provider()
@@ -720,18 +719,18 @@ describe('MarginModule', async () => {
               BfpMarketProxy.connect(trader.signer).modifyCollateral(
                 trader.accountId,
                 marketId,
-                collateral.synthMarketId(),
+                collateral.address(),
                 withdrawAmount.mul(-1)
               ),
             provider()
           );
-
+          const coreEvents = Core.interface.format(utils.FormatTypes.full) as string[];
           // Create a contract that can parse all events emitted.
           const contractsWithAllEvents = extendContractAbi(
             BfpMarketProxy,
-            Core.interface
-              .format(utils.FormatTypes.full)
-              .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+            coreEvents.concat([
+              'event Transfer(address indexed from, address indexed to, uint256 value)',
+            ])
           );
 
           let expectedEvents: Array<string | RegExp> = [
@@ -761,7 +760,7 @@ describe('MarginModule', async () => {
             `"${BfpMarketProxy.address}"`,
             `"${traderAddress}"`,
             withdrawAmount,
-            collateral.synthMarketId(),
+            `"${collateral.address()}"`,
           ].join(', ');
           expectedEvents.push(`MarginWithdraw(${marginWithdrawEventProperties})`);
 
@@ -781,7 +780,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               marketId,
-              collateral.synthMarketId(),
+              collateral.address(),
               withdrawAmount
             ),
           provider()
@@ -791,7 +790,7 @@ describe('MarginModule', async () => {
           `"${BfpMarketProxy.address}"`,
           `"${traderAddress}"`,
           withdrawAmount.abs(), // Convert to positive because `Transfer` takes in abs(amount).
-          collateral.synthMarketId(),
+          `"${collateral.address()}"`,
         ].join(', ');
 
         await assertEvent(
@@ -844,7 +843,7 @@ describe('MarginModule', async () => {
             BfpMarketProxy.connect(trader.signer).modifyCollateral(
               trader.accountId,
               marketId,
-              collateral.synthMarketId(),
+              collateral.address(),
               withdrawAmount.mul(-1).toBN()
             ),
           provider()
@@ -853,7 +852,7 @@ describe('MarginModule', async () => {
           `"${BfpMarketProxy.address}"`,
           `"${traderAddress}"`,
           withdrawAmount.toBN(),
-          collateral.synthMarketId(),
+          `"${collateral.address()}"`,
         ].join(', ');
         await assertEvent(
           receipt,
@@ -879,7 +878,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             invalidAccountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount.mul(-1)
           ),
           `PermissionDenied("${invalidAccountId}"`,
@@ -900,7 +899,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             invalidMarketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount.mul(-1)
           ),
           `MarketNotFound("${invalidMarketId}")`,
@@ -914,17 +913,17 @@ describe('MarginModule', async () => {
           bs,
           genTrader(bs)
         );
-        const invalidSynthMarketId = genNumber(69, 420);
+        const invalidCollateral = genAddress();
 
         // Perform withdraw with invalid synth market id.
         await assertRevert(
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            invalidSynthMarketId,
+            invalidCollateral,
             collateralDepositAmount.mul(-1)
           ),
-          `UnsupportedCollateral("${invalidSynthMarketId}")`,
+          `UnsupportedCollateral("${invalidCollateral}")`,
           BfpMarketProxy
         );
       });
@@ -940,7 +939,7 @@ describe('MarginModule', async () => {
         const withdrawAmount = collateralDepositAmount.add(bn(1)).mul(-1);
 
         const insufficientCollateralEventProperties = [
-          `"${collateral.synthMarketId()}"`,
+          `"${collateral.address()}"`,
           `"${collateralDepositAmount}"`,
           `"${withdrawAmount.mul(-1)}"`,
         ].join(', ');
@@ -949,7 +948,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             withdrawAmount
           ),
           `InsufficientCollateral(${insufficientCollateralEventProperties})`,
@@ -996,7 +995,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             amountToWithdraw.mul(-1).toBN()
           ),
           `InsufficientMargin()`,
@@ -1019,7 +1018,61 @@ describe('MarginModule', async () => {
         const { collateralDepositAmount } = await depositMargin(
           bs,
           genTrader(bs, {
-            desiredMarginUsdDepositAmount: 300,
+            desiredMarginUsdDepositAmount: 1000,
+            desiredCollateral: collateral,
+            desiredTrader: trader,
+            desiredMarket: market,
+          })
+        );
+
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount.div(2), {
+          desiredLeverage: 8,
+          desiredSide: 1,
+        });
+        await commitAndSettle(bs, marketId, trader, openOrder);
+
+        // Set market price to be at a loss.
+        await market.aggregator().mockSetCurrentPrice(bn(3300));
+
+        const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
+        await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        // Get deposited collateral and attempt to withdraw the full amount.
+        const { depositedCollaterals } = await BfpMarketProxy.getAccountDigest(accountId, marketId);
+        const depositedCollateral = depositedCollaterals.find(
+          (c) => c.collateralAddress === collateral.address()
+        );
+        const depositedCollateralAmount = depositedCollateral?.available ?? bn(0);
+        assertBn.gt(depositedCollateralAmount, bn(0));
+
+        // Attempt to withdraw all collateral even though there's debt on the account.
+        await assertRevert(
+          BfpMarketProxy.connect(trader.signer).modifyCollateral(
+            accountId,
+            marketId,
+            collateral.address(),
+            depositedCollateralAmount.mul(-1)
+          ),
+          `InsufficientMargin()`,
+          BfpMarketProxy
+        );
+      });
+
+      it('should revert when remaining discounted collateral < debt due to keeper fees', async () => {
+        const { BfpMarketProxy } = systems();
+
+        const trader = genOneOf(traders());
+        const accountId = trader.accountId;
+        const collateral = genOneOf(collateralsWithoutSusd());
+
+        // Market ETH-PERP and set price at $3500
+        const market = genOneOf(markets());
+        const marketId = market.marketId();
+        await market.aggregator().mockSetCurrentPrice(bn(3500)); // market.getOraclePrice()
+
+        const { collateralDepositAmount, collateralPrice } = await depositMargin(
+          bs,
+          genTrader(bs, {
             desiredCollateral: collateral,
             desiredTrader: trader,
             desiredMarket: market,
@@ -1037,16 +1090,19 @@ describe('MarginModule', async () => {
 
         const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
         await commitAndSettle(bs, marketId, trader, closeOrder);
-
-        const { depositedCollaterals } = await BfpMarketProxy.getAccountDigest(accountId, marketId);
-
-        // Attempt to withdraw all collateral even though there's debt on the account.
+        const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
+          trader.accountId,
+          marketId
+        );
+        const liqMarginReward = liqMarginRewardUsd.div(collateralPrice);
+        // Attempt to withdraw collateral - liqMarginReward, this should cause a revert due to the keeper rewards.
+        const withdrawAmount = collateralDepositAmount.sub(liqMarginReward).mul(-1);
         await assertRevert(
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             accountId,
             marketId,
-            collateral.synthMarketId(),
-            depositedCollaterals[2].available.mul(-1)
+            collateral.address(),
+            withdrawAmount
           ),
           `InsufficientMargin()`,
           BfpMarketProxy
@@ -1059,7 +1115,7 @@ describe('MarginModule', async () => {
           await depositMargin(bs, genTrader(bs));
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: -1,
-          desiredLeverage: 10,
+          desiredLeverage: 8,
         });
 
         // Open leveraged position
@@ -1069,7 +1125,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount.mul(-1)
           ),
           `CanLiquidatePosition()`,
@@ -1096,7 +1152,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             bn(-0.01)
           ),
           `CanLiquidatePosition()`,
@@ -1125,7 +1181,7 @@ describe('MarginModule', async () => {
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            collateral.synthMarketId(),
+            collateral.address(),
             collateralDepositAmount.mul(-1)
           ),
           `PositionFlagged()`,
@@ -1162,12 +1218,12 @@ describe('MarginModule', async () => {
         const accountDigest = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
         const { available: collateralBalance = bn(0) } =
-          accountDigest.depositedCollaterals.find(({ synthMarketId }) =>
-            synthMarketId.eq(collateral.synthMarketId())
+          accountDigest.depositedCollaterals.find(
+            ({ collateralAddress }) => collateralAddress === collateral.address()
           ) || {};
         const { available: collateral2Balance = bn(0) } =
-          accountDigest.depositedCollaterals.find(({ synthMarketId }) =>
-            synthMarketId.eq(collateral2.synthMarketId())
+          accountDigest.depositedCollaterals.find(
+            ({ collateralAddress }) => collateralAddress === collateral2.address()
           ) || {};
 
         assertBn.equal(collateralBalance, collateralDepositAmount);
@@ -1191,14 +1247,14 @@ describe('MarginModule', async () => {
           receipt,
           `MarginWithdraw("${
             BfpMarketProxy.address
-          }", "${traderAddress}", ${collateralDepositAmount}, ${collateral.synthMarketId()})`,
+          }", "${traderAddress}", ${collateralDepositAmount}, "${collateral.address()}")`,
           BfpMarketProxy
         );
         await assertEvent(
           receipt,
           `MarginWithdraw("${
             BfpMarketProxy.address
-          }", "${traderAddress}", ${collateralDepositAmount2}, ${collateral2.synthMarketId()})`,
+          }", "${traderAddress}", ${collateralDepositAmount2}, "${collateral2.address()}")`,
           BfpMarketProxy
         );
 
@@ -1208,12 +1264,12 @@ describe('MarginModule', async () => {
           marketId
         );
         const { available: collateralBalanceAfter = bn(0) } =
-          accountDigestAfter.depositedCollaterals.find(({ synthMarketId }) =>
-            synthMarketId.eq(collateral.synthMarketId())
+          accountDigestAfter.depositedCollaterals.find(
+            ({ collateralAddress }) => collateralAddress === collateral.address()
           ) || {};
         const { available: collateral2BalanceAfter = bn(0) } =
-          accountDigestAfter.depositedCollaterals.find(({ synthMarketId }) =>
-            synthMarketId.eq(collateral2.synthMarketId())
+          accountDigestAfter.depositedCollaterals.find(
+            ({ collateralAddress }) => collateralAddress === collateral2.address()
           ) || {};
 
         assertBn.isZero(collateralBalanceAfter);
@@ -1237,8 +1293,9 @@ describe('MarginModule', async () => {
 
         const configuredCollaterals = await BfpMarketProxy.getMarginCollateralConfiguration();
         await BfpMarketProxy.setMarginCollateralConfiguration(
-          configuredCollaterals.map(({ synthMarketId }) => synthMarketId),
+          configuredCollaterals.map(({ collateralAddress }) => collateralAddress),
           configuredCollaterals.map(({ oracleNodeId }) => oracleNodeId),
+          configuredCollaterals.map(({ skewScale }) => skewScale),
           // Set maxAllowable to 0 for all collaterals.
           configuredCollaterals.map(() => bn(0)),
           configuredCollaterals.map(({ rewardDistributor }) => rewardDistributor)
@@ -1255,7 +1312,7 @@ describe('MarginModule', async () => {
           `"${BfpMarketProxy.address}"`,
           `"${traderAddress}"`,
           collateralDepositAmount,
-          collateral.synthMarketId(),
+          `"${collateral.address()}"`,
         ].join(', ');
 
         await assertEvent(
@@ -1516,12 +1573,27 @@ describe('MarginModule', async () => {
       });
 
       it('should withdraw correct amounts after losing position with margin changing (non-sUSD)', async () => {
-        const { BfpMarketProxy, SpotMarket, Core } = systems();
+        const { BfpMarketProxy, Core } = systems();
 
         await setMarketConfiguration(bs, {
           maxCollateralDiscount: bn(0),
           minCollateralDiscount: bn(0),
         });
+
+        // NOTE: Collateral skewScale _must_ be set to zero here as its too difficult to calculate exact values from
+        // an implicit skewFee applied on the collateral sale.
+        const newCollaterals = collaterals();
+        await withExplicitEvmMine(
+          () =>
+            BfpMarketProxy.setMarginCollateralConfiguration(
+              newCollaterals.map(({ address }) => address()),
+              newCollaterals.map(({ oracleNodeId }) => oracleNodeId()),
+              newCollaterals.map(({ max }) => max),
+              newCollaterals.map(() => bn(0)),
+              newCollaterals.map(({ rewardDistributorAddress }) => rewardDistributorAddress())
+            ),
+          provider()
+        );
 
         const {
           trader,
@@ -1534,13 +1606,6 @@ describe('MarginModule', async () => {
         } = await depositMargin(
           bs,
           genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
-        );
-
-        // NOTE: Spot market skewScale _must_ be set to zero here as its too difficult to calculcate exact values from
-        // an implicit skewFee applied on the collateral sale.
-        await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-          collateral.synthMarketId(),
-          bn(0)
         );
 
         const startingCollateralBalance = wei(
@@ -1623,7 +1688,7 @@ describe('MarginModule', async () => {
           `${closeOrder.fillPrice}`,
           `${debtUsd}`,
         ].join(', ');
-
+        const coreAbi = Core.interface.format(utils.FormatTypes.full) as string[];
         // Assert events from all contracts, to make sure CORE's market manager is paid correctly
         await assertEvents(
           closeReceipt,
@@ -1640,17 +1705,15 @@ describe('MarginModule', async () => {
             `OrderSettled(${orderSettledEventArgs})`,
             `MarketSizeUpdated(${marketId}, 0, 0)`,
           ],
+
           // PerpsMarket abi gets events from Core, SpotMarket, Pyth and ERC20 added
           extendContractAbi(
             BfpMarketProxy,
-            Core.interface
-              .format(utils.FormatTypes.full)
-              .concat(SpotMarket.interface.format(utils.FormatTypes.full))
-              .concat([
-                'event Transfer(address indexed from, address indexed to, uint256 value)', //ERC20
-                'event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf)', // Pyth
-                'event BatchPriceFeedUpdate(uint16 chainId, uint64 sequenceNumber)', // Pyth
-              ])
+            coreAbi.concat([
+              'event Transfer(address indexed from, address indexed to, uint256 value)', //ERC20
+              'event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf)', // Pyth
+              'event BatchPriceFeedUpdate(uint16 chainId, uint64 sequenceNumber)', // Pyth
+            ])
           )
         );
 
@@ -1843,16 +1906,18 @@ describe('MarginModule', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();
 
-      const synthMarketIds = [collaterals()[0].synthMarketId(), collaterals()[1].synthMarketId()];
+      const collateralAddresses = [collaterals()[0].address(), collaterals()[1].address()];
       const maxAllowables = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
+      const skewScales = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
       const oracleNodeIds = genListOf(genNumber(3, 10), () => genBytes32());
       const rewardDistributors = genListOf(genNumber(3, 10), () => genAddress());
 
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          synthMarketIds,
+          collateralAddresses,
           oracleNodeIds,
           maxAllowables,
+          skewScales,
           rewardDistributors
         ),
         `ArrayLengthMismatch()`,
@@ -1865,11 +1930,12 @@ describe('MarginModule', async () => {
       const from = owner();
 
       const newCollaterals = shuffle(collaterals());
-      const newSynthMarketIds = newCollaterals.map(({ synthMarketId }) => synthMarketId());
+      const newCollateralAddresses = newCollaterals.map(({ address }) => address());
       const newOracleNodeIds = genListOf(newCollaterals.length, () => genBytes32());
       const newMaxAllowables = genListOf(newCollaterals.length, () =>
         bn(genNumber(10_000, 100_000))
       );
+      const newSkewScales = genListOf(newCollaterals.length, () => bn(genNumber(10_000, 100_000)));
       const newRewardDistributors = newCollaterals.map(({ rewardDistributorAddress }) =>
         rewardDistributorAddress()
       );
@@ -1877,9 +1943,10 @@ describe('MarginModule', async () => {
       const { receipt } = await withExplicitEvmMine(
         () =>
           BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-            newSynthMarketIds,
+            newCollateralAddresses,
             newOracleNodeIds,
             newMaxAllowables,
+            newSkewScales,
             newRewardDistributors
           ),
         provider()
@@ -1890,16 +1957,12 @@ describe('MarginModule', async () => {
 
       for (const [_i, configuredCollateral] of Object.entries(configuredCollaterals)) {
         const idx = parseInt(_i);
-        const { contract: synth, synthMarketId } = newCollaterals[idx];
+        const { contract: synth } = newCollaterals[idx];
 
-        const perpAllowance = await synth.allowance(BfpMarketProxy.address, BfpMarketProxy.address);
         const coreAllowance = await synth.allowance(
           BfpMarketProxy.address,
           bs.systems().Core.address
         );
-        if (synthMarketId().eq(SYNTHETIX_USD_MARKET_ID)) {
-          assertBn.equal(ethers.constants.MaxUint256, perpAllowance);
-        }
         assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
         assertBn.equal(configuredCollateral.maxAllowable, newMaxAllowables[idx]);
       }
@@ -1912,38 +1975,42 @@ describe('MarginModule', async () => {
     });
 
     it('should remove an unsupported collateral when set with new collaterals', async () => {
-      const { BfpMarketProxy, Core, SpotMarket } = systems();
+      const { BfpMarketProxy, Core } = systems();
       const from = owner();
 
       // Set a known set of supported collaterals.
       const supportedCollaterals = collaterals();
-      const synthMarketIds1 = collaterals().map(({ synthMarketId }) => synthMarketId());
+      const collaterals1 = collaterals().map(({ address }) => address());
       const oracleNodeIds1 = collaterals().map(({ oracleNodeId }) => oracleNodeId());
       const maxAllowables1 = collaterals().map(() => bn(1));
+      const skewScales1 = collaterals().map(({ skewScale }) => skewScale());
       const rewardDistributors1 = collaterals().map(({ rewardDistributorAddress }) =>
         rewardDistributorAddress()
       );
 
       await BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-        synthMarketIds1,
+        collaterals1,
         oracleNodeIds1,
         maxAllowables1,
+        skewScales1,
         rewardDistributors1
       );
 
       // Reconfigure the collaterals, removing one of them.
-      const synthMarketIds2 = [
-        supportedCollaterals[0].synthMarketId(),
-        // supportedCollaterals[1].synthMarketId(), (removed!)
+      const collateral2 = [
+        supportedCollaterals[0].address(),
+        // supportedCollaterals[1].address(), (removed!)
       ];
       const oracleNodeIds2 = [genBytes32()];
       const maxAllowables2 = [bn(1)];
+      const skewScales2 = [bn(1)];
       const rewardDistributors2 = [supportedCollaterals[0].rewardDistributorAddress()];
 
       await BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-        synthMarketIds2,
+        collateral2,
         oracleNodeIds2,
         maxAllowables2,
+        skewScales2,
         rewardDistributors2
       );
 
@@ -1958,17 +2025,14 @@ describe('MarginModule', async () => {
         BfpMarketProxy.address,
         Core.address
       );
-      const spotAllowance = await removedCollateral.contract.allowance(
-        BfpMarketProxy.address,
-        SpotMarket.address
-      );
+
       assertBn.isZero(perpAllowance);
       assertBn.isZero(coreAllowance);
-      assertBn.isZero(spotAllowance);
       assert.equal(configuredCollaterals.length, 1);
       assert.equal(
-        configuredCollaterals.filter((c) => c.synthMarketId.eq(removedCollateral.synthMarketId()))
-          .length,
+        configuredCollaterals.filter(
+          ({ collateralAddress }) => collateralAddress === removedCollateral.address()
+        ).length,
         0
       );
     });
@@ -1979,9 +2043,9 @@ describe('MarginModule', async () => {
 
       // Set zero allowable deposits.
       const supportedCollaterals = collaterals();
-      const synthMarketIds = [
-        supportedCollaterals[0].synthMarketId(),
-        supportedCollaterals[1].synthMarketId(),
+      const collateralAddresses = [
+        supportedCollaterals[0].address(),
+        supportedCollaterals[1].address(),
       ];
       const oracleNodeIds = [
         supportedCollaterals[0].oracleNodeId(),
@@ -1992,14 +2056,16 @@ describe('MarginModule', async () => {
         supportedCollaterals[0].rewardDistributorAddress(),
         supportedCollaterals[1].rewardDistributorAddress(),
       ];
+      const skewScales = [supportedCollaterals[0].skewScale(), supportedCollaterals[1].skewScale()];
 
       // Ensure we can set maxAllowables to 0 even when there's collateral in the system.
       await depositMargin(bs, genTrader(bs, { desiredCollateral: supportedCollaterals[0] }));
 
       await BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-        synthMarketIds,
+        collateralAddresses,
         oracleNodeIds,
         maxAllowables,
+        skewScales,
         rewardDistributors
       );
 
@@ -2021,24 +2087,26 @@ describe('MarginModule', async () => {
 
       // Excluding "collateral" with deposit and expect revert.
       const collateralsWithoutDeposit = supportedCollaterals.filter(
-        ({ synthMarketId }) => synthMarketId() !== collateral.synthMarketId()
+        ({ address }) => address() !== collateral.address()
       );
 
-      const synthMarketIds = collateralsWithoutDeposit.map(({ synthMarketId }) => synthMarketId());
+      const collateralAddresses = collateralsWithoutDeposit.map(({ address }) => address());
       const oracleNodeIds = collateralsWithoutDeposit.map(({ oracleNodeId }) => oracleNodeId());
       const maxAllowables = collateralsWithoutDeposit.map(() => bn(0));
+      const skewScales = collateralsWithoutDeposit.map(({ skewScale }) => skewScale());
       const rewardDistributors = collateralsWithoutDeposit.map(({ rewardDistributorAddress }) =>
         rewardDistributorAddress()
       );
 
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          synthMarketIds,
+          collateralAddresses,
           oracleNodeIds,
           maxAllowables,
+          skewScales,
           rewardDistributors
         ),
-        `MissingRequiredCollateral("${collateral.synthMarketId()}")`,
+        `MissingRequiredCollateral("${collateral.address()}")`,
         BfpMarketProxy
       );
     });
@@ -2050,16 +2118,18 @@ describe('MarginModule', async () => {
       // Set zero allowable deposits.
       const supportedCollaterals = collaterals();
 
-      // Excluding supportedCollaterals[0].synthMarketId(), which has a deposit.
-      const synthMarketIds = [supportedCollaterals[1].synthMarketId()];
+      // Excluding supportedCollaterals[0].address(), which has a deposit.
+      const collateralAddresses = [supportedCollaterals[1].address()];
       const oracleNodeIds = [genBytes32()];
       const maxAllowables = [bn(0)];
+      const skewScales = [supportedCollaterals[1].skewScale()];
       const rewardDistributors = [supportedCollaterals[1].rewardDistributorAddress()];
 
       await BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-        synthMarketIds,
+        collateralAddresses,
         oracleNodeIds,
         maxAllowables,
+        skewScales,
         rewardDistributors
       );
       const configuredCollaterals =
@@ -2071,7 +2141,7 @@ describe('MarginModule', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();
 
-      await BfpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], []);
+      await BfpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], [], []);
       const collaterals = await BfpMarketProxy.getMarginCollateralConfiguration();
 
       assert.equal(collaterals.length, 0);
@@ -2081,7 +2151,7 @@ describe('MarginModule', async () => {
       const { BfpMarketProxy } = systems();
       const from = await traders()[0].signer.getAddress();
       await assertRevert(
-        BfpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], []),
+        BfpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], [], []),
         `Unauthorized("${from}")`,
         BfpMarketProxy
       );
@@ -2092,9 +2162,10 @@ describe('MarginModule', async () => {
       const from = owner();
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          [bn(genNumber())],
+          [genAddress()],
           [],
           [bn(-1)],
+          [],
           [collaterals()[0].rewardDistributorAddress()]
         ),
         'Error: value out-of-bounds',
@@ -2102,20 +2173,22 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should revert when an invalid synthMarketId is supplied as collateral', async () => {
+    it('should revert when an collateralAddress is supplied as collateral', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();
 
-      const synthMarketIds = [BigNumber.from(696969)];
+      const collateralAddresses = [genAddress()];
       const oracleNodeIds = [genBytes32()];
       const maxAllowables = [BigNumber.from(1)];
+      const skewScales = [BigNumber.from(1)];
       const rewardDistributors = [genOneOf(collaterals()).rewardDistributorAddress()];
 
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          synthMarketIds,
+          collateralAddresses,
           oracleNodeIds,
           maxAllowables,
+          skewScales,
           rewardDistributors
         ),
         `transaction reverted in contract unknown: 0x`,
@@ -2130,16 +2203,18 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collateralsWithoutSusd());
       const rewardDistributor = genAddress();
 
-      const synthMarketIds = [collateral.synthMarketId()];
+      const collateralAddresses = [collateral.address()];
       const oracleNodeIds = [genBytes32()];
       const maxAllowables = [bn(0)];
+      const skewScales = [bn(0)];
       const rewardDistributors = [rewardDistributor];
 
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          synthMarketIds,
+          collateralAddresses,
           oracleNodeIds,
           maxAllowables,
+          skewScales,
           rewardDistributors
         ),
         `InvalidRewardDistributor("${rewardDistributor}")`,
@@ -2154,16 +2229,18 @@ describe('MarginModule', async () => {
       const collateral = getSusdCollateral(collaterals());
       const rewardDistributor = genAddress();
 
-      const synthMarketIds = [collateral.synthMarketId()];
+      const collateralAddresses = [collateral.address()];
       const oracleNodeIds = [genBytes32()];
       const maxAllowables = [bn(0)];
+      const skewScales = [bn(0)];
       const rewardDistributors = [rewardDistributor];
 
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          synthMarketIds,
+          collateralAddresses,
           oracleNodeIds,
           maxAllowables,
+          skewScales,
           rewardDistributors
         ),
         `InvalidRewardDistributor("${rewardDistributor}")`,
@@ -2181,20 +2258,22 @@ describe('MarginModule', async () => {
       const collateralsToConfigure = MAX_SUPPORTED_MARGIN_COLLATERALS + genNumber(1, 5);
 
       const newCollaterals = genListOf(collateralsToConfigure, () => genOneOf(collaterals()));
-      const newSynthMarketIds = newCollaterals.map(({ synthMarketId }) => synthMarketId());
+      const newCollateralAddresses = newCollaterals.map(({ address }) => address());
       const newOracleNodeIds = genListOf(newCollaterals.length, () => genBytes32());
       const newMaxAllowables = genListOf(newCollaterals.length, () =>
         bn(genNumber(10_000, 100_000))
       );
+      const newSkewScales = genListOf(newCollaterals.length, () => bn(genNumber(10_000, 100_000)));
       const newRewardDistributors = newCollaterals.map(({ rewardDistributorAddress }) =>
         rewardDistributorAddress()
       );
 
       await assertRevert(
         BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          newSynthMarketIds,
+          newCollateralAddresses,
           newOracleNodeIds,
           newMaxAllowables,
+          newSkewScales,
           newRewardDistributors
         ),
         `MaxCollateralExceeded("${collateralsToConfigure}", "${MAX_SUPPORTED_MARGIN_COLLATERALS}")`,
@@ -2210,10 +2289,10 @@ describe('MarginModule', async () => {
       const { BfpMarketProxy } = systems();
 
       const from = owner();
-      const { synthMarketId } = genOneOf(collaterals());
+      const { address } = genOneOf(collaterals());
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setCollateralMaxAllowable(synthMarketId(), bn(-1)),
+        BfpMarketProxy.connect(from).setCollateralMaxAllowable(address(), bn(-1)),
         'Error: value out-of-bounds',
         BfpMarketProxy
       );
@@ -2224,7 +2303,7 @@ describe('MarginModule', async () => {
 
       const from = await traders()[0].signer.getAddress();
       await assertRevert(
-        BfpMarketProxy.connect(from).setCollateralMaxAllowable(bn(0), bn(0)),
+        BfpMarketProxy.connect(from).setCollateralMaxAllowable(genAddress(), bn(0)),
         `Unauthorized("${from}")`,
         BfpMarketProxy
       );
@@ -2234,11 +2313,11 @@ describe('MarginModule', async () => {
       const { BfpMarketProxy } = systems();
 
       const from = owner();
-      const invalidCollateralId = bn(42069);
+      const invalidCollateralAddress = genAddress();
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setCollateralMaxAllowable(invalidCollateralId, bn(0)),
-        `UnsupportedCollateral("${invalidCollateralId}")`,
+        BfpMarketProxy.connect(from).setCollateralMaxAllowable(invalidCollateralAddress, bn(0)),
+        `UnsupportedCollateral("${invalidCollateralAddress}")`,
         BfpMarketProxy
       );
     });
@@ -2253,20 +2332,20 @@ describe('MarginModule', async () => {
 
         const { maxAllowable: maxAllowableBefore } = findOrThrow(
           await BfpMarketProxy.getMarginCollateralConfiguration(),
-          ({ synthMarketId }) => synthMarketId.eq(collateral.synthMarketId())
+          ({ collateralAddress }) => collateralAddress === collateral.address()
         );
 
         assertBn.gt(maxAllowableBefore, bn(0));
 
         await BfpMarketProxy.connect(from).setCollateralMaxAllowable(
-          collateral.synthMarketId(),
+          collateral.address(),
           newMaxAllowable
         );
         const configuredCollateral = await BfpMarketProxy.getMarginCollateralConfiguration();
 
         const { maxAllowable: maxAllowableAfter } = findOrThrow(
           configuredCollateral,
-          ({ synthMarketId }) => synthMarketId.eq(collateral.synthMarketId())
+          ({ collateralAddress }) => collateralAddress === collateral.address()
         );
         assertBn.equal(maxAllowableAfter, newMaxAllowable);
       }
@@ -2708,6 +2787,22 @@ describe('MarginModule', async () => {
       assertBn.equal(margin, expectedMargin);
     });
 
+    it('should return 0 when debt is bigger than collateral', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId, collateralPrice, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+      await BfpMarketProxy.__test_addDebtUsdToAccountMargin(
+        trader.accountId,
+        marketId,
+        wei(collateralDepositAmount).mul(collateralPrice).mul(1.1).toBN()
+      );
+      const margin = await BfpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
+      assertBn.isZero(margin);
+    });
+
     it('should return the discounted marginUsd less IM when position open', async () => {
       const { BfpMarketProxy } = systems();
 
@@ -2750,7 +2845,7 @@ describe('MarginModule', async () => {
       const { BfpMarketProxy } = systems();
 
       const from = owner();
-      await BfpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], []);
+      await BfpMarketProxy.connect(from).setMarginCollateralConfiguration([], [], [], [], []);
 
       const collaterals = await BfpMarketProxy.getMarginCollateralConfiguration();
       assert.equal(collaterals.length, 0);
@@ -2765,7 +2860,7 @@ describe('MarginModule', async () => {
 
         const sUsdCollateral = getSusdCollateral(collaterals());
         const collateralPrice = await BfpMarketProxy.getDiscountedCollateralPrice(
-          sUsdCollateral.synthMarketId(),
+          sUsdCollateral.address(),
           amount
         );
         assertBn.equal(collateralPrice, bn(1));
@@ -2773,17 +2868,21 @@ describe('MarginModule', async () => {
     );
 
     it('should not apply a discount on collateral price when spot market skew is 0', async () => {
-      const { BfpMarketProxy, SpotMarket } = systems();
+      const { BfpMarketProxy } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-        collateral.synthMarketId(),
-        bn(0)
-      );
 
+      // Set skewScale to 0.
+      await BfpMarketProxy.setMarginCollateralConfiguration(
+        [collateral.address()],
+        [collateral.oracleNodeId()],
+        [collateral.max],
+        [bn(0)], // skew scale = 0.
+        [collateral.rewardDistributorAddress()]
+      );
       const collateralPrice = await collateral.getPrice();
       const priceWithDiscount = await BfpMarketProxy.getDiscountedCollateralPrice(
-        collateral.synthMarketId(),
+        collateral.address(),
         bn(0)
       );
 
@@ -2799,7 +2898,7 @@ describe('MarginModule', async () => {
 
       const collateralPrice = await collateral.getPrice();
       const priceWithDiscount = await BfpMarketProxy.getDiscountedCollateralPrice(
-        collateral.synthMarketId(),
+        collateral.address(),
         bn(0)
       );
 
@@ -2807,7 +2906,7 @@ describe('MarginModule', async () => {
     });
 
     it('should max bound the collateral discount on large skew shift', async () => {
-      const { BfpMarketProxy, SpotMarket } = systems();
+      const { BfpMarketProxy } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
       const collateralPrice = await collateral.getPrice();
@@ -2818,9 +2917,17 @@ describe('MarginModule', async () => {
         maxCollateralDiscount,
         collateralDiscountScalar: bn(0.5),
       });
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-        collateral.synthMarketId(),
-        bn(500_000)
+
+      await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.setMarginCollateralConfiguration(
+            [collateral.address()],
+            [collateral.oracleNodeId()],
+            [collateral.max],
+            [bn(500_000)], // skewScale
+            [collateral.rewardDistributorAddress()]
+          ),
+        provider()
       );
 
       // price = oraclePrice * (1 - min(max((amount * collateralDiscountScalar) / skewScale), minCollateralDiscount), maxCollateralDiscount))
@@ -2830,7 +2937,7 @@ describe('MarginModule', async () => {
 
       const expectedPrice = wei(collateralPrice).mul(bn(1).sub(maxCollateralDiscount)).toBN();
       const priceWithDiscount = await BfpMarketProxy.getDiscountedCollateralPrice(
-        collateral.synthMarketId(),
+        collateral.address(),
         amount
       );
 
@@ -2838,7 +2945,7 @@ describe('MarginModule', async () => {
     });
 
     it('should min bound the collateral discount on small skew shift', async () => {
-      const { BfpMarketProxy, SpotMarket } = systems();
+      const { BfpMarketProxy } = systems();
 
       const collateral = genOneOf(collateralsWithoutSusd());
       const collateralPrice = await collateral.getPrice();
@@ -2849,9 +2956,16 @@ describe('MarginModule', async () => {
         maxCollateralDiscount: bn(0.2),
         collateralDiscountScalar: bn(0.5),
       });
-      await SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-        collateral.synthMarketId(),
-        bn(500_000)
+      await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.setMarginCollateralConfiguration(
+            [collateral.address()],
+            [collateral.oracleNodeId()],
+            [collateral.max],
+            [bn(500_000)], // skewScale
+            [collateral.rewardDistributorAddress()]
+          ),
+        provider()
       );
 
       // price = oraclePrice * (1 - min(max((amount * collateralDiscountScalar) / skewScale), minCollateralDiscount), maxCollateralDiscount))
@@ -2861,7 +2975,7 @@ describe('MarginModule', async () => {
 
       const expectedPrice = wei(collateralPrice).mul(bn(1).sub(minCollateralDiscount)).toBN();
       const priceWithDiscount = await BfpMarketProxy.getDiscountedCollateralPrice(
-        collateral.synthMarketId(),
+        collateral.address(),
         amount
       );
 
@@ -2869,7 +2983,7 @@ describe('MarginModule', async () => {
     });
 
     it('should match the expected discounted collateral price', async () => {
-      const { BfpMarketProxy, SpotMarket } = systems();
+      const { BfpMarketProxy, USD } = systems();
 
       const collateral = genOneOf(collaterals());
       const collateralPrice = await collateral.getPrice();
@@ -2882,30 +2996,34 @@ describe('MarginModule', async () => {
         maxCollateralDiscount,
         collateralDiscountScalar,
       });
-
-      const spotMarketSkewScale = bn(500_000);
-
+      const skewScale = bn(500_000);
       await withExplicitEvmMine(
         () =>
-          SpotMarket.connect(spotMarket.marketOwner()).setMarketSkewScale(
-            collateral.synthMarketId(),
-            spotMarketSkewScale
+          BfpMarketProxy.setMarginCollateralConfiguration(
+            [collateral.address()],
+            [collateral.oracleNodeId()],
+            [collateral.max],
+            [skewScale],
+            [collateral.rewardDistributorAddress()]
           ),
         provider()
       );
 
       const amount = bn(genNumber(3000, 5000));
 
-      const expectedPrice = calcDiscountedCollateralPrice(
-        collateralPrice,
-        amount,
-        spotMarketSkewScale,
-        collateralDiscountScalar,
-        minCollateralDiscount,
-        maxCollateralDiscount
-      );
+      const expectedPrice =
+        collateral.address() === USD.address
+          ? bn(1)
+          : calcDiscountedCollateralPrice(
+              collateralPrice,
+              amount,
+              skewScale,
+              collateralDiscountScalar,
+              minCollateralDiscount,
+              maxCollateralDiscount
+            );
       const actualPrice = await BfpMarketProxy.getDiscountedCollateralPrice(
-        collateral.synthMarketId(),
+        collateral.address(),
         amount
       );
 

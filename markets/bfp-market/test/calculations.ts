@@ -128,6 +128,38 @@ export const calcOrderFees = async (
   return { notional, orderFee, calcKeeperOrderSettlementFee };
 };
 
+export const calcKeeperCancellationFee = async (bs: Bs, blockBaseFeePerGas: BigNumber) => {
+  const { systems, ethOracleNode } = bs;
+  const { BfpMarketProxy } = systems();
+  // Grab market configuration to infer price.
+  const {
+    keeperCancellationGasUnits,
+    keeperProfitMarginPercent,
+    minKeeperFeeUsd,
+    maxKeeperFeeUsd,
+  } = await BfpMarketProxy.getMarketConfiguration();
+  const { answer: ethPrice } = await ethOracleNode().agg.latestRoundData();
+
+  // Perform calc bounding by min/max to prevent going over/under.
+
+  const baseKeeperFeeUsd = calcTransactionCostInUsd(
+    blockBaseFeePerGas,
+    keeperCancellationGasUnits,
+    ethPrice
+  );
+
+  // Base keeperFee + profit margin.
+  const baseKeeperFeePlusProfit = wei(baseKeeperFeeUsd).mul(wei(1).add(keeperProfitMarginPercent));
+
+  // Ensure keeper fee doesn't exceed min/max bounds.
+  const boundedKeeperFeeUsd = Wei.min(
+    Wei.max(wei(minKeeperFeeUsd), baseKeeperFeePlusProfit),
+    wei(maxKeeperFeeUsd)
+  ).toBN();
+
+  return boundedKeeperFeeUsd;
+};
+
 export const calcTransactionCostInUsd = (
   baseFeePerGas: BigNumber, // in gwei
   gasUnitsForTx: BigNumber, // in gwei
@@ -196,22 +228,62 @@ export const calcLiquidationKeeperFee = (
 export const calcDiscountedCollateralPrice = (
   collateralPrice: BigNumber,
   amount: BigNumber,
-  spotMarketSkewScale: BigNumber,
+  skewScale: BigNumber,
   collateralDiscountScalar: BigNumber,
   min: BigNumber,
   max: BigNumber
 ) => {
   const w_collateralPrice = wei(collateralPrice);
   const w_amount = wei(amount);
-  const w_spotMarketSkewScale = wei(spotMarketSkewScale);
+  const w_skewScale = wei(skewScale);
   const w_collateralDiscountScalar = wei(collateralDiscountScalar);
   const w_min = wei(min);
   const w_max = wei(max);
 
   // price = oraclePrice * (1 - min(max(size / (skewScale * skewScaleScalar), minCollateralDiscount), maxCollateralDiscount))
   const discount = Wei.min(
-    Wei.max(w_amount.mul(w_collateralDiscountScalar).div(w_spotMarketSkewScale), w_min),
+    Wei.max(w_amount.mul(w_collateralDiscountScalar).div(w_skewScale), w_min),
     w_max
   );
   return w_collateralPrice.mul(wei(1).sub(discount)).toBN();
+};
+
+export const calcUtilization = async (bs: Bs, marketId: BigNumber) => {
+  const { BfpMarketProxy, Core } = bs.systems();
+
+  // Get delegated usd amount
+  const withdrawable = await Core.getWithdrawableMarketUsd(marketId);
+  const { totalCollateralValueUsd } = await BfpMarketProxy.getMarketDigest(marketId);
+  const delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
+  const { size, oraclePrice } = await BfpMarketProxy.getMarketDigest(marketId);
+  const lockedCollateralUsd = wei(size).mul(oraclePrice);
+
+  return Wei.min(lockedCollateralUsd.div(delegatedAmountUsd), wei(1));
+};
+
+export const calcUtilizationRate = async (bs: Bs, utilization: Wei) => {
+  const { BfpMarketProxy } = bs.systems();
+  const globalMarketConfig = await BfpMarketProxy.getMarketConfiguration();
+  const utilizationBreakpointPercent = wei(globalMarketConfig.utilizationBreakpointPercent);
+  const lowUtilizationSlopePercent = wei(globalMarketConfig.lowUtilizationSlopePercent);
+  const highUtilizationSlopePercent = wei(globalMarketConfig.highUtilizationSlopePercent);
+
+  if (utilization.lt(utilizationBreakpointPercent)) {
+    return wei(lowUtilizationSlopePercent).mul(utilization).mul(100);
+  } else {
+    const lowPart = lowUtilizationSlopePercent.mul(utilizationBreakpointPercent).mul(100);
+    const highPart = highUtilizationSlopePercent
+      .mul(wei(utilization).sub(utilizationBreakpointPercent))
+      .mul(100);
+    return lowPart.add(highPart);
+  }
+};
+
+export const calcDebtCorrection = (
+  prevDebtCorrection: Wei,
+  fundingDelta: Wei,
+  notionalDelta: Wei,
+  totalPositionPnl: Wei
+) => {
+  return prevDebtCorrection.add(fundingDelta).add(notionalDelta).add(totalPositionPnl);
 };
