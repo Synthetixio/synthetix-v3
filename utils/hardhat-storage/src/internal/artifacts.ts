@@ -3,7 +3,13 @@ import path from 'node:path';
 import * as parser from '@solidity-parser/parser';
 import { ContractDefinition } from '@solidity-parser/parser/src/ast-types';
 import { GetArtifactFunction, StorageArtifact } from '../types';
-import { findAll, findContract, findContractStrict, getImportAliasSymbolName } from './finders';
+import {
+  findAll,
+  findContract,
+  findContractStrict,
+  findOne,
+  getCanonicalImportedSymbolName,
+} from './finders';
 import { ensureTrailingSlash, isExplicitRelativePath, removeBasePath } from './path-helpers';
 
 async function _safeReadFile(filepath: string) {
@@ -61,16 +67,36 @@ function _normalizeImportDirectives(
   }
 }
 
-async function _findContractInArtifacts(
+export async function findContractReferenceArtifact(
   getArtifact: GetArtifactFunction,
-  sourceNames: string[],
+  artifact: StorageArtifact,
   contractName: string
-) {
-  for (const sourceName of sourceNames) {
-    const artifact = await getArtifact(sourceName);
-    const contractNode = findContract(artifact.ast, contractName);
-    if (contractNode) return artifact;
+): Promise<[StorageArtifact, string]> {
+  const localContract = findContract(artifact.ast, contractName);
+
+  if (localContract) return [artifact, contractName];
+
+  const importDirective = getCanonicalImportedSymbolName(artifact.ast, contractName);
+
+  // If we have the real name and where it was imported from, look for it there
+  if (importDirective) {
+    const [importSourceName, canonicalContractName] = importDirective;
+    const importedArtifact = await getArtifact(importSourceName);
+    const contractNode = findContract(importedArtifact.ast, canonicalContractName);
+    if (contractNode) return [importedArtifact, canonicalContractName];
+  } else {
+    // if not, on all the imported files
+    const importedSourceNames = findAll(artifact.ast, 'ImportDirective').map((node) => node.path);
+    for (const importSourceName of importedSourceNames) {
+      const importedArtifact = await getArtifact(importSourceName);
+      const contractNode = findContract(importedArtifact.ast, contractName);
+      if (contractNode) return [importedArtifact, contractName];
+    }
   }
+
+  throw new Error(
+    `Could not find contract with name "${contractName}" from "${artifact.sourceName}"`
+  );
 }
 
 export async function findContractTree(
@@ -82,33 +108,20 @@ export async function findContractTree(
 
   const contractNodes: ContractDefinition[] = [contractNode];
 
-  if (contractNode.baseContracts.length) {
-    for (const baseContract of contractNode.baseContracts) {
-      const baseContractName =
-        getImportAliasSymbolName(artifact.ast, baseContract.baseName.namePath) ||
-        baseContract.baseName.namePath;
+  for (const baseContract of contractNode.baseContracts) {
+    const [inheritedArtifact, inheritedContractName] = await findContractReferenceArtifact(
+      getArtifact,
+      artifact,
+      baseContract.baseName.namePath
+    );
 
-      const importedSourceNames = findAll(artifact.ast, 'ImportDirective').map((node) => node.path);
-      const inheritedArtifact = await _findContractInArtifacts(
-        getArtifact,
-        importedSourceNames,
-        baseContractName
-      );
+    const importedContractTree = await findContractTree(
+      getArtifact,
+      inheritedArtifact,
+      inheritedContractName
+    );
 
-      if (!inheritedArtifact) {
-        throw new Error(
-          `Could not find contract with name "${baseContractName}" from "${artifact.sourceName}"`
-        );
-      }
-
-      const importedContractTree = await findContractTree(
-        getArtifact,
-        inheritedArtifact,
-        baseContractName
-      );
-
-      contractNodes.push(...importedContractTree);
-    }
+    contractNodes.push(...importedContractTree);
   }
 
   return contractNodes;

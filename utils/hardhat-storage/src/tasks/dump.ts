@@ -11,6 +11,7 @@ import { TASK_STORAGE_DUMP, TASK_STORAGE_VALIDATE } from '../task-names';
 interface Params {
   output: string;
   noValidate: boolean;
+  quiet: boolean;
   log: boolean;
 }
 
@@ -21,22 +22,15 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     'storage.dump.sol'
   )
   .addFlag('noValidate', 'Do not perform static validations on contracts before generating')
+  .addFlag('quiet', 'only emit errors to the console')
   .addFlag('log', 'log json result to the console')
   .setAction(async (params: Params, hre) => {
-    const { noValidate, log } = params;
+    const { noValidate, log, quiet } = params;
 
     const now = Date.now();
 
-    if (!log) {
-      logger.subtitle('Generating storage dump');
-    }
-
-    if (log) {
-      logger.quiet = true;
-    }
-
     if (!noValidate) {
-      await hre.run(TASK_STORAGE_VALIDATE);
+      await hre.run(TASK_STORAGE_VALIDATE, { quiet: true });
     }
 
     const allFqNames = await hre.artifacts.getAllFullyQualifiedNames();
@@ -55,7 +49,7 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
 
     if (log) {
       writeInChunks(dump);
-    } else {
+    } else if (!quiet) {
       logger.success(`Storage dump finished in ${Date.now() - now}ms`);
     }
 

@@ -1,7 +1,13 @@
-import { SourceUnit, StructDefinition } from '@solidity-parser/parser/dist/src/ast-types';
+import {
+  ContractDefinition,
+  ElementaryTypeName,
+  SourceUnit,
+  StructDefinition,
+} from '@solidity-parser/parser/src/ast-types';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { GetArtifactFunction, StorageArtifact } from '../types';
+import { findContractReferenceArtifact } from './artifacts';
 import { findAll, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
@@ -37,17 +43,25 @@ export async function dumpStorage({
   ];
 
   for (const [artifact, contractNode] of iterateContracts(artifacts)) {
-    const fqName = `${artifact.sourceName}:${contractNode.name}`;
+    const contractName = contractNode.name;
+    const sourceName = artifact.sourceName;
+    const fqName = `${sourceName}:${contractName}`;
 
-    // if (contractName !== 'RewardDistribution') continue;
+    if (contractName !== 'RewardDistribution') continue;
+    // if (contractName !== 'CcipClient') continue;
 
     const resultNode = clone(contractNode);
 
     const enumDefinitions = findAll(contractNode, 'EnumDefinition');
     const structDefinitions = findAll(contractNode, 'StructDefinition');
 
-    // This function mutates the given nodes
-    _replaceContractReferencesForAddresses(structDefinitions);
+    // This function mutates the given structDefinition nodes
+    await _replaceContractReferencesForAddresses(
+      getArtifact,
+      artifact,
+      contractNode,
+      structDefinitions
+    );
 
     // const dependencies = _getDependencySourceUnits(sourceUnits, structDefinitions);
     // const importDirectives = findChildren(sourceUnit, 'ImportDirective').filter((importDirective) =>
@@ -104,40 +118,32 @@ function _renderPragmaDirective(artifacts: StorageArtifact[]) {
   return render(node);
 }
 
-function _replaceContractReferencesForAddresses(structDefinitions: StructDefinition[]) {
+async function _replaceContractReferencesForAddresses(
+  getArtifact: GetArtifactFunction,
+  artifact: StorageArtifact,
+  contractNode: ContractDefinition,
+  structDefinitions: StructDefinition[]
+) {
   const results: SourceUnit[] = [];
 
   for (const structDefinition of structDefinitions) {
-    for (const ref of findAll(
-      structDefinition,
-      'VariableDeclaration',
-      (node) => node.typeName?.type === 'UserDefinedTypeName'
-    )) {
-      // console.log(ref);
-      // if (!ref.typeDescriptions.typeString?.startsWith('contract ')) continue;
-      // const parent = findOne(
-      //   structDefinition,
-      //   'VariableDeclaration',
-      //   (variable) => variable.typeName?.id === ref.id
-      // );
-      // if (!parent) {
-      //   throw new Error(`Parent VariableDeclaration not found for ${JSON.stringify(ref)}`);
-      // }
-      // parent.typeDescriptions = {
-      //   typeIdentifier: 't_address',
-      //   typeString: 'address',
-      // };
-      // parent.typeName = {
-      //   id: ref.id,
-      //   nodeType: 'ElementaryTypeName',
-      //   name: 'address',
-      //   src: ref.src,
-      //   stateMutability: 'nonpayable',
-      //   typeDescriptions: {
-      //     typeIdentifier: 't_address',
-      //     typeString: 'address',
-      //   },
-      // };
+    for (const ref of findAll(structDefinition, 'VariableDeclaration')) {
+      if (ref.typeName?.type !== 'UserDefinedTypeName') continue;
+      if (ref.typeName.namePath.includes('.')) continue; // using point notation, its for sure not a contract reference
+
+      const isContract = await findContractReferenceArtifact(
+        getArtifact,
+        artifact,
+        ref.typeName.namePath
+      );
+
+      if (!isContract) continue;
+
+      ref.typeName = {
+        type: 'ElementaryTypeName',
+        name: 'address',
+        stateMutability: null,
+      } satisfies ElementaryTypeName;
     }
   }
 
