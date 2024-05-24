@@ -151,6 +151,32 @@ type Vault @entity {
   updated_at_block: BigInt!
 }
 
+type VaultSnapshotByDay @entity {
+  "vaultId-YYYY-MM-DD"
+  id: ID!
+  collateral_amount: BigDecimal!
+  collateral_type: CollateralType!
+  pool: Pool!
+  created_at: BigInt!
+  created_at_block: BigInt!
+  updated_at: BigInt!
+  updated_at_block: BigInt!
+  updates_in_period: BigInt!
+}
+
+type VaultSnapshotByWeek @entity {
+  "vaultId-YYYY-WeekNumber"
+  id: ID!
+  collateral_amount: BigDecimal!
+  collateral_type: CollateralType!
+  pool: Pool!
+  created_at: BigInt!
+  created_at_block: BigInt!
+  updated_at: BigInt!
+  updated_at_block: BigInt!
+  updates_in_period: BigInt!
+}
+
 type RewardsDistributor @entity {
   "Address of the distributor"
   id: ID!

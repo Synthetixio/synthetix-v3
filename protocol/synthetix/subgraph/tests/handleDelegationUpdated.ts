@@ -1,5 +1,5 @@
 import { assert, createMockedFunction } from 'matchstick-as';
-import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
+import { Address, BigInt, ethereum, log } from '@graphprotocol/graph-ts';
 import { address, defaultGraphContractAddress } from './constants';
 import { handleDelegationUpdated } from '../mainnet';
 import { createDelegationUpdateEvent } from './event-factories';

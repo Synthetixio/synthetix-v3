@@ -11,7 +11,6 @@ export function createVaultSnapshotByDay(vaultWithLatestValues: Vault): void {
   let vaultSnapshotByDay = VaultSnapshotByDay.load(vaultSnapshotId);
 
   if (!vaultSnapshotByDay) {
-    // If we have two events in the same week update the data fields
     vaultSnapshotByDay = new VaultSnapshotByDay(vaultSnapshotId);
     vaultSnapshotByDay.updates_in_period = new BigInt(0);
     vaultSnapshotByDay.created_at = vaultWithLatestValues.created_at;

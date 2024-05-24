@@ -5,9 +5,9 @@ import { BigInt } from '@graphprotocol/graph-ts';
 export function createVaultSnapshotByWeek(vaultWithLatestValues: Vault): void {
   const date = new Date(<i64>parseInt(vaultWithLatestValues.updated_at.toString()) * 1000);
 
+  const year = date.getUTCFullYear().toString();
   const week = getISOWeekNumber(date.getTime());
 
-  const year = date.toISOString().slice(0, 4); // RIP at year 10k
   const vaultSnapshotId = vaultWithLatestValues.id
     .toString()
     .concat('-week-')
