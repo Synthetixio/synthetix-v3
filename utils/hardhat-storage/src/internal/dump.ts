@@ -1,6 +1,7 @@
 import {
   ContractDefinition,
   ElementaryTypeName,
+  Identifier,
   ImportDirective,
   SourceUnit,
   StructDefinition,
@@ -177,33 +178,52 @@ async function _getDependencyImportDirectives(
 
     const isAliased = canonicalRefName !== refName;
 
-    results.push({
-      type: 'ImportDirective',
-      path: refArtifact.sourceName,
-      pathLiteral: {
-        type: 'StringLiteral',
-        value: refArtifact.sourceName,
-        parts: [refArtifact.sourceName],
-        isUnicode: [false],
-      },
-      unitAlias: null,
-      unitAliasIdentifier: null,
-      symbolAliases: [[canonicalRefName, isAliased ? refName : null]],
-      symbolAliasesIdentifiers: [
-        [
-          {
+    const symbolAlias = [canonicalRefName, isAliased ? refName : null] satisfies [
+      string,
+      string | null,
+    ];
+    const symbolAliasesIdentifier = [
+      {
+        type: 'Identifier',
+        name: canonicalRefName,
+      } satisfies Identifier,
+      isAliased
+        ? {
             type: 'Identifier',
-            name: canonicalRefName,
-          },
-          isAliased
-            ? {
-                type: 'Identifier',
-                name: refName,
-              }
-            : null,
-        ],
-      ],
-    });
+            name: refName,
+          }
+        : null,
+    ] satisfies [Identifier, Identifier | null];
+
+    const exists = results.find(
+      (importDirective) => importDirective.path === refArtifact.sourceName
+    );
+
+    if (exists) {
+      if (!exists.symbolAliases) exists.symbolAliases = [];
+      if (!exists.symbolAliasesIdentifiers) exists.symbolAliasesIdentifiers = [];
+
+      const symbolExists = !!exists.symbolAliases.find(([name]) => name === canonicalRefName);
+      if (!symbolExists) {
+        exists.symbolAliases.push(symbolAlias);
+        exists.symbolAliasesIdentifiers.push(symbolAliasesIdentifier);
+      }
+    } else {
+      results.push({
+        type: 'ImportDirective',
+        path: refArtifact.sourceName,
+        pathLiteral: {
+          type: 'StringLiteral',
+          value: refArtifact.sourceName,
+          parts: [refArtifact.sourceName],
+          isUnicode: [false],
+        },
+        unitAlias: null,
+        unitAliasIdentifier: null,
+        symbolAliases: [symbolAlias],
+        symbolAliasesIdentifiers: [symbolAliasesIdentifier],
+      });
+    }
   }
 
   return results;
