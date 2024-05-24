@@ -7,8 +7,8 @@ import type {
   SourceUnit,
 } from '@solidity-parser/parser/src/ast-types';
 
-type ASTMap<U> = { [K in ASTNodeTypeString]: U extends { type: K } ? U : never };
-type ASTTypeMap = ASTMap<ASTNode>;
+export type ASTMap<U> = { [K in ASTNodeTypeString]: U extends { type: K } ? U : never };
+export type ASTTypeMap = ASTMap<ASTNode>;
 
 // parse.visit() function but compatible with multiple astNodes and better types interface
 function _visit<T extends ASTNodeTypeString>(
@@ -68,6 +68,17 @@ export function findOne<T extends ASTNodeTypeString>(
   return result;
 }
 
+export function findChildren<T extends ASTNodeTypeString>(
+  astNode: SourceUnit,
+  nodeTypes: T | T[],
+  filterFn: (node: ASTTypeMap[T]) => boolean = () => true
+) {
+  const types: ASTNodeTypeString[] = Array.isArray(nodeTypes) ? nodeTypes : [nodeTypes];
+  return astNode.children.filter(
+    (node: ASTNode) => types.includes(node.type) && filterFn(node as ASTTypeMap[T])
+  );
+}
+
 export function findContract(astNode: SourceUnit, contractName: string) {
   return astNode.children.find(
     (node) => node.type === 'ContractDefinition' && node.name === contractName
@@ -84,7 +95,10 @@ export function findContractStrict(astNode: SourceUnit, contractName: string) {
   return contractNode;
 }
 
-export function getCanonicalImportedSymbolName(astNode: ASTNode, symbolName: string) {
+export function getCanonicalImportedSymbolName(
+  astNode: ASTNode,
+  symbolName: string
+): [string, string] | undefined {
   for (const imp of findAll(astNode, 'ImportDirective')) {
     if (imp.symbolAliases) {
       for (const [canonicalName, alias] of imp.symbolAliases) {

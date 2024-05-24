@@ -81,11 +81,12 @@ const _render = {
   },
 
   ImportDirective(node: ImportDirective) {
-    if (node.unitAlias) {
-      throw new Error('Rendering ImportDirective with aliases not implemented');
+    if (node.symbolAliases) {
+      const aliases = node.symbolAliases.map(([from, to]) => `${from}${to ? ` as ${to}` : ''}`);
+      return `import {${aliases.join(', ')}} from "${node.pathLiteral.value}";`;
+    } else {
+      return `import "${node.pathLiteral.value}";`;
     }
-
-    return `import "${node.pathLiteral.value}";`;
   },
 
   ContractDefinition(node: ContractDefinition) {

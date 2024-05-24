@@ -1,13 +1,14 @@
 import {
   ContractDefinition,
   ElementaryTypeName,
+  ImportDirective,
   SourceUnit,
   StructDefinition,
 } from '@solidity-parser/parser/src/ast-types';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { GetArtifactFunction, StorageArtifact } from '../types';
-import { findContractReferenceArtifact } from './artifacts';
+import { findNodeReferenceArtifact } from './artifacts';
 import { findAll, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
@@ -47,8 +48,8 @@ export async function dumpStorage({
     const sourceName = artifact.sourceName;
     const fqName = `${sourceName}:${contractName}`;
 
-    if (contractName !== 'RewardDistribution') continue;
-    // if (contractName !== 'CcipClient') continue;
+    // if (contractName !== 'RewardDistribution') continue;
+    // if (contractName !== 'Proxy') continue;
 
     const resultNode = clone(contractNode);
 
@@ -63,10 +64,11 @@ export async function dumpStorage({
       structDefinitions
     );
 
-    // const dependencies = _getDependencySourceUnits(sourceUnits, structDefinitions);
-    // const importDirectives = findChildren(sourceUnit, 'ImportDirective').filter((importDirective) =>
-    //   dependencies.some((dependency) => dependency.id === importDirective.sourceUnit)
-    // );
+    const importDirectives = await _getDependencyImportDirectives(
+      getArtifact,
+      artifact,
+      structDefinitions
+    );
 
     // Filter all the contract nodes to only include Structs
     resultNode.subNodes = [...enumDefinitions, ...structDefinitions];
@@ -83,13 +85,6 @@ export async function dumpStorage({
           return bytesRequired;
         }
        */
-    // TODO: handle contracts references, they should be converted to address
-    /**
-        if (node.typeDescriptions.typeString?.startsWith('contract ')) {
-          return 'address';
-        }
-     */
-    // TODO: handle array and mappings with custom values
     // TODO: check how fixed arrays interact
 
     if (!resultNode.subNodes.length) continue;
@@ -98,7 +93,7 @@ export async function dumpStorage({
     const contract = render(resultNode as any);
 
     result.push(`// @custom:artifact ${fqName}`);
-    // result.push(...(importDirectives as any).map(render));
+    result.push(...importDirectives.map(render));
     result.push(contract);
     result.push('');
   }
@@ -131,8 +126,9 @@ async function _replaceContractReferencesForAddresses(
       if (ref.typeName?.type !== 'UserDefinedTypeName') continue;
       if (ref.typeName.namePath.includes('.')) continue; // using point notation, its for sure not a contract reference
 
-      const isContract = await findContractReferenceArtifact(
+      const isContract = await findNodeReferenceArtifact(
         getArtifact,
+        'ContractDefinition',
         artifact,
         ref.typeName.namePath
       );
@@ -150,34 +146,68 @@ async function _replaceContractReferencesForAddresses(
   return results;
 }
 
-// function _getDependencySourceUnits(
-//   sourceUnits: SourceUnit[],
-//   structDefinitions: StructDefinition[]
-// ) {
-//   const results: SourceUnit[] = [];
+async function _getDependencyImportDirectives(
+  getArtifact: GetArtifactFunction,
+  artifact: StorageArtifact,
+  structDefinitions: StructDefinition[]
+) {
+  const results: ImportDirective[] = [];
 
-//   for (const structDefinition of structDefinitions) {
-//     for (const reference of findAll(structDefinition, 'UserDefinedTypeName')) {
-//       const sourceUnit = sourceUnits.find((sourceUnit) => {
-//         return !!findOne(
-//           sourceUnit,
-//           ['StructDefinition', 'EnumDefinition'],
-//           (node) => node.id === reference.referencedDeclaration
-//         );
-//       });
+  const refs = structDefinitions
+    .map((structDefinition) => findAll(structDefinition, 'UserDefinedTypeName'))
+    .flat();
 
-//       if (!sourceUnit) {
-//         throw new Error(`SourceUnit not found for "${reference.pathNode?.name}"`);
-//       }
+  for (const ref of refs) {
+    const refName = ref.namePath.split('.')[0]!;
 
-//       if (!results.some((node) => node.id === sourceUnit.id)) {
-//         results.push(sourceUnit);
-//       }
-//     }
-//   }
+    const isLocal = findOne(
+      artifact.ast,
+      ['StructDefinition', 'EnumDefinition'],
+      (node) => node.name === refName
+    );
 
-//   return results;
-// }
+    if (isLocal) continue;
+
+    const [refArtifact, canonicalRefName] = await findNodeReferenceArtifact(
+      getArtifact,
+      'ContractDefinition',
+      artifact,
+      refName
+    );
+
+    const isAliased = canonicalRefName !== refName;
+
+    results.push({
+      type: 'ImportDirective',
+      path: refArtifact.sourceName,
+      pathLiteral: {
+        type: 'StringLiteral',
+        value: refArtifact.sourceName,
+        parts: [refArtifact.sourceName],
+        isUnicode: [false],
+      },
+      unitAlias: null,
+      unitAliasIdentifier: null,
+      symbolAliases: [[canonicalRefName, isAliased ? refName : null]],
+      symbolAliasesIdentifiers: [
+        [
+          {
+            type: 'Identifier',
+            name: canonicalRefName,
+          },
+          isAliased
+            ? {
+                type: 'Identifier',
+                name: refName,
+              }
+            : null,
+        ],
+      ],
+    });
+  }
+
+  return results;
+}
 
 /**
  * Parse a previous generated storage dump

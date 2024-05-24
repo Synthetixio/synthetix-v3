@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as parser from '@solidity-parser/parser';
-import { ContractDefinition } from '@solidity-parser/parser/src/ast-types';
+import { ASTNodeTypeString, ContractDefinition } from '@solidity-parser/parser/src/ast-types';
 import { GetArtifactFunction, StorageArtifact } from '../types';
 import {
   findAll,
@@ -67,36 +67,43 @@ function _normalizeImportDirectives(
   }
 }
 
-export async function findContractReferenceArtifact(
+export async function findNodeReferenceArtifact<T extends ASTNodeTypeString>(
   getArtifact: GetArtifactFunction,
+  nodeTypes: T | T[],
   artifact: StorageArtifact,
-  contractName: string
+  nodeName: string
 ): Promise<[StorageArtifact, string]> {
-  const localContract = findContract(artifact.ast, contractName);
+  const localNode = findOne(artifact.ast, nodeTypes, (node) => (node as any).name === nodeName);
 
-  if (localContract) return [artifact, contractName];
+  if (localNode) return [artifact, nodeName];
 
-  const importDirective = getCanonicalImportedSymbolName(artifact.ast, contractName);
+  const importDirective = getCanonicalImportedSymbolName(artifact.ast, nodeName);
 
   // If we have the real name and where it was imported from, look for it there
   if (importDirective) {
-    const [importSourceName, canonicalContractName] = importDirective;
+    const [importSourceName, canonicalNodeName] = importDirective;
     const importedArtifact = await getArtifact(importSourceName);
-    const contractNode = findContract(importedArtifact.ast, canonicalContractName);
-    if (contractNode) return [importedArtifact, canonicalContractName];
+    const node = findOne(
+      importedArtifact.ast,
+      nodeTypes,
+      (node) => (node as any).name === canonicalNodeName
+    );
+    if (node) return [importedArtifact, canonicalNodeName];
   } else {
     // if not, on all the imported files
     const importedSourceNames = findAll(artifact.ast, 'ImportDirective').map((node) => node.path);
     for (const importSourceName of importedSourceNames) {
       const importedArtifact = await getArtifact(importSourceName);
-      const contractNode = findContract(importedArtifact.ast, contractName);
-      if (contractNode) return [importedArtifact, contractName];
+      const node = findOne(
+        importedArtifact.ast,
+        nodeTypes,
+        (node) => (node as any).name === nodeName
+      );
+      if (node) return [importedArtifact, nodeName];
     }
   }
 
-  throw new Error(
-    `Could not find contract with name "${contractName}" from "${artifact.sourceName}"`
-  );
+  throw new Error(`Could not find node with name "${nodeName}" from "${artifact.sourceName}"`);
 }
 
 export async function findContractTree(
@@ -109,8 +116,9 @@ export async function findContractTree(
   const contractNodes: ContractDefinition[] = [contractNode];
 
   for (const baseContract of contractNode.baseContracts) {
-    const [inheritedArtifact, inheritedContractName] = await findContractReferenceArtifact(
+    const [inheritedArtifact, inheritedContractName] = await findNodeReferenceArtifact(
       getArtifact,
+      'ContractDefinition',
       artifact,
       baseContract.baseName.namePath
     );
