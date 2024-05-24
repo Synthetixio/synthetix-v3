@@ -1646,6 +1646,294 @@ export class Vault extends Entity {
   }
 }
 
+export class VaultSnapshotByDay extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save VaultSnapshotByDay entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type VaultSnapshotByDay must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('VaultSnapshotByDay', id.toString(), this);
+    }
+  }
+
+  static loadInBlock(id: string): VaultSnapshotByDay | null {
+    return changetype<VaultSnapshotByDay | null>(store.get_in_block('VaultSnapshotByDay', id));
+  }
+
+  static load(id: string): VaultSnapshotByDay | null {
+    return changetype<VaultSnapshotByDay | null>(store.get('VaultSnapshotByDay', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get collateral_amount(): BigDecimal {
+    let value = this.get('collateral_amount');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set collateral_amount(value: BigDecimal) {
+    this.set('collateral_amount', Value.fromBigDecimal(value));
+  }
+
+  get collateral_type(): string {
+    let value = this.get('collateral_type');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set collateral_type(value: string) {
+    this.set('collateral_type', Value.fromString(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+
+  get updates_in_period(): BigInt {
+    let value = this.get('updates_in_period');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set updates_in_period(value: BigInt) {
+    this.set('updates_in_period', Value.fromBigInt(value));
+  }
+}
+
+export class VaultSnapshotByWeek extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save VaultSnapshotByWeek entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type VaultSnapshotByWeek must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('VaultSnapshotByWeek', id.toString(), this);
+    }
+  }
+
+  static loadInBlock(id: string): VaultSnapshotByWeek | null {
+    return changetype<VaultSnapshotByWeek | null>(store.get_in_block('VaultSnapshotByWeek', id));
+  }
+
+  static load(id: string): VaultSnapshotByWeek | null {
+    return changetype<VaultSnapshotByWeek | null>(store.get('VaultSnapshotByWeek', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get collateral_amount(): BigDecimal {
+    let value = this.get('collateral_amount');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set collateral_amount(value: BigDecimal) {
+    this.set('collateral_amount', Value.fromBigDecimal(value));
+  }
+
+  get collateral_type(): string {
+    let value = this.get('collateral_type');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set collateral_type(value: string) {
+    this.set('collateral_type', Value.fromString(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+
+  get updates_in_period(): BigInt {
+    let value = this.get('updates_in_period');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set updates_in_period(value: BigInt) {
+    this.set('updates_in_period', Value.fromBigInt(value));
+  }
+}
+
 export class RewardsDistributor extends Entity {
   constructor(id: string) {
     super();

@@ -1,5 +1,7 @@
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 import { Position, Vault } from './generated/schema';
+import { createVaultSnapshotByDay } from './vaultSnapshotByDay';
+import { createVaultSnapshotByWeek } from './vaultSnapshotByWeek';
 
 export function handleDelegationUpdated(event: DelegationUpdated): void {
   const id = event.params.accountId
@@ -51,4 +53,7 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
   vault.updated_at_block = event.block.number;
   vault.save();
   position.save();
+
+  createVaultSnapshotByDay(vault);
+  createVaultSnapshotByWeek(vault);
 }
