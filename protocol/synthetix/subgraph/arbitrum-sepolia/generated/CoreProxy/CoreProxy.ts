@@ -6258,56 +6258,6 @@ export class DistributeRewardsCall__Outputs {
   }
 }
 
-export class DistributeRewardsByOwnerCall extends ethereum.Call {
-  get inputs(): DistributeRewardsByOwnerCall__Inputs {
-    return new DistributeRewardsByOwnerCall__Inputs(this);
-  }
-
-  get outputs(): DistributeRewardsByOwnerCall__Outputs {
-    return new DistributeRewardsByOwnerCall__Outputs(this);
-  }
-}
-
-export class DistributeRewardsByOwnerCall__Inputs {
-  _call: DistributeRewardsByOwnerCall;
-
-  constructor(call: DistributeRewardsByOwnerCall) {
-    this._call = call;
-  }
-
-  get poolId(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-
-  get collateralType(): Address {
-    return this._call.inputValues[1].value.toAddress();
-  }
-
-  get rewardsDistributor(): Address {
-    return this._call.inputValues[2].value.toAddress();
-  }
-
-  get amount(): BigInt {
-    return this._call.inputValues[3].value.toBigInt();
-  }
-
-  get start(): BigInt {
-    return this._call.inputValues[4].value.toBigInt();
-  }
-
-  get duration(): BigInt {
-    return this._call.inputValues[5].value.toBigInt();
-  }
-}
-
-export class DistributeRewardsByOwnerCall__Outputs {
-  _call: DistributeRewardsByOwnerCall;
-
-  constructor(call: DistributeRewardsByOwnerCall) {
-    this._call = call;
-  }
-}
-
 export class RegisterRewardsDistributorCall extends ethereum.Call {
   get inputs(): RegisterRewardsDistributorCall__Inputs {
     return new RegisterRewardsDistributorCall__Inputs(this);
