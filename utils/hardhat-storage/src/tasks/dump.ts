@@ -37,7 +37,7 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     const contracts = filterContracts(allFqNames, hre.config.storage.artifacts);
     const getArtifact = (fqName: string) => readHardhatArtifact(hre, fqName);
 
-    const dump = await dumpStorage({ contracts, getArtifact });
+    const dump = await dumpStorage({ getArtifact, contracts });
 
     // if (output) {
     //   const target = path.resolve(hre.config.paths.root, output);
@@ -48,7 +48,7 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     // }
 
     if (log) {
-      writeInChunks(dump);
+      writeInChunks(JSON.stringify(dump, null, 2));
     } else if (!quiet) {
       logger.success(`Storage dump finished in ${Date.now() - now}ms`);
     }

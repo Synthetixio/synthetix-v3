@@ -5,27 +5,124 @@ import {
   ImportDirective,
   SourceUnit,
   StructDefinition,
+  TypeName,
+  VariableDeclaration,
 } from '@solidity-parser/parser/src/ast-types';
 import { clone } from '@synthetixio/core-utils/utils/misc/clone';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { GetArtifactFunction, StorageArtifact } from '../types';
+import {
+  GetArtifactFunction,
+  StorageArtifact,
+  StorageDump,
+  StorageDumpLayout,
+  StorageDumpSlot,
+} from '../types';
 import { findNodeReferenceArtifact } from './artifacts';
-import { findAll, findOne } from './finders';
+import { findAll, findContract, findContractStrict, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
 
+interface ContractOrLibrary extends ContractDefinition {
+  kind: 'contract' | 'library';
+}
+
 interface Params {
-  contracts: string[];
   getArtifact: GetArtifactFunction;
+  contracts: string[];
   version?: string;
   license?: string;
+}
+
+export async function dumpStorage({ getArtifact, contracts }: Params) {
+  const results: StorageDump = {};
+
+  for (const [artifact, contractNode] of await _getContracts(getArtifact, contracts)) {
+    const result = {
+      kind: contractNode.kind,
+      name: contractNode.name,
+      structs: {},
+    } satisfies StorageDumpLayout;
+
+    const contractName = contractNode.name;
+    const sourceName = artifact.sourceName;
+    const fqName = `${sourceName}:${contractName}`;
+
+    for (const structDefinition of findAll(contractNode, 'StructDefinition')) {
+      const struct: StorageDumpSlot[] = [];
+
+      for (const member of structDefinition.members) {
+      }
+    }
+  }
+
+  return results;
+}
+
+async function _astVariableToStorageSlot(
+  artifact: StorageArtifact,
+  structDefinition: StructDefinition,
+  member: VariableDeclaration
+) {
+  if (!member.typeName) {
+    throw new Error('Missing type notation');
+  }
+
+  const typeName = (await _isContractReference(getArtifact, artifact, member.typeName))
+    ? ({
+        type: 'ElementaryTypeName',
+        name: 'address',
+        stateMutability: null,
+      } satisfies ElementaryTypeName)
+    : member.typeName;
+
+  if (typeName.type === 'ElementaryTypeName') {
+    struct.push({
+      type: typeName.name,
+      name: member.name,
+    });
+  }
+  if (typeName.type === 'FunctionTypeName') {
+    throw new Error(`Functions not allowed on structs for storage check`);
+  }
+}
+
+async function _isContractReference(
+  getArtifact: GetArtifactFunction,
+  artifact: StorageArtifact,
+  typeName: TypeName
+) {
+  if (typeName.type !== 'UserDefinedTypeName') return false;
+  if (typeName.namePath.includes('.')) return false; // using point notation, its for sure not a contract reference
+
+  const isContract = await findNodeReferenceArtifact(
+    getArtifact,
+    'ContractDefinition',
+    artifact,
+    typeName.namePath
+  );
+
+  return isContract;
+}
+
+async function _getContracts(getArtifact: GetArtifactFunction, contracts: string[]) {
+  return Promise.all(
+    contracts.map(async (fqName) => {
+      const { sourceName, contractName } = parseFullyQualifiedName(fqName);
+      const artifact = await getArtifact(sourceName);
+      const contractNode = findContract(artifact.ast, contractName, (node) =>
+        ['contract', 'library'].includes(node.kind)
+      ) as ContractOrLibrary;
+      if (!contractNode) return;
+      return [artifact, contractNode];
+    })
+  ).then((results) => results.filter(Boolean) as [StorageArtifact, ContractOrLibrary][]);
 }
 
 /**
  * Generate a single solidity file including all the given contracts but only
  * rendering its storage defintions.
  */
-export async function dumpStorage({
+export async function dumpStorageOld({
   contracts,
   getArtifact,
   version,
@@ -45,6 +142,8 @@ export async function dumpStorage({
   ];
 
   for (const [artifact, contractNode] of iterateContracts(artifacts)) {
+    if (contractNode.kind === 'interface') continue;
+
     const contractName = contractNode.name;
     const sourceName = artifact.sourceName;
     const fqName = `${sourceName}:${contractName}`;
@@ -58,12 +157,7 @@ export async function dumpStorage({
     const structDefinitions = findAll(contractNode, 'StructDefinition');
 
     // This function mutates the given structDefinition nodes
-    await _replaceContractReferencesForAddresses(
-      getArtifact,
-      artifact,
-      contractNode,
-      structDefinitions
-    );
+    await _replaceContractReferencesForAddresses(getArtifact, artifact, structDefinitions);
 
     const importDirectives = await _getDependencyImportDirectives(
       getArtifact,
@@ -117,7 +211,6 @@ function _renderPragmaDirective(artifacts: StorageArtifact[]) {
 async function _replaceContractReferencesForAddresses(
   getArtifact: GetArtifactFunction,
   artifact: StorageArtifact,
-  contractNode: ContractDefinition,
   structDefinitions: StructDefinition[]
 ) {
   const results: SourceUnit[] = [];

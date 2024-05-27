@@ -79,14 +79,22 @@ export function findChildren<T extends ASTNodeTypeString>(
   );
 }
 
-export function findContract(astNode: SourceUnit, contractName: string) {
+export function findContract(
+  astNode: SourceUnit,
+  contractName: string,
+  filterFn: (node: ContractDefinition) => boolean = () => true
+) {
   return astNode.children.find(
-    (node) => node.type === 'ContractDefinition' && node.name === contractName
+    (node) => node.type === 'ContractDefinition' && node.name === contractName && filterFn(node)
   ) as ContractDefinition | undefined;
 }
 
-export function findContractStrict(astNode: SourceUnit, contractName: string) {
-  const contractNode = findContract(astNode, contractName);
+export function findContractStrict(
+  astNode: SourceUnit,
+  contractName: string,
+  filterFn: (node: ContractDefinition) => boolean = () => true
+) {
+  const contractNode = findContract(astNode, contractName, filterFn);
 
   if (!contractNode) {
     throw new Error(`Contract with name "${contractName}" not found`);
