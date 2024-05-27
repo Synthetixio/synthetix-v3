@@ -136,6 +136,12 @@ library AccountDelegationIntents {
         return self.intentsByPair[keccak256(abi.encodePacked(poolId, collateralType))].values();
     }
 
+    function isInCurrentEpoch(Data storage self, uint256 intentId) internal view returns (bool) {
+        // Notice: not checking that `self.delegationIntentsEpoch == account.currentDelegationIntentsEpoch` since
+        // it was loadValid and getValid use it at load time
+        return self.intentsId.contains(intentId);
+    }
+
     /**
      * @dev Cleans all expired intents related to the account.
      */

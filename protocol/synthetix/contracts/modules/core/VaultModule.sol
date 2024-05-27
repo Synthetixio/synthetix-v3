@@ -149,8 +149,15 @@ contract VaultModule is IVaultModule {
         uint256[] memory intentIds
     ) public override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
+        AccountDelegationIntents.Data storage accountIntents = AccountDelegationIntents.loadValid(
+            accountId
+        );
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            if (!accountIntents.isInCurrentEpoch(intent.id)) {
+                revert DelegationIntentNotInCurrentEpoch(intent.id);
+            }
+
             if (!intent.isExecutable()) {
                 // emit an Skipped event
                 emit DelegationIntentSkipped(

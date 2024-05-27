@@ -48,6 +48,11 @@ interface IVaultModule {
     error DelegationIntentNotExpired(uint256 intentId);
 
     /**
+     * @notice Thrown when the specified intent is not in current epoch (it was nuked in a liquidation or administrative fix).
+     */
+    error DelegationIntentNotInCurrentEpoch(uint256 intentId);
+
+    /**
      * @notice Thrown when the specified intent is not executable due to pending intents.
      */
     error ExceedingUndelegateAmount(
