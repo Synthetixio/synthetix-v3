@@ -46,6 +46,7 @@ export default function test(): void {
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '2323');
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_type', address);
   assert.fieldEquals('Vault', `1-${address}`, 'pool', '1');
+
   const newDelegatioNUpdatedEvent2 = createDelegationUpdateEvent(
     BigInt.fromI32(1),
     BigInt.fromI32(1),

@@ -1,3 +1,4 @@
+import { BigInt, log } from '@graphprotocol/graph-ts';
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 import { Position, Vault } from './generated/schema';
 import { createVaultSnapshotByDay } from './vaultSnapshotByDay';
@@ -30,7 +31,13 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     if (position) {
       const isIncreasing = event.params.amount.toBigDecimal().gt(position.collateral_amount);
       if (isIncreasing) {
-        vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
+        log.info('INCREASING {} {}', [
+          event.params.amount.toString(),
+          position.collateral_amount.toString(),
+        ]);
+        vault.collateral_amount = vault.collateral_amount.plus(
+          event.params.amount.toBigDecimal().minus(position.collateral_amount)
+        );
       } else {
         vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
       }
@@ -48,7 +55,9 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
 
   position.pool = event.params.poolId.toString();
   position.collateral_type = event.params.collateralType.toHex();
-  position.collateral_amount = event.params.amount.toBigDecimal();
+  position.collateral_amount = event.params.amount.gt(BigInt.fromI32(0))
+    ? event.params.amount.toBigDecimal()
+    : position.collateral_amount.plus(event.params.amount.toBigDecimal());
   position.updated_at = event.block.timestamp;
   position.updated_at_block = event.block.number;
   // position.c_ratio = VaultModule.bind(event.address)

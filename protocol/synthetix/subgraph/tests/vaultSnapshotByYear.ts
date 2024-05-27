@@ -71,7 +71,7 @@ export default function test(): void {
       BigInt.fromI32(1),
       BigInt.fromI32(1),
       Address.fromString(sender),
-      BigInt.fromI32(100),
+      BigInt.fromI32(200),
       BigInt.fromI32(1),
       now + 1,
       now - 999
@@ -133,7 +133,7 @@ export default function test(): void {
     'VaultSnapshotByYear',
     '1-0x6942000000000000000000000000000000000000-2023',
     'collateral_amount',
-    '700'
+    '500'
   );
   assert.fieldEquals(
     'VaultSnapshotByYear',
