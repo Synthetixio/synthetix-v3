@@ -1,5 +1,5 @@
 import { addressEqual } from '@synthetixio/core-utils/utils/assertions/assert-address';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import {
   AssociatedSystemsModule,
   DecayTokenModule,

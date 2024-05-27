@@ -28,7 +28,6 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
-    "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
     "@usecannon/cli": "2.13.6",
     "ethers": "^5.7.2",

@@ -1,0 +1,31 @@
+name = "erc-4626-to-assets-ratio-oracle"
+version = "<%= package.version %>-testable"
+
+[import.synthetix]
+source = "synthetix:latest"
+
+[deploy.ERC20Mock]
+artifact = "contracts/mocks/ERC20Mock.sol:ERC20Mock"
+
+[deploy.ERC4626Mock]
+artifact = "contracts/mocks/ERC4626Mock.sol:ERC4626Mock"
+args = ["<%= contracts.ERC20Mock.address %>"]
+
+[deploy.ERC4626ToAssetsRatioOracle]
+artifact = "contracts/ERC4626ToAssetsRatioOracle.sol:ERC4626ToAssetsRatioOracle"
+args = ["<%= contracts.ERC4626Mock.address %>"]
+
+[invoke.register_erc_4626_to_assets_ratio_oracle]
+target = ["synthetix.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # external node
+    2,
+    # contract
+    "<%= defaultAbiCoder.encode(['address'], [contracts.ERC4626ToAssetsRatioOracle.address]) %>",
+    [
+    ],
+]
+var.erc_4626_to_assets_ratio_oracle_node_id.event = "NodeRegistered"
+var.erc_4626_to_assets_ratio_oracle_node_id.arg = 0
+depends = ["deploy.ERC4626Mock", "deploy.ERC4626ToAssetsRatioOracle"]

@@ -1,23 +1,23 @@
 import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { ethers } from 'ethers';
 import { createStakedPool } from '@synthetixio/main/test/common';
-import type { WstEthToStEthRatioOracle, WstETHMock } from '../typechain-types';
-import { AggregatorV3Mock } from '../typechain-types/contracts/mocks';
+import type { ERC4626ToAssetsRatioOracle } from '../typechain-types';
+import { ERC20Mock, ERC4626Mock } from '../typechain-types/contracts/mocks';
 
 type CreateStakePoolSystems = ReturnType<Parameters<typeof createStakedPool>[0]['systems']>;
 type OracleManager = CreateStakePoolSystems['OracleManager'];
 
 interface Contracts {
-  WstEthToStEthRatioOracle: WstEthToStEthRatioOracle;
-  WstETHMock: WstETHMock;
-  StEthAggregatorV3MockOracleNode: AggregatorV3Mock;
+  ERC4626ToAssetsRatioOracle: ERC4626ToAssetsRatioOracle;
+  ERC20Mock: ERC20Mock;
+  ERC4626Mock: ERC4626Mock;
   ['synthetix.oracle_manager.Proxy']: OracleManager;
 }
 
 interface Systems {
-  WstEthToStEthRatioOracle: WstEthToStEthRatioOracle;
-  WstETHMock: WstETHMock;
-  StEthAggregatorV3MockOracleNode: AggregatorV3Mock;
+  ERC4626ToAssetsRatioOracle: ERC4626ToAssetsRatioOracle;
+  ERC20Mock: ERC20Mock;
+  ERC4626Mock: ERC4626Mock;
   OracleManager: OracleManager;
 }
 
@@ -33,13 +33,13 @@ export const bootstrap = () => {
   let owner: ethers.Signer;
   let user: ethers.Signer;
 
-  before('bootstrap WstEthToStEthRatioOracle', async function () {
+  before('bootstrap ERC4626ToAssetsRatioOracle', async function () {
     [owner, user] = getSigners();
 
     systems = {
-      WstEthToStEthRatioOracle: getContract('WstEthToStEthRatioOracle'),
-      WstETHMock: getContract('WstETHMock'),
-      StEthAggregatorV3MockOracleNode: getContract('StEthAggregatorV3MockOracleNode'),
+      ERC4626ToAssetsRatioOracle: getContract('ERC4626ToAssetsRatioOracle'),
+      ERC20Mock: getContract('ERC20Mock'),
+      ERC4626Mock: getContract('ERC4626Mock'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     };
   });

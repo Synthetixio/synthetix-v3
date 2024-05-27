@@ -48,6 +48,7 @@
     "sinon": "^17.0.1",
     "solc": "0.8.21",
     "solidity-ast": "^0.4.55",
+    "typechain": "8.3.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
