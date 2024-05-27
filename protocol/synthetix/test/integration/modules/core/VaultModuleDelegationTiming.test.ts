@@ -261,7 +261,7 @@ describe('VaultModule Two-step Delegation', function () {
       it('intent is deleted', async () => {
         await assertRevert(
           systems().Core.connect(owner).getAccountIntent(accountId, intentId),
-          'InvalidDelegationIntentId()',
+          'InvalidDelegationIntent()',
           systems().Core
         );
       });
@@ -281,7 +281,7 @@ describe('VaultModule Two-step Delegation', function () {
       it('intent is deleted', async () => {
         await assertRevert(
           systems().Core.connect(owner).getAccountIntent(accountId, intentId),
-          'InvalidDelegationIntentId()',
+          'InvalidDelegationIntent()',
           systems().Core
         );
       });
@@ -338,7 +338,7 @@ describe('VaultModule Two-step Delegation', function () {
       it('intent is deleted', async () => {
         await assertRevert(
           systems().Core.connect(user2).getAccountIntent(accountId, intentId),
-          'InvalidDelegationIntentId()',
+          'InvalidDelegationIntent()',
           systems().Core
         );
       });
@@ -360,7 +360,7 @@ describe('VaultModule Two-step Delegation', function () {
       it('intent is deleted', async () => {
         await assertRevert(
           systems().Core.connect(user2).getAccountIntent(accountId, intentId),
-          'InvalidDelegationIntentId()',
+          'InvalidDelegationIntent()',
           systems().Core
         );
       });
@@ -408,7 +408,7 @@ describe('VaultModule Two-step Delegation', function () {
     it('intent is deleted', async () => {
       await assertRevert(
         systems().Core.connect(user1).getAccountIntent(accountId, intentId),
-        'InvalidDelegationIntentId()',
+        'InvalidDelegationIntent()',
         systems().Core
       );
     });
@@ -461,7 +461,7 @@ describe('VaultModule Two-step Delegation', function () {
     it('intent is deleted', async () => {
       await assertRevert(
         systems().Core.connect(user1).getAccountIntent(accountId, intentId),
-        'InvalidDelegationIntentId()',
+        'InvalidDelegationIntent()',
         systems().Core
       );
     });
