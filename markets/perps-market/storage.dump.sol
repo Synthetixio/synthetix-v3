@@ -118,7 +118,7 @@ library Account {
         AccountRBAC.Data rbac;
         uint64 lastInteraction;
         uint64 __slotAvailableForFutureUse;
-        uint128 __slot2AvailableForFutureUse;
+        uint128 currentDelegationIntentsEpoch;
         mapping(address => Collateral.Data) collaterals;
     }
     function load(uint128 id) internal pure returns (Data storage account) {

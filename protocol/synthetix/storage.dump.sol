@@ -395,7 +395,7 @@ library Account {
         AccountRBAC.Data rbac;
         uint64 lastInteraction;
         uint64 __slotAvailableForFutureUse;
-        uint128 __slot2AvailableForFutureUse;
+        uint128 currentDelegationIntentsEpoch;
         mapping(address => Collateral.Data) collaterals;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
@@ -410,13 +410,14 @@ library Account {
 library AccountDelegationIntents {
     struct Data {
         uint128 accountId;
+        uint128 delegationIntentsEpoch;
         SetUtil.UintSet intentsId;
         mapping(bytes32 => SetUtil.UintSet) intentsByPair;
         SetUtil.AddressSet delegatedCollaterals;
         mapping(address => int256) netDelegatedAmountPerCollateral;
     }
-    function load(uint128 id) internal pure returns (Data storage accountDelegationIntents) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.AccountDelegationIntents", id));
+    function load(uint128 accountId, uint128 delegationIntentsEpoch) internal pure returns (Data storage accountDelegationIntents) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.AccountDelegationIntents", accountId, delegationIntentsEpoch));
         assembly {
             accountDelegationIntents.slot := s
         }
