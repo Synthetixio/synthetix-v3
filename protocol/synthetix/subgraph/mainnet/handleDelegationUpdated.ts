@@ -1,7 +1,9 @@
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 import { Position, Vault } from './generated/schema';
 import { createVaultSnapshotByDay } from './vaultSnapshotByDay';
+import { createVaultSnapshotByMonth } from './vaultSnapshotByMonth';
 import { createVaultSnapshotByWeek } from './vaultSnapshotByWeek';
+import { createVaultSnapshotByYear } from './vaultSnapshotByYear';
 
 export function handleDelegationUpdated(event: DelegationUpdated): void {
   const id = event.params.accountId
@@ -28,9 +30,7 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     if (position) {
       const isIncreasing = event.params.amount.toBigDecimal().gt(position.collateral_amount);
       if (isIncreasing) {
-        vault.collateral_amount = vault.collateral_amount.plus(
-          event.params.amount.toBigDecimal().minus(position.collateral_amount)
-        );
+        vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
       } else {
         vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
       }
@@ -38,12 +38,12 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
       vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
     }
   }
+
   if (position === null) {
     position = new Position(id);
     position.created_at = event.block.timestamp;
     position.created_at_block = event.block.number;
     position.account = event.params.accountId.toString();
-    position.collateral_amount = event.params.amount.toBigDecimal();
   }
 
   position.pool = event.params.poolId.toString();
@@ -66,4 +66,6 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
   position.save();
   createVaultSnapshotByDay(vault, event);
   createVaultSnapshotByWeek(vault, event);
+  createVaultSnapshotByMonth(vault, event);
+  createVaultSnapshotByYear(vault, event);
 }

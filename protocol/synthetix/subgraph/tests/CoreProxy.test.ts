@@ -27,6 +27,8 @@ import handleUSDMintedTest from './handleUSDMinted';
 import handleVaultLiquidationTest from './handleVaultLiquidation';
 import vaultSnapshotByDayTest from './vaultSnapshotByDay';
 import vaultSnapshotByWeekTest from './vaultSnapshotByWeek';
+import vaultSnapshotByMonthTest from './vaultSnapshotByMonth';
+import vaultSnapshotByYearTest from './vaultSnapshotByYear';
 
 describe('CoreProxy', () => {
   beforeEach(() => {
@@ -49,6 +51,8 @@ describe('CoreProxy', () => {
   test('getISOWeekNumber', getISOWeekNumberTest);
   test('vaultSnapshotByDay', vaultSnapshotByDayTest);
   test('vaultSnapshotByWeek', vaultSnapshotByWeekTest);
+  test('vaultSnapshotByMonth', vaultSnapshotByMonthTest);
+  test('vaultSnapshotByYear', vaultSnapshotByYearTest);
   test('caultSnapshotByWeek', marketSnapshotByWeekTest);
   test('marketSnapshotByDay', marketSnapshotByDayTest);
   test('marketSnapshotByWeek', marketSnapshotByWeekTest);

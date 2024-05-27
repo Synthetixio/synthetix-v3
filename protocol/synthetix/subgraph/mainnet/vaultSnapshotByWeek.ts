@@ -23,7 +23,7 @@ export function createVaultSnapshotByWeek(
 
   if (!vaultSnapshotByWeek) {
     vaultSnapshotByWeek = new VaultSnapshotByWeek(vaultSnapshotId);
-    vaultSnapshotByWeek.updates_in_period = new BigInt(0);
+    vaultSnapshotByWeek.updates_in_period = BigInt.fromI32(0);
     vaultSnapshotByWeek.created_at = event.block.timestamp;
     vaultSnapshotByWeek.created_at_block = event.block.number;
     vaultSnapshotByWeek.collateral_type = vaultWithLatestValues.collateral_type;
@@ -31,7 +31,9 @@ export function createVaultSnapshotByWeek(
   }
   vaultSnapshotByWeek.updated_at = event.block.timestamp;
   vaultSnapshotByWeek.updated_at_block = event.block.number;
-  vaultSnapshotByWeek.updates_in_period = vaultSnapshotByWeek.updates_in_period.plus(new BigInt(1));
+  vaultSnapshotByWeek.updates_in_period = vaultSnapshotByWeek.updates_in_period.plus(
+    BigInt.fromI32(1)
+  );
   vaultSnapshotByWeek.collateral_amount = vaultWithLatestValues.collateral_amount;
 
   vaultSnapshotByWeek.save();

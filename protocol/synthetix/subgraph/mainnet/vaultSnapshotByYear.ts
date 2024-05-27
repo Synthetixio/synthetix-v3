@@ -1,22 +1,21 @@
-import { Vault, VaultSnapshotByDay } from './generated/schema';
-import { BigInt, log } from '@graphprotocol/graph-ts';
+import { Vault, VaultSnapshotByYear } from './generated/schema';
+import { BigInt } from '@graphprotocol/graph-ts';
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 
-export function createVaultSnapshotByDay(
+export function createVaultSnapshotByYear(
   vaultWithLatestValues: Vault,
   event: DelegationUpdated
 ): void {
   const date = new Date(<i64>parseInt(vaultWithLatestValues.updated_at.toString()) * 1000);
 
-  const vaultSnapshotId = vaultWithLatestValues.id
-    .toString()
-    .concat('-')
-    .concat(date.toISOString().slice(0, 10));
+  const year = date.getUTCFullYear().toString();
 
-  let vaultSnapshotByDay = VaultSnapshotByDay.load(vaultSnapshotId);
+  const vaultSnapshotId = vaultWithLatestValues.id.toString().concat('-').concat(year);
+
+  let vaultSnapshotByDay = VaultSnapshotByYear.load(vaultSnapshotId);
 
   if (!vaultSnapshotByDay) {
-    vaultSnapshotByDay = new VaultSnapshotByDay(vaultSnapshotId);
+    vaultSnapshotByDay = new VaultSnapshotByYear(vaultSnapshotId);
     vaultSnapshotByDay.updates_in_period = BigInt.fromI32(0);
     vaultSnapshotByDay.created_at = event.block.timestamp;
     vaultSnapshotByDay.created_at_block = event.block.number;
@@ -29,7 +28,6 @@ export function createVaultSnapshotByDay(
     BigInt.fromI32(1)
   );
   vaultSnapshotByDay.collateral_amount = vaultWithLatestValues.collateral_amount;
-  log.info('{}', [vaultSnapshotByDay.updates_in_period.toString()]);
 
   vaultSnapshotByDay.save();
 }
