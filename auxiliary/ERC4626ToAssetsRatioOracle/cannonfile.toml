@@ -14,7 +14,7 @@ args = ["<%= contracts.ERC20Mock.address %>"]
 defaultValue = "<%= contracts.ERC4626Mock.address %>"
 
 # Changing the vault will change the address of the node, per CREATE2
-[contract.ERC4626ToAssetsRatioOracle]
+[deploy.ERC4626ToAssetsRatioOracle]
 artifact = "contracts/ERC4626ToAssetsRatioOracle.sol:ERC4626ToAssetsRatioOracle"
 args = ["<%= settings.vault %>"]
 create2 = true
