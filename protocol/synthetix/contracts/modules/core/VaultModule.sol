@@ -452,16 +452,16 @@ contract VaultModule is IVaultModule {
             ];
     }
 
-    function getDelegationReminder(
+    function getDelegationAccumulated(
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view returns (uint256 reminder) {
+    ) external view returns (int256 accumulatedIntentDelta) {
         uint256[] memory intentIds = AccountDelegationIntents.loadValid(accountId).intentIdsByPair(
             poolId,
             collateralType
         );
-        int256 accumulatedIntentDelta = 0;
+        accumulatedIntentDelta = 0;
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (!intent.intentExpired()) {
