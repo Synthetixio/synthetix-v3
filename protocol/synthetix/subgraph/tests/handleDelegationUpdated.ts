@@ -61,5 +61,32 @@ export default function test(): void {
   assert.fieldEquals('Position', `1-1-${address}`, 'collateral_amount', '10000');
   assert.fieldEquals('Vault', `1-${address}`, 'updated_at', (now + 1000).toString());
   assert.fieldEquals('Vault', `1-${address}`, 'updated_at_block', now.toString());
-  assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '-5354');
+  assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '10000');
+
+  const newDelegatioNUpdatedEvent3 = createDelegationUpdateEvent(
+    BigInt.fromI32(2),
+    BigInt.fromI32(1),
+    Address.fromString(address),
+    BigInt.fromI32(5000),
+    BigInt.fromI32(10),
+    now + 1000,
+    now
+  );
+  handleDelegationUpdated(newDelegatioNUpdatedEvent3);
+
+  assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '15000');
+
+  const newDelegatioNUpdatedEvent4 = createDelegationUpdateEvent(
+    BigInt.fromI32(1),
+    BigInt.fromI32(1),
+    Address.fromString(address),
+    BigInt.fromI32(-9000),
+    BigInt.fromI32(10),
+    now + 1000,
+    now
+  );
+
+  handleDelegationUpdated(newDelegatioNUpdatedEvent4);
+
+  assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '6000');
 }

@@ -11,29 +11,7 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     .concat('-')
     .concat(event.params.collateralType.toHex());
   let position = Position.load(id);
-  if (position === null) {
-    position = new Position(id);
-    position.created_at = event.block.timestamp;
-    position.created_at_block = event.block.number;
-    position.account = event.params.accountId.toString();
-    position.collateral_amount = event.params.amount.toBigDecimal();
-  }
-  const collateralAmountChange = position.collateral_amount.minus(
-    event.params.amount.toBigDecimal()
-  );
-  position.pool = event.params.poolId.toString();
-  position.collateral_type = event.params.collateralType.toHex();
-  position.collateral_amount = event.params.amount.toBigDecimal();
-  position.updated_at = event.block.timestamp;
-  position.updated_at_block = event.block.number;
-  // position.c_ratio = VaultModule.bind(event.address)
-  //   .getPositionCollateralizationRatio(
-  //     event.params.accountId,
-  //     event.params.poolId,
-  //     event.params.collateralType
-  //   )
-  //   .toBigDecimal();
-  position.leverage = event.params.leverage.toBigDecimal();
+
   let vault = Vault.load(
     event.params.poolId.toString().concat('-').concat(event.params.collateralType.toHex())
   );
@@ -47,13 +25,45 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     vault.collateral_type = event.params.collateralType.toHex();
     vault.pool = event.params.poolId.toString();
   } else {
-    vault.collateral_amount = vault.collateral_amount.plus(collateralAmountChange);
+    if (position) {
+      const isIncreasing = event.params.amount.toBigDecimal().gt(position.collateral_amount);
+      if (isIncreasing) {
+        vault.collateral_amount = vault.collateral_amount.plus(
+          event.params.amount.toBigDecimal().minus(position.collateral_amount)
+        );
+      } else {
+        vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
+      }
+    } else {
+      vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
+    }
   }
+  if (position === null) {
+    position = new Position(id);
+    position.created_at = event.block.timestamp;
+    position.created_at_block = event.block.number;
+    position.account = event.params.accountId.toString();
+    position.collateral_amount = event.params.amount.toBigDecimal();
+  }
+
+  position.pool = event.params.poolId.toString();
+  position.collateral_type = event.params.collateralType.toHex();
+  position.collateral_amount = event.params.amount.toBigDecimal();
+  position.updated_at = event.block.timestamp;
+  position.updated_at_block = event.block.number;
+  // position.c_ratio = VaultModule.bind(event.address)
+  //   .getPositionCollateralizationRatio(
+  //     event.params.accountId,
+  //     event.params.poolId,
+  //     event.params.collateralType
+  //   )
+  //   .toBigDecimal();
+  position.leverage = event.params.leverage.toBigDecimal();
+
   vault.updated_at = event.block.timestamp;
   vault.updated_at_block = event.block.number;
   vault.save();
   position.save();
-
-  createVaultSnapshotByDay(vault);
-  createVaultSnapshotByWeek(vault);
+  createVaultSnapshotByDay(vault, event);
+  createVaultSnapshotByWeek(vault, event);
 }

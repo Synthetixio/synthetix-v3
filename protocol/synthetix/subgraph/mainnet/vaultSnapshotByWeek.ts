@@ -1,8 +1,12 @@
 import { Vault, VaultSnapshotByWeek } from './generated/schema';
 import { getISOWeekNumber } from './getISOWeekNumber';
 import { BigInt } from '@graphprotocol/graph-ts';
+import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 
-export function createVaultSnapshotByWeek(vaultWithLatestValues: Vault): void {
+export function createVaultSnapshotByWeek(
+  vaultWithLatestValues: Vault,
+  event: DelegationUpdated
+): void {
   const date = new Date(<i64>parseInt(vaultWithLatestValues.updated_at.toString()) * 1000);
 
   const year = date.getUTCFullYear().toString();
@@ -18,22 +22,17 @@ export function createVaultSnapshotByWeek(vaultWithLatestValues: Vault): void {
   let vaultSnapshotByWeek = VaultSnapshotByWeek.load(vaultSnapshotId);
 
   if (!vaultSnapshotByWeek) {
-    // If we have two events in the same week update the data fields
     vaultSnapshotByWeek = new VaultSnapshotByWeek(vaultSnapshotId);
     vaultSnapshotByWeek.updates_in_period = new BigInt(0);
-    vaultSnapshotByWeek.created_at = vaultWithLatestValues.created_at;
-    vaultSnapshotByWeek.created_at_block = vaultWithLatestValues.created_at_block;
-    vaultSnapshotByWeek.collateral_amount = vaultWithLatestValues.collateral_amount;
+    vaultSnapshotByWeek.created_at = event.block.timestamp;
+    vaultSnapshotByWeek.created_at_block = event.block.number;
     vaultSnapshotByWeek.collateral_type = vaultWithLatestValues.collateral_type;
     vaultSnapshotByWeek.pool = vaultWithLatestValues.pool;
-    vaultSnapshotByWeek.updated_at_block = vaultWithLatestValues.updated_at_block;
-    vaultSnapshotByWeek.updated_at = vaultWithLatestValues.updated_at;
   }
-  vaultSnapshotByWeek.updated_at = vaultWithLatestValues.updated_at;
-  vaultSnapshotByWeek.updated_at_block = vaultWithLatestValues.updated_at_block;
+  vaultSnapshotByWeek.updated_at = event.block.timestamp;
+  vaultSnapshotByWeek.updated_at_block = event.block.number;
   vaultSnapshotByWeek.updates_in_period = vaultSnapshotByWeek.updates_in_period.plus(new BigInt(1));
-  vaultSnapshotByWeek.collateral_amount = vaultSnapshotByWeek.collateral_amount.plus(
-    vaultWithLatestValues.collateral_amount
-  );
+  vaultSnapshotByWeek.collateral_amount = vaultWithLatestValues.collateral_amount;
+
   vaultSnapshotByWeek.save();
 }
