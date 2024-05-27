@@ -114,7 +114,7 @@ describe('Pool', function () {
             );
           await systems()
             .Core.connect(user1)
-            .processIntentToDelegateCollateralByPair(accountId, poolId);
+            .processIntentToDelegateCollateralByPair(accountId, poolId, collateralAddress());
         });
 
         it('the ultimate capacity of the pool ends up higher', async () => {

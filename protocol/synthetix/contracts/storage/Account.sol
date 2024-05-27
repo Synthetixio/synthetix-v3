@@ -54,7 +54,10 @@ library Account {
         AccountRBAC.Data rbac;
         uint64 lastInteraction;
         uint64 __slotAvailableForFutureUse;
-        uint128 __slot2AvailableForFutureUse;
+        /**
+         * @dev Account Delegation Intents index is used to nuke previous intents using a new epoch (useful on liquidations).
+         */
+        uint128 currentDelegationIntentsEpoch;
         /**
          * @dev Address set of collaterals that are being used in the system by this account.
          */
@@ -206,5 +209,13 @@ library Account {
         ) {
             revert ICollateralModule.InsufficientAccountCollateral(amountD18);
         }
+    }
+
+    /**
+     * @dev Returns the new delegation intents epoch (by incrementing the currentDelegationIntentsEpoch).
+     */
+    function getNewDelegationIntentsEpoch(Data storage self) internal returns (uint128) {
+        self.currentDelegationIntentsEpoch += 1;
+        return self.currentDelegationIntentsEpoch;
     }
 }

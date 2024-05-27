@@ -496,7 +496,7 @@ describe('MarketManagerModule', function () {
         );
       await systems()
         .Core.connect(user1)
-        .processIntentToDelegateCollateralByPair(accountId, poolId + 1);
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 1, collateralAddress());
 
       await systems()
         .Core.connect(user1)
@@ -509,7 +509,7 @@ describe('MarketManagerModule', function () {
         );
       await systems()
         .Core.connect(user1)
-        .processIntentToDelegateCollateralByPair(accountId, poolId + 2);
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 2, collateralAddress());
     });
 
     before('accumulate debt', async () => {
@@ -799,7 +799,7 @@ describe('MarketManagerModule', function () {
         );
       await systems()
         .Core.connect(user1)
-        .processIntentToDelegateCollateralByPair(accountId, poolId + 1);
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 1, collateralAddress());
 
       await systems()
         .Core.connect(user1)
@@ -812,7 +812,7 @@ describe('MarketManagerModule', function () {
         );
       await systems()
         .Core.connect(user1)
-        .processIntentToDelegateCollateralByPair(accountId, poolId + 2);
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 2, collateralAddress());
     });
 
     it('inRangePools and outRangePools are returned correctly', async () => {

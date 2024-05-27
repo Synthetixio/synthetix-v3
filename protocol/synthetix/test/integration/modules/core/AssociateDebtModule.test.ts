@@ -129,7 +129,7 @@ describe('AssociateDebtModule', function () {
 
         await systems()
           .Core.connect(user2)
-          .processIntentToDelegateCollateralByPair(user2AccountId, poolId);
+          .processIntentToDelegateCollateralByPair(user2AccountId, poolId, collateralAddress());
       });
 
       describe('when the market reported debt is 100', function () {

@@ -4,15 +4,13 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./Config.sol";
 import "./Pool.sol";
 
+import "../interfaces/IVaultModule.sol";
+
 /**
  * @title Represents a delegation (or undelegation) intent.
  */
 library DelegationIntent {
     using Pool for Pool.Data;
-
-    error InvalidDelegationIntentId();
-    error DelegationIntentNotReady(uint32 declarationTime, uint32 processingStartTime);
-    error DelegationIntentExpired(uint32 declarationTime, uint32 processingEndTime);
 
     bytes32 private constant _ATOMIC_VALUE_LATEST_ID = "delegateIntent_idAsNonce";
 
@@ -85,7 +83,7 @@ library DelegationIntent {
         delegationIntent = load(id);
 
         if (delegationIntent.id != id) {
-            revert InvalidDelegationIntentId();
+            revert IVaultModule.DelegationIntentNotExists();
         }
     }
 
@@ -132,9 +130,12 @@ library DelegationIntent {
         uint32 _processingEndTime = _processingStartTime + requiredWindowTime;
 
         if (block.timestamp < _processingStartTime)
-            revert DelegationIntentNotReady(self.declarationTime, _processingStartTime);
+            revert IVaultModule.DelegationIntentNotReady(
+                self.declarationTime,
+                _processingStartTime
+            );
         if (block.timestamp >= _processingEndTime)
-            revert DelegationIntentExpired(self.declarationTime, _processingEndTime);
+            revert IVaultModule.DelegationIntentExpired(self.declarationTime, _processingEndTime);
     }
 
     function isExecutable(Data storage self) internal view returns (bool) {

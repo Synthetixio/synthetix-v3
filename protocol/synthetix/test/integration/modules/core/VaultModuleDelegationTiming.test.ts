@@ -316,7 +316,7 @@ describe('VaultModule Two-step Delegation', function () {
     it("fails to delete an intent that didn't expire", async () => {
       await fastForwardTo(declareDelegateIntentTime + 115, provider());
       await assertRevert(
-        systems().Core.connect(user1).deleteIntents(accountId, [intentId]),
+        systems().Core.connect(user1).deleteExpiredIntents(accountId, [intentId]),
         `DelegationIntentNotExpired`,
         systems().Core
       );
@@ -332,7 +332,7 @@ describe('VaultModule Two-step Delegation', function () {
 
       it('can delete an expired intent', async () => {
         await fastForwardTo(declareDelegateIntentTime + 121, provider());
-        await systems().Core.connect(user2).deleteIntents(accountId, [intentId]);
+        await systems().Core.connect(user2).deleteExpiredIntents(accountId, [intentId]);
       });
 
       it('intent is deleted', async () => {

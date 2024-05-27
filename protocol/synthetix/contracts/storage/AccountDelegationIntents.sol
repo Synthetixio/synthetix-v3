@@ -4,6 +4,8 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./DelegationIntent.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "../interfaces/IVaultModule.sol";
+import "./Account.sol";
 
 /**
  * @title Represents a delegation (or undelegation) intent.
@@ -15,13 +17,13 @@ library AccountDelegationIntents {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.AddressSet;
     using DelegationIntent for DelegationIntent.Data;
-
-    error InvalidAccountDelegationIntents();
+    using Account for Account.Data;
 
     struct Data {
         uint128 accountId;
+        uint128 delegationIntentsEpoch; // nonce used to nuke previous intents using a new era (useful on liquidations)
         SetUtil.UintSet intentsId;
-        mapping(bytes32 => SetUtil.UintSet) intentsByPair; // poolId/collateralId => intentIds[]
+        mapping(bytes32 => SetUtil.UintSet) intentsByPair; // poolId/collateralType => intentIds[]
         // accounting for the intents collateral delegated
         // Per Collateral
         SetUtil.AddressSet delegatedCollaterals;
@@ -31,8 +33,17 @@ library AccountDelegationIntents {
     /**
      * @dev Returns the account delegation intents stored at the specified account id.
      */
-    function load(uint128 id) internal pure returns (Data storage accountDelegationIntents) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.AccountDelegationIntents", id));
+    function load(
+        uint128 accountId,
+        uint128 delegationIntentsEpoch
+    ) internal pure returns (Data storage accountDelegationIntents) {
+        bytes32 s = keccak256(
+            abi.encode(
+                "io.synthetix.synthetix.AccountDelegationIntents",
+                accountId,
+                delegationIntentsEpoch
+            )
+        );
         assembly {
             accountDelegationIntents.slot := s
         }
@@ -41,21 +52,31 @@ library AccountDelegationIntents {
     /**
      * @dev Returns the account delegation intents stored at the specified account id.
      */
-    function loadValid(uint128 id) internal view returns (Data storage accountDelegationIntents) {
-        accountDelegationIntents = load(id);
-        if (accountDelegationIntents.accountId != 0 && accountDelegationIntents.accountId != id) {
-            revert InvalidAccountDelegationIntents();
+    function loadValid(
+        uint128 accountId
+    ) internal view returns (Data storage accountDelegationIntents) {
+        uint128 delegationIntentsEpoch = Account.load(accountId).currentDelegationIntentsEpoch;
+        accountDelegationIntents = load(accountId, delegationIntentsEpoch);
+        if (
+            accountDelegationIntents.accountId != 0 &&
+            (accountDelegationIntents.accountId != accountId ||
+                accountDelegationIntents.delegationIntentsEpoch != delegationIntentsEpoch)
+        ) {
+            revert IVaultModule.InvalidDelegationIntent();
         }
     }
 
     /**
      * @dev Returns the account delegation intents stored at the specified account id. Checks if it's valid
      */
-    function getValid(uint128 id) internal returns (Data storage accountDelegationIntents) {
-        accountDelegationIntents = loadValid(id);
+    function getValid(uint128 accountId) internal returns (Data storage accountDelegationIntents) {
+        accountDelegationIntents = loadValid(accountId);
         if (accountDelegationIntents.accountId == 0) {
-            // Uninitialized storage will have a 0 accountId
-            accountDelegationIntents.accountId = id;
+            // Uninitialized storage will have a 0 accountId; it means we need to initialize it (new accountDelegationIntents era)
+            accountDelegationIntents.accountId = accountId;
+            accountDelegationIntents.delegationIntentsEpoch = Account
+                .load(accountId)
+                .currentDelegationIntentsEpoch;
         }
     }
 
@@ -99,7 +120,7 @@ library AccountDelegationIntents {
         uint256 intentId
     ) internal view returns (DelegationIntent.Data storage) {
         if (!self.intentsId.contains(intentId)) {
-            revert DelegationIntent.InvalidDelegationIntentId();
+            revert IVaultModule.InvalidDelegationIntent();
         }
         return DelegationIntent.load(intentId);
     }
@@ -110,13 +131,13 @@ library AccountDelegationIntents {
     function intentIdsByPair(
         Data storage self,
         uint128 poolId,
-        uint128 accountId
+        address collateralType
     ) internal view returns (uint256[] memory intentIds) {
-        return self.intentsByPair[keccak256(abi.encodePacked(poolId, accountId))].values();
+        return self.intentsByPair[keccak256(abi.encodePacked(poolId, collateralType))].values();
     }
 
     /**
-     * @dev Cleans all intents related to the account. This should be called upon liquidation.
+     * @dev Cleans all expired intents related to the account.
      */
     function cleanAllExpiredIntents(Data storage self) internal {
         uint256[] memory intentIds = self.intentsId.values();
@@ -129,21 +150,11 @@ library AccountDelegationIntents {
     }
 
     /**
-     * @dev Cleans all intents related to the account. This should be called upon liquidation.
+     * @dev Cleans all intents (expired and not) related to the account. This should be called upon liquidation.
      */
     function cleanAllIntents(Data storage self) internal {
-        uint256[] memory intentIds = self.intentsId.values();
-        for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
-            removeIntent(self, intent);
-        }
-
-        // Clear the cached collateral per collateral
-        address[] memory addresses = self.delegatedCollaterals.values();
-        for (uint256 i = 0; i < addresses.length; i++) {
-            self.netDelegatedAmountPerCollateral[addresses[i]] = 0;
-
-            self.delegatedCollaterals.remove(addresses[i]);
-        }
+        // Nuke all intents by incrementing the delegationIntentsEpoch nonce
+        // This is useful to avoid iterating over all intents to remove them and risking a for loop revert.
+        Account.load(self.accountId).getNewDelegationIntentsEpoch();
     }
 }

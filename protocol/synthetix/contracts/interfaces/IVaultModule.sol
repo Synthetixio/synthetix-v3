@@ -28,7 +28,22 @@ interface IVaultModule {
     error InvalidDelegationIntent();
 
     /**
-     * @notice Thrown when the specified intent is not related to the account id.
+     * @notice Thrown when the specified intent does not exist.
+     */
+    error DelegationIntentNotExists();
+
+    /**
+     * @notice Thrown when the specified intent is ready to be executed yet.
+     */
+    error DelegationIntentNotReady(uint32 declarationTime, uint32 processingStartTime);
+
+    /**
+     * @notice Thrown when the specified intent is already expired.
+     */
+    error DelegationIntentExpired(uint32 declarationTime, uint32 processingEndTime);
+
+    /**
+     * @notice Thrown when the specified intent is not expired yet.
      */
     error DelegationIntentNotExpired(uint256 intentId);
 
@@ -167,15 +182,20 @@ interface IVaultModule {
     ) external;
 
     /**
-     * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by pool/accountID pair.
+     * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by pool/collateral pair.
      * @param accountId The id of the account associated with the position that intends to update the collateral amount.
      * @param poolId The ID of the pool for which the intent of the account to delegate a new amount of collateral is being processed
+     * @param collateralType The address of the collateral used in the position.
      * @dev The intents that are not executable at this time will be ignored and am event will be emitted to show that.
      * Requirements:
      *
      * Emits a {DelegationUpdated} event.
      */
-    function processIntentToDelegateCollateralByPair(uint128 accountId, uint128 poolId) external;
+    function processIntentToDelegateCollateralByPair(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external;
 
     /**
      * @notice Attempt to delete delegation intents.
@@ -183,7 +203,7 @@ interface IVaultModule {
      * @param intentIds Array of ids to attempt to delete.
      * @dev It will only delete expired intents.
      */
-    function deleteIntents(uint128 accountId, uint256[] calldata intentIds) external;
+    function deleteExpiredIntents(uint128 accountId, uint256[] calldata intentIds) external;
 
     /**
      * @notice Attempt to delete all expired delegation intents from an account.
@@ -232,6 +252,56 @@ interface IVaultModule {
             uint256 leverage,
             uint32 declarationTime
         );
+
+    /**
+     * @notice Returns the total (positive and negative) amount of collateral intended to be delegated to the vault by the account.
+     * @param accountId The id of the account owning the intents.
+     * @param collateralType The address of the collateral.
+     * @return netDelegatedPerCollateral The total amount of collateral intended to be delegated to the vault by the account, denominated with 18 decimals of precision.
+     */
+    function getNetDelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view returns (int256 netDelegatedPerCollateral);
+
+    /**
+     * @notice Returns the list of executable (by timing) intents for the account.
+     * @param accountId The id of the account owning the intents.
+     * @param maxProcessableIntent The maximum number of intents to process.
+     * @return intentIds The list of intents.
+     * @return foundIntents The number of found intents.
+     *
+     * @dev The array of intent ids might have empty items at the end, use `foundIntents` to know the actual number
+     * of valid intents.
+     */
+    function getAccountExecutableIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view returns (uint256[] memory intentIds, uint256 foundIntents);
+
+    /**
+     * @notice Returns the list of expired (by timing) intents for the account.
+     * @param accountId The id of the account owning the intents.
+     * @param maxProcessableIntent The maximum number of intents to process.
+     * @return intentIds The list of intents.
+     * @return foundIntents The number of found intents.
+     *
+     * @dev The array of intent ids might have empty items at the end, use `foundIntents` to know the actual number
+     * of valid intents.
+     */
+    function getAccountExpiredIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view returns (uint256[] memory intentIds, uint256 foundIntents);
+
+    /**
+     * @notice Returns the list of intents for the account.
+     * @param accountId The id of the account owning the intents.
+     * @return intentIds The list of intents.
+     */
+    function getAccountIntentIds(
+        uint128 accountId
+    ) external view returns (uint256[] memory intentIds);
 
     /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.

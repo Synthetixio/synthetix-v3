@@ -120,7 +120,7 @@ describe('LiquidationModule', function () {
             );
           await systems()
             .Core.connect(user2)
-            .processIntentToDelegateCollateralByPair(accountId2, poolId);
+            .processIntentToDelegateCollateralByPair(accountId2, poolId, collateralAddress());
         });
 
         let txn: ethers.providers.TransactionResponse;
@@ -288,7 +288,7 @@ describe('LiquidationModule', function () {
             );
           await systems()
             .Core.connect(user2)
-            .processIntentToDelegateCollateralByPair(liquidatorAccountId, 0);
+            .processIntentToDelegateCollateralByPair(liquidatorAccountId, 0, collateralAddress());
 
           await systems()
             .Core.connect(user2)

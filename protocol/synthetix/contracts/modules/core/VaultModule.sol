@@ -82,9 +82,8 @@ contract VaultModule is IVaultModule {
             );
         }
 
-        uint256 newCollateralAmountD18 = accumulatedDelta > 0
-            ? currentCollateralAmount + (accumulatedDelta).toUint()
-            : currentCollateralAmount - (-1 * accumulatedDelta).toUint();
+        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() + accumulatedDelta)
+            .toUint();
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -97,7 +96,7 @@ contract VaultModule is IVaultModule {
         // Check the validity of the collateral amount to be delegated, respecting the caches that track outstanding intents to delegate or undelegate collateral.
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
-        else if (newCollateralAmountD18 > currentCollateralAmount) {
+        if (newCollateralAmountD18 > currentCollateralAmount) {
             // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
 
@@ -153,7 +152,15 @@ contract VaultModule is IVaultModule {
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (!intent.isExecutable()) {
-                // Remove the intent.
+                // emit an Skipped event
+                emit DelegationIntentSkipped(
+                    intent.id,
+                    accountId,
+                    intent.poolId,
+                    intent.collateralType
+                );
+
+                // If expired, remove the intent.
                 if (intent.intentExpired()) {
                     AccountDelegationIntents.getValid(accountId).removeIntent(intent);
                     emit DelegationIntentRemoved(
@@ -163,14 +170,6 @@ contract VaultModule is IVaultModule {
                         intent.collateralType
                     );
                 }
-
-                // emit an event
-                emit DelegationIntentSkipped(
-                    intent.id,
-                    accountId,
-                    intent.poolId,
-                    intent.collateralType
-                );
 
                 // skip to the next intent
                 continue;
@@ -215,11 +214,12 @@ contract VaultModule is IVaultModule {
      */
     function processIntentToDelegateCollateralByPair(
         uint128 accountId,
-        uint128 poolId
+        uint128 poolId,
+        address collateralType
     ) external override {
         processIntentToDelegateCollateralByIntents(
             accountId,
-            AccountDelegationIntents.getValid(accountId).intentIdsByPair(poolId, accountId)
+            AccountDelegationIntents.getValid(accountId).intentIdsByPair(poolId, collateralType)
         );
     }
 
@@ -252,7 +252,10 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function deleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
+    function deleteExpiredIntents(
+        uint128 accountId,
+        uint256[] calldata intentIds
+    ) external override {
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (intent.accountId != accountId) {
@@ -374,6 +377,98 @@ contract VaultModule is IVaultModule {
         );
     }
 
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountIntentIds(
+        uint128 accountId
+    ) external view override returns (uint256[] memory) {
+        return AccountDelegationIntents.loadValid(accountId).intentsId.values();
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountExpiredIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view override returns (uint256[] memory expiredIntents, uint256 foundItems) {
+        uint256[] memory allIntents = AccountDelegationIntents
+            .loadValid(accountId)
+            .intentsId
+            .values();
+        uint256 max = maxProcessableIntent > allIntents.length
+            ? allIntents.length
+            : maxProcessableIntent;
+        expiredIntents = new uint256[](max);
+        for (uint256 i = 0; i < max; i++) {
+            if (DelegationIntent.load(allIntents[i]).intentExpired()) {
+                expiredIntents[i] = allIntents[i];
+                foundItems++;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountExecutableIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view override returns (uint256[] memory executableIntents, uint256 foundItems) {
+        uint256[] memory allIntents = AccountDelegationIntents
+            .loadValid(accountId)
+            .intentsId
+            .values();
+        uint256 max = maxProcessableIntent > allIntents.length
+            ? allIntents.length
+            : maxProcessableIntent;
+        executableIntents = new uint256[](max);
+        for (uint256 i = 0; i < max; i++) {
+            if (DelegationIntent.load(allIntents[i]).isExecutable()) {
+                executableIntents[i] = allIntents[i];
+                foundItems++;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getNetDelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view override returns (int256) {
+        return
+            AccountDelegationIntents.loadValid(accountId).netDelegatedAmountPerCollateral[
+                collateralType
+            ];
+    }
+
+    function getDelegationReminder(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view returns (uint256 reminder) {
+        uint256[] memory intentIds = AccountDelegationIntents.loadValid(accountId).intentIdsByPair(
+            poolId,
+            collateralType
+        );
+        int256 accumulatedIntentDelta = 0;
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            if (!intent.intentExpired()) {
+                accumulatedIntentDelta += intent.deltaCollateralAmountD18;
+            }
+        }
+        // TODO LJM Continue from here
+        // Also another function that loops on all intents and gives the remainder that can be delegated, assuming
+        // those that expired expire
+        // those that can execute can execute
+        // those that are yet to be executed execute
+        // Capped at the amount that can be delegated, would help integrators / front-ends, given that the gas limit can be pretty high for reads (as opposed to writes, limited to block space)
+    }
+
     function _delegateCollateral(
         uint128 accountId,
         uint128 poolId,
@@ -390,9 +485,10 @@ contract VaultModule is IVaultModule {
             accountId.toBytes32()
         );
 
-        uint256 newCollateralAmountD18 = deltaCollateralAmountD18 > 0
-            ? vault.currentAccountCollateral(accountId) + deltaCollateralAmountD18.toUint()
-            : vault.currentAccountCollateral(accountId) - (deltaCollateralAmountD18 * -1).toUint();
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+
+        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() +
+            deltaCollateralAmountD18).toUint();
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -402,8 +498,6 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18
             );
         }
-
-        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
         // Conditions for collateral amount
 

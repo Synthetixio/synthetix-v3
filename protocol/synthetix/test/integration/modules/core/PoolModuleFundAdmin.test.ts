@@ -392,7 +392,7 @@ describe('PoolModule Admin', function () {
         );
         await systems()
           .Core.connect(user1)
-          .processIntentToDelegateCollateralByPair(accountId, secondPoolId);
+          .processIntentToDelegateCollateralByPair(accountId, secondPoolId, collateralAddress());
 
         await systems()
           .Core.connect(user1)

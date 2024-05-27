@@ -428,9 +428,11 @@ library Pool {
                 ? market.undelegateCollateralDelay
                 : market.delegateCollateralDelay;
 
+            // Find the most restrictive delay time market and use that market to get the delay and window configured times.
             if (marketDelayTime > requiredDelayTime) {
                 requiredDelayTime = marketDelayTime;
-                // Also get the window from the more restrictive market
+
+                // Pull the window time from the same market.
                 requiredWindowTime = isUndelegation
                     ? market.undelegateCollateralWindow
                     : market.delegateCollateralWindow;
