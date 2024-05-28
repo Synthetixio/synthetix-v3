@@ -1,5 +1,5 @@
 import { Vault, VaultSnapshotByDay } from './generated/schema';
-import { BigInt, log } from '@graphprotocol/graph-ts';
+import { BigInt } from '@graphprotocol/graph-ts';
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 
 export function createVaultSnapshotByDay(
@@ -29,7 +29,6 @@ export function createVaultSnapshotByDay(
     BigInt.fromI32(1)
   );
   vaultSnapshotByDay.collateral_amount = vaultWithLatestValues.collateral_amount;
-  log.info('{}', [vaultSnapshotByDay.updates_in_period.toString()]);
 
   vaultSnapshotByDay.save();
 }

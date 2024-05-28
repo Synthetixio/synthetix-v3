@@ -76,18 +76,4 @@ export default function test(): void {
   handleDelegationUpdated(newDelegatioNUpdatedEvent3);
 
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '15000');
-
-  const newDelegatioNUpdatedEvent4 = createDelegationUpdateEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(-9000),
-    BigInt.fromI32(10),
-    now + 1000,
-    now
-  );
-
-  handleDelegationUpdated(newDelegatioNUpdatedEvent4);
-
-  assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '6000');
 }

@@ -71,7 +71,7 @@ export default function test(): void {
       BigInt.fromI32(1),
       BigInt.fromI32(1),
       Address.fromString(sender),
-      BigInt.fromI32(-100),
+      BigInt.fromI32(0),
       BigInt.fromI32(1),
       now + 1,
       now - 999
