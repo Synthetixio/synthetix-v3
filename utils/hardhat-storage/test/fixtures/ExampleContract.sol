@@ -5,18 +5,24 @@ contract ExampleContract {
     bytes32 private constant _SLOT_EXAMPLE_CONTRACT =
         keccak256(abi.encode("io.synthetix.hardhat-storage.Example"));
 
-    enum NodeType {
-        NONE,
-        REDUCER,
-        EXTERNAL,
-        CHAINLINK,
-        PYTH
+    enum EnumExample {
+        ONE,
+        TWO,
+        THREE,
+        FOUR,
+        FIVE
     }
 
     struct Data {
         address owner;
-        mapping(address => uint128) permissions;
-        NodeType nodeType;
+        EnumExample enumExample;
+        mapping(address => uint128) simpleMapping;
+        address[] dynamicArray;
+        uint256[3] staticArray;
+        uint uninsignedInt; // solhint-disable-line explicit-types
+        uint256 uninsignedInt256;
+        uint8 uninsignedInt8;
+        int256 signedInt256;
     }
 
     uint128 public constant SOME_CONSTANT = 445;

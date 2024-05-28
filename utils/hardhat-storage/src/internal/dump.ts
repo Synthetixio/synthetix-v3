@@ -18,7 +18,7 @@ import {
   StorageDumpSlot,
 } from '../types';
 import { findNodeReferenceArtifact } from './artifacts';
-import { findAll, findContract, findContractStrict, findOne } from './finders';
+import { findAll, findContract, findOne } from './finders';
 import { iterateContracts } from './iterators';
 import { render } from './render';
 
@@ -37,11 +37,11 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
   const results: StorageDump = {};
 
   for (const [artifact, contractNode] of await _getContracts(getArtifact, contracts)) {
-    const result = {
-      kind: contractNode.kind,
+    const result: StorageDumpLayout = {
       name: contractNode.name,
+      kind: contractNode.kind,
       structs: {},
-    } satisfies StorageDumpLayout;
+    };
 
     const contractName = contractNode.name;
     const sourceName = artifact.sourceName;
@@ -51,24 +51,37 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
       const struct: StorageDumpSlot[] = [];
 
       for (const member of structDefinition.members) {
+        struct.push(...(await _astVariableToStorageSlots(getArtifact, artifact, member)));
       }
+
+      if (struct.length) {
+        result.structs[structDefinition.name] = struct;
+      }
+    }
+
+    if (Object.keys(result.structs).length > 0) {
+      results[fqName] = result;
     }
   }
 
   return results;
 }
 
-async function _astVariableToStorageSlot(
+async function _astVariableToStorageSlots(
+  getArtifact: GetArtifactFunction,
   artifact: StorageArtifact,
-  structDefinition: StructDefinition,
-  member: VariableDeclaration
+  member: VariableDeclaration,
+  namePrefix = ''
 ) {
   if (!member.typeName) {
     throw new Error('Missing type notation');
   }
 
+  const name = namePrefix ? `${namePrefix}.${member.name}` : member.name;
+
   const typeName = (await _isContractReference(getArtifact, artifact, member.typeName))
-    ? ({
+    ? // If it is a reference to a contract, define the type as `address`
+      ({
         type: 'ElementaryTypeName',
         name: 'address',
         stateMutability: null,
@@ -76,14 +89,12 @@ async function _astVariableToStorageSlot(
     : member.typeName;
 
   if (typeName.type === 'ElementaryTypeName') {
-    struct.push({
-      type: typeName.name,
-      name: member.name,
-    });
+    return [{ name, type: typeName.name }];
   }
-  if (typeName.type === 'FunctionTypeName') {
-    throw new Error(`Functions not allowed on structs for storage check`);
-  }
+
+  return [];
+
+  throw new Error(`"${typeName.type}" not implemented for generating storage layout`);
 }
 
 async function _isContractReference(

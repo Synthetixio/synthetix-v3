@@ -3,13 +3,7 @@ import path from 'node:path';
 import * as parser from '@solidity-parser/parser';
 import { ASTNodeTypeString, ContractDefinition } from '@solidity-parser/parser/src/ast-types';
 import { GetArtifactFunction, StorageArtifact } from '../types';
-import {
-  findAll,
-  findContract,
-  findContractStrict,
-  findOne,
-  getCanonicalImportedSymbolName,
-} from './finders';
+import { findAll, findContractStrict, findOne, getCanonicalImportedSymbolName } from './finders';
 import { ensureTrailingSlash, isExplicitRelativePath, removeBasePath } from './path-helpers';
 
 async function _safeReadFile(filepath: string) {
@@ -73,6 +67,7 @@ export async function findNodeReferenceArtifact<T extends ASTNodeTypeString>(
   artifact: StorageArtifact,
   nodeName: string
 ): Promise<[StorageArtifact, string]> {
+  // Check if it's defined on the same file
   const localNode = findOne(artifact.ast, nodeTypes, (node) => (node as any).name === nodeName);
 
   if (localNode) return [artifact, nodeName];

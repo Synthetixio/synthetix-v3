@@ -1,54 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`internal/dump.ts sample-project contract with storage and interface 1`] = `
-"// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
-
-// @custom:artifact contracts/storage/GlobalStorage.sol:GlobalStorage
-contract GlobalStorage {
-    bytes32 private constant _SLOT_GLOBAL_STORAGE = keccak256(abi.encode("io.synthetix.sample-project.Global"));
-    struct GlobalStore {
-        uint256 value;
-        uint256 someValue;
-    }
-    function _globalStore() internal pure returns (GlobalStore storage store) {
-        bytes32 s = _SLOT_GLOBAL_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
+{
+  "contracts/storage/GlobalStorage.sol:GlobalStorage": {
+    "kind": "contract",
+    "name": "GlobalStorage",
+    "structs": {
+      "GlobalStore": [
+        {
+          "name": "value",
+          "type": "uint256",
+        },
+        {
+          "name": "someValue",
+          "type": "uint256",
+        },
+      ],
+    },
+  },
 }
-"
 `;
 
 exports[`internal/dump.ts single contract with state variables, contracts and structs 1`] = `
-"// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
-
-// @custom:artifact ExampleContract.sol:ExampleContract
-contract ExampleContract {
-    bytes32 private constant _SLOT_EXAMPLE_CONTRACT = keccak256(abi.encode("io.synthetix.hardhat-storage.Example"));
-    uint128 public constant SOME_CONSTANT = 445;
-    uint128 public constant SOME_CASTED_CONSTANT = uint128(SOME_CONSTANT);
-    address private constant SOME_ADDRESS = 0xe27454c382e79a1876096B691ef4b52747B7097D;
-    enum NodeType {
-        NONE,
-        REDUCER,
-        EXTERNAL,
-        CHAINLINK,
-        PYTH
-    }
-    struct Data {
-        address owner;
-        mapping(address => uint128) permissions;
-        NodeType nodeType;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_EXAMPLE_CONTRACT;
-        assembly {
-            store.slot := s
-        }
-    }
+{
+  "ExampleContract.sol:ExampleContract": {
+    "kind": "contract",
+    "name": "ExampleContract",
+    "structs": {
+      "Data": [
+        {
+          "name": "owner",
+          "type": "address",
+        },
+      ],
+    },
+  },
 }
-"
 `;
