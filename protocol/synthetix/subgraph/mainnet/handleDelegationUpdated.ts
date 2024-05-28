@@ -1,4 +1,4 @@
-import { BigInt } from '@graphprotocol/graph-ts';
+import { BigInt, log } from '@graphprotocol/graph-ts';
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 import { Position, Vault } from './generated/schema';
 import { createVaultSnapshotByDay } from './vaultSnapshotByDay';
@@ -31,13 +31,16 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     if (position) {
       const isIncreasing = event.params.amount.toBigDecimal().gt(position.collateral_amount);
       if (isIncreasing) {
+        // if the user is increasing his existing collateral we need to remove the previous collateral
         vault.collateral_amount = vault.collateral_amount.plus(
           event.params.amount.toBigDecimal().minus(position.collateral_amount)
         );
       } else {
+        // if the user is decreasong his existing collateral event.params.amount gonna be negative
         vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
       }
     } else {
+      // if no position is yet created, we just add it to the vault
       vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
     }
   }
