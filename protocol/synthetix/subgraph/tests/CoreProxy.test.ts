@@ -53,7 +53,6 @@ describe('CoreProxy', () => {
   test('vaultSnapshotByWeek', vaultSnapshotByWeekTest);
   test('vaultSnapshotByMonth', vaultSnapshotByMonthTest);
   test('vaultSnapshotByYear', vaultSnapshotByYearTest);
-  test('caultSnapshotByWeek', marketSnapshotByWeekTest);
   test('marketSnapshotByDay', marketSnapshotByDayTest);
   test('marketSnapshotByWeek', marketSnapshotByWeekTest);
   test('handleNominatedPoolOwner', handleNominatedPoolOwnerTest);

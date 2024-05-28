@@ -1,4 +1,4 @@
-import { BigInt, log } from '@graphprotocol/graph-ts';
+import { BigInt } from '@graphprotocol/graph-ts';
 import { DelegationUpdated } from './generated/CoreProxy/CoreProxy';
 import { Position, Vault } from './generated/schema';
 import { createVaultSnapshotByDay } from './vaultSnapshotByDay';
@@ -31,10 +31,6 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     if (position) {
       const isIncreasing = event.params.amount.toBigDecimal().gt(position.collateral_amount);
       if (isIncreasing) {
-        log.info('INCREASING {} {}', [
-          event.params.amount.toString(),
-          position.collateral_amount.toString(),
-        ]);
         vault.collateral_amount = vault.collateral_amount.plus(
           event.params.amount.toBigDecimal().minus(position.collateral_amount)
         );
