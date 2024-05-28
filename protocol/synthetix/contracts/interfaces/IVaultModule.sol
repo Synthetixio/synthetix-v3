@@ -270,6 +270,37 @@ interface IVaultModule {
     ) external view returns (int256 netDelegatedPerCollateral);
 
     /**
+     * @notice Returns the total executable (not expired) amount of collateral intended to be delegated to the vault by the account.
+     * @param accountId The id of the account owning the intents.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral.
+     * @return accumulatedIntentDelta The total amount of collateral intended to be delegated that is not expired, denominated with 18 decimals of precision.
+     */
+    function getExecutableDelegationAccumulated(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view returns (int256 accumulatedIntentDelta);
+
+    /**
+     * @notice Returns the amount of debt to repay in order to an intent to reduce the delegated collateral will meet the issuance ratio.
+     * @param accountId The id of the account owning the position.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral.
+     * @param deltaCollateralAmountD18 The delta collateral to be delegated, denominated with 18 decimals of precision.
+     * @param collateralPrice Reference price of the collateral.
+     * @return howMuchToRepayD18 The debt to repay.
+     *
+     */
+    function requiredDebtRepaymentForUndelegation(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaCollateralAmountD18,
+        uint256 collateralPrice
+    ) external view returns (uint256 howMuchToRepayD18);
+
+    /**
      * @notice Returns the list of executable (by timing) intents for the account.
      * @param accountId The id of the account owning the intents.
      * @param maxProcessableIntent The maximum number of intents to process.

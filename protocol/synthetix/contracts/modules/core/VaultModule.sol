@@ -452,11 +452,14 @@ contract VaultModule is IVaultModule {
             ];
     }
 
-    function getDelegationAccumulated(
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getExecutableDelegationAccumulated(
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view returns (int256 accumulatedIntentDelta) {
+    ) external view override returns (int256 accumulatedIntentDelta) {
         uint256[] memory intentIds = AccountDelegationIntents.loadValid(accountId).intentIdsByPair(
             poolId,
             collateralType
@@ -468,12 +471,61 @@ contract VaultModule is IVaultModule {
                 accumulatedIntentDelta += intent.deltaCollateralAmountD18;
             }
         }
-        // TODO LJM Continue from here
-        // Also another function that loops on all intents and gives the remainder that can be delegated, assuming
-        // those that expired expire
-        // those that can execute can execute
-        // those that are yet to be executed execute
-        // Capped at the amount that can be delegated, would help integrators / front-ends, given that the gas limit can be pretty high for reads (as opposed to writes, limited to block space)
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function requiredDebtRepaymentForUndelegation(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaCollateralAmountD18,
+        uint256 collateralPrice
+    ) external view override returns (uint256) {
+        // Identify the vault that corresponds to this collateral type and pool id.
+        if (deltaCollateralAmountD18 > 0) {
+            return 0;
+        }
+
+        Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
+
+        int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
+        uint256 effectiveDebt = debt < 0 ? 0 : debt.toUint();
+        if (effectiveDebt == 0) {
+            return 0;
+        }
+
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+
+        if (currentCollateralAmount < (-1 * deltaCollateralAmountD18).toUint()) {
+            revert ExceedingUndelegateAmount(
+                deltaCollateralAmountD18,
+                0,
+                deltaCollateralAmountD18,
+                currentCollateralAmount
+            );
+        }
+
+        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() +
+            deltaCollateralAmountD18).toUint();
+
+        uint256 minIssuanceRatioD18 = Pool
+            .loadExisting(poolId)
+            .collateralConfigurations[collateralType]
+            .issuanceRatioD18;
+
+        uint256 effectiveIssuanceRatioD18 = CollateralConfiguration
+            .load(collateralType)
+            .getEffectiveIssuanceRatio(minIssuanceRatioD18);
+
+        uint256 collateralValue = newCollateralAmountD18.mulDecimal(collateralPrice);
+
+        uint256 maxDebt = effectiveIssuanceRatioD18.mulDecimal(collateralValue);
+        if (maxDebt >= effectiveDebt) {
+            return 0;
+        }
+        return maxDebt - effectiveDebt;
     }
 
     function _delegateCollateral(
