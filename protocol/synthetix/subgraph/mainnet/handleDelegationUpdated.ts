@@ -33,7 +33,7 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
   if (position) {
     previous_position_amount = position.collateral_amount;
     let amount_delta = event.params.amount.toBigDecimal().minus(previous_position_amount);
-    vault.collateral_amount = previous_position_amount.plus(amount_delta);
+    vault.collateral_amount = vault.collateral_amount.plus(amount_delta);
   } else {
     vault.collateral_amount = vault.collateral_amount.plus(event.params.amount.toBigDecimal());
   }
