@@ -64,7 +64,7 @@ export default function test(): void {
   assert.fieldEquals('Vault', `1-${address}`, 'updated_at_block', now.toString());
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '10000');
 
-  const newDelegatioNUpdatedEvent3 = createDelegationUpdateEvent(
+  const newDelegationUpdatedEvent3 = createDelegationUpdateEvent(
     BigInt.fromI32(2),
     BigInt.fromI32(1),
     Address.fromString(address),
@@ -73,7 +73,7 @@ export default function test(): void {
     now + 1000,
     now
   );
-  handleDelegationUpdated(newDelegatioNUpdatedEvent3);
+  handleDelegationUpdated(newDelegationUpdatedEvent3);
 
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '15000');
 }

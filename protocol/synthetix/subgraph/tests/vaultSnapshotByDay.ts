@@ -127,40 +127,40 @@ export default function test(): void {
     )
   );
 
-  // assert.fieldEquals(
-  //   'VaultSnapshotByDay',
-  //   '1-0x6942000000000000000000000000000000000000-2022-01-02',
-  //   'collateral_amount',
-  //   '550'
-  // );
-  // assert.fieldEquals(
-  //   'VaultSnapshotByDay',
-  //   '1-0x6942000000000000000000000000000000000000-2022-01-02',
-  //   'created_at',
-  //   `${now + oneDay}`
-  // );
-  // assert.fieldEquals(
-  //   'VaultSnapshotByDay',
-  //   '1-0x6942000000000000000000000000000000000000-2022-01-02',
-  //   'created_at_block',
-  //   `${now}`
-  // );
-  // assert.fieldEquals(
-  //   'VaultSnapshotByDay',
-  //   '1-0x6942000000000000000000000000000000000000-2022-01-02',
-  //   'updates_in_period',
-  //   '1'
-  // );
-  // assert.fieldEquals(
-  //   'VaultSnapshotByDay',
-  //   '1-0x6942000000000000000000000000000000000000-2022-01-02',
-  //   'updated_at_block',
-  //   `${now}`
-  // );
-  // assert.fieldEquals(
-  //   'VaultSnapshotByDay',
-  //   '1-0x6942000000000000000000000000000000000000-2022-01-02',
-  //   'updated_at',
-  //   `${now + oneDay}`
-  // );
+  assert.fieldEquals(
+    'VaultSnapshotByDay',
+    '1-0x6942000000000000000000000000000000000000-2022-01-02',
+    'collateral_amount',
+    '550'
+  );
+  assert.fieldEquals(
+    'VaultSnapshotByDay',
+    '1-0x6942000000000000000000000000000000000000-2022-01-02',
+    'created_at',
+    `${now + oneDay}`
+  );
+  assert.fieldEquals(
+    'VaultSnapshotByDay',
+    '1-0x6942000000000000000000000000000000000000-2022-01-02',
+    'created_at_block',
+    `${now}`
+  );
+  assert.fieldEquals(
+    'VaultSnapshotByDay',
+    '1-0x6942000000000000000000000000000000000000-2022-01-02',
+    'updates_in_period',
+    '1'
+  );
+  assert.fieldEquals(
+    'VaultSnapshotByDay',
+    '1-0x6942000000000000000000000000000000000000-2022-01-02',
+    'updated_at_block',
+    `${now}`
+  );
+  assert.fieldEquals(
+    'VaultSnapshotByDay',
+    '1-0x6942000000000000000000000000000000000000-2022-01-02',
+    'updated_at',
+    `${now + oneDay}`
+  );
 }
