@@ -185,9 +185,6 @@ contract VaultModule is IVaultModule {
             // Ensure the intent is valid.
             if (intent.accountId != accountId) revert InvalidDelegationIntent();
 
-            // Ensure the intent is within the processing window.
-            intent.checkIsExecutable();
-
             // Process the intent.
             _delegateCollateral(
                 accountId,
@@ -518,6 +515,11 @@ contract VaultModule is IVaultModule {
         uint256 effectiveIssuanceRatioD18 = CollateralConfiguration
             .load(collateralType)
             .getEffectiveIssuanceRatio(minIssuanceRatioD18);
+
+        // edge case. Issuance set to max
+        if (effectiveIssuanceRatioD18 == type(uint256).max) {
+            return effectiveDebt;
+        }
 
         uint256 collateralValue = newCollateralAmountD18.mulDecimal(collateralPrice);
 

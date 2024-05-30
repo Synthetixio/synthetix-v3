@@ -283,7 +283,7 @@ interface IVaultModule {
     ) external view returns (int256 accumulatedIntentDelta);
 
     /**
-     * @notice Returns the amount of debt to repay in order to an intent to reduce the delegated collateral will meet the issuance ratio.
+     * @notice Returns the amount of debt that needs to be repaid, which allows execution of intents that aim at undelegating collalteral, ensuring complyiance with the issuance ratio requirements
      * @param accountId The id of the account owning the position.
      * @param poolId The id of the pool associated with the position.
      * @param collateralType The address of the collateral.
