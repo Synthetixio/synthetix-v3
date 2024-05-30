@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
 library DecimalMath {
@@ -100,10 +100,25 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/utils/FullMath.sol:FullMath
+library FullMath {
+    enum Rounding {
+        Floor,
+        Ceil,
+        Trunc,
+        Expand
+    }
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/utils/TickMath.sol:TickMath
 library TickMath {
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
 }

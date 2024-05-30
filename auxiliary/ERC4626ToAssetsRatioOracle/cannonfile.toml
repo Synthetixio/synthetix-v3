@@ -3,15 +3,21 @@ version = "<%= package.version %>"
 description = "<%= package.description %>"
 
 # Mocks are deployed so the cannonfile will build successfully by default
-[deploy.ERC20Mock]
-artifact = "contracts/mocks/ERC20Mock.sol:ERC20Mock"
+[clone.ausdc_token_mock]
+source = "mintable-token@permissionless-mint"
+target = "synthetix-mock-tokens@ausdc"
+options.name = "aUSDC Mock"
+options.symbol = "aUSDC"
+options.decimals = "6"
 
-[deploy.ERC4626Mock]
-artifact = "contracts/mocks/ERC4626Mock.sol:ERC4626Mock"
-args = ["<%= contracts.ERC20Mock.address %>"]
+[clone.statausdc_token_mock]
+source = "erc4626"
+options.asset = "<%= ausdc_token_mock.MintableToken.address %>"
+options.name = "stataUSDC Mock"
+options.symbol = "stataUSDC"
 
-[setting.vault]
-defaultValue = "<%= contracts.ERC4626Mock.address %>"
+[var.vault_address]
+vault = "<%= statausdc_token_mock.Token.address %>"
 
 # Changing the vault will change the address of the node, per CREATE2
 [deploy.ERC4626ToAssetsRatioOracle]
