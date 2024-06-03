@@ -667,6 +667,7 @@ contract OrderModule {
     struct Runtime_commitOrder {
         uint256 oraclePrice;
         uint64 commitmentTime;
+        AddressRegistry.Data addresses;
     }
     struct Runtime_settleOrder {
         uint256 pythPrice;
