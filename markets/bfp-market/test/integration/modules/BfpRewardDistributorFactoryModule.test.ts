@@ -23,7 +23,7 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 
-describe('PerpRewardDistributorFactoryModule', () => {
+describe('BfpRewardDistributorFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
   const { traders, pool, owner, keeper, collateralsWithoutSusd, systems, provider, restore } = bs;
 

@@ -16,7 +16,7 @@ library PerpMarketConfiguration {
         IPyth pyth;
         /// Oracle node id for for eth/usd.
         bytes32 ethOracleNodeId;
-        /// Address of generic PerpRewardDistributor contract.
+        /// Address of generic BfpRewardDistributor contract.
         address rewardDistributorImplementation;
         /// Minimum acceptable publishTime from Pyth WH VAA price update data.
         uint64 pythPublishTimeMin;

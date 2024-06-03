@@ -48,8 +48,8 @@ args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 artifact = "MarginModule"
 args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
-[contract.PerpRewardDistributorFactoryModule]
-artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
+[contract.BfpRewardDistributorFactoryModule]
+artifact = "contracts/modules/BfpRewardDistributorModule/BfpRewardDistributorFactoryModule.sol:BfpRewardDistributorFactoryModule"
 args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.FeatureFlagModule]
@@ -66,8 +66,8 @@ args = []
 
 # --- Distributor contract --- #
 
-[contract.PerpRewardDistributor]
-artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
+[contract.BfpRewardDistributor]
+artifact = "contracts/modules/BfpRewardDistributorModule/BfpRewardDistributor.sol:BfpRewardDistributor"
 args = []
 
 # --- Market proxy contract --- #
@@ -92,7 +92,7 @@ contracts = [
     "MarginModule",
     "OrderModule",
     "LiquidationModule",
-    "PerpRewardDistributorFactoryModule",
+    "BfpRewardDistributorFactoryModule",
     "SettlementHookModule",
 ]
 
@@ -127,7 +127,7 @@ factory.PerpAccountProxy.arg = 2
 target = ["BfpMarketProxy"]
 fromCall.func = "owner"
 func = "setRewardDistributorImplementation"
-args = ["<%= contracts.PerpRewardDistributor.address %>"]
+args = ["<%= contracts.BfpRewardDistributor.address %>"]
 
 # --- Core feature flags --- #
 

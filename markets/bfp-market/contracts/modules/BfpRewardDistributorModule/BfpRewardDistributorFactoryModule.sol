@@ -6,12 +6,12 @@ import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/externa
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ISynthetixSystem} from "../../external/ISynthetixSystem.sol";
-import {IPerpRewardDistributorFactoryModule} from "../../interfaces/IPerpRewardDistributorFactoryModule.sol";
-import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
+import {IBfpRewardDistributorFactoryModule} from "../../interfaces/IBfpRewardDistributorFactoryModule.sol";
+import {IBfpRewardDistributor} from "../../interfaces/IBfpRewardDistributor.sol";
 import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol";
 import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 
-contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
+contract BfpRewardDistributorFactoryModule is IBfpRewardDistributorFactoryModule {
     using Clones for address;
 
     // --- Immutables --- //
@@ -35,9 +35,9 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
 
     // --- Mutations --- //
 
-    /// @inheritdoc IPerpRewardDistributorFactoryModule
+    /// @inheritdoc IBfpRewardDistributorFactoryModule
     function createRewardDistributor(
-        IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParameters calldata data
+        IBfpRewardDistributorFactoryModule.CreateBfpRewardDistributorParameters calldata data
     ) external returns (address) {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -68,7 +68,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
 
         // Create a new distributor by cloning an existing implementation.
         address distributorAddress = globalConfig.rewardDistributorImplementation.clone();
-        IPerpRewardDistributor distributor = IPerpRewardDistributor(distributorAddress);
+        IBfpRewardDistributor distributor = IBfpRewardDistributor(distributorAddress);
         distributor.initialize(
             SYNTHETIX_CORE,
             address(this),

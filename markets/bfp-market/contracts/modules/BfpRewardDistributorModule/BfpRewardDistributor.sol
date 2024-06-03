@@ -10,11 +10,11 @@ import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/Param
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {ERC20} from "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
+import {IBfpRewardDistributor} from "../../interfaces/IBfpRewardDistributor.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
 
-contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
+contract BfpRewardDistributor is Initializable, IBfpRewardDistributor {
     using ERC20Helper for address;
 
     /// @notice Address of the RewardManager (i.e. Synthetix core proxy)
@@ -38,7 +38,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         _disableInitializers();
     }
 
-    /// @inheritdoc IPerpRewardDistributor
+    /// @inheritdoc IBfpRewardDistributor
     function initialize(
         address rewardManager,
         address perpMarket,
@@ -66,7 +66,7 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         }
     }
 
-    /// @inheritdoc IPerpRewardDistributor
+    /// @inheritdoc IBfpRewardDistributor
     function distributeRewards(address collateralType, uint256 amount) external {
         onlyPerpMarket();
 
@@ -91,17 +91,17 @@ contract PerpRewardDistributor is Initializable, IPerpRewardDistributor {
         );
     }
 
-    /// @inheritdoc IPerpRewardDistributor
+    /// @inheritdoc IBfpRewardDistributor
     function getPoolId() external view returns (uint128) {
         return _poolId;
     }
 
-    /// @inheritdoc IPerpRewardDistributor
+    /// @inheritdoc IBfpRewardDistributor
     function getPoolCollateralTypes() external view returns (address[] memory) {
         return _poolCollateralTypes;
     }
 
-    /// @inheritdoc IPerpRewardDistributor
+    /// @inheritdoc IBfpRewardDistributor
     function setShouldFailPayout(bool _shouldFailedPayout) external {
         onlyPoolOwner();
         shouldFailPayout = _shouldFailedPayout;

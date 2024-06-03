@@ -26,7 +26,7 @@ const config = {
     artifacts: [...commonConfig.storage.artifacts, '!contracts/external/**/*'],
     skip: [
       ...commonConfig.storage.skip,
-      'contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor',
+      'contracts/modules/BfpRewardDistributorModule/BfpRewardDistributor.sol:BfpRewardDistributor',
     ],
   },
 };

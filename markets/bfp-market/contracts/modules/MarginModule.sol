@@ -436,7 +436,7 @@ contract MarginModule is IMarginModule {
             } else {
                 // non-sUSD collateral must have a compatible reward distributor.
                 //
-                // NOTE: The comparison with `IRewardDistributor` here and not `IPerpRewardDistributor`.
+                // NOTE: The comparison with `IRewardDistributor` here and not `IBfpRewardDistributor`.
                 if (
                     !ERC165Helper.safeSupportsInterface(
                         distributor,

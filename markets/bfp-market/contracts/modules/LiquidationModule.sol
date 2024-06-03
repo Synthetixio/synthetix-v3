@@ -10,7 +10,7 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
-import {IPerpRewardDistributor} from "../interfaces/IPerpRewardDistributor.sol";
+import {IBfpRewardDistributor} from "../interfaces/IBfpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
@@ -157,7 +157,7 @@ contract LiquidationModule is ILiquidationModule {
                     runtime.collateralAddress,
                     runtime.availableAccountCollateral
                 );
-                IPerpRewardDistributor distributor = IPerpRewardDistributor(
+                IBfpRewardDistributor distributor = IBfpRewardDistributor(
                     globalMarginConfig.supported[runtime.collateralAddress].rewardDistributor
                 );
                 ITokenModule(runtime.collateralAddress).transfer(

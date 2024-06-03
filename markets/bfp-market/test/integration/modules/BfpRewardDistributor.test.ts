@@ -12,19 +12,19 @@ import {
   genOneOf,
 } from '../../generators';
 import { withExplicitEvmMine, withImpersonate } from '../../helpers';
-import { IPerpRewardDistributorFactoryModule } from '../../../typechain-types/contracts/interfaces/IPerpRewardDistributorFactoryModule';
-import { IPerpRewardDistributor__factory } from '../../../typechain-types/factories/contracts/interfaces/IPerpRewardDistributor__factory';
+import { IBfpRewardDistributorFactoryModule } from '../../../typechain-types/contracts/interfaces/IBfpRewardDistributorFactoryModule';
+import { IBfpRewardDistributor__factory } from '../../../typechain-types/factories/contracts/interfaces/IBfpRewardDistributor__factory';
 
 type CreateRewardDistributorArgs =
-  IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParametersStruct;
+  IBfpRewardDistributorFactoryModule.CreateBfpRewardDistributorParametersStruct;
 
-describe('PerpRewardDistributor', () => {
+describe('BfpRewardDistributor', () => {
   const bs = bootstrap(genBootstrap());
   const { traders, pool, owner, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
-  const createPerpRewardDistributor = async (args: CreateRewardDistributorArgs) => {
+  const createBfpRewardDistributor = async (args: CreateRewardDistributorArgs) => {
     const { BfpMarketProxy } = systems();
     const distributor =
       await BfpMarketProxy.connect(owner()).callStatic.createRewardDistributor(args);
@@ -32,7 +32,7 @@ describe('PerpRewardDistributor', () => {
       () => BfpMarketProxy.connect(owner()).createRewardDistributor(args),
       provider()
     );
-    return IPerpRewardDistributor__factory.connect(distributor, provider());
+    return IBfpRewardDistributor__factory.connect(distributor, provider());
   };
 
   describe('initialize', () => {
@@ -45,13 +45,13 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
-      assertBn.equal(await PerpRewardDistributor.getPoolId(), args.poolId);
-      assert.equal(await PerpRewardDistributor.callStatic.name(), args.name);
-      assert.equal(await PerpRewardDistributor.callStatic.token(), args.token);
+      assertBn.equal(await BfpRewardDistributor.getPoolId(), args.poolId);
+      assert.equal(await BfpRewardDistributor.callStatic.name(), args.name);
+      assert.equal(await BfpRewardDistributor.callStatic.token(), args.token);
 
-      const poolCollateralTypes = await PerpRewardDistributor.getPoolCollateralTypes();
+      const poolCollateralTypes = await BfpRewardDistributor.getPoolCollateralTypes();
       assert.deepEqual(poolCollateralTypes, args.collateralTypes);
     });
 
@@ -82,10 +82,10 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
-      await PerpRewardDistributor.connect(owner()).setShouldFailPayout(true);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
+      await BfpRewardDistributor.connect(owner()).setShouldFailPayout(true);
 
-      const hasPayoutProcessed = await PerpRewardDistributor.connect(owner()).callStatic.payout(
+      const hasPayoutProcessed = await BfpRewardDistributor.connect(owner()).callStatic.payout(
         bn(0),
         bn(0),
         genAddress(),
@@ -104,11 +104,11 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
       const from = traders()[0].signer;
       await assertRevert(
-        PerpRewardDistributor.connect(from).setShouldFailPayout(genBoolean()),
+        BfpRewardDistributor.connect(from).setShouldFailPayout(genBoolean()),
         `Unauthorized("${await from.getAddress()}")`,
         systems().Core
       );
@@ -125,7 +125,7 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const distributor = await createPerpRewardDistributor(args);
+      const distributor = await createBfpRewardDistributor(args);
       await distributor.connect(owner()).setShouldFailPayout(true);
 
       const hasPayoutProcessed = await distributor
@@ -143,11 +143,11 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
       const invalidPoolId = genNumber(69420, 69999);
       await assertRevert(
-        PerpRewardDistributor.connect(owner()).payout(
+        BfpRewardDistributor.connect(owner()).payout(
           bn(0),
           invalidPoolId,
           args.token,
@@ -168,11 +168,11 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
       const from = genOneOf(traders());
       await assertRevert(
-        PerpRewardDistributor.connect(from.signer).payout(
+        BfpRewardDistributor.connect(from.signer).payout(
           bn(0),
           args.poolId,
           args.token,
@@ -193,14 +193,14 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
       // Amount of payoutTokens to send (1 more than there actually is, zero).
       const amount = bn(1);
 
       await withImpersonate(bs, Core.address, async (signer) => {
         await assertRevert(
-          PerpRewardDistributor.connect(signer).payout(
+          BfpRewardDistributor.connect(signer).payout(
             bn(0),
             args.poolId,
             args.token,
@@ -208,7 +208,7 @@ describe('PerpRewardDistributor', () => {
             amount
           ),
           `InsufficientRewardBalance("${amount}", "0")`,
-          PerpRewardDistributor
+          BfpRewardDistributor
         );
       });
     });
@@ -224,37 +224,37 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
       await Core.connect(owner()).registerRewardsDistributor(
         args.poolId,
         args.collateralTypes[0],
-        PerpRewardDistributor.address
+        BfpRewardDistributor.address
       );
 
       await withImpersonate(bs, BfpMarketProxy.address, async (signer) => {
         const amount = bn(genNumber(1, 100));
-        await CollateralMockD18.mint(PerpRewardDistributor.address, amount);
-        assertBn.equal(await CollateralMockD18.balanceOf(PerpRewardDistributor.address), amount);
+        await CollateralMockD18.mint(BfpRewardDistributor.address, amount);
+        assertBn.equal(await CollateralMockD18.balanceOf(BfpRewardDistributor.address), amount);
 
         // One less than transferred - OK
-        await PerpRewardDistributor.connect(signer).callStatic.distributeRewards(
+        await BfpRewardDistributor.connect(signer).callStatic.distributeRewards(
           args.collateralTypes[0],
           amount.sub(bn(1))
         );
         // Exactly transferred - OK
-        await PerpRewardDistributor.connect(signer).callStatic.distributeRewards(
+        await BfpRewardDistributor.connect(signer).callStatic.distributeRewards(
           args.collateralTypes[0],
           amount
         );
         // One more than transferred - FAIL
         await assertRevert(
-          PerpRewardDistributor.connect(signer).distributeRewards(
+          BfpRewardDistributor.connect(signer).distributeRewards(
             args.collateralTypes[0],
             amount.add(bn(1))
           ),
           `InsufficientRewardBalance("${amount.add(bn(1))}", "${amount}")`,
-          PerpRewardDistributor
+          BfpRewardDistributor
         );
       });
     });
@@ -268,14 +268,14 @@ describe('PerpRewardDistributor', () => {
         name: genBytes32(),
         token: CollateralMockD18.address,
       };
-      const PerpRewardDistributor = await createPerpRewardDistributor(args);
+      const BfpRewardDistributor = await createBfpRewardDistributor(args);
 
       await withImpersonate(bs, BfpMarketProxy.address, async (signer) => {
         const amount = bn(1);
         await assertRevert(
-          PerpRewardDistributor.connect(signer).distributeRewards(args.collateralTypes[0], amount),
+          BfpRewardDistributor.connect(signer).distributeRewards(args.collateralTypes[0], amount),
           `InsufficientRewardBalance("${amount}", "0")`,
-          PerpRewardDistributor
+          BfpRewardDistributor
         );
       });
     });

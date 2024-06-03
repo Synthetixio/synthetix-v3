@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 
 // @see: https://github.com/Synthetixio/rewards-distributors
-interface IPerpRewardDistributor is IRewardDistributor {
+interface IBfpRewardDistributor is IRewardDistributor {
     // --- Errors --- //
 
     /// @notice Thrown when rewards `balance` does not meet distribute or payout requirements.
@@ -24,7 +24,7 @@ interface IPerpRewardDistributor is IRewardDistributor {
 
     // --- Mutations --- //
 
-    /// @notice Initializes the PerpRewardDistributor with references, name, token to distribute etc.
+    /// @notice Initializes the BfpRewardDistributor with references, name, token to distribute etc.
     /// @param rewardManager Address of the reward manager (i.e. Synthetix core proxy)
     /// @param perpMarket Address of the bfp market proxy
     /// @param poolId_ Id of the pool this RD was registered with

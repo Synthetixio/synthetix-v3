@@ -2,12 +2,12 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
-import {IPerpRewardDistributor} from "./IPerpRewardDistributor.sol";
+import {IBfpRewardDistributor} from "./IBfpRewardDistributor.sol";
 
-interface IPerpRewardDistributorFactoryModule {
+interface IBfpRewardDistributorFactoryModule {
     // --- Structs --- //
 
-    struct CreatePerpRewardDistributorParameters {
+    struct CreateBfpRewardDistributorParameters {
         /// The pool the distributor will be registered with.
         uint128 poolId;
         /// The collateral(s) in the pool it must be registered against.
@@ -30,8 +30,8 @@ interface IPerpRewardDistributorFactoryModule {
     /// @param data A struct of parameters to create a reward distributor with
     /// @return createRewardDistributor Address of the newly created reward distributor
     /// @dev The pool owner must then make a subsequent `.registerRewardDistributor` invocation against `collateralTypes`
-    ///      specified in `PerpRewardDistributor.initialize`.
+    ///      specified in `BfpRewardDistributor.initialize`.
     function createRewardDistributor(
-        IPerpRewardDistributorFactoryModule.CreatePerpRewardDistributorParameters calldata data
+        IBfpRewardDistributorFactoryModule.CreateBfpRewardDistributorParameters calldata data
     ) external returns (address);
 }
