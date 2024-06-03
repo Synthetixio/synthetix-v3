@@ -1,5 +1,5 @@
 import { BigNumber, Contract, ContractReceipt, ethers, utils, providers, Signer } from 'ethers';
-import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
+import { BfpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { genNumber, raise } from './generators';
 import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
@@ -136,7 +136,7 @@ export const withdrawAllCollateral = async (bs: Bs, trader: Trader, marketId: Bi
 export const setMarketConfigurationById = async (
   { systems, owner, provider }: Pick<Bs, 'systems' | 'owner' | 'provider'>,
   marketId: BigNumber,
-  params: Partial<PerpMarketConfiguration.DataStruct>
+  params: Partial<BfpMarketConfiguration.DataStruct>
 ) => {
   const { BfpMarketProxy } = systems();
   const data = await BfpMarketProxy.getMarketConfigurationById(marketId);
@@ -155,7 +155,7 @@ export const setMarketConfigurationById = async (
 /** Generic update on global market data (similar to setMarketConfigurationById). */
 export const setMarketConfiguration = async (
   { systems, owner, provider }: Pick<Bs, 'systems' | 'owner' | 'provider'>,
-  params: Partial<PerpMarketConfiguration.GlobalDataStruct>
+  params: Partial<BfpMarketConfiguration.GlobalDataStruct>
 ) => {
   const { BfpMarketProxy } = systems();
   const data = await BfpMarketProxy.getMarketConfiguration();

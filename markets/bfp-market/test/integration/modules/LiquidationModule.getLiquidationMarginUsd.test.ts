@@ -5,7 +5,7 @@ import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import { depositMargin, commitAndSettle, setBaseFeePerGas } from '../../helpers';
 import { calcFlagReward, calcLiquidationKeeperFee } from '../../calculations';
-import { PerpMarketConfiguration } from '../../generated/typechain/MarketConfigurationModule';
+import { BfpMarketConfiguration } from '../../generated/typechain/MarketConfigurationModule';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -16,7 +16,7 @@ describe('LiquidationModule', () => {
   afterEach(async () => await setBaseFeePerGas(1, provider()));
 
   describe('getLiquidationMarginUsd', () => {
-    const calcImrAndMmr = (size: Wei, marketConfig: PerpMarketConfiguration.DataStructOutput) => {
+    const calcImrAndMmr = (size: Wei, marketConfig: BfpMarketConfiguration.DataStructOutput) => {
       const imr = Wei.min(
         size
           .abs()

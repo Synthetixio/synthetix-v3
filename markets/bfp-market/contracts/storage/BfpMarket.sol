@@ -6,7 +6,7 @@ import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetix
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "./BfpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
 import {AddressRegistry} from "./AddressRegistry.sol";
@@ -15,7 +15,7 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Margin} from "../storage/Margin.sol";
 
-library PerpMarket {
+library BfpMarket {
     using DecimalMath for int128;
     using DecimalMath for uint128;
     using DecimalMath for int256;
@@ -92,7 +92,7 @@ library PerpMarket {
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.BfpMarket", id));
         assembly {
             d.slot := s
         }
@@ -109,7 +109,7 @@ library PerpMarket {
 
     /// @dev Creates a market by updating storage for at `id`.
     function create(uint128 id, bytes32 name) internal {
-        PerpMarket.Data storage market = load(id);
+        BfpMarket.Data storage market = load(id);
         market.id = id;
         market.name = name;
 
@@ -121,7 +121,7 @@ library PerpMarket {
 
     /// @dev Updates the debt correction given an `oldPosition` and `newPosition`.
     function updateDebtCorrection(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         Position.Data storage oldPosition,
         Position.Data memory newPosition
     ) internal {
@@ -138,7 +138,7 @@ library PerpMarket {
     }
 
     /// @dev Updates the `pastLiquidations` array by either appending a new timestamp or update an existing accumulation.
-    function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
+    function updateAccumulatedLiquidation(BfpMarket.Data storage self, uint128 liqSize) internal {
         uint128 currentTime = block.timestamp.to128();
         uint256 length = self.pastLiquidations.length;
 
@@ -155,7 +155,7 @@ library PerpMarket {
 
     ///  @dev Updates `totalTraderDebtUsd` and sUSD collateral.
     function updateDebtAndCollateral(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         int128 debtAmountDeltaUsd,
         int128 sUsdCollateralDelta,
         address sUsdAddress
@@ -175,8 +175,8 @@ library PerpMarket {
 
     /// @dev Returns the market's required minimum backing credit in USD.
     function getMinimumCredit(
-        PerpMarket.Data storage self,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarket.Data storage self,
+        BfpMarketConfiguration.Data storage marketConfig,
         uint256 price,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
@@ -187,7 +187,7 @@ library PerpMarket {
 
     /// @dev Returns the markets delegated collateral value in USD.
     function getDelegatedCollateralValueUsd(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         AddressRegistry.Data memory addresses
     ) internal view returns (int256) {
         // This is our market's `creditCapacity + all deposited collateral`.
@@ -201,11 +201,11 @@ library PerpMarket {
 
     /// @dev Returns the collateral utilization bounded by 0 and 1.
     function getUtilization(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         uint256 price,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint128) {
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(self.id);
 
         uint256 lockedCollateralUsd = self.size.mulDecimal(price).mulDecimal(
             marketConfig.minCreditPercent
@@ -233,7 +233,7 @@ library PerpMarket {
     /// @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).
     function getCurrentUtilizationRate(
         uint128 utilization,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        BfpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint128) {
         uint128 lowUtilizationSlopePercent = globalConfig.lowUtilizationSlopePercent;
         uint128 utilizationBreakpointPercent = globalConfig.utilizationBreakpointPercent;
@@ -256,9 +256,7 @@ library PerpMarket {
     }
 
     /// @dev Returns the next market collateral utilization value.
-    function getUnrecordedUtilization(
-        PerpMarket.Data storage self
-    ) internal view returns (uint128) {
+    function getUnrecordedUtilization(BfpMarket.Data storage self) internal view returns (uint128) {
         return
             self
                 .currentUtilizationRateComputed
@@ -268,11 +266,11 @@ library PerpMarket {
 
     /// @dev Recompute and store utilization rate given current market conditions.
     function recomputeUtilization(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         uint256 price,
         AddressRegistry.Data memory addresses
     ) internal returns (uint128 utilizationRate, uint128 unrecordedUtilization) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
         utilizationRate = getCurrentUtilizationRate(
             getUtilization(self, price, addresses),
             globalConfig
@@ -286,7 +284,7 @@ library PerpMarket {
 
     /// @dev Recompute and store funding related values given the current market conditions.
     function recomputeFunding(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         uint256 price
     ) internal returns (int128 fundingRate, int128 unrecordingFunding) {
         (fundingRate, unrecordingFunding) = getUnrecordedFundingWithRate(self, price);
@@ -300,19 +298,17 @@ library PerpMarket {
 
     /// @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
     function getOraclePrice(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(self.id);
         return
             INodeModule(addresses.oracleManager).process(marketConfig.oracleNodeId).price.toUint();
     }
 
     /// @dev Returns the rate of funding rate change.
-    function getCurrentFundingVelocity(
-        PerpMarket.Data storage self
-    ) internal view returns (int128) {
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+    function getCurrentFundingVelocity(BfpMarket.Data storage self) internal view returns (int128) {
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(self.id);
         int128 skewScale = marketConfig.skewScale.toInt();
 
         // proportional skew
@@ -331,21 +327,21 @@ library PerpMarket {
 
     /// @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
     function getProportionalFundingElapsed(
-        PerpMarket.Data storage self
+        BfpMarket.Data storage self
     ) internal view returns (int128) {
         return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt().to128();
     }
 
     /// @dev Returns the proportional time elapsed since last utilization.
     function getProportionalUtilizationElapsed(
-        PerpMarket.Data storage self
+        BfpMarket.Data storage self
     ) internal view returns (uint128) {
         return
             (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SECONDS_PER_YEAR).to128();
     }
 
     /// @dev Returns the current funding rate given current market conditions.
-    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int128) {
+    function getCurrentFundingRate(BfpMarket.Data storage self) internal view returns (int128) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
         //  - velocity         = proportionalSkew * maxFundingVelocity
@@ -369,7 +365,7 @@ library PerpMarket {
 
     /// @dev Returns the next market funding accrued value.
     function getUnrecordedFundingWithRate(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         uint256 price
     ) internal view returns (int128 fundingRate, int128 unrecordedFunding) {
         fundingRate = getCurrentFundingRate(self);
@@ -387,7 +383,7 @@ library PerpMarket {
 
     /// @dev Returns the maximum amount of size that can be liquidated (excluding current cap usage).
     function getMaxLiquidatableCapacity(
-        PerpMarketConfiguration.Data storage marketConfig
+        BfpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint128) {
         // How do we calculcate `maxLiquidatableCapacity`?
         //
@@ -410,8 +406,8 @@ library PerpMarket {
 
     /// @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
     function getRemainingLiquidatableSizeCapacity(
-        PerpMarket.Data storage self,
-        PerpMarketConfiguration.Data storage marketConfig
+        BfpMarket.Data storage self,
+        BfpMarketConfiguration.Data storage marketConfig
     )
         internal
         view
@@ -492,7 +488,7 @@ library PerpMarket {
 
     /// @dev Returns the total USD value of all collaterals if we were to spot sell everything.
     function getTotalCollateralValueUsd(
-        PerpMarket.Data storage self,
+        BfpMarket.Data storage self,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();

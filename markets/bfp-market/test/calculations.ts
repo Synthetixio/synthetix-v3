@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
-import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
+import { BfpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { IBfpAccountModule } from '../typechain-types';
 
 // --- Primitives --- //
@@ -176,8 +176,8 @@ export const calcFlagReward = (
   sizeAbs: Wei,
   price: Wei,
   collateralUsd: Wei,
-  globalConfig: PerpMarketConfiguration.GlobalDataStructOutput,
-  marketConfig: PerpMarketConfiguration.DataStructOutput
+  globalConfig: BfpMarketConfiguration.GlobalDataStructOutput,
+  marketConfig: BfpMarketConfiguration.DataStructOutput
 ) => {
   const flagExecutionCostInUsd = calcTransactionCostInUsd(
     baseFeePerGas,
@@ -204,7 +204,7 @@ export const calcLiquidationKeeperFee = (
   baseFeePerGas: BigNumber, // in gwei
   sizeAbs: Wei,
   maxLiqCapacity: Wei,
-  globalConfig: PerpMarketConfiguration.GlobalDataStructOutput
+  globalConfig: BfpMarketConfiguration.GlobalDataStructOutput
 ) => {
   if (sizeAbs.eq(0)) return wei(0);
   const iterations = divDecimalAndCeil(sizeAbs, maxLiqCapacity);

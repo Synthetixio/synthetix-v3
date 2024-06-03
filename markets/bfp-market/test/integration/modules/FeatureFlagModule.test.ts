@@ -35,7 +35,7 @@ describe('FeatureFlagModule', () => {
     const { BfpMarketProxy } = systems();
     await assertEvent(
       await BfpMarketProxy.suspendAllFeatures(),
-      `PerpMarketSuspended(true)`,
+      `BfpMarketSuspended(true)`,
       BfpMarketProxy
     );
     await assertRevert(
@@ -45,7 +45,7 @@ describe('FeatureFlagModule', () => {
     );
     await assertEvent(
       await BfpMarketProxy.enableAllFeatures(),
-      `PerpMarketSuspended(false)`,
+      `BfpMarketSuspended(false)`,
       BfpMarketProxy
     );
     const tx = await BfpMarketProxy['createAccount()']();

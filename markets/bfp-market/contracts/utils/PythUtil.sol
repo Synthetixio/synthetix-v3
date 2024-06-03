@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SafeCastU256, SafeCastI256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 
 library PythUtil {
     using DecimalMath for int64;
@@ -13,8 +13,8 @@ library PythUtil {
 
     /// @dev Parse and update `priceUpdateData` relative to min/max publishTimes defined in config.
     function parsePythPrice(
-        PerpMarketConfiguration.GlobalData storage globalConfig,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         uint256 commitmentTime,
         bytes calldata priceUpdateData
     ) internal returns (uint256 price) {

@@ -8,7 +8,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {ISynthetixSystem} from "../../external/ISynthetixSystem.sol";
 import {IBfpRewardDistributorFactoryModule} from "../../interfaces/IBfpRewardDistributorFactoryModule.sol";
 import {IBfpRewardDistributor} from "../../interfaces/IBfpRewardDistributor.sol";
-import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "../../storage/BfpMarketConfiguration.sol";
 import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 
 contract BfpRewardDistributorFactoryModule is IBfpRewardDistributorFactoryModule {
@@ -40,7 +40,7 @@ contract BfpRewardDistributorFactoryModule is IBfpRewardDistributorFactoryModule
         IBfpRewardDistributorFactoryModule.CreateBfpRewardDistributorParameters calldata data
     ) external returns (address) {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         // A reward token to distribute must exist.
         if (data.token == address(0)) {

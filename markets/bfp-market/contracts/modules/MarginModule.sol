@@ -12,8 +12,8 @@ import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165He
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IMarginModule} from "../interfaces/IMarginModule.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
@@ -25,7 +25,7 @@ contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
@@ -67,7 +67,7 @@ contract MarginModule is IMarginModule {
     /// @dev Validation account and position after accounting update to verify margin requirements are acceptable.
     function validateAccountAndPositionOnWithdrawal(
         uint128 accountId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         Position.Data storage position,
         uint256 oraclePrice
     ) private view {
@@ -88,7 +88,7 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
         if (position.isLiquidatable(oraclePrice, marketConfig, marginValues, addresses)) {
@@ -153,15 +153,15 @@ contract MarginModule is IMarginModule {
 
     /// @dev Given a `collateral` determine if tokens of collateral has been deposited in any market.
     function isCollateralDeposited(address collateralAddress) private view returns (bool) {
-        PerpMarket.GlobalData storage globalPerpMarket = PerpMarket.load();
+        BfpMarket.GlobalData storage globalBfpMarket = BfpMarket.load();
 
-        uint128[] memory activeMarketIds = globalPerpMarket.activeMarketIds;
+        uint128[] memory activeMarketIds = globalBfpMarket.activeMarketIds;
         uint256 activeMarketIdsLength = activeMarketIds.length;
 
         // In practice, we should only have one perp market but this has been designed to allow for many. So,
         // we should consider that possibility and iterate over all active markets.
         for (uint256 i = 0; i < activeMarketIdsLength; ) {
-            PerpMarket.Data storage market = PerpMarket.load(activeMarketIds[i]);
+            BfpMarket.Data storage market = BfpMarket.load(activeMarketIds[i]);
 
             if (market.depositedCollateral[collateralAddress] > 0) {
                 return true;
@@ -183,7 +183,7 @@ contract MarginModule is IMarginModule {
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
 
         // Prevent collateral transfers when there's a pending order.
         if (market.orders[accountId].sizeDelta != 0) {
@@ -274,7 +274,7 @@ contract MarginModule is IMarginModule {
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.CollateralType storage collateral = globalMarginConfig.supported[collateralAddress];
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
@@ -494,7 +494,7 @@ contract MarginModule is IMarginModule {
             AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
         );
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         // We're storing debt separately to track the current debt before we pay down.
@@ -573,7 +573,7 @@ contract MarginModule is IMarginModule {
         uint128 marketId
     ) external view returns (Margin.MarginValues memory) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -589,7 +589,7 @@ contract MarginModule is IMarginModule {
         uint256 oraclePrice
     ) external view returns (uint256) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -610,7 +610,7 @@ contract MarginModule is IMarginModule {
         uint256 amount
     ) external view returns (uint256) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration
+        BfpMarketConfiguration.GlobalData storage globalMarketConfig = BfpMarketConfiguration
             .load();
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -634,7 +634,7 @@ contract MarginModule is IMarginModule {
         uint128 marketId
     ) external view returns (uint256) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -663,7 +663,7 @@ contract MarginModule is IMarginModule {
                     .toUint();
         }
 
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
         (uint256 im, , ) = Position.getLiquidationMarginUsd(
             size,
             oraclePrice,
@@ -684,7 +684,7 @@ contract MarginModule is IMarginModule {
         uint128 marketId
     ) external view returns (uint256) {
         Account.exists(accountId);
-        PerpMarket.exists(marketId);
+        BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -697,8 +697,8 @@ contract MarginModule is IMarginModule {
                     Margin.load(),
                     addresses
                 ),
-                PerpMarketConfiguration.load(marketId),
-                PerpMarketConfiguration.load(),
+                BfpMarketConfiguration.load(marketId),
+                BfpMarketConfiguration.load(),
                 addresses
             );
     }

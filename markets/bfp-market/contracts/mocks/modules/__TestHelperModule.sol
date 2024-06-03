@@ -3,10 +3,10 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Margin} from "../../storage/Margin.sol";
-import {PerpMarket} from "../../storage/PerpMarket.sol";
+import {BfpMarket} from "../../storage/BfpMarket.sol";
 
 contract __TestHelperModule {
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
     using Margin for Margin.Data;
 
     // --- Immutables --- //
@@ -26,7 +26,7 @@ contract __TestHelperModule {
     ) external {
         OwnableStorage.onlyOwner();
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         market.depositedCollateral[SYNTHETIX_SUSD] += creditAmountUsd;
@@ -40,7 +40,7 @@ contract __TestHelperModule {
     ) external {
         OwnableStorage.onlyOwner();
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         market.totalTraderDebtUsd += debtAmountUsd;

@@ -26,14 +26,14 @@ interface IBfpRewardDistributor is IRewardDistributor {
 
     /// @notice Initializes the BfpRewardDistributor with references, name, token to distribute etc.
     /// @param rewardManager Address of the reward manager (i.e. Synthetix core proxy)
-    /// @param perpMarket Address of the bfp market proxy
+    /// @param bfpMarket Address of the bfp market proxy
     /// @param poolId_ Id of the pool this RD was registered with
     /// @param collateralTypes An array of delegated pool collateral types to dstribute to
     /// @param payoutToken_ Reward token to distribute
     /// @param name_ Name of the reward distributor
     function initialize(
         address rewardManager,
-        address perpMarket,
+        address bfpMarket,
         uint128 poolId_,
         address[] calldata collateralTypes,
         address payoutToken_,

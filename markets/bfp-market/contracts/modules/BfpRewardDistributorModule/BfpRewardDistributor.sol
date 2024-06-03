@@ -20,7 +20,7 @@ contract BfpRewardDistributor is Initializable, IBfpRewardDistributor {
     /// @notice Address of the RewardManager (i.e. Synthetix core proxy)
     address private _rewardManager;
     /// @notice Address the BFP market proxy.
-    address private _perpMarket;
+    address private _bfpMarket;
     /// @notice Address of the reward token to distribute.
     address private _payoutToken;
     /// @notice User defined name of this reward distributor.
@@ -41,14 +41,14 @@ contract BfpRewardDistributor is Initializable, IBfpRewardDistributor {
     /// @inheritdoc IBfpRewardDistributor
     function initialize(
         address rewardManager,
-        address perpMarket,
+        address bfpMarket,
         uint128 poolId_,
         address[] calldata poolCollateralTypes_,
         address payoutToken_,
         string memory name_
     ) external initializer {
         _rewardManager = rewardManager; // CoreProxy
-        _perpMarket = perpMarket;
+        _bfpMarket = bfpMarket;
         _poolId = poolId_;
         _poolCollateralTypes = poolCollateralTypes_;
         _payoutToken = payoutToken_;
@@ -68,7 +68,7 @@ contract BfpRewardDistributor is Initializable, IBfpRewardDistributor {
 
     /// @inheritdoc IBfpRewardDistributor
     function distributeRewards(address collateralType, uint256 amount) external {
-        onlyPerpMarket();
+        onlyBfpMarket();
 
         uint256 currentRewardsAmount = _rewardsAmount;
         uint256 nextRewardsAmount = currentRewardsAmount + amount;
@@ -160,9 +160,9 @@ contract BfpRewardDistributor is Initializable, IBfpRewardDistributor {
 
     // --- Helpers --- //
 
-    /// @dev Throws `Unauthorized` when msg.sender is not the PerpMarketProxy.
-    function onlyPerpMarket() private view {
-        if (msg.sender != _perpMarket) {
+    /// @dev Throws `Unauthorized` when msg.sender is not the BfpMarketProxy.
+    function onlyBfpMarket() private view {
+        if (msg.sender != _bfpMarket) {
             revert AccessError.Unauthorized(msg.sender);
         }
     }

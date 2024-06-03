@@ -7,10 +7,10 @@ import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetix
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 import {IBfpMarketFactoryModule, IMarket} from "../interfaces/IBfpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
@@ -23,7 +23,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
     using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
 
     // --- Immutables --- //
 
@@ -49,31 +49,31 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
     /// @inheritdoc IBfpMarketFactoryModule
     function setPyth(IPyth pyth) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.load().pyth = pyth;
+        BfpMarketConfiguration.load().pyth = pyth;
     }
 
     /// @inheritdoc IBfpMarketFactoryModule
     function setEthOracleNodeId(bytes32 ethOracleNodeId) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.load().ethOracleNodeId = ethOracleNodeId;
+        BfpMarketConfiguration.load().ethOracleNodeId = ethOracleNodeId;
     }
 
     /// @inheritdoc IBfpMarketFactoryModule
     function setRewardDistributorImplementation(address implementation) external {
         OwnableStorage.onlyOwner();
-        PerpMarketConfiguration.load().rewardDistributorImplementation = implementation;
+        BfpMarketConfiguration.load().rewardDistributorImplementation = implementation;
     }
 
     /// @inheritdoc IBfpMarketFactoryModule
     function createMarket(
-        IBfpMarketFactoryModule.CreatePerpMarketParameters memory data
+        IBfpMarketFactoryModule.CreateBfpMarketParameters memory data
     ) external returns (uint128) {
         OwnableStorage.onlyOwner();
 
         uint128 id = ISynthetixSystem(SYNTHETIX_CORE).registerMarket(address(this));
 
-        PerpMarket.create(id, data.name);
-        PerpMarket.load().activeMarketIds.push(id);
+        BfpMarket.create(id, data.name);
+        BfpMarket.load().activeMarketIds.push(id);
         emit MarketCreated(id, data.name);
 
         return id;
@@ -81,7 +81,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
 
     /// @inheritdoc IBfpMarketFactoryModule
     function recomputeUtilization(uint128 marketId) external {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -96,7 +96,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
 
     /// @inheritdoc IBfpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         (int128 fundingRate, ) = market.recomputeFunding(
             market.getOraclePrice(
                 AddressRegistry.Data({
@@ -121,7 +121,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
 
     /// @inheritdoc IMarket
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -158,7 +158,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
         // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -166,7 +166,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
         });
         return
             market.getMinimumCredit(
-                PerpMarketConfiguration.load(marketId),
+                BfpMarketConfiguration.load(marketId),
                 market.getOraclePrice(addresses),
                 addresses
             );
@@ -185,15 +185,15 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
 
     /// @inheritdoc IBfpMarketFactoryModule
     function getActiveMarketIds() external view returns (uint128[] memory) {
-        return PerpMarket.load().activeMarketIds;
+        return BfpMarket.load().activeMarketIds;
     }
 
     /// @inheritdoc IBfpMarketFactoryModule
     function getUtilizationDigest(
         uint128 marketId
     ) external view returns (IBfpMarketFactoryModule.UtilizationDigest memory) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -204,7 +204,7 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
             IBfpMarketFactoryModule.UtilizationDigest(
                 market.currentUtilizationRateComputed,
                 market.lastUtilizationTime,
-                PerpMarket.getCurrentUtilizationRate(utilization, globalConfig),
+                BfpMarket.getCurrentUtilizationRate(utilization, globalConfig),
                 utilization
             );
     }
@@ -213,9 +213,9 @@ contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
     function getMarketDigest(
         uint128 marketId
     ) external view returns (IBfpMarketFactoryModule.MarketDigest memory) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
         (, uint128 remainingCapacity, uint128 lastLiquidationTime) = market
             .getRemainingLiquidatableSizeCapacity(marketConfig);
 

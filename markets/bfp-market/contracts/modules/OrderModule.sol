@@ -13,8 +13,8 @@ import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {ISettlementHook} from "../interfaces/hooks/ISettlementHook.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Order} from "../storage/Order.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
@@ -34,7 +34,7 @@ contract OrderModule is IOrderModule {
     using SafeCastU128 for uint128;
     using Order for Order.Data;
     using Position for Position.Data;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
     using Margin for Margin.Data;
 
     // --- Immutables --- //
@@ -95,7 +95,7 @@ contract OrderModule is IOrderModule {
      */
     function isOrderStaleOrReady(
         uint64 commitmentTime,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        BfpMarketConfiguration.GlobalData storage globalConfig
     ) private view returns (bool isStale, bool isReady) {
         uint64 timestamp = block.timestamp.to64();
         isStale = timestamp - commitmentTime >= globalConfig.maxOrderAge;
@@ -104,7 +104,7 @@ contract OrderModule is IOrderModule {
 
     /// @dev Validates that an order can only be settled if time and price are acceptable.
     function validateOrderPriceReadiness(
-        PerpMarketConfiguration.GlobalData storage globalConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig,
         uint64 commitmentTime,
         uint256 pythPrice,
         Position.TradeParams memory params
@@ -184,7 +184,7 @@ contract OrderModule is IOrderModule {
     }
 
     /// @dev Generic helper for utilization recomputation during order management.
-    function recomputeUtilization(PerpMarket.Data storage market, uint256 price) private {
+    function recomputeUtilization(BfpMarket.Data storage market, uint256 price) private {
         (uint128 utilizationRate, ) = market.recomputeUtilization(
             price,
             AddressRegistry.Data({
@@ -197,7 +197,7 @@ contract OrderModule is IOrderModule {
     }
 
     /// @dev Generic helper for funding recomputation during order management.
-    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
+    function recomputeFunding(BfpMarket.Data storage market, uint256 price) private {
         (int128 fundingRate, ) = market.recomputeFunding(price);
         emit FundingRecomputed(
             market.id,
@@ -225,7 +225,7 @@ contract OrderModule is IOrderModule {
             AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
         );
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -242,7 +242,7 @@ contract OrderModule is IOrderModule {
 
         runtime.oraclePrice = market.getOraclePrice(addresses);
 
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
 
         // NOTE: `oraclePrice` in TradeParams should be `pythPrice` as to track the raw Pyth price on settlement. However,
         // we are only committing the order and the `trade.newPosition` is discarded so it does not matter here.
@@ -292,7 +292,7 @@ contract OrderModule is IOrderModule {
         bytes calldata priceUpdateData
     ) external payable {
         FeatureFlag.ensureAccessToFeature(Flags.SETTLE_ORDER);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
 
         Order.Data storage order = market.orders[accountId];
         Position.Data storage position = market.positions[accountId];
@@ -303,8 +303,8 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -440,7 +440,7 @@ contract OrderModule is IOrderModule {
     /// @inheritdoc IOrderModule
     function cancelStaleOrder(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
 
         if (order.sizeDelta == 0) {
@@ -448,7 +448,7 @@ contract OrderModule is IOrderModule {
         }
 
         uint64 commitmentTime = order.commitmentTime;
-        (bool isStale, ) = isOrderStaleOrReady(commitmentTime, PerpMarketConfiguration.load());
+        (bool isStale, ) = isOrderStaleOrReady(commitmentTime, BfpMarketConfiguration.load());
 
         if (!isStale) {
             revert ErrorUtil.OrderNotStale();
@@ -465,7 +465,7 @@ contract OrderModule is IOrderModule {
         bytes calldata priceUpdateData
     ) external payable {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Account.Data storage account = Account.exists(accountId);
         Order.Data storage order = market.orders[accountId];
 
@@ -474,7 +474,7 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderNotFound();
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
@@ -485,7 +485,7 @@ contract OrderModule is IOrderModule {
 
         // Only do the price divergence check for non stale orders. All stale orders are allowed to be canceled.
         if (!isStale) {
-            PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(
+            BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(
                 marketId
             );
 
@@ -545,7 +545,7 @@ contract OrderModule is IOrderModule {
         uint128 marketId
     ) external view returns (IOrderModule.OrderDigest memory) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
 
         // no-op rather than revert.
@@ -554,7 +554,7 @@ contract OrderModule is IOrderModule {
             return emptyOrderDigest;
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
@@ -577,9 +577,9 @@ contract OrderModule is IOrderModule {
         int128 sizeDelta,
         uint128 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         uint256 ethPrice = INodeModule(ORACLE_MANAGER)
             .process(globalConfig.ethOracleNodeId)
@@ -609,11 +609,11 @@ contract OrderModule is IOrderModule {
 
     /// @inheritdoc IOrderModule
     function getFillPrice(uint128 marketId, int128 size) external view returns (uint256) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         return
             Order.getFillPrice(
                 market.skew,
-                PerpMarketConfiguration.load(marketId).skewScale,
+                BfpMarketConfiguration.load(marketId).skewScale,
                 size,
                 market.getOraclePrice(
                     AddressRegistry.Data({
@@ -628,7 +628,7 @@ contract OrderModule is IOrderModule {
     /// @inheritdoc IOrderModule
     function getOraclePrice(uint128 marketId) external view returns (uint256) {
         return
-            PerpMarket.exists(marketId).getOraclePrice(
+            BfpMarket.exists(marketId).getOraclePrice(
                 AddressRegistry.Data({
                     synthetix: ISynthetixSystem(SYNTHETIX_CORE),
                     sUsd: SYNTHETIX_SUSD,

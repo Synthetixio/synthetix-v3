@@ -6,8 +6,8 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {Order} from "./Order.sol";
-import {PerpMarket} from "./PerpMarket.sol";
-import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import {BfpMarket} from "./BfpMarket.sol";
+import {BfpMarketConfiguration} from "./BfpMarketConfiguration.sol";
 import {Margin} from "./Margin.sol";
 import {AddressRegistry} from "./AddressRegistry.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -20,7 +20,7 @@ library Position {
     using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
 
     // --- Structs --- //
 
@@ -72,7 +72,7 @@ library Position {
 
     // --- Storage --- //
 
-    /// @dev Position.Data structs are stored in PerpMarket.Data.positions.
+    /// @dev Position.Data structs are stored in BfpMarket.Data.positions.
     struct Data {
         /// Size (in native units e.g. swstETH)
         int128 size;
@@ -93,7 +93,7 @@ library Position {
      * a market can have on either side.
      */
     function validateMaxOi(
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 maxMarketSize,
         int256 currentSize,
         int256 newSize
@@ -133,9 +133,9 @@ library Position {
 
     /// @dev validates whether the market minimum credit has been met.
     function validateMinimumCredit(
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 oraclePrice,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses
     ) internal view {
         uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
@@ -195,9 +195,9 @@ library Position {
     /// @dev Validates whether the given `TradeParams` would lead to a valid next position.
     function validateTrade(
         uint128 accountId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         Position.TradeParams memory params,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses
     ) internal view returns (Position.ValidatedTrade memory) {
         // Empty order is a no.
@@ -249,7 +249,7 @@ library Position {
             params.takerFee
         );
         runtime.ethPrice = INodeModule(addresses.oracleManager)
-            .process(PerpMarketConfiguration.load().ethOracleNodeId)
+            .process(BfpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
         runtime.keeperFee = Order.getSettlementKeeperFee(
@@ -335,9 +335,9 @@ library Position {
     /// @dev Validates whether the position at `accountId` and `marketId` would pass liquidation.
     function validateLiquidation(
         uint128 accountId,
-        PerpMarket.Data storage market,
-        PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
+        BfpMarket.Data storage market,
+        BfpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig,
         address oracleManagerAddress
     )
         internal
@@ -424,8 +424,8 @@ library Position {
         uint256 notionalValueUsd,
         uint256 collateralUsd,
         uint256 ethPrice,
-        PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        BfpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         uint256 flagExecutionCostInUsd = ethPrice.mulDecimal(
             block.basefee * globalConfig.keeperFlagGasUnits
@@ -460,10 +460,10 @@ library Position {
         int128 size,
         uint256 price,
         uint256 collateralUsd,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         // Short-circuit empty position and return zero'd values.
         if (size == 0) {
@@ -525,15 +525,15 @@ library Position {
     function getLiquidationKeeperFee(
         uint128 size,
         uint256 ethPrice,
-        PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        BfpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
         // We exit early if size is 0, this would only happen then remaining liqcapacity is 0.
         if (size == 0) {
             return 0;
         }
 
-        uint256 maxLiqCapacity = PerpMarket.getMaxLiquidatableCapacity(marketConfig);
+        uint256 maxLiqCapacity = BfpMarket.getMaxLiquidatableCapacity(marketConfig);
         uint256 liquidationExecutionCostUsd = ethPrice.mulDecimal(
             block.basefee * globalConfig.keeperLiquidationGasUnits
         );
@@ -550,13 +550,13 @@ library Position {
 
     /// @dev Returns the health data given the `marketId`, `config`, and position{...} details.
     function getHealthData(
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         int128 size,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
         uint256 positionEntryUtilizationAccrued,
         uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
         AddressRegistry.Data memory addresses
     ) internal view returns (Position.HealthData memory healthData) {
@@ -602,7 +602,7 @@ library Position {
     function getHealthFactor(
         int128 size,
         uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
@@ -623,7 +623,7 @@ library Position {
     function isLiquidatable(
         Position.Data storage self,
         uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
         Margin.MarginValues memory marginValues,
         AddressRegistry.Data memory addresses
     ) internal view returns (bool) {
@@ -646,7 +646,7 @@ library Position {
     /// @dev Returns the funding accrued from when the position was opened to now.
     function getAccruedFunding(
         Position.Data storage self,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 price
     ) internal view returns (int128) {
         if (self.size == 0) {
@@ -668,7 +668,7 @@ library Position {
     /// @dev Returns the utilization accrued from when the position was opened to now.
     function getAccruedUtilization(
         Position.Data storage self,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 price
     ) internal view returns (uint128) {
         if (self.size == 0) {

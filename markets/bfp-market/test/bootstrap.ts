@@ -223,12 +223,12 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       maxHooksPerOrder: args.global.hooks.maxHooksPerOrder,
     });
 
-    const perpMarketPoolConfig = markets.map(({ marketId }) => ({
+    const bfpMarketPoolConfig = markets.map(({ marketId }) => ({
       marketId: marketId(),
       weightD18: utils.parseEther('1'),
       maxDebtShareValueD18: utils.parseEther('1'),
     }));
-    await Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, perpMarketPoolConfig);
+    await Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, bfpMarketPoolConfig);
 
     // Collaterals we want to configure for the perp market - prepended with sUSD configuration.
     const sUsdMaxDepositAllowance = bn(10_000_000);

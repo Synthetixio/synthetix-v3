@@ -11,11 +11,11 @@ import {IBfpAccountModule} from "../interfaces/IBfpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Flags} from "../utils/Flags.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
@@ -27,7 +27,7 @@ contract BfpAccountModule is IBfpAccountModule {
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
     using Position for Position.Data;
     using Margin for Margin.GlobalData;
     using Margin for Margin.Data;
@@ -91,9 +91,9 @@ contract BfpAccountModule is IBfpAccountModule {
         uint128 marketId
     ) external view returns (IBfpAccountModule.AccountDigest memory) {
         Account.exists(accountId);
-        PerpMarket.exists(marketId);
+        BfpMarket.exists(marketId);
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
@@ -140,7 +140,7 @@ contract BfpAccountModule is IBfpAccountModule {
         uint128 marketId
     ) public view returns (IBfpAccountModule.PositionDigest memory) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
         if (position.size == 0) {
@@ -153,7 +153,7 @@ contract BfpAccountModule is IBfpAccountModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
         uint256 oraclePrice = market.getOraclePrice(addresses);
         Margin.MarginValues memory marginValues = Margin.getMarginUsd(
             accountId,
@@ -224,7 +224,7 @@ contract BfpAccountModule is IBfpAccountModule {
 
         Runtime_splitAccount memory runtime;
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Margin.Data storage toAccountMargin = Margin.load(toId, marketId);
         Position.Data storage toPosition = market.positions[toId];
         Position.Data storage fromPosition = market.positions[fromId];
@@ -270,7 +270,7 @@ contract BfpAccountModule is IBfpAccountModule {
         });
 
         runtime.oraclePrice = market.getOraclePrice(addresses);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
 
         // `fromAccount` position should not be liquidatable.
         if (
@@ -288,7 +288,7 @@ contract BfpAccountModule is IBfpAccountModule {
         // Move collaterals `from` -> `to`.
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         runtime.supportedCollateralsLength = globalMarginConfig.supportedCollaterals.length;
 
@@ -442,8 +442,8 @@ contract BfpAccountModule is IBfpAccountModule {
 
         Runtime_mergeAccounts memory runtime;
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         Margin.Data storage fromAccountMargin = Margin.load(fromId, marketId);
@@ -603,7 +603,7 @@ contract BfpAccountModule is IBfpAccountModule {
         (runtime.mergedCollateralUsd, runtime.mergedDiscountedCollateralUsd) = Margin
             .getCollateralUsd(
                 Margin.load(toId, marketId),
-                PerpMarketConfiguration.load(),
+                BfpMarketConfiguration.load(),
                 addresses
             );
         (runtime.im, , ) = Position.getLiquidationMarginUsd(

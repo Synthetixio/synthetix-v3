@@ -13,8 +13,8 @@ import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
 import {IBfpRewardDistributor} from "../interfaces/IBfpRewardDistributor.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Order} from "../storage/Order.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
@@ -25,7 +25,7 @@ contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
     using Position for Position.Data;
 
     // --- Immutables --- //
@@ -64,9 +64,9 @@ contract LiquidationModule is ILiquidationModule {
     function updateMarketPreLiquidation(
         uint128 accountId,
         uint128 marketId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 oraclePrice,
-        PerpMarketConfiguration.GlobalData storage globalConfig
+        BfpMarketConfiguration.GlobalData storage globalConfig
     )
         private
         returns (
@@ -87,7 +87,7 @@ contract LiquidationModule is ILiquidationModule {
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(
             accountId,
             market,
-            PerpMarketConfiguration.load(marketId),
+            BfpMarketConfiguration.load(marketId),
             globalConfig,
             ORACLE_MANAGER
         );
@@ -121,7 +121,7 @@ contract LiquidationModule is ILiquidationModule {
     function liquidateCollateral(
         uint128 accountId,
         uint128 marketId,
-        PerpMarket.Data storage market
+        BfpMarket.Data storage market
     ) private {
         Runtime_liquidateCollateral memory runtime;
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -225,7 +225,7 @@ contract LiquidationModule is ILiquidationModule {
     function flagPosition(uint128 accountId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.FLAG_POSITION);
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
         // Cannot reflag an account that's already flagged.
@@ -257,7 +257,7 @@ contract LiquidationModule is ILiquidationModule {
         if (
             !position.isLiquidatable(
                 oraclePrice,
-                PerpMarketConfiguration.load(marketId),
+                BfpMarketConfiguration.load(marketId),
                 marginValues,
                 addresses
             )
@@ -271,7 +271,7 @@ contract LiquidationModule is ILiquidationModule {
             emit OrderCanceled(accountId, marketId, 0, order.commitmentTime);
             delete market.orders[accountId];
         }
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         uint256 ethPrice = INodeModule(ORACLE_MANAGER)
             .process(globalConfig.ethOracleNodeId)
@@ -281,7 +281,7 @@ contract LiquidationModule is ILiquidationModule {
             MathUtil.abs(size).mulDecimal(oraclePrice),
             marginValues.collateralUsd,
             ethPrice,
-            PerpMarketConfiguration.load(marketId),
+            BfpMarketConfiguration.load(marketId),
             globalConfig
         );
 
@@ -303,7 +303,7 @@ contract LiquidationModule is ILiquidationModule {
         FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_POSITION);
 
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
         // Cannot liquidate a position that does not exist.
@@ -318,7 +318,7 @@ contract LiquidationModule is ILiquidationModule {
                 oracleManager: ORACLE_MANAGER
             })
         );
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         address flagger = market.flaggedLiquidations[accountId];
         (, Position.Data memory newPosition, uint256 liqKeeperFee) = updateMarketPreLiquidation(
@@ -359,7 +359,7 @@ contract LiquidationModule is ILiquidationModule {
         FeatureFlag.ensureAccessToFeature(Flags.LIQUIDATE_MARGIN_ONLY);
 
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -385,10 +385,10 @@ contract LiquidationModule is ILiquidationModule {
             delete market.orders[accountId];
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
         uint256 keeperReward = Margin.getMarginLiquidationOnlyReward(
             marginValues.collateralUsd,
-            PerpMarketConfiguration.load(marketId),
+            BfpMarketConfiguration.load(marketId),
             globalConfig,
             addresses
         );
@@ -409,10 +409,10 @@ contract LiquidationModule is ILiquidationModule {
         uint128 marketId
     ) external view returns (uint256 flagKeeperReward, uint256 liqKeeperFee) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
 
         uint256 absSize = MathUtil.abs(market.positions[accountId].size);
 
@@ -465,8 +465,8 @@ contract LiquidationModule is ILiquidationModule {
             uint128 lastLiquidationTimestamp
         )
     {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
+        return market.getRemainingLiquidatableSizeCapacity(BfpMarketConfiguration.load(marketId));
     }
 
     /// @inheritdoc ILiquidationModule
@@ -474,7 +474,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (bool) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -485,7 +485,7 @@ contract LiquidationModule is ILiquidationModule {
         return
             market.positions[accountId].isLiquidatable(
                 oraclePrice,
-                PerpMarketConfiguration.load(marketId),
+                BfpMarketConfiguration.load(marketId),
                 Margin.getMarginUsd(accountId, market, oraclePrice, addresses),
                 addresses
             );
@@ -497,7 +497,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 marketId
     ) external view returns (bool) {
         Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -523,9 +523,9 @@ contract LiquidationModule is ILiquidationModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view returns (uint256 im, uint256 mm) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Account.exists(accountId);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.Data storage marketConfig = BfpMarketConfiguration.load(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
@@ -535,7 +535,7 @@ contract LiquidationModule is ILiquidationModule {
         uint256 oraclePrice = market.getOraclePrice(addresses);
         (uint256 collateralUsd, ) = Margin.getCollateralUsd(
             Margin.load(accountId, marketId),
-            PerpMarketConfiguration.load(),
+            BfpMarketConfiguration.load(),
             addresses
         );
         (im, mm, ) = Position.getLiquidationMarginUsd(
@@ -551,7 +551,7 @@ contract LiquidationModule is ILiquidationModule {
     function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
 
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        BfpMarket.Data storage market = BfpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
         AddressRegistry.Data memory addresses = AddressRegistry.Data(
@@ -565,7 +565,7 @@ contract LiquidationModule is ILiquidationModule {
             Position.getHealthFactor(
                 position.size,
                 oraclePrice,
-                PerpMarketConfiguration.load(marketId),
+                BfpMarketConfiguration.load(marketId),
                 Margin.getMarginUsd(accountId, market, oraclePrice, addresses),
                 addresses
             );

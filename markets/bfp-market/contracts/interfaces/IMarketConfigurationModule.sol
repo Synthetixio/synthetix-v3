@@ -4,12 +4,12 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 
 interface IMarketConfigurationModule {
     // --- Structs --- //
 
-    /// @notice See PerpMarketConfiguration.GlobalData for more details.
+    /// @notice See BfpMarketConfiguration.GlobalData for more details.
     struct GlobalMarketConfigureParameters {
         uint64 pythPublishTimeMin;
         uint64 pythPublishTimeMax;
@@ -33,7 +33,7 @@ interface IMarketConfigurationModule {
         uint128 highUtilizationSlopePercent;
     }
 
-    /// @notice See PerpMarketConfiguration.Data for more details.
+    /// @notice See BfpMarketConfiguration.Data for more details.
     struct ConfigureByMarketParameters {
         uint128 marketId;
         bytes32 oracleNodeId;
@@ -88,12 +88,12 @@ interface IMarketConfigurationModule {
     function getMarketConfiguration()
         external
         view
-        returns (PerpMarketConfiguration.GlobalData memory);
+        returns (BfpMarketConfiguration.GlobalData memory);
 
     /// @notice Returns configured market specific parameters.
     /// @param marketId Market to query against
     /// @return getMarketConfigurationById A struct of configured parameters for marketId
     function getMarketConfigurationById(
         uint128 marketId
-    ) external view returns (PerpMarketConfiguration.Data memory);
+    ) external view returns (BfpMarketConfiguration.Data memory);
 }

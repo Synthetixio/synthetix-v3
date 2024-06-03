@@ -4,8 +4,8 @@ pragma solidity >=0.8.11 <0.9.0;
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
+import {BfpMarketConfiguration} from "../storage/BfpMarketConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
@@ -15,7 +15,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external {
         OwnableStorage.onlyOwner();
 
-        PerpMarketConfiguration.GlobalData storage config = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage config = BfpMarketConfiguration.load();
 
         config.pythPublishTimeMin = data.pythPublishTimeMin;
         config.pythPublishTimeMax = data.pythPublishTimeMax;
@@ -49,10 +49,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId = data.marketId;
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
-        PerpMarket.exists(marketId);
+        BfpMarket.exists(marketId);
 
-        PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.Data storage config = BfpMarketConfiguration.load(marketId);
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         if (data.minMarginUsd < globalConfig.maxKeeperFeeUsd) {
             revert ErrorUtil.InvalidParameter(
@@ -93,15 +93,15 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function getMarketConfiguration()
         external
         pure
-        returns (PerpMarketConfiguration.GlobalData memory)
+        returns (BfpMarketConfiguration.GlobalData memory)
     {
-        return PerpMarketConfiguration.load();
+        return BfpMarketConfiguration.load();
     }
 
     /// @inheritdoc IMarketConfigurationModule
     function getMarketConfigurationById(
         uint128 marketId
-    ) external pure returns (PerpMarketConfiguration.Data memory) {
-        return PerpMarketConfiguration.load(marketId);
+    ) external pure returns (BfpMarketConfiguration.Data memory) {
+        return BfpMarketConfiguration.load(marketId);
     }
 }

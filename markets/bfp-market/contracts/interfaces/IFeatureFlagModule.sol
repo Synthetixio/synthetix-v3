@@ -6,7 +6,7 @@ import {IFeatureFlagModule as IBaseFeatureFlagModule} from "@synthetixio/core-mo
 interface IFeatureFlagModule is IBaseFeatureFlagModule {
     /// @notice Emitted when all features get suspended or enabled.
     /// @param suspended True to indicate the market was suspended or false if enabled
-    event PerpMarketSuspended(bool suspended);
+    event BfpMarketSuspended(bool suspended);
 
     /// @notice Suspends all features. Can be called by owner or a configured "denier".
     function suspendAllFeatures() external;

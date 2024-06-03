@@ -3,11 +3,11 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 
-library PerpMarketConfiguration {
+library BfpMarketConfiguration {
     // --- Constants --- //
 
     bytes32 constant GLOBAL_DATA_SLOT_NAME =
-        keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
+        keccak256(abi.encode("io.synthetix.bfp-market.GlobalBfpMarketConfiguration"));
 
     // --- Storage --- //
 
@@ -99,16 +99,16 @@ library PerpMarketConfiguration {
         uint128 liquidationMaxPd;
     }
 
-    function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
+    function load() internal pure returns (BfpMarketConfiguration.GlobalData storage d) {
         bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s
         }
     }
 
-    function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
+    function load(uint128 marketId) internal pure returns (BfpMarketConfiguration.Data storage d) {
         bytes32 s = keccak256(
-            abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId)
+            abi.encode("io.synthetix.bfp-market.BfpMarketConfiguration", marketId)
         );
         assembly {
             d.slot := s

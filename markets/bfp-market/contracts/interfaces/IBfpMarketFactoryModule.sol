@@ -4,13 +4,13 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
+import {BfpMarket} from "../storage/BfpMarket.sol";
 import {IBaseBfpMarket} from "./IBaseBfpMarket.sol";
 
 interface IBfpMarketFactoryModule is IMarket, IBaseBfpMarket {
     // --- Structs --- //
 
-    struct CreatePerpMarketParameters {
+    struct CreateBfpMarketParameters {
         /// Name of the market to be created e.g, ETHPERP
         bytes32 name;
     }
@@ -83,11 +83,11 @@ interface IBfpMarketFactoryModule is IMarket, IBaseBfpMarket {
     /// @param implementation Address of reward distributor implementation
     function setRewardDistributorImplementation(address implementation) external;
 
-    /// @notice Registers a new PerpMarket with Synthetix and initializes storage.
+    /// @notice Registers a new BfpMarket with Synthetix and initializes storage.
     /// @param data A struct of parameters to create a market with
     /// @return createMarket Market id of newly created market
     function createMarket(
-        IBfpMarketFactoryModule.CreatePerpMarketParameters memory data
+        IBfpMarketFactoryModule.CreateBfpMarketParameters memory data
     ) external returns (uint128);
 
     // --- Views --- //

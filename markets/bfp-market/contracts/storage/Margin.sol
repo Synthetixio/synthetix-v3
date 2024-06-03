@@ -5,8 +5,8 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
-import {PerpMarket} from "./PerpMarket.sol";
+import {BfpMarketConfiguration} from "./BfpMarketConfiguration.sol";
+import {BfpMarket} from "./BfpMarket.sol";
 import {Position} from "./Position.sol";
 import {AddressRegistry} from "./AddressRegistry.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -18,7 +18,7 @@ library Margin {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
-    using PerpMarket for PerpMarket.Data;
+    using BfpMarket for BfpMarket.Data;
     using Position for Position.Data;
 
     // --- Constants --- //
@@ -97,7 +97,7 @@ library Margin {
      */
     function realizeAccountPnlAndUpdate(
         Margin.Data storage accountMargin,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         int256 amountDeltaUsd,
         AddressRegistry.Data memory addresses
     ) internal {
@@ -140,7 +140,7 @@ library Margin {
     /// @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
     function getCollateralUsd(
         Margin.Data storage accountMargin,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256 collateralUsd, uint256 discountedCollateralUsd) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -189,7 +189,7 @@ library Margin {
      */
     function getPnlAdjustmentUsd(
         uint128 accountId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 oraclePrice,
         uint256 pricePnLPrice
     ) internal view returns (int256) {
@@ -216,13 +216,13 @@ library Margin {
      */
     function getMarginUsd(
         uint128 accountId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 price,
         AddressRegistry.Data memory addresses
     ) internal view returns (MarginValues memory marginValues) {
         (uint256 collateralUsd, uint256 discountedCollateralUsd) = getCollateralUsd(
             Margin.load(accountId, market.id),
-            PerpMarketConfiguration.load(),
+            BfpMarketConfiguration.load(),
             addresses
         );
         int256 adjustment = getPnlAdjustmentUsd(accountId, market, price, price);
@@ -301,7 +301,7 @@ library Margin {
     /// @dev Returns the NAV given the `accountId` and `market` where NAV is size * price + PnL.
     function getNetAssetValue(
         uint128 accountId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         uint256 price,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
@@ -356,7 +356,7 @@ library Margin {
         uint256 amountAvailable,
         uint256 collateralPrice,
         address collateralAddress,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig,
         Margin.GlobalData storage globalMarginConfig,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
@@ -387,8 +387,8 @@ library Margin {
     /// @dev Returns the reward for liquidating margin.
     function getMarginLiquidationOnlyReward(
         uint256 collateralValue,
-        PerpMarketConfiguration.Data storage marketConfig,
-        PerpMarketConfiguration.GlobalData storage globalConfig,
+        BfpMarketConfiguration.Data storage marketConfig,
+        BfpMarketConfiguration.GlobalData storage globalConfig,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         uint256 ethPrice = INodeModule(addresses.oracleManager)
@@ -414,7 +414,7 @@ library Margin {
     /// @dev Returns whether an account in a specific market's margin can be liquidated.
     function isMarginLiquidatable(
         uint128 accountId,
-        PerpMarket.Data storage market,
+        BfpMarket.Data storage market,
         Margin.MarginValues memory marginValues,
         AddressRegistry.Data memory addresses
     ) internal view returns (bool) {
@@ -427,8 +427,8 @@ library Margin {
             marginValues.discountedMarginUsd.toInt() -
                 getMarginLiquidationOnlyReward(
                     marginValues.collateralUsd,
-                    PerpMarketConfiguration.load(market.id),
-                    PerpMarketConfiguration.load(),
+                    BfpMarketConfiguration.load(market.id),
+                    BfpMarketConfiguration.load(),
                     addresses
                 ).toInt() <=
             0;

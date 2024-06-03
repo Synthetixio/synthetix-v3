@@ -47,7 +47,7 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         suspendFeature(Flags.MERGE_ACCOUNT);
         suspendFeature(Flags.SPLIT_ACCOUNT);
 
-        emit PerpMarketSuspended(true);
+        emit BfpMarketSuspended(true);
     }
 
     /// @inheritdoc IFeatureFlagModule
@@ -67,6 +67,6 @@ contract FeatureFlagModule is IFeatureFlagModule, BaseFeatureFlagModule {
         enableFeature(Flags.MERGE_ACCOUNT);
         enableFeature(Flags.SPLIT_ACCOUNT);
 
-        emit PerpMarketSuspended(false);
+        emit BfpMarketSuspended(false);
     }
 }

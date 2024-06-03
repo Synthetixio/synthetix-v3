@@ -501,15 +501,15 @@ describe('LiquidationModule', () => {
           ];
         } else {
           expectedEvents = [
-            // Withdraw and transfer from Core -> PerpMarket.
+            // Withdraw and transfer from Core -> BfpMarket.
             `Transfer("${Core.address}", "${BfpMarketProxy.address}", ${collateralDepositAmount})`,
             new RegExp(
               `MarketCollateralWithdrawn\\(${marketId}, "${collateralAddress}", ${collateralDepositAmount}, "${BfpMarketProxy.address}",`
             ), // + tail properties omitted.
-            // Transfer from PerpMarket -> RewardDistributor.
+            // Transfer from BfpMarket -> RewardDistributor.
             `Transfer("${BfpMarketProxy.address}", "${distributorAddress}", ${collateralDepositAmount})`,
             `RewardsDistributed(${poolId}, "${poolCollateralAddress}", "${distributorAddress}", ${collateralDepositAmount}, ${blockTime}, 0)`,
-            // Transfer flag reward from PerpMarket -> Keeper.
+            // Transfer flag reward from BfpMarket -> Keeper.
             `Transfer("${ADDRESS0}", "${keeperAddress}", ${flagKeeperReward})`,
             new RegExp(
               `MarketUsdWithdrawn\\(${marketId}, "${keeperAddress}", ${flagKeeperReward}, "${BfpMarketProxy.address}",`

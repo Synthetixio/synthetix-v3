@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import {BfpMarketConfiguration} from "./BfpMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
 library Order {
@@ -14,7 +14,7 @@ library Order {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    /// @dev Order.Data structs are stored within PerpMarket.Data.orders.
+    /// @dev Order.Data structs are stored within BfpMarket.Data.orders.
     struct Data {
         /// Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;
@@ -104,7 +104,7 @@ library Order {
         uint128 keeperFeeBufferUsd,
         uint256 ethPrice
     ) internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperSettlementGasUnits * block.basefee
@@ -121,7 +121,7 @@ library Order {
 
     /// @dev Returns the keeper fee in USD for order cancellations.
     function getCancellationKeeperFee(uint256 ethPrice) internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        BfpMarketConfiguration.GlobalData storage globalConfig = BfpMarketConfiguration.load();
 
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperCancellationGasUnits * block.basefee
