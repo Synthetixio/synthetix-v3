@@ -2,7 +2,7 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { IPerpAccountModule } from '../typechain-types';
+import { IBfpAccountModule } from '../typechain-types';
 
 // --- Primitives --- //
 
@@ -19,7 +19,7 @@ export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) =>
 
 // --- Calcs --- //
 
-export const calcTotalPnls = (positionDigests: IPerpAccountModule.PositionDigestStructOutput[]) => {
+export const calcTotalPnls = (positionDigests: IBfpAccountModule.PositionDigestStructOutput[]) => {
   return positionDigests
     .map(({ pnl, accruedFunding, accruedUtilization }) =>
       wei(pnl).add(accruedFunding).sub(accruedUtilization)

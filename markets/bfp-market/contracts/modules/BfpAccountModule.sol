@@ -7,7 +7,7 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
+import {IBfpAccountModule} from "../interfaces/IBfpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Flags} from "../utils/Flags.sol";
@@ -20,7 +20,7 @@ import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguratio
 
 /* solhint-disable meta-transactions/no-msg-sender */
 
-contract PerpAccountModule is IPerpAccountModule {
+contract BfpAccountModule is IBfpAccountModule {
     using DecimalMath for uint256;
     using DecimalMath for uint128;
     using DecimalMath for int128;
@@ -85,11 +85,11 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 fromAccountCollateral;
     }
 
-    /// @inheritdoc IPerpAccountModule
+    /// @inheritdoc IBfpAccountModule
     function getAccountDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.AccountDigest memory) {
+    ) external view returns (IBfpAccountModule.AccountDigest memory) {
         Account.exists(accountId);
         PerpMarket.exists(marketId);
 
@@ -98,7 +98,7 @@ contract PerpAccountModule is IPerpAccountModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 length = globalMarginConfig.supportedCollaterals.length;
-        IPerpAccountModule.DepositedCollateral[]
+        IBfpAccountModule.DepositedCollateral[]
             memory depositedCollaterals = new DepositedCollateral[](length);
 
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
@@ -113,7 +113,7 @@ contract PerpAccountModule is IPerpAccountModule {
         for (uint256 i = 0; i < length; ) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
             collateralPrice = globalMarginConfig.getCollateralPrice(collateralAddress, addresses);
-            depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
+            depositedCollaterals[i] = IBfpAccountModule.DepositedCollateral(
                 collateralAddress,
                 accountMargin.collaterals[collateralAddress],
                 collateralPrice
@@ -126,7 +126,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         (uint256 collateralUsd, ) = Margin.getCollateralUsd(accountMargin, globalConfig, addresses);
         return
-            IPerpAccountModule.AccountDigest(
+            IBfpAccountModule.AccountDigest(
                 depositedCollaterals,
                 collateralUsd,
                 accountMargin.debtUsd,
@@ -134,17 +134,17 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /// @inheritdoc IPerpAccountModule
+    /// @inheritdoc IBfpAccountModule
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
-    ) public view returns (IPerpAccountModule.PositionDigest memory) {
+    ) public view returns (IBfpAccountModule.PositionDigest memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
         if (position.size == 0) {
-            IPerpAccountModule.PositionDigest memory emptyPositionDigest;
+            IBfpAccountModule.PositionDigest memory emptyPositionDigest;
             return emptyPositionDigest;
         }
 
@@ -182,7 +182,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         return
-            IPerpAccountModule.PositionDigest(
+            IBfpAccountModule.PositionDigest(
                 accountId,
                 marketId,
                 marginValues.discountedMarginUsd,
@@ -200,7 +200,7 @@ contract PerpAccountModule is IPerpAccountModule {
             );
     }
 
-    /// @inheritdoc IPerpAccountModule
+    /// @inheritdoc IBfpAccountModule
     function splitAccount(
         uint128 fromId,
         uint128 toId,
@@ -428,7 +428,7 @@ contract PerpAccountModule is IPerpAccountModule {
         emit AccountSplit(fromId, toId, marketId);
     }
 
-    /// @inheritdoc IPerpAccountModule
+    /// @inheritdoc IBfpAccountModule
     function mergeAccounts(uint128 fromId, uint128 toId, uint128 marketId) external {
         FeatureFlag.ensureAccessToFeature(Flags.MERGE_ACCOUNT);
 

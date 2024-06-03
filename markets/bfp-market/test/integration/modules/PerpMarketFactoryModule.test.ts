@@ -34,7 +34,7 @@ import {
 import { Collateral, Market, Trader } from '../../typed';
 import { isSameSide } from '../../calculations';
 import { shuffle, times } from 'lodash';
-import { IPerpAccountModule } from '../../../typechain-types';
+import { IBfpAccountModule } from '../../../typechain-types';
 
 describe('PerpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -803,7 +803,7 @@ describe('PerpMarketFactoryModule', () => {
 
       /** Calculates the sum of all PnL (inc. funding/util/price) for n position digests. */
       const calcSumPricePnlAccruedFunding = (
-        positionDigests: IPerpAccountModule.PositionDigestStructOutput[]
+        positionDigests: IBfpAccountModule.PositionDigestStructOutput[]
       ) =>
         positionDigests
           .map((d) => wei(d.pnl).add(d.accruedFunding).sub(d.accruedUtilization))

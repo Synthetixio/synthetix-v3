@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-interface IPerpAccountModule {
+interface IBfpAccountModule {
     // --- Structs --- //
 
     struct DepositedCollateral {
@@ -15,7 +15,7 @@ interface IPerpAccountModule {
 
     struct AccountDigest {
         /// Array of collateral deposited into account as margin.
-        IPerpAccountModule.DepositedCollateral[] depositedCollaterals;
+        IBfpAccountModule.DepositedCollateral[] depositedCollaterals;
         /// USD value of deposited collateral.
         uint256 collateralUsd;
         /// Debt of account in USD.
@@ -78,7 +78,7 @@ interface IPerpAccountModule {
     function getAccountDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.AccountDigest memory);
+    ) external view returns (IBfpAccountModule.AccountDigest memory);
 
     /// @notice Returns a digest of an open position belonging to `accountId` in `marketId`.
     /// @param accountId Account of position
@@ -87,7 +87,7 @@ interface IPerpAccountModule {
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.PositionDigest memory);
+    ) external view returns (IBfpAccountModule.PositionDigest memory);
 
     /// @notice Merges two accounts, combining `fromId` into `toId` for `marketId`. Merging accounts will realize the
     ///         position of account `toId` in addition to transferring collateral and size from one to the other. It's

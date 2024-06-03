@@ -4,7 +4,7 @@ import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf } from '../../generators';
 import { fastForwardBySec } from '../../helpers';
 
-describe('PerpAccountModule', () => {
+describe('BfpAccountModule', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, traders, systems, provider, restore } = bs;
 

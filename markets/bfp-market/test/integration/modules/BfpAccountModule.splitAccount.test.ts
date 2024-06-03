@@ -6,7 +6,7 @@ import { commitAndSettle, commitOrder, depositMargin, withExplicitEvmMine } from
 import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe('PerpAccountModule splitAccount', () => {
+describe('BfpAccountModule splitAccount', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, traders, owner, systems, restore, provider } = bs;
 

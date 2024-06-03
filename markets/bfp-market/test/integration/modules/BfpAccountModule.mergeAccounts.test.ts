@@ -31,7 +31,7 @@ import {
 } from '../../helpers';
 import { calcDebtCorrection, calcPricePnl } from '../../calculations';
 
-describe('PerpAccountModule mergeAccounts', () => {
+describe('BfpAccountModule mergeAccounts', () => {
   const bs = bootstrap(genBootstrap());
   const {
     markets,
