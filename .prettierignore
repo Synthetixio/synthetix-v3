@@ -18,7 +18,6 @@ markets/*/test/generated
 lerna.json
 *.hbs
 **/subgraph/**/deployments
-**/subgraph/**/generated
 **/subgraph/build
 **/subgraph/.bin
 **/artifacts/
