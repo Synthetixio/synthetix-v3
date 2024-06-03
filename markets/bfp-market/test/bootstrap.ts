@@ -3,7 +3,7 @@ import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import { BfpMarketProxy, PerpAccountProxy } from './generated/typechain';
+import { BfpMarketProxy, BfpAccountProxy } from './generated/typechain';
 import {
   CollateralMock,
   SettlementHookMock,
@@ -29,7 +29,7 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
   MergeAccountSettlementHookMock: MergeAccountSettlementHookMock;
-  Account: PerpAccountProxy;
+  Account: BfpAccountProxy;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -47,7 +47,7 @@ export interface Contracts {
   CollateralMockD18: CollateralMock;
   CollateralMockD8: CollateralMock;
   BfpMarketProxy: BfpMarketProxy;
-  PerpAccountProxy: PerpAccountProxy;
+  BfpAccountProxy: BfpAccountProxy;
   SettlementHookMock: SettlementHookMock;
   SettlementHook2Mock: SettlementHookMock;
   MergeAccountSettlementHookMock: MergeAccountSettlementHookMock;
@@ -115,7 +115,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
   before('load core and perp contracts', () => {
     systems = {
-      Account: getContract('PerpAccountProxy'),
+      Account: getContract('BfpAccountProxy'),
       BfpMarketProxy: getContract('BfpMarketProxy'),
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),

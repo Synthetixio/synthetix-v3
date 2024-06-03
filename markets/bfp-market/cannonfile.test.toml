@@ -130,9 +130,9 @@ args = [
     "",
     "<%= imports.synthetix.contracts.AccountRouter.address %>",
 ]
-factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
-factory.PerpAccountProxy.event = "AssociatedSystemSet"
-factory.PerpAccountProxy.arg = 2
+factory.BfpAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.BfpAccountProxy.event = "AssociatedSystemSet"
+factory.BfpAccountProxy.arg = 2
 
 # --- Mocks --- #
 
