@@ -3,7 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
-import { PerpCollateral, bootstrap } from '../../bootstrap';
+import { BfpCollateral, bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../generators';
 import {
   depositMargin,
@@ -449,7 +449,7 @@ describe('LiquidationModule', () => {
       ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
     ]).it(
       'should emit all events in correct order (%s)',
-      async (_, getCollateral: () => PerpCollateral) => {
+      async (_, getCollateral: () => BfpCollateral) => {
         const { BfpMarketProxy, Core } = systems();
 
         const orderSide = genSide();

@@ -5,7 +5,7 @@ import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { uniq } from 'lodash';
 import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './typed';
-import { PerpCollateral } from './bootstrap';
+import { BfpCollateral } from './bootstrap';
 import { parseUnits } from 'ethers/lib/utils';
 import hre from 'hardhat';
 
@@ -400,14 +400,14 @@ export const withExplicitEvmMine = async (
   return { tx, receipt };
 };
 
-export const getSusdCollateral = (collaterals: PerpCollateral[]) => {
+export const getSusdCollateral = (collaterals: BfpCollateral[]) => {
   const sUsdCollateral = collaterals.filter((c) => c.name === 'sUSD')[0];
   return !sUsdCollateral
     ? raise('sUSD collateral not found. Did you mistakenly use collateralsWithoutSusd()?')
     : sUsdCollateral;
 };
 
-export const isSusdCollateral = (collateral: PerpCollateral) => collateral.name === 'sUSD';
+export const isSusdCollateral = (collateral: BfpCollateral) => collateral.name === 'sUSD';
 
 export const findOrThrow = <A>(l: A[], p: (a: A) => boolean) => {
   const found = l.find(p);

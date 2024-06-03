@@ -66,7 +66,7 @@ export interface Contracts {
 const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.test.toml' });
 const restoreSnapshot = _bootstraped.createSnapshot();
 
-export interface PerpCollateral {
+export interface BfpCollateral {
   name: string;
   initialPrice: BigNumber;
   max: BigNumber;
@@ -148,8 +148,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     marketId: () => BigNumber;
   }[] = [];
 
-  let collaterals: PerpCollateral[];
-  let collateralsWithoutSusd: PerpCollateral[];
+  let collaterals: BfpCollateral[];
+  let collateralsWithoutSusd: BfpCollateral[];
 
   let keeper: Signer;
   let keeper2: Signer;
@@ -312,7 +312,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     // Collect non-sUSD collaterals along with their Synth Market.
     const nonSusdCollaterals = MARGIN_COLLATERALS_TO_CONFIGURE.map(
-      (collateral, i): PerpCollateral => {
+      (collateral, i): BfpCollateral => {
         return {
           ...collateral,
           skewScale: () => skewScales[i + 1],
@@ -328,7 +328,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       }
     );
 
-    const sUsdCollateral: PerpCollateral = {
+    const sUsdCollateral: BfpCollateral = {
       name: 'sUSD',
       initialPrice: bn(1),
       max: sUsdMaxDepositAllowance,

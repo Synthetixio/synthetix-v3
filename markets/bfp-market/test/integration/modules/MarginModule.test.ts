@@ -7,7 +7,7 @@ import { wei } from '@synthetixio/wei';
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import forEach from 'mocha-each';
-import { PerpCollateral, bootstrap } from '../../bootstrap';
+import { BfpCollateral, bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
@@ -307,7 +307,7 @@ describe('MarginModule', async () => {
         ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
       ]).it(
         'should emit all events in correct order (%s)',
-        async (_, getCollateral: () => PerpCollateral) => {
+        async (_, getCollateral: () => BfpCollateral) => {
           const { BfpMarketProxy, Core } = systems();
 
           const { collateral, trader, traderAddress, collateralDepositAmount, marketId } =
@@ -707,7 +707,7 @@ describe('MarginModule', async () => {
         ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
       ]).it(
         'should emit all events in correct order (%s)',
-        async (_, getCollateral: () => PerpCollateral) => {
+        async (_, getCollateral: () => BfpCollateral) => {
           const { BfpMarketProxy, Core } = systems();
           const { trader, marketId, collateral, collateralDepositAmount, traderAddress } =
             await depositMargin(bs, genTrader(bs, { desiredCollateral: getCollateral() }));
@@ -1439,7 +1439,7 @@ describe('MarginModule', async () => {
         ['non-sUSD', () => genOneOf(collateralsWithoutSusd())],
       ]).it(
         'should withdraw correct amounts after winning position (%s)',
-        async (_, getCollateral: () => PerpCollateral) => {
+        async (_, getCollateral: () => BfpCollateral) => {
           const { BfpMarketProxy, USD } = systems();
           const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress } =
             await depositMargin(bs, genTrader(bs, { desiredCollateral: getCollateral() }));
