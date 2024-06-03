@@ -5,9 +5,9 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {IBasePerpMarket} from "./IBasePerpMarket.sol";
+import {IBaseBfpMarket} from "./IBaseBfpMarket.sol";
 
-interface IBfpMarketFactoryModule is IMarket, IBasePerpMarket {
+interface IBfpMarketFactoryModule is IMarket, IBaseBfpMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {

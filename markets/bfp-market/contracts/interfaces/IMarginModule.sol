@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {IBasePerpMarket} from "./IBasePerpMarket.sol";
+import {IBaseBfpMarket} from "./IBaseBfpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
 
-interface IMarginModule is IBasePerpMarket {
+interface IMarginModule is IBaseBfpMarket {
     // --- Structs --- //
 
     struct ConfiguredCollateral {

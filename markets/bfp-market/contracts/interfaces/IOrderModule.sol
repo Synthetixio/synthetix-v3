@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {IBasePerpMarket} from "./IBasePerpMarket.sol";
+import {IBaseBfpMarket} from "./IBaseBfpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Order} from "../storage/Order.sol";
 
-interface IOrderModule is IBasePerpMarket {
+interface IOrderModule is IBaseBfpMarket {
     // --- Structs --- //
 
     struct OrderDigest {

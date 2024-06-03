@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {IBasePerpMarket} from "./IBasePerpMarket.sol";
+import {IBaseBfpMarket} from "./IBaseBfpMarket.sol";
 
-interface ILiquidationModule is IBasePerpMarket {
+interface ILiquidationModule is IBaseBfpMarket {
     // --- Events --- //
 
     /// @notice Emitted when a position is flagged for liquidation.
