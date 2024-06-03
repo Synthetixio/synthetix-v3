@@ -15,7 +15,7 @@ import {
 } from '../../helpers';
 import { calcUtilization, calcUtilizationRate } from '../../calculations';
 
-describe('PerpMarketFactoryModule Utilization', () => {
+describe('BfpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, systems, restore, provider, pool, owner, collateralsWithoutSusd } = bs;
 

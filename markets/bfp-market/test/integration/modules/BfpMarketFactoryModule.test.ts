@@ -36,7 +36,7 @@ import { isSameSide } from '../../calculations';
 import { shuffle, times } from 'lodash';
 import { IBfpAccountModule } from '../../../typechain-types';
 
-describe('PerpMarketFactoryModule', () => {
+describe('BfpMarketFactoryModule', () => {
   const bs = bootstrap(genBootstrap());
   const {
     traders,

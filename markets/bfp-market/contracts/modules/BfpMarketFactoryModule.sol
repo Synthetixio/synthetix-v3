@@ -11,11 +11,11 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
+import {IBfpMarketFactoryModule, IMarket} from "../interfaces/IBfpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
-contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
+contract BfpMarketFactoryModule is IBfpMarketFactoryModule {
     using DecimalMath for int128;
     using DecimalMath for uint128;
     using DecimalMath for uint256;
@@ -46,27 +46,27 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Mutations --- //
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function setPyth(IPyth pyth) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().pyth = pyth;
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function setEthOracleNodeId(bytes32 ethOracleNodeId) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().ethOracleNodeId = ethOracleNodeId;
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function setRewardDistributorImplementation(address implementation) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.load().rewardDistributorImplementation = implementation;
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function createMarket(
-        IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
+        IBfpMarketFactoryModule.CreatePerpMarketParameters memory data
     ) external returns (uint128) {
         OwnableStorage.onlyOwner();
 
@@ -79,7 +79,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         return id;
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function recomputeUtilization(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
@@ -94,7 +94,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         (int128 fundingRate, ) = market.recomputeFunding(
@@ -183,15 +183,15 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Views --- //
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function getActiveMarketIds() external view returns (uint128[] memory) {
         return PerpMarket.load().activeMarketIds;
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function getUtilizationDigest(
         uint128 marketId
-    ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory) {
+    ) external view returns (IBfpMarketFactoryModule.UtilizationDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
@@ -201,7 +201,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         });
         uint128 utilization = market.getUtilization(market.getOraclePrice(addresses), addresses);
         return
-            IPerpMarketFactoryModule.UtilizationDigest(
+            IBfpMarketFactoryModule.UtilizationDigest(
                 market.currentUtilizationRateComputed,
                 market.lastUtilizationTime,
                 PerpMarket.getCurrentUtilizationRate(utilization, globalConfig),
@@ -209,10 +209,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             );
     }
 
-    /// @inheritdoc IPerpMarketFactoryModule
+    /// @inheritdoc IBfpMarketFactoryModule
     function getMarketDigest(
         uint128 marketId
-    ) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
+    ) external view returns (IBfpMarketFactoryModule.MarketDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
@@ -220,13 +220,13 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             .getRemainingLiquidatableSizeCapacity(marketConfig);
 
         uint256 length = globalMarginConfig.supportedCollaterals.length;
-        IPerpMarketFactoryModule.DepositedCollateral[]
+        IBfpMarketFactoryModule.DepositedCollateral[]
             memory depositedCollaterals = new DepositedCollateral[](length);
         address collateralAddress;
 
         for (uint256 i = 0; i < length; ) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
-            depositedCollaterals[i] = IPerpMarketFactoryModule.DepositedCollateral(
+            depositedCollaterals[i] = IBfpMarketFactoryModule.DepositedCollateral(
                 collateralAddress,
                 market.depositedCollateral[collateralAddress]
             );
@@ -242,7 +242,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         });
 
         return
-            IPerpMarketFactoryModule.MarketDigest(
+            IBfpMarketFactoryModule.MarketDigest(
                 depositedCollaterals,
                 market.name,
                 market.skew,

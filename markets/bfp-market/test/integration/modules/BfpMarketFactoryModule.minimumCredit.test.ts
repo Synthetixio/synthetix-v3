@@ -11,7 +11,7 @@ import {
 } from '../../generators';
 import { commitAndSettle, depositMargin, getSusdCollateral } from '../../helpers';
 
-describe('PerpMarketFactoryModule minimumCredit', () => {
+describe('BfpMarketFactoryModule minimumCredit', () => {
   const bs = bootstrap(genBootstrap());
   const { traders, collaterals, collateralsWithoutSusd, systems, restore } = bs;
 

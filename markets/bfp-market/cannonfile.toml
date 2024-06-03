@@ -32,8 +32,8 @@ args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 artifact = "LiquidationModule"
 args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
-[contract.PerpMarketFactoryModule]
-artifact = "PerpMarketFactoryModule"
+[contract.BfpMarketFactoryModule]
+artifact = "BfpMarketFactoryModule"
 args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarketConfigurationModule]
@@ -86,7 +86,7 @@ contracts = [
     "synthetix.AssociatedSystemsModule",
     "CoreModule",
     "FeatureFlagModule",
-    "PerpMarketFactoryModule",
+    "BfpMarketFactoryModule",
     "MarketConfigurationModule",
     "BfpAccountModule",
     "MarginModule",

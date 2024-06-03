@@ -7,7 +7,7 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
-interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
+interface IBfpMarketFactoryModule is IMarket, IBasePerpMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
@@ -35,7 +35,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
 
     struct MarketDigest {
         /// Array of supported collaterals and amounts.
-        IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
+        IBfpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
         /// Name of the market e.g, swstETHsUSDPERP.
         bytes32 name;
         /// Skew in native units on market (long - shorts).
@@ -87,7 +87,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     /// @param data A struct of parameters to create a market with
     /// @return createMarket Market id of newly created market
     function createMarket(
-        IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
+        IBfpMarketFactoryModule.CreatePerpMarketParameters memory data
     ) external returns (uint128);
 
     // --- Views --- //
@@ -97,14 +97,14 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
      */
     function getMarketDigest(
         uint128 marketId
-    ) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
+    ) external view returns (IBfpMarketFactoryModule.MarketDigest memory);
 
     /// @notice Returns a the utilization digest of an existing market given their `marketId`.
     /// @param marketId Market to query the digest against
     /// @return getUtilizationDigest Utilization digest struct
     function getUtilizationDigest(
         uint128 marketId
-    ) external view returns (IPerpMarketFactoryModule.UtilizationDigest memory);
+    ) external view returns (IBfpMarketFactoryModule.UtilizationDigest memory);
 
     /// @notice Returns all created market ids in the system.
     /// @return getActiveMarketIds An array of market ids
