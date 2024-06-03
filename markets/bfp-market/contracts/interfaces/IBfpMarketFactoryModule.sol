@@ -79,7 +79,7 @@ interface IBfpMarketFactoryModule is IMarket, IBaseBfpMarket {
     /// @param nodeId Id of ETH/USD oracle node
     function setEthOracleNodeId(bytes32 nodeId) external;
 
-    /// @notice Stores the address of a base perp reward distributor contract.
+    /// @notice Stores the address of a base bfp reward distributor contract.
     /// @param implementation Address of reward distributor implementation
     function setRewardDistributorImplementation(address implementation) external;
 

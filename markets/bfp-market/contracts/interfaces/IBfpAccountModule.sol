@@ -91,7 +91,7 @@ interface IBfpAccountModule {
 
     /// @notice Merges two accounts, combining `fromId` into `toId` for `marketId`. Merging accounts will realize the
     ///         position of account `toId` in addition to transferring collateral and size from one to the other. It's
-    ///         on the caller to burn the perp account NFT post merge.
+    ///         on the caller to burn the bfp account NFT post merge.
     ///         Additionally, this fn requires that account `fromId` must have just been settled, implying account
     ///         merge operation can only be performed in the same block as settlement via multicalls on settlement or
     ///         indirectly settlement hooks.

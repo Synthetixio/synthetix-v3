@@ -289,11 +289,6 @@ library Position {
                 addresses
             );
 
-            // Check new position initial margin validations.
-            if (runtime.discountedNextMarginUsd < runtime.im) {
-                revert ErrorUtil.InsufficientMargin();
-            }
-
             // Check the minimum credit requirements are still met.
             validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
 

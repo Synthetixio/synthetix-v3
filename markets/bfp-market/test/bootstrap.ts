@@ -113,7 +113,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     extras: () => getExtras(),
   };
 
-  before('load core and perp contracts', () => {
+  before('load core and bfp contracts', () => {
     systems = {
       Account: getContract('BfpAccountProxy'),
       BfpMarketProxy: getContract('BfpMarketProxy'),
@@ -157,7 +157,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   let endorsedKeeper: Signer;
   const traders: { signer: Signer; accountId: number }[] = [];
 
-  before('perp market bootstrap', async () => {
+  before('bfp market bootstrap', async () => {
     const {
       Core,
       BfpMarketProxy,
@@ -230,7 +230,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     }));
     await Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, bfpMarketPoolConfig);
 
-    // Collaterals we want to configure for the perp market - prepended with sUSD configuration.
+    // Collaterals we want to configure for the bfp market - prepended with sUSD configuration.
     const sUsdMaxDepositAllowance = bn(10_000_000);
     const sUSDSkewScale = bn(1_000_000);
     const sUSD = USD.address;
@@ -345,7 +345,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
 
     const allCollaterals = [sUsdCollateral].concat(nonSusdCollaterals);
 
-    // Ensure core system has enough capacity to deposit this collateral for perp market x.
+    // Ensure core system has enough capacity to deposit this collateral for bfp market x.
     for (const collateral of allCollaterals) {
       for (const market of markets) {
         await Core.connect(getOwner()).configureMaximumMarketCollateral(
