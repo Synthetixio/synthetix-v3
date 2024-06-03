@@ -3,6 +3,7 @@ import { CollateralType } from './generated/schema';
 
 export function handleCollateralDeposited(event: Deposited): void {
   let collateralType = CollateralType.load(event.params.collateralType.toHex());
+
   if (collateralType) {
     collateralType.updated_at = event.block.timestamp;
     collateralType.updated_at_block = event.block.number;

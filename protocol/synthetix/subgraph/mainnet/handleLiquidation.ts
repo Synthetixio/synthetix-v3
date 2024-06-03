@@ -12,6 +12,7 @@ export function handleLiquidation(event: Liquidation): void {
       .concat('-')
       .concat(event.logIndex.toString())
   );
+
   newLiquidation.created_at = event.block.timestamp;
   newLiquidation.created_at_block = event.block.number;
   newLiquidation.updated_at = event.block.timestamp;

@@ -1,6 +1,6 @@
 export * from '../mainnet/getISOWeekNumber';
 export * from '../mainnet/handleAccountCreated';
-export * from '../mainnet/handleCollateralConfigured';
+export * from './handleCollateralConfigured';
 export * from '../mainnet/handleCollateralDeposited';
 export * from '../mainnet/handleCollateralWithdrawn';
 export * from '../mainnet/handleDelegationUpdated';
