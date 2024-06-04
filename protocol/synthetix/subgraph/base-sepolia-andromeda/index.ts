@@ -8,8 +8,6 @@ export * from '../mainnet/handleCollateralWithdrawn';
 export * from '../mainnet/handleDelegationUpdated';
 export * from '../mainnet/handleLiquidation';
 export * from '../mainnet/handleMarketCreated';
-export * from '../mainnet/handleMarketUsdDeposited';
-export * from '../mainnet/handleMarketUsdWithdrawn';
 export * from '../mainnet/handlePermissionGranted';
 export * from '../mainnet/handlePermissionRevoked';
 export * from '../mainnet/handlePoolConfigurationSet';

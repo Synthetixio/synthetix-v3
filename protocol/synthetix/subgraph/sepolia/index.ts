@@ -2,7 +2,7 @@
 // If some handlers need to be different - we copy-paste them into goerli folder and make adjustments. Later when aligned with mainnet -- revert import
 export * from '../mainnet/getISOWeekNumber';
 export * from '../mainnet/handleAccountCreated';
-export * from '../mainnet/handleCollateralConfigured';
+export * from './handleCollateralConfigured';
 export * from '../mainnet/handleCollateralDeposited';
 export * from '../mainnet/handleCollateralWithdrawn';
 export * from '../mainnet/handleDelegationUpdated';

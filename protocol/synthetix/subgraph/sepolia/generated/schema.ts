@@ -1050,6 +1050,57 @@ export class CollateralType extends Entity {
       this.set('total_amount_deposited', Value.fromBigDecimal(<BigDecimal>value));
     }
   }
+
+  get name(): string | null {
+    let value = this.get('name');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set name(value: string | null) {
+    if (!value) {
+      this.unset('name');
+    } else {
+      this.set('name', Value.fromString(<string>value));
+    }
+  }
+
+  get symbol(): string | null {
+    let value = this.get('symbol');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set symbol(value: string | null) {
+    if (!value) {
+      this.unset('symbol');
+    } else {
+      this.set('symbol', Value.fromString(<string>value));
+    }
+  }
+
+  get decimals(): BigInt | null {
+    let value = this.get('decimals');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set decimals(value: BigInt | null) {
+    if (!value) {
+      this.unset('decimals');
+    } else {
+      this.set('decimals', Value.fromBigInt(<BigInt>value));
+    }
+  }
 }
 
 export class Account extends Entity {
