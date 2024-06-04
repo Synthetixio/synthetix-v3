@@ -17,6 +17,8 @@ dataSources:
       abis:
         - name: CoreProxy
           file: ./base-sepolia-andromeda/deployments/system/CoreProxy.json
+        - name: ERC20
+          file: ./base-sepolia-andromeda/manual/ERC20.json
       entities:
         - PoolModule
         - MarketManagerModule

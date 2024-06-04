@@ -1,7 +1,7 @@
 import { CollateralConfigured } from './generated/CoreProxy/CoreProxy';
+import { ERC20 } from './generated/CoreProxy/ERC20';
 import { CollateralType } from './generated/schema';
 import { BigInt, log } from '@graphprotocol/graph-ts';
-import { TokenDefinition } from './collateralDefinition';
 
 export function handleCollateralConfigured(event: CollateralConfigured): void {
   let collateralType = CollateralType.load(event.params.collateralType.toHex());
@@ -21,12 +21,12 @@ export function handleCollateralConfigured(event: CollateralConfigured): void {
   collateralType.updated_at = event.block.timestamp;
   collateralType.updated_at_block = event.block.number;
 
-  const tokenDefinition = TokenDefinition.fromAddress(event.params.collateralType);
+  const erc20Contract = ERC20.bind(event.params.collateralType);
 
-  if (tokenDefinition !== null) {
-    collateralType.name = tokenDefinition.name;
-    collateralType.symbol = tokenDefinition.symbol;
-    collateralType.decimals = tokenDefinition.decimals;
+  if (erc20Contract) {
+    collateralType.name = erc20Contract.name();
+    collateralType.symbol = erc20Contract.symbol();
+    collateralType.decimals = BigInt.fromI32(erc20Contract.decimals());
   } else {
     log.error('Token definition not found for collateral type {}', [
       event.params.collateralType.toHex(),

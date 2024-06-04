@@ -17,6 +17,8 @@ dataSources:
       abis:
         - name: CoreProxy
           file: ./arbitrum-mainnet/deployments/system/CoreProxy.json
+        - name: ERC20
+          file: ./arbitrum-mainnet/manual/ERC20.json
       entities:
         - PoolModule
         - MarketManagerModule

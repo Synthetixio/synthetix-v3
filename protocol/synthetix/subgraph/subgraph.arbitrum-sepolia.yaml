@@ -3,7 +3,7 @@ schema:
   file: ./arbitrum-sepolia/schema.graphql
 dataSources:
   - kind: ethereum
-    network: arbitrum-one
+    network: arbitrum-sepolia
     name: CoreProxy
     source:
       abi: CoreProxy
@@ -17,6 +17,8 @@ dataSources:
       abis:
         - name: CoreProxy
           file: ./arbitrum-sepolia/deployments/system/CoreProxy.json
+        - name: ERC20
+          file: ./arbitrum-sepolia/manual/ERC20.json
       entities:
         - PoolModule
         - MarketManagerModule
