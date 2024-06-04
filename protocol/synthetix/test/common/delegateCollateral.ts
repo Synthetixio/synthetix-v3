@@ -35,7 +35,7 @@ export async function declareDelegateIntent(
   if (shouldCleanBefore) {
     await systems().Core.connect(owner).forceDeleteAllAccountIntents(accountId);
   }
-  const intentId = await systems()
+  const intentId: BigNumber = await systems()
     .Core.connect(signer)
     .callStatic.declareIntentToDelegateCollateral(
       accountId,

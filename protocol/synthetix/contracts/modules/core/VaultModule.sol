@@ -407,7 +407,7 @@ contract VaultModule is IVaultModule {
         expiredIntents = new uint256[](max);
         for (uint256 i = 0; i < max; i++) {
             if (DelegationIntent.load(allIntents[i]).intentExpired()) {
-                expiredIntents[i] = allIntents[i];
+                expiredIntents[foundItems] = allIntents[i];
                 foundItems++;
             }
         }
@@ -430,7 +430,7 @@ contract VaultModule is IVaultModule {
         executableIntents = new uint256[](max);
         for (uint256 i = 0; i < max; i++) {
             if (DelegationIntent.load(allIntents[i]).isExecutable()) {
-                executableIntents[i] = allIntents[i];
+                executableIntents[foundItems] = allIntents[i];
                 foundItems++;
             }
         }
