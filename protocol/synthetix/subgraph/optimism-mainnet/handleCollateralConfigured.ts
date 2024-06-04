@@ -1,6 +1,6 @@
 import { CollateralConfigured } from './generated/CoreProxy/CoreProxy';
 import { CollateralType } from './generated/schema';
-import { BigInt } from '@graphprotocol/graph-ts';
+import { BigInt, log } from '@graphprotocol/graph-ts';
 import { TokenDefinition } from './collateralDefinition';
 
 export function handleCollateralConfigured(event: CollateralConfigured): void {
@@ -27,6 +27,10 @@ export function handleCollateralConfigured(event: CollateralConfigured): void {
     collateralType.name = tokenDefinition.name;
     collateralType.symbol = tokenDefinition.symbol;
     collateralType.decimals = tokenDefinition.decimals;
+  } else {
+    log.error('Token definition not found for collateral type {}', [
+      event.params.collateralType.toHex(),
+    ]);
   }
 
   collateralType.save();

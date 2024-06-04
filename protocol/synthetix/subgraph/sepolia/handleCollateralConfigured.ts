@@ -28,7 +28,9 @@ export function handleCollateralConfigured(event: CollateralConfigured): void {
     collateralType.symbol = tokenDefinition.symbol;
     collateralType.decimals = tokenDefinition.decimals;
   } else {
-    log.error('Token definition not found for collateral type', []);
+    log.error('Token definition not found for collateral type {}', [
+      event.params.collateralType.toHex(),
+    ]);
   }
 
   collateralType.save();
