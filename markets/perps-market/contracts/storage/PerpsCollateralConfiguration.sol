@@ -22,7 +22,7 @@ library PerpsCollateralConfiguration {
 
     struct Data {
         /**
-         * @dev Collateral Id (same as synth id)
+         * @dev Collateral Id
          */
         uint128 id;
         /**
@@ -45,6 +45,10 @@ library PerpsCollateralConfiguration {
          * @dev Liquidation Asset Manager data. (see LiquidationAssetManager.Data struct).
          */
         LiquidationAssetManager.Data lam;
+        /**
+         * @dev Oracle Manager Node ID to retrieve collateral price
+         */
+        bytes32 priceFeed;
     }
 
     /**
@@ -92,12 +96,14 @@ library PerpsCollateralConfiguration {
         self.maxAmount = maxAmount;
     }
 
-    function setDiscounts(
+    function setPricing(
         Data storage self,
+        bytes32 priceFeedId,
         uint256 upperLimitDiscount,
         uint256 lowerLimitDiscount,
         uint256 discountScalar
     ) internal {
+        self.priceFeed = priceFeedId;
         self.upperLimitDiscount = upperLimitDiscount;
         self.lowerLimitDiscount = lowerLimitDiscount;
         self.discountScalar = discountScalar;

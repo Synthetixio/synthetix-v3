@@ -30,14 +30,20 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         uint256 maxCollateralAmount,
         uint256 upperLimitDiscount,
         uint256 lowerLimitDiscount,
-        uint256 discountScalar
+        uint256 discountScalar,
+        bytes32 priceFeedId
     ) external override {
         OwnableStorage.onlyOwner();
         PerpsCollateralConfiguration.Data storage collateralConfig = PerpsCollateralConfiguration
             .load(collateralId);
 
         collateralConfig.setMax(collateralId, maxCollateralAmount);
-        collateralConfig.setDiscounts(upperLimitDiscount, lowerLimitDiscount, discountScalar);
+        collateralConfig.setPricing(
+            priceFeedId,
+            upperLimitDiscount,
+            lowerLimitDiscount,
+            discountScalar
+        );
 
         GlobalPerpsMarketConfiguration.load().updateSupportedCollaterals(
             collateralId,
