@@ -141,7 +141,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         if (PerpsMarketFactory.load().perpsMarketId == perpsMarketId) {
-            return GlobalPerpsMarket.load().minimumCredit();
+            return GlobalPerpsMarket.load().minimumCredit(PerpsPrice.Tolerance.DEFAULT);
         }
 
         return 0;
@@ -163,7 +163,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         override
         returns (uint256 rate, uint256 delegatedCollateral, uint256 lockedCredit)
     {
-        return GlobalPerpsMarket.load().utilizationRate();
+        return GlobalPerpsMarket.load().utilizationRate(PerpsPrice.Tolerance.ONE_MONTH);
     }
 
     /**
