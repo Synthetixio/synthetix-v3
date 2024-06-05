@@ -487,6 +487,79 @@ library TickMath {
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
 
+// @custom:artifact contracts/interfaces/IBfpAccountModule.sol:IBfpAccountModule
+interface IBfpAccountModule {
+    struct DepositedCollateral {
+        address collateralAddress;
+        uint256 available;
+        uint256 oraclePrice;
+    }
+    struct AccountDigest {
+        IBfpAccountModule.DepositedCollateral[] depositedCollaterals;
+        uint256 collateralUsd;
+        uint128 debtUsd;
+        PositionDigest position;
+    }
+    struct PositionDigest {
+        uint128 accountId;
+        uint128 marketId;
+        uint256 remainingMarginUsd;
+        uint256 healthFactor;
+        uint256 notionalValueUsd;
+        int256 pnl;
+        int128 accruedFunding;
+        uint128 accruedUtilization;
+        uint256 entryPythPrice;
+        uint256 entryPrice;
+        uint256 oraclePrice;
+        int128 size;
+        uint256 im;
+        uint256 mm;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IBfpMarketFactoryModule.sol:IBfpMarketFactoryModule
+interface IBfpMarketFactoryModule {
+    struct CreateBfpMarketParameters {
+        bytes32 name;
+    }
+    struct DepositedCollateral {
+        address collateralAddress;
+        uint256 available;
+    }
+    struct UtilizationDigest {
+        uint128 lastComputedUtilizationRate;
+        uint64 lastComputedTimestamp;
+        uint128 currentUtilizationRate;
+        uint256 utilization;
+    }
+    struct MarketDigest {
+        IBfpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
+        bytes32 name;
+        int128 skew;
+        uint128 size;
+        uint256 oraclePrice;
+        int128 fundingVelocity;
+        int128 fundingRate;
+        uint128 utilizationRate;
+        uint128 remainingLiquidatableSizeCapacity;
+        uint128 lastLiquidationTime;
+        uint128 totalTraderDebtUsd;
+        uint256 totalCollateralValueUsd;
+        int128 debtCorrection;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IBfpRewardDistributorFactoryModule.sol:IBfpRewardDistributorFactoryModule
+interface IBfpRewardDistributorFactoryModule {
+    struct CreateBfpRewardDistributorParameters {
+        uint128 poolId;
+        address[] collateralTypes;
+        string name;
+        address token;
+    }
+}
+
 // @custom:artifact contracts/interfaces/IMarginModule.sol:IMarginModule
 interface IMarginModule {
     struct ConfiguredCollateral {
@@ -558,84 +631,45 @@ interface IOrderModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/IPerpAccountModule.sol:IPerpAccountModule
-interface IPerpAccountModule {
-    struct DepositedCollateral {
-        address collateralAddress;
-        uint256 available;
-        uint256 oraclePrice;
-    }
-    struct AccountDigest {
-        IPerpAccountModule.DepositedCollateral[] depositedCollaterals;
-        uint256 collateralUsd;
-        uint128 debtUsd;
-        PositionDigest position;
-    }
-    struct PositionDigest {
-        uint128 accountId;
-        uint128 marketId;
-        uint256 remainingMarginUsd;
-        uint256 healthFactor;
-        uint256 notionalValueUsd;
-        int256 pnl;
-        int128 accruedFunding;
-        uint128 accruedUtilization;
-        uint256 entryPythPrice;
-        uint256 entryPrice;
-        uint256 oraclePrice;
-        int128 size;
-        uint256 im;
-        uint256 mm;
-    }
-}
-
-// @custom:artifact contracts/interfaces/IPerpMarketFactoryModule.sol:IPerpMarketFactoryModule
-interface IPerpMarketFactoryModule {
-    struct CreatePerpMarketParameters {
-        bytes32 name;
-    }
-    struct DepositedCollateral {
-        address collateralAddress;
-        uint256 available;
-    }
-    struct UtilizationDigest {
-        uint128 lastComputedUtilizationRate;
-        uint64 lastComputedTimestamp;
-        uint128 currentUtilizationRate;
-        uint256 utilization;
-    }
-    struct MarketDigest {
-        IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
-        bytes32 name;
-        int128 skew;
-        uint128 size;
-        uint256 oraclePrice;
-        int128 fundingVelocity;
-        int128 fundingRate;
-        uint128 utilizationRate;
-        uint128 remainingLiquidatableSizeCapacity;
-        uint128 lastLiquidationTime;
-        uint128 totalTraderDebtUsd;
-        uint256 totalCollateralValueUsd;
-        int128 debtCorrection;
-    }
-}
-
-// @custom:artifact contracts/interfaces/IPerpRewardDistributorFactoryModule.sol:IPerpRewardDistributorFactoryModule
-interface IPerpRewardDistributorFactoryModule {
-    struct CreatePerpRewardDistributorParameters {
-        uint128 poolId;
-        address[] collateralTypes;
-        string name;
-        address token;
-    }
-}
-
 // @custom:artifact contracts/interfaces/ISettlementHookModule.sol:ISettlementHookModule
 interface ISettlementHookModule {
     struct SettlementHookConfigureParameters {
         address[] whitelistedHookAddresses;
         uint32 maxHooksPerOrder;
+    }
+}
+
+// @custom:artifact contracts/modules/BfpAccountModule.sol:BfpAccountModule
+contract BfpAccountModule {
+    struct Runtime_splitAccount {
+        uint256 oraclePrice;
+        uint256 toIm;
+        uint256 fromIm;
+        uint128 debtToMove;
+        int128 sizeToMove;
+        uint256 supportedCollateralsLength;
+        address collateralAddress;
+        uint256 collateralToMove;
+        uint256 newFromAmountCollateral;
+        uint256 fromAccountCollateral;
+        uint256 toCollateralUsd;
+        uint256 fromCollateralUsd;
+        uint256 toDiscountedCollateralUsd;
+        uint256 fromDiscountedCollateralUsd;
+        uint256 collateralPrice;
+        uint256 fromAccountCollateralUsd;
+    }
+    struct Runtime_mergeAccounts {
+        uint256 oraclePrice;
+        uint256 im;
+        uint256 fromCollateralUsd;
+        uint256 fromMarginUsd;
+        uint256 toMarginUsd;
+        uint256 mergedCollateralUsd;
+        uint256 mergedDiscountedCollateralUsd;
+        uint256 supportedCollateralsLength;
+        address collateralAddress;
+        uint256 fromAccountCollateral;
     }
 }
 
@@ -681,46 +715,118 @@ contract OrderModule {
     }
 }
 
-// @custom:artifact contracts/modules/PerpAccountModule.sol:PerpAccountModule
-contract PerpAccountModule {
-    struct Runtime_splitAccount {
-        uint256 oraclePrice;
-        uint256 toIm;
-        uint256 fromIm;
-        uint128 debtToMove;
-        int128 sizeToMove;
-        uint256 supportedCollateralsLength;
-        address collateralAddress;
-        uint256 collateralToMove;
-        uint256 newFromAmountCollateral;
-        uint256 fromAccountCollateral;
-        uint256 toCollateralUsd;
-        uint256 fromCollateralUsd;
-        uint256 toDiscountedCollateralUsd;
-        uint256 fromDiscountedCollateralUsd;
-        uint256 collateralPrice;
-        uint256 fromAccountCollateralUsd;
-    }
-    struct Runtime_mergeAccounts {
-        uint256 oraclePrice;
-        uint256 im;
-        uint256 fromCollateralUsd;
-        uint256 fromMarginUsd;
-        uint256 toMarginUsd;
-        uint256 mergedCollateralUsd;
-        uint256 mergedDiscountedCollateralUsd;
-        uint256 supportedCollateralsLength;
-        address collateralAddress;
-        uint256 fromAccountCollateral;
-    }
-}
-
 // @custom:artifact contracts/storage/AddressRegistry.sol:AddressRegistry
 library AddressRegistry {
     struct Data {
         address synthetix;
         address sUsd;
         address oracleManager;
+    }
+}
+
+// @custom:artifact contracts/storage/BfpMarket.sol:BfpMarket
+library BfpMarket {
+    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
+    uint256 internal constant AVG_SECONDS_PER_YEAR = 31556952;
+    struct GlobalData {
+        uint128[] activeMarketIds;
+    }
+    struct Data {
+        bytes32 name;
+        uint128 id;
+        uint64 __unused1;
+        uint64 __unused2;
+        int128 skew;
+        uint128 size;
+        uint64 lastFundingTime;
+        uint64 lastUtilizationTime;
+        uint64 __unused3;
+        uint64 __unused4;
+        int128 currentFundingRateComputed;
+        int128 currentFundingAccruedComputed;
+        uint128 currentUtilizationRateComputed;
+        uint128 currentUtilizationAccruedComputed;
+        uint128 totalTraderDebtUsd;
+        int128 debtCorrection;
+        mapping(uint128 => Order.Data) orders;
+        mapping(uint128 => Position.Data) positions;
+        mapping(uint128 => address) flaggedLiquidations;
+        mapping(address => uint256) depositedCollateral;
+        uint128[][] pastLiquidations;
+    }
+    function load() internal pure returns (GlobalData storage d) {
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
+        assembly {
+            d.slot := s
+        }
+    }
+    function load(uint128 id) internal pure returns (Data storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.BfpMarket", id));
+        assembly {
+            d.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/BfpMarketConfiguration.sol:BfpMarketConfiguration
+library BfpMarketConfiguration {
+    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalBfpMarketConfiguration"));
+    struct GlobalData {
+        address pyth;
+        bytes32 ethOracleNodeId;
+        address rewardDistributorImplementation;
+        uint64 pythPublishTimeMin;
+        uint64 pythPublishTimeMax;
+        uint64 minOrderAge;
+        uint64 maxOrderAge;
+        uint256 minKeeperFeeUsd;
+        uint256 maxKeeperFeeUsd;
+        uint128 keeperProfitMarginUsd;
+        uint128 keeperProfitMarginPercent;
+        uint128 keeperSettlementGasUnits;
+        uint128 keeperCancellationGasUnits;
+        uint128 keeperLiquidationGasUnits;
+        uint128 keeperFlagGasUnits;
+        uint128 keeperLiquidateMarginGasUnits;
+        address keeperLiquidationEndorsed;
+        uint128 collateralDiscountScalar;
+        uint128 minCollateralDiscount;
+        uint128 maxCollateralDiscount;
+        uint128 utilizationBreakpointPercent;
+        uint128 lowUtilizationSlopePercent;
+        uint128 highUtilizationSlopePercent;
+    }
+    struct Data {
+        bytes32 oracleNodeId;
+        bytes32 pythPriceFeedId;
+        uint128 makerFee;
+        uint128 takerFee;
+        uint128 maxMarketSize;
+        uint128 maxFundingVelocity;
+        uint128 skewScale;
+        uint128 fundingVelocityClamp;
+        uint128 minCreditPercent;
+        uint256 minMarginUsd;
+        uint256 minMarginRatio;
+        uint256 incrementalMarginScalar;
+        uint256 maintenanceMarginScalar;
+        uint256 maxInitialMarginRatio;
+        uint256 liquidationRewardPercent;
+        uint128 liquidationLimitScalar;
+        uint128 liquidationWindowDuration;
+        uint128 liquidationMaxPd;
+    }
+    function load() internal pure returns (BfpMarketConfiguration.GlobalData storage d) {
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
+        assembly {
+            d.slot := s
+        }
+    }
+    function load(uint128 marketId) internal pure returns (BfpMarketConfiguration.Data storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.BfpMarketConfiguration", marketId));
+        assembly {
+            d.slot := s
+        }
     }
 }
 
@@ -770,112 +876,6 @@ library Order {
         uint256 limitPrice;
         uint128 keeperFeeBufferUsd;
         address[] hooks;
-    }
-}
-
-// @custom:artifact contracts/storage/PerpMarket.sol:PerpMarket
-library PerpMarket {
-    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
-    uint256 internal constant AVG_SECONDS_PER_YEAR = 31556952;
-    struct GlobalData {
-        uint128[] activeMarketIds;
-    }
-    struct Data {
-        bytes32 name;
-        uint128 id;
-        uint64 __unused1;
-        uint64 __unused2;
-        int128 skew;
-        uint128 size;
-        uint64 lastFundingTime;
-        uint64 lastUtilizationTime;
-        uint64 __unused3;
-        uint64 __unused4;
-        int128 currentFundingRateComputed;
-        int128 currentFundingAccruedComputed;
-        uint128 currentUtilizationRateComputed;
-        uint128 currentUtilizationAccruedComputed;
-        uint128 totalTraderDebtUsd;
-        int128 debtCorrection;
-        mapping(uint128 => Order.Data) orders;
-        mapping(uint128 => Position.Data) positions;
-        mapping(uint128 => address) flaggedLiquidations;
-        mapping(address => uint256) depositedCollateral;
-        uint128[][] pastLiquidations;
-    }
-    function load() internal pure returns (GlobalData storage d) {
-        bytes32 s = GLOBAL_DATA_SLOT_NAME;
-        assembly {
-            d.slot := s
-        }
-    }
-    function load(uint128 id) internal pure returns (Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket", id));
-        assembly {
-            d.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/storage/PerpMarketConfiguration.sol:PerpMarketConfiguration
-library PerpMarketConfiguration {
-    bytes32 internal constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarketConfiguration"));
-    struct GlobalData {
-        address pyth;
-        bytes32 ethOracleNodeId;
-        address rewardDistributorImplementation;
-        uint64 pythPublishTimeMin;
-        uint64 pythPublishTimeMax;
-        uint64 minOrderAge;
-        uint64 maxOrderAge;
-        uint256 minKeeperFeeUsd;
-        uint256 maxKeeperFeeUsd;
-        uint128 keeperProfitMarginUsd;
-        uint128 keeperProfitMarginPercent;
-        uint128 keeperSettlementGasUnits;
-        uint128 keeperCancellationGasUnits;
-        uint128 keeperLiquidationGasUnits;
-        uint128 keeperFlagGasUnits;
-        uint128 keeperLiquidateMarginGasUnits;
-        address keeperLiquidationEndorsed;
-        uint128 collateralDiscountScalar;
-        uint128 minCollateralDiscount;
-        uint128 maxCollateralDiscount;
-        uint128 utilizationBreakpointPercent;
-        uint128 lowUtilizationSlopePercent;
-        uint128 highUtilizationSlopePercent;
-    }
-    struct Data {
-        bytes32 oracleNodeId;
-        bytes32 pythPriceFeedId;
-        uint128 makerFee;
-        uint128 takerFee;
-        uint128 maxMarketSize;
-        uint128 maxFundingVelocity;
-        uint128 skewScale;
-        uint128 fundingVelocityClamp;
-        uint128 minCreditPercent;
-        uint256 minMarginUsd;
-        uint256 minMarginRatio;
-        uint256 incrementalMarginScalar;
-        uint256 maintenanceMarginScalar;
-        uint256 maxInitialMarginRatio;
-        uint256 liquidationRewardPercent;
-        uint128 liquidationLimitScalar;
-        uint128 liquidationWindowDuration;
-        uint128 liquidationMaxPd;
-    }
-    function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = GLOBAL_DATA_SLOT_NAME;
-        assembly {
-            d.slot := s
-        }
-    }
-    function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId));
-        assembly {
-            d.slot := s
-        }
     }
 }
 
