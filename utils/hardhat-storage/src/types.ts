@@ -48,11 +48,17 @@ export interface StorageDumpArraySlot extends StorageDumpSlotBase {
   range: [number, number] | null;
 }
 
+export interface StorageDumpEnumSlot extends StorageDumpSlotBase {
+  type: 'enum';
+  members: string[];
+}
+
 export type StorageDumpSlot =
   | StorageDumpBuiltInValueSlot
   | StorageDumpStructSlot
   | StorageDumpMappingSlot
-  | StorageDumpArraySlot;
+  | StorageDumpArraySlot
+  | StorageDumpEnumSlot;
 
 export interface StorageDumpLayout {
   kind: 'contract' | 'library';

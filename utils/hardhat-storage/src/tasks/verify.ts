@@ -13,12 +13,12 @@ task(
   .addOptionalPositionalParam(
     'previous',
     'Older storage dump to compare to',
-    'storage.dump.prev.sol'
+    'storage.dump.prev.json'
   )
   .addOptionalPositionalParam(
     'current',
     'More recent storage dump to compare to',
-    'storage.dump.sol'
+    'storage.dump.json'
   )
   .setAction(async (params: Required<Params>, hre) => {
     // TODO: implement storage mutations check

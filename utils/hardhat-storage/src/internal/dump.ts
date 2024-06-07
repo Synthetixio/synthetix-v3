@@ -121,7 +121,7 @@ async function _typeNameToStorageSlot(
   if (typeName.type === 'UserDefinedTypeName') {
     const [referenceArtifact, referenceNode] = await findNodeReferenceWithArtifact(
       getArtifact,
-      ['ContractDefinition', 'StructDefinition'],
+      ['ContractDefinition', 'StructDefinition', 'EnumDefinition'],
       artifact,
       typeName.namePath
     );
@@ -129,6 +129,11 @@ async function _typeNameToStorageSlot(
     // If it is a reference to a contract, replace the type as `address`
     if (referenceNode.type === 'ContractDefinition') {
       return { type: 'address', name };
+    }
+
+    if (referenceNode.type === 'EnumDefinition') {
+      const members = referenceNode.members.map((m) => m.name);
+      return { type: 'enum', name, members };
     }
 
     // handle structs
@@ -155,6 +160,7 @@ function _isBuiltInType(
 const FIXED_SIZE_VALUE_REGEX = /^(uint|int|bytes)[0-9]+$/;
 function _isBuiltInValueType(typeName: string): typeName is StorageDumpBuiltInValueType {
   if (typeof typeName !== 'string' || !typeName) throw new Error(`Invalid typeName ${typeName}`);
+  // If we get a type alias here something is wrong, as the parser doesn't generates them
   if (['uint', 'int'].includes(typeName)) throw new Error('Alias base types not implemented');
   if (['bool', 'address', 'bytes', 'string'].includes(typeName)) return true;
   return FIXED_SIZE_VALUE_REGEX.test(typeName);
