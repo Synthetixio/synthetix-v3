@@ -17,6 +17,8 @@ dataSources:
       abis:
         - name: CoreProxy
           file: ./optimism-sepolia/deployments/system/CoreProxy.json
+        - name: ERC20
+          file: ./optimism-sepolia/manual/ERC20.json
       entities:
         - PoolModule
         - MarketManagerModule

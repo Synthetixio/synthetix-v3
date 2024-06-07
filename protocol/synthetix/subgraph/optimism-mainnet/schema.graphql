@@ -94,6 +94,9 @@ type CollateralType @entity {
   updated_at: BigInt!
   updated_at_block: BigInt!
   total_amount_deposited: BigDecimal
+  name: String
+  symbol: String
+  decimals: BigInt
 }
 
 type Account @entity {

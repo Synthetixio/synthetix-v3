@@ -17,6 +17,8 @@ dataSources:
       abis:
         - name: CoreProxy
           file: ./mainnet/deployments/system/CoreProxy.json
+        - name: ERC20
+          file: ./mainnet/manual/ERC20.json
       entities:
         - PoolModule
         - MarketManagerModule

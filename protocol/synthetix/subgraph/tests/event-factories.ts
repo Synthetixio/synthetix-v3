@@ -6,9 +6,6 @@ import {
   DelegationUpdated,
   Deposited,
   Liquidation,
-  MarketRegistered,
-  MarketUsdDeposited,
-  MarketUsdWithdrawn,
   PermissionGranted,
   PermissionRevoked,
   PoolConfigurationSet,
@@ -27,6 +24,7 @@ import {
   VaultLiquidation,
   Withdrawn,
 } from '../mainnet/generated/CoreProxy/CoreProxy';
+import { ERC20 } from '../mainnet/generated/CoreProxy/ERC20';
 import { address } from './constants';
 
 function createBlock(timestamp: i64, blockNumber: i64): Map<string, i64> {

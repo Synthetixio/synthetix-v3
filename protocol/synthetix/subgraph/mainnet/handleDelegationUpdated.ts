@@ -13,11 +13,13 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
     .concat(event.params.poolId.toString())
     .concat('-')
     .concat(event.params.collateralType.toHex());
+
   let position = Position.load(id);
 
   let vault = Vault.load(
     event.params.poolId.toString().concat('-').concat(event.params.collateralType.toHex())
   );
+
   if (vault === null) {
     vault = new Vault(
       event.params.poolId.toString().concat('-').concat(event.params.collateralType.toHex())
