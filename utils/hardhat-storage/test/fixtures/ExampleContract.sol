@@ -13,16 +13,23 @@ contract ExampleContract {
         FIVE
     }
 
+    struct SubData {
+        string someString;
+        uint256 someValue;
+    }
+
     struct Data {
         address owner;
         EnumExample enumExample;
         mapping(address => uint128) simpleMapping;
         address[] dynamicArray;
         uint256[3] staticArray;
-        uint uninsignedInt; // solhint-disable-line explicit-types
-        uint256 uninsignedInt256;
-        uint8 uninsignedInt8;
+        uint unsignedInt; // solhint-disable-line explicit-types
+        uint256 unsignedInt256;
+        uint8 unsignedInt8;
         int256 signedInt256;
+        mapping(ExampleKeyContract => SubData) mappingWithNestedStruct;
+        string someStringValue;
     }
 
     uint128 public constant SOME_CONSTANT = 445;
@@ -43,3 +50,5 @@ contract ExampleContract {
         }
     }
 }
+
+contract ExampleKeyContract {}

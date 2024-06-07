@@ -24,6 +24,8 @@ export type StorageDumpBuiltInValueType =
   | `uint${number}`
   | `int${number}`
   | `bytes${number}`
+  | `ufixed${number}x${number}`
+  | `fixed${number}x${number}`
   | 'bytes'
   | 'string';
 
@@ -45,7 +47,7 @@ export interface StorageDumpMappingSlot extends StorageDumpSlotBase {
 export interface StorageDumpArraySlot extends StorageDumpSlotBase {
   type: 'array';
   value: StorageDumpSlot;
-  range: [number, number] | null;
+  length?: number;
 }
 
 export interface StorageDumpEnumSlot extends StorageDumpSlotBase {

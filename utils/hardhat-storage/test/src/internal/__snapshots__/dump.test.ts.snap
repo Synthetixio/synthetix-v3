@@ -32,6 +32,92 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
           "name": "owner",
           "type": "address",
         },
+        {
+          "members": [
+            "ONE",
+            "TWO",
+            "THREE",
+            "FOUR",
+            "FIVE",
+          ],
+          "name": "enumExample",
+          "type": "enum",
+        },
+        {
+          "key": {
+            "type": "address",
+          },
+          "name": "simpleMapping",
+          "type": "mapping",
+          "value": {
+            "type": "uint128",
+          },
+        },
+        {
+          "name": "dynamicArray",
+          "type": "array",
+          "value": {
+            "type": "address",
+          },
+        },
+        {
+          "length": 3,
+          "name": "staticArray",
+          "type": "array",
+          "value": {
+            "type": "uint256",
+          },
+        },
+        {
+          "name": "unsignedInt",
+          "type": "uint256",
+        },
+        {
+          "name": "unsignedInt256",
+          "type": "uint256",
+        },
+        {
+          "name": "unsignedInt8",
+          "type": "uint8",
+        },
+        {
+          "name": "signedInt256",
+          "type": "int256",
+        },
+        {
+          "key": {
+            "type": "address",
+          },
+          "name": "mappingWithNestedStruct",
+          "type": "mapping",
+          "value": {
+            "members": [
+              {
+                "name": "someString",
+                "type": "string",
+              },
+              {
+                "name": "someValue",
+                "type": "uint256",
+              },
+            ],
+            "type": "struct",
+          },
+        },
+        {
+          "name": "someStringValue",
+          "type": "string",
+        },
+      ],
+      "SubData": [
+        {
+          "name": "someString",
+          "type": "string",
+        },
+        {
+          "name": "someValue",
+          "type": "uint256",
+        },
       ],
     },
   },

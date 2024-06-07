@@ -8,6 +8,7 @@ import {
   GetArtifactFunction,
   StorageArtifact,
   StorageDump,
+  StorageDumpArraySlot,
   StorageDumpBuiltInValueSlot,
   StorageDumpBuiltInValueType,
   StorageDumpLayout,
@@ -79,8 +80,21 @@ async function _typeNameToStorageSlot(
   typeName: TypeName,
   name?: string
 ): Promise<StorageDumpSlot> {
-  if (typeName.type === 'ElementaryTypeName' && _isBuiltInValueType(typeName.name)) {
-    return { type: typeName.name, name };
+  const _slotWithName = (slot: StorageDumpSlot) => {
+    if (!name) return slot;
+    const { type, ...restAttrs } = slot;
+    return { type, name, ...restAttrs } as StorageDumpSlot; // order keys for consistency
+  };
+
+  const _error = (msg: string) => {
+    const err = new Error(`"${typeName.type}": ${msg}`);
+    (err as any).typeName = typeName;
+    throw err;
+  };
+
+  if (typeName.type === 'ElementaryTypeName') {
+    const type = _getBuiltInValueType(typeName.name);
+    return _slotWithName({ type });
   }
 
   if (typeName.type === 'ArrayTypeName') {
@@ -92,7 +106,20 @@ async function _typeNameToStorageSlot(
         ? typeName.baseTypeName.namePath
         : undefined
     );
-    return { type: 'array', name, value, range: typeName.length?.range || null };
+
+    const slot = _slotWithName({ type: 'array', value }) as StorageDumpArraySlot;
+
+    if (typeName.range) _error('array values with range not implemented');
+
+    if (typeName.length) {
+      if (typeName.length.type === 'NumberLiteral') {
+        slot.length = Number.parseInt(typeName.length.number);
+      } else {
+        _error('array length with custom value not implemented');
+      }
+    }
+
+    return slot;
   }
 
   if (typeName.type === 'Mapping') {
@@ -115,7 +142,7 @@ async function _typeNameToStorageSlot(
       throw new Error('Invalid key type for mapping');
     }
 
-    return { type: 'mapping', name, key, value };
+    return _slotWithName({ type: 'mapping', key, value });
   }
 
   if (typeName.type === 'UserDefinedTypeName') {
@@ -128,12 +155,12 @@ async function _typeNameToStorageSlot(
 
     // If it is a reference to a contract, replace the type as `address`
     if (referenceNode.type === 'ContractDefinition') {
-      return { type: 'address', name };
+      return _slotWithName({ type: 'address' });
     }
 
     if (referenceNode.type === 'EnumDefinition') {
       const members = referenceNode.members.map((m) => m.name);
-      return { type: 'enum', name, members };
+      return _slotWithName({ type: 'enum', members });
     }
 
     // handle structs
@@ -143,7 +170,7 @@ async function _typeNameToStorageSlot(
       )
     ).then((result) => result.flat());
 
-    return { type: 'struct', name, members };
+    return _slotWithName({ type: 'struct', members });
   }
 
   const err = new Error(`"${typeName.type}" not implemented for generating storage layout`);
@@ -154,16 +181,34 @@ async function _typeNameToStorageSlot(
 function _isBuiltInType(
   storageSlot: StorageDumpSlotBase
 ): storageSlot is StorageDumpBuiltInValueSlot {
-  return _isBuiltInValueType(storageSlot.type);
+  try {
+    _getBuiltInValueType(storageSlot.type);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
-const FIXED_SIZE_VALUE_REGEX = /^(uint|int|bytes)[0-9]+$/;
-function _isBuiltInValueType(typeName: string): typeName is StorageDumpBuiltInValueType {
-  if (typeof typeName !== 'string' || !typeName) throw new Error(`Invalid typeName ${typeName}`);
-  // If we get a type alias here something is wrong, as the parser doesn't generates them
-  if (['uint', 'int'].includes(typeName)) throw new Error('Alias base types not implemented');
-  if (['bool', 'address', 'bytes', 'string'].includes(typeName)) return true;
+const FIXED_SIZE_VALUE_REGEX = /^((?:int|uint|bytes)[0-9]+|(?:ufixed|fixed)[0-9]+x[0-9]+)$/;
+function _isFixedBuiltInValueType(typeName: string): typeName is StorageDumpBuiltInValueType {
   return FIXED_SIZE_VALUE_REGEX.test(typeName);
+}
+
+const _typeValueNormalizeMap = {
+  int: 'int256',
+  uint: 'uint256',
+  byte: 'bytes1',
+  ufixed: 'ufixed128x18',
+  fixed: 'fixed128x18',
+} as { [k: string]: StorageDumpBuiltInValueType };
+
+function _getBuiltInValueType(typeName: string): StorageDumpBuiltInValueType {
+  if (typeof typeName !== 'string' || !typeName) throw new Error(`Invalid typeName ${typeName}`);
+  if (['bool', 'address', 'bytes', 'string'].includes(typeName))
+    return typeName as StorageDumpBuiltInValueType;
+  if (_typeValueNormalizeMap[typeName]) return _typeValueNormalizeMap[typeName];
+  if (_isFixedBuiltInValueType(typeName)) return typeName;
+  throw new Error(`Invalid typeName ${typeName}`);
 }
 
 async function _getContracts(getArtifact: GetArtifactFunction, contracts: string[]) {
