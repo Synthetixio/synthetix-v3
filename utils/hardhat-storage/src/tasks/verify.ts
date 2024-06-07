@@ -1,8 +1,5 @@
 import { task } from 'hardhat/config';
-import { render } from '../internal/render';
-import { SUBTASK_STORAGE_LOAD_DUMP, TASK_STORAGE_VERIFY } from '../task-names';
-
-import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+import { TASK_STORAGE_VERIFY } from '../task-names';
 
 interface Params {
   previous: string;
@@ -24,12 +21,5 @@ task(
     'storage.dump.sol'
   )
   .setAction(async (params: Required<Params>, hre) => {
-    const currSourceUnits: SourceUnit[] = await hre.run(SUBTASK_STORAGE_LOAD_DUMP, {
-      filepath: params.current,
-    });
-
-    for (const sourceUnit of currSourceUnits) {
-      console.log(JSON.stringify(sourceUnit, null, 2));
-      console.log(render(sourceUnit));
-    }
+    // TODO: implement storage mutations check
   });

@@ -14,11 +14,45 @@ export interface OldStorageArtifact extends StorageArtifact {
 export type GetArtifactFunction = (sourceName: string) => Promise<StorageArtifact>;
 
 export interface StorageDumpSlotBase {
-  name: string | null;
   type: string;
+  name?: string;
 }
 
-export type StorageDumpSlot = StorageDumpSlotBase;
+export type StorageDumpBuiltInValueType =
+  | 'bool'
+  | 'address'
+  | `uint${number}`
+  | `int${number}`
+  | `bytes${number}`
+  | 'bytes'
+  | 'string';
+
+export interface StorageDumpBuiltInValueSlot extends StorageDumpSlotBase {
+  type: StorageDumpBuiltInValueType;
+}
+
+export interface StorageDumpStructSlot extends StorageDumpSlotBase {
+  type: 'struct';
+  members: StorageDumpSlot[];
+}
+
+export interface StorageDumpMappingSlot extends StorageDumpSlotBase {
+  type: 'mapping';
+  key: StorageDumpBuiltInValueSlot;
+  value: StorageDumpSlot;
+}
+
+export interface StorageDumpArraySlot extends StorageDumpSlotBase {
+  type: 'array';
+  value: StorageDumpSlot;
+  range: [number, number] | null;
+}
+
+export type StorageDumpSlot =
+  | StorageDumpBuiltInValueSlot
+  | StorageDumpStructSlot
+  | StorageDumpMappingSlot
+  | StorageDumpArraySlot;
 
 export interface StorageDumpLayout {
   kind: 'contract' | 'library';

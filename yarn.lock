@@ -3102,6 +3102,7 @@ __metadata:
     "@types/mustache": "npm:^4.2.5"
     hardhat: "npm:^2.19.5"
     jest: "npm:^29.7.0"
+    json-stringify-pretty-compact: "npm:3.0.0"
     lodash.memoize: "npm:^4.1.2"
     mustache: "npm:^4.2.0"
     solidity-ast: "npm:^0.4.55"
@@ -10903,6 +10904,13 @@ __metadata:
   version: 1.1.4
   resolution: "json-stringify-nice@npm:1.1.4"
   checksum: 10/0e02cae900a1f24df64613dd10a54b354e4ba2b17822f0d7f0d2708182e71a8bbbfac107d54d3ae8fa3d8bab3556e20cef84f193ace92c9df7bc30872ec2926e
+  languageName: node
+  linkType: hard
+
+"json-stringify-pretty-compact@npm:3.0.0":
+  version: 3.0.0
+  resolution: "json-stringify-pretty-compact@npm:3.0.0"
+  checksum: 10/bf2cfb77e5eedb38c2a3c5ff2b8680e05a6073209bd54176640e90c2bc49c9eb798c8c6a3267216981291f8e3a6b82c996bfae71c155cbfd51eb3f998eeea482
   languageName: node
   linkType: hard
 

@@ -1,12 +1,12 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import { filterContracts } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { dumpStorage } from '../internal/dump';
 import { readHardhatArtifact } from '../internal/read-hardhat-artifact';
-import { writeInChunks } from '../internal/write-in-chunks';
+import { logInChunks } from '../internal/log-in-chunks';
 import { TASK_STORAGE_DUMP, TASK_STORAGE_VALIDATE } from '../task-names';
+import { writeFile } from '../internal/write-file';
 
 interface Params {
   output: string;
@@ -19,13 +19,13 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
   .addOptionalParam(
     'output',
     'Storage dump output file relative to the root of the project',
-    'storage.dump.sol'
+    'storage.dump.json'
   )
   .addFlag('noValidate', 'Do not perform static validations on contracts before generating')
   .addFlag('quiet', 'only emit errors to the console')
   .addFlag('log', 'log json result to the console')
   .setAction(async (params: Params, hre) => {
-    const { noValidate, log, quiet } = params;
+    const { output, noValidate, log, quiet } = params;
 
     const now = Date.now();
 
@@ -39,16 +39,12 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
 
     const dump = await dumpStorage({ getArtifact, contracts });
 
-    // if (output) {
-    //   const target = path.resolve(hre.config.paths.root, output);
-    //   await fs.mkdir(path.dirname(target), { recursive: true });
-    //   await fs.writeFile(target, dump);
-
-    //   logger.success(`Storage dump written to ${output} in ${Date.now() - now}ms`);
-    // }
+    if (output) {
+      await writeFile(path.resolve(hre.config.paths.root, output), dump);
+    }
 
     if (log) {
-      writeInChunks(JSON.stringify(dump, null, 2));
+      logInChunks(dump);
     } else if (!quiet) {
       logger.success(`Storage dump finished in ${Date.now() - now}ms`);
     }

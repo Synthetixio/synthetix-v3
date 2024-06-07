@@ -3,11 +3,9 @@ import { extendConfig } from 'hardhat/config';
 import { HardhatConfig, HardhatUserConfig } from 'hardhat/types';
 import './type-extensions';
 import './subtasks/generate-testable-storage';
-import './subtasks/get-source-units';
 import './subtasks/parse-contents';
-import './subtasks/parse-dump';
-import './tasks/generate-testable';
 import './tasks/dump';
+import './tasks/generate-testable';
 import './tasks/validate';
 import './tasks/verify';
 

@@ -17,7 +17,7 @@ export async function readHardhatArtifact(hre: HardhatRuntimeEnvironment, source
     return readArtifactCached(hre.config.paths.root, sourceName);
   } else {
     const sourceFullPath = require.resolve(sourceName);
-    const projectPackageJson = await findClosestPackageJson(sourceFullPath);
+    const projectPackageJson = findClosestPackageJson(sourceFullPath);
 
     if (!projectPackageJson) {
       throw new Error(`Could not find project root for "${sourceName}"`);
