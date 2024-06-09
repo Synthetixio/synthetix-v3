@@ -120,19 +120,19 @@ library Vault {
 
     function updateRewards(
         Data storage self,
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
+				PositionSelector memory pos,
+				bytes32[] memory rewardIds
     ) internal returns (uint256[] memory rewards, address[] memory distributors) {
         uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
         uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
-            accountId.toBytes32()
+            pos.accountId.toBytes32()
         );
 
         return
             updateRewards(
                 self,
-                PositionSelector(accountId, poolId, collateralType),
+                pos,
+								rewardIds,
                 totalSharesD18,
                 actorSharesD18
             );
@@ -145,15 +145,20 @@ library Vault {
     function updateRewards(
         Data storage self,
         PositionSelector memory pos,
+				bytes32[] memory rewardIds,
         uint256 totalSharesD18,
         uint256 actorSharesD18
     ) internal returns (uint256[] memory rewards, address[] memory distributors) {
-        rewards = new uint256[](self.rewardIds.length());
-        distributors = new address[](self.rewardIds.length());
+        rewards = new uint256[](rewardIds.length);
+        distributors = new address[](rewardIds.length);
 
-        uint256 numRewards = self.rewardIds.length();
-        for (uint256 i = 0; i < numRewards; i++) {
-            RewardDistribution.Data storage dist = self.rewards[self.rewardIds.valueAt(i + 1)];
+        for (uint256 i = 0; i < rewardIds.length; i++) {
+						// gaps can exist in the rewardIds
+						if (rewardIds[i] == 0) {
+							continue;
+						}
+
+            RewardDistribution.Data storage dist = self.rewards[rewardIds[i]];
 
             if (address(dist.distributor) == address(0)) {
                 continue;
@@ -163,7 +168,7 @@ library Vault {
             rewards[i] = updateReward(
                 self,
                 pos,
-                self.rewardIds.valueAt(i + 1),
+                rewardIds[i],
                 totalSharesD18,
                 actorSharesD18
             );

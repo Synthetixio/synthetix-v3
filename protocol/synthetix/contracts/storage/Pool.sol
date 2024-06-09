@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./Config.sol";
 import "./Distribution.sol";
+import "./RewardDistribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
@@ -27,6 +28,7 @@ library Pool {
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
+		using RewardDistribution for RewardDistribution.Data;
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
@@ -35,6 +37,7 @@ library Pool {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
+		using SetUtil for SetUtil.Bytes32Set;
 
     /**
      * @dev Thrown when the specified pool is not found.
@@ -114,6 +117,7 @@ library Pool {
          *
          */
         Distribution.Data vaultsDebtDistribution;
+
         /**
          * @dev Reference to all the vaults that provide liquidity to this pool.
          *
@@ -135,6 +139,19 @@ library Pool {
          * If the pool owner sets this value to true, then new collaterals will be disabled for the pool unless a maxDeposit is set for a that collateral.
          */
         bool collateralDisabledByDefault;
+
+        /**
+         * @dev Tracks reward ids, for pool-wide distributions.
+         */
+        SetUtil.Bytes32Set rewardIds;
+
+				/**
+				 * @dev To allow for rewards to be distributed proportionally to all vaults at a vault level, this data structure
+				 * records the proportional amount of rewards that are assigned to each vault (which then correspondingly, gets assigned to users).
+				 *
+				 */
+				mapping(bytes32 => RewardDistribution.Data) rewardsToVaults;
+				
     }
 
     /**
@@ -370,6 +387,59 @@ library Pool {
     ) internal returns (int256 debtD18) {
         distributeDebtToVaults(self, collateralType);
         return self.vaults[collateralType].consolidateAccountDebt(accountId);
+    }
+
+		/**
+		 * @dev Allocates rewards sent at the pool level to vaults so they can be claimed
+		 */
+		function updateRewardsToVaults(
+				Data storage self,
+        Vault.PositionSelector memory pos
+    ) internal returns (uint256[] memory rewards, address[] memory distributors) {
+        bytes32[] memory poolRewardIds = new bytes32[](self.rewardIds.length());
+
+				{
+						bytes32 actorId = pos.collateralType.toBytes32();
+						uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
+						uint256 vaultSharesD18 = self.vaultsDebtDistribution.getActorShares(actorId);
+
+						uint256 numRewards = self.rewardIds.length();
+						for (uint256 i = 0; i < numRewards; i++) {
+								bytes32 rewardId = self.rewardIds.valueAt(i + 1);
+								RewardDistribution.Data storage dist = self.rewardsToVaults[rewardId];
+
+								if (address(dist.distributor) == address(0)) {
+										continue;
+								}
+
+								dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
+
+								uint256 distAmount = vaultSharesD18
+										.mulDecimal(
+												dist.rewardPerShareD18 - dist.claimStatus[uint256(actorId)].lastRewardPerShareD18
+										);
+
+								if (distAmount == 0) {
+										continue;
+								}
+
+								// TODO: check that vault shares are same as the total shares for the ultimate distribution. if not, load distribution info
+								self.vaults[pos.collateralType].rewards[rewardId].rewardPerShareD18 += distAmount.divDecimal(vaultSharesD18).to128();
+
+								dist.claimStatus[uint256(actorId)].lastRewardPerShareD18 = dist.rewardPerShareD18;
+
+								poolRewardIds[i] = rewardId;
+						}
+				}
+
+				// update pool level rewards to vaults
+				(uint256[] memory poolAmounts, address[] memory poolAddrs) = self.vaults[pos.collateralType].updateRewards(pos, poolRewardIds);
+
+				// also update vault level rewards
+				(uint256[] memory vaultAmounts, address[] memory vaultAddrs) = self.vaults[pos.collateralType].updateRewards(pos, self.vaults[pos.collateralType].rewardIds.values());
+
+				rewards = new uint256[](poolAmounts.length + vaultAmounts.length);
+				distributors  = new address[](poolAddrs.length + vaultAddrs.length);
     }
 
     /**

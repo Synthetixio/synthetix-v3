@@ -31,6 +31,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     using SafeCastI256 for int256;
 
     using Vault for Vault.Data;
+		using Pool for Pool.Data;
     using Distribution for Distribution.Data;
     using RewardDistribution for RewardDistribution.Data;
 
@@ -47,7 +48,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address distributor
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
-        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+        SetUtil.Bytes32Set storage rewardIds = collateralType == address(0) ? pool.rewardIds : pool.vaults[collateralType].rewardIds;
 
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
@@ -77,7 +78,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
         if (distributor == address(0)) {
             revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
-        pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(distributor);
+
+				if (collateralType == address(0)) {
+						pool.rewardsToVaults[rewardId].distributor = IRewardDistributor(distributor);
+				} {
+						pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(distributor);
+				}
 
         emit RewardsDistributorRegistered(poolId, collateralType, distributor);
     }
@@ -127,8 +133,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 accountId
     ) external override returns (uint256[] memory, address[] memory) {
         Account.exists(accountId);
-        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        return vault.updateRewards(accountId, poolId, collateralType);
+        Pool.Data storage pool = Pool.load(poolId);
+        return pool.updateRewardsToVaults(Vault.PositionSelector(accountId, poolId, collateralType));
     }
 
     /**
@@ -241,7 +247,10 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         reward.rewardPerShareD18 += reward
             .distribute(
-                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+								// if the rewards to be distributed are at the pool level, we want to use the pool distribution (trickle down happens later)
+                collateralType == address(0) ? 
+									pool.vaultsDebtDistribution : 
+									pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
                 amount.toInt(),
                 start,
                 duration
