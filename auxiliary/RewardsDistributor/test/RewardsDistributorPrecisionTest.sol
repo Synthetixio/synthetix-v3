@@ -14,8 +14,9 @@ contract CoreProxyMock {
         uint256 amount_,
         uint64, // start_,
         uint32 // duration_
-    ) public {
+    ) public returns (uint256) {
         amount = amount_;
+				return 0;
     }
 
     address public poolOwner;
@@ -56,7 +57,6 @@ contract RewardsDistributorPrecisionTest is Test {
         RewardsDistributor rewardsDistributor = new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T6D),
             T6D.decimals(),
             "6 Decimals token payouts"
@@ -101,7 +101,6 @@ contract RewardsDistributorPrecisionTest is Test {
         RewardsDistributor rewardsDistributor = new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T33D),
             T33D.decimals(),
             "33 Decimals token payouts"
@@ -146,7 +145,6 @@ contract RewardsDistributorPrecisionTest is Test {
         RewardsDistributor rewardsDistributor = new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T6D),
             T6D.decimals(),
             "6 Decimals token payouts"
@@ -185,7 +183,6 @@ contract RewardsDistributorPrecisionTest is Test {
         RewardsDistributor rewardsDistributor = new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T33D),
             T33D.decimals(),
             "33 Decimals token payouts"
