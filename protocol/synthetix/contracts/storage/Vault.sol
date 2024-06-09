@@ -120,22 +120,15 @@ library Vault {
 
     function updateRewards(
         Data storage self,
-				PositionSelector memory pos,
-				bytes32[] memory rewardIds
+        PositionSelector memory pos,
+        bytes32[] memory rewardIds
     ) internal returns (uint256[] memory rewards, address[] memory distributors) {
         uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
         uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
             pos.accountId.toBytes32()
         );
 
-        return
-            updateRewards(
-                self,
-                pos,
-								rewardIds,
-                totalSharesD18,
-                actorSharesD18
-            );
+        return updateRewards(self, pos, rewardIds, totalSharesD18, actorSharesD18);
     }
 
     /**
@@ -145,7 +138,7 @@ library Vault {
     function updateRewards(
         Data storage self,
         PositionSelector memory pos,
-				bytes32[] memory rewardIds,
+        bytes32[] memory rewardIds,
         uint256 totalSharesD18,
         uint256 actorSharesD18
     ) internal returns (uint256[] memory rewards, address[] memory distributors) {
@@ -153,10 +146,10 @@ library Vault {
         distributors = new address[](rewardIds.length);
 
         for (uint256 i = 0; i < rewardIds.length; i++) {
-						// gaps can exist in the rewardIds
-						if (rewardIds[i] == 0) {
-							continue;
-						}
+            // gaps can exist in the rewardIds
+            if (rewardIds[i] == 0) {
+                continue;
+            }
 
             RewardDistribution.Data storage dist = self.rewards[rewardIds[i]];
 
@@ -165,13 +158,7 @@ library Vault {
             }
 
             distributors[i] = address(dist.distributor);
-            rewards[i] = updateReward(
-                self,
-                pos,
-                rewardIds[i],
-                totalSharesD18,
-                actorSharesD18
-            );
+            rewards[i] = updateReward(self, pos, rewardIds[i], totalSharesD18, actorSharesD18);
         }
     }
 

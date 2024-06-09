@@ -149,7 +149,9 @@ contract VaultModule is IVaultModule {
             ERC2771Context._msgSender()
         );
 
-        Pool.load(poolId).updateRewardsToVaults(Vault.PositionSelector(accountId, poolId, collateralType));
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
     }
 
     /**
