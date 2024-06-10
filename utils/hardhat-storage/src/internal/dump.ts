@@ -14,9 +14,11 @@ import {
   StorageDumpLayout,
   StorageDumpSlot,
   StorageDumpSlotBase,
+  StorageDumpSlotWithSize,
 } from '../types';
 import { findNodeReferenceWithArtifact } from './artifacts';
 import { findAll, findContract } from './finders';
+import { getStorageSlotSize } from './layout';
 
 interface ContractOrLibrary extends ContractDefinition {
   kind: 'contract' | 'library';
@@ -44,7 +46,7 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
     const fqName = `${sourceName}:${contractName}`;
 
     for (const structDefinition of findAll(contractNode, 'StructDefinition')) {
-      const struct: StorageDumpSlot[] = [];
+      const struct: StorageDumpSlotWithSize[] = [];
 
       for (const member of structDefinition.members) {
         const storageSlot = await _astVariableToStorageSlot(getArtifact, artifact, member);
@@ -68,7 +70,7 @@ async function _astVariableToStorageSlot(
   getArtifact: GetArtifactFunction,
   artifact: StorageArtifact,
   member: VariableDeclaration
-): Promise<StorageDumpSlot> {
+) {
   if (!member.typeName) throw new Error('Missing type notation');
   if (!member.name) throw new Error('Missing name notation');
   return _typeNameToStorageSlot(getArtifact, artifact, member.typeName, member.name);
@@ -79,11 +81,13 @@ async function _typeNameToStorageSlot(
   artifact: StorageArtifact,
   typeName: TypeName,
   name?: string
-): Promise<StorageDumpSlot> {
-  const _slotWithName = (slot: StorageDumpSlot) => {
-    if (!name) return slot;
+): Promise<StorageDumpSlotWithSize> {
+  const _slotWithName = (slot: StorageDumpSlot): StorageDumpSlotWithSize => {
     const { type, ...restAttrs } = slot;
-    return { type, name, ...restAttrs } as StorageDumpSlot; // order keys for consistency
+    const size = getStorageSlotSize(slot);
+    return (
+      name ? { type, name, size, ...restAttrs } : { type, size, ...restAttrs }
+    ) as StorageDumpSlotWithSize; // order keys for consistency
   };
 
   const _error = (msg: string) => {
@@ -107,13 +111,13 @@ async function _typeNameToStorageSlot(
         : undefined
     );
 
-    const slot = _slotWithName({ type: 'array', value }) as StorageDumpArraySlot;
+    const slot = _slotWithName({ type: 'array', value });
 
     if (typeName.range) _error('array values with range not implemented');
 
     if (typeName.length) {
       if (typeName.length.type === 'NumberLiteral') {
-        slot.length = Number.parseInt(typeName.length.number);
+        (slot as StorageDumpArraySlot).length = Number.parseInt(typeName.length.number);
       } else {
         _error('array length with custom value not implemented');
       }

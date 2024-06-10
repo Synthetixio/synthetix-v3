@@ -18,10 +18,21 @@ contract ExampleContract {
         uint256 someValue;
     }
 
+    struct SimpleStruct {
+        uint8 size1;
+        uint16 size2;
+        uint32 size4;
+        uint64 size8;
+    }
+
     struct Data {
         address owner;
+        address anotherOwner;
+        uint128 sharingSlot1;
+        uint128 sharingSlot2;
         EnumExample enumExample;
         mapping(address => uint128) simpleMapping;
+        uint8 afterMappingSlot;
         address[] dynamicArray;
         uint256[3] staticArray;
         uint unsignedInt; // solhint-disable-line explicit-types
@@ -30,6 +41,7 @@ contract ExampleContract {
         int256 signedInt256;
         mapping(ExampleKeyContract => SubData) mappingWithNestedStruct;
         string someStringValue;
+        SimpleStruct simpleStruct;
     }
 
     uint128 public constant SOME_CONSTANT = 445;
@@ -38,6 +50,8 @@ contract ExampleContract {
 
     uint256 public stateVariableNumber = 12345;
     string public stateVariableString = "give me some testing data";
+
+    Data public structData;
 
     function getValue() public pure returns (uint256) {
         return 1;

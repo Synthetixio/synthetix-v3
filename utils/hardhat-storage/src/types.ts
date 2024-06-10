@@ -33,6 +33,11 @@ export interface StorageDumpBuiltInValueSlot extends StorageDumpSlotBase {
   type: StorageDumpBuiltInValueType;
 }
 
+export interface StorageDumpEnumSlot extends StorageDumpSlotBase {
+  type: 'enum';
+  members: string[];
+}
+
 export interface StorageDumpStructSlot extends StorageDumpSlotBase {
   type: 'struct';
   members: StorageDumpSlot[];
@@ -50,11 +55,6 @@ export interface StorageDumpArraySlot extends StorageDumpSlotBase {
   length?: number;
 }
 
-export interface StorageDumpEnumSlot extends StorageDumpSlotBase {
-  type: 'enum';
-  members: string[];
-}
-
 export type StorageDumpSlot =
   | StorageDumpBuiltInValueSlot
   | StorageDumpStructSlot
@@ -62,10 +62,17 @@ export type StorageDumpSlot =
   | StorageDumpArraySlot
   | StorageDumpEnumSlot;
 
+export type StorageDumpSlotWithSize =
+  | (StorageDumpBuiltInValueSlot & { size: number })
+  | (StorageDumpStructSlot & { size: number })
+  | (StorageDumpMappingSlot & { size: number })
+  | (StorageDumpArraySlot & { size: number })
+  | (StorageDumpEnumSlot & { size: number });
+
 export interface StorageDumpLayout {
   kind: 'contract' | 'library';
   name: string;
-  structs: { [structName: string]: StorageDumpSlot[] };
+  structs: { [structName: string]: StorageDumpSlotWithSize[] };
 }
 
 export interface StorageDump {

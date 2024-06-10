@@ -9,10 +9,12 @@ exports[`internal/dump.ts sample-project contract with storage and interface 1`]
       "GlobalStore": [
         {
           "name": "value",
+          "size": 32,
           "type": "uint256",
         },
         {
           "name": "someValue",
+          "size": 32,
           "type": "uint256",
         },
       ],
@@ -30,7 +32,23 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
       "Data": [
         {
           "name": "owner",
+          "size": 20,
           "type": "address",
+        },
+        {
+          "name": "anotherOwner",
+          "size": 20,
+          "type": "address",
+        },
+        {
+          "name": "sharingSlot1",
+          "size": 16,
+          "type": "uint128",
+        },
+        {
+          "name": "sharingSlot2",
+          "size": 16,
+          "type": "uint128",
         },
         {
           "members": [
@@ -41,81 +59,155 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
             "FIVE",
           ],
           "name": "enumExample",
+          "size": 1,
           "type": "enum",
         },
         {
           "key": {
+            "size": 20,
             "type": "address",
           },
           "name": "simpleMapping",
+          "size": 32,
           "type": "mapping",
           "value": {
+            "size": 16,
             "type": "uint128",
           },
         },
         {
+          "name": "afterMappingSlot",
+          "size": 1,
+          "type": "uint8",
+        },
+        {
           "name": "dynamicArray",
+          "size": 32,
           "type": "array",
           "value": {
+            "size": 20,
             "type": "address",
           },
         },
         {
           "length": 3,
           "name": "staticArray",
+          "size": 32,
           "type": "array",
           "value": {
+            "size": 32,
             "type": "uint256",
           },
         },
         {
           "name": "unsignedInt",
+          "size": 32,
           "type": "uint256",
         },
         {
           "name": "unsignedInt256",
+          "size": 32,
           "type": "uint256",
         },
         {
           "name": "unsignedInt8",
+          "size": 1,
           "type": "uint8",
         },
         {
           "name": "signedInt256",
+          "size": 32,
           "type": "int256",
         },
         {
           "key": {
+            "size": 20,
             "type": "address",
           },
           "name": "mappingWithNestedStruct",
+          "size": 32,
           "type": "mapping",
           "value": {
             "members": [
               {
                 "name": "someString",
+                "size": 32,
                 "type": "string",
               },
               {
                 "name": "someValue",
+                "size": 32,
                 "type": "uint256",
               },
             ],
+            "size": 64,
             "type": "struct",
           },
         },
         {
           "name": "someStringValue",
+          "size": 32,
           "type": "string",
+        },
+        {
+          "members": [
+            {
+              "name": "size1",
+              "size": 1,
+              "type": "uint8",
+            },
+            {
+              "name": "size2",
+              "size": 2,
+              "type": "uint16",
+            },
+            {
+              "name": "size4",
+              "size": 4,
+              "type": "uint32",
+            },
+            {
+              "name": "size8",
+              "size": 8,
+              "type": "uint64",
+            },
+          ],
+          "name": "simpleStruct",
+          "size": 15,
+          "type": "struct",
+        },
+      ],
+      "SimpleStruct": [
+        {
+          "name": "size1",
+          "size": 1,
+          "type": "uint8",
+        },
+        {
+          "name": "size2",
+          "size": 2,
+          "type": "uint16",
+        },
+        {
+          "name": "size4",
+          "size": 4,
+          "type": "uint32",
+        },
+        {
+          "name": "size8",
+          "size": 8,
+          "type": "uint64",
         },
       ],
       "SubData": [
         {
           "name": "someString",
+          "size": 32,
           "type": "string",
         },
         {
           "name": "someValue",
+          "size": 32,
           "type": "uint256",
         },
       ],
