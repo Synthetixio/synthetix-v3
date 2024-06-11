@@ -285,5 +285,6 @@ export const genOrderFromSizeDelta = async (
     orderFee,
     keeperFee,
     hooks: [] as string[],
+    trackingCode: genBytes32(),
   };
 };

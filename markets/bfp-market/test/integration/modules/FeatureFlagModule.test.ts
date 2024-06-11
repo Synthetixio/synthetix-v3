@@ -150,7 +150,8 @@ describe('FeatureFlagModule', () => {
         order.sizeDelta,
         order.limitPrice,
         order.keeperFeeBufferUsd,
-        [ADDRESS0]
+        [ADDRESS0],
+        order.trackingCode
       ),
       `FeatureUnavailable("${feature}")`,
       BfpMarketProxy
