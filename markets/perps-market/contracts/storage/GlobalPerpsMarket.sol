@@ -143,7 +143,6 @@ library GlobalPerpsMarket {
 
     function updateDebt(Data storage self, int256 debtDelta) internal {
         int256 newTotalAccountsDebt = self.totalAccountsDebt.toInt() + debtDelta;
-        if (newTotalAccountsDebt < 0) {}
         self.totalAccountsDebt = newTotalAccountsDebt < 0 ? 0 : newTotalAccountsDebt.toUint();
     }
 

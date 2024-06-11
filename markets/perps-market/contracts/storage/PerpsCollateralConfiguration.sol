@@ -92,7 +92,7 @@ library PerpsCollateralConfiguration {
         self.maxAmount = maxAmount;
     }
 
-    function setPricing(
+    function setDiscounts(
         Data storage self,
         uint256 upperLimitDiscount,
         uint256 lowerLimitDiscount,

@@ -37,7 +37,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
             .load(collateralId);
 
         collateralConfig.setMax(collateralId, maxCollateralAmount);
-        collateralConfig.setPricing(upperLimitDiscount, lowerLimitDiscount, discountScalar);
+        collateralConfig.setDiscounts(upperLimitDiscount, lowerLimitDiscount, discountScalar);
 
         GlobalPerpsMarketConfiguration.load().updateSupportedCollaterals(
             collateralId,

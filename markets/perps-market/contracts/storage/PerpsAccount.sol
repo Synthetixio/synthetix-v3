@@ -145,7 +145,7 @@ library PerpsAccount {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, amount);
             } else {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -creditAvailable);
-                newDebt = self.debt - leftoverCredit.toUint();
+                newDebt = (self.debt.toInt() - leftoverCredit).toUint();
             }
         }
 
