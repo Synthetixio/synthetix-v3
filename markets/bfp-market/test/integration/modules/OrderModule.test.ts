@@ -698,7 +698,7 @@ describe('OrderModule', () => {
           order.hooks,
           genBytes32()
         ),
-        'CanLiquidatePosition()',
+        'InsufficientMargin()',
         BfpMarketProxy
       );
     });
@@ -2068,7 +2068,7 @@ describe('OrderModule', () => {
         BfpMarketProxy.connect(keeper()).settleOrder(mainTrader.accountId, marketId, updateData, {
           value: updateFee,
         }),
-        'CanLiquidatePosition()',
+        'InsufficientMargin()',
         BfpMarketProxy
       );
     });

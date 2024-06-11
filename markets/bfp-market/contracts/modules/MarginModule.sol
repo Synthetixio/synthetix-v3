@@ -95,7 +95,7 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (uint256 im, ) = Position.getLiquidationMarginUsd(
             position.size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -628,6 +628,25 @@ contract MarginModule is IMarginModule {
             );
     }
 
+    /// @dev Internal function for this module to reduce code duplication when querying for margin liq reward.
+    function _getMarginLiquidationOnlyReward(
+        uint128 accountId,
+        uint128 marketId,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
+        return
+            Margin.getMarginLiquidationOnlyReward(
+                Margin.getCollateralUsdWithoutDiscount(
+                    Margin.load(accountId, marketId),
+                    Margin.load(),
+                    addresses
+                ),
+                PerpMarketConfiguration.load(marketId),
+                PerpMarketConfiguration.load(),
+                addresses
+            );
+    }
+
     /// @inheritdoc IMarginModule
     function getWithdrawableMargin(
         uint128 accountId,
@@ -653,18 +672,21 @@ contract MarginModule is IMarginModule {
         // When there is no position then we can ignore all running losses/profits but still need to include debt
         // as they may have realized a prior negative PnL.
         if (size == 0) {
+            int256 liqOnlyReward = _getMarginLiquidationOnlyReward(accountId, marketId, addresses)
+                .toInt();
             return
                 MathUtil
                     .max(
                         marginValues.collateralUsd.toInt() -
-                            Margin.load(accountId, marketId).debtUsd.toInt(),
+                            Margin.load(accountId, marketId).debtUsd.toInt() -
+                            liqOnlyReward,
                         0
                     )
                     .toUint();
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (uint256 im, ) = Position.getLiquidationMarginUsd(
             size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -690,16 +712,6 @@ contract MarginModule is IMarginModule {
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
-        return
-            Margin.getMarginLiquidationOnlyReward(
-                Margin.getCollateralUsdWithoutDiscount(
-                    Margin.load(accountId, marketId),
-                    Margin.load(),
-                    addresses
-                ),
-                PerpMarketConfiguration.load(marketId),
-                PerpMarketConfiguration.load(),
-                addresses
-            );
+        return _getMarginLiquidationOnlyReward(accountId, marketId, addresses);
     }
 }

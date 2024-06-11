@@ -173,7 +173,7 @@ contract PerpAccountModule is IPerpAccountModule {
             marginValues,
             addresses
         );
-        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(
+        (uint256 im, uint256 mm) = Position.getLiquidationMarginUsd(
             position.size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -380,7 +380,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Ensure `toAccount` has enough margin to meet IM.
-        (runtime.toIm, , ) = Position.getLiquidationMarginUsd(
+        (runtime.toIm, ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             runtime.toCollateralUsd,
@@ -399,7 +399,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Ensure we validate remaining `fromAccount` margin > IM when position still remains.
         if (proportion < DecimalMath.UNIT) {
-            (runtime.fromIm, , ) = Position.getLiquidationMarginUsd(
+            (runtime.fromIm, ) = Position.getLiquidationMarginUsd(
                 fromPosition.size,
                 runtime.oraclePrice,
                 runtime.fromCollateralUsd,
@@ -606,7 +606,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 PerpMarketConfiguration.load(),
                 addresses
             );
-        (runtime.im, , ) = Position.getLiquidationMarginUsd(
+        (runtime.im, ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             runtime.mergedCollateralUsd,

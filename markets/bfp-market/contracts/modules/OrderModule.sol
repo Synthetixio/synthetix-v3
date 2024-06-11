@@ -382,7 +382,6 @@ contract OrderModule is IOrderModule {
                 // fees and we want to avoid attributing price PnL (due to pd adjusted oracle price) now as its already
                 // tracked in the new position price PnL.
                 //
-
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
                 trade.newMarginUsd.toInt() - trade.collateralUsd.toInt(),

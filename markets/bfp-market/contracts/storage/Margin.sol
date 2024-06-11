@@ -33,7 +33,7 @@ library Margin {
         bytes32 oracleNodeId;
         /// Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
-        /// skewScale to use when caluclating collateral discount.
+        /// skewScale to use when calculating collateral discount.
         uint128 skewScale;
         /// Address of the associated reward distributor.
         address rewardDistributor;

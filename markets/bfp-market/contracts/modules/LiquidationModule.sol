@@ -538,7 +538,7 @@ contract LiquidationModule is ILiquidationModule {
             PerpMarketConfiguration.load(),
             addresses
         );
-        (im, mm, ) = Position.getLiquidationMarginUsd(
+        (im, mm) = Position.getLiquidationMarginUsd(
             market.positions[accountId].size + sizeDelta,
             oraclePrice,
             collateralUsd,
