@@ -8,11 +8,11 @@ export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
   const newDelegationUpdatedEvent = createDelegationUpdateEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(2323),
-    BigInt.fromI32(10),
+    1,
+    1,
+    address,
+    2323,
+    10,
     now,
     now - 1000
   );
@@ -28,14 +28,7 @@ export default function test(): void {
     ])
     .returns([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(200))]);
   handleDelegationUpdated(newDelegationUpdatedEvent);
-  const newUSDMintedEvent = createUSDMintedEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(2000),
-    now + 1000,
-    now
-  );
+  const newUSDMintedEvent = createUSDMintedEvent(1, 1, address, 2000, now + 1000, now);
   handleUSDMinted(newUSDMintedEvent);
   assert.fieldEquals('Position', `1-1-${address}`, 'id', `1-1-${address}`);
   assert.fieldEquals('Position', `1-1-${address}`, 'created_at', now.toString());

@@ -1,5 +1,5 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
+import { store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handleCollateralConfigured } from '../mainnet';
 import { createCollateralConfiguredEvent } from './event-factories';
@@ -8,25 +8,25 @@ export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
-    Address.fromString(address),
+    address,
     true,
-    BigInt.fromI32(200),
-    BigInt.fromI32(50),
-    BigInt.fromI32(90),
-    Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(10))),
-    BigInt.fromI32(500),
+    200,
+    50,
+    90,
+    10,
+    500,
     now,
     now - 1000
   );
   handleCollateralConfigured(newCollateralConfiguredEvent);
   const newCollateralConfiguredEvent2 = createCollateralConfiguredEvent(
-    Address.fromString(address),
+    address,
     true,
-    BigInt.fromI32(300),
-    BigInt.fromI32(60),
-    BigInt.fromI32(80),
-    Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(10))),
-    BigInt.fromI32(400),
+    300,
+    60,
+    80,
+    10,
+    400,
     now + 1000,
     now
   );

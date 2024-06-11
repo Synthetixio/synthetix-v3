@@ -1,5 +1,4 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt, Bytes } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handleCollateralConfigured, handleCollateralDeposited } from '../mainnet';
 import { createCollateralConfiguredEvent, createDepositEvent } from './event-factories';
@@ -8,23 +7,17 @@ export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
-    Address.fromString(address),
+    address,
     true,
-    BigInt.fromI32(200),
-    BigInt.fromI32(50),
-    BigInt.fromI32(90),
-    Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(12))),
-    BigInt.fromI32(500),
+    200,
+    50,
+    90,
+    12,
+    500,
     now,
     now - 1000
   );
-  const newCollateralDepositEvent = createDepositEvent(
-    23,
-    Address.fromString(address),
-    BigInt.fromI32(555),
-    now + 1000,
-    now
-  );
+  const newCollateralDepositEvent = createDepositEvent(23, address, 555, now + 1000, now);
   handleCollateralConfigured(newCollateralConfiguredEvent);
   handleCollateralDeposited(newCollateralDepositEvent);
   assert.fieldEquals('CollateralType', address, 'id', address);

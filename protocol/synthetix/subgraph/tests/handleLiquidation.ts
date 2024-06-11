@@ -1,5 +1,4 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handleLiquidation } from '../mainnet';
 import { createLiquidationEvent } from './event-factories';
@@ -8,14 +7,14 @@ export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
   const newLiquidationEvent = createLiquidationEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(2),
-    Address.fromString(address),
-    BigInt.fromI32(300),
-    BigInt.fromI32(200),
-    BigInt.fromI32(100),
-    BigInt.fromI32(10),
-    Address.fromString(address2),
+    1,
+    2,
+    address,
+    300,
+    200,
+    100,
+    10,
+    address2,
     now,
     now - 1000
   );
