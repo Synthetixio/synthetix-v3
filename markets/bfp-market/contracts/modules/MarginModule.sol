@@ -628,7 +628,7 @@ contract MarginModule is IMarginModule {
             );
     }
 
-    /// @dev Internal function for this module to reduce code duplication when querying for margni liq reward.
+    /// @dev Internal function for this module to reduce code duplication when querying for margin liq reward.
     function _getMarginLiquidationOnlyReward(
         uint128 accountId,
         uint128 marketId,
