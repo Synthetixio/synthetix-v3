@@ -217,12 +217,12 @@ export function createCollateralConfiguredEvent(
   );
   const tupleArray = changetype<ethereum.Value>([
     ethereum.Value.fromBoolean(depositingEnabled),
-    ethereum.Value.fromSignedBigInt(BigInt.fromI32(issuanceRatio)),
-    ethereum.Value.fromSignedBigInt(BigInt.fromI32(liquidationRatio)),
-    ethereum.Value.fromSignedBigInt(BigInt.fromI32(liquidationReward)),
+    ethereum.Value.fromI32(issuanceRatio),
+    ethereum.Value.fromI32(liquidationRatio),
+    ethereum.Value.fromI32(liquidationReward),
     ethereum.Value.fromBytes(Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(oracleNodeId)))),
     ethereum.Value.fromAddress(Address.fromString(address)),
-    ethereum.Value.fromSignedBigInt(BigInt.fromI32(minDelegation)),
+    ethereum.Value.fromI32(minDelegation),
   ]);
   const tuple = changetype<ethereum.Tuple>(tupleArray);
   const tupleValue = ethereum.Value.fromTuple(tuple);
@@ -359,7 +359,7 @@ export function createDelegationUpdateEvent(
     )
   );
   newDelegationUpdatedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newDelegationUpdatedEvent.parameters.push(
     new ethereum.EventParam(
@@ -396,7 +396,7 @@ export function createUSDMintedEvent(
     )
   );
   newUSDMintedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newUSDMintedEvent.parameters.push(
     new ethereum.EventParam(
@@ -430,7 +430,7 @@ export function createUSDBurnedEvent(
     )
   );
   newUSDBurnedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newUSDBurnedEvent.parameters.push(
     new ethereum.EventParam(
@@ -457,7 +457,7 @@ export function createRewardsDistributorRegisteredEvent(
   const block = createBlock(timestamp, blockNumber);
   newRewardsDistributorRegisteredEvent.parameters = [];
   newRewardsDistributorRegisteredEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newRewardsDistributorRegisteredEvent.parameters.push(
     new ethereum.EventParam(
@@ -484,7 +484,7 @@ export function createRewardsDistributorRemovedEvent(
   const block = createBlock(timestamp, blockNumber);
   newRewardsDistributorRemovedEvent.parameters = [];
   newRewardsDistributorRemovedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newRewardsDistributorRemovedEvent.parameters.push(
     new ethereum.EventParam(
@@ -521,7 +521,7 @@ export function createRewardsDistributedEvent(
   newRewardsDistributedEvent.logIndex = BigInt.fromI32(logIndex);
   newRewardsDistributedEvent.parameters = [];
   newRewardsDistributedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newRewardsDistributedEvent.parameters.push(
     new ethereum.EventParam(
@@ -570,7 +570,7 @@ export function createRewardsClaimedEvent(
     )
   );
   newRewardsClaimedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newRewardsClaimedEvent.parameters.push(
     new ethereum.EventParam(
@@ -616,7 +616,7 @@ export function createLiquidationEvent(
     )
   );
   newLiquidatedEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newLiquidatedEvent.parameters.push(
     new ethereum.EventParam(
@@ -663,7 +663,7 @@ export function createVaultLiquidationEvent(
   newVaultLiquidationEvent.logIndex = BigInt.fromI32(logIndex);
   newVaultLiquidationEvent.parameters = [];
   newVaultLiquidationEvent.parameters.push(
-    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolId)))
+    new ethereum.EventParam('poolId', ethereum.Value.fromI32(poolId))
   );
   newVaultLiquidationEvent.parameters.push(
     new ethereum.EventParam(
