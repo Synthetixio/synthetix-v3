@@ -367,15 +367,18 @@ library Margin {
         // Calculate discount on collateral if this collateral were to be instantly sold on spot.
         uint256 skewScale = globalMarginConfig.supported[collateralAddress].skewScale;
 
-        uint256 discount = MathUtil.min(
-            MathUtil.max(
-                amountAvailable.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(
-                    skewScale
+        // skewScale _may_ be zero. In this event, do _not_ apply a discount.
+        uint256 discount = skewScale == 0
+            ? 0
+            : MathUtil.min(
+                MathUtil.max(
+                    amountAvailable.mulDecimal(globalConfig.collateralDiscountScalar).divDecimal(
+                        skewScale
+                    ),
+                    globalConfig.minCollateralDiscount
                 ),
-                globalConfig.minCollateralDiscount
-            ),
-            globalConfig.maxCollateralDiscount
-        );
+                globalConfig.maxCollateralDiscount
+            );
 
         // Apply discount on `collateralPrice` by the capped discount.
         return collateralPrice.mulDecimal(DecimalMath.UNIT - discount);
