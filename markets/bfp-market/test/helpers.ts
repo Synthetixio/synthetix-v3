@@ -245,7 +245,7 @@ export const commitOrder = async (
   order: CommitableOrder | Promise<CommitableOrder>
 ) => {
   const { BfpMarketProxy } = systems();
-  const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks } = await order;
+  const { sizeDelta, limitPrice, keeperFeeBufferUsd, hooks, trackingCode } = await order;
   return withExplicitEvmMine(
     () =>
       BfpMarketProxy.connect(trader.signer).commitOrder(
@@ -255,6 +255,7 @@ export const commitOrder = async (
         limitPrice,
         keeperFeeBufferUsd,
         hooks,
+        trackingCode,
         {
           maxFeePerGas: BigNumber.from(500 * 1e9), // Specify a large maxFeePerGas so callers can set a high basefee without any problems.
           gasLimit: BigNumber.from(1000000), // Sometimes gas estimation is not big enough, add a large one to be safe.
