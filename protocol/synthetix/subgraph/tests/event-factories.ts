@@ -721,7 +721,7 @@ export function createMarketRegisteredEvent(
 export function createMarketUsdDepositedEvent(
   marketId: i32,
   target: string,
-  amount: i32,
+  amount: i64,
   market: string,
   timestamp: i64,
   blockNumber: i64,
@@ -750,7 +750,7 @@ export function createMarketUsdDepositedEvent(
 export function createMarketUsdWithdrawnEvent(
   marketId: i32,
   target: string,
-  amount: i32,
+  amount: i64,
   market: string,
   timestamp: i64,
   blockNumber: i64,
