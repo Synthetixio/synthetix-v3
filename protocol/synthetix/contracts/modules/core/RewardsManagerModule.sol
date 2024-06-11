@@ -83,8 +83,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         if (collateralType == address(0)) {
             pool.rewardsToVaults[rewardId].distributor = IRewardDistributor(distributor);
-        }
-        {
+        } else {
             pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(
                 distributor
             );
