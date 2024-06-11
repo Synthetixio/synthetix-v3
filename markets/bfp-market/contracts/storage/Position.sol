@@ -170,6 +170,7 @@ library Position {
     function validateNextPositionEnoughMargin(
         Position.Data memory newPosition,
         uint256 oraclePrice,
+        uint256 im,
         uint256 mm,
         uint256 nextMarginUsd
     ) internal pure {
@@ -185,8 +186,12 @@ library Position {
         );
         uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
 
-        uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
+        // Check new position initial margin validations.
+        if (remainingMarginUsd < im) {
+            revert ErrorUtil.InsufficientMargin();
+        }
 
+        uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
         }
@@ -289,11 +294,6 @@ library Position {
                 addresses
             );
 
-            // Check new position initial margin validations.
-            if (runtime.discountedNextMarginUsd < runtime.im) {
-                revert ErrorUtil.InsufficientMargin();
-            }
-
             // Check the minimum credit requirements are still met.
             validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
 
@@ -301,6 +301,7 @@ library Position {
             validateNextPositionEnoughMargin(
                 newPosition,
                 params.oraclePrice,
+                runtime.im,
                 runtime.mm,
                 runtime.discountedNextMarginUsd
             );
