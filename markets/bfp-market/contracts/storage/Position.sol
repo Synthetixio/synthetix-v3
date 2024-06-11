@@ -190,11 +190,6 @@ library Position {
         if (remainingMarginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
-
-        uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
-        if (healthFactor <= DecimalMath.UNIT) {
-            revert ErrorUtil.CanLiquidatePosition();
-        }
     }
 
     /// @dev Validates whether the given `TradeParams` would lead to a valid next position.
