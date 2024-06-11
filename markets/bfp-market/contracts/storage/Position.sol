@@ -286,7 +286,7 @@ library Position {
                 runtime.keeperFee
             );
 
-            (runtime.im, runtime.mm, ) = getLiquidationMarginUsd(
+            (runtime.im, runtime.mm) = getLiquidationMarginUsd(
                 newPosition.size,
                 params.oraclePrice,
                 marginValuesForLiqValidation.collateralUsd,
@@ -463,12 +463,12 @@ library Position {
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses
-    ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
+    ) internal view returns (uint256 im, uint256 mm) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Short-circuit empty position and return zero'd values.
         if (size == 0) {
-            return (0, 0, 0);
+            return (0, 0);
         }
 
         uint128 absSize = MathUtil.abs(size).to128();
@@ -487,7 +487,7 @@ library Position {
             .price
             .toUint();
 
-        liqFlagReward = getLiquidationFlagReward(
+        uint256 liqFlagReward = getLiquidationFlagReward(
             notional,
             collateralUsd,
             ethPrice,
@@ -608,7 +608,7 @@ library Position {
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         // `margin / mm <= 1` means liquidation.
-        (, uint256 mm, ) = getLiquidationMarginUsd(
+        (, uint256 mm) = getLiquidationMarginUsd(
             size,
             price,
             marginValues.collateralUsd,

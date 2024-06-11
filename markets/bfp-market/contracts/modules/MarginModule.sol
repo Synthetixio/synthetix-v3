@@ -95,7 +95,7 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.CanLiquidatePosition();
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (uint256 im, ) = Position.getLiquidationMarginUsd(
             position.size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -686,7 +686,7 @@ contract MarginModule is IMarginModule {
         }
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(
+        (uint256 im, ) = Position.getLiquidationMarginUsd(
             size,
             oraclePrice,
             marginValues.collateralUsd,
