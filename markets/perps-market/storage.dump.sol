@@ -573,8 +573,6 @@ interface IAsyncOrderSettlementPythModule {
         int256 pnl;
         uint256 chargedInterest;
         int256 accruedFunding;
-        uint256 pnlUint;
-        uint256 amountToDeduct;
         uint256 settlementReward;
         uint256 fillPrice;
         uint256 totalFees;
@@ -679,6 +677,7 @@ library GlobalPerpsMarket {
         mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
+        uint256 totalAccountsDebt;
     }
     function load() internal pure returns (Data storage marketData) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;

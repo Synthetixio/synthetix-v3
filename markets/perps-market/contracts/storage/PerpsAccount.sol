@@ -53,6 +53,7 @@ library PerpsAccount {
         // @dev set of open position market ids
         SetUtil.UintSet openPositionMarketIds;
         // @dev account's debt accrued from previous positions
+        // @dev please use updateAccountDebt() to update this value which will update global debt also
         uint256 debt;
     }
 
@@ -76,6 +77,8 @@ library PerpsAccount {
     error MaxPositionsPerAccountReached(uint128 maxPositionsPerAccount);
 
     error MaxCollateralsPerAccountReached(uint128 maxCollateralsPerAccount);
+
+    error NonexistentDebt(uint128 accountId);
 
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
@@ -120,30 +123,40 @@ library PerpsAccount {
     }
 
     /**
-     * @notice This function applies the pnl of a closing position to the account
-     * @dev It will either reduce the account's debt or increase the account's debt
-     * @dev It will also update the account's collateral amount if the debt is fully paid off
+     * @notice This function charges the account the specified amount
+     * @dev This is the only function that changes account debt.
+     * @dev Excess credit is added to account's snxUSD amount.
      */
-    function applyPnl(Data storage self, int256 pnl) internal {
-        if (pnl > 0) {
-            int256 leftoverDebt = self.debt.toInt() - pnl;
+    function charge(Data storage self, int256 amount) internal returns (uint256 debt) {
+        uint256 newDebt;
+        if (amount > 0) {
+            int256 leftoverDebt = self.debt.toInt() - amount;
             if (leftoverDebt > 0) {
-                self.debt = leftoverDebt.toUint();
+                newDebt = leftoverDebt.toUint();
             } else {
-                self.debt = 0;
+                newDebt = 0;
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -leftoverDebt);
             }
         } else {
             int256 creditAvailable = self.collateralAmounts[SNX_USD_MARKET_ID].toInt();
-            int256 leftoverCredit = creditAvailable + pnl;
+            int256 leftoverCredit = creditAvailable + amount;
 
             if (leftoverCredit > 0) {
-                updateCollateralAmount(self, SNX_USD_MARKET_ID, pnl);
+                updateCollateralAmount(self, SNX_USD_MARKET_ID, amount);
             } else {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -creditAvailable);
-                self.debt += (-leftoverCredit).toUint();
+                newDebt = self.debt - leftoverCredit.toUint();
             }
         }
+
+        return updateAccountDebt(self, newDebt.toInt() - self.debt.toInt());
+    }
+
+    function updateAccountDebt(Data storage self, int256 amount) internal returns (uint256 debt) {
+        self.debt = (self.debt.toInt() + amount).toUint();
+        GlobalPerpsMarket.load().updateDebt(amount);
+
+        return self.debt;
     }
 
     function isEligibleForMarginLiquidation(
@@ -234,6 +247,10 @@ library PerpsAccount {
     }
 
     function payDebt(Data storage self, uint256 amount) internal {
+        if (self.debt == 0) {
+            revert NonexistentDebt(self.id);
+        }
+
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
         perpsMarketFactory.synthetix.depositMarketUsd(
             perpsMarketFactory.perpsMarketId,
@@ -276,10 +293,11 @@ library PerpsAccount {
         if (collateralId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
         } else {
-            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
-                collateralId,
+            (amountToWithdrawUsd, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
                 amountToWithdraw,
-                Price.Tolerance.STRICT
+                spotMarket,
+                PerpsPrice.Tolerance.STRICT,
+                false
             );
         }
 
@@ -303,6 +321,9 @@ library PerpsAccount {
     ) internal view returns (int256 withdrawableMargin) {
         bool hasActivePositions = hasOpenPositions(self);
 
+        // not allowed to withdraw until debt is paid off fully.
+        if (self.debt > 0) return 0;
+
         if (hasActivePositions) {
             (
                 uint256 requiredInitialMargin,
@@ -314,9 +335,7 @@ library PerpsAccount {
                 getAvailableMargin(self, stalenessTolerance) -
                 requiredMargin.toInt();
         } else {
-            withdrawableMargin = self.debt > 0
-                ? getAvailableMargin(self, stalenessTolerance)
-                : getTotalCollateralValue(self, stalenessTolerance, false).toInt();
+            withdrawableMargin = getTotalCollateralValue(self, stalenessTolerance, false).toInt();
         }
     }
 
@@ -493,30 +512,6 @@ library PerpsAccount {
         possibleLiquidationReward = liquidateAndFlagCost + liquidateWindowsCosts;
     }
 
-    function convertAllCollateralToUsd(
-        Data storage self
-    ) internal returns (uint256 totalConvertedCollateral) {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        uint256[] memory activeCollateralTypes = self.activeCollateralTypes.values();
-
-        // 1. withdraw all collateral from synthetix
-        // 2. sell all collateral for snxUSD
-        // 3. deposit snxUSD into synthetix
-        for (uint256 i = 0; i < activeCollateralTypes.length; i++) {
-            uint128 collateralId = activeCollateralTypes[i].to128();
-            if (collateralId == SNX_USD_MARKET_ID) {
-                totalConvertedCollateral += self.collateralAmounts[collateralId];
-                updateCollateralAmount(
-                    self,
-                    collateralId,
-                    -(self.collateralAmounts[collateralId].toInt())
-                );
-            } else {
-                totalConvertedCollateral += _deductAllSynth(self, factory, collateralId);
-            }
-        }
-    }
-
     function transferAllCollateral(
         Data storage self
     ) internal returns (uint256 seizedCollateralValue) {
@@ -539,103 +534,6 @@ library PerpsAccount {
                 collateralId,
                 -(self.collateralAmounts[collateralId].toInt())
             );
-        }
-    }
-
-    /**
-     * @notice  This function deducts snxUSD from an account
-     * @dev It uses the synth deduction priority to determine which synth to deduct from first
-     * @dev if the synth is not snxUSD it will sell the synth for snxUSD
-     * @dev Returns two arrays with the synth ids and amounts deducted
-     */
-    function deductFromAccount(
-        Data storage self,
-        uint256 amount // snxUSD
-    ) internal returns (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) {
-        uint256 leftoverAmount = amount;
-        uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
-            .load()
-            .synthDeductionPriority;
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        ISpotMarketSystem spotMarket = factory.spotMarket;
-
-        deductedSynthIds = new uint128[](synthDeductionPriority.length);
-        deductedAmount = new uint256[](synthDeductionPriority.length);
-
-        for (uint256 i = 0; i < synthDeductionPriority.length; i++) {
-            uint128 collateralId = synthDeductionPriority[i];
-            uint256 availableAmount = self.collateralAmounts[collateralId];
-            if (availableAmount == 0) {
-                continue;
-            }
-            deductedSynthIds[i] = collateralId;
-
-            if (collateralId == SNX_USD_MARKET_ID) {
-                // snxUSD
-                if (availableAmount >= leftoverAmount) {
-                    deductedAmount[i] = leftoverAmount;
-                    updateCollateralAmount(self, collateralId, -(leftoverAmount.toInt()));
-                    leftoverAmount = 0;
-                    break;
-                } else {
-                    deductedAmount[i] = availableAmount;
-                    updateCollateralAmount(self, collateralId, -(availableAmount.toInt()));
-                    leftoverAmount -= availableAmount;
-                }
-            } else {
-                (uint256 synthAmountRequired, ) = spotMarket.quoteSellExactOut(
-                    collateralId,
-                    leftoverAmount,
-                    Price.Tolerance.STRICT
-                );
-
-                address synthToken = factory.spotMarket.getSynth(collateralId);
-
-                if (availableAmount >= synthAmountRequired) {
-                    factory.synthetix.withdrawMarketCollateral(
-                        factory.perpsMarketId,
-                        synthToken,
-                        synthAmountRequired
-                    );
-
-                    (uint256 amountToDeduct, ) = spotMarket.sellExactOut(
-                        collateralId,
-                        leftoverAmount,
-                        type(uint256).max,
-                        address(0)
-                    );
-
-                    factory.depositMarketUsd(leftoverAmount);
-
-                    deductedAmount[i] = amountToDeduct;
-                    updateCollateralAmount(self, collateralId, -(amountToDeduct.toInt()));
-                    leftoverAmount = 0;
-                    break;
-                } else {
-                    factory.synthetix.withdrawMarketCollateral(
-                        factory.perpsMarketId,
-                        synthToken,
-                        availableAmount
-                    );
-
-                    (uint256 amountToDeductUsd, ) = spotMarket.sellExactIn(
-                        collateralId,
-                        availableAmount,
-                        0,
-                        address(0)
-                    );
-
-                    factory.depositMarketUsd(amountToDeductUsd);
-
-                    deductedAmount[i] = availableAmount;
-                    updateCollateralAmount(self, collateralId, -(availableAmount.toInt()));
-                    leftoverAmount -= amountToDeductUsd;
-                }
-            }
-        }
-
-        if (leftoverAmount > 0) {
-            revert InsufficientAccountMargin(leftoverAmount);
         }
     }
 
@@ -698,29 +596,6 @@ library PerpsAccount {
             oldPositionAbsSize,
             marketUpdateData
         );
-    }
-
-    function _deductAllSynth(
-        Data storage self,
-        PerpsMarketFactory.Data storage factory,
-        uint128 collateralId
-    ) private returns (uint256 amountUsd) {
-        uint256 amount = self.collateralAmounts[collateralId];
-        address synth = factory.spotMarket.getSynth(collateralId);
-
-        // 1. withdraw collateral from market manager
-        factory.synthetix.withdrawMarketCollateral(factory.perpsMarketId, synth, amount);
-
-        // 2. sell collateral for snxUSD
-        (amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
-            collateralId,
-            amount,
-            0,
-            address(0)
-        );
-
-        // 3. deposit snxUSD into market manager
-        factory.depositMarketUsd(amountUsd);
     }
 
     function hasOpenPositions(Data storage self) internal view returns (bool) {

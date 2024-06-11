@@ -52,8 +52,6 @@ interface IAsyncOrderSettlementPythModule {
         int256 pnl;
         uint256 chargedInterest;
         int256 accruedFunding;
-        uint256 pnlUint;
-        uint256 amountToDeduct;
         uint256 settlementReward;
         uint256 fillPrice;
         uint256 totalFees;
