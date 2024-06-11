@@ -2740,8 +2740,14 @@ describe('MarginModule', async () => {
         genTrader(bs, { desiredMarginUsdDepositAmount })
       );
 
+      const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
+        trader.accountId,
+        marketId
+      );
+      const expectedWithdrawableMargin = bn(desiredMarginUsdDepositAmount).sub(liqMarginRewardUsd);
       const margin = await BfpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
-      assertBn.near(margin, bn(desiredMarginUsdDepositAmount), bn(0.000001));
+
+      assertBn.near(margin, expectedWithdrawableMargin, bn(0.000001));
     });
 
     it('should return the full collateralUsd value minus debt when no position open (concrete)', async () => {
@@ -2782,7 +2788,11 @@ describe('MarginModule', async () => {
       assertBn.gt(debtUsd, bn(0));
 
       const margin = await BfpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
-      const expectedMargin = collateralUsd.sub(debtUsd);
+      const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
+        trader.accountId,
+        marketId
+      );
+      const expectedMargin = collateralUsd.sub(liqMarginRewardUsd).sub(debtUsd);
 
       assertBn.equal(margin, expectedMargin);
     });
