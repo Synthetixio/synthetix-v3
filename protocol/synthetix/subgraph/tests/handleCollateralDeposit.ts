@@ -1,7 +1,7 @@
 import { assert } from 'matchstick-as';
 import { address, address2 } from './constants';
 import { handleCollateralConfigured, handleCollateralDeposited } from '../mainnet';
-import { createCollateralConfiguredEvent, createDepositEvent } from './event-factories'
+import { createCollateralConfiguredEvent, createDepositEvent } from './event-factories';
 
 export default function test(): void {
   // Needs to be here because of Closures

@@ -1,7 +1,7 @@
-import { newTypedMockEvent } from "matchstick-as";
-import { MarketUsdDeposited } from "../../mainnet/generated/CoreProxy/CoreProxy";
-import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { createBlock } from "./utils";
+import { newTypedMockEvent } from 'matchstick-as';
+import { MarketUsdDeposited } from '../../mainnet/generated/CoreProxy/CoreProxy';
+import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
+import { createBlock } from './utils';
 
 export function createMarketUsdDepositedEvent(
   marketId: i32,
@@ -25,7 +25,7 @@ export function createMarketUsdDepositedEvent(
     new ethereum.EventParam('market', ethereum.Value.fromAddress(Address.fromString(market)))
   );
 
-  const block = createBlock(timestamp, blockNumber)
+  const block = createBlock(timestamp, blockNumber);
   event.block.timestamp = BigInt.fromI64(block['timestamp']);
   event.block.number = BigInt.fromI64(block['blockNumber']);
   event.logIndex = BigInt.fromI64(logIndex);
