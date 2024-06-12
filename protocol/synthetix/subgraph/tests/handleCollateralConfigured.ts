@@ -7,26 +7,36 @@ import { createCollateralConfiguredEvent } from './event-factories/createCollate
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const issuanceRatioEventOne = 200;
+  const liquidationRatioEventOne = 50;
+  const liquidationRewardsEventOne = 90;
+  const oracleNodeId = 10;
+  const minDelegationEventOne = 500;
+
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
     address,
     true,
-    200,
-    50,
-    90,
-    10,
-    500,
+    issuanceRatioEventOne,
+    liquidationRatioEventOne,
+    liquidationRewardsEventOne,
+    oracleNodeId,
+    minDelegationEventOne,
     now,
     now - 1000
   );
   handleCollateralConfigured(newCollateralConfiguredEvent);
+  const issuanceRatioEventTwo = 300;
+  const liquidationRatioEventTwo = 60;
+  const liquidationRewardsEventTwo = 80;
+  const minDelegationEventTwo = 400;
   const newCollateralConfiguredEvent2 = createCollateralConfiguredEvent(
     address,
     true,
-    300,
-    60,
-    80,
-    10,
-    400,
+    issuanceRatioEventTwo,
+    liquidationRatioEventTwo,
+    liquidationRewardsEventTwo,
+    oracleNodeId,
+    minDelegationEventTwo,
     now + 1000,
     now
   );

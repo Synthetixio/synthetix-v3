@@ -7,11 +7,14 @@ import { createDelegationUpdateEvent } from './event-factories';
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const accountId = 1;
+  const poolId = 1;
+  const amount = 2323;
   const newDelegationUpdatedEvent = createDelegationUpdateEvent(
-    1,
-    1,
+    accountId,
+    poolId,
     address,
-    2323,
+    amount,
     10,
     now,
     now - 1000
@@ -46,12 +49,12 @@ export default function test(): void {
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '2323');
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_type', address);
   assert.fieldEquals('Vault', `1-${address}`, 'pool', '1');
-
+  const newAmount = 10000;
   const newDelegatioNUpdatedEvent2 = createDelegationUpdateEvent(
-    1,
-    1,
+    accountId,
+    poolId,
     address,
-    10000,
+    newAmount,
     10,
     now + 1000,
     now
@@ -64,11 +67,13 @@ export default function test(): void {
   assert.fieldEquals('Vault', `1-${address}`, 'updated_at_block', now.toString());
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '10000');
 
+  const newAccountId = 2;
+  const amountFromNewAccount = 5000;
   const newDelegationUpdatedEvent3 = createDelegationUpdateEvent(
-    2,
-    1,
+    newAccountId,
+    poolId,
     address,
-    5000,
+    amountFromNewAccount,
     10,
     now + 1000,
     now

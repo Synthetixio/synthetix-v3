@@ -6,14 +6,21 @@ import { createLiquidationEvent } from './event-factories';
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+
+  const accountId = 1;
+  const poolId = 2;
+  const debtLiquidated = 300;
+  const collateralLiquidated = 200;
+  const amountRewarded = 100;
+  const liquidatedAsAccountId = 10;
   const newLiquidationEvent = createLiquidationEvent(
-    1,
-    2,
+    accountId,
+    poolId,
     address,
-    300,
-    200,
-    100,
-    10,
+    debtLiquidated,
+    collateralLiquidated,
+    amountRewarded,
+    liquidatedAsAccountId,
     address2,
     now,
     now - 1000

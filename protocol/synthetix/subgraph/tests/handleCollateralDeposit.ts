@@ -6,14 +6,19 @@ import { createCollateralConfiguredEvent, createDepositEvent } from './event-fac
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const issuanceRatio = 200;
+  const liquidationRatio = 50;
+  const liquidationRewards = 90;
+  const oracleNodeId = 12;
+  const minDelegation = 500;
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
     address,
     true,
-    200,
-    50,
-    90,
-    12,
-    500,
+    issuanceRatio,
+    liquidationRatio,
+    liquidationRewards,
+    oracleNodeId,
+    minDelegation,
     now,
     now - 1000
   );

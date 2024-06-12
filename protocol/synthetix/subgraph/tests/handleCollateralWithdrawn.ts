@@ -14,20 +14,26 @@ import {
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const issuanceRatio = 200;
+  const liquidationRatio = 50;
+  const liquidationRewards = 90;
+  const oracleNodeId = 13;
+  const minDelegation = 500;
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
     address,
     true,
-    200,
-    50,
-    90,
-    13,
-    500,
+    issuanceRatio,
+    liquidationRatio,
+    liquidationRewards,
+    oracleNodeId,
+    minDelegation,
     now,
     now - 1000
   );
-  const newCollateralDepositEvent = createDepositEvent(23, address, 555, now + 1000, now);
+  const accountId = 23;
+  const newCollateralDepositEvent = createDepositEvent(accountId, address, 555, now + 1000, now);
   const newCollateralWithdrawnEvent = createWithdrawnEvent(
-    23,
+    accountId,
     address,
     100,
     now + 2000,

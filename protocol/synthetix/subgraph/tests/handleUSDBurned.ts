@@ -11,12 +11,16 @@ import {
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const accountId = 1;
+  const poolId = 1;
+  const amount = 2323;
+  const leverage = 10;
   const newDelegationUpdatedEvent = createDelegationUpdateEvent(
-    1,
-    1,
+    accountId,
+    poolId,
     address,
-    2323,
-    10,
+    amount,
+    leverage,
     now,
     now - 1000
   );
@@ -32,9 +36,24 @@ export default function test(): void {
     ])
     .returns([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(200))]);
   handleDelegationUpdated(newDelegationUpdatedEvent);
-  const newUSDMintedEvent = createUSDMintedEvent(1, 1, address, 2000, now + 1000, now);
+  const newAmount = 2000;
+  const newUSDMintedEvent = createUSDMintedEvent(
+    accountId,
+    poolId,
+    address,
+    newAmount,
+    now + 1000,
+    now
+  );
   handleUSDMinted(newUSDMintedEvent);
-  const newUSDBurnedEvent = createUSDBurnedEvent(1, 1, address, 2000, now + 1000, now);
+  const newUSDBurnedEvent = createUSDBurnedEvent(
+    accountId,
+    poolId,
+    address,
+    newAmount,
+    now + 1000,
+    now
+  );
   handleUSDBurned(newUSDBurnedEvent);
   assert.fieldEquals('Position', `1-1-${address}`, 'id', `1-1-${address}`);
   assert.fieldEquals('Position', `1-1-${address}`, 'created_at', now.toString());
