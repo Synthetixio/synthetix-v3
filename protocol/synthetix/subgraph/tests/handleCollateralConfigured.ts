@@ -2,7 +2,7 @@ import { assert } from 'matchstick-as';
 import { store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handleCollateralConfigured } from '../mainnet';
-import { createCollateralConfiguredEvent } from './event-factories';
+import { createCollateralConfiguredEvent } from './event-factories/createCollateralConfiguredEvent'
 
 export default function test(): void {
   // Needs to be here because of Closures
