@@ -329,6 +329,9 @@ contract MarginModule is IMarginModule {
             transferAndDeposit(marketId, absAmountDelta, collateralAddress);
         } else {
             FeatureFlag.ensureAccessToFeature(Flags.WITHDRAW);
+            if (accountMargin.debtUsd != 0) {
+                revert ErrorUtil.DebtFound(accountId, marketId);
+            }
 
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (accountMargin.collaterals[collateralAddress] < absAmountDelta) {
@@ -344,7 +347,7 @@ contract MarginModule is IMarginModule {
 
             // Verify account and position remain solvent.
             Position.Data storage position = market.positions[accountId];
-            if (position.size != 0 || accountMargin.debtUsd != 0) {
+            if (position.size != 0) {
                 validateAccountAndPositionOnWithdrawal(accountId, market, position, oraclePrice);
             }
 
