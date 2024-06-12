@@ -1,6 +1,5 @@
 import { assert } from 'matchstick-as';
 import { createDelegationUpdateEvent } from './event-factories';
-import { Address, BigInt } from '@graphprotocol/graph-ts';
 import { handleDelegationUpdated } from '../mainnet';
 
 export default function test(): void {
@@ -14,17 +13,7 @@ export default function test(): void {
   const oneHour = 60 * 60;
   const oneDay = 24 * oneHour * 31 * 12;
 
-  handleDelegationUpdated(
-    createDelegationUpdateEvent(
-      BigInt.fromI32(1),
-      BigInt.fromI32(1),
-      Address.fromString(sender),
-      BigInt.fromI32(100),
-      BigInt.fromI32(1),
-      now,
-      now - 1000
-    )
-  );
+  handleDelegationUpdated(createDelegationUpdateEvent(1, 1, sender, 100, 1, now, now - 1000));
 
   assert.entityCount('Vault', 1);
   assert.entityCount('VaultSnapshotByYear', 1);
@@ -66,17 +55,7 @@ export default function test(): void {
     `${now}`
   );
 
-  handleDelegationUpdated(
-    createDelegationUpdateEvent(
-      BigInt.fromI32(1),
-      BigInt.fromI32(1),
-      Address.fromString(sender),
-      BigInt.fromI32(200),
-      BigInt.fromI32(1),
-      now + 1,
-      now - 999
-    )
-  );
+  handleDelegationUpdated(createDelegationUpdateEvent(1, 1, sender, 200, 1, now + 1, now - 999));
 
   assert.entityCount('Vault', 1);
   assert.entityCount('VaultSnapshotByYear', 1);
@@ -118,17 +97,7 @@ export default function test(): void {
     `${now + 1}`
   );
 
-  handleDelegationUpdated(
-    createDelegationUpdateEvent(
-      BigInt.fromI32(1),
-      BigInt.fromI32(1),
-      Address.fromString(sender),
-      BigInt.fromI32(500),
-      BigInt.fromI32(1),
-      now + oneDay,
-      now
-    )
-  );
+  handleDelegationUpdated(createDelegationUpdateEvent(1, 1, sender, 500, 1, now + oneDay, now));
   assert.fieldEquals(
     'VaultSnapshotByYear',
     '1-0x6942000000000000000000000000000000000000-2023',

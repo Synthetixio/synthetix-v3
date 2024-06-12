@@ -1,6 +1,5 @@
 import { assert } from 'matchstick-as';
 import { createDelegationUpdateEvent } from './event-factories';
-import { Address, BigInt } from '@graphprotocol/graph-ts';
 import { handleDelegationUpdated } from '../mainnet';
 
 export default function test(): void {
@@ -14,17 +13,7 @@ export default function test(): void {
   const oneHour = 60 * 60;
   const oneWeek = 24 * oneHour + 7;
 
-  handleDelegationUpdated(
-    createDelegationUpdateEvent(
-      BigInt.fromI32(1),
-      BigInt.fromI32(1),
-      Address.fromString(sender),
-      BigInt.fromI32(100),
-      BigInt.fromI32(1),
-      now,
-      now - 1000
-    )
-  );
+  handleDelegationUpdated(createDelegationUpdateEvent(1, 1, sender, 100, 1, now, now - 1000));
 
   assert.entityCount('Vault', 1);
   assert.entityCount('VaultSnapshotByWeek', 1);
@@ -66,17 +55,7 @@ export default function test(): void {
     `${now}`
   );
 
-  handleDelegationUpdated(
-    createDelegationUpdateEvent(
-      BigInt.fromI32(1),
-      BigInt.fromI32(1),
-      Address.fromString(sender),
-      BigInt.fromI32(0),
-      BigInt.fromI32(1),
-      now + 1,
-      now - 999
-    )
-  );
+  handleDelegationUpdated(createDelegationUpdateEvent(1, 1, sender, 0, 1, now + 1, now - 999));
 
   assert.fieldEquals(
     'VaultSnapshotByWeek',
@@ -115,17 +94,7 @@ export default function test(): void {
     `${now + 1}`
   );
 
-  handleDelegationUpdated(
-    createDelegationUpdateEvent(
-      BigInt.fromI32(1),
-      BigInt.fromI32(1),
-      Address.fromString(sender),
-      BigInt.fromI32(500),
-      BigInt.fromI32(1),
-      now + oneWeek,
-      now
-    )
-  );
+  handleDelegationUpdated(createDelegationUpdateEvent(1, 1, sender, 500, 1, now + oneWeek, now));
   assert.fieldEquals(
     'VaultSnapshotByWeek',
     '1-0x6942000000000000000000000000000000000000-week-2022-1',
