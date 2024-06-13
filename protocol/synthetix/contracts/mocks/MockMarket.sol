@@ -102,28 +102,18 @@ contract MockMarket is IMarket {
         _price = newPrice;
     }
 
-    function setUndelegateCollateralDelay(uint32 undelegateCollateralDelay) external {
-        IMarketManagerModule(_proxy).setUndelegateCollateralDelay(
+    function setDelegationCollateralConfiguration(
+        uint32 delegateCollateralDelay,
+        uint32 delegateCollateralWindow,
+        uint32 undelegateCollateralDelay,
+        uint32 undelegateCollateralWindow
+    ) external {
+        IMarketManagerModule(_proxy).setDelegationCollateralConfiguration(
             _marketId,
-            undelegateCollateralDelay
-        );
-    }
-
-    function setUndelegateCollateralWindow(uint32 undelegateCollateralWindow) external {
-        IMarketManagerModule(_proxy).setUndelegateCollateralWindow(
-            _marketId,
+            delegateCollateralDelay,
+            delegateCollateralWindow,
+            undelegateCollateralDelay,
             undelegateCollateralWindow
-        );
-    }
-
-    function setDelegateCollateralDelay(uint32 delegateCollateralDelay) external {
-        IMarketManagerModule(_proxy).setDelegateCollateralDelay(_marketId, delegateCollateralDelay);
-    }
-
-    function setDelegateCollateralWindow(uint32 delegateCollateralWindow) external {
-        IMarketManagerModule(_proxy).setDelegateCollateralWindow(
-            _marketId,
-            delegateCollateralWindow
         );
     }
 
