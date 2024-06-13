@@ -64,7 +64,7 @@ library VaultEpoch {
          * and directly when users mint or burn USD, or repay debt.
          */
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
-        mapping(uint128 => uint64) __unused_legacy_slot;
+        mapping(uint128 => uint64) __legacySlotDirtyDoNotReuse;
     }
 
     /**
