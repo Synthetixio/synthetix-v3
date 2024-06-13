@@ -6,7 +6,7 @@ import { dumpStorage } from '../internal/dump';
 import { readHardhatArtifact } from '../internal/read-hardhat-artifact';
 import { logInChunks } from '../internal/log-in-chunks';
 import { TASK_STORAGE_DUMP, TASK_STORAGE_VALIDATE } from '../task-names';
-import { writeFile } from '../internal/write-file';
+import { writeJsonFile } from '../internal/write-json-file';
 
 interface Params {
   output: string;
@@ -40,7 +40,7 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     const dump = await dumpStorage({ getArtifact, contracts });
 
     if (output) {
-      await writeFile(path.resolve(hre.config.paths.root, output), dump);
+      await writeJsonFile(path.resolve(hre.config.paths.root, output), dump);
     }
 
     if (log) {

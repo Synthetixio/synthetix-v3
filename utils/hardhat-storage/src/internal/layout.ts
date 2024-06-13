@@ -1,10 +1,10 @@
-import { StorageDumpSlot } from '../types';
+import { StorageSlot } from '../types';
 
-type StorageLayoutSlot = StorageDumpSlot & { offset: number; slot: string; size: number };
+type StorageLayoutSlot = StorageSlot & { offset: number; slot: string; size: number };
 
 const SLOT_SIZE = 32;
 
-export function getStorageLayout(slots: StorageDumpSlot[]) {
+export function getStorageLayout(slots: StorageSlot[]) {
   const layout: StorageLayoutSlot[] = [];
 
   for (const slot of slots) {
@@ -28,7 +28,7 @@ const _parseBasicTypeSize = (type: string, max = 256) => {
  * the total dynamic size that could change durin execution, like from "bytes" or "string" vars.
  * More info: https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html
  */
-export function getStorageSlotSize(slot: StorageDumpSlot): number {
+export function getStorageSlotSize(slot: StorageSlot): number {
   if (slot.type === 'bool') return 1;
 
   if (slot.type === 'address') return 20;

@@ -8,13 +8,12 @@ import {
   GetArtifactFunction,
   StorageArtifact,
   StorageDump,
-  StorageDumpArraySlot,
-  StorageDumpBuiltInValueSlot,
-  StorageDumpBuiltInValueType,
-  StorageDumpLayout,
-  StorageDumpSlot,
-  StorageDumpSlotBase,
-  StorageDumpSlotWithSize,
+  StorageArraySlot,
+  StorageBuiltinValueSlot,
+  StorageBuiltInValueType,
+  StorageLayout,
+  StorageSlot,
+  StorageSlotBase,
 } from '../types';
 import { findNodeReferenceWithArtifact } from './artifacts';
 import { findAll, findContract } from './finders';
@@ -35,7 +34,7 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
   const results: StorageDump = {};
 
   for (const [artifact, contractNode] of await _getContracts(getArtifact, contracts)) {
-    const result: StorageDumpLayout = {
+    const result: StorageLayout = {
       name: contractNode.name,
       kind: contractNode.kind,
       structs: {},
@@ -46,7 +45,7 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
     const fqName = `${sourceName}:${contractName}`;
 
     for (const structDefinition of findAll(contractNode, 'StructDefinition')) {
-      const struct: StorageDumpSlotWithSize[] = [];
+      const struct: StorageSlot[] = [];
 
       for (const member of structDefinition.members) {
         const storageSlot = await _astVariableToStorageSlot(getArtifact, artifact, member);
@@ -76,18 +75,22 @@ async function _astVariableToStorageSlot(
   return _typeNameToStorageSlot(getArtifact, artifact, member.typeName, member.name);
 }
 
+/**
+ * Utility function to convert the given AST typeName elements in StorageSlot that
+ * then can be used to calculate a complete Storage Layout with sizes and locations.
+ */
 async function _typeNameToStorageSlot(
   getArtifact: GetArtifactFunction,
   artifact: StorageArtifact,
   typeName: TypeName,
   name?: string
-): Promise<StorageDumpSlotWithSize> {
-  const _slotWithName = (slot: StorageDumpSlot): StorageDumpSlotWithSize => {
-    const { type, ...restAttrs } = slot;
-    const size = getStorageSlotSize(slot);
-    return (
-      name ? { type, name, size, ...restAttrs } : { type, size, ...restAttrs }
-    ) as StorageDumpSlotWithSize; // order keys for consistency
+): Promise<StorageSlot> {
+  const _createSlot = (attrs: StorageSlot) => {
+    const { type, ...restAttrs } = attrs;
+    // order keys for consistency:
+    const slot = (name ? { type, name, ...restAttrs } : { type, ...restAttrs }) as StorageSlot;
+    slot.size = getStorageSlotSize(slot);
+    return slot;
   };
 
   const _error = (msg: string) => {
@@ -98,7 +101,7 @@ async function _typeNameToStorageSlot(
 
   if (typeName.type === 'ElementaryTypeName') {
     const type = _getBuiltInValueType(typeName.name);
-    return _slotWithName({ type });
+    return _createSlot({ type });
   }
 
   if (typeName.type === 'ArrayTypeName') {
@@ -111,13 +114,13 @@ async function _typeNameToStorageSlot(
         : undefined
     );
 
-    const slot = _slotWithName({ type: 'array', value });
+    const slot = _createSlot({ type: 'array', value });
 
     if (typeName.range) _error('array values with range not implemented');
 
     if (typeName.length) {
       if (typeName.length.type === 'NumberLiteral') {
-        (slot as StorageDumpArraySlot).length = Number.parseInt(typeName.length.number);
+        (slot as StorageArraySlot).length = Number.parseInt(typeName.length.number);
       } else {
         _error('array length with custom value not implemented');
       }
@@ -146,7 +149,7 @@ async function _typeNameToStorageSlot(
       throw new Error('Invalid key type for mapping');
     }
 
-    return _slotWithName({ type: 'mapping', key, value });
+    return _createSlot({ type: 'mapping', key, value });
   }
 
   if (typeName.type === 'UserDefinedTypeName') {
@@ -159,12 +162,12 @@ async function _typeNameToStorageSlot(
 
     // If it is a reference to a contract, replace the type as `address`
     if (referenceNode.type === 'ContractDefinition') {
-      return _slotWithName({ type: 'address' });
+      return _createSlot({ type: 'address' });
     }
 
     if (referenceNode.type === 'EnumDefinition') {
       const members = referenceNode.members.map((m) => m.name);
-      return _slotWithName({ type: 'enum', members });
+      return _createSlot({ type: 'enum', members });
     }
 
     // handle structs
@@ -174,7 +177,7 @@ async function _typeNameToStorageSlot(
       )
     ).then((result) => result.flat());
 
-    return _slotWithName({ type: 'struct', members });
+    return _createSlot({ type: 'struct', members });
   }
 
   const err = new Error(`"${typeName.type}" not implemented for generating storage layout`);
@@ -182,9 +185,7 @@ async function _typeNameToStorageSlot(
   throw err;
 }
 
-function _isBuiltInType(
-  storageSlot: StorageDumpSlotBase
-): storageSlot is StorageDumpBuiltInValueSlot {
+function _isBuiltInType(storageSlot: StorageSlotBase): storageSlot is StorageBuiltinValueSlot {
   try {
     _getBuiltInValueType(storageSlot.type);
     return true;
@@ -194,7 +195,7 @@ function _isBuiltInType(
 }
 
 const FIXED_SIZE_VALUE_REGEX = /^((?:int|uint|bytes)[0-9]+|(?:ufixed|fixed)[0-9]+x[0-9]+)$/;
-function _isFixedBuiltInValueType(typeName: string): typeName is StorageDumpBuiltInValueType {
+function _isFixedBuiltInValueType(typeName: string): typeName is StorageBuiltInValueType {
   return FIXED_SIZE_VALUE_REGEX.test(typeName);
 }
 
@@ -204,12 +205,12 @@ const _typeValueNormalizeMap = {
   byte: 'bytes1',
   ufixed: 'ufixed128x18',
   fixed: 'fixed128x18',
-} as { [k: string]: StorageDumpBuiltInValueType };
+} as { [k: string]: StorageBuiltInValueType };
 
-function _getBuiltInValueType(typeName: string): StorageDumpBuiltInValueType {
+function _getBuiltInValueType(typeName: string): StorageBuiltInValueType {
   if (typeof typeName !== 'string' || !typeName) throw new Error(`Invalid typeName ${typeName}`);
   if (['bool', 'address', 'bytes', 'string'].includes(typeName))
-    return typeName as StorageDumpBuiltInValueType;
+    return typeName as StorageBuiltInValueType;
   if (_typeValueNormalizeMap[typeName]) return _typeValueNormalizeMap[typeName];
   if (_isFixedBuiltInValueType(typeName)) return typeName;
   throw new Error(`Invalid typeName ${typeName}`);

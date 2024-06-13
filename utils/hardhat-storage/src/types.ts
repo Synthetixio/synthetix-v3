@@ -1,6 +1,6 @@
 import type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
 
-export type { SourceUnit } from '@solidity-parser/parser/src/ast-types';
+export type { SourceUnit };
 
 export interface StorageArtifact {
   sourceName: string;
@@ -13,12 +13,15 @@ export interface OldStorageArtifact extends StorageArtifact {
 
 export type GetArtifactFunction = (sourceName: string) => Promise<StorageArtifact>;
 
-export interface StorageDumpSlotBase {
+export interface StorageSlotBase {
   type: string;
   name?: string;
+  size?: number;
+  slot?: string;
+  offset?: number;
 }
 
-export type StorageDumpBuiltInValueType =
+export type StorageBuiltInValueType =
   | 'bool'
   | 'address'
   | `uint${number}`
@@ -29,52 +32,45 @@ export type StorageDumpBuiltInValueType =
   | 'bytes'
   | 'string';
 
-export interface StorageDumpBuiltInValueSlot extends StorageDumpSlotBase {
-  type: StorageDumpBuiltInValueType;
+export interface StorageBuiltinValueSlot extends StorageSlotBase {
+  type: StorageBuiltInValueType;
 }
 
-export interface StorageDumpEnumSlot extends StorageDumpSlotBase {
+export interface StorageEnumSlot extends StorageSlotBase {
   type: 'enum';
   members: string[];
 }
 
-export interface StorageDumpStructSlot extends StorageDumpSlotBase {
+export interface StorageStructSlot extends StorageSlotBase {
   type: 'struct';
-  members: StorageDumpSlot[];
+  members: StorageSlot[];
 }
 
-export interface StorageDumpMappingSlot extends StorageDumpSlotBase {
+export interface StorageMappingSlot extends StorageSlotBase {
   type: 'mapping';
-  key: StorageDumpBuiltInValueSlot;
-  value: StorageDumpSlot;
+  key: StorageBuiltinValueSlot;
+  value: StorageSlot;
 }
 
-export interface StorageDumpArraySlot extends StorageDumpSlotBase {
+export interface StorageArraySlot extends StorageSlotBase {
   type: 'array';
-  value: StorageDumpSlot;
+  value: StorageSlot;
   length?: number;
 }
 
-export type StorageDumpSlot =
-  | StorageDumpBuiltInValueSlot
-  | StorageDumpStructSlot
-  | StorageDumpMappingSlot
-  | StorageDumpArraySlot
-  | StorageDumpEnumSlot;
+export type StorageSlot =
+  | StorageBuiltinValueSlot
+  | StorageStructSlot
+  | StorageMappingSlot
+  | StorageArraySlot
+  | StorageEnumSlot;
 
-export type StorageDumpSlotWithSize =
-  | (StorageDumpBuiltInValueSlot & { size: number })
-  | (StorageDumpStructSlot & { size: number })
-  | (StorageDumpMappingSlot & { size: number })
-  | (StorageDumpArraySlot & { size: number })
-  | (StorageDumpEnumSlot & { size: number });
-
-export interface StorageDumpLayout {
+export interface StorageLayout {
   kind: 'contract' | 'library';
   name: string;
-  structs: { [structName: string]: StorageDumpSlotWithSize[] };
+  structs: { [structName: string]: StorageSlot[] };
 }
 
 export interface StorageDump {
-  [contractName: string]: StorageDumpLayout;
+  [contractName: string]: StorageLayout;
 }
