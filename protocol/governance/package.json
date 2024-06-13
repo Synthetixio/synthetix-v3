@@ -30,11 +30,5 @@
     "hardhat": "^2.19.0",
     "solidity-docgen": "^0.6.0-beta.36",
     "typechain": "^8.3.2"
-  },
-  "dependencies": {
-    "@certusone/wormhole-sdk": "^0.10.15",
-    "@wormhole-foundation/sdk": "^0.6.3",
-    "install": "^0.13.0",
-    "npm": "^10.6.0"
   }
 }
