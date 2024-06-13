@@ -73,35 +73,20 @@ interface IMarketManagerModule {
     event MarketSystemFeePaid(uint128 indexed marketId, uint256 feeAmount);
 
     /**
-     * @notice Emitted when a market sets an updated undelegate collateral delay
-     * @param marketId The id of the market that the setting is applied to
-     * @param undelegateCollateralDelay The minimum amount of time to undelegate collateral
-     */
-    event SetUndelegateCollateralDelay(uint128 indexed marketId, uint32 undelegateCollateralDelay);
-
-    /**
-     * @notice Emitted when a market sets an updated undelegate collateral window
-     * @param marketId The id of the market that the setting is applied to
-     * @param undelegateCollateralWindow The maximum window of time to undelegate collateral
-     */
-    event SetUndelegateCollateralWindow(
-        uint128 indexed marketId,
-        uint32 undelegateCollateralWindow
-    );
-
-    /**
-     * @notice Emitted when a market sets an updated delegate collateral delay
+     * @notice Emitted when a market sets its delegation and undelegation configuration
      * @param marketId The id of the market that the setting is applied to
      * @param delegateCollateralDelay The minimum amount of time to delegate collateral
-     */
-    event SetDelegateCollateralDelay(uint128 indexed marketId, uint32 delegateCollateralDelay);
-
-    /**
-     * @notice Emitted when a market sets an updated delegate collateral window
-     * @param marketId The id of the market that the setting is applied to
      * @param delegateCollateralWindow The maximum window of time to delegate collateral
+     * @param undelegateCollateralDelay The minimum amount of time to undelegate collateral
+     * @param undelegateCollateralWindow The maximum window of time to undelegate collateral
      */
-    event SetDelegateCollateralWindow(uint128 indexed marketId, uint32 delegateCollateralWindow);
+    event SetDelegateCollateralConfiguration(
+        uint128 indexed marketId,
+        uint32 delegateCollateralDelay,
+        uint32 delegateCollateralWindow,
+        uint32 undelegateCollateralDelay,
+        uint32 undelegateCollateralWindow
+    );
 
     /**
      * @notice Emitted when a market-specific minimum liquidity ratio is set
@@ -245,65 +230,36 @@ interface IMarketManagerModule {
     ) external returns (bool finishedDistributing);
 
     /**
-     * @notice allows for a market to set its un-delegation delay time. (See SIP-366). By default, there is no delay for undelegation.
-     * @param marketId the id of the market that wants to set un-delegation delay time.
+     * @notice allows for a market to set its delegation and delegation delay and window times. (See SIP-366). By default, there is no delay and infinite windows.
+     * @param marketId the id of the market that wants to set delegation times.
+     * @param delegateCollateralDelay the minimum number of delay seconds to delegation
+     * @param delegateCollateralWindow the maximum number of seconds that an delegation can be executed after the delay.
      * @param undelegateCollateralDelay the minimum number of delay seconds to un-delegation
-     */
-    function setUndelegateCollateralDelay(
-        uint128 marketId,
-        uint32 undelegateCollateralDelay
-    ) external;
-
-    /**
-     * @notice Retrieve the un-delegation delay time of a market
-     * @param marketId the id of the market
-     */
-    function getUndelegateCollateralDelay(uint128 marketId) external view returns (uint32);
-
-    /**
-     * @notice allows for a market to set its un-delegation window time. (See SIP-366). By default, (or if it's set to zero) there no window limit for undelegation.
-     * @param marketId the id of the market that wants to set un-delegation window time.
      * @param undelegateCollateralWindow the maximum number of seconds that an undelegation can be executed after the delay.
      */
-    function setUndelegateCollateralWindow(
+    function setDelegationCollateralConfiguration(
         uint128 marketId,
+        uint32 delegateCollateralDelay,
+        uint32 delegateCollateralWindow,
+        uint32 undelegateCollateralDelay,
         uint32 undelegateCollateralWindow
     ) external;
 
     /**
-     * @notice Retrieve the un-delegation window of a market
+     * @notice Retrieve the delegation and delegation delay and window times of a market
      * @param marketId the id of the market
      */
-    function getUndelegateCollateralWindow(uint128 marketId) external view returns (uint32);
-
-    /**
-     * @notice allows for a market to set its delegation delay time. (See SIP-366). By default, there is no delay for undelegation.
-     * @param marketId the id of the market that wants to set delegation delay time.
-     * @param delegateCollateralDelay the minimum number of delay seconds to delegation
-     */
-    function setDelegateCollateralDelay(uint128 marketId, uint32 delegateCollateralDelay) external;
-
-    /**
-     * @notice Retrieve the minimum delegation time of a market
-     * @param marketId the id of the market
-     */
-    function getDelegateCollateralDelay(uint128 marketId) external view returns (uint32);
-
-    /**
-     * @notice allows for a market to set its delegation window time. (See SIP-366). By default, (or if it's set to zero) there no window limit for delegation.
-     * @param marketId the id of the market that wants to set delegation window time.
-     * @param delegateCollateralWindow the maximum number of seconds that an delegation can be executed after the delay.
-     */
-    function setDelegateCollateralWindow(
-        uint128 marketId,
-        uint32 delegateCollateralWindow
-    ) external;
-
-    /**
-     * @notice Retrieve the delegation window of a market
-     * @param marketId the id of the market
-     */
-    function getDelegateCollateralWindow(uint128 marketId) external view returns (uint32);
+    function getDelegationCollateralConfiguration(
+        uint128 marketId
+    )
+        external
+        view
+        returns (
+            uint32 delegateCollateralDelay,
+            uint32 delegateCollateralWindow,
+            uint32 undelegateCollateralDelay,
+            uint32 undelegateCollateralWindow
+        );
 
     /**
      * @notice Allows the system owner (not the pool owner) to set a market-specific minimum liquidity ratio.

@@ -328,34 +328,11 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setUndelegateCollateralDelay(
+    function setDelegationCollateralConfiguration(
         uint128 marketId,
-        uint32 undelegateCollateralDelay
-    ) external override {
-        Market.Data storage market = Market.load(marketId);
-
-        if (ERC2771Context._msgSender() != market.marketAddress)
-            revert AccessError.Unauthorized(ERC2771Context._msgSender());
-
-        market.undelegateCollateralDelay = undelegateCollateralDelay;
-
-        emit SetUndelegateCollateralDelay(marketId, undelegateCollateralDelay);
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function getUndelegateCollateralDelay(
-        uint128 marketId
-    ) external view override returns (uint32) {
-        return Market.load(marketId).undelegateCollateralDelay;
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function setUndelegateCollateralWindow(
-        uint128 marketId,
+        uint32 delegateCollateralDelay,
+        uint32 delegateCollateralWindow,
+        uint32 undelegateCollateralDelay,
         uint32 undelegateCollateralWindow
     ) external override {
         Market.Data storage market = Market.load(marketId);
@@ -363,66 +340,42 @@ contract MarketManagerModule is IMarketManagerModule {
         if (ERC2771Context._msgSender() != market.marketAddress)
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
+        market.delegateCollateralDelay = delegateCollateralDelay;
+        market.delegateCollateralWindow = delegateCollateralWindow;
+        market.undelegateCollateralDelay = undelegateCollateralDelay;
         market.undelegateCollateralWindow = undelegateCollateralWindow;
 
-        emit SetUndelegateCollateralWindow(marketId, undelegateCollateralWindow);
+        emit SetDelegateCollateralConfiguration(
+            marketId,
+            delegateCollateralDelay,
+            delegateCollateralWindow,
+            undelegateCollateralDelay,
+            undelegateCollateralWindow
+        );
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getUndelegateCollateralWindow(
+    function getDelegationCollateralConfiguration(
         uint128 marketId
-    ) external view override returns (uint32) {
-        return Market.load(marketId).undelegateCollateralWindow;
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function setDelegateCollateralDelay(
-        uint128 marketId,
-        uint32 delegateCollateralDelay
-    ) external override {
+    )
+        external
+        view
+        override
+        returns (
+            uint32 delegateCollateralDelay,
+            uint32 delegateCollateralWindow,
+            uint32 undelegateCollateralDelay,
+            uint32 undelegateCollateralWindow
+        )
+    {
         Market.Data storage market = Market.load(marketId);
 
-        if (ERC2771Context._msgSender() != market.marketAddress)
-            revert AccessError.Unauthorized(ERC2771Context._msgSender());
-
-        market.delegateCollateralDelay = delegateCollateralDelay;
-
-        emit SetDelegateCollateralDelay(marketId, delegateCollateralDelay);
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function getDelegateCollateralDelay(uint128 marketId) external view override returns (uint32) {
-        return Market.load(marketId).delegateCollateralDelay;
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function setDelegateCollateralWindow(
-        uint128 marketId,
-        uint32 delegateCollateralWindow
-    ) external override {
-        Market.Data storage market = Market.load(marketId);
-
-        if (ERC2771Context._msgSender() != market.marketAddress)
-            revert AccessError.Unauthorized(ERC2771Context._msgSender());
-
-        market.delegateCollateralWindow = delegateCollateralWindow;
-
-        emit SetDelegateCollateralWindow(marketId, delegateCollateralWindow);
-    }
-
-    /**
-     * @inheritdoc IMarketManagerModule
-     */
-    function getDelegateCollateralWindow(uint128 marketId) external view override returns (uint32) {
-        return Market.load(marketId).delegateCollateralWindow;
+        delegateCollateralDelay = market.delegateCollateralDelay;
+        delegateCollateralWindow = market.delegateCollateralWindow;
+        undelegateCollateralDelay = market.undelegateCollateralDelay;
+        undelegateCollateralWindow = market.undelegateCollateralWindow;
     }
 
     /**
