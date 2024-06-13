@@ -4,8 +4,10 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
-import type { CcipRouterMock, CouncilToken } from '../generated/typechain/sepolia';
+import type { CouncilToken } from '../generated/typechain/sepolia';
 import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
+import type { WormholeMock } from '../generated/typechain/sepolia';
+import type { WormholeRelayerMock } from '../generated/typechain/sepolia';
 
 export async function spinChain<GovernanceProxy>({
   networkName,
@@ -52,11 +54,15 @@ export async function spinChain<GovernanceProxy>({
     projectDirectory: hre.config.paths.root,
   });
 
+  console.log('after cannonBuild');
+
   await cannonInspect({
     chainId,
     packageRef,
     writeDeployments,
   });
+
+  console.log('after cannonInspect');
 
   const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
@@ -67,6 +73,8 @@ export async function spinChain<GovernanceProxy>({
     target: 'ethers-v5',
     outDir: typechainFolder,
   });
+
+  console.log('after runTypeChain');
 
   const signer = provider.getSigner(ownerAddress);
 
@@ -82,11 +90,23 @@ export async function spinChain<GovernanceProxy>({
     signer
   ) as SnapshotRecordMock;
 
-  const CcipRouter = new ethers.Contract(
-    outputs.contracts!.CcipRouterMock.address,
-    outputs.contracts!.CcipRouterMock.abi,
+  // const CcipRouter = new ethers.Contract(
+  //   outputs.contracts!.CcipRouterMock.address,
+  //   outputs.contracts!.CcipRouterMock.abi,
+  //   signer
+  // ) as CcipRouterMock;
+
+  const WormholeMock = new ethers.Contract(
+    outputs.contracts!.WormholeMock.address,
+    outputs.contracts!.WormholeMock.abi,
     signer
-  ) as CcipRouterMock;
+  ) as WormholeMock;
+
+  const WormholeRelayerMock = new ethers.Contract(
+    outputs.contracts!.WormholeRelayerMock.address,
+    outputs.contracts!.WormholeRelayerMock.abi,
+    signer
+  ) as WormholeRelayerMock;
 
   const CouncilToken = new ethers.Contract(
     outputs.contracts!.CouncilToken.address,
@@ -101,8 +121,9 @@ export async function spinChain<GovernanceProxy>({
     provider: provider as unknown as ethers.providers.JsonRpcProvider,
     GovernanceProxy,
     CouncilToken,
-    CcipRouter,
     signer,
     SnapshotRecordMock,
+    WormholeMock,
+    WormholeRelayerMock,
   };
 }

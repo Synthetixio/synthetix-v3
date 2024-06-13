@@ -11,13 +11,21 @@ describe('ElectionModule - schedule', () => {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
   let user: ethers.Signer;
+  let owner: ethers.Signer;
   let rx: ethers.ContractReceipt;
   let newNominationPeriodStartDate: ethers.BigNumberish;
   let newVotingPeriodStartDate: ethers.BigNumberish;
   let newEpochEndDate: ethers.BigNumberish;
 
   before('identify signers', async () => {
-    [, user] = getSigners();
+    [owner, user] = getSigners();
+  });
+
+  before('register emitters', async function () {
+    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
+      [13370],
+      [c.GovernanceProxy.address]
+    );
   });
 
   // ----------------------------------

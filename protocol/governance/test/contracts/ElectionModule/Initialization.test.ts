@@ -27,6 +27,8 @@ describe('ElectionModule - Initialization', function () {
   } = {}) {
     return ElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
+      '0x28D8F1Be96f97C1387e94A53e00eCcFb4E75175a', // addresses are not important
+      '0x28D8F1Be96f97C1387e94A53e00eCcFb4E75175a',
       minimumActiveMembers,
       initialNominationPeriodStartDate,
       administrationPeriodDuration,
@@ -37,6 +39,13 @@ describe('ElectionModule - Initialization', function () {
 
   before('identify signers', function () {
     [owner, user] = getSigners();
+  });
+
+  before('register emitters', async function () {
+    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
+      [13370],
+      [c.GovernanceProxy.address]
+    );
   });
 
   before('deploy uninitialized module', async function () {

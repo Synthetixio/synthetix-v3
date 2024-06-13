@@ -15,10 +15,18 @@ interface ScheduleConfig {
 describe('ElectionSchedule', function () {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
+  let owner: ethers.Signer;
   let user: ethers.Signer;
 
   before('identify signers', function () {
-    [, user] = getSigners();
+    [owner, user] = getSigners();
+  });
+
+  before('register emitters', async function () {
+    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
+      [13370],
+      [c.GovernanceProxy.address]
+    );
   });
 
   describe('#getEpochSchedule', function () {
@@ -166,7 +174,6 @@ describe('ElectionSchedule', function () {
       });
     });
 
-    // TODO: fix weird error, running this tests breaks another ones
     describe.skip('when calling it outside of Administration period', function () {
       let schedule: ScheduleConfig;
 
