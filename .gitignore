@@ -20,7 +20,7 @@ lerna-debug.log
 docs/
 junit
 
-Yarn v3
+# Yarn v3
 .yarn/*
 !.yarn/cache
 !.yarn/patches
