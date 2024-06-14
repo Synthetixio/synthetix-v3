@@ -117,6 +117,14 @@ contract MockMarket is IMarket {
         );
     }
 
+    function getDelegationCollateralConfiguration()
+        external
+        view
+        returns (uint32, uint32, uint32, uint32)
+    {
+        return IMarketManagerModule(_proxy).getDelegationCollateralConfiguration(_marketId);
+    }
+
     function price() external view returns (uint256) {
         return _price;
     }

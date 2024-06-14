@@ -159,8 +159,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setUndelegateCollateralDelay(100);
-      await MockMarket.setUndelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        previousConfiguration[0],
+        previousConfiguration[1],
+        100,
+        20
+      );
     });
 
     before('first delegete some', async () => {
