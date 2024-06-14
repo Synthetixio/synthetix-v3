@@ -104,8 +104,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     before('declare intent to delegate', async () => {
@@ -292,8 +297,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     before('declare intent to delegate', async () => {
@@ -371,8 +381,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(10000);
-      await MockMarket.setDelegateCollateralWindow(2000);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        10000,
+        2000,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     before('declare intent to delegate', async () => {
@@ -391,8 +406,13 @@ describe('VaultModule Two-step Delegation', function () {
     });
 
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     it('sanity check. The intent exists', async () => {
@@ -419,8 +439,14 @@ describe('VaultModule Two-step Delegation', function () {
     let declareDelegateIntentTime: number;
     before(restore);
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(150);
-      // Note: not setting the window size (it means defaults to 0) - forever expiration to execute, immediate expiration to delete
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        150,
+        0,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
+      // Note: not setting the window size to zero - forever expiration to execute, immediate expiration to delete
     });
 
     before('declare intent to delegate', async () => {
@@ -504,15 +530,9 @@ describe('VaultModule Two-step Delegation', function () {
     });
 
     before('set both market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setUndelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(0);
-      await MockMarket.setUndelegateCollateralWindow(0);
+      await MockMarket.setDelegationCollateralConfiguration(100, 0, 100, 0);
 
-      await SecondMockMarket.setDelegateCollateralDelay(200);
-      await SecondMockMarket.setUndelegateCollateralDelay(200);
-      await SecondMockMarket.setDelegateCollateralWindow(20);
-      await SecondMockMarket.setUndelegateCollateralWindow(20);
+      await SecondMockMarket.setDelegationCollateralConfiguration(200, 20, 200, 20);
     });
 
     before('declare intent to delegate', async () => {
