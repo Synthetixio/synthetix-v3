@@ -40,7 +40,7 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@types/micromatch": "^4",
     "@types/prompts": "^2.4.9",
-    "@usecannon/builder": "2.13.6",
+    "@usecannon/builder": "2.15.1",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "mocha": "^10.3.0",
