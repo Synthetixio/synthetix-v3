@@ -357,6 +357,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         // No rewards are currently being distributed if the distributor doesn't exist, they are scheduled to be distributed in the future, or the distribution as already completed
         if (
             address(vault.rewards[rewardId].distributor) == address(0) ||
+            totalShares == 0 ||
             vault.rewards[rewardId].start > curTime.toUint() ||
             vault.rewards[rewardId].start + vault.rewards[rewardId].duration <= curTime.toUint()
         ) {
