@@ -1,6 +1,0 @@
-[contract.WormholeMock]
-artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
-
-[contract.WormholeRelayerMock]
-artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
-args = ["<%= contracts.WormholeMock.address %>"]
