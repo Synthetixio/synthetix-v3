@@ -18,10 +18,11 @@ const interestRateParams = {
   highUtilGradient: wei(0.01),
 };
 
+const TOTAL_DEPOSITED_SNX_USD = bn(250_000); // trader margins deposited below
 const calculateMinCredit = (useMonthlyPrice: boolean) => {
   const ethNotional = _TRADER_ETH_SIZE.abs().mul(useMonthlyPrice ? _ETH_MONTHLY_PRICE : _ETH_PRICE);
   const btcNotional = _TRADER_BTC_SIZE.abs().mul(useMonthlyPrice ? _BTC_MONTHLY_PRICE : _BTC_PRICE);
-  return ethNotional.add(btcNotional).add(wei(250_000));
+  return ethNotional.add(btcNotional).add(TOTAL_DEPOSITED_SNX_USD);
 };
 
 describe('InterestRate.tolerance', () => {
