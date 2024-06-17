@@ -583,6 +583,8 @@ interface IAsyncOrderSettlementPythModule {
         uint256 synthDeductionIterator;
         uint128[] deductedSynthIds;
         uint256[] deductedAmount;
+        int256 chargedAmount;
+        uint256 newAccountDebt;
     }
 }
 
