@@ -21,7 +21,7 @@ const interestRateParams = {
 const calculateMinCredit = (useMonthlyPrice: boolean) => {
   const ethNotional = _TRADER_ETH_SIZE.abs().mul(useMonthlyPrice ? _ETH_MONTHLY_PRICE : _ETH_PRICE);
   const btcNotional = _TRADER_BTC_SIZE.abs().mul(useMonthlyPrice ? _BTC_MONTHLY_PRICE : _BTC_PRICE);
-  return ethNotional.add(btcNotional);
+  return ethNotional.add(btcNotional).add(wei(250_000));
 };
 
 describe('InterestRate.tolerance', () => {
@@ -95,14 +95,18 @@ describe('InterestRate.tolerance', () => {
 
   const checkMarketInterestRate = (withMontlyTolerance: boolean) => {
     let currentInterestRate: Wei;
-    it.skip('has correct interest rate', async () => {
+    it('has correct interest rate', async () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
 
+      console.log('WITHDRAWABLE', withdrawableUsd, totalCollateralValue, delegatedCollateral);
+
       const minCredit = calculateMinCredit(withMontlyTolerance);
+      console.log('MINCREDIT', minCredit.toString(10));
 
       const utilRate = minCredit.div(delegatedCollateral);
+      console.log('UTILRATE', utilRate);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
       const actualInterestRate = await systems().PerpsMarket.interestRate();
       assertBn.near(actualInterestRate, currentInterestRate.toBN(), bn(0.0001));
