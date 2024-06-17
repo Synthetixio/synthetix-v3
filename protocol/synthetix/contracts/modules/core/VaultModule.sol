@@ -40,6 +40,7 @@ contract VaultModule is IVaultModule {
     using DelegationIntent for DelegationIntent.Data;
 
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
+    bytes32 private constant _TWO_STEPS_DELEGATE_FEATURE_FLAG = "twoStepsDelegateCollateral";
 
     /**
      * @inheritdoc IVaultModule
@@ -53,6 +54,9 @@ contract VaultModule is IVaultModule {
     ) external override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        if (FeatureFlag.hasAccess(_TWO_STEPS_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
+            revert LegacyAndTwoStepsDelegateCollateralEnabled();
+        }
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -175,8 +179,11 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override returns (uint256 intentId) {
         // Ensure the caller is authorized to represent the account.
-        FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
+        FeatureFlag.ensureAccessToFeature(_TWO_STEPS_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        if (FeatureFlag.hasAccess(_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
+            revert LegacyAndTwoStepsDelegateCollateralEnabled();
+        }
 
         // Input checks
         // System only supports leverage of 1.0 for now.
@@ -271,10 +278,15 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint256[] memory intentIds
     ) public override {
-        FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
+        FeatureFlag.ensureAccessToFeature(_TWO_STEPS_DELEGATE_FEATURE_FLAG);
+        if (FeatureFlag.hasAccess(_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
+            revert LegacyAndTwoStepsDelegateCollateralEnabled();
+        }
+
         AccountDelegationIntents.Data storage accountIntents = AccountDelegationIntents.loadValid(
             accountId
         );
+
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (!accountIntents.isInCurrentEpoch(intent.id)) {

@@ -63,6 +63,11 @@ interface IVaultModule {
     );
 
     /**
+     * @notice Thrown when the both legacy and two steps delegation is enabled.
+     */
+    error LegacyAndTwoStepsDelegateCollateralEnabled();
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
