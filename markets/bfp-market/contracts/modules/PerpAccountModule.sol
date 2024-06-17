@@ -17,6 +17,7 @@ import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
+import {SplitAccountConfiguration} from "../storage/SplitAccountConfiguration.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
 
@@ -229,6 +230,9 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage toPosition = market.positions[toId];
         Position.Data storage fromPosition = market.positions[fromId];
 
+        if (SplitAccountConfiguration.load().whitelisted[msg.sender] != true) {
+            revert ErrorUtil.Unauthorized(msg.sender);
+        }
         // Cannot split more than what's available.
         if (proportion > DecimalMath.UNIT) {
             revert ErrorUtil.AccountSplitProportionTooLarge();

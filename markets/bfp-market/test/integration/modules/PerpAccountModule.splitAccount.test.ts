@@ -55,6 +55,36 @@ describe('PerpAccountModule splitAccount', () => {
     );
   });
 
+  it('should revert is caller is not whitelisted', async () => {
+    const { BfpMarketProxy } = systems();
+
+    const invalidAccountId = 42069;
+    const marketId = 1;
+    const fromTrader = genOneOf(traders());
+    // Ensure we don't have any whitelisted accounts.
+    await withExplicitEvmMine(() => BfpMarketProxy.setEndorsedSplitAccount([]), provider());
+
+    await assertRevert(
+      BfpMarketProxy.splitAccount(fromTrader.accountId, invalidAccountId, marketId, bn(0.1)),
+      `PermissionDenied`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert when fromAccount does not exist/has missing permission', async () => {
+    const { BfpMarketProxy } = systems();
+
+    const invalidAccountId = 42069;
+    const marketId = 1;
+    const toTrader = genOneOf(traders());
+
+    await assertRevert(
+      BfpMarketProxy.splitAccount(invalidAccountId, toTrader.accountId, marketId, bn(0.1)),
+      `PermissionDenied`,
+      BfpMarketProxy
+    );
+  });
+
   it('should revert if proportion is bigger than 1', async () => {
     const { BfpMarketProxy } = systems();
 
@@ -63,6 +93,12 @@ describe('PerpAccountModule splitAccount', () => {
     const toTraderAccountId = 42069;
     await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const market = genOneOf(markets());
+
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -83,6 +119,12 @@ describe('PerpAccountModule splitAccount', () => {
     const toTraderAccountId = 42069;
     await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const market = genOneOf(markets());
+
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -103,6 +145,12 @@ describe('PerpAccountModule splitAccount', () => {
     const toTraderAccountId = 42069;
     await BfpMarketProxy.connect(fromTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     const invalidMarketId = 69420;
+
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -139,6 +187,11 @@ describe('PerpAccountModule splitAccount', () => {
       traderWithOrder,
       genOrder(bs, market, collateral, collateralDepositAmount)
     );
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -162,6 +215,10 @@ describe('PerpAccountModule splitAccount', () => {
       accountId: toTraderAccountId,
     };
     await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
 
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
@@ -197,6 +254,10 @@ describe('PerpAccountModule splitAccount', () => {
     };
     await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     await depositMargin(bs, genTrader(bs, { desiredTrader: toTrader, desiredMarket: market }));
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
 
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
@@ -238,6 +299,10 @@ describe('PerpAccountModule splitAccount', () => {
       marketId,
       bn(1)
     );
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
 
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
@@ -271,6 +336,10 @@ describe('PerpAccountModule splitAccount', () => {
       marketId,
       toTrader,
       genOrder(bs, market, collateral, collateralDepositAmount)
+    );
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
     );
 
     await assertRevert(
@@ -314,6 +383,11 @@ describe('PerpAccountModule splitAccount', () => {
       () => BfpMarketProxy.flagPosition(fromTrader.accountId, marketId),
       provider()
     );
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -352,6 +426,11 @@ describe('PerpAccountModule splitAccount', () => {
         .toBN()
     );
     await tx.wait();
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -383,6 +462,11 @@ describe('PerpAccountModule splitAccount', () => {
     await commitAndSettle(bs, marketId, fromTrader, order);
 
     const proportion = bn(0.9999);
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
+
     await assertRevert(
       BfpMarketProxy.connect(fromTrader.signer).splitAccount(
         fromTrader.accountId,
@@ -422,7 +506,10 @@ describe('PerpAccountModule splitAccount', () => {
       fromTrader.accountId,
       marketId
     );
-
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
     const { receipt } = await withExplicitEvmMine(
       () =>
         BfpMarketProxy.connect(fromTrader.signer).splitAccount(
@@ -501,7 +588,10 @@ describe('PerpAccountModule splitAccount', () => {
       fromTrader.accountId,
       marketId
     );
-
+    await withExplicitEvmMine(
+      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      provider()
+    );
     const { receipt } = await withExplicitEvmMine(
       () =>
         BfpMarketProxy.connect(fromTrader.signer).splitAccount(
