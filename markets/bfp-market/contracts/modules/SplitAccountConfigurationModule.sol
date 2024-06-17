@@ -29,9 +29,14 @@ contract SplitAccountConfigurationModule is ISplitAccountConfigurationModule {
         delete config.whitelistedAddresses;
 
         uint256 addressesLength = addresses.length;
-
+        address currentAddress;
         for (uint256 i = 0; i < addressesLength; ) {
-            config.whitelisted[addresses[i]] = true;
+            currentAddress = addresses[i];
+            if (currentAddress == address(0)) {
+                revert ErrorUtil.ZeroAddress();
+            }
+
+            config.whitelisted[currentAddress] = true;
             unchecked {
                 ++i;
             }

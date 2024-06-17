@@ -3,7 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap, genNumber } from '../../generators';
-import { withExplicitEvmMine } from '../../helpers';
+import { ADDRESS0, withExplicitEvmMine } from '../../helpers';
 
 describe('SplitAccountConfigurationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -63,6 +63,16 @@ describe('SplitAccountConfigurationModule', () => {
       await assertRevert(
         BfpMarketProxy.connect(from).setEndorsedSplitAccounts([genAddress()]),
         `Unauthorized("${await from.getAddress()}")`,
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert is passed 0x address', async () => {
+      const { BfpMarketProxy } = systems();
+
+      await assertRevert(
+        BfpMarketProxy.setEndorsedSplitAccounts([ADDRESS0]),
+        `ZeroAddress()`,
         BfpMarketProxy
       );
     });
