@@ -3,12 +3,19 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {IWormhole} from "./../interfaces/IWormhole.sol";
 import {IWormholeReceiver} from "./../interfaces/IWormholeReceiver.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "../storage/WormholeCrossChain.sol";
 
 /**
  * @title Module with assorted cross-chain functions.
  */
 contract WormholeCrossChainModule is IWormholeReceiver {
+    error OnlyRelayer();
+    error InsufficientValue();
+    error InvalidVM(string reason);
+    error MessageAlreadyProcessed();
+    error UnregisteredEmitter();
+
     function setRegisteredEmitters(uint16[] memory chainIds, address[] memory emitters) external {
         OwnableStorage.onlyOwner();
 
@@ -35,7 +42,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         bytes32 //deliveryId
     ) public payable override {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        require(msg.sender == address(wh.wormholeRelayer), "Only relayer allowed");
+        if (ERC2771Context._msgSender() != address(wh.wormholeRelayer)) revert OnlyRelayer();
 
         (IWormhole.VM memory vm, bool valid, string memory reason) = wh
             .wormholeCore
@@ -44,21 +51,19 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         //1. Check Wormhole Guardian Signatures
         //  If the VM is NOT valid, will return the reason it's not valid
         //  If the VM IS valid, reason will be blank
-        require(valid, reason);
+        if (!valid) revert InvalidVM(reason);
 
         //2. Check if the Emitter Chain contract is registered
-        require(
-            wh.registeredEmitters[vm.emitterChainId] == vm.emitterAddress,
-            "Invalid Emitter Address!"
-        );
+        if (wh.registeredEmitters[vm.emitterChainId] != vm.emitterAddress)
+            revert UnregisteredEmitter();
 
         //3. Check that the message hasn't already been processed
-        require(!wh.hasProcessedMessage[vm.hash], "Message already processed");
+        if (wh.hasProcessedMessage[vm.hash]) revert MessageAlreadyProcessed();
         wh.hasProcessedMessage[vm.hash] = true;
 
         // do the thing!
-        (bool success, ) = address(this).call(vm.payload);
-        require(success, "Failed to execute payload");
+        (bool success, bytes memory result) = address(this).call(vm.payload);
+        _checkSuccess(success, result);
     }
 
     function transmit(
@@ -86,13 +91,14 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         } else {
             // If the target chain is different, we need to send the message to the WormholeRelayer
             // to be sent to the target chain
-            require(msg.value >= requiredMsgValue, "Insufficient msg value");
+            if (msg.value < requiredMsgValue) revert InsufficientValue();
             sequence = self.wormholeRelayer.sendPayloadToEvm(
                 targetChain,
                 targetAddress,
                 payload,
                 receiverValue,
                 gasLimit
+                // TODO: do we add refund addresses? who should get the refund and on what chain?
             );
         }
     }
@@ -111,10 +117,21 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     }
 
     function toAddress(bytes32 _bytes) internal pure returns (address) {
+        // solhint-disable-next-line
         return address(uint160(uint256(_bytes)));
     }
 
     function toBytes32(address _address) internal pure returns (bytes32) {
+        // solhint-disable-next-line
         return bytes32(uint256(uint160(_address)));
+    }
+
+    function _checkSuccess(bool success, bytes memory result) private pure {
+        if (!success) {
+            uint256 len = result.length;
+            assembly {
+                revert(add(result, 0x20), len)
+            }
+        }
     }
 }
