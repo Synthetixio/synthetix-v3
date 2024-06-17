@@ -86,7 +86,10 @@ contract AsyncOrderSettlementPythModule is
         (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
             runtime.fillPrice
         );
-        perpsAccount.charge(runtime.pnl + runtime.totalFees.toInt());
+
+        runtime.chargedAmount = runtime.pnl - runtime.totalFees.toInt();
+        perpsAccount.charge(runtime.chargedAmount);
+        emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
         // after pnl is realized, update position
         runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(

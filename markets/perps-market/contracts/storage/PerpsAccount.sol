@@ -126,6 +126,7 @@ library PerpsAccount {
      * @notice This function charges the account the specified amount
      * @dev This is the only function that changes account debt.
      * @dev Excess credit is added to account's snxUSD amount.
+     * @dev if the amount is positive, it is credit, if negative, it is debt.
      */
     function charge(Data storage self, int256 amount) internal returns (uint256 debt) {
         uint256 newDebt;

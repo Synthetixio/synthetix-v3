@@ -71,7 +71,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         if (runtime.settlementReward > 0) {
             // charge account the settlement reward
             uint256 accountDebt = PerpsAccount.load(runtime.accountId).charge(
-                runtime.settlementReward.toInt()
+                -runtime.settlementReward.toInt()
             );
 
             emit AccountCharged(runtime.accountId, runtime.settlementReward.toInt(), accountDebt);
