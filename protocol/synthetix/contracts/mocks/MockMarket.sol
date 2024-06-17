@@ -102,6 +102,10 @@ contract MockMarket is IMarket {
         _price = newPrice;
     }
 
+    function setMinDelegationTime(uint32 minDelegationTime) external {
+        IMarketManagerModule(_proxy).setMarketMinDelegateTime(_marketId, minDelegationTime);
+    }
+
     function setDelegationCollateralConfiguration(
         uint32 delegateCollateralDelay,
         uint32 delegateCollateralWindow,

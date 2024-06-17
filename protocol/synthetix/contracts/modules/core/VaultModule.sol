@@ -44,6 +44,129 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
+    function delegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint256 newCollateralAmountD18,
+        uint256 leverage
+    ) external override {
+        FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+
+        // Each collateral type may specify a minimum collateral amount that can be delegated.
+        // See CollateralConfiguration.minDelegationD18.
+        if (newCollateralAmountD18 > 0) {
+            CollateralConfiguration.requireSufficientDelegation(
+                collateralType,
+                newCollateralAmountD18
+            );
+        }
+
+        // System only supports leverage of 1.0 for now.
+        if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
+
+        // Identify the vault that corresponds to this collateral type and pool id.
+        Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
+
+        // Use account interaction to update its rewards.
+        uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
+
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+
+        // Conditions for collateral amount
+
+        // Ensure current collateral amount differs from the new collateral amount.
+        if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
+        // If increasing delegated collateral amount,
+        // Check that the account has sufficient collateral.
+        else if (newCollateralAmountD18 > currentCollateralAmount) {
+            // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
+            CollateralConfiguration.collateralEnabled(collateralType);
+
+            Account.requireSufficientCollateral(
+                accountId,
+                collateralType,
+                newCollateralAmountD18 - currentCollateralAmount
+            );
+            Pool.loadExisting(poolId).checkPoolCollateralLimit(
+                collateralType,
+                newCollateralAmountD18 - currentCollateralAmount
+            );
+
+            // if decreasing delegation amount, ensure min time has elapsed
+        } else {
+            Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
+                vault.currentEpoch().lastDelegationTime[accountId]
+            );
+        }
+
+        // Update the account's position for the given pool and collateral type,
+        // Note: This will trigger an update in the entire debt distribution chain.
+        uint256 collateralPrice = _updatePosition(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18,
+            currentCollateralAmount,
+            leverage
+        );
+
+        _updateAccountCollateralPools(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18 > 0
+        );
+        // If decreasing the delegated collateral amount,
+        // check the account's collateralization ratio.
+        // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
+        if (newCollateralAmountD18 < currentCollateralAmount) {
+            int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
+
+            uint256 minIssuanceRatioD18 = Pool
+                .loadExisting(poolId)
+                .collateralConfigurations[collateralType]
+                .issuanceRatioD18;
+
+            // Minimum collateralization ratios are configured in the system per collateral type.abi
+            // Ensure that the account's updated position satisfies this requirement.
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
+                debt < 0 ? 0 : debt.toUint(),
+                newCollateralAmountD18.mulDecimal(collateralPrice),
+                minIssuanceRatioD18
+            );
+
+            // Accounts cannot reduce collateral if any of the pool's
+            // connected market has its capacity locked.
+            _verifyNotCapacityLocked(poolId);
+        }
+
+        // solhint-disable-next-line numcast/safe-cast
+        vault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
+
+        emit DelegationUpdated(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18,
+            leverage,
+            ERC2771Context._msgSender()
+        );
+
+        vault.updateRewards(
+            Vault.PositionSelector(accountId, poolId, collateralType),
+            totalSharesD18,
+            actorSharesD18
+        );
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
     function declareIntentToDelegateCollateral(
         uint128 accountId,
         uint128 poolId,

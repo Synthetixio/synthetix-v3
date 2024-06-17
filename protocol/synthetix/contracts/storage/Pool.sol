@@ -61,6 +61,8 @@ library Pool {
         uint256 maxCollateral
     );
 
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+
     struct Data {
         /**
          * @dev Numeric identifier for the pool. Must be unique.
@@ -418,6 +420,29 @@ library Pool {
         return Market.load(0);
     }
 
+    function getRequiredMinDelegationTime(
+        Data storage self
+    ) internal view returns (uint32 requiredMinDelegateTime) {
+        for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
+            uint32 marketMinDelegateTime = Market
+                .load(self.marketConfigurations[i].marketId)
+                .minDelegateTime;
+
+            if (marketMinDelegateTime > requiredMinDelegateTime) {
+                requiredMinDelegateTime = marketMinDelegateTime;
+            }
+        }
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 maxMinDelegateTime = uint32(
+            Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
+        );
+        return
+            maxMinDelegateTime < requiredMinDelegateTime
+                ? maxMinDelegateTime
+                : requiredMinDelegateTime;
+    }
+
     function getRequiredDelegationDelayAndWindow(
         Data storage self,
         bool isUndelegation
@@ -514,6 +539,20 @@ library Pool {
     function onlyPoolOwner(uint128 poolId, address caller) internal view {
         if (Pool.load(poolId).owner != caller) {
             revert AccessError.Unauthorized(caller);
+        }
+    }
+
+    function requireMinDelegationTimeElapsed(
+        Data storage self,
+        uint64 lastDelegationTime
+    ) internal view {
+        uint32 requiredMinDelegationTime = getRequiredMinDelegationTime(self);
+        if (block.timestamp < lastDelegationTime + requiredMinDelegationTime) {
+            revert MinDelegationTimeoutPending(
+                self.id,
+                // solhint-disable-next-line numcast/safe-cast
+                uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
+            );
         }
     }
 

@@ -141,7 +141,7 @@ library Market {
         /**
          * @dev Delegation/Undelegation frontrunning protection.
          */
-        uint32 __legacySlotDirtyDoNotReuse; // Accumulated Alignment 32
+        uint32 minDelegateTime; // Accumulated Alignment 32
         uint32 undelegateCollateralDelay; // Accumulated Alignment 64
         uint32 undelegateCollateralWindow; // Accumulated Alignment 96
         uint32 delegateCollateralDelay; // Accumulated Alignment 128

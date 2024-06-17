@@ -43,6 +43,7 @@ contract MarketManagerModule is IMarketManagerModule {
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
@@ -323,6 +324,43 @@ contract MarketManagerModule is IMarketManagerModule {
         uint256 maxIter
     ) external override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external override {
+        Market.Data storage market = Market.load(marketId);
+
+        if (ERC2771Context._msgSender() != market.marketAddress)
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
+
+        // min delegate time should not be unreasonably long
+        uint256 maxMinDelegateTime = Config.readUint(
+            _CONFIG_SET_MARKET_MIN_DELEGATE_MAX,
+            86400 * 30
+        );
+
+        if (minDelegateTime > maxMinDelegateTime) {
+            revert ParameterError.InvalidParameter("minDelegateTime", "must not be too large");
+        }
+
+        market.minDelegateTime = minDelegateTime;
+
+        emit SetMinDelegateTime(marketId, minDelegateTime);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function getMarketMinDelegateTime(uint128 marketId) external view override returns (uint32) {
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 maxMinDelegateTime = uint32(
+            Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
+        );
+        uint32 marketMinDelegateTime = Market.load(marketId).minDelegateTime;
+        return
+            maxMinDelegateTime < marketMinDelegateTime ? maxMinDelegateTime : marketMinDelegateTime;
     }
 
     /**
