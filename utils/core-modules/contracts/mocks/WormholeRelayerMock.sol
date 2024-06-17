@@ -2,8 +2,11 @@
 pragma solidity ^0.8.17;
 import {IWormhole} from "../interfaces/IWormhole.sol";
 import {IWormholeReceiver} from "../interfaces/IWormholeReceiver.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 contract WormholeRelayerMock {
+    error InvalidTargetChain(uint16 targetChain);
+
     event SendEvent(
         uint64 indexed sequence,
         uint256 deliveryQuote,
@@ -22,10 +25,10 @@ contract WormholeRelayerMock {
         bytes overridesInfo
     );
 
-    IWormhole private immutable wormhole;
+    IWormhole private immutable WORMHOLE;
 
     constructor(address _wormhole) {
-        wormhole = IWormhole(_wormhole);
+        WORMHOLE = IWormhole(_wormhole);
     }
 
     function sendPayloadToEvm(
@@ -37,26 +40,26 @@ contract WormholeRelayerMock {
     ) external payable returns (uint64 sequence) {
         bytes memory _payload = abi.encode(
             targetChain,
-            wormhole.chainId(),
+            WORMHOLE.chainId(),
             targetAddress,
-            msg.sender, // emitterAddress
+            ERC2771Context._msgSender(), // emitterAddress
             sequence,
             payload,
             receiverValue,
             gasLimit
         );
-        sequence = wormhole.publishMessage{value: 0}(0, _payload, 1);
+        sequence = WORMHOLE.publishMessage{value: 0}(0, _payload, 1);
         emit SendEvent(sequence, 0, 0);
     }
 
     function deliver(
-        bytes[] memory encodedVMs,
+        bytes[] memory, // encodedVMs
         bytes memory encodedDeliveryVAA,
-        address payable relayerRefundAddress,
-        bytes memory deliveryOverrides
+        address payable, // relayerRefundAddress
+        bytes memory // deliveryOverrides
     ) public payable {
         // Parse and verify VAA containing delivery instructions, revert if invalid
-        (IWormhole.VM memory vm, , ) = wormhole.parseAndVerifyVM(encodedDeliveryVAA);
+        (IWormhole.VM memory vm, , ) = WORMHOLE.parseAndVerifyVM(encodedDeliveryVAA);
 
         (
             uint16 targetChain,
@@ -74,7 +77,7 @@ contract WormholeRelayerMock {
 
         IWormholeReceiver targetReceiver = IWormholeReceiver(targetAddress);
 
-        require(targetChain == wormhole.chainId(), "Invalid target chain");
+        if (targetChain != WORMHOLE.chainId()) revert InvalidTargetChain(targetChain);
 
         targetReceiver.receiveEncodedMsg{value: receiverValue}(
             encodedDeliveryVAA,
@@ -98,14 +101,15 @@ contract WormholeRelayerMock {
     }
 
     function quoteEVMDeliveryPrice(
-        uint16 targetChain,
-        uint256 receiverValue,
-        uint256 gasLimit
-    ) public view returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused) {
+        uint16, // targetChain
+        uint256, // receiverValue
+        uint256 // gasLimit
+    ) public pure returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused) {
         return (0, 0);
     }
 
     function toBytes32(address _address) internal pure returns (bytes32) {
+        // solhint-disable-next-line
         return bytes32(uint256(uint160(_address)));
     }
 }

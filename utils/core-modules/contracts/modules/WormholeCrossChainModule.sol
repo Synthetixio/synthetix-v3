@@ -29,13 +29,13 @@ contract WormholeCrossChainModule is IWormholeReceiver {
 
     function receiveEncodedMsg(
         bytes memory encodedMsg,
-        bytes[] memory additionalVaas,
-        bytes32 sender,
-        uint16 sourceChain,
-        bytes32 deliveryId
+        bytes[] memory, // additionalVaas
+        bytes32, // sender
+        uint16, // sourceChain
+        bytes32 //deliveryId
     ) public payable override {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        // require(msg.sender == address(wh.wormholeRelayer), "Only relayer allowed");
+        require(msg.sender == address(wh.wormholeRelayer), "Only relayer allowed");
 
         (IWormhole.VM memory vm, bool valid, string memory reason) = wh
             .wormholeCore
@@ -57,7 +57,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         wh.hasProcessedMessage[vm.hash] = true;
 
         // do the thing!
-        (bool success, bytes memory result) = address(this).call(vm.payload);
+        (bool success, ) = address(this).call(vm.payload);
         require(success, "Failed to execute payload");
     }
 
@@ -86,7 +86,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         } else {
             // If the target chain is different, we need to send the message to the WormholeRelayer
             // to be sent to the target chain
-            // require(msg.value >= requiredMsgValue, "Insufficient msg value"
+            require(msg.value >= requiredMsgValue, "Insufficient msg value");
             sequence = self.wormholeRelayer.sendPayloadToEvm(
                 targetChain,
                 targetAddress,

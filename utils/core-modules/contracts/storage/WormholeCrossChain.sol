@@ -38,31 +38,6 @@ library WormholeCrossChain {
         mapping(bytes32 => bool) hasProcessedMessage;
     }
 
-    function configureWormhole(
-        IWormhole wormholeCore,
-        IWormholeRelayer wormholeRelayer,
-        uint16[] memory supportedNetworks,
-        address[] memory emitters
-    ) external {
-        OwnableStorage.onlyOwner();
-
-        if (supportedNetworks.length != emitters.length) {
-            revert ParameterError.InvalidParameter(
-                "emitters",
-                "must match length of supportedNetworks"
-            );
-        }
-
-        Data storage wh = load();
-        wh.wormholeCore = wormholeCore;
-        wh.wormholeRelayer = wormholeRelayer;
-
-        for (uint256 i = 0; i < supportedNetworks.length; i++) {
-            addSupportedNetwork(wh, supportedNetworks[i]);
-            addEmitter(wh, supportedNetworks[i], emitters[i]);
-        }
-    }
-
     function addSupportedNetwork(Data storage self, uint16 chainId) internal {
         self.supportedNetworks.add(chainId);
         emit NewSupportedCrossChainNetwork(chainId);
