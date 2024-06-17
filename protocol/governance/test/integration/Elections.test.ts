@@ -22,7 +22,6 @@ describe('SynthetixElectionModule - Elections', () => {
   const fastForwardToNominationPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
     const schedule = await chains.mothership.GovernanceProxy.getEpochSchedule();
     await fastForwardTo(schedule.nominationPeriodStartDate.toNumber() + 10, provider);
-    console.log('nomintation timestamp: ', schedule.nominationPeriodStartDate.toNumber());
   };
 
   const fastForwardToVotingPeriod = async (provider: ethers.providers.JsonRpcProvider) => {
@@ -63,14 +62,10 @@ describe('SynthetixElectionModule - Elections', () => {
     const iface = new ethers.utils.Interface(abi);
     let events = [];
 
-    console.log('in deliver revolve: ', rx.events.length);
-
     // Parsing the events from the receipt
     rx.events.forEach((_event, i) => {
-      console.log('event: ', _event);
       try {
         events.push(iface.parseLog(_event));
-        console.log('event: ', events[i].args);
       } catch (error) {
         // Handle the case where the event does not match the ABI
       }

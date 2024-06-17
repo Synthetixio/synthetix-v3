@@ -57,12 +57,10 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 nominationPeriodDuration, // days
         uint64 votingPeriodDuration // days
     ) external override {
-        {
-            OwnableStorage.onlyOwner();
+        OwnableStorage.onlyOwner();
 
-            if (initialCouncil.length > type(uint8).max) {
-                revert TooManyMembers();
-            }
+        if (initialCouncil.length > type(uint8).max) {
+            revert TooManyMembers();
         }
 
         Council.Data storage council = Council.load();
@@ -71,36 +69,34 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 epochDuration;
         ElectionSettings.Data storage nextElectionSettings;
 
-        {
-            WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-            wh.wormholeCore = wormholeCore;
-            wh.wormholeRelayer = wormholeRelayer;
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        wh.wormholeCore = wormholeCore;
+        wh.wormholeRelayer = wormholeRelayer;
 
-            // Convert given days to seconds
-            administrationPeriodDuration = administrationPeriodDuration * 1 days;
-            nominationPeriodDuration = nominationPeriodDuration * 1 days;
-            votingPeriodDuration = votingPeriodDuration * 1 days;
+        // Convert given days to seconds
+        administrationPeriodDuration = administrationPeriodDuration * 1 days;
+        nominationPeriodDuration = nominationPeriodDuration * 1 days;
+        votingPeriodDuration = votingPeriodDuration * 1 days;
 
-            // solhint-disable-next-line numcast/safe-cast
-            epochSeatCount = uint8(initialCouncil.length);
+        // solhint-disable-next-line numcast/safe-cast
+        epochSeatCount = uint8(initialCouncil.length);
 
-            epochDuration =
-                administrationPeriodDuration +
-                nominationPeriodDuration +
-                votingPeriodDuration;
+        epochDuration =
+            administrationPeriodDuration +
+            nominationPeriodDuration +
+            votingPeriodDuration;
 
-            nextElectionSettings = council.getNextElectionSettings();
+        nextElectionSettings = council.getNextElectionSettings();
 
-            // Set the expected epoch durations for next council
-            nextElectionSettings.setElectionSettings(
-                epochSeatCount,
-                minimumActiveMembers,
-                epochDuration,
-                nominationPeriodDuration,
-                votingPeriodDuration,
-                3 days // maxDateAdjustmentTolerance
-            );
-        }
+        // Set the expected epoch durations for next council
+        nextElectionSettings.setElectionSettings(
+            epochSeatCount,
+            minimumActiveMembers,
+            epochDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
+            3 days // maxDateAdjustmentTolerance
+        );
 
         // Initialize first epoch if necessary
         if (!_isInitialized()) {
@@ -437,7 +433,9 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
         Epoch.Data memory nextEpoch;
+
         {
+            // to prevent stack to deep error
             if (!election.evaluated) revert ElectionNotEvaluated();
 
             ElectionSettings.Data storage currentElectionSettings = council

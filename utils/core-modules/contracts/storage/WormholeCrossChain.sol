@@ -9,6 +9,7 @@ import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/Param
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /**
  * @title System wide configuration for anything related to cross-chain
  */
@@ -23,9 +24,6 @@ library WormholeCrossChain {
     event ProcessedWormholeMessage(bytes payload, bytes result);
 
     error UnsupportedNetwork(uint64);
-    // error InvalidNetwork(uint64);
-    // error InsufficientCcipFee(uint256 requiredAmount, uint256 availableAmount);
-    // error InvalidMessage();
 
     bytes32 private constant _SLOT_WORMHOLE_CROSS_CHAIN =
         keccak256(abi.encode("io.synthetix.core-modules.WormholeCrossChain"));

@@ -145,8 +145,6 @@ describe('cross chain election testing', function () {
     it('casts vote on mothership', async function () {
       const { mothership } = chains;
 
-      console.log('relayer address: ', await mothership.WormholeRelayerMock.address);
-
       const tx = await mothership.GovernanceProxy.connect(voter.mothership).cast(
         [await nominee.mothership.getAddress()],
         [ethers.utils.parseEther('100')],

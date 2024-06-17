@@ -28,22 +28,6 @@ describe('Evaluation', function () {
 
       await mothership.GovernanceProxy.evaluate(0);
 
-      // await ccipReceive({
-      //   ccipAddress: satellite1.CcipRouter.address,
-      //   rx,
-      //   sourceChainSelector: mothership.chainSlector,
-      //   targetSigner: satellite1.signer,
-      //   index: 0,
-      // });
-
-      // await ccipReceive({
-      //   ccipAddress: satellite2.CcipRouter.address,
-      //   rx,
-      //   sourceChainSelector: mothership.chainSlector,
-      //   targetSigner: satellite2.signer,
-      //   index: 1,
-      // });
-
       assert.equal((await mothership.GovernanceProxy.getCurrentPeriod()).toNumber(), 2);
     });
   });

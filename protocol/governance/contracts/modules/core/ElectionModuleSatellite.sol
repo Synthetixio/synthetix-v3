@@ -81,34 +81,30 @@ contract ElectionModuleSatellite is
         address[] calldata candidates,
         uint256[] calldata amounts
     ) public payable override {
-        {
-            Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
-        }
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
         address sender = ERC2771Context._msgSender();
         bytes memory payload;
         uint256 votingPower;
 
         /// @dev: load ballot with total votingPower, should have been prepared before,
         /// calling the prepareBallotWithSnapshot method
-        {
-            uint256 currentEpoch = Council.load().currentElectionId;
+        uint256 currentEpoch = Council.load().currentElectionId;
 
-            Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
-            votingPower = ballot.votingPower;
-            if (votingPower == 0) {
-                revert NoVotingPower(sender, currentEpoch);
-            }
-
-            payload = abi.encodeWithSelector(
-                IElectionModule._recvCast.selector,
-                currentEpoch,
-                sender,
-                votingPower,
-                block.chainid,
-                candidates,
-                amounts
-            );
+        Ballot.Data storage ballot = Ballot.load(currentEpoch, sender, block.chainid);
+        votingPower = ballot.votingPower;
+        if (votingPower == 0) {
+            revert NoVotingPower(sender, currentEpoch);
         }
+
+        payload = abi.encodeWithSelector(
+            IElectionModule._recvCast.selector,
+            currentEpoch,
+            sender,
+            votingPower,
+            block.chainid,
+            candidates,
+            amounts
+        );
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         uint16 targetChain = uint16(wh.getChainIdAt(0));

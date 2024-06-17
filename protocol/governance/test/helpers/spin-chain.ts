@@ -54,15 +54,11 @@ export async function spinChain<GovernanceProxy>({
     projectDirectory: hre.config.paths.root,
   });
 
-  console.log('after cannonBuild');
-
   await cannonInspect({
     chainId,
     packageRef,
     writeDeployments,
   });
-
-  console.log('after cannonInspect');
 
   const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
@@ -73,8 +69,6 @@ export async function spinChain<GovernanceProxy>({
     target: 'ethers-v5',
     outDir: typechainFolder,
   });
-
-  console.log('after runTypeChain');
 
   const signer = provider.getSigner(ownerAddress);
 
