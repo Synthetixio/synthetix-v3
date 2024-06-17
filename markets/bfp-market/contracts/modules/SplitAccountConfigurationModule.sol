@@ -15,7 +15,7 @@ contract SplitAccountConfigurationModule is ISplitAccountConfigurationModule {
     /**
      * @inheritdoc ISplitAccountConfigurationModule
      */
-    function setEndorsedSplitAccount(address[] memory addresses) external {
+    function setEndorsedSplitAccounts(address[] memory addresses) external {
         OwnableStorage.onlyOwner();
 
         SplitAccountConfiguration.GlobalData storage config = SplitAccountConfiguration.load();

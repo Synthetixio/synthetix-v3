@@ -62,7 +62,7 @@ describe('PerpAccountModule splitAccount', () => {
     const marketId = 1;
     const fromTrader = genOneOf(traders());
     // Ensure we don't have any whitelisted accounts.
-    await withExplicitEvmMine(() => BfpMarketProxy.setEndorsedSplitAccount([]), provider());
+    await withExplicitEvmMine(() => BfpMarketProxy.setEndorsedSplitAccounts([]), provider());
 
     await assertRevert(
       BfpMarketProxy.splitAccount(fromTrader.accountId, invalidAccountId, marketId, bn(0.1)),
@@ -95,7 +95,7 @@ describe('PerpAccountModule splitAccount', () => {
     const market = genOneOf(markets());
 
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -121,7 +121,7 @@ describe('PerpAccountModule splitAccount', () => {
     const market = genOneOf(markets());
 
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -147,7 +147,7 @@ describe('PerpAccountModule splitAccount', () => {
     const invalidMarketId = 69420;
 
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -188,7 +188,7 @@ describe('PerpAccountModule splitAccount', () => {
       genOrder(bs, market, collateral, collateralDepositAmount)
     );
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -216,7 +216,7 @@ describe('PerpAccountModule splitAccount', () => {
     };
     await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -255,7 +255,7 @@ describe('PerpAccountModule splitAccount', () => {
     await BfpMarketProxy.connect(toTrader.signer)['createAccount(uint128)'](toTraderAccountId);
     await depositMargin(bs, genTrader(bs, { desiredTrader: toTrader, desiredMarket: market }));
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -300,7 +300,7 @@ describe('PerpAccountModule splitAccount', () => {
       bn(1)
     );
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -338,7 +338,7 @@ describe('PerpAccountModule splitAccount', () => {
       genOrder(bs, market, collateral, collateralDepositAmount)
     );
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -384,7 +384,7 @@ describe('PerpAccountModule splitAccount', () => {
       provider()
     );
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -427,7 +427,7 @@ describe('PerpAccountModule splitAccount', () => {
     );
     await tx.wait();
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -463,7 +463,7 @@ describe('PerpAccountModule splitAccount', () => {
 
     const proportion = bn(0.9999);
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
 
@@ -507,7 +507,7 @@ describe('PerpAccountModule splitAccount', () => {
       marketId
     );
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
     const { receipt } = await withExplicitEvmMine(
@@ -589,7 +589,7 @@ describe('PerpAccountModule splitAccount', () => {
       marketId
     );
     await withExplicitEvmMine(
-      async () => BfpMarketProxy.setEndorsedSplitAccount([await fromTrader.signer.getAddress()]),
+      async () => BfpMarketProxy.setEndorsedSplitAccounts([await fromTrader.signer.getAddress()]),
       provider()
     );
     const { receipt } = await withExplicitEvmMine(

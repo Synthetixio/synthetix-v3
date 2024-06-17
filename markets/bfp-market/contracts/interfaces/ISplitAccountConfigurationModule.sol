@@ -15,7 +15,7 @@ interface ISplitAccountConfigurationModule {
 
     /// @notice Configures a list of addresses to be whitelisted for splitAccount.
     /// @param addresses An array of addresses to whitelist
-    function setEndorsedSplitAccount(address[] memory addresses) external;
+    function setEndorsedSplitAccounts(address[] memory addresses) external;
 
     // --- Views --- //
 

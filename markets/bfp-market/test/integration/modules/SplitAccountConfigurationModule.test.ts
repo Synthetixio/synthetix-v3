@@ -2,7 +2,7 @@ import assert from 'assert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bootstrap } from '../../bootstrap';
-import { genAddress, genBootstrap } from '../../generators';
+import { genAddress, genBootstrap, genNumber } from '../../generators';
 import { withExplicitEvmMine } from '../../helpers';
 
 describe('SplitAccountConfigurationModule', () => {
@@ -11,14 +11,14 @@ describe('SplitAccountConfigurationModule', () => {
 
   beforeEach(restore);
 
-  describe('setEndorsedSplitAccount', () => {
+  describe('setEndorsedSplitAccounts', () => {
     it('should configure endorsed accounts', async () => {
       const { BfpMarketProxy } = systems();
 
-      const whitelistedHookAddresses = [genAddress(), genAddress()];
+      const whitelistedHookAddresses = Array.from(Array(genNumber(1, 10))).map(() => genAddress());
 
       const { receipt } = await withExplicitEvmMine(
-        () => BfpMarketProxy.connect(owner()).setEndorsedSplitAccount(whitelistedHookAddresses),
+        () => BfpMarketProxy.connect(owner()).setEndorsedSplitAccounts(whitelistedHookAddresses),
         provider()
       );
 
@@ -32,12 +32,12 @@ describe('SplitAccountConfigurationModule', () => {
       const { BfpMarketProxy } = systems();
       const addressBefore = genAddress();
 
-      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccount([addressBefore]);
+      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccounts([addressBefore]);
 
       assert.deepEqual(await BfpMarketProxy.getEndorsedSplitAccounts(), [addressBefore]);
 
       const addressAfter = genAddress();
-      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccount([addressAfter]);
+      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccounts([addressAfter]);
 
       assert.deepEqual(await BfpMarketProxy.getEndorsedSplitAccounts(), [addressAfter]);
     });
@@ -46,11 +46,11 @@ describe('SplitAccountConfigurationModule', () => {
       const { BfpMarketProxy } = systems();
       const addressBefore = genAddress();
 
-      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccount([addressBefore]);
+      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccounts([addressBefore]);
 
       assert.deepEqual(await BfpMarketProxy.getEndorsedSplitAccounts(), [addressBefore]);
 
-      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccount([]);
+      await BfpMarketProxy.connect(owner()).setEndorsedSplitAccounts([]);
 
       assert.deepEqual(await BfpMarketProxy.getEndorsedSplitAccounts(), []);
     });
@@ -61,7 +61,7 @@ describe('SplitAccountConfigurationModule', () => {
       const from = traders()[0].signer; // not owner.
 
       await assertRevert(
-        BfpMarketProxy.connect(from).setEndorsedSplitAccount([genAddress()]),
+        BfpMarketProxy.connect(from).setEndorsedSplitAccounts([genAddress()]),
         `Unauthorized("${await from.getAddress()}")`,
         BfpMarketProxy
       );
