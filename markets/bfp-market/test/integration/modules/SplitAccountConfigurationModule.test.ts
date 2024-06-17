@@ -23,7 +23,11 @@ describe('SplitAccountConfigurationModule', () => {
       );
 
       const ownerAddress = await owner().getAddress();
-      await assertEvent(receipt, `SplitAccountConfigured("${ownerAddress}", 2)`, BfpMarketProxy);
+      await assertEvent(
+        receipt,
+        `SplitAccountConfigured("${ownerAddress}", ${whitelistedHookAddresses.length})`,
+        BfpMarketProxy
+      );
 
       assert.deepEqual(await BfpMarketProxy.getEndorsedSplitAccounts(), whitelistedHookAddresses);
     });
