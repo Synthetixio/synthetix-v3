@@ -68,6 +68,10 @@ args = []
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
 args = []
 
+[contract.SplitAccountConfigurationModule]
+artifact = "contracts/modules/SplitAccountConfigurationModule.sol:SplitAccountConfigurationModule"
+args = []
+
 # --- Distributor contract --- #
 
 [contract.PerpRewardDistributor]
@@ -104,6 +108,7 @@ contracts = [
     "LiquidationModule",
     "PerpRewardDistributorFactoryModule",
     "SettlementHookModule",
+    "SplitAccountConfigurationModule",
     "__TestHelperModule",
 ]
 

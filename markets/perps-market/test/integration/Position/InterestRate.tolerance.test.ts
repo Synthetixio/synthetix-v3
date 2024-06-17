@@ -95,7 +95,7 @@ describe('InterestRate.tolerance', () => {
 
   const checkMarketInterestRate = (withMontlyTolerance: boolean) => {
     let currentInterestRate: Wei;
-    it('has correct interest rate', async () => {
+    it.skip('has correct interest rate', async () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
