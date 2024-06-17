@@ -101,13 +101,9 @@ describe('InterestRate.tolerance', () => {
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
 
-      console.log('WITHDRAWABLE', withdrawableUsd, totalCollateralValue, delegatedCollateral);
-
       const minCredit = calculateMinCredit(withMontlyTolerance);
-      console.log('MINCREDIT', minCredit.toString(10));
 
       const utilRate = minCredit.div(delegatedCollateral);
-      console.log('UTILRATE', utilRate);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
       const actualInterestRate = await systems().PerpsMarket.interestRate();
       assertBn.near(actualInterestRate, currentInterestRate.toBN(), bn(0.0001));
