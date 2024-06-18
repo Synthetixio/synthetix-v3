@@ -204,6 +204,8 @@ library PerpsAccount {
             liquidatableAccounts.add(self.id);
             seizedMarginValue = transferAllCollateral(self);
             AsyncOrder.load(self.id).reset();
+
+            updateAccountDebt(self, -self.debt.toInt());
         }
     }
 
