@@ -80,8 +80,12 @@ describe('Position - interest rates', () => {
         currentInterestRate.toBN(),
         bn(0.0001)
       );
-      const { rate: expectedUtilizationRate } = await systems().PerpsMarket.utilizationRate();
+      const {
+        rate: expectedUtilizationRate,
+        delegatedCollateral: expectedDelegatedCollateralValue,
+      } = await systems().PerpsMarket.utilizationRate();
       assertBn.near(expectedUtilizationRate, utilRate.toBN(), bn(0.0001));
+      assertBn.equal(expectedDelegatedCollateralValue, delegatedCollateral.toBN());
     });
 
     return {

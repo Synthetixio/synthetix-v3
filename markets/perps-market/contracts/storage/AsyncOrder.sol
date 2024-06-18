@@ -197,7 +197,7 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint settlementTime = self.commitmentTime + settlementStrategy.settlementDelay;
+        uint256 settlementTime = self.commitmentTime + settlementStrategy.settlementDelay;
         uint256 settlementExpiration = settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < settlementTime) {
@@ -238,7 +238,7 @@ library AsyncOrder {
         uint256 currentLiquidationReward;
         int128 newPositionSize;
         uint256 newNotionalValue;
-        int currentAvailableMargin;
+        int256 currentAvailableMargin;
         uint256 requiredInitialMargin;
         uint256 initialRequiredMargin;
         uint256 totalRequiredMargin;
@@ -299,10 +299,6 @@ library AsyncOrder {
             orderPrice
         );
 
-        if (acceptablePriceExceeded(order, runtime.fillPrice)) {
-            revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
-        }
-
         runtime.orderFees =
             calculateOrderFee(
                 runtime.sizeDelta,
@@ -310,8 +306,7 @@ library AsyncOrder {
                 perpsMarketData.skew,
                 marketConfig.orderFees
             ) +
-            KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId) +
-            strategy.settlementReward;
+            settlementRewardCost(strategy);
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
@@ -398,15 +393,24 @@ library AsyncOrder {
     }
 
     /**
+     * @notice Calculates the settlement rewards.
+     */
+    function settlementRewardCost(
+        SettlementStrategy.Data storage strategy
+    ) internal view returns (uint256) {
+        return KeeperCosts.load().getSettlementKeeperCosts() + strategy.settlementReward;
+    }
+
+    /**
      * @notice Calculates the order fees.
      */
     function calculateOrderFee(
         int128 sizeDelta,
         uint256 fillPrice,
-        int marketSkew,
+        int256 marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint256) {
-        int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
+        int256 notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
@@ -484,13 +488,13 @@ library AsyncOrder {
             return price;
         }
         // calculate pd (premium/discount) before and after trade
-        int pdBefore = skew.divDecimal(skewScale.toInt());
-        int newSkew = skew + size;
-        int pdAfter = newSkew.divDecimal(skewScale.toInt());
+        int256 pdBefore = skew.divDecimal(skewScale.toInt());
+        int256 newSkew = skew + size;
+        int256 pdAfter = newSkew.divDecimal(skewScale.toInt());
 
         // calculate price before and after trade with pd applied
-        int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
+        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
 
         // the fill price is the average of those prices
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
@@ -500,9 +504,9 @@ library AsyncOrder {
         uint256 newRequiredMargin;
         uint256 oldRequiredMargin;
         uint256 requiredMarginForNewPosition;
-        uint accumulatedLiquidationRewards;
-        uint maxNumberOfWindows;
-        uint numberOfWindows;
+        uint256 accumulatedLiquidationRewards;
+        uint256 maxNumberOfWindows;
+        uint256 numberOfWindows;
         uint256 requiredRewardMargin;
     }
 
@@ -510,8 +514,8 @@ library AsyncOrder {
      * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
      */
     function calculateStartingPnl(
-        uint fillPrice,
-        uint marketPrice,
+        uint256 fillPrice,
+        uint256 marketPrice,
         int128 size
     ) internal pure returns (int256) {
         return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
@@ -520,6 +524,7 @@ library AsyncOrder {
     /**
      * @notice After the required margins are calculated with the old position, this function replaces the
      * old position initial margin with the new position initial margin requirements and returns them.
+     * @dev SIP-359: If the position is being reduced, required margin is 0.
      */
     function getRequiredMarginWithNewPosition(
         PerpsAccount.Data storage account,
@@ -531,6 +536,11 @@ library AsyncOrder {
         uint256 currentTotalInitialMargin
     ) internal view returns (uint256) {
         RequiredMarginWithNewPositionRuntime memory runtime;
+
+        if (MathUtil.isSameSideReducing(oldPositionSize, newPositionSize)) {
+            return 0;
+        }
+
         // get initial margin requirement for the new position
         (, , runtime.newRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             newPositionSize,
@@ -570,6 +580,12 @@ library AsyncOrder {
 
         // this is the required margin for the new position (minus any order fees)
         return runtime.requiredMarginForNewPosition + runtime.requiredRewardMargin;
+    }
+
+    function validateAcceptablePrice(Data storage order, uint256 fillPrice) internal view {
+        if (acceptablePriceExceeded(order, fillPrice)) {
+            revert AcceptablePriceExceeded(fillPrice, order.request.acceptablePrice);
+        }
     }
 
     /**

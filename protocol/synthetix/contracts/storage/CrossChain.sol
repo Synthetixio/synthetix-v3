@@ -78,7 +78,7 @@ library CrossChain {
         (bool success, bytes memory result) = caller.call(payload);
 
         if (!success) {
-            uint len = result.length;
+            uint256 len = result.length;
             assembly {
                 revert(add(result, 0x20), len)
             }

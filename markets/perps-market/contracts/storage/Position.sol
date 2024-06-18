@@ -20,8 +20,8 @@ library Position {
         uint128 marketId;
         int128 size;
         uint128 latestInteractionPrice;
-        uint256 latestInterestAccrued;
         int128 latestInteractionFunding;
+        uint256 latestInterestAccrued;
     }
 
     function update(
@@ -38,18 +38,18 @@ library Position {
 
     function getPositionData(
         Data storage self,
-        uint price
+        uint256 price
     )
         internal
         view
         returns (
             uint256 notionalValue,
-            int totalPnl,
-            int pricePnl,
+            int256 totalPnl,
+            int256 pricePnl,
             uint256 chargedInterest,
-            int accruedFunding,
-            int netFundingPerUnit,
-            int nextFunding
+            int256 accruedFunding,
+            int256 netFundingPerUnit,
+            int256 nextFunding
         )
     {
         (
@@ -65,24 +65,24 @@ library Position {
 
     function getPnl(
         Data storage self,
-        uint price
+        uint256 price
     )
         internal
         view
         returns (
-            int totalPnl,
-            int pricePnl,
-            uint chargedInterest,
-            int accruedFunding,
-            int netFundingPerUnit,
-            int nextFunding
+            int256 totalPnl,
+            int256 pricePnl,
+            uint256 chargedInterest,
+            int256 accruedFunding,
+            int256 netFundingPerUnit,
+            int256 nextFunding
         )
     {
         nextFunding = PerpsMarket.load(self.marketId).calculateNextFunding(price);
         netFundingPerUnit = nextFunding - self.latestInteractionFunding;
         accruedFunding = self.size.mulDecimal(netFundingPerUnit);
 
-        int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
+        int256 priceShift = price.toInt() - self.latestInteractionPrice.toInt();
         pricePnl = self.size.mulDecimal(priceShift);
 
         chargedInterest = interestAccrued(self, price);
@@ -92,10 +92,10 @@ library Position {
 
     function interestAccrued(
         Data storage self,
-        uint price
+        uint256 price
     ) internal view returns (uint256 chargedInterest) {
-        uint nextInterestAccrued = InterestRate.load().calculateNextInterest();
-        uint netInterestPerDollar = nextInterestAccrued - self.latestInterestAccrued;
+        uint256 nextInterestAccrued = InterestRate.load().calculateNextInterest();
+        uint256 netInterestPerDollar = nextInterestAccrued - self.latestInterestAccrued;
 
         // The interest is charged pro-rata on this position's contribution to the locked OI requirement
         chargedInterest = getLockedNotionalValue(self, price).mulDecimal(netInterestPerDollar);

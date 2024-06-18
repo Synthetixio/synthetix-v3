@@ -3,6 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('AssociateDebtModule', function () {
   const {
@@ -15,6 +16,7 @@ describe('AssociateDebtModule', function () {
     MockMarket,
     marketId,
     depositAmount,
+    provider,
   } = bootstrapWithMockMarketAndPool();
 
   let owner: ethers.Signer;
@@ -31,6 +33,8 @@ describe('AssociateDebtModule', function () {
   });
 
   describe('associateDebt()', () => {
+    const restore = snapshotCheckpoint(provider);
+
     const amount = ethers.utils.parseEther('100');
 
     it('only works from the configured market address', async () => {
@@ -64,10 +68,10 @@ describe('AssociateDebtModule', function () {
     });
 
     it('only works when the target account has enough collateral', async () => {
-      const debt = amount.mul(100000000);
-      const { liquidationRatioD18 } = await systems().Core.getCollateralConfiguration(
-        collateralAddress()
-      );
+      const debt = depositAmount.div(3).mul(2).add(100);
+      await MockMarket().connect(owner).setReportedDebt(debt);
+      const { liquidationRatioD18 } =
+        await systems().Core.getCollateralConfiguration(collateralAddress());
       const price = await systems().Core.getCollateralPrice(collateralAddress());
 
       await assertRevert(
@@ -77,6 +81,22 @@ describe('AssociateDebtModule', function () {
           .div(debt)}", "${liquidationRatioD18}")`,
         systems().Core
       );
+    });
+
+    describe('assigning debt to self', async () => {
+      after(restore);
+      it('works when assigning max amount of debt - 1', async () => {
+        // sit just below the liqudiation limit
+        const debt = depositAmount.div(3).mul(2);
+        await MockMarket().connect(owner).setReportedDebt(debt);
+
+        // should be able to associate
+        await (
+          await MockMarket()
+            .connect(user2)
+            .callAssociateDebt(poolId, collateralAddress(), accountId, debt)
+        ).wait();
+      });
     });
 
     describe('with a second staker', async () => {
@@ -129,7 +149,7 @@ describe('AssociateDebtModule', function () {
         });
 
         describe('when the market reported debt is 200', function () {
-          before('set reported debt to 100', async function () {
+          before('set reported debt to 200', async function () {
             await MockMarket().connect(owner).setReportedDebt(amount.mul(2));
           });
 
@@ -150,6 +170,20 @@ describe('AssociateDebtModule', function () {
               ),
               ethers.utils.parseEther('100')
             );
+          });
+
+          it('edge case: only works when the market is *in range* in the pool', async () => {
+            await MockMarket().connect(owner).setReportedDebt(amount.mul(10000000000));
+
+            await assertRevert(
+              MockMarket()
+                .connect(user2)
+                .callAssociateDebt(poolId, collateralAddress(), accountId, amount),
+              `NotFundedByPool("${marketId()}", "1")`,
+              systems().Core
+            );
+
+            await MockMarket().connect(owner).setReportedDebt(amount.mul(2));
           });
 
           describe('when associateDebt is invoked', async () => {

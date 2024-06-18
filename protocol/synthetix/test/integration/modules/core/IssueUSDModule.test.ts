@@ -109,9 +109,8 @@ describe('IssueUSDModule', function () {
     });
 
     it('verifies sufficient c-ratio', async () => {
-      const { issuanceRatioD18 } = await systems().Core.getCollateralConfiguration(
-        collateralAddress()
-      );
+      const { issuanceRatioD18 } =
+        await systems().Core.getCollateralConfiguration(collateralAddress());
       const price = await systems().Core.getCollateralPrice(collateralAddress());
 
       await assertRevert(

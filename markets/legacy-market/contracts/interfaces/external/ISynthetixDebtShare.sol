@@ -7,17 +7,20 @@ interface ISynthetixDebtShare {
 
     function currentPeriodId() external view returns (uint128);
 
-    function allowance(address account, address spender) external view returns (uint);
+    function allowance(address account, address spender) external view returns (uint256);
 
-    function balanceOf(address account) external view returns (uint);
+    function balanceOf(address account) external view returns (uint256);
 
-    function balanceOfOnPeriod(address account, uint periodId) external view returns (uint);
+    function balanceOfOnPeriod(address account, uint256 periodId) external view returns (uint256);
 
-    function totalSupply() external view returns (uint);
+    function totalSupply() external view returns (uint256);
 
-    function sharePercent(address account) external view returns (uint);
+    function sharePercent(address account) external view returns (uint256);
 
-    function sharePercentOnPeriod(address account, uint periodId) external view returns (uint);
+    function sharePercentOnPeriod(
+        address account,
+        uint256 periodId
+    ) external view returns (uint256);
 
     // Mutative functions
 

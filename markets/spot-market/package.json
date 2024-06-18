@@ -1,10 +1,10 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.3.4",
+  "version": "3.3.19",
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
-    "build:contracts": "rm -rf contracts/generated && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
@@ -16,7 +16,7 @@
     "coverage1": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "cannon publish synthetix-spot-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
-    "postpack": "yarn build && yarn publish-contracts",
+    "deploy": "yarn build && yarn publish-contracts",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "docgen": "hardhat docgen"
   },
@@ -31,16 +31,14 @@
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "^2.74.4",
-    "@types/node-fetch": "^2.6.9",
-    "@usecannon/cli": "2.10.6",
+    "@types/node-fetch": "^2.6.11",
+    "@usecannon/cli": "2.15.1",
     "ethers": "^5.7.2",
-    "hardhat": "^2.19.0",
+    "hardhat": "^2.19.5",
     "node-fetch": "^2.7.0",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
 }

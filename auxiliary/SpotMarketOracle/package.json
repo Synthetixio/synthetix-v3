@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market-oracle",
-  "version": "3.3.4",
+  "version": "3.3.19",
   "description": "Spot market quoting oracle (used in synthetix core contracts",
   "publishConfig": {
     "access": "public"
@@ -10,13 +10,13 @@
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "build": "yarn build:contracts",
-    "build:contracts": "hardhat storage:verify && hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "publish-contracts": "cannon publish spot-market-oracle:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
-    "postpack": "yarn build && yarn publish-contracts",
+    "deploy": "yarn build && yarn publish-contracts",
     "docgen": "hardhat docgen"
   },
   "keywords": [],
@@ -27,10 +27,9 @@
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "hardhat": "^2.19.0",
+    "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
 }

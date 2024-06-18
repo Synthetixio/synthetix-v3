@@ -9,10 +9,10 @@ contract MockPyth is AbstractPyth {
     mapping(bytes32 => PythStructs.PriceFeed) priceFeeds;
     uint64 sequenceNumber;
 
-    uint singleUpdateFeeInWei;
-    uint validTimePeriod;
+    uint256 singleUpdateFeeInWei;
+    uint256 validTimePeriod;
 
-    constructor(uint _validTimePeriod, uint _singleUpdateFeeInWei) {
+    constructor(uint256 _validTimePeriod, uint256 _singleUpdateFeeInWei) {
         singleUpdateFeeInWei = _singleUpdateFeeInWei;
         validTimePeriod = _validTimePeriod;
     }
@@ -28,7 +28,7 @@ contract MockPyth is AbstractPyth {
         return (priceFeeds[id].id != 0);
     }
 
-    function getValidTimePeriod() public view override returns (uint) {
+    function getValidTimePeriod() public view override returns (uint256) {
         return validTimePeriod;
     }
 
@@ -36,20 +36,20 @@ contract MockPyth is AbstractPyth {
     // You can create this data either by calling createPriceFeedUpdateData or
     // by using web3.js or ethers abi utilities.
     function updatePriceFeeds(bytes[] calldata updateData) public payable override {
-        uint requiredFee = getUpdateFee(updateData);
+        uint256 requiredFee = getUpdateFee(updateData);
         if (msg.value < requiredFee) revert PythErrors.InsufficientFee();
 
         // Chain ID is id of the source chain that the price update comes from. Since it is just a mock contract
         // We set it to 1.
         uint16 chainId = 1;
 
-        for (uint i = 0; i < updateData.length; i++) {
+        for (uint256 i = 0; i < updateData.length; i++) {
             PythStructs.PriceFeed memory priceFeed = abi.decode(
                 updateData[i],
                 (PythStructs.PriceFeed)
             );
 
-            uint lastPublishTime = priceFeeds[priceFeed.id].price.publishTime;
+            uint256 lastPublishTime = priceFeeds[priceFeed.id].price.publishTime;
 
             if (lastPublishTime < priceFeed.price.publishTime) {
                 // Price information is more recent than the existing price information.
@@ -73,7 +73,7 @@ contract MockPyth is AbstractPyth {
 
     function getUpdateFee(
         bytes[] calldata updateData
-    ) public view override returns (uint feeAmount) {
+    ) public view override returns (uint256 feeAmount) {
         return singleUpdateFeeInWei * updateData.length;
     }
 
@@ -84,13 +84,13 @@ contract MockPyth is AbstractPyth {
         uint64 maxPublishTime,
         bool unique
     ) internal returns (PythStructs.PriceFeed[] memory feeds) {
-        uint requiredFee = getUpdateFee(updateData);
+        uint256 requiredFee = getUpdateFee(updateData);
         if (msg.value < requiredFee) revert PythErrors.InsufficientFee();
 
         feeds = new PythStructs.PriceFeed[](priceIds.length);
 
-        for (uint i = 0; i < priceIds.length; i++) {
-            for (uint j = 0; j < updateData.length; j++) {
+        for (uint256 i = 0; i < priceIds.length; i++) {
+            for (uint256 j = 0; j < updateData.length; j++) {
                 uint64 prevPublishTime;
                 (feeds[i], prevPublishTime) = abi.decode(
                     updateData[j],
@@ -98,7 +98,7 @@ contract MockPyth is AbstractPyth {
                 );
 
                 if (feeds[i].id == priceIds[i]) {
-                    uint publishTime = feeds[i].price.publishTime;
+                    uint256 publishTime = feeds[i].price.publishTime;
                     if (
                         minPublishTime <= publishTime &&
                         publishTime <= maxPublishTime &&

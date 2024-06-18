@@ -28,6 +28,6 @@ args = [
     "<%= settings.oracle_manager_address %>",
     "<%= settings.snx_oracle_id %>",
     "<%= settings.snx_token %>",
-    "<%= settings.usd_token %>"
+    "<%= settings.usd_token %>",
 ]
 create2 = true

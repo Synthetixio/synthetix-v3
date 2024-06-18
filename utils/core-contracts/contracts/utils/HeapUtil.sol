@@ -8,12 +8,12 @@ pragma solidity >=0.8.11 <0.9.0;
 library HeapUtil {
     // default max-heap
 
-    uint private constant _ROOT_INDEX = 1;
+    uint256 private constant _ROOT_INDEX = 1;
 
     struct Data {
         uint128 idCount;
         Node[] nodes; // root is index 1; index 0 not used
-        mapping(uint128 => uint) indices; // unique id => node index
+        mapping(uint128 => uint256) indices; // unique id => node index
     }
     struct Node {
         uint128 id; //use with another mapping to store arbitrary object types
@@ -64,7 +64,7 @@ library HeapUtil {
         return getByIndex(self, self.indices[id]); //test that all these return the emptyNode
     }
 
-    function getByIndex(Data storage self, uint i) internal view returns (Node memory) {
+    function getByIndex(Data storage self, uint256 i) internal view returns (Node memory) {
         return self.nodes.length > i ? self.nodes[i] : Node(0, 0);
     }
 
@@ -72,7 +72,7 @@ library HeapUtil {
         return getByIndex(self, _ROOT_INDEX);
     }
 
-    function size(Data storage self) internal view returns (uint) {
+    function size(Data storage self) internal view returns (uint256) {
         return self.nodes.length > 0 ? self.nodes.length - 1 : 0;
     }
 
@@ -81,7 +81,7 @@ library HeapUtil {
     }
 
     //private
-    function _extract(Data storage self, uint i) private returns (Node memory) {
+    function _extract(Data storage self, uint256 i) private returns (Node memory) {
         //√
         if (self.nodes.length <= i || i <= 0) {
             return Node(0, 0);
@@ -101,7 +101,7 @@ library HeapUtil {
         return extractedNode;
     }
 
-    function _bubbleUp(Data storage self, Node memory n, uint i) private {
+    function _bubbleUp(Data storage self, Node memory n, uint256 i) private {
         //√
         if (i == _ROOT_INDEX || n.priority <= self.nodes[i / 2].priority) {
             _insert(self, n, i);
@@ -111,10 +111,10 @@ library HeapUtil {
         }
     }
 
-    function _bubbleDown(Data storage self, Node memory n, uint i) private {
+    function _bubbleDown(Data storage self, Node memory n, uint256 i) private {
         //
-        uint length = self.nodes.length;
-        uint cIndex = i * 2; // left child index
+        uint256 length = self.nodes.length;
+        uint256 cIndex = i * 2; // left child index
 
         if (length <= cIndex) {
             _insert(self, n, i);
@@ -135,7 +135,7 @@ library HeapUtil {
         }
     }
 
-    function _insert(Data storage self, Node memory n, uint i) private {
+    function _insert(Data storage self, Node memory n, uint256 i) private {
         //√
         self.nodes[i] = n;
         self.indices[n.id] = i;

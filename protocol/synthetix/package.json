@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.3.4",
+  "version": "3.3.19",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -8,7 +8,7 @@
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
-    "build:contracts": "hardhat storage:verify && hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
@@ -17,7 +17,7 @@
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "publish-contracts": "cannon publish synthetix:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
-    "postpack": "yarn build && yarn publish-contracts",
+    "deploy": "yarn build && yarn publish-contracts",
     "docgen": "hardhat docgen"
   },
   "keywords": [],
@@ -30,13 +30,11 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
-    "hardhat": "^2.19.0",
-    "solidity-ast": "^0.4.52",
+    "hardhat": "^2.19.5",
+    "solidity-ast": "^0.4.55",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.1"
-  },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+    "ts-node": "^10.9.2"
+  }
 }

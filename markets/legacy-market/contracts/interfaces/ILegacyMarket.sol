@@ -3,12 +3,19 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./external/IAddressResolver.sol";
 import "./external/IV3CoreProxy.sol";
+import "./ISNXDistributor.sol";
 
 /**
  * @title Market enabling the V3 system to back debt issued by the V2 system, migrate positions from V2 to V3, and convert stablecoins issued from V2 into stablecoins issued by V3.
  * @dev This market effectively acts as a single large "staker" in the V2 system.
  */
 interface ILegacyMarket {
+    function v2xResolver() external view returns (IAddressResolver);
+
+    function v3System() external view returns (IV3CoreProxy);
+
+    function rewardsDistributor() external view returns (ISNXDistributor);
+
     /**
      * @notice Emitted after an account has been migrated from the (legacy) v2x system to v3
      * @param staker the address of the v2x staker that migrated
@@ -21,6 +28,20 @@ interface ILegacyMarket {
         uint256 indexed accountId,
         uint256 collateralAmount,
         uint256 debtAmount
+    );
+
+    /**
+     * @notice Emitted if an account was migrated but its c-ratioi was insufficient for assigning debt in v3
+     * @param staker the address of the v2x staker that migrated
+     * @param collateralAmount the amount of SNX migrated to v3
+     * @param debtAmount the value of new debt now managed by v3
+     * @param cratio the calculated c-ratio of the account
+     */
+    event AccountLiquidatedInMigration(
+        address staker,
+        uint256 collateralAmount,
+        uint256 debtAmount,
+        uint256 cratio
     );
 
     /**
@@ -81,10 +102,12 @@ interface ILegacyMarket {
      * @notice called by the owner to set the addresses of the v3 and v2x systems which are needed for calls in `migrate` and `convertUSD`
      * @param v2xResolverAddress the v2x `AddressResolver` contract address. LegacyMarket can use AddressResolver to get the address of any other v2x contract.
      * @param v3SystemAddress the v3 core proxy address
+     * @param snxDistributor the SNXDistributor which should be used if an account is liquidated
      */
     function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
-        IV3CoreProxy v3SystemAddress
+        IV3CoreProxy v3SystemAddress,
+        ISNXDistributor snxDistributor
     ) external returns (bool didInitialize);
 
     /**

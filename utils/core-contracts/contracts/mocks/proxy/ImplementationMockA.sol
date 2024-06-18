@@ -4,13 +4,13 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./UUPSImplementationMock.sol";
 
 contract ImplementationMockA is UUPSImplementationMock {
-    uint private _a;
+    uint256 private _a;
 
-    function setA(uint newA) external {
+    function setA(uint256 newA) external {
         _a = newA;
     }
 
-    function getA() external view returns (uint) {
+    function getA() external view returns (uint256) {
         return _a;
     }
 }

@@ -6,12 +6,12 @@ import "../../storage/SampleStorage.sol";
 import "../../storage/FeatureFlag.sol";
 
 contract SampleFeatureFlagModule is ISampleFeatureFlagModule {
-    function setFeatureFlaggedValue(uint valueToSet) external {
+    function setFeatureFlaggedValue(uint256 valueToSet) external {
         FeatureFlag.ensureAccessToFeature("SAMPLE_FEATURE");
         SampleStorage.load().someValue = valueToSet;
     }
 
-    function getFeatureFlaggedValue() external view returns (uint) {
+    function getFeatureFlaggedValue() external view returns (uint256) {
         return SampleStorage.load().someValue;
     }
 }

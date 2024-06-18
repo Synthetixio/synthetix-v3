@@ -16,7 +16,7 @@ description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.oracle_manager_source]
-defaultValue = "oracle-manager:<%= package.version %>"
+defaultValue = "oracle-manager"
 
 [provision.oracle_manager]
 source = "<%= settings.oracle_manager_source %>"
@@ -144,7 +144,7 @@ args = [
     "Synthetix Account",
     "SACCT",
     "https://synthetix.io",
-    "<%= contracts.AccountRouter.address %>"
+    "<%= contracts.AccountRouter.address %>",
 ]
 depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
 factory.AccountProxy.abiOf = ["AccountRouter"]
@@ -161,7 +161,7 @@ args = [
     "Synthetic USD Token v3",
     "snxUSD",
     18,
-    "<%= contracts.USDRouter.address %>"
+    "<%= contracts.USDRouter.address %>",
 ]
 depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
 factory.USDProxy.abiOf = ["USDRouter"]
@@ -260,7 +260,7 @@ args = [
     # 8 = "constant" oracle
     8,
     "<%= defaultAbiCoder.encode(['uint256'], [parseEther('1')]) %>",
-    []
+    [],
 ]
 extra.const_one_oracle_id.event = "NodeRegistered"
 extra.const_one_oracle_id.arg = 0
@@ -271,7 +271,7 @@ target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "configureCollateral"
 args = [
-    { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true }
+    { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true },
 ]
 
 [provision.trusted_multicall_forwarder]

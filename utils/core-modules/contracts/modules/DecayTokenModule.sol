@@ -14,7 +14,7 @@ import "./TokenModule.sol";
 contract DecayTokenModule is IDecayTokenModule, TokenModule {
     using DecimalMath for uint256;
 
-    uint private constant SECONDS_PER_YEAR = 31536000;
+    uint256 private constant SECONDS_PER_YEAR = 31536000;
 
     modifier _advanceEpoch() {
         _;
@@ -108,9 +108,9 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         if (_totalSupplyAtEpochStart() == 0) {
             return totalShares();
         }
-        uint t = (block.timestamp - _epochStart());
+        uint256 t = (block.timestamp - _epochStart());
         supply = _totalSupplyAtEpochStart();
-        uint r = _pow(((DecimalMath.UNIT) - _ratePerSecond()), t);
+        uint256 r = _pow(((DecimalMath.UNIT) - _ratePerSecond()), t);
         supply = supply.mulDecimal(r);
 
         return (supply);
@@ -180,7 +180,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         return (tokenPerShare > 0 ? amount.divDecimal(tokenPerShare) : amount);
     }
 
-    function _pow(uint256 x, uint n) internal pure returns (uint256 r) {
+    function _pow(uint256 x, uint256 n) internal pure returns (uint256 r) {
         r = 1e18;
         while (n > 0) {
             if (n % 2 == 1) {

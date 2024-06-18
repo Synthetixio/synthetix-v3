@@ -43,7 +43,7 @@ contract SafeCastMock {
     }
 
     // solc-ignore-next-line func-mutability
-    function bytes32toUint(bytes32 x) external view returns (uint) {
+    function bytes32toUint(bytes32 x) external view returns (uint256) {
         return SafeCastBytes32.toUint(x);
     }
 

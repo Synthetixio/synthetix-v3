@@ -7,7 +7,7 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>"
+defaultValue = "synthetix"
 
 [setting.synthetixPreset]
 defaultValue = "main"
@@ -66,7 +66,7 @@ contracts = [
     "AsyncOrderConfigurationModule",
     "WrapperModule",
     "MarketConfigurationModule",
-    "FeatureFlagModule"
+    "FeatureFlagModule",
 ]
 
 [invoke.upgradeSpotMarketProxy]
@@ -102,7 +102,7 @@ func = "addToFeatureFlagAllowlist"
 fromCall.func = "owner"
 args = [
     "<%= formatBytes32String('registerMarket') %>",
-    "<%= contracts.SpotMarketProxy.address %>"
+    "<%= contracts.SpotMarketProxy.address %>",
 ]
 
 [invoke.addCreateSynthToFeatureFlag]

@@ -48,21 +48,21 @@ contract PerpsMarketModule is IPerpsMarketModule {
     /**
      * @inheritdoc IPerpsMarketModule
      */
-    function currentFundingRate(uint128 marketId) external view override returns (int) {
+    function currentFundingRate(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).currentFundingRate();
     }
 
     /**
      * @inheritdoc IPerpsMarketModule
      */
-    function currentFundingVelocity(uint128 marketId) external view override returns (int) {
+    function currentFundingVelocity(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).currentFundingVelocity();
     }
 
     /**
      * @inheritdoc IPerpsMarketModule
      */
-    function indexPrice(uint128 marketId) external view override returns (uint) {
+    function indexPrice(uint128 marketId) external view override returns (uint256) {
         return PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT);
     }
 
@@ -72,8 +72,8 @@ contract PerpsMarketModule is IPerpsMarketModule {
     function fillPrice(
         uint128 marketId,
         int128 orderSize,
-        uint price
-    ) external view override returns (uint) {
+        uint256 price
+    ) external view override returns (uint256) {
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,

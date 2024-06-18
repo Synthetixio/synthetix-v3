@@ -125,21 +125,32 @@ describe('Offchain Async Order - Price tests', () => {
         });
       });
 
-      describe('fillPrice deviation check at commit', () => {
+      describe('fillPrice deviation check at settlement', () => {
         describe('when fillPrice is not acceptable', () => {
           before(restoreToSetCollateralTime);
 
-          it('reverts', async () => {
+          before('commit', async () => {
+            const tx = await systems().PerpsMarket.connect(trader1()).commitOrder({
+              marketId: ethMarketId,
+              accountId: 2,
+              sizeDelta: iter.sizeDelta,
+              settlementStrategyId: 0,
+              acceptablePrice: iter.tightFillPrice,
+              referrer: ethers.constants.AddressZero,
+              trackingCode: ethers.constants.HashZero,
+            });
+            const commitmentTime = await getTxTime(provider(), tx);
+
+            // fast forward to settlement
+            await fastForwardTo(
+              commitmentTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+              provider()
+            );
+          });
+
+          it('reverts on settle', async () => {
             await assertRevert(
-              systems().PerpsMarket.connect(trader1()).commitOrder({
-                marketId: ethMarketId,
-                accountId: 2,
-                sizeDelta: iter.sizeDelta,
-                settlementStrategyId: 0,
-                acceptablePrice: iter.tightFillPrice,
-                referrer: ethers.constants.AddressZero,
-                trackingCode: ethers.constants.HashZero,
-              }),
+              systems().PerpsMarket.connect(keeper()).settleOrder(accountId),
               `AcceptablePriceExceeded("${iter.limitFillPrice}", "${iter.tightFillPrice}")`
             );
           });

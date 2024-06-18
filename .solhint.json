@@ -23,6 +23,9 @@
     ],
     "meta-transactions/no-msg-sender": "error",
     "meta-transactions/no-msg-data": "error",
-    "numcast/safe-cast": "error"
+    "numcast/safe-cast": "error",
+
+    "explicit-types": "error",
+    "no-global-import": "off"
   }
 }

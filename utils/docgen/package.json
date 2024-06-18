@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "handlebars": "^4.7.8",
-    "solidity-ast": "^0.4.52",
+    "solidity-ast": "^0.4.55",
     "solidity-docgen": "^0.6.0-beta.36"
   }
 }

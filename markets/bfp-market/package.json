@@ -1,0 +1,49 @@
+{
+  "name": "@synthetixio/bfp-market",
+  "version": "3.3.20",
+  "description": "L1 perp market implementation",
+  "scripts": {
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
+    "check:storage": "git diff --exit-code storage.dump.sol",
+    "start": "yarn build && yarn cannon-build",
+    "clean": "hardhat clean",
+    "cannon-build": "hardhat cannon:build",
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "test:stable": "sh ./scripts/stable_test.sh",
+    "coverage": "hardhat test",
+    "coverage1": "hardhat coverage --network hardhat",
+    "compile-contracts": "hardhat compile",
+    "publish-contracts": "cannon publish synthetix-bfp-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "docgen": "hardhat docgen"
+  },
+  "author": "Synthetix",
+  "license": "MIT",
+  "devDependencies": {
+    "@openzeppelin/contracts": "4.9.3",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/main": "workspace:*",
+    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/wei": "^2.74.4",
+    "@types/lodash": "^4.14.199",
+    "@types/mocha-each": "2.0.1",
+    "@usecannon/cli": "2.15.1",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.19.5",
+    "lodash": "^4.17.21",
+    "mocha-each": "2.0.1",
+    "solidity-docgen": "^0.6.0-beta.36",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@openzeppelin/contracts"
+    ]
+  }
+}

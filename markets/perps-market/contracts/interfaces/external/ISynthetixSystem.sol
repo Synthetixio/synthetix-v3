@@ -14,6 +14,4 @@ interface ISynthetixSystem is
     IMarketManagerModule,
     IUtilsModule,
     ICollateralConfigurationModule
-{
-
-}
+{}

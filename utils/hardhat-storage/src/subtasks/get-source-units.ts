@@ -3,6 +3,7 @@ import { subtask } from 'hardhat/config';
 import { iterateFunctions } from '../internal/iterators';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS } from '../task-names';
 import 'hardhat/types/runtime';
+
 // Flag added by solidity-coverage module, necessary so we can check if it is being used
 declare module 'hardhat/types/runtime' {
   export interface HardhatRuntimeEnvironment {
@@ -10,8 +11,12 @@ declare module 'hardhat/types/runtime' {
   }
 }
 
-subtask(SUBTASK_STORAGE_GET_SOURCE_UNITS).setAction(async ({ contracts }, hre) => {
-  const sourceUnits = await getContractsAsts(hre, contracts);
+interface Params {
+  artifacts: string[];
+}
+
+subtask(SUBTASK_STORAGE_GET_SOURCE_UNITS).setAction(async ({ artifacts }: Params, hre) => {
+  const sourceUnits = await getContractsAsts(hre, artifacts);
 
   // When running coverage, remove function calls added by solidity-coverage
   if (hre.__SOLIDITY_COVERAGE_RUNNING) {

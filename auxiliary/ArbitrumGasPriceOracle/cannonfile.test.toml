@@ -1,0 +1,2 @@
+name = "arbitrum-gas-price-oracle"
+version = "<%= package.version %>-testable"

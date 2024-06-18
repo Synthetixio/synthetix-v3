@@ -78,7 +78,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     /**
      * @inheritdoc INftModule
      */
-    function setAllowance(uint tokenId, address spender) external override {
+    function setAllowance(uint256 tokenId, address spender) external override {
         OwnableStorage.onlyOwner();
         ERC721Storage.load().tokenApprovals[tokenId] = spender;
     }

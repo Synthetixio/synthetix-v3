@@ -1,0 +1,11 @@
+name = "arbitrum-gas-price-oracle"
+version = "<%= package.version %>"
+description = "Arbiturm Gas Price Oracle Node"
+
+[setting.arbGasPriceOracleAddress]
+defaultValue = "0x000000000000000000000000000000000000006C"
+
+[contract.ArbGasPriceOracle]
+artifact = "contracts/ArbGasPriceOracle.sol:ArbGasPriceOracle"
+args = ["<%= settings.arbGasPriceOracleAddress %>"]
+create2 = true

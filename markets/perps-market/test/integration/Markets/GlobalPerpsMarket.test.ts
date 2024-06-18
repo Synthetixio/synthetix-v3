@@ -50,11 +50,7 @@ describe('GlobalPerpsMarket', () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(owner())
-        .initializeFactory(
-          await trader1().getAddress(),
-          await trader1().getAddress(),
-          'other name'
-        ),
+        .initializeFactory(await trader1().getAddress(), await trader1().getAddress()),
       'FactoryInitialized(1)',
       systems().PerpsMarket
     );

@@ -41,7 +41,7 @@ library FeatureFlag {
     }
 
     function isDenier(Data storage self, address possibleDenier) internal view returns (bool) {
-        for (uint i = 0; i < self.deniers.length; i++) {
+        for (uint256 i = 0; i < self.deniers.length; i++) {
             if (self.deniers[i] == possibleDenier) {
                 return true;
             }

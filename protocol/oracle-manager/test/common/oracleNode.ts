@@ -39,6 +39,7 @@ export const createPythNode = async (
   const factory = await hre.ethers.getContractFactory('MockPythExternalNode');
   const aggregator = await factory.connect(owner).deploy();
   await aggregator.mockSetCurrentPrice(price);
+  await aggregator.mockSetMonthlyTolerancePrice(price);
 
   const params = abi.encode(
     ['address', 'bytes32', 'uint256'],

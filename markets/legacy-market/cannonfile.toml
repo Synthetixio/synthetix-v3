@@ -15,13 +15,10 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.v2x_package]
-defaultValue = "synthetix:2.94.1"
+defaultValue = "synthetix:2.100.0"
 
 [setting.v3_package]
-defaultValue = "synthetix:<%= package.version %>"
-
-[setting.oracle_package]
-defaultValue = "chainlink-mock-v3-aggregator:1.0"
+defaultValue = "synthetix:3.3.15"
 
 [import.v2x]
 source = "<%= settings.v2x_package %>"
@@ -29,12 +26,8 @@ source = "<%= settings.v2x_package %>"
 [import.v3]
 source = "<%= settings.v3_package %>"
 
-[import.fakeOracle]
-source = "<%= settings.oracle_package %>"
-
 [contract.InitialModuleBundle]
 artifact = "InitialModuleBundle"
-args = []
 
 [contract.InitialProxy]
 artifact = "Proxy"
@@ -57,13 +50,21 @@ factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
 
+[contract.SNXDistributor]
+artifact = "SNXDistributor"
+
+args = ["<%= contracts.Proxy.address %>"]
+
+depends = ["invoke.upgradeProxy"]
+
 [invoke.setSystemAddresses]
 target = ["Proxy"]
 from = "<%= settings.owner %>"
 func = "setSystemAddresses"
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
-    "<%= imports.v3.contracts.CoreProxy.address %>"
+    "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= contracts.SNXDistributor.address %>",
 ]
 
 # add pool owner to pool feature flag allow list
@@ -72,7 +73,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
     "0x637265617465506f6f6c00000000000000000000000000000000000000000000",
-    "<%= settings.pool_owner %>"
+    "<%= settings.pool_owner %>",
 ] # formatBytes32String("createPool")
 fromCall.func = "owner"
 
@@ -81,7 +82,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
     "0x72656769737465724d61726b6574000000000000000000000000000000000000",
-    "<%= contracts.Proxy.address %>"
+    "<%= contracts.Proxy.address %>",
 ] # formatBytes32String("registerMarket")
 fromCall.func = "owner"
 
@@ -90,7 +91,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
     "0x6173736f63696174654465627400000000000000000000000000000000000000",
-    "<%= contracts.Proxy.address %>"
+    "<%= contracts.Proxy.address %>",
 ] # formatBytes32String("associateDebt")
 fromCall.func = "owner"
 
@@ -103,25 +104,6 @@ extra.marketId.event = "MarketRegistered"
 extra.marketId.arg = 1
 depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
 
-[invoke.registerOracleManager]
-target = ["v3.oracle_manager.Proxy"]
-func = "registerNode"
-args = [
-    3, # Type for Chainlink aggregator
-    "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [imports.fakeOracle.contracts.MockV3Aggregator.address, 0, 18]) %>",
-    []
-]
-extra.snx_oracle_id.event = "NodeRegistered"
-extra.snx_oracle_id.arg = 0
-
-[invoke.configureSnxCollateral]
-target = ["v3.CoreProxy"]
-func = "configureCollateral"
-args = [
-    { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= extras.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true }
-]
-fromCall.func = "owner"
-
 # set up on v2x
 [invoke.associate]
 target = ["v2x.AddressResolver"]
@@ -129,7 +111,7 @@ func = "importAddresses"
 args = [
     ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
     # TODO nested interpolation
-    ["<%= contracts.Proxy.address %>"]
+    ["<%= contracts.Proxy.address %>"],
     #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
 fromCall.func = "owner"
@@ -140,32 +122,15 @@ func = "addAuthorizedBroker"
 args = ["<%= contracts.Proxy.address %>"]
 fromCall.func = "owner"
 
-# create spartan council pool
-[invoke.createPool]
-target = ["v3.CoreProxy"]
-from = "<%= settings.pool_owner %>"
-func = "createPool"
-args = ["<%= settings.sc_pool_id %>", "<%= settings.pool_owner %>"]
-depends = ["invoke.setFeatureFlagPool"]
+#[invoke.registerRewardsDistributor]
+#target = ["v3.CoreProxy"]
+#func = "registerRewardsDistributor"
+#args = [
+#    "<%= settings.sc_pool_id %>",
+#    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
+#    "<%= contracts.SNXDistributor.address %>",
+#]
 
-[invoke.configurePool]
-target = ["v3.CoreProxy"]
-func = "setPoolConfiguration"
-from = "<%= settings.pool_owner %>"
-args = [
-    "<%= settings.sc_pool_id %>",
-    [
-        { marketId = "<%= extras.marketId %>", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
-    ]
-]
-depends = ["invoke.createPool"]
+#fromCall.func = "owner"
 
-[invoke.preferPool]
-target = ["v3.CoreProxy"]
-func = "setPreferredPool"
-args = ["<%= settings.sc_pool_id %>"]
-fromCall.func = "owner"
-depends = ["invoke.createPool"]
-
-[provision.trusted_multicall_forwarder]
-source = "trusted-multicall-forwarder"
+#depends = ["contract.SNXDistributor"]

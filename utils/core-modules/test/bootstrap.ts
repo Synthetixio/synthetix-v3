@@ -1,4 +1,5 @@
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { addressEqual } from '@synthetixio/core-utils/utils/assertions/assert-address';
+import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import {
   AssociatedSystemsModule,
   DecayTokenModule,
@@ -76,7 +77,7 @@ export function bootstrap({ implementation }: { implementation: Implementation }
     const currentImplementation = await UpgradeModule.getImplementation();
 
     // Upgrade the Proxy to the desired implemenatation
-    if (currentImplementation !== Implementation.address) {
+    if (!addressEqual(currentImplementation, Implementation.address)) {
       await UpgradeModule.upgradeTo(Implementation.address);
     }
   });

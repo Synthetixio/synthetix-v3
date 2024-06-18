@@ -182,7 +182,7 @@ library Pool {
         // These values should not change while iterating through each market.
         uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
         int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
-            ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            ? int256(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
             : int128(0);
 
         uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
@@ -274,7 +274,10 @@ library Pool {
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
-            if (self.marketConfigurations[i].marketId == marketId) {
+            if (
+                self.marketConfigurations[i].marketId == marketId &&
+                Market.load(marketId).isPoolInRange(self.id)
+            ) {
                 return true;
             }
         }

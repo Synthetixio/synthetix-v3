@@ -73,17 +73,45 @@ contract OpGasPriceOracle is IExternalNode {
         RuntimeParams memory runtimeParams
     ) internal view returns (uint256 costOfExecutionGrossEth) {
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);
+        bool isEcotone;
+        try ovmGasPriceOracle.isEcotone() returns (bool _isEcotone) {
+            isEcotone = _isEcotone;
+        } catch {
+            // If the call fails, we assume it's not an ecotone. Explicitly setting it to false to avoid missunderstandings
+            isEcotone = false;
+        }
 
-        uint256 gasPriceL2 = ovmGasPriceOracle.gasPrice();
-        uint256 overhead = ovmGasPriceOracle.overhead();
-        uint256 l1BaseFee = ovmGasPriceOracle.l1BaseFee();
-        uint256 decimals = ovmGasPriceOracle.decimals();
-        uint256 scalar = ovmGasPriceOracle.scalar();
+        if (isEcotone) {
+            // If it's an ecotone, use the new formula and interface
+            uint256 gasPriceL2 = ovmGasPriceOracle.baseFee();
+            uint256 baseFeeScalar = ovmGasPriceOracle.baseFeeScalar();
+            uint256 l1BaseFee = ovmGasPriceOracle.l1BaseFee();
+            uint256 blobBaseFeeScalar = ovmGasPriceOracle.blobBaseFeeScalar();
+            uint256 blobBaseFee = ovmGasPriceOracle.blobBaseFee();
+            uint256 decimals = ovmGasPriceOracle.decimals();
 
-        (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
+            (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
 
-        costOfExecutionGrossEth = ((((gasUnitsL1 + overhead) * l1BaseFee * scalar) /
-            10 ** decimals) + (gasUnitsL2 * gasPriceL2));
+            uint256 l1GasPrice = (baseFeeScalar *
+                l1BaseFee *
+                16 +
+                blobBaseFeeScalar *
+                blobBaseFee) / (16 * 10 ** decimals);
+
+            costOfExecutionGrossEth = ((gasUnitsL1 * l1GasPrice) + (gasUnitsL2 * gasPriceL2));
+        } else {
+            // If it's not an ecotone, use the legacy formula and interface
+            uint256 gasPriceL2 = ovmGasPriceOracle.baseFee(); // baseFee and gasPrice are the same in the legacy contract. Both return block.basefee
+            uint256 overhead = ovmGasPriceOracle.overhead();
+            uint256 l1BaseFee = ovmGasPriceOracle.l1BaseFee();
+            uint256 decimals = ovmGasPriceOracle.decimals();
+            uint256 scalar = ovmGasPriceOracle.scalar();
+
+            (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
+
+            costOfExecutionGrossEth = ((((gasUnitsL1 + overhead) * l1BaseFee * scalar) /
+                10 ** decimals) + (gasUnitsL2 * gasPriceL2));
+        }
     }
 
     function getGasUnits(
@@ -130,10 +158,8 @@ contract OpGasPriceOracle is IExternalNode {
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);
 
         ovmGasPriceOracle.gasPrice();
-        ovmGasPriceOracle.overhead();
         ovmGasPriceOracle.l1BaseFee();
         ovmGasPriceOracle.decimals();
-        ovmGasPriceOracle.scalar();
 
         return true;
     }

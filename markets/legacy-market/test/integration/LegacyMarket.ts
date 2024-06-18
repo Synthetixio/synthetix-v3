@@ -4,7 +4,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 //@ts-ignore
-import { LegacyMarket__factory } from '../../typechain-types';
+import { IV3CoreProxy, LegacyMarket__factory } from '../../typechain-types';
 //@ts-ignore
 import { LegacyMarket } from '../../typechain-types/contracts/LegacyMarket';
 
@@ -29,7 +29,8 @@ async function doForkDeploy() {
   });
 }
 
-describe('LegacyMarket', () => {
+describe('LegacyMarket', function () {
+  this.timeout(360000);
   let owner: ethers.Signer, snxStaker: ethers.Signer;
 
   let snxStakerAddress: string;
@@ -42,6 +43,7 @@ describe('LegacyMarket', () => {
   let synthetixDebtShare: ethers.Contract;
   let liquidationRewards: ethers.Contract;
   let rewardEscrow: ethers.Contract;
+  let snxDistributor: ethers.Contract;
 
   let v3System: ethers.Contract;
   let v3Account: ethers.Contract;
@@ -97,7 +99,7 @@ describe('LegacyMarket', () => {
       outputs.imports.v3.contracts.CoreProxy.address,
       outputs.imports.v3.contracts.CoreProxy.abi,
       provider
-    );
+    ) as IV3CoreProxy;
     v3Account = new ethers.Contract(
       outputs.imports.v3.contracts.AccountProxy.address,
       outputs.imports.v3.contracts.AccountProxy.abi,
@@ -108,6 +110,13 @@ describe('LegacyMarket', () => {
       outputs.imports.v3.contracts.USDProxy.abi,
       provider
     );
+
+    snxDistributor = new ethers.Contract(
+      outputs.contracts.SNXDistributor.address,
+      outputs.contracts.SNXDistributor.abi
+    );
+
+    await rewardEscrow.connect(owner).setPermittedEscrowCreator(await owner.getAddress(), true);
 
     cannonProvider = provider;
   });
@@ -139,18 +148,8 @@ describe('LegacyMarket', () => {
         await market.connect(snxStaker).migrate(migratedAccountId);
 
         // sanity
-        console.log(
-          'coll', // TODO, what does 'coll' mean here, I'm now changing getPositionCollateral to not return value but only the amount
-          wei(
-            await v3System.getPositionCollateral(
-              migratedAccountId,
-              await v3System.getPreferredPool(),
-              snxToken.address
-            )
-          ).toString()
-        );
         assertBn.gte(
-          await v3System.getWithdrawableUsd(await market.marketId()),
+          await v3System.getWithdrawableMarketUsd(await market.marketId()),
           convertedAmount.toBN()
         );
       });
@@ -253,7 +252,6 @@ describe('LegacyMarket', () => {
         beforeDebt = wei(
           await snxToken.debtBalanceOf(snxStakerAddress, ethers.utils.formatBytes32String('sUSD'))
         );
-        //beforeDebtShares = wei(await synthetixDebtShare.balanceOf(snxStakerAddress));
 
         // sanity
         assertBn.equal(
@@ -332,6 +330,145 @@ describe('LegacyMarket', () => {
       return market.connect(snxStaker).migrate(migratedAccountId);
     });
 
+    describe('when we have some collateral already deposited from outside the v3 market', () => {
+      const accountId = 100;
+      const delegateAmount = ethers.utils.parseEther('10000');
+
+      before(restore);
+
+      before('delegate collateral outside of market', async () => {
+        // create user account
+        await v3System.connect(owner)['createAccount(uint128)'](100);
+
+        // approve
+        await snxToken.connect(owner).approve(v3System.address, ethers.constants.MaxUint256);
+
+        // stake collateral
+        await v3System.connect(owner).deposit(accountId, snxToken.address, delegateAmount);
+
+        // invest in the pool
+        await v3System
+          .connect(owner)
+          .delegateCollateral(
+            accountId,
+            await v3System.getPreferredPool(),
+            snxToken.address,
+            delegateAmount,
+            ethers.utils.parseEther('1')
+          );
+
+        // sanity
+        assertBn.equal(
+          await v3System.callStatic.getPositionDebt(
+            accountId,
+            await v3System.getPreferredPool(),
+            snxToken.address
+          ),
+          0
+        );
+      });
+
+      const restoreExistingLiquidity = snapshotCheckpoint(() => cannonProvider);
+
+      describe('run a migration', () => {
+        before(restoreExistingLiquidity);
+        testMigrate(async () => {
+          return market.connect(snxStaker).migrate(migratedAccountId);
+        });
+
+        describe('post check', async () => {
+          it('should have no debt', async () => {
+            assertBn.equal(
+              await v3System.callStatic.getPositionDebt(
+                accountId,
+                await v3System.getPreferredPool(),
+                snxToken.address
+              ),
+              0
+            );
+          });
+        });
+      });
+
+      describe('run a migartion with insufficient liquidity', () => {
+        before(restoreExistingLiquidity);
+
+        before('create account with insufficient collateral', async () => {
+          // bring it to a 10% effective c-ratio--below liquidation threshold, eligible for liquidation
+          // we have the ratio so low just to make sure that the inverse condition is not being checked in the contract
+          await snxToken
+            .connect(snxStaker)
+            .transfer(
+              await owner.getAddress(),
+              (await snxToken.connect(owner).balanceOf(snxStakerAddress)).sub(
+                ethers.utils.parseEther('10')
+              )
+            );
+        });
+
+        describe('call migrate', async () => {
+          before('do it', async () => {
+            // should not fail but should do liquidation
+            await market.connect(snxStaker).migrate(2873826);
+          });
+
+          it('account has not been created', async () => {
+            if ((await v3System.getAccountOwner(2873826)) !== ethers.constants.AddressZero) {
+              throw new Error('account was created');
+            }
+          });
+
+          it('debt has increased for existing account', async () => {
+            // there is only one account so the debt it should have should be the same as the actual amount
+            assertBn.equal(
+              await v3System.callStatic.getPositionDebt(
+                accountId,
+                await v3System.getPreferredPool(),
+                snxToken.address
+              ),
+              ethers.utils.parseEther('1000')
+            );
+          });
+
+          it('rewards available for distributed', async () => {
+            assertBn.equal(
+              await v3System
+                .connect(owner)
+                .callStatic.claimRewards(
+                  accountId,
+                  await v3System.getPreferredPool(),
+                  snxToken.address,
+                  snxDistributor.address
+                ),
+              ethers.utils.parseEther('10')
+            );
+          });
+
+          describe('claim rewards from rewards distributor', async () => {
+            let beforeBalance: ethers.BigNumberish;
+            before('claim', async () => {
+              beforeBalance = await snxToken.balanceOf(await owner.getAddress());
+              await v3System
+                .connect(owner)
+                .claimRewards(
+                  accountId,
+                  await v3System.getPreferredPool(),
+                  snxToken.address,
+                  snxDistributor.address
+                );
+            });
+
+            it('should have collateral in account', async () => {
+              assertBn.equal(
+                (await snxToken.balanceOf(await owner.getAddress())).sub(beforeBalance),
+                ethers.utils.parseEther('10')
+              );
+            });
+          });
+        });
+      });
+    });
+
     // the below tests are fork only
     if (hre.network.name === 'cannon') {
       describe('when all accounts migrate to v3', function () {
@@ -366,5 +503,18 @@ describe('LegacyMarket', () => {
     it('only works for owner', async () => {});
 
     it('sets the value', async () => {});
+  });
+
+  describe('onERC721Received()', async () => {
+    before(restore);
+    it('fails if you just send an account token nft to the market without migrating', async () => {
+      const func = 'safeTransferFrom(address,address,uint256)';
+      await v3System.connect(owner)['createAccount(uint128)'](12341234);
+      await assertRevert(
+        v3Account.connect(owner)[func](await owner.getAddress(), market.address, 12341234),
+        'InvalidTransferRecipient("0xD931006FdC3ba62E74Ae181CCBb1eA243AbE8956")',
+        market
+      );
+    });
   });
 });

@@ -1,0 +1,15 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = []
+allow_paths = [
+    "../../node_modules/forge-std",
+    "../../protocol/synthetix",
+    "../../utils/core-contracts",
+]
+remappings = [
+    "forge-std=../../node_modules/forge-std/src",
+    "@synthetixio=../../node_modules/@synthetixio",
+]
+
+fs_permissions = [{ access = "read", path = "./" }]

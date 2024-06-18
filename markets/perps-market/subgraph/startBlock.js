@@ -17,13 +17,9 @@ exports.findDeploymentBlock = getStartBlock;
 
 async function findAll() {
   const data = await Promise.all([
-    //    getStartBlock({ namespace: 'mainnet', networkName: 'mainnet' }),
-    //    getStartBlock({ namespace: 'goerli', networkName: 'goerli' }),
-    //    getStartBlock({ namespace: 'optimism-mainnet', networkName: 'optimism-mainnet' }),
     getStartBlock({ namespace: 'optimism-goerli', networkName: 'optimism-goerli' }),
-    //    getStartBlock({ namespace: 'base-goerli', networkName: 'base-goerli' }),
-    getStartBlock({ namespace: 'base-goerli-competition', networkName: 'base-goerli' }),
-    getStartBlock({ namespace: 'base-goerli-andromeda', networkName: 'base-goerli' }),
+    getStartBlock({ namespace: 'base-mainnet-andromeda', networkName: 'base-mainnet' }),
+    getStartBlock({ namespace: 'base-sepolia-andromeda', networkName: 'base-sepolia' }),
   ]);
 
   return Object.fromEntries(

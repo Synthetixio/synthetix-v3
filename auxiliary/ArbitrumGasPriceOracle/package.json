@@ -1,0 +1,35 @@
+{
+  "name": "@synthetixio/arbitrum-gas-price-oracle",
+  "version": "3.3.19",
+  "description": "Arbitrum Gas Price Oracle Node",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
+    "clean": "hardhat clean",
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
+    "check:storage": "git diff --exit-code storage.dump.sol",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "publish-contracts": "cannon publish arbitrum-gas-price-oracle:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
+    "docgen": "hardhat docgen"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "hardhat": "^2.19.5",
+    "solidity-docgen": "^0.6.0-beta.36",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -100,7 +100,10 @@ interface IGlobalPerpsMarketModule {
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param maxCollateralAmount Max collateral amount to set for the synth market id.
      */
-    function setCollateralConfiguration(uint128 synthMarketId, uint maxCollateralAmount) external;
+    function setCollateralConfiguration(
+        uint128 synthMarketId,
+        uint256 maxCollateralAmount
+    ) external;
 
     /**
      * @notice Gets the max collateral amount for a specific synth market.
@@ -162,7 +165,7 @@ interface IGlobalPerpsMarketModule {
             uint256 minKeeperRewardUsd,
             uint256 minKeeperProfitRatioD18,
             uint256 maxKeeperRewardUsd,
-            uint maxKeeperScalingRatioD18
+            uint256 maxKeeperScalingRatioD18
         );
 
     /**
@@ -170,6 +173,15 @@ interface IGlobalPerpsMarketModule {
      * @return totalCollateralValue value of all collateral
      */
     function totalGlobalCollateralValue() external view returns (uint256 totalCollateralValue);
+
+    /**
+     * @notice Gets the total collateral value of all deposited collateral from all traders.
+     * @param collateralId the id of the collateral (0 for snxUSD)
+     * @return collateralValue value of all collateral for collateral id
+     */
+    function globalCollateralValue(
+        uint128 collateralId
+    ) external view returns (uint256 collateralValue);
 
     /**
      * @notice Sets the fee collector contract.

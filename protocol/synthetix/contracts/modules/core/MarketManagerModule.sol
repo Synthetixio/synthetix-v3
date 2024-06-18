@@ -138,14 +138,14 @@ contract MarketManagerModule is IMarketManagerModule {
 
         HeapUtil.Data storage inRangePools = market.inRangePools;
         inRangePoolIds = new uint128[](inRangePools.size());
-        for (uint i = 1; i <= inRangePools.size(); i++) {
+        for (uint256 i = 1; i <= inRangePools.size(); i++) {
             HeapUtil.Node memory node = inRangePools.getByIndex(i);
             inRangePoolIds[i - 1] = node.id;
         }
 
         HeapUtil.Data storage outRangePools = market.outRangePools;
         outRangePoolIds = new uint128[](outRangePools.size());
-        for (uint i = 1; i <= outRangePools.size(); i++) {
+        for (uint256 i = 1; i <= outRangePools.size(); i++) {
             HeapUtil.Node memory node = outRangePools.getByIndex(i);
             outRangePoolIds[i - 1] = node.id;
         }
@@ -242,8 +242,7 @@ contract MarketManagerModule is IMarketManagerModule {
             ERC2771Context._msgSender(),
             market.creditCapacityD18,
             market.netIssuanceD18,
-            market.getDepositedCollateralValue(),
-            market.getReportedDebt()
+            market.getDepositedCollateralValue()
         );
     }
 
@@ -297,8 +296,7 @@ contract MarketManagerModule is IMarketManagerModule {
             ERC2771Context._msgSender(),
             marketData.creditCapacityD18,
             marketData.netIssuanceD18,
-            marketData.getDepositedCollateralValue(),
-            marketData.getReportedDebt()
+            marketData.getDepositedCollateralValue()
         );
     }
 

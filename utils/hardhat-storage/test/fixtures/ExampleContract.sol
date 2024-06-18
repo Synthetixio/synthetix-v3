@@ -20,7 +20,7 @@ contract ExampleContract {
     }
 
     uint128 public constant SOME_CONSTANT = 445;
-    uint128 public constant SOME_CASTED_CONSTANT = uint128(SOME_CONSTANT);
+    uint128 public constant SOME_CASTED_CONSTANT = uint128(SOME_CONSTANT); // solhint-disable-line numcast/safe-cast
     address private constant SOME_ADDRESS = 0xe27454c382e79a1876096B691ef4b52747B7097D;
 
     uint256 public stateVariableNumber = 12345;

@@ -25,6 +25,22 @@ interface ILiquidationModule {
     );
 
     /**
+     * @notice Gets fired when an account is flagged for liquidation.
+     * @param accountId Id of the account flagged.
+     * @param availableMargin available margin after flagging.
+     * @param requiredMaintenanceMargin required maintenance margin which caused the flagging.
+     * @param liquidationReward reward for fully liquidating account paid when liquidation occurs.
+     * @param flagReward reward to keeper for flagging the account
+     */
+    event AccountFlaggedForLiquidation(
+        uint128 indexed accountId,
+        int256 availableMargin,
+        uint256 requiredMaintenanceMargin,
+        uint256 liquidationReward,
+        uint256 flagReward
+    );
+
+    /**
      * @notice Gets fired when an account is liquidated.
      * @dev this event is fired once per liquidation tx after the each position that can be liquidated at the time was liquidated.
      * @param accountId Id of the account liquidated.

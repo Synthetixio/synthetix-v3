@@ -23,6 +23,7 @@ This is a monorepo with the following folder structure and packages:
 │   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
 │   └── perps-market             // Market extension for perps.
 │   └── spot-market              // Market extension for spot synths.
+│   └── bfp-market               // Market extension for eth l1 perp.
 │
 ├── protocol                     // Core Synthetix protocol projects.
 │   ├── governance               // Governance contracts for on chain voting.
@@ -82,35 +83,28 @@ To prepare for system upgrades, this repository is used to release new versions 
 #### Publish Dev Release
 
 - Confirm you are on the development branch you’d like to release and that there are no git changes `git diff --exit-code .`
-- If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
 - Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)
-- For each publishable package cannon will ask if you want to publish given package with version and tag. The question may not appear on screen, and you will observe npm just hanging and waiting for something. Press `y` and lerna publishing will continue. This situation will repeat for EACH package (13 times for now).
-- When packages are built and published to cannon, lerna will ask for the OTP code to publish npm packages. Supply it with your OTP (make sure your account has access to publish `@synthetixio` packages)
+- If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
+- In the directory for each package you’d like to publish to cannon, run `yarn deploy`
 - After successful publish, there should be no diff in git. But if there is a diff - make sure you reset any changes, fix publishing issues and re-publish again. Double-check all the package.json files, revert dependencies' version changes back to `"workspaces:*"`.
 
 #### Publish Official Release
 
 **Each step is necessary, do not skip any steps.**
 
-- Confirm you are on the `release` branch and that there are no git changes `git diff --exit-code .`
+- Verify what has changed since the last release
+
+  ```sh
+  yarn changed
+  ```
+
+- Confirm you are on the `main` branch and that there are no git changes `git diff --exit-code .` and you have write access to `main` branch
   ```sh
   git fetch --all
-  git checkout release
+  git checkout main
   git pull
   git diff --exit-code .
   ```
-- Merge any changes from `main` to the `release` branch. It is essential that `release` branch has merge commits from `main` and not squashed updates or anything. Please do **NOT** use GitHub UI for this to avoid squashing.
-  ```sh
-  git merge origin/main
-  ```
-- In case of any conflicts - resolve them and push to upstream. It is essential that `release` branch is pushed to the upstream
-  ```sh
-  git push
-  ```
+- Publish the release with `yarn publish:release`. (After successful publish, there should be no diff in git.)
 - If you aren't using an EIP-1193 compatible wallet, prepend `CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the following command.
-- Publish the release with `yarn publish:release`
-- For each publishable package cannon will ask if you want to publish given package with version and tag. The question may not appear on screen, and you will observe npm just hanging and waiting for something. Press `y` and lerna publishing will continue. This situation will repeat for EACH package (13 times for now).
-- When packages are built and published to cannon, lerna will ask for the OTP code to publish npm packages. Supply it with your OTP (make sure your account has access to publish `@synthetixio` packages)
-- After successful publish, there should be no diff in git. But if there is a diff - make sure you reset any changes, fix publishing issues and re-publish again. Double-check all the package.json files, revert dependencies' version changes back to `"workspaces:*"`.
-
-_In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately._
+- In the directory for each package you’d like to publish to cannon, run `yarn deploy`

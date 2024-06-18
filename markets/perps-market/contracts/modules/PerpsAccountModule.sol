@@ -18,6 +18,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 /**
  * @title Module to manage accounts
@@ -38,7 +39,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function modifyCollateral(
         uint128 accountId,
         uint128 synthMarketId,
-        int amountDelta
+        int256 amountDelta
     ) external override {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
 
@@ -85,14 +86,14 @@ contract PerpsAccountModule is IPerpsAccountModule {
     /**
      * @inheritdoc IPerpsAccountModule
      */
-    function totalCollateralValue(uint128 accountId) external view override returns (uint) {
+    function totalCollateralValue(uint128 accountId) external view override returns (uint256) {
         return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**
      * @inheritdoc IPerpsAccountModule
      */
-    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
+    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint256) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
     }
 
@@ -116,6 +117,18 @@ contract PerpsAccountModule is IPerpsAccountModule {
             PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
         );
         return (totalPnl, accruedFunding, position.size, owedInterest);
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getOpenPositionSize(
+        uint128 accountId,
+        uint128 marketId
+    ) external view override returns (int128 positionSize) {
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
+
+        positionSize = perpsMarket.positions[accountId].size;
     }
 
     /**

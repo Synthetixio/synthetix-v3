@@ -6,7 +6,7 @@ contract SettingsStorage {
         keccak256(abi.encode("io.synthetix.sample-project.Settings"));
 
     struct SettingsStore {
-        uint aSettingValue;
+        uint256 aSettingValue;
     }
 
     function _settingsStore() internal pure returns (SettingsStore storage store) {

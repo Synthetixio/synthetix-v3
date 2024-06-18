@@ -61,7 +61,7 @@ interface IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external returns (AsyncOrder.Data memory retOrder, uint fees);
+    ) external returns (AsyncOrder.Data memory retOrder, uint256 fees);
 
     /**
      * @notice Get async order claim details
@@ -97,6 +97,17 @@ interface IAsyncOrderModule {
         int128 sizeDelta,
         uint256 price
     ) external view returns (uint256 orderFees, uint256 fillPrice);
+
+    /**
+     * @notice Gets the settlement cost including keeper rewards and keeper costs.
+     * @param marketId Id of the market.
+     * @param settlementStrategyId Order size.
+     * @return settlement cost.
+     */
+    function getSettlementRewardCost(
+        uint128 marketId,
+        uint128 settlementStrategyId
+    ) external view returns (uint256);
 
     /**
      * @notice For a given market, account id, and a position size, returns the required total account margin for this order to succeed

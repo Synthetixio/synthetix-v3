@@ -1,0 +1,53 @@
+specVersion: 0.0.4
+schema:
+  file: ./base-sepolia-andromeda/schema.graphql
+dataSources:
+  - kind: ethereum
+    network: base-sepolia
+    name: SpotMarketProxy
+    source:
+      abi: SpotMarketProxy
+      address: "0xA4fE63F8ea9657990eA8E05Ebfa5C19a7D4d7337"
+      startBlock: 4548870
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./base-sepolia-andromeda/index.ts
+      abis:
+        - name: SpotMarketProxy
+          file: ./base-sepolia-andromeda/deployments/spotFactory/SpotMarketProxy.json
+      entities:
+        - Wrapper
+        - Order
+        - MarketInfo
+        - SettlementStrategy
+        - SynthWrapped
+      eventHandlers:
+        - event: OrderSettled(indexed uint128,indexed
+            uint128,uint256,(uint256,uint256,int256,int256),uint256,indexed
+            address,uint256,uint8)
+          handler: handleOrderSettled
+        - event: SynthWrapped(indexed
+            uint256,uint256,(uint256,uint256,int256,int256),uint256)
+          handler: handleSynthWrapped
+        - event: SynthUnwrapped(indexed
+            uint256,uint256,(uint256,uint256,int256,int256),uint256)
+          handler: handleSynthUnwrapped
+        - event:
+            OrderCommitted(indexed uint128,indexed uint8,uint256,uint128,indexed
+            address,address)
+          handler: handleOrderCommitted
+        - event: OrderCancelled(indexed uint128,indexed
+            uint128,(uint128,address,uint8,uint256,uint256,uint256,uint256,uint256,address),indexed
+            address)
+          handler: handleOrderCancelled
+        - event: WrapperSet(indexed uint256,indexed address,uint256)
+          handler: handleWrapperSet
+        - event: SettlementStrategyAdded(indexed uint128,indexed uint256)
+          handler: handleSettlementStrategyAdded
+        # TODO: Need to implement handler for SettlementStrategySet (replaces SettlementStrategyUpdated)
+        #- event: SettlementStrategySet(indexed uint128,indexed uint256,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool))
+        #  handler: handleSettlementStrategySet
+        - event: SynthPriceDataUpdated(indexed uint256,indexed bytes32,indexed bytes32,uint256)
+          handler: handleSynthPriceDataUpdated

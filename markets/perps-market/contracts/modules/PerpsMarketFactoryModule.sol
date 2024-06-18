@@ -41,8 +41,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     function initializeFactory(
         ISynthetixSystem synthetix,
-        ISpotMarketSystem spotMarket,
-        string memory marketName
+        ISpotMarketSystem spotMarket
     ) external override returns (uint128) {
         OwnableStorage.onlyOwner();
 
@@ -50,7 +49,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            perpsMarketId = factory.initialize(synthetix, spotMarket, marketName);
+            perpsMarketId = factory.initialize(synthetix, spotMarket);
         } else {
             perpsMarketId = factory.perpsMarketId;
         }
@@ -118,19 +117,19 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             // debt is the total debt of all markets
             // can be computed as total collateral value - sum_each_market( debt )
             GlobalPerpsMarket.Data storage globalMarket = GlobalPerpsMarket.load();
-            uint collateralValue = globalMarket.totalCollateralValue();
-            int totalMarketDebt;
+            uint256 collateralValue = globalMarket.totalCollateralValue();
+            int256 totalMarketDebt;
 
             SetUtil.UintSet storage activeMarkets = globalMarket.activeMarkets;
             uint256 activeMarketsLength = activeMarkets.length();
-            for (uint i = 1; i <= activeMarketsLength; i++) {
+            for (uint256 i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
                 totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
                     PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
                 );
             }
 
-            int totalDebt = collateralValue.toInt() + totalMarketDebt;
+            int256 totalDebt = collateralValue.toInt() + totalMarketDebt;
             return MathUtil.max(0, totalDebt).toUint();
         }
 
@@ -142,7 +141,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         if (PerpsMarketFactory.load().perpsMarketId == perpsMarketId) {
-            return GlobalPerpsMarket.load().minimumCredit();
+            return GlobalPerpsMarket.load().minimumCredit(PerpsPrice.Tolerance.DEFAULT);
         }
 
         return 0;
@@ -164,7 +163,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         override
         returns (uint256 rate, uint256 delegatedCollateral, uint256 lockedCredit)
     {
-        return GlobalPerpsMarket.load().utilizationRate();
+        return GlobalPerpsMarket.load().utilizationRate(PerpsPrice.Tolerance.ONE_MONTH);
     }
 
     /**

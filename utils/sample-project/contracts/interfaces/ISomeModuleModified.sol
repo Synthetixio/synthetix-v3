@@ -2,13 +2,13 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface ISomeModuleModified {
-    function setValue(uint newValue) external;
+    function setValue(uint256 newValue) external;
 
-    function setSomeValue(uint newSomeValue) external;
+    function setSomeValue(uint256 newSomeValue) external;
 
-    function getValue() external view returns (uint);
+    function getValue() external view returns (uint256);
 
-    function getSomeValue() external view returns (uint);
+    function getSomeValue() external view returns (uint256);
 
-    function fourtyTwo() external pure returns (uint);
+    function fourtyTwo() external pure returns (uint256);
 }

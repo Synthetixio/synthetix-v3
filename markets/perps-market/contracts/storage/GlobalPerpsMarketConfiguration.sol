@@ -35,7 +35,7 @@ library GlobalPerpsMarketConfiguration {
          * @dev mapping of configured synthMarketId to max collateral amount.
          * @dev USD token synth market id = 0
          */
-        mapping(uint128 => uint) maxCollateralAmounts;
+        mapping(uint128 => uint256) maxCollateralAmounts;
         /**
          * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
          */
@@ -43,11 +43,11 @@ library GlobalPerpsMarketConfiguration {
         /**
          * @dev minimum configured keeper reward for the sender who liquidates the account
          */
-        uint minKeeperRewardUsd;
+        uint256 minKeeperRewardUsd;
         /**
          * @dev maximum configured keeper reward for the sender who liquidates the account
          */
-        uint maxKeeperRewardUsd;
+        uint256 maxKeeperRewardUsd;
         /**
          * @dev maximum configured number of concurrent positions per account.
          * @notice If set to zero it means no new positions can be opened, but existing positions can be increased or decreased.
@@ -63,11 +63,11 @@ library GlobalPerpsMarketConfiguration {
         /**
          * @dev used together with minKeeperRewardUsd to get the minumum keeper reward for the sender who settles, or liquidates the account
          */
-        uint minKeeperProfitRatioD18;
+        uint256 minKeeperProfitRatioD18;
         /**
          * @dev used together with maxKeeperRewardUsd to get the maximum keeper reward for the sender who settles, or liquidates the account
          */
-        uint maxKeeperScalingRatioD18;
+        uint256 maxKeeperScalingRatioD18;
         /**
          * @dev set of supported collateral types. By supported we mean collateral types that have a maxCollateralAmount > 0
          */
@@ -138,8 +138,8 @@ library GlobalPerpsMarketConfiguration {
         uint256 costOfExecutionInUsd,
         uint256 availableMarginInUsd
     ) internal view returns (uint256) {
-        uint minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
-        uint maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
+        uint256 minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
+        uint256 maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
         return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
     }
 
@@ -149,7 +149,7 @@ library GlobalPerpsMarketConfiguration {
     ) internal {
         delete self.synthDeductionPriority;
 
-        for (uint i = 0; i < newSynthDeductionPriority.length; i++) {
+        for (uint256 i = 0; i < newSynthDeductionPriority.length; i++) {
             self.synthDeductionPriority.push(newSynthDeductionPriority[i]);
         }
     }
@@ -189,7 +189,7 @@ library GlobalPerpsMarketConfiguration {
     function updateCollateral(
         Data storage self,
         uint128 synthMarketId,
-        uint maxCollateralAmount
+        uint256 maxCollateralAmount
     ) internal {
         self.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
 
@@ -207,7 +207,7 @@ library GlobalPerpsMarketConfiguration {
         address referrer,
         PerpsMarketFactory.Data storage factory
     ) private returns (uint256 referralFeesSent) {
-        if (referrer == address(0)) {
+        if (fees == 0 || referrer == address(0)) {
             return 0;
         }
 

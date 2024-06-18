@@ -12,13 +12,13 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
-    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int newSideSize);
+    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int256 newSideSize);
 
     error MaxUSDOpenInterestReached(
         uint128 marketId,
         uint256 maxMarketValue,
-        int newSideSize,
-        uint price
+        int256 newSideSize,
+        uint256 price
     );
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
@@ -100,7 +100,7 @@ library PerpsMarketConfiguration {
 
     function numberOfLiquidationWindows(
         Data storage self,
-        uint positionSize
+        uint256 positionSize
     ) internal view returns (uint256) {
         return MathUtil.ceilDivide(positionSize, maxLiquidationAmountInWindow(self));
     }

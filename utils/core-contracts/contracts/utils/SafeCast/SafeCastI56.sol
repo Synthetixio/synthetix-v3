@@ -10,7 +10,7 @@ library SafeCastI56 {
     function to24(int56 x) internal pure returns (int24) {
         // ----------------------<========o========>-----------------------
         // ----------------------xxx<=====o=====>xxx-----------------------
-        if (x < int(type(int24).min) || x > int(type(int24).max)) {
+        if (x < int256(type(int24).min) || x > int256(type(int24).max)) {
             revert OverflowInt56ToInt24();
         }
 

@@ -23,7 +23,7 @@ options.salt = "usd"
 defaultValue = "60"
 
 [provision.oracle_manager]
-source = "oracle-manager:3.3.3-dev.249e185f"
+source = "oracle-manager"
 
 # Latest Price
 [invoke.registerConstantNode]
@@ -32,7 +32,8 @@ func = "registerNode"
 args = [
     8, # constant node type
     "<%= defaultAbiCoder.encode(['int256'], [parseEther('10')]) %>",
-    [],
+    [
+    ],
 ]
 extra.snx_pyth_oracle_id.event = "NodeRegistered"
 extra.snx_pyth_oracle_id.arg = 0
@@ -45,6 +46,6 @@ args = [
     "<%= imports.oracle_manager.contracts.Proxy.address %>",
     "<%= extras.snx_pyth_oracle_id %>",
     "<%= imports.snx.contracts.MintableToken.address %>",
-    "<%= imports.usd.contracts.MintableToken.address %>"
+    "<%= imports.usd.contracts.MintableToken.address %>",
 ]
 create2 = true

@@ -38,15 +38,15 @@ library ERC2771Context {
 
 // @custom:artifact contracts/modules/AnotherModule.sol:AnotherModule
 contract AnotherModule {
-    uint private constant _SIXTY_FOUR = 64;
+    uint256 private constant _SIXTY_FOUR = 64;
 }
 
 // @custom:artifact contracts/storage/GlobalStorage.sol:GlobalStorage
 contract GlobalStorage {
     bytes32 private constant _SLOT_GLOBAL_STORAGE = keccak256(abi.encode("io.synthetix.sample-project.Global"));
     struct GlobalStore {
-        uint value;
-        uint someValue;
+        uint256 value;
+        uint256 someValue;
     }
     function _globalStore() internal pure returns (GlobalStore storage store) {
         bytes32 s = _SLOT_GLOBAL_STORAGE;
@@ -74,7 +74,7 @@ contract InitializableStorage {
 contract SettingsStorage {
     bytes32 private constant _SLOT_SETTINGS_STORAGE = keccak256(abi.encode("io.synthetix.sample-project.Settings"));
     struct SettingsStore {
-        uint aSettingValue;
+        uint256 aSettingValue;
     }
     function _settingsStore() internal pure returns (SettingsStore storage store) {
         bytes32 s = _SLOT_SETTINGS_STORAGE;

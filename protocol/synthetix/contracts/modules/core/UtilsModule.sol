@@ -68,7 +68,7 @@ contract UtilsModule is IUtilsModule {
         }
 
         CrossChain.Data storage cc = CrossChain.load();
-        for (uint i = 0; i < supportedNetworks.length; i++) {
+        for (uint256 i = 0; i < supportedNetworks.length; i++) {
             if (supportedNetworks[i] == myChainId) continue;
             if (
                 supportedNetworks[i] != myChainId &&

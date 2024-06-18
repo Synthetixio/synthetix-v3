@@ -6,25 +6,25 @@ import "../storage/GlobalStorage.sol";
 import "../interfaces/ISomeModule.sol";
 
 contract SomeModule is GlobalStorage, ISomeModule {
-    event ValueSet(address sender, uint value);
+    event ValueSet(address sender, uint256 value);
 
-    function setValue(uint newValue) public override {
+    function setValue(uint256 newValue) public override {
         _globalStore().value = newValue;
 
         emit ValueSet(ERC2771Context._msgSender(), newValue);
     }
 
-    function setSomeValue(uint newSomeValue) public override {
+    function setSomeValue(uint256 newSomeValue) public override {
         _globalStore().someValue = newSomeValue;
 
         emit ValueSet(ERC2771Context._msgSender(), newSomeValue);
     }
 
-    function getValue() public view override returns (uint) {
+    function getValue() public view override returns (uint256) {
         return _globalStore().value;
     }
 
-    function getSomeValue() public view override returns (uint) {
+    function getSomeValue() public view override returns (uint256) {
         return _globalStore().someValue;
     }
 }

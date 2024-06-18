@@ -77,6 +77,7 @@ contract AsyncOrderSettlementPythModule is
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
+        asyncOrder.validateAcceptablePrice(runtime.fillPrice);
 
         runtime.amountToDeduct = runtime.totalFees;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
@@ -136,7 +137,7 @@ contract AsyncOrderSettlementPythModule is
         }
         runtime.settlementReward =
             settlementStrategy.settlementReward +
-            KeeperCosts.load().getSettlementKeeperCosts(runtime.accountId);
+            KeeperCosts.load().getSettlementKeeperCosts();
 
         if (runtime.settlementReward > 0) {
             // pay keeper

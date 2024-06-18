@@ -11,12 +11,16 @@ import {
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const accountId = 1;
+  const poolId = 1;
+  const amount = 2323;
+  const leverage = 10;
   const newDelegationUpdatedEvent = createDelegationUpdateEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(2323),
-    BigInt.fromI32(10),
+    accountId,
+    poolId,
+    address,
+    amount,
+    leverage,
     now,
     now - 1000
   );
@@ -32,20 +36,21 @@ export default function test(): void {
     ])
     .returns([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(200))]);
   handleDelegationUpdated(newDelegationUpdatedEvent);
+  const newAmount = 2000;
   const newUSDMintedEvent = createUSDMintedEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(2000),
+    accountId,
+    poolId,
+    address,
+    newAmount,
     now + 1000,
     now
   );
   handleUSDMinted(newUSDMintedEvent);
   const newUSDBurnedEvent = createUSDBurnedEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(2000),
+    accountId,
+    poolId,
+    address,
+    newAmount,
     now + 1000,
     now
   );

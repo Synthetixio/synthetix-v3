@@ -17,7 +17,7 @@ abstract contract AbstractPyth is IPythMock {
     /// @param id The Pyth Price Feed ID of which to check its existence.
     function priceFeedExists(bytes32 id) public view virtual returns (bool exists);
 
-    function getValidTimePeriod() public view virtual override returns (uint validTimePeriod);
+    function getValidTimePeriod() public view virtual override returns (uint256 validTimePeriod);
 
     function getPrice(
         bytes32 id
@@ -40,7 +40,7 @@ abstract contract AbstractPyth is IPythMock {
 
     function getPriceNoOlderThan(
         bytes32 id,
-        uint age
+        uint256 age
     ) public view virtual override returns (PythStructs.Price memory price) {
         price = getPriceUnsafe(id);
 
@@ -58,7 +58,7 @@ abstract contract AbstractPyth is IPythMock {
 
     function getEmaPriceNoOlderThan(
         bytes32 id,
-        uint age
+        uint256 age
     ) public view virtual override returns (PythStructs.Price memory price) {
         price = getEmaPriceUnsafe(id);
 
@@ -67,7 +67,7 @@ abstract contract AbstractPyth is IPythMock {
         return price;
     }
 
-    function diff(uint x, uint y) internal pure returns (uint) {
+    function diff(uint256 x, uint256 y) internal pure returns (uint256) {
         if (x > y) {
             return x - y;
         } else {
@@ -85,7 +85,7 @@ abstract contract AbstractPyth is IPythMock {
     ) external payable virtual override {
         if (priceIds.length != publishTimes.length) revert PythErrors.InvalidArgument();
 
-        for (uint i = 0; i < priceIds.length; i++) {
+        for (uint256 i = 0; i < priceIds.length; i++) {
             if (
                 !priceFeedExists(priceIds[i]) ||
                 queryPriceFeed(priceIds[i]).price.publishTime < publishTimes[i]

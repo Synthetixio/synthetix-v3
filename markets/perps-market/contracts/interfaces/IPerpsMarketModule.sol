@@ -16,11 +16,11 @@ interface IPerpsMarketModule {
         // @dev Max open interest of the market in units of native asset
         uint256 maxOpenInterest;
         // @dev Current funding rate of the market
-        int currentFundingRate;
+        int256 currentFundingRate;
         // @dev Current funding velocity of the market
-        int currentFundingVelocity;
+        int256 currentFundingVelocity;
         // @dev Index price of the market
-        uint indexPrice;
+        uint256 indexPrice;
     }
 
     /**
@@ -59,21 +59,21 @@ interface IPerpsMarketModule {
      * @param marketId Id of the market.
      * @return currentFundingRate Current funding rate of the market.
      */
-    function currentFundingRate(uint128 marketId) external view returns (int);
+    function currentFundingRate(uint128 marketId) external view returns (int256);
 
     /**
      * @notice Gets a market's current funding velocity.
      * @param marketId Id of the market.
      * @return currentFundingVelocity Current funding velocity of the market.
      */
-    function currentFundingVelocity(uint128 marketId) external view returns (int);
+    function currentFundingVelocity(uint128 marketId) external view returns (int256);
 
     /**
      * @notice Gets a market's index price.
      * @param marketId Id of the market.
      * @return indexPrice Index price of the market.
      */
-    function indexPrice(uint128 marketId) external view returns (uint);
+    function indexPrice(uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Gets a market's fill price for a specific order size and index price.
@@ -82,7 +82,11 @@ interface IPerpsMarketModule {
      * @param price Index price.
      * @return price Fill price.
      */
-    function fillPrice(uint128 marketId, int128 orderSize, uint price) external view returns (uint);
+    function fillPrice(
+        uint128 marketId,
+        int128 orderSize,
+        uint256 price
+    ) external view returns (uint256);
 
     /**
      * @notice Given a marketId return a market's summary details in one call.

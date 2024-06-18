@@ -7,9 +7,9 @@ import "../interfaces/external/IFeeCollector.sol";
  * @title Mock Fee Collector.
  */
 contract FeeCollectorMock is IFeeCollector {
-    uint internal feeRatioD18;
+    uint256 internal feeRatioD18;
 
-    function mockSetFeeRatio(uint _feeRatio) external {
+    function mockSetFeeRatio(uint256 _feeRatio) external {
         feeRatioD18 = _feeRatio;
     }
 

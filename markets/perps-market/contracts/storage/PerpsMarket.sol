@@ -58,9 +58,9 @@ library PerpsMarket {
         // accumulates total notional size of the market including accrued funding until the last time any position changed
         int256 debtCorrectionAccumulator;
         // accountId => asyncOrder
-        mapping(uint => AsyncOrder.Data) asyncOrders;
+        mapping(uint256 => AsyncOrder.Data) asyncOrders;
         // accountId => position
-        mapping(uint => Position.Data) positions;
+        mapping(uint256 => Position.Data) positions;
         // liquidation amounts
         Liquidation.Data[] liquidationData;
     }
@@ -127,9 +127,9 @@ library PerpsMarket {
         }
 
         (
-            uint liquidationCapacity,
-            uint maxLiquidationInWindow,
-            uint latestLiquidationTimestamp
+            uint256 liquidationCapacity,
+            uint256 maxLiquidationInWindow,
+            uint256 latestLiquidationTimestamp
         ) = currentLiquidationCapacity(self, marketConfig);
 
         // this would only occur if there was a misconfiguration (like skew scale not being set)
@@ -139,7 +139,7 @@ library PerpsMarket {
             return requestedLiquidationAmount;
         }
 
-        uint maxLiquidationPd = marketConfig.maxLiquidationPd;
+        uint256 maxLiquidationPd = marketConfig.maxLiquidationPd;
         // if liquidation capacity exists, update accordingly
         if (liquidationCapacity != 0) {
             liquidatableAmount = MathUtil.min128(
@@ -170,8 +170,8 @@ library PerpsMarket {
     }
 
     function _updateLiquidationData(Data storage self, uint128 liquidationAmount) private {
-        uint liquidationDataLength = self.liquidationData.length;
-        uint currentTimestamp = liquidationDataLength == 0
+        uint256 liquidationDataLength = self.liquidationData.length;
+        uint256 currentTimestamp = liquidationDataLength == 0
             ? 0
             : self.liquidationData[liquidationDataLength - 1].timestamp;
 
@@ -195,16 +195,20 @@ library PerpsMarket {
     )
         internal
         view
-        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp)
+        returns (
+            uint256 capacity,
+            uint256 maxLiquidationInWindow,
+            uint256 latestLiquidationTimestamp
+        )
     {
         maxLiquidationInWindow = marketConfig.maxLiquidationAmountInWindow();
-        uint accumulatedLiquidationAmounts;
-        uint liquidationDataLength = self.liquidationData.length;
+        uint256 accumulatedLiquidationAmounts;
+        uint256 liquidationDataLength = self.liquidationData.length;
         if (liquidationDataLength == 0) return (maxLiquidationInWindow, maxLiquidationInWindow, 0);
 
-        uint currentIndex = liquidationDataLength - 1;
+        uint256 currentIndex = liquidationDataLength - 1;
         latestLiquidationTimestamp = self.liquidationData[currentIndex].timestamp;
-        uint windowStartTimestamp = block.timestamp - marketConfig.maxSecondsInLiquidationWindow;
+        uint256 windowStartTimestamp = block.timestamp - marketConfig.maxSecondsInLiquidationWindow;
 
         while (self.liquidationData[currentIndex].timestamp > windowStartTimestamp) {
             accumulatedLiquidationAmounts += self.liquidationData[currentIndex].amount;
@@ -212,17 +216,17 @@ library PerpsMarket {
             if (currentIndex == 0) break;
             currentIndex--;
         }
-        int availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
+        int256 availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
             accumulatedLiquidationAmounts.toInt();
         // solhint-disable-next-line numcast/safe-cast
-        capacity = MathUtil.max(availableLiquidationCapacity, int(0)).toUint();
+        capacity = MathUtil.max(availableLiquidationCapacity, int256(0)).toUint();
     }
 
     struct PositionDataRuntime {
         uint256 currentPrice;
-        int sizeDelta;
-        int fundingDelta;
-        int notionalDelta;
+        int256 sizeDelta;
+        int256 fundingDelta;
+        int256 notionalDelta;
     }
 
     /**
@@ -244,7 +248,7 @@ library PerpsMarket {
         self.skew += newPosition.size - oldPosition.size;
 
         runtime.currentPrice = newPosition.latestInteractionPrice;
-        (, int pricePnl, , int fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
+        (, int256 pricePnl, , int256 fundingPnl, , ) = oldPosition.getPnl(runtime.currentPrice);
 
         runtime.sizeDelta = newPosition.size - oldPosition.size;
         runtime.fundingDelta = calculateNextFunding(self, runtime.currentPrice).mulDecimal(
@@ -263,7 +267,10 @@ library PerpsMarket {
         // update position to new position
         // Note: once market interest rate is updated, the current accrued interest is saved
         // to figure out the unrealized interest for the position
-        (uint128 interestRate, uint256 currentInterestAccrued) = InterestRate.update();
+        // when we update market size, use a 1 month price tolerance for calculating minimum credit
+        (uint128 interestRate, uint256 currentInterestAccrued) = InterestRate.update(
+            PerpsPrice.Tolerance.ONE_MONTH
+        );
         oldPosition.update(newPosition, currentInterestAccrued);
 
         return
@@ -279,8 +286,8 @@ library PerpsMarket {
 
     function recomputeFunding(
         Data storage self,
-        uint price
-    ) internal returns (int fundingRate, int fundingValue) {
+        uint256 price
+    ) internal returns (int256 fundingRate, int256 fundingValue) {
         fundingRate = currentFundingRate(self);
         fundingValue = calculateNextFunding(self, price);
 
@@ -293,22 +300,22 @@ library PerpsMarket {
 
     function calculateNextFunding(
         Data storage self,
-        uint price
-    ) internal view returns (int nextFunding) {
+        uint256 price
+    ) internal view returns (int256 nextFunding) {
         nextFunding = self.lastFundingValue + unrecordedFunding(self, price);
     }
 
-    function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
-        int fundingRate = currentFundingRate(self);
+    function unrecordedFunding(Data storage self, uint256 price) internal view returns (int256) {
+        int256 fundingRate = currentFundingRate(self);
         // note the minus sign: funding flows in the opposite direction to the skew.
-        int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
+        int256 avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
 
         return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
-    function currentFundingRate(Data storage self) internal view returns (int) {
+    function currentFundingRate(Data storage self) internal view returns (int256) {
         // calculations:
         //  - velocity          = proportional_skew * max_funding_velocity
         //  - proportional_skew = skew / skew_scale
@@ -332,47 +339,46 @@ library PerpsMarket {
             (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
-    function currentFundingVelocity(Data storage self) internal view returns (int) {
+    function currentFundingVelocity(Data storage self) internal view returns (int256) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
-        int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
-        int skewScale = marketConfig.skewScale.toInt();
+        int256 maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
+        int256 skewScale = marketConfig.skewScale.toInt();
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
             return 0;
         }
         // Ensures the proportionalSkew is between -1 and 1.
-        int pSkew = self.skew.divDecimal(skewScale);
-        int pSkewBounded = MathUtil.min(
+        int256 pSkew = self.skew.divDecimal(skewScale);
+        int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
         return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
-    function proportionalElapsed(Data storage self) internal view returns (int) {
+    function proportionalElapsed(Data storage self) internal view returns (int256) {
         // even though timestamps here are not D18, divDecimal multiplies by 1e18 to preserve decimals into D18
         return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     function validatePositionSize(
         Data storage self,
-        uint maxSize,
-        uint maxValue,
-        uint price,
-        int oldSize,
-        int newSize
+        uint256 maxSize,
+        uint256 maxValue,
+        uint256 price,
+        int128 oldSize,
+        int128 newSize
     ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        bool isNotReducingInterest = !(MathUtil.sameSide(oldSize, newSize) &&
-            MathUtil.abs(newSize) <= MathUtil.abs(oldSize));
-        if (isNotReducingInterest) {
-            int newSkew = self.skew - oldSize + newSize;
+        bool isReducingInterest = MathUtil.isSameSideReducing(oldSize, newSize);
+        if (!isReducingInterest) {
+            int256 newSkew = self.skew - oldSize + newSize;
 
-            int newMarketSize = self.size.toInt() -
+            int256 newMarketSize = self.size.toInt() -
                 MathUtil.abs(oldSize).toInt() +
                 MathUtil.abs(newSize).toInt();
 
-            int newSideSize;
+            int256 newSideSize;
             if (0 < newSize) {
                 // long case: marketSize + skew
                 //            = (|longSize| + |shortSize|) + (longSize + shortSize)
@@ -411,21 +417,24 @@ library PerpsMarket {
      * @dev Returns the market debt incurred by all positions
      * @notice  Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
      */
-    function marketDebt(Data storage self, uint price) internal view returns (int) {
+    function marketDebt(Data storage self, uint256 price) internal view returns (int256) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-        int positionPnl = self.skew.mulDecimal(price.toInt());
-        int fundingPnl = self.skew.mulDecimal(calculateNextFunding(self, price));
+        int256 positionPnl = self.skew.mulDecimal(price.toInt());
+        int256 fundingPnl = self.skew.mulDecimal(calculateNextFunding(self, price));
 
         return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
     }
 
-    function requiredCredit(uint128 marketId) internal view returns (uint) {
+    function requiredCredit(
+        uint128 marketId,
+        PerpsPrice.Tolerance tolerance
+    ) internal view returns (uint256) {
         return
             PerpsMarket
                 .load(marketId)
                 .size
-                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, tolerance))
                 .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 

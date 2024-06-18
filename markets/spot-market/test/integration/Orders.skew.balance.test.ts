@@ -35,6 +35,10 @@ describe('skew balance integration test', () => {
       .setWrapper(marketId(), systems().CollateralMock.address, bn(500));
   });
 
+  it('should have 0 skew', async () => {
+    assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(0));
+  });
+
   const restore = snapshotCheckpoint(provider);
 
   describe('wrap and sell, negative skew', () => {
@@ -46,6 +50,11 @@ describe('skew balance integration test', () => {
       await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(10), 0);
     });
 
+    it('should have right skew', async () => {
+      // wrapped 10 eth, minted 10 snxETH
+      assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(0));
+    });
+
     describe('sell', () => {
       let trader1UsdBalanceBeforeSell: Ethers.BigNumber;
       before('sell', async () => {
@@ -54,6 +63,11 @@ describe('skew balance integration test', () => {
         await systems()
           .SpotMarket.connect(trader1)
           .sell(marketId(), bn(10), bn(0), Ethers.constants.AddressZero);
+      });
+
+      it('should have right skew', async () => {
+        // wrapped 10 eth, sold 10 snxETH => -10 skew
+        assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(-10));
       });
 
       // selling 10 eth. should get extra $500 via skew fee
@@ -70,6 +84,11 @@ describe('skew balance integration test', () => {
         await systems()
           .SpotMarket.connect(trader1)
           .buy(marketId(), bn(9_500), bn(0), Ethers.constants.AddressZero);
+      });
+
+      it('should have right skew', async () => {
+        // wrapped 10 eth, bought 10 snxETH => 0 skew
+        assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(0));
       });
 
       it('trader1 should receive 10 eth', async () => {
@@ -96,6 +115,11 @@ describe('skew balance integration test', () => {
         await systems()
           .SpotMarket.connect(trader1)
           .sellExactOut(marketId(), usdReceived, bn(12), Ethers.constants.AddressZero);
+      });
+
+      it('should have right skew', async () => {
+        // wrapped 10 eth, bought amd sold same ammount (10 snxETH) => 0 skew
+        assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(0));
       });
 
       it('trader1 should be charged more than 10 eth', async () => {
@@ -131,6 +155,11 @@ describe('skew balance integration test', () => {
         .sell(marketId(), synthTraderValue, bn(0), Ethers.constants.AddressZero);
     });
 
+    it('should have right skew', async () => {
+      // wrapped 10 eth, bought amd sold same ammount (10 snxETH) => 0 skew
+      assertBn.equal(await systems().SpotMarket.getMarketSkew(marketId()), bn(0));
+    });
+
     it('check synth balance of trader 1', async () => {
       const afterTraderUsd = await systems().USD.balanceOf(await trader1.getAddress());
       assertBn.near(afterTraderUsd.sub(beforeSellUsdBalance), bn(10_000), bn(0.0001));
@@ -161,6 +190,12 @@ describe('skew balance integration test', () => {
       await systems()
         .SpotMarket.connect(trader1)
         .sell(marketId(), synthTraderValue.div(2), bn(0), Ethers.constants.AddressZero);
+    });
+
+    it('should have right skew', async () => {
+      // wrapped 10 eth, bought amd sold same ammount (10 snxETH) => 0 skew
+      // Note: using near with delta 1 due to div(2) rounding
+      assertBn.near(await systems().SpotMarket.getMarketSkew(marketId()), bn(0), 1);
     });
 
     it('check synth balance of trader 1', async () => {

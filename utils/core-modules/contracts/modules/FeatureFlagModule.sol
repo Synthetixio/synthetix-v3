@@ -83,12 +83,12 @@ contract FeatureFlagModule is IFeatureFlagModule {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
         // resize array (its really dumb how you have to do this)
-        uint storageLen = flag.deniers.length;
-        for (uint i = storageLen; i > deniers.length; i--) {
+        uint256 storageLen = flag.deniers.length;
+        for (uint256 i = storageLen; i > deniers.length; i--) {
             flag.deniers.pop();
         }
 
-        for (uint i = 0; i < deniers.length; i++) {
+        for (uint256 i = 0; i < deniers.length; i++) {
             if (i >= storageLen) {
                 flag.deniers.push(deniers[i]);
             } else {
@@ -105,7 +105,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     function getDeniers(bytes32 feature) external view override returns (address[] memory) {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
         address[] memory addrs = new address[](flag.deniers.length);
-        for (uint i = 0; i < addrs.length; i++) {
+        for (uint256 i = 0; i < addrs.length; i++) {
             addrs[i] = flag.deniers[i];
         }
 

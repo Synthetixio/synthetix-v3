@@ -7,6 +7,4 @@ import {IDecayTokenModule} from "@synthetixio/core-modules/contracts/interfaces/
  * @title Module for market synth tokens
  */
 // solhint-disable-next-line no-empty-blocks
-interface ISynthTokenModule is IDecayTokenModule {
-
-}
+interface ISynthTokenModule is IDecayTokenModule {}

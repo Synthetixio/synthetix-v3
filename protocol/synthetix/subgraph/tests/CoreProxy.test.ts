@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'matchstick-as';
-
 import handleAccountCreatedTest from './handleAccountCreated';
 import handleCollateralConfiguredTest from './handleCollateralConfigured';
 import handleCollateralDepositTest from './handleCollateralDeposit';
@@ -26,6 +25,10 @@ import handleRewardsDistributedTest from './handleRewardsDistributed';
 import handleUSDBurnedTest from './handleUSDBurned';
 import handleUSDMintedTest from './handleUSDMinted';
 import handleVaultLiquidationTest from './handleVaultLiquidation';
+import vaultSnapshotByDayTest from './vaultSnapshotByDay';
+import vaultSnapshotByWeekTest from './vaultSnapshotByWeek';
+import vaultSnapshotByMonthTest from './vaultSnapshotByMonth';
+import vaultSnapshotByYearTest from './vaultSnapshotByYear';
 
 describe('CoreProxy', () => {
   beforeEach(() => {
@@ -46,6 +49,10 @@ describe('CoreProxy', () => {
   test('handleMarketDeposits', handleMarketDepositsTest);
   test('handleMarketWithdrawals', handleMarketWithdrawalsTest);
   test('getISOWeekNumber', getISOWeekNumberTest);
+  test('vaultSnapshotByDay', vaultSnapshotByDayTest);
+  test('vaultSnapshotByWeek', vaultSnapshotByWeekTest);
+  test('vaultSnapshotByMonth', vaultSnapshotByMonthTest);
+  test('vaultSnapshotByYear', vaultSnapshotByYearTest);
   test('marketSnapshotByDay', marketSnapshotByDayTest);
   test('marketSnapshotByWeek', marketSnapshotByWeekTest);
   test('handleNominatedPoolOwner', handleNominatedPoolOwnerTest);
@@ -61,5 +68,5 @@ describe('CoreProxy', () => {
   test('handleRewardsDistributed', handleRewardsDistributedTest);
   test('handleUSDBurned', handleUSDBurnedTest);
   test('handleUSDMinted', handleUSDMintedTest);
-  test('handleVaultLiquidation  ', handleVaultLiquidationTest);
+  test('handleVaultLiquidation', handleVaultLiquidationTest);
 });

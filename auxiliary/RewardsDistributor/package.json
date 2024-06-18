@@ -1,0 +1,32 @@
+{
+  "name": "@synthetixio/rewards-distributor",
+  "version": "3.3.19",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js",
+  "files": [
+    "src",
+    "package.json",
+    "README.md"
+  ],
+  "repository": "Synthetixio/synthetix-v3",
+  "author": "Synthetix",
+  "license": "MIT",
+  "scripts": {
+    "cov": "forge coverage --report lcov && genhtml ./lcov.info --output-directory coverage",
+    "build": "CANNON_REGISTRY_PRIORITY=local cannon build",
+    "publish-contracts": "cannon publish synthetix-rewards-distributor:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "forge-test": "forge test -vvvvv",
+    "forge-coverage": "forge coverage --report lcov"
+  },
+  "devDependencies": {
+    "@usecannon/cli": "2.15.1",
+    "forge-std": "github:foundry-rs/forge-std#master"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "forge-std"
+    ]
+  }
+}

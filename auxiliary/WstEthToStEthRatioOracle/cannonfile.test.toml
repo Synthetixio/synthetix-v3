@@ -1,0 +1,76 @@
+name = "wsteth-to-steth-ratio-oracle"
+version = "<%= package.version %>-testable"
+
+# --- Imports --- #
+
+[import.synthetix]
+source = "synthetix:latest"
+
+# --- wstETH mock (Lido contracts) --- #
+
+[contract.WstETHMock]
+artifact = "contracts/mocks/WstETHMock.sol:WstETHMock"
+
+[contract.WstEthToStEthRatioOracle]
+artifact = "contracts/WstEthToStEthRatioOracle.sol:WstEthToStEthRatioOracle"
+args = ["<%= contracts.WstETHMock.address %>"]
+
+[invoke.register_node_wsteth_to_steth_ratio_oracle]
+target = ["synthetix.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # external node
+    2,
+    # contract
+    "<%= defaultAbiCoder.encode(['address'], [contracts.WstEthToStEthRatioOracle.address]) %>",
+    [
+    ],
+]
+extra.wsteth_to_steth_ratio_oracle_node_id.event = "NodeRegistered"
+extra.wsteth_to_steth_ratio_oracle_node_id.arg = 0
+depends = ["contract.WstETHMock", "contract.WstEthToStEthRatioOracle"]
+
+# --- CL stETH/USD oracle --- #
+
+[contract.StEthAggregatorV3MockOracleNode]
+artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
+args = []
+
+[invoke.register_node_steth_aggregator_v3_mock_oracle_node]
+target = ["synthetix.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # chainlink aggregator type
+    3,
+    # contract, twap, decimals
+    "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [contracts.StEthAggregatorV3MockOracleNode.address, 0, 18]) %>",
+    [
+    ],
+]
+extra.steth_aggregator_v3_mock_oracle_node_id.event = "NodeRegistered"
+extra.steth_aggregator_v3_mock_oracle_node_id.arg = 0
+depends = ["contract.StEthAggregatorV3MockOracleNode"]
+
+# --- wstETH/USD oracle --- #
+
+[invoke.register_node_wsteth_oracle_node]
+target = ["synthetix.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # reducer node
+    1,
+    # mulDecimal
+    "<%= defaultAbiCoder.encode(['uint256'], [7]) %>",
+    # stETH/USD, wstETH/stETH
+    [
+        "<%= extras.steth_aggregator_v3_mock_oracle_node_id %>",
+        "<%= extras.wsteth_to_steth_ratio_oracle_node_id %>",
+    ],
+]
+extra.wsteth_oracle_node_id.event = "NodeRegistered"
+extra.wsteth_oracle_node_id.arg = 0
+depends = [
+    "import.synthetix",
+    "invoke.register_node_wsteth_to_steth_ratio_oracle",
+    "invoke.register_node_steth_aggregator_v3_mock_oracle_node",
+]

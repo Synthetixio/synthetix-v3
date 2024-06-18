@@ -1,0 +1,146 @@
+name = "synthetix-bfp-market"
+version = "<%= package.version %>"
+description = "bfp-market for Synthetix v3"
+
+# NOTE: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' (Anvil signer[0])
+[setting.owner]
+description = "bfp-market owner"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.synthetixPreset]
+defaultValue = "main"
+
+[setting.synthetixPackage]
+defaultValue = "synthetix:latest"
+
+[setting.salt]
+defaultValue = "snax"
+
+# --- External Imports --- #
+
+[import.synthetix]
+source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
+
+# --- Module contracts --- #
+
+[contract.OrderModule]
+artifact = "OrderModule"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[contract.LiquidationModule]
+artifact = "LiquidationModule"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[contract.PerpMarketFactoryModule]
+artifact = "PerpMarketFactoryModule"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
+args = []
+
+[contract.PerpAccountModule]
+artifact = "PerpAccountModule"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[contract.MarginModule]
+artifact = "MarginModule"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[contract.PerpRewardDistributorFactoryModule]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+args = []
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+args = []
+
+[contract.SettlementHookModule]
+artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
+args = []
+
+[contract.SplitAccountConfigurationModule]
+artifact = "contracts/modules/SplitAccountConfigurationModule.sol:SplitAccountConfigurationModule"
+args = []
+
+# --- Distributor contract --- #
+
+[contract.PerpRewardDistributor]
+artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor"
+args = []
+
+# --- Market proxy contract --- #
+
+[contract.InitialBfpMarketProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
+abiOf = ["CoreModule"]
+salt = "<%= settings.salt %>"
+
+# --- Core router --- #
+
+[router.BfpMarketRouter]
+contracts = [
+    "synthetix.AccountModule",
+    "synthetix.AssociatedSystemsModule",
+    "CoreModule",
+    "FeatureFlagModule",
+    "PerpMarketFactoryModule",
+    "MarketConfigurationModule",
+    "PerpAccountModule",
+    "MarginModule",
+    "OrderModule",
+    "LiquidationModule",
+    "PerpRewardDistributorFactoryModule",
+    "SettlementHookModule",
+    "SplitAccountConfigurationModule",
+]
+
+# --- Proxy post deployment --- #
+
+[invoke.upgrade_proxy]
+target = ["InitialBfpMarketProxy"]
+fromCall.func = "owner"
+func = "upgradeTo"
+args = ["<%= contracts.BfpMarketRouter.address %>"]
+factory.BfpMarketProxy.abiOf = ["BfpMarketRouter"]
+factory.BfpMarketProxy.event = "Upgraded"
+factory.BfpMarketProxy.arg = 0
+
+# @see: https://github.com/Synthetixio/synthetix-v3/blob/main/utils/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol#L63
+[invoke.init_or_upgrade_nft]
+target = ["BfpMarketProxy"]
+fromCall.func = "owner"
+func = "initOrUpgradeNft"
+args = [
+    "<%= formatBytes32String('accountNft') %>",
+    "Synthetix V3: BFP Account NFT",
+    "SNX-V3-BFP-ACC",
+    "",
+    "<%= imports.synthetix.contracts.AccountRouter.address %>",
+]
+factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.PerpAccountProxy.event = "AssociatedSystemSet"
+factory.PerpAccountProxy.arg = 2
+
+[invoke.set_reward_distributor_implementation]
+target = ["BfpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = ["<%= contracts.PerpRewardDistributor.address %>"]
+
+# --- Core feature flags --- #
+
+[invoke.add_to_feature_flag_allowlist_register_market]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+fromCall.func = "owner"
+args = [
+    "<%= formatBytes32String('registerMarket') %>",
+    "<%= contracts.InitialBfpMarketProxy.address %>",
+]

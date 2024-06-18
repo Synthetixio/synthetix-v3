@@ -6,15 +6,22 @@ import {NodeOutput} from "../storage/NodeOutput.sol";
 import {NodeDefinition} from "../storage/NodeDefinition.sol";
 
 contract MockPythExternalNode is IExternalNode {
-    uint private _price;
+    uint256 private _price;
+    uint256 private _monthlyTolerancePrice;
+
+    uint256 private constant ONE_MONTH = 2592000;
 
     error OracleDataRequired();
 
-    function mockSetCurrentPrice(uint currentPrice) external {
+    function mockSetCurrentPrice(uint256 currentPrice) external {
         _price = currentPrice;
     }
 
-    function getCurrentPrice() external view returns (uint) {
+    function mockSetMonthlyTolerancePrice(uint256 price) external {
+        _monthlyTolerancePrice = price;
+    }
+
+    function getCurrentPrice() external view returns (uint256) {
         return _price;
     }
 
@@ -27,9 +34,14 @@ contract MockPythExternalNode is IExternalNode {
         // Note: when it's 50 seconds, it should revert.  This is a way to test the right
         // tolerance is being sent in during different situations (like liquidations on perps, we should use a strict staleness tolerance)
         if (runtimeValues.length > 0) {
-            uint strictTolerance = 50;
+            uint256 strictTolerance = 50;
             if (runtimeValues[0] == bytes32(strictTolerance)) {
                 revert OracleDataRequired();
+            }
+
+            if (runtimeValues[0] == bytes32(ONE_MONTH)) {
+                // solhint-disable-next-line numcast/safe-cast
+                return NodeOutput.Data(int(_monthlyTolerancePrice), block.timestamp, 0, 0);
             }
         }
         // solhint-disable-next-line numcast/safe-cast

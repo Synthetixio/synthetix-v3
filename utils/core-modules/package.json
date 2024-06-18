@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "3.3.4",
+  "version": "3.3.19",
   "publishConfig": {
     "access": "public"
   },
@@ -15,6 +15,7 @@
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
+    "build-testable": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],
@@ -24,10 +25,9 @@
     "@foundry-rs/hardhat-anvil": "^0.1.7",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/router": "^3.3.0",
     "ethers": "^5.7.2",
     "get-port": "^7.0.0",
-    "hardhat": "^2.19.0"
+    "hardhat": "^2.19.5"
   },
   "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
 }

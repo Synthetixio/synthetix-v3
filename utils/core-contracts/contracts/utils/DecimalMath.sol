@@ -72,7 +72,7 @@ library DecimalMath {
      * E.g. if value is not a decimal, a scale up by 18 makes it a low precision decimal.
      * If value is a low precision decimal, a scale up by 9 makes it a high precision decimal.
      */
-    function upscale(uint x, uint factor) internal pure returns (uint) {
+    function upscale(uint256 x, uint256 factor) internal pure returns (uint256) {
         return x * 10 ** factor;
     }
 
@@ -84,7 +84,7 @@ library DecimalMath {
      *
      * Scaling down a regular integer would not make sense.
      */
-    function downscale(uint x, uint factor) internal pure returns (uint) {
+    function downscale(uint256 x, uint256 factor) internal pure returns (uint256) {
         return x / 10 ** factor;
     }
 
@@ -111,14 +111,14 @@ library DecimalMath {
     /**
      * @dev See upscale for uint256.
      */
-    function upscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
+    function upscaleUint128(uint128 x, uint256 factor) internal pure returns (uint128) {
         return x * (10 ** factor).to128();
     }
 
     /**
      * @dev See downscale for uint256.
      */
-    function downscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
+    function downscaleUint128(uint128 x, uint256 factor) internal pure returns (uint128) {
         return x / (10 ** factor).to128();
     }
 
@@ -143,14 +143,14 @@ library DecimalMath {
     /**
      * @dev See upscale for uint256.
      */
-    function upscale(int x, uint factor) internal pure returns (int) {
+    function upscale(int256 x, uint256 factor) internal pure returns (int256) {
         return x * (10 ** factor).toInt();
     }
 
     /**
      * @dev See downscale for uint256.
      */
-    function downscale(int x, uint factor) internal pure returns (int) {
+    function downscale(int256 x, uint256 factor) internal pure returns (int256) {
         return x / (10 ** factor).toInt();
     }
 
@@ -175,14 +175,14 @@ library DecimalMath {
     /**
      * @dev See upscale for uint256.
      */
-    function upscaleInt128(int128 x, uint factor) internal pure returns (int128) {
+    function upscaleInt128(int128 x, uint256 factor) internal pure returns (int128) {
         return x * ((10 ** factor).toInt()).to128();
     }
 
     /**
      * @dev See downscale for uint256.
      */
-    function downscaleInt128(int128 x, uint factor) internal pure returns (int128) {
+    function downscaleInt128(int128 x, uint256 factor) internal pure returns (int128) {
         return x / ((10 ** factor).toInt().to128());
     }
 }

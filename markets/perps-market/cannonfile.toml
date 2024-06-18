@@ -11,7 +11,7 @@ description = "perps market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>"
+defaultValue = "synthetix:latest"
 
 [setting.synthetixPreset]
 defaultValue = "main"
@@ -20,7 +20,7 @@ defaultValue = "main"
 defaultValue = "main"
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:<%= package.version %>"
+defaultValue = "synthetix-spot-market:latest"
 
 [setting.salt]
 defaultValue = "snax"
@@ -87,7 +87,7 @@ contracts = [
     "FeatureFlagModule",
     "LiquidationModule",
     "MarketConfigurationModule",
-    "GlobalPerpsMarketModule"
+    "GlobalPerpsMarketModule",
 ]
 
 [invoke.upgrade_proxy]
@@ -109,7 +109,7 @@ args = [
     "Perpetual Futures Account",
     "snxPerpsAcct",
     "",
-    "<%= imports.synthetix.contracts.AccountRouter.address %>"
+    "<%= imports.synthetix.contracts.AccountRouter.address %>",
 ]
 depends = ["invoke.upgrade_proxy"]
 factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
@@ -124,7 +124,7 @@ func = "addToFeatureFlagAllowlist"
 fromCall.func = "owner"
 args = [
     "<%= formatBytes32String('registerMarket') %>",
-    "<%= contracts.PerpsMarketProxy.address %>"
+    "<%= contracts.PerpsMarketProxy.address %>",
 ]
 
 [invoke.addCreateMarketToFeatureFlag]
@@ -138,7 +138,7 @@ target = ["PerpsMarketProxy"]
 func = "initializeFactory"
 args = [
     "<%= imports.synthetix.contracts.CoreProxy.address %>",
-    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"
+    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
 ]
 fromCall.func = "owner"
 extra.superMarketId.event = "FactoryInitialized"

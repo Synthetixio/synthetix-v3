@@ -5,6 +5,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import { SynthRouter } from './generated/typechain';
+import assert from 'assert';
 
 const bn = (n: number) => wei(n).toBN();
 
@@ -64,6 +65,12 @@ describe('WrapperModule', () => {
         `WrapperSet(${marketId()}, "${systems().CollateralMock.address}", ${bn(500)})`,
         systems().SpotMarket
       );
+    });
+
+    it('can get wrapper info', async () => {
+      const wrapperInfo = await systems().SpotMarket.getWrapper(marketId());
+      assert.equal(wrapperInfo[0], systems().CollateralMock.address);
+      assertBn.equal(wrapperInfo[1], bn(500));
     });
   });
 

@@ -34,10 +34,7 @@ codegen() {
 # releaseVersion=$(yarn workspace '@synthetixio/spot-market' node -p 'require(`./package.json`).version')
 releaseVersion="latest"
 
-#codegen mainnet 1 "synthetix-omnibus:$releaseVersion" main
-#codegen goerli 5 "synthetix-omnibus:$releaseVersion" main
+codegen base-sepolia-andromeda 84532 "synthetix-omnibus:$releaseVersion" andromeda
+codegen base-mainnet-andromeda 8453 "synthetix-omnibus:$releaseVersion" andromeda
+
 codegen optimism-mainnet 10 "synthetix-omnibus:$releaseVersion" main
-codegen optimism-goerli 420 "synthetix-omnibus:$releaseVersion" main
-#codegen base-goerli 84531 "synthetix-omnibus:$releaseVersion" main
-codegen base-goerli-competition 84531 "synthetix-omnibus:$releaseVersion" competition
-codegen base-goerli-andromeda 84531 "synthetix-omnibus:$releaseVersion" andromeda

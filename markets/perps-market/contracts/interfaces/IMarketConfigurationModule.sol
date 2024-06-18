@@ -97,14 +97,16 @@ interface IMarketConfigurationModule {
     /**
      * @notice Gets fired when max market value is updated.
      * @param marketId udpates funding parameters to this specific market.
-     * @param maxMarketSize the max market value in units.
-     * @param maxMarketValue the max market value USD denominated.
+     * @param maxMarketSize the max market size in units.
      */
-    event MaxMarketSizesSet(
-        uint128 indexed marketId,
-        uint256 maxMarketSize,
-        uint256 maxMarketValue
-    );
+    event MaxMarketSizeSet(uint128 indexed marketId, uint256 maxMarketSize);
+
+    /**
+     * @notice Gets fired when max market value is updated.
+     * @param marketId udpates funding parameters to this specific market.
+     * @param maxMarketValue the max market value in USD.
+     */
+    event MaxMarketValueSet(uint128 indexed marketId, uint256 maxMarketValue);
 
     /**
      * @notice Gets fired when locked oi ratio is updated.
@@ -212,13 +214,15 @@ interface IMarketConfigurationModule {
      * @dev This controls the maximum open interest a market can have on either side (Long | Short). So the total Open Interest (with zero skew) for a market can be up to max market size * 2.
      * @param marketId id of the market to set the max market value.
      * @param maxMarketSize the max market size in market asset units.
+     */
+    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external;
+
+    /**
+     * @notice Set the max value in USD of an specific market with this function.
+     * @param marketId id of the market to set the max market value.
      * @param maxMarketValue the max market size in market USD value.
      */
-    function setMaxMarketSizes(
-        uint128 marketId,
-        uint256 maxMarketSize,
-        uint256 maxMarketValue
-    ) external;
+    function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external;
 
     /**
      * @notice Set the locked OI Ratio for a market with this function.
@@ -306,11 +310,15 @@ interface IMarketConfigurationModule {
      * @notice Gets the max size of an specific market.
      * @param marketId id of the market.
      * @return maxMarketSize the max market size in market asset units.
+     */
+    function getMaxMarketSize(uint128 marketId) external view returns (uint256 maxMarketSize);
+
+    /**
+     * @notice Gets the max size (in value) of an specific market.
+     * @param marketId id of the market.
      * @return maxMarketValue the max market size in market USD value.
      */
-    function getMaxMarketSizes(
-        uint128 marketId
-    ) external view returns (uint256 maxMarketSize, uint256 maxMarketValue);
+    function getMaxMarketValue(uint128 marketId) external view returns (uint256 maxMarketValue);
 
     /**
      * @notice Gets the order fees of a market.

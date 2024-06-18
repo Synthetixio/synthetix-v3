@@ -70,7 +70,8 @@ describe('MarketConfiguration', () => {
           systems()
             .PerpsMarket.connect(randomUser)
             .addSettlementStrategy(marketId, fixture.settlementStrategy),
-          `Unauthorized`
+          `Unauthorized`,
+          systems().PerpsMarket
         );
       });
 
@@ -110,14 +111,16 @@ describe('MarketConfiguration', () => {
             systems()
               .PerpsMarket.connect(randomUser)
               .setSettlementStrategyEnabled(marketId, 0, true),
-            `Unauthorized`
+            `Unauthorized`,
+            systems().PerpsMarket
           );
 
           await assertRevert(
             systems()
               .PerpsMarket.connect(randomUser)
               .setSettlementStrategy(marketId, 0, fixture.settlementStrategy),
-            `Unauthorized`
+            `Unauthorized`,
+            systems().PerpsMarket
           );
         });
       });
@@ -126,14 +129,16 @@ describe('MarketConfiguration', () => {
         it('reverts', async () => {
           await assertRevert(
             systems().PerpsMarket.connect(owner()).setSettlementStrategyEnabled(marketId, 1, true),
-            `InvalidSettlementStrategy`
+            `InvalidSettlementStrategy("1")`,
+            systems().PerpsMarket
           );
 
           await assertRevert(
             systems()
               .PerpsMarket.connect(owner())
               .setSettlementStrategy(marketId, 1, fixture.settlementStrategy),
-            `InvalidSettlementStrategy`
+            `InvalidSettlementStrategy("1")`,
+            systems().PerpsMarket
           );
         });
       });
@@ -249,18 +254,22 @@ describe('MarketConfiguration', () => {
       systems().PerpsMarket
     );
   });
+  it('owner can set max market size and events are emitted', async () => {
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxMarketSize(marketId, fixture.maxMarketSize),
+      'MaxMarketSizeSet(' + marketId.toString() + ', ' + fixture.maxMarketSize.toString() + ')',
+      systems().PerpsMarket
+    );
+  });
+
   it('owner can set max market value and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxMarketSizes(marketId, fixture.maxMarketSize, fixture.maxMarketValue),
-      'MaxMarketSizesSet(' +
-        marketId.toString() +
-        ', ' +
-        fixture.maxMarketSize.toString() +
-        ', ' +
-        fixture.maxMarketValue.toString() +
-        ')',
+        .setMaxMarketValue(marketId, fixture.maxMarketValue),
+      'MaxMarketValueSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
       systems().PerpsMarket
     );
   });
@@ -337,35 +346,44 @@ describe('MarketConfiguration', () => {
       systems()
         .PerpsMarket.connect(randomUser)
         .addSettlementStrategy(marketId, fixture.settlementStrategy),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setSettlementStrategy(marketId, 0, fixture.settlementStrategy),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems().PerpsMarket.connect(randomUser).setSettlementStrategyEnabled(marketId, 0, true),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
-      systems()
-        .PerpsMarket.connect(randomUser)
-        .setMaxMarketSizes(marketId, fixture.maxMarketSize, fixture.maxMarketValue),
-      'Unauthorized'
+      systems().PerpsMarket.connect(randomUser).setMaxMarketSize(marketId, fixture.maxMarketSize),
+      'Unauthorized',
+      systems().PerpsMarket
+    );
+    await assertRevert(
+      systems().PerpsMarket.connect(randomUser).setMaxMarketValue(marketId, fixture.maxMarketValue),
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setFundingParameters(marketId, fixture.skewScale, fixture.maxFundingVelocity),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems()
@@ -378,7 +396,8 @@ describe('MarketConfiguration', () => {
           fixture.flagRewardRatioD18,
           fixture.minimumPositionMargin
         ),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems()
@@ -390,19 +409,26 @@ describe('MarketConfiguration', () => {
           fixture.maxLiquidationPd,
           ethers.constants.AddressZero
         ),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
-      'Unauthorized'
+      'Unauthorized',
+      systems().PerpsMarket
     );
   });
 
   it('get maxMarketSize', async () => {
-    const maxMarketSizes = await systems().PerpsMarket.getMaxMarketSizes(marketId);
-    assertBn.equal(maxMarketSizes[0], fixture.maxMarketSize);
+    const maxMarketSize = await systems().PerpsMarket.getMaxMarketSize(marketId);
+    assertBn.equal(maxMarketSize, fixture.maxMarketSize);
+  });
+
+  it('get maxMarketValue', async () => {
+    const maxMarketValue = await systems().PerpsMarket.getMaxMarketValue(marketId);
+    assertBn.equal(maxMarketValue, fixture.maxMarketValue);
   });
 
   it('get orderFees', async () => {

@@ -15,14 +15,14 @@ contract ElectionStorage {
         // Council member addresses
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
-        mapping(address => uint) councilTokenIds;
+        mapping(address => uint256) councilTokenIds;
         // Array of EpochData's for each epoch
         EpochData[] epochs;
         // Array of ElectionData's for each election
         ElectionData[] elections;
         // Pointer to ElectionSettings
         // To be always used via store.settings[0] to avoid storage collisions
-        mapping(uint => ElectionSettings) settings;
+        mapping(uint256 => ElectionSettings) settings;
     }
 
     struct ElectionSettings {
@@ -39,7 +39,7 @@ contract ElectionStorage {
         // Maximum size for tweaking epoch schedules (see tweakEpochSchedule)
         uint64 maxDateAdjustmentTolerance;
         // Default batch size when calling evaluate() with numBallots = 0
-        uint defaultBallotEvaluationBatchSize;
+        uint256 defaultBallotEvaluationBatchSize;
     }
 
     struct EpochData {
@@ -59,7 +59,7 @@ contract ElectionStorage {
         // True if NFTs have been re-shuffled in this election
         bool resolved;
         // Number of counted ballots in this election
-        uint numEvaluatedBallots;
+        uint256 numEvaluatedBallots;
         // List of nominated candidates in this election
         SetUtil.AddressSet nominees;
         // List of winners of this election (requires evaluation)
@@ -71,16 +71,16 @@ contract ElectionStorage {
         // Ballot id that each user voted on
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
-        mapping(address => uint) candidateVotes;
+        mapping(address => uint256) candidateVotes;
     }
 
     struct BallotData {
         // Total accumulated votes in this ballot (needs evaluation)
-        uint votes;
+        uint256 votes;
         // List of candidates in this ballot
         address[] candidates;
         // Vote power added per voter
-        mapping(address => uint) votesByUser;
+        mapping(address => uint256) votesByUser;
     }
 
     function _electionSettings() internal view returns (ElectionSettings storage) {

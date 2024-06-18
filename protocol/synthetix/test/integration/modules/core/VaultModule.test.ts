@@ -301,9 +301,8 @@ describe('VaultModule', function () {
       });
 
       before('disable collateral', async () => {
-        const beforeConfiguration = await systems().Core.getCollateralConfiguration(
-          collateralAddress()
-        );
+        const beforeConfiguration =
+          await systems().Core.getCollateralConfiguration(collateralAddress());
 
         await systems()
           .Core.connect(owner)
@@ -338,9 +337,8 @@ describe('VaultModule', function () {
       });
 
       before('enable collateral for the system', async () => {
-        const beforeConfiguration = await systems().Core.getCollateralConfiguration(
-          collateralAddress()
-        );
+        const beforeConfiguration =
+          await systems().Core.getCollateralConfiguration(collateralAddress());
 
         await systems()
           .Core.connect(owner)
@@ -668,9 +666,8 @@ describe('VaultModule', function () {
             after(restore);
 
             before('disable collatearal', async () => {
-              const beforeConfiguration = await systems().Core.getCollateralConfiguration(
-                collateralAddress()
-              );
+              const beforeConfiguration =
+                await systems().Core.getCollateralConfiguration(collateralAddress());
 
               await systems()
                 .Core.connect(owner)
@@ -716,9 +713,8 @@ describe('VaultModule', function () {
 
         describe('decrease collateral', async () => {
           it('fails when insufficient c-ratio', async () => {
-            const { issuanceRatioD18 } = await systems().Core.getCollateralConfiguration(
-              collateralAddress()
-            );
+            const { issuanceRatioD18 } =
+              await systems().Core.getCollateralConfiguration(collateralAddress());
             const price = await systems().Core.getCollateralPrice(collateralAddress());
             const deposit = depositAmount.div(50);
             const debt = depositAmount.div(100);
@@ -785,9 +781,8 @@ describe('VaultModule', function () {
             after(restore);
 
             before('disable collateral', async () => {
-              const beforeConfiguration = await systems().Core.getCollateralConfiguration(
-                collateralAddress()
-              );
+              const beforeConfiguration =
+                await systems().Core.getCollateralConfiguration(collateralAddress());
 
               await systems()
                 .Core.connect(owner)

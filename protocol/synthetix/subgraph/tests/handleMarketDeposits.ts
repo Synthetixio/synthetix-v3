@@ -1,7 +1,6 @@
 import { log, assert } from 'matchstick-as';
 import { handleMarketCreated, handleMarketUsdDeposited } from '../mainnet';
-import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
-import { createMarketUsdDepositedEvent } from './event-factories/createMarketUsdDepositedEvent';
+import { createMarketUsdDepositedEvent, createMarketRegisteredEvent } from './event-factories';
 
 export default function test(): void {
   assert.entityCount('Market', 0);

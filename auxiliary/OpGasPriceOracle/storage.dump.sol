@@ -19,7 +19,7 @@ contract PythStructs {
         int64 price;
         uint64 conf;
         int32 expo;
-        uint publishTime;
+        uint256 publishTime;
     }
     struct PriceFeed {
         bytes32 id;

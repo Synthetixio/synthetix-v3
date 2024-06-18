@@ -30,7 +30,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
+    ) external override returns (AsyncOrder.Data memory retOrder, uint256 fees) {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         PerpsMarket.loadValid(commitment.marketId);
 
@@ -65,7 +65,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         order.updateValid(commitment);
 
-        (, uint feesAccrued, , ) = order.validateRequest(
+        (, uint256 feesAccrued, , ) = order.validateRequest(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId, PerpsPrice.Tolerance.DEFAULT)
         );
@@ -120,6 +120,19 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 price
     ) external view override returns (uint256 orderFees, uint256 fillPrice) {
         (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta, price);
+    }
+
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
+    function getSettlementRewardCost(
+        uint128 marketId,
+        uint128 settlementStrategyId
+    ) external view override returns (uint256) {
+        return
+            AsyncOrder.settlementRewardCost(
+                PerpsMarketConfiguration.loadValidSettlementStrategy(marketId, settlementStrategyId)
+            );
     }
 
     function requiredMarginForOrder(

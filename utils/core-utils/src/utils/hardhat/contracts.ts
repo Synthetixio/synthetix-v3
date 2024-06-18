@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { JsonFragment } from '@ethersproject/abi';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { parseFullyQualifiedName, parseName } from 'hardhat/utils/contract-names';
+import micromatch from 'micromatch';
 import { SourceUnit } from 'solidity-ast';
 import { findImportsRecursive } from '../ast/finders';
 
@@ -29,26 +30,33 @@ export async function getContractsFullyQualifiedNames(
   patterns: string[] = ['*']
 ) {
   const contractFullyQualifiedNames = await hre.artifacts.getAllFullyQualifiedNames();
+  return filterContracts(contractFullyQualifiedNames, patterns);
+}
 
-  if (patterns.length === 1 && patterns[0] === '*') {
-    return contractFullyQualifiedNames;
+/**
+ * Filter the given contracts using multimatch. It can include a whitelist filter
+ * by contractName, contractSource, or if its included in a given folder.
+ */
+export function filterContracts(contracts: string[], patterns: string[] = ['*']) {
+  if (patterns.length === 1 && /^\*+$/.test(patterns[0])) {
+    return [...contracts];
   }
 
-  const { default: multimatch } = await import('multimatch');
-  const matches = (items: string[], patterns: string[]) => multimatch(items, patterns).length > 0;
+  const matches = (items: string[], patterns: string[]) => micromatch(items, patterns).length > 0;
 
   const blacklist = patterns.filter((w) => w.startsWith('!')).map((b) => b.slice(1));
   const whitelist = patterns.filter((w) => !w.startsWith('!'));
 
-  return contractFullyQualifiedNames.filter((fqName) => {
-    const { sourceName, contractName } = parseFullyQualifiedName(fqName);
-    const item = [fqName, sourceName, contractName];
+  return contracts.filter((name) => {
+    const { sourceName, contractName } = parseName(name);
+    const item = [name, contractName];
+    if (sourceName) item.push(sourceName);
     return !matches(item, blacklist) && matches(item, whitelist);
   });
 }
 
-export async function getContractsAbis(hre: HardhatRuntimeEnvironment, whitelist: string[]) {
-  const filtered = await getContractsFullyQualifiedNames(hre, whitelist);
+export async function getContractsAbis(hre: HardhatRuntimeEnvironment, patterns: string[]) {
+  const filtered = await getContractsFullyQualifiedNames(hre, patterns);
 
   const result: AbiMap = {};
 
@@ -63,8 +71,8 @@ export async function getContractsAbis(hre: HardhatRuntimeEnvironment, whitelist
 }
 
 export async function getContractAst(
-  contractFullyQualifiedName: string,
-  hre: HardhatRuntimeEnvironment
+  hre: HardhatRuntimeEnvironment,
+  contractFullyQualifiedName: string
 ) {
   const { sourceName } = parseFullyQualifiedName(contractFullyQualifiedName);
   const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
@@ -76,8 +84,7 @@ export async function getContractAst(
   return buildInfo.output.sources[sourceName].ast as SourceUnit;
 }
 
-export async function getContractsAsts(hre: HardhatRuntimeEnvironment, whitelist: string[]) {
-  const fqNames = await getContractsFullyQualifiedNames(hre, whitelist);
+export async function getContractsAsts(hre: HardhatRuntimeEnvironment, fqNames: string[]) {
   const astSources = await _getAllAsts(hre);
   const astNodes = Object.values(astSources);
 

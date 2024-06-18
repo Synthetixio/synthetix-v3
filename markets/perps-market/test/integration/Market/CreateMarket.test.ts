@@ -61,18 +61,22 @@ describe('Create Market test', () => {
     });
 
     describe('after market is created', () => {
-      before('set max market value', async () => {
-        tx = await systems()
-          .PerpsMarket.connect(owner())
-          .setMaxMarketSizes(marketId, bn(99999999), bn(999999999999));
-      });
-
       it('should emit MaxMarketSizeSet event', async () => {
+        tx = await systems().PerpsMarket.connect(owner()).setMaxMarketSize(marketId, bn(99999999));
         await assertEvent(
           tx,
-          `MaxMarketSizesSet(${marketId}, ${bn(99999999).toString()}, ${bn(
-            999999999999
-          ).toString()})`,
+          `MaxMarketSizeSet(${marketId}, ${bn(99999999).toString()})`,
+          systems().PerpsMarket
+        );
+      });
+
+      it('should emit MaxMarketValueSet event', async () => {
+        tx = await systems()
+          .PerpsMarket.connect(owner())
+          .setMaxMarketValue(marketId, bn(999999999999));
+        await assertEvent(
+          tx,
+          `MaxMarketValueSet(${marketId}, ${bn(999999999999).toString()})`,
           systems().PerpsMarket
         );
       });
@@ -120,9 +124,8 @@ describe('Create Market test', () => {
     });
 
     before('set max market value', async () => {
-      await systems()
-        .PerpsMarket.connect(owner())
-        .setMaxMarketSizes(marketId, bn(99999999), bn(999999999999));
+      await systems().PerpsMarket.connect(owner()).setMaxMarketSize(marketId, bn(99999999));
+      await systems().PerpsMarket.connect(owner()).setMaxMarketValue(marketId, bn(999999999999));
     });
 
     before('create price node', async () => {

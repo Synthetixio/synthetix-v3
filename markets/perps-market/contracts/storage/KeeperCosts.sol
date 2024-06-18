@@ -4,7 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
@@ -39,13 +38,8 @@ library KeeperCosts {
         self.keeperCostNodeId = keeperCostNodeId;
     }
 
-    function getSettlementKeeperCosts(
-        Data storage self,
-        uint128 accountId
-    ) internal view returns (uint sUSDCost) {
+    function getSettlementKeeperCosts(Data storage self) internal view returns (uint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-
-        accountId; // unused for now, but will be used to calculate rewards based on account collaterals in the future
 
         sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_SETTLEMENT);
     }
@@ -53,14 +47,14 @@ library KeeperCosts {
     function getFlagKeeperCosts(
         Data storage self,
         uint128 accountId
-    ) internal view returns (uint sUSDCost) {
+    ) internal view returns (uint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        uint numberOfCollateralFeeds = account.activeCollateralTypes.contains(SNX_USD_MARKET_ID)
+        uint256 numberOfCollateralFeeds = account.activeCollateralTypes.contains(SNX_USD_MARKET_ID)
             ? account.activeCollateralTypes.length() - 1
             : account.activeCollateralTypes.length();
-        uint numberOfUpdatedFeeds = numberOfCollateralFeeds +
+        uint256 numberOfUpdatedFeeds = numberOfCollateralFeeds +
             account.openPositionMarketIds.length();
 
         sUSDCost = _processWithRuntime(
@@ -71,7 +65,7 @@ library KeeperCosts {
         );
     }
 
-    function getLiquidateKeeperCosts(Data storage self) internal view returns (uint sUSDCost) {
+    function getLiquidateKeeperCosts(Data storage self) internal view returns (uint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_LIQUIDATE);
@@ -82,7 +76,7 @@ library KeeperCosts {
         PerpsMarketFactory.Data storage factory,
         uint256 numberOfUpdatedFeeds,
         uint256 executionKind
-    ) private view returns (uint sUSDCost) {
+    ) private view returns (uint256 sUSDCost) {
         bytes32[] memory runtimeKeys = new bytes32[](4);
         bytes32[] memory runtimeValues = new bytes32[](4);
         runtimeKeys[0] = bytes32("numberOfUpdatedFeeds");

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import hre from 'hardhat';
-import { ethers } from 'ethers';
-import assert from 'assert/strict';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { bootstrap } from '../bootstrap';
 
-import { findAll } from '@synthetixio/core-utils/utils/ast/finders';
 import { getContractAst } from '@synthetixio/core-utils/src/utils/hardhat/contracts';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { findAll } from '@synthetixio/core-utils/utils/ast/finders';
+import assert from 'assert/strict';
+import { ethers } from 'ethers';
+import hre from 'hardhat';
+import { bootstrap } from '../bootstrap';
 
 describe('AccountRBAC', () => {
   const { systems } = bootstrap();
@@ -17,7 +17,7 @@ describe('AccountRBAC', () => {
    * */
   async function findAllPermissions() {
     // @ts-ignore couldn't figure out why the hre type is wrong :(
-    const ast = await getContractAst('contracts/storage/AccountRBAC.sol:AccountRBAC', hre);
+    const ast = await getContractAst(hre, 'contracts/storage/AccountRBAC.sol:AccountRBAC');
 
     const variableDeclarations = findAll(
       ast,
