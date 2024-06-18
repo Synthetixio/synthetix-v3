@@ -1,6 +1,11 @@
 import { ethers } from 'ethers';
 import type { CoreProxy, CollateralMock } from '../generated/typechain';
 
+const LEGACY_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String('delegateCollateral');
+const TWO_STEPS_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String(
+  'twoStepsDelegateCollateral'
+);
+
 type SystemArgs = {
   Core: CoreProxy;
   CollateralMock: CollateralMock;
@@ -72,6 +77,9 @@ export const stake = async (
 
   // stake collateral
   await Core.connect(user).deposit(accountId, CollateralMock.address, delegateAmount.mul(300));
+
+  await Core.setFeatureFlagAllowAll(TWO_STEPS_DELEGATION_FEATURE_FLAG, true);
+  await Core.setFeatureFlagAllowAll(LEGACY_DELEGATION_FEATURE_FLAG, false);
 
   // invest in the pool
   await Core.connect(user).declareIntentToDelegateCollateral(
