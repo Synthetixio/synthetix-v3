@@ -126,3 +126,15 @@ target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "setFeatureFlagAllowAll"
 args = ["<%= formatBytes32String('createPool') %>", true]
+
+[invoke.enable_feature_twoStepsDelegateCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('twoStepsDelegateCollateral') %>", true]
+
+[invoke.disable_feature_delegateCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('delegateCollateral') %>", false]
