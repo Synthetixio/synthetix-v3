@@ -353,6 +353,7 @@ contract MarketManagerModule {
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
@@ -381,6 +382,7 @@ contract UtilsModule {
 // @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule
 contract VaultModule {
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
+    bytes32 private constant _TWO_STEPS_DELEGATE_FEATURE_FLAG = "twoStepsDelegateCollateral";
 }
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
@@ -559,7 +561,7 @@ library Market {
         mapping(uint128 => MarketPoolInfo.Data) pools;
         DepositedCollateral[] depositedCollateral;
         mapping(address => uint256) maximumDepositableD18;
-        uint32 __unusedLegacyStorageSlot;
+        uint32 minDelegateTime;
         uint32 undelegateCollateralDelay;
         uint32 undelegateCollateralWindow;
         uint32 delegateCollateralDelay;
@@ -628,6 +630,7 @@ library OracleManager {
 
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;
@@ -749,7 +752,7 @@ library VaultEpoch {
         Distribution.Data accountsDebtDistribution;
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
-        mapping(uint128 => uint64) __unused_legacy_slot;
+        mapping(uint128 => uint64) lastDelegationTime;
     }
 }
 
