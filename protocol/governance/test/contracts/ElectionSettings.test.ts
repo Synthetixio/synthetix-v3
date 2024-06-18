@@ -122,7 +122,5 @@ describe('ElectionSettings', function () {
         );
       });
     });
-
-    // TODO: test callable only during Administration
   });
 });

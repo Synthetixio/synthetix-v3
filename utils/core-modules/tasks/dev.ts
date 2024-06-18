@@ -1,3 +1,4 @@
+// TODO: is this file just a duplicate of the old dev.ts file in the protocol/governance directory?
 import path from 'node:path';
 import { cannonBuild } from '@synthetixio/core-modules/test/helpers/cannon';
 import { ccipReceive, CcipRouter } from '@synthetixio/core-modules/test/helpers/ccip';
@@ -13,27 +14,18 @@ const chains = [
   {
     name: 'mothership',
     networkName: 'sepolia',
-    cannonfile: 'cannonfile.sepolia-mothership.test.toml',
+    cannonfile: 'cannonfile.test.toml',
     chainSelector: '16015286601757825753',
-    wormholeChainId: '10002',
   },
   {
     name: 'satellite1',
     networkName: 'optimistic-goerli',
-    cannonfile: 'cannonfile.optimistic-goerli-satelite.test.toml',
+    cannonfile: 'cannonfile.satellite.test.toml',
     chainSelector: '2664363617261496610',
-    wormholeChainId: '420',
-  },
-  {
-    name: 'satellite2',
-    networkName: 'avalanche-fuji',
-    cannonfile: 'cannonfile.avalanche-fuji-satelite.test.toml',
-    chainSelector: '14767482510784806043',
-    wormholeChainId: '43113',
   },
 ] as const;
 
-task('dev', 'spins up locally 3 nodes ready for test purposes')
+task('dev', 'spins up locally 2 nodes ready for test purposes')
   .addOptionalParam(
     'owner',
     'Wallet address to use as signer',
@@ -71,57 +63,29 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
       console.log(`  rpc: ${rpcUrl}`);
       console.log(`  GovernanceProxy: ${node.outputs.contracts?.GovernanceProxy.address}`);
 
-      let wormholeMockAddress: string = node.outputs.contracts?.WormholeMock.address;
+      // Listen for cross chain message send events, and pass it on to the target network
+      CcipRouter.connect(node.provider)
+        .attach(node.outputs.contracts!.CcipRouterMock.address)
+        .on(
+          'CCIPSend',
+          async (chainSelector: string, message: string, messageId: string, evt: ethers.Event) => {
+            console.log('CCIPSend', { chainSelector, message, messageId });
 
-      // Ensure govProxy is an instance of an ethers.Contract
-      const wormholeMock = new ethers.Contract(
-        wormholeMockAddress,
-        node.outputs.contracts?.WormholeMock.abi, // Replace this with the actual ABI of the contract
-        node.provider
-      );
+            const targetChainIndex = chains.findIndex((c) => c.chainSelector === chainSelector);
+            const targetChain = chains[targetChainIndex]!;
+            const targetNode = nodes[targetChainIndex]!;
 
-      wormholeMock
-        .connect(node.provider)
-        .attach(wormholeMock.address)
-        .on('LogMessagePublished', async (evt: ethers.Event) => {
-          const encodedValue = ethers.utils.defaultAbiCoder.encode(
-            ['address', 'uint16', 'uint64'], // Types
-            [
-              node.outputs.contracts?.GovernanceProxy.address,
-              chain.wormholeChainId,
-              evt.args?.sequence,
-            ] // Values
-          );
+            const rx = await node.provider.getTransactionReceipt(evt.transactionHash);
+            const targetSigner = targetNode.provider.getSigner(owner);
 
-          const payloadTypes = [
-            'uint16', // targetChain
-            'uint16', // wormholeChainId
-            'address', // targetAddress
-            'address', // emitterAddress
-            'uint64', // sequence
-            'bytes', // payload
-            'uint256', // receiverValue
-            'uint256', // gasLimit
-          ];
-
-          const decodedPayload = ethers.utils.defaultAbiCoder.decode(
-            payloadTypes,
-            evt.args?.payload
-          );
-
-          const targetChainIndex = chains.findIndex(
-            (c) => c.wormholeChainId === decodedPayload.targetChain.toString()
-          );
-          const targetNode = nodes[targetChainIndex];
-
-          const targetWormholeMock = new ethers.Contract(
-            targetNode.outputs.contracts?.WormholeMock.address,
-            targetNode.outputs.contracts?.WormholeMock.abi,
-            targetNode.provider
-          );
-
-          await targetWormholeMock.deliver([encodedValue], payload, emitterAddress, []);
-        });
+            await ccipReceive({
+              rx,
+              sourceChainSelector: targetChain.chainSelector,
+              targetSigner,
+              ccipAddress: targetNode.outputs.contracts!.CcipRouterMock.address,
+            });
+          }
+        );
     }
 
     await _keepAlive();

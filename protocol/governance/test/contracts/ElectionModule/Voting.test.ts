@@ -7,11 +7,19 @@ import { bootstrap } from '../../bootstrap';
 describe('ElectionModule - voting', function () {
   const { c, getSigners, getProvider } = bootstrap();
 
+  let owner: ethers.Signer;
   let user: ethers.Signer;
   let otherUser: ethers.Signer;
 
   before('identify signers', async function () {
-    [, user, otherUser] = getSigners();
+    [owner, user, otherUser] = getSigners();
+  });
+
+  before('register emitters', async function () {
+    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
+      [13370],
+      [c.GovernanceProxy.address]
+    );
   });
 
   before('create voting power for user', async function () {

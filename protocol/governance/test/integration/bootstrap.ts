@@ -21,6 +21,12 @@ export enum ChainSelector {
   satellite2 = '14767482510784806043',
 }
 
+export enum WormholeChainSelector {
+  mothership = '13370',
+  satellite1 = '10005',
+  satellite2 = '43113',
+}
+
 export interface SignerOnChains {
   mothership: ethers.Signer;
   satellite1: ethers.Signer;
@@ -114,7 +120,7 @@ before(`setup integration chains`, async function () {
     }),
     spinChain<Proxies['satellite2']>({
       networkName: 'avalanche-fuji',
-      cannonfile: 'cannonfile.satellite.test.toml',
+      cannonfile: 'cannonfile.avalanche-fuji-satelite.test.toml',
       cannonfileSettings,
       typechainFolder,
       writeDeployments,

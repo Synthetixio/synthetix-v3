@@ -24,9 +24,6 @@ artifact = "contracts/modules/CoreModule.sol:CoreModule"
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.CrossChainModule]
-artifact = "contracts/modules/CrossChainModule.sol:CrossChainModule"
-
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
@@ -101,6 +98,3 @@ salt = "third"
 
 [router.FeatureFlagModuleRouter]
 contracts = ["CoreModule", "FeatureFlagModule", "SampleFeatureFlagModule"]
-
-[router.CrossChainModuleRouter]
-contracts = ["CoreModule", "CrossChainModule"]

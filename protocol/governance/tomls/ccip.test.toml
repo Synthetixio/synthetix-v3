@@ -11,22 +11,3 @@ defaultValue = "16015286601757825753"
 [contract.CcipRouterMock]
 artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
 create2 = true
-
-[invoke.set_supported_cross_chain_networks]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setSupportedCrossChainNetworks"
-args = [
-    ["<%= settings.ccip_mothership_chain_id %>", "420", "43113"],
-    [
-        "<%= settings.ccip_mothership_selector %>",
-        "2664363617261496610",
-        "14767482510784806043"
-    ]
-]
-
-[invoke.configure_chainlink_cross_chain]
-target = ["GovernanceProxy"]
-func = "configureChainlinkCrossChain"
-from = "<%= settings.owner %>"
-args = ["<%= contracts.CcipRouterMock.address %>"]

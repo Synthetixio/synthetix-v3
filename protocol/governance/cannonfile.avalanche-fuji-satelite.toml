@@ -1,4 +1,4 @@
-name = "synthetix-governance-satellite"
+name = "synthetix-governance-satellite-avalanche-fuji"
 description = "On-chain voting for synthetix councils - Logic for satellite chains"
 version = "<%= package.version %>"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
@@ -32,7 +32,7 @@ artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePower
 
 [contract.WormholeMock]
 artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
-args = ["10005"]
+args = ["43113"]
 
 [contract.WormholeRelayerMock]
 artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
