@@ -89,7 +89,7 @@ async function _typeNameToStorageSlot(
     const { type, ...restAttrs } = attrs;
     // order keys for consistency:
     const slot = (name ? { type, name, ...restAttrs } : { type, ...restAttrs }) as StorageSlot;
-    slot.size = getStorageSlotSize(slot);
+
     return slot;
   };
 
