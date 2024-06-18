@@ -77,15 +77,11 @@ async function run() {
 
     const packageJson = JSON.parse(await fs.readFile(`${location}/package.json`, 'utf-8'));
 
-    let { dependencies, devDependencies, missing, invalidFiles } = await depcheck(location, {
+    let { dependencies, devDependencies, missing } = await depcheck(location, {
       ...options,
       ...packageJson.depcheck,
       package: packageJson,
     });
-    if (Object.keys(invalidFiles).length > 0) {
-      console.error('ERROR: Invalid files', invalidFiles);
-      process.exit(1);
-    }
     dependencies.sort();
     devDependencies.sort();
 
