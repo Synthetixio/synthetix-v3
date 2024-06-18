@@ -118,7 +118,7 @@ contract LiquidationModule is ILiquidationModule {
         );
 
         // Clean any outstanding intents to delegate collateral
-        AccountDelegationIntents.getValid(accountId).cleanAllIntents();
+        AccountDelegationIntents.loadValidWithInit(accountId).cleanAllIntents();
 
         emit Liquidation(
             accountId,

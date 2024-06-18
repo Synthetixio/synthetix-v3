@@ -69,7 +69,9 @@ library AccountDelegationIntents {
     /**
      * @dev Returns the account delegation intents stored at the specified account id. Checks if it's valid
      */
-    function getValid(uint128 accountId) internal returns (Data storage accountDelegationIntents) {
+    function loadValidWithInit(
+        uint128 accountId
+    ) internal returns (Data storage accountDelegationIntents) {
         accountDelegationIntents = loadValid(accountId);
         if (accountDelegationIntents.accountId == 0) {
             // Uninitialized storage will have a 0 accountId; it means we need to initialize it (new accountDelegationIntents era)
