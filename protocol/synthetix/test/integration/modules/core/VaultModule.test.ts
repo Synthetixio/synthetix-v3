@@ -301,7 +301,7 @@ describe('VaultModule', function () {
 
     verifyUsesFeatureFlag(
       () => systems().Core,
-      'delegateCollateral',
+      'twoStepsDelegateCollateral',
       async () =>
         systems()
           .Core.connect(user1)
