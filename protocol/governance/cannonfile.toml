@@ -33,6 +33,15 @@ artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
+# @TODO: delete WormholeMocks on cannonfile.toml but make it work without needing them
+[contract.WormholeMock]
+artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
+args = ["13370"]
+
+[contract.WormholeRelayerMock]
+artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
+args = ["<%= contracts.WormholeMock.address %>"]
+
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",

@@ -83,7 +83,7 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions;
+        mapping(bytes32 => uint256) _positions;
     }
 }
 
@@ -313,6 +313,15 @@ library CouncilMembers {
         assembly {
             store.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/CrossChainDebtShare.sol:CrossChainDebtShare
+library CrossChainDebtShare {
+    struct Data {
+        bytes32 merkleRoot;
+        uint256 merkleRootBlockNumber;
+        mapping(address => uint256) debtShares;
     }
 }
 
