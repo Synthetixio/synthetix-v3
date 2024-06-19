@@ -62,6 +62,9 @@ library Pool {
     );
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_DELEGATE_COLLATERAL_DELAY_MIN = "delegateCollateralDelay_min";
+    bytes32 private constant _CONFIG_DELEGATE_COLLATERAL_WINDOW_MAX =
+        "delegateCollateralWindow_max";
 
     struct Data {
         /**
@@ -447,6 +450,16 @@ library Pool {
         Data storage self,
         bool isUndelegation
     ) internal view returns (uint32 requiredDelayTime, uint32 requiredWindowTime) {
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 globalMinDelegateDelay = uint32(
+            Config.readUint(_CONFIG_DELEGATE_COLLATERAL_DELAY_MIN, 0)
+        );
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 globalMaxDelegateWindow = uint32(
+            Config.readUint(_CONFIG_DELEGATE_COLLATERAL_WINDOW_MAX, 0)
+        );
+
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
             uint32 marketDelayTime = isUndelegation
@@ -462,6 +475,15 @@ library Pool {
                     ? market.undelegateCollateralWindow
                     : market.delegateCollateralWindow;
             }
+        }
+
+        // Apply global limits if set.
+        if (globalMinDelegateDelay > 0 && globalMinDelegateDelay > requiredDelayTime) {
+            requiredDelayTime = globalMinDelegateDelay;
+        }
+
+        if (globalMaxDelegateWindow > 0 && globalMaxDelegateWindow < requiredWindowTime) {
+            requiredWindowTime = globalMaxDelegateWindow;
         }
     }
 
