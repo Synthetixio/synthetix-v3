@@ -99,6 +99,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
             // clear debt
             account.updateAccountDebt(-(account.debt.toInt()));
+
+            emit AccountMarginLiquidation(accountId, seizedMarginValue, liquidationReward);
         } else {
             revert NotEligibleForMarginLiquidation(accountId);
         }

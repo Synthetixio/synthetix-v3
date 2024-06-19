@@ -64,6 +64,18 @@ interface ILiquidationModule {
     );
 
     /**
+     * @notice Gets fired when an account margin is liquidated due to not paying down debt.
+     * @param accountId Id of the account liquidated.
+     * @param seizedMarginValue margin seized due to liquidation.
+     * @param liquidationReward reward for liquidating margin account
+     */
+    event AccountMarginLiquidation(
+        uint128 indexed accountId,
+        uint256 seizedMarginValue,
+        uint256 liquidationReward
+    );
+
+    /**
      * @notice Liquidates an account.
      * @dev according to the current situation and account size it can be a partial or full liquidation.
      * @param accountId Id of the account to liquidate.
