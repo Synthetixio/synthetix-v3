@@ -631,6 +631,8 @@ library OracleManager {
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_DELEGATE_COLLATERAL_DELAY_MIN = "delegateCollateralDelay_min";
+    bytes32 private constant _CONFIG_DELEGATE_COLLATERAL_WINDOW_MAX = "delegateCollateralWindow_max";
     struct Data {
         uint128 id;
         string name;
