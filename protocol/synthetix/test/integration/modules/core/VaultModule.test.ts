@@ -179,7 +179,7 @@ describe('VaultModule', function () {
     });
   });
 
-  describe('delegateCollateral()', async () => {
+  describe('intent delegate', async () => {
     it(
       'after bootstrap have correct amounts',
       verifyAccountState(accountId, poolId, depositAmount, 0)
@@ -319,6 +319,77 @@ describe('VaultModule', function () {
             ethers.utils.parseEther('1')
           )
     );
+
+    describe('when both FF are enabled', async () => {
+      const LEGACY_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String('delegateCollateral');
+      const TWO_STEPS_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String(
+        'twoStepsDelegateCollateral'
+      );
+
+      const restore = snapshotCheckpoint(provider);
+      after(restore);
+
+      before('enable both FFs', async () => {
+        await systems().Core.setFeatureFlagAllowAll(LEGACY_DELEGATION_FEATURE_FLAG, true);
+        await systems().Core.setFeatureFlagAllowAll(TWO_STEPS_DELEGATION_FEATURE_FLAG, true);
+      });
+
+      it('fails when trying to use declareIntentToDelegateCollateral()', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .declareIntentToDelegateCollateral(
+              accountId,
+              poolId,
+              collateralAddress(),
+              await expectedToDeltaDelegatedCollateral(
+                systems,
+                accountId,
+                poolId,
+                collateralAddress(),
+                depositAmount
+              ),
+              ethers.utils.parseEther('1')
+            ),
+          'LegacyAndTwoStepsDelegateCollateralEnabled()',
+          systems().Core
+        );
+      });
+
+      it('fails when trying to use processIntentToDelegateCollateralByIntents()', async () => {
+        await assertRevert(
+          systems().Core.connect(user2).processIntentToDelegateCollateralByIntents(accountId, [0]),
+          'LegacyAndTwoStepsDelegateCollateralEnabled()',
+          systems().Core
+        );
+      });
+
+      it('fails when trying to use processIntentToDelegateCollateralByPair()', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user2)
+            .processIntentToDelegateCollateralByPair(accountId, poolId, collateralAddress()),
+          'LegacyAndTwoStepsDelegateCollateralEnabled()',
+          systems().Core
+        );
+      });
+
+      it('fails when trying to use delegateCollateral() (legacy delegation)', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .delegateCollateral(
+              accountId,
+              poolId,
+              collateralAddress(),
+              depositAmount,
+              ethers.utils.parseEther('1')
+            ),
+          'LegacyAndTwoStepsDelegateCollateralEnabled()',
+          systems().Core
+        );
+      });
+    });
 
     describe('when collateral is disabled by system', async () => {
       const restore = snapshotCheckpoint(provider);
