@@ -399,6 +399,7 @@ library Account {
         uint64 __slotAvailableForFutureUse;
         uint128 currentDelegationIntentsEpoch;
         mapping(address => Collateral.Data) collaterals;
+        mapping(uint128 => AccountDelegationIntents.Data) delegationIntents;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
@@ -411,18 +412,10 @@ library Account {
 // @custom:artifact contracts/storage/AccountDelegationIntents.sol:AccountDelegationIntents
 library AccountDelegationIntents {
     struct Data {
-        uint128 accountId;
-        uint128 delegationIntentsEpoch;
         SetUtil.UintSet intentsId;
         mapping(bytes32 => SetUtil.UintSet) intentsByPair;
         SetUtil.AddressSet delegatedCollaterals;
         mapping(address => int256) netDelegatedAmountPerCollateral;
-    }
-    function load(uint128 accountId, uint128 delegationIntentsEpoch) internal pure returns (Data storage accountDelegationIntents) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.AccountDelegationIntents", accountId, delegationIntentsEpoch));
-        assembly {
-            accountDelegationIntents.slot := s
-        }
     }
 }
 

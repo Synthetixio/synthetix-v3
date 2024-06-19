@@ -120,12 +120,23 @@ library Account {
         uint64 __slotAvailableForFutureUse;
         uint128 currentDelegationIntentsEpoch;
         mapping(address => Collateral.Data) collaterals;
+        mapping(uint128 => AccountDelegationIntents.Data) delegationIntents;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
             account.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/AccountDelegationIntents.sol:AccountDelegationIntents
+library AccountDelegationIntents {
+    struct Data {
+        SetUtil.UintSet intentsId;
+        mapping(bytes32 => SetUtil.UintSet) intentsByPair;
+        SetUtil.AddressSet delegatedCollaterals;
+        mapping(address => int256) netDelegatedAmountPerCollateral;
     }
 }
 
@@ -193,6 +204,26 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/DelegationIntent.sol:DelegationIntent
+library DelegationIntent {
+    bytes32 private constant _ATOMIC_VALUE_LATEST_ID = "delegateIntent_idAsNonce";
+    struct Data {
+        uint256 id;
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
+        int256 deltaCollateralAmountD18;
+        uint256 leverage;
+        uint32 declarationTime;
+    }
+    function load(uint256 id) internal pure returns (Data storage delegationIntent) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", id));
+        assembly {
+            delegationIntent.slot := s
+        }
     }
 }
 

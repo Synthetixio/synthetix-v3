@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./AccountRBAC.sol";
 import "./Collateral.sol";
 import "./Pool.sol";
+import "./AccountDelegationIntents.sol";
 
 import "../interfaces/ICollateralModule.sol";
 
@@ -62,6 +63,10 @@ library Account {
          * @dev Address set of collaterals that are being used in the system by this account.
          */
         mapping(address => Collateral.Data) collaterals;
+        /**
+         * @dev Delegation Intents by epoch. Will use `currentDelegationIndentsEpoch` to point to the latest active delegation intents for this account.
+         */
+        mapping(uint128 => AccountDelegationIntents.Data) delegationIntents;
     }
 
     /**
@@ -211,11 +216,16 @@ library Account {
         }
     }
 
+    function getDelegationIntents(
+        Data storage self
+    ) internal view returns (AccountDelegationIntents.Data storage) {
+        return self.delegationIntents[self.currentDelegationIntentsEpoch];
+    }
+
     /**
-     * @dev Returns the new delegation intents epoch (by incrementing the currentDelegationIntentsEpoch).
+     * @dev It "deletes" all the account intents by moving to a new delegation intents epoch
      */
-    function getNewDelegationIntentsEpoch(Data storage self) internal returns (uint128) {
+    function cleanAllIntents(Data storage self) internal {
         self.currentDelegationIntentsEpoch += 1;
-        return self.currentDelegationIntentsEpoch;
     }
 }

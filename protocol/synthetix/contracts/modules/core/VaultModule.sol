@@ -38,6 +38,7 @@ contract VaultModule is IVaultModule {
     using SafeCastI256 for int256;
     using AccountDelegationIntents for AccountDelegationIntents.Data;
     using DelegationIntent for DelegationIntent.Data;
+    using Account for Account.Data;
 
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
     bytes32 private constant _TWO_STEPS_DELEGATE_FEATURE_FLAG = "twoStepsDelegateCollateral";
@@ -86,7 +87,10 @@ contract VaultModule is IVaultModule {
     ) external override returns (uint256 intentId) {
         // Ensure the caller is authorized to represent the account.
         FeatureFlag.ensureAccessToFeature(_TWO_STEPS_DELEGATE_FEATURE_FLAG);
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._DELEGATE_PERMISSION
+        );
         if (FeatureFlag.hasAccess(_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
             revert LegacyAndTwoStepsDelegateCollateralEnabled();
         }
@@ -99,8 +103,9 @@ contract VaultModule is IVaultModule {
 
         // Verify the account holds enough collateral to execute the intent.
         // Get previous intents cache
-        AccountDelegationIntents.Data storage accountIntents = AccountDelegationIntents
-            .loadValidWithInit(accountId);
+        AccountDelegationIntents.Data storage accountIntents = account.delegationIntents[
+            account.currentDelegationIntentsEpoch
+        ];
 
         // Identify the vault that corresponds to this collateral type and pool id.
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
@@ -159,7 +164,7 @@ contract VaultModule is IVaultModule {
         intent.declarationTime = block.timestamp.to32();
 
         // Add intent to the account's delegation intents.
-        AccountDelegationIntents.loadValidWithInit(intent.accountId).addIntent(intent);
+        accountIntents.addIntent(intent);
 
         // emit an event
         emit DelegationIntentDeclared(
@@ -188,9 +193,9 @@ contract VaultModule is IVaultModule {
             revert LegacyAndTwoStepsDelegateCollateralEnabled();
         }
 
-        AccountDelegationIntents.Data storage accountIntents = AccountDelegationIntents.loadValid(
-            accountId
-        );
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
 
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
@@ -209,7 +214,7 @@ contract VaultModule is IVaultModule {
 
                 // If expired, remove the intent.
                 if (intent.intentExpired()) {
-                    AccountDelegationIntents.loadValidWithInit(accountId).removeIntent(intent);
+                    accountIntents.removeIntent(intent);
                     emit DelegationIntentRemoved(
                         intent.id,
                         accountId,
@@ -235,7 +240,7 @@ contract VaultModule is IVaultModule {
             );
 
             // Remove the intent.
-            AccountDelegationIntents.loadValidWithInit(accountId).removeIntent(intent);
+            accountIntents.removeIntent(intent);
             emit DelegationIntentRemoved(
                 intent.id,
                 accountId,
@@ -263,10 +268,7 @@ contract VaultModule is IVaultModule {
     ) external override {
         processIntentToDelegateCollateralByIntents(
             accountId,
-            AccountDelegationIntents.loadValidWithInit(accountId).intentIdsByPair(
-                poolId,
-                collateralType
-            )
+            Account.load(accountId).getDelegationIntents().intentIdsByPair(poolId, collateralType)
         );
     }
 
@@ -275,7 +277,7 @@ contract VaultModule is IVaultModule {
      */
     function forceDeleteAllAccountIntents(uint128 accountId) external override {
         OwnableStorage.onlyOwner();
-        AccountDelegationIntents.loadValidWithInit(accountId).cleanAllIntents();
+        Account.load(accountId).cleanAllIntents();
     }
 
     /**
@@ -283,9 +285,12 @@ contract VaultModule is IVaultModule {
      */
     function forceDeleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
         OwnableStorage.onlyOwner();
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
-            AccountDelegationIntents.loadValidWithInit(accountId).removeIntent(intent);
+            accountIntents.removeIntent(intent);
         }
     }
 
@@ -293,7 +298,7 @@ contract VaultModule is IVaultModule {
      * @inheritdoc IVaultModule
      */
     function deleteAllExpiredIntents(uint128 accountId) external override {
-        AccountDelegationIntents.loadValidWithInit(accountId).cleanAllExpiredIntents();
+        Account.load(accountId).getDelegationIntents().cleanAllExpiredIntents();
     }
 
     /**
@@ -303,6 +308,9 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint256[] calldata intentIds
     ) external override {
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (intent.accountId != accountId) {
@@ -311,7 +319,7 @@ contract VaultModule is IVaultModule {
             if (!intent.intentExpired()) {
                 revert DelegationIntentNotExpired(intent.id);
             }
-            AccountDelegationIntents.loadValidWithInit(accountId).removeIntent(intent);
+            accountIntents.removeIntent(intent);
         }
     }
 
@@ -412,8 +420,9 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint256 intentId
     ) external view override returns (uint128, address, int256, uint256, uint32) {
-        DelegationIntent.Data storage intent = AccountDelegationIntents
-            .loadValid(accountId)
+        DelegationIntent.Data storage intent = Account
+            .load(accountId)
+            .getDelegationIntents()
             .getIntent(intentId);
         return (
             intent.poolId,
@@ -430,7 +439,7 @@ contract VaultModule is IVaultModule {
     function getAccountIntentIds(
         uint128 accountId
     ) external view override returns (uint256[] memory) {
-        return AccountDelegationIntents.loadValid(accountId).intentsId.values();
+        return Account.load(accountId).getDelegationIntents().intentsId.values();
     }
 
     /**
@@ -440,8 +449,9 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint256 maxProcessableIntent
     ) external view override returns (uint256[] memory expiredIntents, uint256 foundItems) {
-        uint256[] memory allIntents = AccountDelegationIntents
-            .loadValid(accountId)
+        uint256[] memory allIntents = Account
+            .load(accountId)
+            .getDelegationIntents()
             .intentsId
             .values();
         uint256 max = maxProcessableIntent > allIntents.length
@@ -463,8 +473,9 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint256 maxProcessableIntent
     ) external view override returns (uint256[] memory executableIntents, uint256 foundItems) {
-        uint256[] memory allIntents = AccountDelegationIntents
-            .loadValid(accountId)
+        uint256[] memory allIntents = Account
+            .load(accountId)
+            .getDelegationIntents()
             .intentsId
             .values();
         uint256 max = maxProcessableIntent > allIntents.length
@@ -487,7 +498,7 @@ contract VaultModule is IVaultModule {
         address collateralType
     ) external view override returns (int256) {
         return
-            AccountDelegationIntents.loadValid(accountId).netDelegatedAmountPerCollateral[
+            Account.load(accountId).getDelegationIntents().netDelegatedAmountPerCollateral[
                 collateralType
             ];
     }
@@ -500,7 +511,7 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType
     ) external view override returns (int256 accumulatedIntentDelta) {
-        uint256[] memory intentIds = AccountDelegationIntents.loadValid(accountId).intentIdsByPair(
+        uint256[] memory intentIds = Account.load(accountId).getDelegationIntents().intentIdsByPair(
             poolId,
             collateralType
         );
