@@ -22,7 +22,7 @@ const chains = [
     networkName: 'optimistic-sepolia',
     cannonfile: 'cannonfile.optimistic-sepolia-satelite.test.toml',
     chainSelector: '2664363617261496610',
-    wormholeChainId: '11155420',
+    wormholeChainId: '10005',
   },
   {
     name: 'satellite2',

@@ -67,7 +67,7 @@ const config = {
         process.env.NETWORK_ENDPOINT ||
         `https://optimism-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 11155420,
+      chainId: 10005,
     },
     ['optimistic-mainnet']: {
       url:
