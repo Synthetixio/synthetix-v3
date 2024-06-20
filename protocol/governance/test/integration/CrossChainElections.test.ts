@@ -22,7 +22,7 @@ describe('cross chain election testing', function () {
   const deliverCrossChainCast = async (
     tx: ethers.ContractTransaction,
     emitterAddress: string,
-    emitterChainId: number,
+    emitterChainId: number
   ) => {
     const rx = await tx.wait();
 

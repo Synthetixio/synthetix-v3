@@ -56,7 +56,9 @@ factory.GovernanceProxy.highlight = true
 target = ["GovernanceProxy"]
 func = "initOrUpdateElectionSettings(address[],address,address,uint8,uint64,uint64,uint64,uint64)"
 args = [
-    ["<%= settings.initial_council_member %>"],
+    [
+        "<%= settings.initial_council_member %>",
+    ],
     "<%= contracts.WormholeMock.address %>",
     "<%= contracts.WormholeRelayerMock.address %>",
     "<%= settings.minimum_active_members %>",

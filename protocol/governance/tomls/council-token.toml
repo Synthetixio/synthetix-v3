@@ -22,7 +22,7 @@ args = [
     "<%= settings.council_token_name %>",
     "<%= settings.council_token_symbol %>",
     "<%= settings.council_token_uri %>",
-    "<%= contracts.CouncilTokenRouter.address %>"
+    "<%= contracts.CouncilTokenRouter.address %>",
 ]
 factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
 factory.CouncilToken.event = "AssociatedSystemSet"

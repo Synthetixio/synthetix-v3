@@ -67,6 +67,8 @@ args = [
     "<%= settings.initial_epoch_end_date %>",
     "<%= contracts.WormholeMock.address %>",
     "<%= contracts.WormholeRelayerMock.address %>",
-    ["<%= settings.initial_council_member %>"],
+    [
+        "<%= settings.initial_council_member %>",
+    ],
 ]
 from = "<%= settings.owner %>"

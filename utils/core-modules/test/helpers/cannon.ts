@@ -31,8 +31,9 @@ interface InspectOptions {
   writeDeployments: string;
 }
 
-
-export type BuildOutputs = Partial<Pick<ChainBuilderContext, 'imports' | 'contracts' | 'txns' | 'settings'>>;
+export type BuildOutputs = Partial<
+  Pick<ChainBuilderContext, 'imports' | 'contracts' | 'txns' | 'settings'>
+>;
 export type CannonProvider = viem.PublicClient & viem.TestClient & viem.WalletClient;
 
 export async function launchNode(options: NodeOptions = {}) {
@@ -70,7 +71,7 @@ export async function cannonBuild(options: BuildOptions) {
     await provider.impersonateAccount({ address: addr });
     await provider.setBalance({ address: addr, value: viem.parseEther('10000') });
     return { address: addr, wallet: provider };
-  }
+  };
 
   const { outputs } = await build({
     provider,
@@ -82,7 +83,9 @@ export async function cannonBuild(options: BuildOptions) {
     },
     getArtifact: options.getArtifact,
     getSigner,
-    getDefaultSigner: options.impersonate ? () => getSigner(options.impersonate! as viem.Address) : undefined,
+    getDefaultSigner: options.impersonate
+      ? () => getSigner(options.impersonate! as viem.Address)
+      : undefined,
     pkgInfo: options.pkgInfo,
     projectDirectory: options.projectDirectory,
     wipe: options.wipe,
@@ -104,12 +107,14 @@ export async function cannonBuild(options: BuildOptions) {
     packageRef,
     options,
     provider: ethersProvider,
-    outputs
+    outputs,
   };
 }
 
 function augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs) {
-  const provider = originalProvider.extend(traceActions(outputs) as any) as unknown as CannonProvider;
+  const provider = originalProvider.extend(
+    traceActions(outputs) as any
+  ) as unknown as CannonProvider;
 
   // Monkey patch to call original cannon extended estimateGas fn
   const originalRequest = provider.request;
@@ -131,7 +136,6 @@ function augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs
 
   return provider;
 }
-
 
 export async function cannonInspect(options: InspectOptions) {
   const cliSettings = resolveCliSettings();

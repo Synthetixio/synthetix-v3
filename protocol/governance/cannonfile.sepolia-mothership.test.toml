@@ -44,7 +44,7 @@ contracts = [
     "TestableSnapshotVotePowerStorage",
     "TestableElectionSettingsStorage",
     "TestableElectionStorage",
-    "TestableEpochStorage"
+    "TestableEpochStorage",
 ]
 
 [invoke.upgrade_core_proxy]

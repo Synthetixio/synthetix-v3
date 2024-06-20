@@ -7,6 +7,4 @@ import {CcipReceiverModule as BaseCcipReceiverModule} from "@synthetixio/core-mo
  * @title Module that handles receiving ccip messages.
  */
 // solhint-disable-next-line no-empty-blocks
-contract CcipReceiverModule is BaseCcipReceiverModule {
-
-}
+contract CcipReceiverModule is BaseCcipReceiverModule {}

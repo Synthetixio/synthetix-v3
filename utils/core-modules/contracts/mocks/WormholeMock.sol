@@ -42,10 +42,10 @@ contract WormholeMock {
             address emitterAddress,
             uint64 sequence,
             bytes memory payload, // uint256 receiverValue
+            // uint256 gasLimit
             ,
 
-        ) = // uint256 gasLimit
-            abi.decode(
+        ) = abi.decode(
                 encodedVM,
                 (uint16, uint16, address, address, uint64, bytes, uint256, uint256)
             );
