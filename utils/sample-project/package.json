@@ -19,7 +19,7 @@
     "@synthetixio/hardhat-storage": "workspace:*",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
-    "hardhat-cannon": "2.15.1",
+    "hardhat-cannon": "2.15.2",
     "solidity-coverage": "^0.8.7"
   }
 }
