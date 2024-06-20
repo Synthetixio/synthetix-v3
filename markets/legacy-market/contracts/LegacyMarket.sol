@@ -156,7 +156,10 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         // now burn it
         uint256 beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
         oldSynthetix.burnSynths(amount);
-        if (iss.debtBalanceOf(address(this), "sUSD") != beforeDebt - amount) {
+        uint256 afterDebt = iss.debtBalanceOf(address(this), "sUSD");
+
+        // approximately equal check because some rounding error can happen on the v2x side
+        if (afterDebt < beforeDebt - amount - 10 || afterDebt > beforeDebt - amount + 10) {
             revert Paused();
         }
 
@@ -180,7 +183,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     /**
      * @inheritdoc ILegacyMarket
      */
-    function migrateOnBehalf(address staker, uint128 accountId) external onlyOwner {
+    function migrateOnBehalf(address staker, uint128 accountId) external {
         _migrate(staker, accountId);
     }
 
@@ -236,6 +239,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             );
 
             return;
+        } else if (
+            ERC2771Context._msgSender() != staker &&
+            ERC2771Context._msgSender() != OwnableStorage.load().owner
+        ) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         // start building the staker's v3 account
