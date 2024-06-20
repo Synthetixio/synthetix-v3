@@ -173,7 +173,7 @@ describe('SynthetixElectionModule - Elections', () => {
               0
             );
             assertBn.equal(
-              await chains.mothership.GovernanceProxy.getVotePower(addresses[0].address, 420, 0),
+              await chains.mothership.GovernanceProxy.getVotePower(addresses[0].address, 11155420, 0),
               0
             );
             assertBn.equal(
