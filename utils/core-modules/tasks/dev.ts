@@ -19,7 +19,7 @@ const chains = [
   },
   {
     name: 'satellite1',
-    networkName: 'optimistic-goerli',
+    networkName: 'optimistic-sepolia',
     cannonfile: 'cannonfile.satellite.test.toml',
     chainSelector: '2664363617261496610',
   },

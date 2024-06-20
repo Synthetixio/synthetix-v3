@@ -74,13 +74,15 @@ export async function spinChain<GovernanceProxy>({
 
   const GovernanceProxy = new ethers.Contract(
     outputs.contracts!.GovernanceProxy.address,
-    outputs.contracts!.GovernanceProxy.abi,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputs.contracts!.GovernanceProxy.abi as any,
     signer
   ) as GovernanceProxy;
 
   const SnapshotRecordMock = new ethers.Contract(
     outputs.contracts!.SnapshotRecordMock.address,
-    outputs.contracts!.SnapshotRecordMock.abi,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputs.contracts!.SnapshotRecordMock.abi as any,
     signer
   ) as SnapshotRecordMock;
 
@@ -92,19 +94,22 @@ export async function spinChain<GovernanceProxy>({
 
   const WormholeMock = new ethers.Contract(
     outputs.contracts!.WormholeMock.address,
-    outputs.contracts!.WormholeMock.abi,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputs.contracts!.WormholeMock.abi as any,
     signer
   ) as WormholeMock;
 
   const WormholeRelayerMock = new ethers.Contract(
     outputs.contracts!.WormholeRelayerMock.address,
-    outputs.contracts!.WormholeRelayerMock.abi,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputs.contracts!.WormholeRelayerMock.abi as any,
     signer
   ) as WormholeRelayerMock;
 
   const CouncilToken = new ethers.Contract(
     outputs.contracts!.CouncilToken.address,
-    outputs.contracts!.CouncilToken.abi,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputs.contracts!.CouncilToken.abi as any,
     signer
   ) as CouncilToken;
 
@@ -112,7 +117,7 @@ export async function spinChain<GovernanceProxy>({
     networkName,
     chainId,
     chainSlector,
-    provider: provider as unknown as ethers.providers.JsonRpcProvider,
+    provider,
     GovernanceProxy,
     CouncilToken,
     signer,

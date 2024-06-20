@@ -19,29 +19,25 @@ describe('cross chain election testing', function () {
     await fastForwardChainsTo(schedule.votingPeriodStartDate.toNumber() + 10);
   };
 
-  const deliverCrossChainCast = async (tx, emitterAddress, emitterChainId) => {
-    let receipt = await tx.wait();
+  const deliverCrossChainCast = async (
+    tx: ethers.ContractTransaction,
+    emitterAddress: string,
+    emitterChainId: number,
+  ) => {
+    const rx = await tx.wait();
 
     // TODO use json abi here
     const abi = [
       'event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel)',
     ];
     const iface = new ethers.utils.Interface(abi);
-    let event;
 
-    // Parsing the events from the receipt
-    receipt.events.forEach((_event) => {
-      try {
-        event = iface.parseLog(_event);
-        console.log('event: ', event.args);
-      } catch (error) {
-        // Handle the case where the event does not match the ABI
-      }
-    });
+    // Parsing the last event from the receipt
+    const event = iface.parseLog(rx.events![rx.events!.length - 1]);
 
     const encodedValue = ethers.utils.defaultAbiCoder.encode(
       ['address', 'uint16', 'uint64'], // Types
-      [emitterAddress, emitterChainId, event?.args?.sequence] // Values
+      [emitterAddress, emitterChainId, event.args?.sequence] // Values
     );
 
     // request delivery from wormhole standard relayer on the mothership chain
@@ -172,7 +168,7 @@ describe('cross chain election testing', function () {
 
       await deliverCrossChainCast(
         tx,
-        await chains.satellite1.GovernanceProxy.address,
+        chains.satellite1.GovernanceProxy.address,
         chains.satellite1.chainId
       );
 

@@ -19,10 +19,10 @@ const chains = [
   },
   {
     name: 'satellite1',
-    networkName: 'optimistic-goerli',
-    cannonfile: 'cannonfile.optimistic-goerli-satelite.test.toml',
+    networkName: 'optimistic-sepolia',
+    cannonfile: 'cannonfile.optimistic-sepolia-satelite.test.toml',
     chainSelector: '2664363617261496610',
-    wormholeChainId: '420',
+    wormholeChainId: '11155420',
   },
   {
     name: 'satellite2',
@@ -155,7 +155,7 @@ async function _spinChain({
   return await cannonBuild({
     cannonfile: path.join(hre.config.paths.root, cannonfile),
     chainId,
-    impersonate: ownerAddress,
+    impersonate: ownerAddress as any,
     wipe: true,
     getArtifact: async (contractName: string) =>
       await hre.run('cannon:get-artifact', { name: contractName }),

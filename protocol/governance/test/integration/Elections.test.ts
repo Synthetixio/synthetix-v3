@@ -54,16 +54,16 @@ describe('SynthetixElectionModule - Elections', () => {
     },
   ];
 
-  const deliverResolve = async (rx) => {
+  const deliverResolve = async (rx: ethers.ContractReceipt) => {
     // TODO use json abi here
     const abi = [
       'event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel)',
     ];
     const iface = new ethers.utils.Interface(abi);
-    let events = [];
+    const events: ethers.utils.LogDescription[] = [];
 
     // Parsing the events from the receipt
-    rx.events.forEach((_event, i) => {
+    rx.events!.forEach((_event) => {
       try {
         events.push(iface.parseLog(_event));
       } catch (error) {

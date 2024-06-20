@@ -6,7 +6,7 @@ import { typedValues } from '../helpers/object';
 import { spinChain } from '../helpers/spin-chain';
 
 import type { GovernanceProxy as SepoliaGovernanceProxy } from '../generated/typechain/sepolia';
-import type { GovernanceProxy as OptimisticGoerliGovernanceProxy } from '../generated/typechain/optimistic-goerli';
+import type { GovernanceProxy as OptimisticGoerliGovernanceProxy } from '../generated/typechain/optimistic-sepolia';
 import type { GovernanceProxy as AvalancheFujiGovernanceProxy } from '../generated/typechain/avalanche-fuji';
 
 interface Proxies {
@@ -111,7 +111,7 @@ before(`setup integration chains`, async function () {
 
   const [satellite1, satellite2] = await Promise.all([
     spinChain<Proxies['satellite1']>({
-      networkName: 'optimistic-goerli',
+      networkName: 'optimistic-sepolia',
       cannonfile: 'cannonfile.satellite.test.toml',
       cannonfileSettings,
       typechainFolder,
