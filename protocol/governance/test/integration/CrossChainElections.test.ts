@@ -33,7 +33,19 @@ describe('cross chain election testing', function () {
     const iface = new ethers.utils.Interface(abi);
 
     // Parsing the last event from the receipt
-    const event = iface.parseLog(rx.events![rx.events!.length - 1]);
+    let event: ethers.utils.LogDescription | null = null;
+
+    for (const evt of rx.events!) {
+      try {
+        event = iface.parseLog(evt);
+      } catch (_) {
+        // If the event is not parsed is not the one we are looking for
+      }
+    }
+
+    if (!event) {
+      throw new Error('Could not find cross chain event');
+    }
 
     const encodedValue = ethers.utils.defaultAbiCoder.encode(
       ['address', 'uint16', 'uint64'], // Types
