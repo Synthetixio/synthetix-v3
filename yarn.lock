@@ -3043,8 +3043,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": "npm:^3.3.0"
-    "@usecannon/cli": "npm:2.10.6"
+    "@usecannon/cli": "npm:2.15.1"
     hardhat: "npm:^2.19.0"
     solidity-docgen: "npm:^0.6.0-beta.36"
     typechain: "npm:^8.3.2"
@@ -3202,7 +3201,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@npm:3.4.0, @synthetixio/router@npm:^3.3.0, @synthetixio/router@npm:^3.4.0":
+"@synthetixio/router@npm:^3.4.0":
   version: 3.4.0
   resolution: "@synthetixio/router@npm:3.4.0"
   dependencies:
@@ -3225,7 +3224,6 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
-    "@synthetixio/router": "npm:3.4.0"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     hardhat-cannon: "npm:2.15.1"
@@ -3284,7 +3282,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/wei@npm:^2.74.1, @synthetixio/wei@npm:^2.74.4":
+"@synthetixio/wei@npm:^2.74.4":
   version: 2.74.4
   resolution: "@synthetixio/wei@npm:2.74.4"
   dependencies:
@@ -3978,7 +3976,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.15.1, @usecannon/builder@npm:^2.10.6":
+"@usecannon/builder@npm:2.15.1":
   version: 2.15.1
   resolution: "@usecannon/builder@npm:2.15.1"
   dependencies:
@@ -3996,33 +3994,6 @@ __metadata:
     viem: "npm:^2.9.31"
     zod: "npm:^3.23.6"
   checksum: 10/25f587f50d2038529fffda97ab7df9048f33686938862e9dcb01e55e5a9c3bbec2d414739620c0fffdcaf67ceb463a13162166128e74a9ac498ae23eaff90d87
-  languageName: node
-  linkType: hard
-
-"@usecannon/cli@npm:2.10.6":
-  version: 2.10.6
-  resolution: "@usecannon/cli@npm:2.10.6"
-  dependencies:
-    "@iarna/toml": "npm:^3.0.0"
-    "@synthetixio/wei": "npm:^2.74.1"
-    "@usecannon/builder": "npm:^2.10.6"
-    chalk: "npm:^4.1.2"
-    commander: "npm:^9.5.0"
-    debug: "npm:^4.3.4"
-    eth-provider: "npm:^0.13.6"
-    ethers: "npm:^5.7.1"
-    fastq: "npm:^1.15.0"
-    fs-extra: "npm:^10.1.0"
-    lodash: "npm:^4.17.21"
-    promise-timeout: "npm:^1.3.0"
-    prompts: "npm:^2.4.2"
-    semver: "npm:^7.3.7"
-    table: "npm:^6.8.0"
-    tildify: "npm:2.0.0"
-    untildify: "npm:^4.0.0"
-  bin:
-    cannon: bin/cannon.js
-  checksum: 10/69ee6d54cd130da5703e77f2b4e6e53a455af108b6818daf19c790534f079458e401bb3bb300ab84763cb64877152ba5a0382c20b41244b3ed106a6e309c4cf8
   languageName: node
   linkType: hard
 
@@ -7406,7 +7377,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^5.0.0, ethers@npm:^5.7.1, ethers@npm:^5.7.2":
+"ethers@npm:^5.0.0, ethers@npm:^5.7.2":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -7694,7 +7665,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fastq@npm:^1.15.0, fastq@npm:^1.17.1, fastq@npm:^1.6.0":
+"fastq@npm:^1.17.1, fastq@npm:^1.6.0":
   version: 1.17.1
   resolution: "fastq@npm:1.17.1"
   dependencies:
@@ -8027,17 +7998,6 @@ __metadata:
     path-is-absolute: "npm:^1.0.0"
     rimraf: "npm:^2.2.8"
   checksum: 10/bfdd95f598a36a3f24b02db840c1dc54facba2793dea06355c75a6ed823f92e4033589e287f2b91a02a9980c3fb44099e3f00fce5230f045c87431f69be26084
-  languageName: node
-  linkType: hard
-
-"fs-extra@npm:^10.1.0":
-  version: 10.1.0
-  resolution: "fs-extra@npm:10.1.0"
-  dependencies:
-    graceful-fs: "npm:^4.2.0"
-    jsonfile: "npm:^6.0.1"
-    universalify: "npm:^2.0.0"
-  checksum: 10/05ce2c3b59049bcb7b52001acd000e44b3c4af4ec1f8839f383ef41ec0048e3cfa7fd8a637b1bddfefad319145db89be91f4b7c1db2908205d38bf91e7d1d3b7
   languageName: node
   linkType: hard
 
@@ -13491,13 +13451,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"promise-timeout@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "promise-timeout@npm:1.3.0"
-  checksum: 10/4faa906ba2f4d966c9cb5d033030f2d0c5c96465650ee42a130497c70c6ddb1a202bff85ef877898ffa0cf2a4ba0ac52228ea2a03b2ddbf4091153294e87d016
-  languageName: node
-  linkType: hard
-
 "promise@npm:^8.0.0":
   version: 8.3.0
   resolution: "promise@npm:8.3.0"
@@ -15694,13 +15647,6 @@ __metadata:
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: 10/5da78346f70139a7d213b65a0106f3c398d6bc5301f9248b5275f420abc2c4b1e77c2abc72d218dedc28c41efb2e7c312cb76a7730d04f9c2d37d247da3f4198
-  languageName: node
-  linkType: hard
-
-"tildify@npm:2.0.0":
-  version: 2.0.0
-  resolution: "tildify@npm:2.0.0"
-  checksum: 10/0f5fee93624c4afdf75ee224c3b65aece4817ba5317fd70f49eaf084ea720d73556a6ef3f50079425a773ba3b93805b4524d14057841d4e4336516fdbe80635b
   languageName: node
   linkType: hard
 

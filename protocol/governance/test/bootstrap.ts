@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import hre from 'hardhat';
 
 import type {
