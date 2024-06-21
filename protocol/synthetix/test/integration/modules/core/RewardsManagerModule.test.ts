@@ -22,6 +22,7 @@ describe('RewardsManagerModule', function () {
 
   let Collateral: CollateralMock;
   let RewardDistributor: RewardDistributorMock;
+  let RewardDistributorPoolLevel: RewardDistributorMock;
 
   const rewardAmount = ethers.utils.parseEther('1000');
 
@@ -41,16 +42,24 @@ describe('RewardsManagerModule', function () {
   before('deploy fake reward distributor', async () => {
     const factory = await hre.ethers.getContractFactory('RewardDistributorMock');
     RewardDistributor = await factory.connect(owner).deploy();
+    RewardDistributorPoolLevel = await factory.connect(owner).deploy();
 
     await RewardDistributor.connect(owner).initialize(
       systems().Core.address,
       Collateral.address,
       'Fake Reward Distributor'
     );
+
+    await RewardDistributorPoolLevel.connect(owner).initialize(
+      systems().Core.address,
+      ethers.constants.AddressZero,
+      'Fake Pool Level Distributor'
+    );
   });
 
   before('mint token for the reward distributor', async () => {
     await Collateral.mint(RewardDistributor.address, rewardAmount.mul(1000));
+    await Collateral.mint(RewardDistributorPoolLevel.address, rewardAmount.mul(1000));
   });
 
   before(async () => {
@@ -58,6 +67,10 @@ describe('RewardsManagerModule', function () {
     await systems()
       .Core.connect(owner)
       .registerRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
+    //register pool level rd
+    await systems()
+      .Core.connect(owner)
+      .registerRewardsDistributor(poolId, ethers.constants.AddressZero, RewardDistributor.address);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -561,6 +574,13 @@ describe('RewardsManagerModule', function () {
         0, // timestamp
         0
       );
+      await RewardDistributorPoolLevel.connect(owner).distributeRewards(
+        poolId,
+        collateralAddress(),
+        rewardAmount,
+        0, // timestamp
+        0
+      );
     });
 
     it('only works with owner', async () => {
@@ -688,6 +708,42 @@ describe('RewardsManagerModule', function () {
         });
       });
     });
+
+    describe('successful claim (pool level)', () => {
+      before('claim', async () => {
+        await systems()
+          .Core.connect(user1)
+          .claimRewards(
+            accountId,
+            poolId,
+            ethers.constants.AddressZero,
+            RewardDistributorPoolLevel.address
+          );
+      });
+
+      it('pays out', async () => {
+        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+      });
+
+      it('returns no rewards remaining', async () => {
+        await systems().Core.callStatic.updateRewards(
+          poolId,
+          ethers.constants.AddressZero,
+          accountId
+        );
+
+        const availableRewards = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributorPoolLevel.address
+          );
+
+        assertBn.equal(availableRewards, 0);
+      });
+    });
   });
 
   describe('removeRewardsDistributor()', async () => {
@@ -711,6 +767,14 @@ describe('RewardsManagerModule', function () {
         0, // timestamp
         10
       );
+
+      await RewardDistributor.connect(owner).distributeRewards(
+        poolId,
+        ethers.constants.AddressZero,
+        rewardAmount,
+        0, // timestamp
+        10
+      );
     });
 
     describe('successful invoke', async () => {
@@ -729,6 +793,13 @@ describe('RewardsManagerModule', function () {
         await systems()
           .Core.connect(owner)
           .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
+        await systems()
+          .Core.connect(owner)
+          .removeRewardsDistributor(
+            poolId,
+            ethers.constants.AddressZero,
+            RewardDistributor.address
+          );
       });
 
       it('make sure distributor is removed', async () => {
@@ -736,6 +807,17 @@ describe('RewardsManagerModule', function () {
           RewardDistributor.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
+            rewardAmount,
+            0, // timestamp
+            0
+          ),
+          'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")',
+          systems().Core
+        );
+        await assertRevert(
+          RewardDistributor.connect(owner).distributeRewards(
+            poolId,
+            ethers.constants.AddressZero,
             rewardAmount,
             0, // timestamp
             0
@@ -788,6 +870,17 @@ describe('RewardsManagerModule', function () {
           systems()
             .Core.connect(owner)
             .registerRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
+          'InvalidParameter("distributor", "cant be re-registered")',
+          systems().Core
+        );
+        await assertRevert(
+          systems()
+            .Core.connect(owner)
+            .registerRewardsDistributor(
+              poolId,
+              ethers.constants.AddressZero,
+              RewardDistributor.address
+            ),
           'InvalidParameter("distributor", "cant be re-registered")',
           systems().Core
         );

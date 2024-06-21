@@ -72,7 +72,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         if (rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter("distributor", "is already registered");
         }
-        if (address(pool.vaults[collateralType].rewards[rewardId].distributor) != address(0)) {
+
+				RewardDistribution.Data storage rd = collateralType == address(0) ? pool.rewardsToVaults[rewardId] : pool.vaults[collateralType].rewards[rewardId];
+        if (address(rd.distributor) != address(0)) {
             revert ParameterError.InvalidParameter("distributor", "cant be re-registered");
         }
 
@@ -81,13 +83,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
 
-        if (collateralType == address(0)) {
-            pool.rewardsToVaults[rewardId].distributor = IRewardDistributor(distributor);
-        } else {
-            pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(
-                distributor
-            );
-        }
+				rd.distributor = IRewardDistributor(distributor);
 
         emit RewardsDistributorRegistered(poolId, collateralType, distributor);
     }
@@ -322,7 +318,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address distributor
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
-        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+        SetUtil.Bytes32Set storage rewardIds = collateralType == address(0) ? pool.vaults[collateralType].rewardIds : pool.rewardIds;
 
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
@@ -336,7 +332,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         rewardIds.remove(rewardId);
 
-        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
+        RewardDistribution.Data storage reward = collateralType == address(0) ? pool.vaults[collateralType].rewards[rewardId] : pool.rewardsToVaults[rewardId];
 
         // ensure rewards emission is stopped (users can still come in to claim rewards after the fact)
         reward.rewardPerShareD18 += reward
