@@ -3048,9 +3048,9 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@usecannon/cli": "npm:2.15.2"
     ethers: "npm:^5.7.2"
-    hardhat: "npm:^2.19.0"
+    hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    typechain: "npm:^8.3.2"
+    typechain: "npm:8.3.2"
   languageName: unknown
   linkType: soft
 
@@ -8792,7 +8792,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat@npm:^2.19.0, hardhat@npm:^2.19.5":
+"hardhat@npm:^2.19.5":
   version: 2.22.5
   resolution: "hardhat@npm:2.22.5"
   dependencies:
@@ -16027,7 +16027,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typechain@npm:8.3.2, typechain@npm:^8.3.2":
+"typechain@npm:8.3.2":
   version: 8.3.2
   resolution: "typechain@npm:8.3.2"
   dependencies:
