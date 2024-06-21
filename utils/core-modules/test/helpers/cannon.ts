@@ -6,7 +6,6 @@ import { ethers } from 'ethers';
 import * as viem from 'viem';
 
 import type { ChainBuilderContext } from '@usecannon/builder';
-
 interface NodeOptions {
   port?: number;
   chainId?: number;
@@ -113,11 +112,13 @@ export async function cannonBuild(options: BuildOptions) {
 
 function augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs) {
   const provider = originalProvider.extend(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     traceActions(outputs) as any
   ) as unknown as CannonProvider;
 
   // Monkey patch to call original cannon extended estimateGas fn
   const originalRequest = provider.request;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   provider.request = async function request(args: any) {
     if (args.method === 'eth_estimateGas') {
@@ -131,8 +132,8 @@ function augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs
       });
     }
 
-    return await originalRequest(args);
-  } as any;
+    return originalRequest(args);
+  } as typeof originalRequest;
 
   return provider;
 }

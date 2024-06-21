@@ -99,7 +99,9 @@ interface IWormhole {
 
     function parseVM(bytes memory encodedVM) external pure returns (VM memory vm);
 
-    function quorum(uint numGuardians) external pure returns (uint numSignaturesRequiredForQuorum);
+    function quorum(
+        uint256 numGuardians
+    ) external pure returns (uint256 numSignaturesRequiredForQuorum);
 
     function getGuardianSet(uint32 index) external view returns (GuardianSet memory);
 

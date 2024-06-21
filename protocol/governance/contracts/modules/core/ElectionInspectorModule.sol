@@ -56,7 +56,7 @@ contract ElectionInspectorModule is IElectionInspectorModule {
     function getCandidateVotesInEpoch(
         address candidate,
         uint256 epochIndex
-    ) external view override returns (uint) {
+    ) external view override returns (uint256) {
         return Election.load(epochIndex).candidateVoteTotals[candidate];
     }
 

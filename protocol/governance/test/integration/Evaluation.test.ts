@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
-import { integrationBootstrap, SignerOnChains } from './bootstrap';
+import { integrationBootstrap } from './bootstrap';
 
 describe('Evaluation', function () {
   const { chains } = integrationBootstrap();

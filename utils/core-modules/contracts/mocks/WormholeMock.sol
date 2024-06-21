@@ -36,16 +36,14 @@ contract WormholeMock {
     ) external view returns (IWormhole.VM memory vm, bool valid, string memory reason) {
         (
             ,
-            // uint16 targetChain
-            uint16 emitterChain, // address targetAddress
+            uint16 emitterChain,
             ,
             address emitterAddress,
             uint64 sequence,
-            bytes memory payload, // uint256 receiverValue
+            bytes memory payload,
             ,
 
-        ) = // uint256 gasLimit
-            abi.decode(
+        ) = abi.decode(
                 encodedVM,
                 (uint16, uint16, address, address, uint64, bytes, uint256, uint256)
             );

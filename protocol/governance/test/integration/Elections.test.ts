@@ -869,7 +869,7 @@ describe('SynthetixElectionModule - Elections', () => {
 
                     describe('when the election is resolved', () => {
                       before('resolve', async () => {
-                        const { mothership, satellite1, satellite2 } = chains;
+                        const { mothership } = chains;
                         const rx = await (
                           await mothership.GovernanceProxy.resolve({
                             value: ethers.utils.parseEther('1'),

@@ -28,7 +28,7 @@ library Epoch {
         uint64 endDate;
     }
 
-    function load(uint epochIndex) internal pure returns (Data storage epoch) {
+    function load(uint256 epochIndex) internal pure returns (Data storage epoch) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Epoch", epochIndex));
         assembly {
             epoch.slot := s

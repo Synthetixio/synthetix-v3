@@ -91,7 +91,7 @@ library CrossChain {
         }
 
         if (!success) {
-            uint len = result.length;
+            uint256 len = result.length;
             assembly {
                 revert(add(result, 0x20), len)
             }
@@ -114,7 +114,7 @@ library CrossChain {
         SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
         uint256[] memory supportedChains = supportedNetworks.values();
         uint64[] memory chains = new uint64[](supportedChains.length);
-        for (uint i = 0; i < supportedChains.length; i++) {
+        for (uint256 i = 0; i < supportedChains.length; i++) {
             uint64 chainId = supportedChains[i].to64();
             chains[i] = chainId;
         }
@@ -143,7 +143,7 @@ library CrossChain {
     ) internal returns (uint256 gasTokenUsed) {
         ICcipRouterClient router = self.ccipRouter;
 
-        for (uint i = 0; i < chains.length; i++) {
+        for (uint256 i = 0; i < chains.length; i++) {
             uint64 destChainId = chains[i];
 
             if (destChainId == block.chainid) {

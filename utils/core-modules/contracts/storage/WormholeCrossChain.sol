@@ -4,8 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {IWormhole} from "./../interfaces/IWormhole.sol";
 import {IWormholeRelayer} from "./../interfaces/IWormholeRelayer.sol";
-import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -77,7 +75,7 @@ library WormholeCrossChain {
         SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
         uint256[] memory supportedChains = supportedNetworks.values();
         uint64[] memory chains = new uint64[](supportedChains.length);
-        for (uint i = 0; i < supportedChains.length; i++) {
+        for (uint256 i = 0; i < supportedChains.length; i++) {
             uint64 chainId = supportedChains[i].to64();
             chains[i] = chainId;
         }

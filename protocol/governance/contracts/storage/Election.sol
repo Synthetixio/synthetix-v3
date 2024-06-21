@@ -12,7 +12,7 @@ library Election {
         // True if NFTs have been re-shuffled in this election
         bool resolved;
         // Number of counted ballots in this election
-        uint numEvaluatedBallots;
+        uint256 numEvaluatedBallots;
         // List of nominated candidates in this election
         SetUtil.AddressSet nominees;
         // List of winners of this election (requires evaluation)
@@ -23,7 +23,7 @@ library Election {
         mapping(address => uint256) candidateVoteTotals;
     }
 
-    function load(uint epochIndex) internal pure returns (Data storage election) {
+    function load(uint256 epochIndex) internal pure returns (Data storage election) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", epochIndex));
         assembly {
             election.slot := s

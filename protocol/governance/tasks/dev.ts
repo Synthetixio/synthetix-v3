@@ -1,6 +1,5 @@
 import path from 'node:path';
 import { cannonBuild } from '@synthetixio/core-modules/test/helpers/cannon';
-import { ccipReceive, CcipRouter } from '@synthetixio/core-modules/test/helpers/ccip';
 import { ethers } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -59,9 +58,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
 
     for (const [index, chain] of Object.entries(chains)) {
       const node = nodes[index as unknown as number]!;
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rpcUrl = (node.provider.passThroughProvider as any).connection.url;
+      const rpcUrl = node.provider.connection.url;
 
       console.log();
       console.log(`Chain: ${chain.name}`);
@@ -71,12 +68,12 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
       console.log(`  rpc: ${rpcUrl}`);
       console.log(`  GovernanceProxy: ${node.outputs.contracts?.GovernanceProxy.address}`);
 
-      let wormholeMockAddress: string = node.outputs.contracts?.WormholeMock.address;
+      const wormholeMockAddress = node.outputs.contracts!.WormholeMock.address;
 
       // Ensure govProxy is an instance of an ethers.Contract
       const wormholeMock = new ethers.Contract(
         wormholeMockAddress,
-        node.outputs.contracts?.WormholeMock.abi, // Replace this with the actual ABI of the contract
+        node.outputs.contracts!.WormholeMock.abi as ethers.ContractInterface, // Replace this with the actual ABI of the contract
         node.provider
       );
 
@@ -84,13 +81,11 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
         .connect(node.provider)
         .attach(wormholeMock.address)
         .on('LogMessagePublished', async (evt: ethers.Event) => {
+          const emitterAddress = node.outputs.contracts!.GovernanceProxy.address;
+
           const encodedValue = ethers.utils.defaultAbiCoder.encode(
             ['address', 'uint16', 'uint64'], // Types
-            [
-              node.outputs.contracts?.GovernanceProxy.address,
-              chain.wormholeChainId,
-              evt.args?.sequence,
-            ] // Values
+            [emitterAddress, chain.wormholeChainId, evt.args?.sequence] // Values
           );
 
           const payloadTypes = [
@@ -115,12 +110,12 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
           const targetNode = nodes[targetChainIndex];
 
           const targetWormholeMock = new ethers.Contract(
-            targetNode.outputs.contracts?.WormholeMock.address,
-            targetNode.outputs.contracts?.WormholeMock.abi,
+            targetNode.outputs.contracts!.WormholeMock.address,
+            targetNode.outputs.contracts!.WormholeMock.abi as ethers.ContractInterface,
             targetNode.provider
           );
 
-          await targetWormholeMock.deliver([encodedValue], payload, emitterAddress, []);
+          await targetWormholeMock.deliver([encodedValue], decodedPayload, emitterAddress, []);
         });
     }
 
@@ -155,7 +150,7 @@ async function _spinChain({
   return await cannonBuild({
     cannonfile: path.join(hre.config.paths.root, cannonfile),
     chainId,
-    impersonate: ownerAddress as any,
+    impersonate: ownerAddress,
     wipe: true,
     getArtifact: async (contractName: string) =>
       await hre.run('cannon:get-artifact', { name: contractName }),

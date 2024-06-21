@@ -32,7 +32,7 @@ library Council {
         }
     }
 
-    function newElection(Data storage self) internal returns (uint newElectionId) {
+    function newElection(Data storage self) internal returns (uint256 newElectionId) {
         newElectionId = ++self.currentElectionId;
     }
 

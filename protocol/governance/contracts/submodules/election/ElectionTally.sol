@@ -15,7 +15,7 @@ contract ElectionTally {
 
     uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;
 
-    function _evaluateNextBallotBatch(uint numBallots) internal {
+    function _evaluateNextBallotBatch(uint256 numBallots) internal {
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
         ElectionSettings.Data storage settings = council.getCurrentElectionSettings();
@@ -24,11 +24,11 @@ contract ElectionTally {
             numBallots = _DEFAULT_EVALUATION_BATCH_SIZE;
         }
 
-        uint totalBallots = election.ballotPtrs.length();
+        uint256 totalBallots = election.ballotPtrs.length();
 
-        uint firstBallotIndex = election.numEvaluatedBallots;
+        uint256 firstBallotIndex = election.numEvaluatedBallots;
 
-        uint lastBallotIndex = firstBallotIndex + numBallots;
+        uint256 lastBallotIndex = firstBallotIndex + numBallots;
         if (lastBallotIndex > totalBallots) {
             lastBallotIndex = totalBallots;
         }
@@ -39,12 +39,12 @@ contract ElectionTally {
     function _evaluateBallotRange(
         Election.Data storage election,
         ElectionSettings.Data storage settings,
-        uint fromIndex,
-        uint toIndex
+        uint256 fromIndex,
+        uint256 toIndex
     ) private {
-        uint numSeats = settings.epochSeatCount;
+        uint256 numSeats = settings.epochSeatCount;
 
-        for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
+        for (uint256 ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
             bytes32 ballotPtr = election.ballotPtrs.valueAt(ballotIndex + 1);
             Ballot.Data storage ballot;
 
@@ -59,15 +59,15 @@ contract ElectionTally {
     function _evaluateBallot(
         Election.Data storage election,
         Ballot.Data storage ballot,
-        uint numSeats
+        uint256 numSeats
     ) internal {
-        uint numCandidates = ballot.votedCandidates.length;
+        uint256 numCandidates = ballot.votedCandidates.length;
 
-        for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
+        for (uint256 candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
             address candidate = ballot.votedCandidates[candidateIndex];
 
-            uint currentCandidateVotes = election.candidateVoteTotals[candidate];
-            uint newCandidateVotes = currentCandidateVotes + ballot.amounts[candidateIndex];
+            uint256 currentCandidateVotes = election.candidateVoteTotals[candidate];
+            uint256 newCandidateVotes = currentCandidateVotes + ballot.amounts[candidateIndex];
             election.candidateVoteTotals[candidate] = newCandidateVotes;
 
             _updateWinnerSet(election, candidate, newCandidateVotes, numSeats);
@@ -79,8 +79,8 @@ contract ElectionTally {
     function _updateWinnerSet(
         Election.Data storage election,
         address candidate,
-        uint candidateVotes,
-        uint numSeats
+        uint256 candidateVotes,
+        uint256 numSeats
     ) private {
         SetUtil.AddressSet storage winners = election.winners;
 
@@ -99,7 +99,10 @@ contract ElectionTally {
 
         // Otherwise, replace the winner with the least votes
         // in the set.
-        (address leastVotedWinner, uint leastVotes) = _findWinnerWithLeastVotes(election, winners);
+        (address leastVotedWinner, uint256 leastVotes) = _findWinnerWithLeastVotes(
+            election,
+            winners
+        );
 
         if (candidateVotes > leastVotes) {
             winners.replace(leastVotedWinner, candidate);
@@ -109,14 +112,14 @@ contract ElectionTally {
     function _findWinnerWithLeastVotes(
         Election.Data storage election,
         SetUtil.AddressSet storage winners
-    ) private view returns (address leastVotedWinner, uint leastVotes) {
-        leastVotes = type(uint).max;
+    ) private view returns (address leastVotedWinner, uint256 leastVotes) {
+        leastVotes = type(uint256).max;
 
-        uint numWinners = winners.length();
+        uint256 numWinners = winners.length();
 
         for (uint8 winnerPosition = 1; winnerPosition <= numWinners; winnerPosition++) {
             address winner = winners.valueAt(winnerPosition);
-            uint winnerVotes = election.candidateVoteTotals[winner];
+            uint256 winnerVotes = election.candidateVoteTotals[winner];
 
             if (winnerVotes < leastVotes) {
                 leastVotes = winnerVotes;
