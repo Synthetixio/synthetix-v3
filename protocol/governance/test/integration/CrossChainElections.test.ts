@@ -22,7 +22,7 @@ describe('cross chain election testing', function () {
   const deliverCrossChainCast = async (
     tx: ethers.ContractTransaction,
     emitterAddress: string,
-    emitterChainId: number
+    emitterChainId: string
   ) => {
     const rx = await tx.wait();
 
@@ -164,7 +164,7 @@ describe('cross chain election testing', function () {
 
       const hasVoted = await mothership.GovernanceProxy.hasVoted(
         await voter.mothership.getAddress(),
-        mothership.chainId
+        chains.mothership.chainId
       );
 
       assert.equal(hasVoted, true);
@@ -181,12 +181,12 @@ describe('cross chain election testing', function () {
       await deliverCrossChainCast(
         tx,
         chains.satellite1.GovernanceProxy.address,
-        chains.satellite1.chainId
+        WormholeChainSelector.satellite1
       );
 
       const hasVoted = await mothership.GovernanceProxy.hasVoted(
         await voter.satellite1.getAddress(),
-        satellite1.chainId
+        chains.satellite1.chainId
       );
 
       assert.equal(hasVoted, true);
@@ -203,12 +203,12 @@ describe('cross chain election testing', function () {
       await deliverCrossChainCast(
         tx,
         chains.satellite2.GovernanceProxy.address,
-        chains.satellite2.chainId
+        WormholeChainSelector.satellite2
       );
 
       const hasVoted = await mothership.GovernanceProxy.hasVoted(
         await voter.satellite2.getAddress(),
-        satellite2.chainId
+        chains.satellite2.chainId
       );
 
       assert.equal(hasVoted, true);

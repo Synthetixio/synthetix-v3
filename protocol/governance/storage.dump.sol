@@ -330,13 +330,13 @@ library Election {
     struct Data {
         bool evaluated;
         bool resolved;
-        uint numEvaluatedBallots;
+        uint256 numEvaluatedBallots;
         SetUtil.AddressSet nominees;
         SetUtil.AddressSet winners;
         SetUtil.Bytes32Set ballotPtrs;
         mapping(address => uint256) candidateVoteTotals;
     }
-    function load(uint epochIndex) internal pure returns (Data storage election) {
+    function load(uint256 epochIndex) internal pure returns (Data storage election) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", epochIndex));
         assembly {
             election.slot := s
@@ -377,7 +377,7 @@ library Epoch {
         uint64 votingPeriodStartDate;
         uint64 endDate;
     }
-    function load(uint epochIndex) internal pure returns (Data storage epoch) {
+    function load(uint256 epochIndex) internal pure returns (Data storage epoch) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Epoch", epochIndex));
         assembly {
             epoch.slot := s
