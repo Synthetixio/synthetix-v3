@@ -40,7 +40,8 @@ interface IOrderModule is IBasePerpMarket {
         uint64 commitmentTime,
         int128 sizeDelta,
         uint256 estimatedOrderFee,
-        uint256 estimatedKeeperFee
+        uint256 estimatedKeeperFee,
+        bytes32 trackingCode
     );
 
     /// @notice Emitted when a pending order was successfully settled.
@@ -93,7 +94,8 @@ interface IOrderModule is IBasePerpMarket {
         int128 sizeDelta,
         uint256 limitPrice,
         uint128 keeperFeeBufferUsd,
-        address[] memory hooks
+        address[] memory hooks,
+        bytes32 trackingCode
     ) external;
 
     /// @notice Settles a previously committed order by `accountId` and `marketId`.

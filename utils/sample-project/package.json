@@ -17,10 +17,10 @@
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/hardhat-storage": "workspace:*",
-    "@synthetixio/router": "3.3.7",
+    "@synthetixio/router": "3.4.0",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
-    "hardhat-cannon": "2.13.6",
+    "hardhat-cannon": "2.15.1",
     "solidity-coverage": "^0.8.7"
   }
 }

@@ -68,5 +68,5 @@ describe('CoreProxy', () => {
   test('handleRewardsDistributed', handleRewardsDistributedTest);
   test('handleUSDBurned', handleUSDBurnedTest);
   test('handleUSDMinted', handleUSDMintedTest);
-  test('handleVaultLiquidation  ', handleVaultLiquidationTest);
+  test('handleVaultLiquidation', handleVaultLiquidationTest);
 });

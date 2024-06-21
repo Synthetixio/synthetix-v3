@@ -193,6 +193,7 @@ export const genOrder = async (
     desiredSize?: BigNumber; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
     desiredPriceImpactPercentage?: number;
     desiredHooks?: string[];
+    desiredTrackingCode?: string;
   }
 ) => {
   const { BfpMarketProxy } = systems();
@@ -242,6 +243,7 @@ export const genOrder = async (
     orderFee,
     keeperFee,
     hooks: options?.desiredHooks ?? [],
+    trackingCode: options?.desiredTrackingCode ?? genBytes32(),
   };
 };
 
@@ -283,5 +285,6 @@ export const genOrderFromSizeDelta = async (
     orderFee,
     keeperFee,
     hooks: [] as string[],
+    trackingCode: genBytes32(),
   };
 };
