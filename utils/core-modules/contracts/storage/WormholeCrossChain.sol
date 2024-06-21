@@ -40,6 +40,7 @@ library WormholeCrossChain {
     }
 
     function addEmitter(Data storage self, uint16 chainId, address emitter) internal {
+        // solhint-disable-next-line
         self.registeredEmitters[chainId] = bytes32(uint256(uint160(emitter)));
         emit NewEmitter(chainId, emitter);
     }
@@ -64,6 +65,7 @@ library WormholeCrossChain {
     }
 
     function emitterAddress() public view returns (bytes32) {
+        // solhint-disable-next-line
         return bytes32(uint256(uint160(address(this))));
     }
 

@@ -27,7 +27,7 @@ library ElectionSettings {
         uint64 maxDateAdjustmentTolerance;
     }
 
-    function load(uint epochIndex) internal pure returns (Data storage settings) {
+    function load(uint256 epochIndex) internal pure returns (Data storage settings) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionSettings", epochIndex));
         assembly {
             settings.slot := s
@@ -83,7 +83,7 @@ library ElectionSettings {
         }
     }
 
-    function minimumElectionPeriodDuration(Data storage settings) internal view returns (uint) {
+    function minimumElectionPeriodDuration(Data storage settings) internal view returns (uint256) {
         return _MIN_ELECTION_PERIOD_DURATION + settings.maxDateAdjustmentTolerance;
     }
 

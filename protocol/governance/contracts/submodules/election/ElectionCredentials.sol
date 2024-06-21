@@ -89,7 +89,7 @@ contract ElectionCredentials {
     }
 
     /// @dev cast member address to uint256 to use as tokenId
-    function _getCouncilMemberTokenId(address member) private pure returns (uint) {
+    function _getCouncilMemberTokenId(address member) private pure returns (uint256) {
         // solhint-disable-next-line numcast/safe-cast
         return uint256(uint160(member));
     }

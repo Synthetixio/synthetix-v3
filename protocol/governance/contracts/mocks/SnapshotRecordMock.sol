@@ -25,6 +25,7 @@ contract SnapshotRecordMock is ISnapshotRecord {
         address user,
         uint256 periodId
     ) external view override returns (uint256) {
+        // solhint-disable-next-line
         Period storage period = _periods[uint128(periodId)];
 
         return period.balances[user];

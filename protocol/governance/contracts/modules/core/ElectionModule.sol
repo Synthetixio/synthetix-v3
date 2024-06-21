@@ -170,6 +170,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         uint64[] memory chains = wh.getSupportedNetworks();
         for (uint256 i = 0; i < chains.length; i++) {
+            // solhint-disable-next-line
             if (chains[i] == uint64(wh.getChainIdAt(0))) {
                 currentEpoch.nominationPeriodStartDate = newNominationPeriodStartDate;
                 currentEpoch.votingPeriodStartDate = newVotingPeriodStartDate;
@@ -177,7 +178,9 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             } else {
                 transmit(
                     wh,
+                    // solhint-disable-next-line
                     uint16(chains[i]),
+                    // solhint-disable-next-line
                     toAddress(wh.registeredEmitters[uint16(chains[i])]),
                     abi.encodeWithSelector(
                         this._recvTweakEpochSchedule.selector,
@@ -228,6 +231,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
+        // solhint-disable-next-line
         uint16 chain = uint16(wh.getChainIdAt(0));
 
         transmit(
@@ -392,7 +396,9 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             for (uint256 i = 0; i < chains.length; i++) {
                 transmit(
                     wh,
+                    // solhint-disable-next-line
                     uint16(chains[i]),
+                    // solhint-disable-next-line
                     toAddress(wh.registeredEmitters[uint16(chains[i])]),
                     abi.encodeWithSelector(
                         this._recvTweakEpochSchedule.selector,
@@ -461,7 +467,9 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         for (uint256 i = 0; i < chains.length; i++) {
             transmit(
                 wh,
+                // solhint-disable-next-line
                 uint16(chains[i]),
+                // solhint-disable-next-line
                 toAddress(wh.registeredEmitters[uint16(chains[i])]),
                 abi.encodeWithSelector(
                     this._recvResolve.selector,

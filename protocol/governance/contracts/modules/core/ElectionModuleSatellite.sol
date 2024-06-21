@@ -107,6 +107,7 @@ contract ElectionModuleSatellite is
         );
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        // solhint-disable-next-line
         uint16 targetChain = uint16(wh.getChainIdAt(0));
 
         transmit(
@@ -128,6 +129,7 @@ contract ElectionModuleSatellite is
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
+        // solhint-disable-next-line
         uint16 targetChain = uint16(wh.getChainIdAt(0));
         transmit(
             wh,
