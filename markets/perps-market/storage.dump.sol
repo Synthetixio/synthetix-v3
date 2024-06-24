@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -583,6 +583,8 @@ interface IAsyncOrderSettlementPythModule {
         uint256 synthDeductionIterator;
         uint128[] deductedSynthIds;
         uint256[] deductedAmount;
+        int256 chargedAmount;
+        uint256 newAccountDebt;
     }
 }
 
@@ -694,7 +696,7 @@ library GlobalPerpsMarketConfiguration {
         address feeCollector;
         mapping(address => uint256) referrerShare;
         mapping(uint128 => uint256) __unused_1;
-        uint128[] synthDeductionPriority;
+        uint128[] __unused_2;
         uint256 minKeeperRewardUsd;
         uint256 maxKeeperRewardUsd;
         uint128 maxPositionsPerAccount;
@@ -963,9 +965,4 @@ library BigNumber {
 library Flags {
     bytes32 public constant PERPS_SYSTEM = "perpsSystem";
     bytes32 public constant CREATE_MARKET = "createMarket";
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
 }
