@@ -17,6 +17,7 @@ import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {SettlementHookConfiguration} from "../storage/SettlementHookConfiguration.sol";
+import {SplitAccountConfiguration} from "../storage/SplitAccountConfiguration.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
 
@@ -173,7 +174,7 @@ contract PerpAccountModule is IPerpAccountModule {
             marginValues,
             addresses
         );
-        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(
+        (uint256 im, uint256 mm) = Position.getLiquidationMarginUsd(
             position.size,
             oraclePrice,
             marginValues.collateralUsd,
@@ -229,6 +230,9 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage toPosition = market.positions[toId];
         Position.Data storage fromPosition = market.positions[fromId];
 
+        if (SplitAccountConfiguration.load().whitelisted[msg.sender] != true) {
+            revert ErrorUtil.Unauthorized(msg.sender);
+        }
         // Cannot split more than what's available.
         if (proportion > DecimalMath.UNIT) {
             revert ErrorUtil.AccountSplitProportionTooLarge();
@@ -380,7 +384,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Ensure `toAccount` has enough margin to meet IM.
-        (runtime.toIm, , ) = Position.getLiquidationMarginUsd(
+        (runtime.toIm, ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             runtime.toCollateralUsd,
@@ -399,7 +403,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Ensure we validate remaining `fromAccount` margin > IM when position still remains.
         if (proportion < DecimalMath.UNIT) {
-            (runtime.fromIm, , ) = Position.getLiquidationMarginUsd(
+            (runtime.fromIm, ) = Position.getLiquidationMarginUsd(
                 fromPosition.size,
                 runtime.oraclePrice,
                 runtime.fromCollateralUsd,
@@ -606,7 +610,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 PerpMarketConfiguration.load(),
                 addresses
             );
-        (runtime.im, , ) = Position.getLiquidationMarginUsd(
+        (runtime.im, ) = Position.getLiquidationMarginUsd(
             toPosition.size,
             runtime.oraclePrice,
             runtime.mergedCollateralUsd,

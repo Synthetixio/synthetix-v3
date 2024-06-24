@@ -13,26 +13,20 @@ export default function test(): void {
   const now = new Date(1668448739566).getTime();
   const newAccountCreatedEvent = createAccountCreatedEvent(1, address, now, now - 1000);
   handleAccountCreated(newAccountCreatedEvent);
-  const newPermissionGrantedEvent = createPermissionGrantedEvent(
-    1,
-    Address.fromString(address),
-    Bytes.fromByteArray(Bytes.fromI64(1234)),
-    now + 1000,
-    now
-  );
+  const newPermissionGrantedEvent = createPermissionGrantedEvent(1, address, 1234, now + 1000, now);
   handlePermissionGranted(newPermissionGrantedEvent);
   const newPermissionGrantedEvent2 = createPermissionGrantedEvent(
     1,
-    Address.fromString(address),
-    Bytes.fromByteArray(Bytes.fromI64(1111)),
+    address,
+    1111,
     now + 2000,
     now + 1000
   );
   handlePermissionGranted(newPermissionGrantedEvent2);
   const newPermissionRevokedEvent = createPermissionRevokedEvent(
     1,
-    Address.fromString(address),
-    Bytes.fromByteArray(ByteArray.fromHexString(Address.fromString(address).toHex())),
+    address,
+    1234,
     now + 3000,
     now + 2000
   );

@@ -10,6 +10,7 @@ import {
   bn,
   genAddress,
   genBootstrap,
+  genBytes32,
   genListOf,
   genNumber,
   genOneOf,
@@ -92,6 +93,7 @@ describe('OrderModule', () => {
         order.sizeDelta,
         orderFee,
         orderCommittedArgs?.estimatedKeeperFee ?? 0,
+        `"${order.trackingCode}"`,
       ].join(', ');
 
       await assertEvent(
@@ -122,7 +124,8 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.limitPrice,
           order.keeperFeeBufferUsd,
-          order.hooks
+          order.hooks,
+          genBytes32()
         ),
         'InsufficientMargin()',
         BfpMarketProxy
@@ -185,7 +188,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          order2.trackingCode
         ),
         'InsufficientLiquidity()',
         BfpMarketProxy
@@ -209,7 +213,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          order2.trackingCode
         ),
         'InsufficientLiquidity()',
         BfpMarketProxy
@@ -253,7 +258,8 @@ describe('OrderModule', () => {
           orderExpectedToFail.sizeDelta,
           orderExpectedToFail.limitPrice,
           orderExpectedToFail.keeperFeeBufferUsd,
-          orderExpectedToFail.hooks
+          orderExpectedToFail.hooks,
+          orderExpectedToFail.trackingCode
         ),
         'InsufficientMargin()',
         BfpMarketProxy
@@ -283,7 +289,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          genBytes32()
         ),
         `OrderFound()`,
         BfpMarketProxy
@@ -313,7 +320,8 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.limitPrice,
           order.keeperFeeBufferUsd,
-          order.hooks
+          order.hooks,
+          genBytes32()
         ),
         'MaxMarketSizeExceeded()',
         BfpMarketProxy
@@ -343,7 +351,8 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.limitPrice,
           order.keeperFeeBufferUsd,
-          order.hooks
+          order.hooks,
+          genBytes32()
         ),
         'MaxMarketSizeExceeded()',
         BfpMarketProxy
@@ -379,7 +388,8 @@ describe('OrderModule', () => {
           nilSizeDelta,
           limitPrice,
           keeperFeeBufferUsd,
-          hooks
+          hooks,
+          genBytes32()
         ),
         'NilOrder()',
         BfpMarketProxy
@@ -416,7 +426,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          genBytes32()
         ),
         'CanLiquidatePosition()',
         BfpMarketProxy
@@ -455,7 +466,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          genBytes32()
         ),
         'PositionFlagged()',
         BfpMarketProxy
@@ -483,7 +495,8 @@ describe('OrderModule', () => {
           sizeDelta,
           limitPrice,
           keeperFeeBufferUsd,
-          hooks
+          hooks,
+          genBytes32()
         ),
         `PermissionDenied("${invalidAccountId}"`,
         BfpMarketProxy
@@ -511,7 +524,8 @@ describe('OrderModule', () => {
           sizeDelta,
           limitPrice,
           keeperFeeBufferUsd,
-          hooks
+          hooks,
+          genBytes32()
         ),
         `MarketNotFound("${invalidMarketId}")`,
         BfpMarketProxy
@@ -545,7 +559,8 @@ describe('OrderModule', () => {
           sizeDelta,
           limitPrice,
           keeperFeeBufferUsd,
-          hooks
+          hooks,
+          genBytes32()
         ),
         `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`,
         BfpMarketProxy
@@ -589,7 +604,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          genBytes32()
         ),
         'CanLiquidatePosition()',
         BfpMarketProxy
@@ -635,7 +651,8 @@ describe('OrderModule', () => {
           order2.sizeDelta,
           order2.limitPrice,
           order2.keeperFeeBufferUsd,
-          order2.hooks
+          order2.hooks,
+          genBytes32()
         ),
         'PositionFlagged()',
         BfpMarketProxy
@@ -678,9 +695,10 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.limitPrice,
           order.keeperFeeBufferUsd,
-          order.hooks
+          order.hooks,
+          genBytes32()
         ),
-        'CanLiquidatePosition()',
+        'InsufficientMargin()',
         BfpMarketProxy
       );
     });
@@ -739,7 +757,8 @@ describe('OrderModule', () => {
             order.sizeDelta,
             order.limitPrice,
             order.keeperFeeBufferUsd,
-            hooks
+            hooks,
+            genBytes32()
           ),
           `InvalidHook("${hooks[0]}")`,
           BfpMarketProxy
@@ -765,7 +784,8 @@ describe('OrderModule', () => {
             order.sizeDelta,
             order.limitPrice,
             order.keeperFeeBufferUsd,
-            hooks
+            hooks,
+            genBytes32()
           ),
           `InvalidHook("${hooks[1]}")`,
           BfpMarketProxy
@@ -788,7 +808,8 @@ describe('OrderModule', () => {
             order.sizeDelta,
             order.limitPrice,
             order.keeperFeeBufferUsd,
-            hooks
+            hooks,
+            genBytes32()
           ),
           'MaxHooksExceeded()',
           BfpMarketProxy
@@ -1942,7 +1963,8 @@ describe('OrderModule', () => {
           failingOrder.sizeDelta,
           failingOrder.limitPrice,
           failingOrder.keeperFeeBufferUsd,
-          []
+          [],
+          genBytes32()
         ),
         'InsufficientMargin()',
         BfpMarketProxy
@@ -2046,7 +2068,7 @@ describe('OrderModule', () => {
         BfpMarketProxy.connect(keeper()).settleOrder(mainTrader.accountId, marketId, updateData, {
           value: updateFee,
         }),
-        'CanLiquidatePosition()',
+        'InsufficientMargin()',
         BfpMarketProxy
       );
     });

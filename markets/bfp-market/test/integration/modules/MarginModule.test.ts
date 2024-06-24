@@ -822,6 +822,8 @@ describe('MarginModule', async () => {
             desiredLeverage: 5,
           })
         );
+        // Payback debt for fees
+        await payDebt(bs, marketId, trader);
 
         const { im, remainingMarginUsd } = await BfpMarketProxy.getPositionDigest(
           trader.accountId,
@@ -975,6 +977,9 @@ describe('MarginModule', async () => {
         // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
 
+        // Payback debt for fees
+        await payDebt(bs, marketId, trader);
+
         const { im, remainingMarginUsd } = await BfpMarketProxy.getPositionDigest(
           trader.accountId,
           marketId
@@ -1003,7 +1008,7 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert when remaining discounted collateral < debt', async () => {
+      it('should revert when user has debt', async () => {
         const { BfpMarketProxy } = systems();
 
         const trader = genOneOf(traders());
@@ -1034,16 +1039,9 @@ describe('MarginModule', async () => {
         // Set market price to be at a loss.
         await market.aggregator().mockSetCurrentPrice(bn(3300));
 
+        // Close order so we now have some debt
         const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
         await commitAndSettle(bs, marketId, trader, closeOrder);
-
-        // Get deposited collateral and attempt to withdraw the full amount.
-        const { depositedCollaterals } = await BfpMarketProxy.getAccountDigest(accountId, marketId);
-        const depositedCollateral = depositedCollaterals.find(
-          (c) => c.collateralAddress === collateral.address()
-        );
-        const depositedCollateralAmount = depositedCollateral?.available ?? bn(0);
-        assertBn.gt(depositedCollateralAmount, bn(0));
 
         // Attempt to withdraw all collateral even though there's debt on the account.
         await assertRevert(
@@ -1051,60 +1049,9 @@ describe('MarginModule', async () => {
             accountId,
             marketId,
             collateral.address(),
-            depositedCollateralAmount.mul(-1)
+            bn(-1)
           ),
-          `InsufficientMargin()`,
-          BfpMarketProxy
-        );
-      });
-
-      it('should revert when remaining discounted collateral < debt due to keeper fees', async () => {
-        const { BfpMarketProxy } = systems();
-
-        const trader = genOneOf(traders());
-        const accountId = trader.accountId;
-        const collateral = genOneOf(collateralsWithoutSusd());
-
-        // Market ETH-PERP and set price at $3500
-        const market = genOneOf(markets());
-        const marketId = market.marketId();
-        await market.aggregator().mockSetCurrentPrice(bn(3500)); // market.getOraclePrice()
-
-        const { collateralDepositAmount, collateralPrice } = await depositMargin(
-          bs,
-          genTrader(bs, {
-            desiredCollateral: collateral,
-            desiredTrader: trader,
-            desiredMarket: market,
-          })
-        );
-
-        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount.div(2), {
-          desiredLeverage: 10,
-          desiredSide: 1,
-        });
-        await commitAndSettle(bs, marketId, trader, openOrder);
-
-        // Set market price to be at a loss.
-        await market.aggregator().mockSetCurrentPrice(bn(3300));
-
-        const closeOrder = await genOrderFromSizeDelta(bs, market, openOrder.sizeDelta.mul(-1));
-        await commitAndSettle(bs, marketId, trader, closeOrder);
-        const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
-          trader.accountId,
-          marketId
-        );
-        const liqMarginReward = liqMarginRewardUsd.div(collateralPrice);
-        // Attempt to withdraw collateral - liqMarginReward, this should cause a revert due to the keeper rewards.
-        const withdrawAmount = collateralDepositAmount.sub(liqMarginReward).mul(-1);
-        await assertRevert(
-          BfpMarketProxy.connect(trader.signer).modifyCollateral(
-            accountId,
-            marketId,
-            collateral.address(),
-            withdrawAmount
-          ),
-          `InsufficientMargin()`,
+          `DebtFound("${trader.accountId}", "${marketId}")`,
           BfpMarketProxy
         );
       });
@@ -1115,18 +1062,21 @@ describe('MarginModule', async () => {
           await depositMargin(bs, genTrader(bs));
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: -1,
-          desiredLeverage: 8,
+          desiredLeverage: 7,
         });
 
         // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
+
+        // Payback debt for order fees
+        await payDebt(bs, marketId, trader);
 
         await assertRevert(
           BfpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
             collateral.address(),
-            collateralDepositAmount.mul(-1)
+            wei(collateralDepositAmount).mul(-0.9).toBN()
           ),
           `CanLiquidatePosition()`,
           BfpMarketProxy
@@ -1144,6 +1094,8 @@ describe('MarginModule', async () => {
 
         // Open leveraged position.
         await commitAndSettle(bs, marketId, trader, order);
+        // Payback debt for order fees
+        await payDebt(bs, marketId, trader);
 
         // Change market price to make position liquidatable.
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
@@ -2740,8 +2692,14 @@ describe('MarginModule', async () => {
         genTrader(bs, { desiredMarginUsdDepositAmount })
       );
 
+      const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
+        trader.accountId,
+        marketId
+      );
+      const expectedWithdrawableMargin = bn(desiredMarginUsdDepositAmount).sub(liqMarginRewardUsd);
       const margin = await BfpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
-      assertBn.near(margin, bn(desiredMarginUsdDepositAmount), bn(0.000001));
+
+      assertBn.near(margin, expectedWithdrawableMargin, bn(0.000001));
     });
 
     it('should return the full collateralUsd value minus debt when no position open (concrete)', async () => {
@@ -2782,7 +2740,11 @@ describe('MarginModule', async () => {
       assertBn.gt(debtUsd, bn(0));
 
       const margin = await BfpMarketProxy.getWithdrawableMargin(trader.accountId, marketId);
-      const expectedMargin = collateralUsd.sub(debtUsd);
+      const liqMarginRewardUsd = await BfpMarketProxy.getMarginLiquidationOnlyReward(
+        trader.accountId,
+        marketId
+      );
+      const expectedMargin = collateralUsd.sub(liqMarginRewardUsd).sub(debtUsd);
 
       assertBn.equal(margin, expectedMargin);
     });

@@ -667,6 +667,7 @@ contract OrderModule {
     struct Runtime_commitOrder {
         uint256 oraclePrice;
         uint64 commitmentTime;
+        AddressRegistry.Data addresses;
     }
     struct Runtime_settleOrder {
         uint256 pythPrice;
@@ -942,6 +943,21 @@ library SettlementHookConfiguration {
         address[] whitelistedHookAddresses;
     }
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
+        assembly {
+            d.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/SplitAccountConfiguration.sol:SplitAccountConfiguration
+library SplitAccountConfiguration {
+    bytes32 private constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SplitAccountConfiguration"));
+    struct GlobalData {
+        mapping(address => bool) whitelisted;
+        address[] whitelistedAddresses;
+    }
+    function load() internal pure returns (SplitAccountConfiguration.GlobalData storage d) {
         bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s

@@ -1,5 +1,5 @@
 import { assert, createMockedFunction } from 'matchstick-as';
-import { Address, BigInt, ethereum, log } from '@graphprotocol/graph-ts';
+import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { address, defaultGraphContractAddress } from './constants';
 import { handleDelegationUpdated } from '../mainnet';
 import { createDelegationUpdateEvent } from './event-factories';
@@ -7,12 +7,15 @@ import { createDelegationUpdateEvent } from './event-factories';
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const accountId = 1;
+  const poolId = 1;
+  const amount = 2323;
   const newDelegationUpdatedEvent = createDelegationUpdateEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(2323),
-    BigInt.fromI32(10),
+    accountId,
+    poolId,
+    address,
+    amount,
+    10,
     now,
     now - 1000
   );
@@ -46,13 +49,13 @@ export default function test(): void {
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '2323');
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_type', address);
   assert.fieldEquals('Vault', `1-${address}`, 'pool', '1');
-
+  const newAmount = 10000;
   const newDelegatioNUpdatedEvent2 = createDelegationUpdateEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(10000),
-    BigInt.fromI32(10),
+    accountId,
+    poolId,
+    address,
+    newAmount,
+    10,
     now + 1000,
     now
   );
@@ -64,12 +67,14 @@ export default function test(): void {
   assert.fieldEquals('Vault', `1-${address}`, 'updated_at_block', now.toString());
   assert.fieldEquals('Vault', `1-${address}`, 'collateral_amount', '10000');
 
+  const newAccountId = 2;
+  const amountFromNewAccount = 5000;
   const newDelegationUpdatedEvent3 = createDelegationUpdateEvent(
-    BigInt.fromI32(2),
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(5000),
-    BigInt.fromI32(10),
+    newAccountId,
+    poolId,
+    address,
+    amountFromNewAccount,
+    10,
     now + 1000,
     now
   );

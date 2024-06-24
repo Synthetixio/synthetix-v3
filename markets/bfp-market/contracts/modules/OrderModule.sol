@@ -61,6 +61,7 @@ contract OrderModule is IOrderModule {
     struct Runtime_commitOrder {
         uint256 oraclePrice;
         uint64 commitmentTime;
+        AddressRegistry.Data addresses;
     }
 
     struct Runtime_settleOrder {
@@ -216,7 +217,8 @@ contract OrderModule is IOrderModule {
         int128 sizeDelta,
         uint256 limitPrice,
         uint128 keeperFeeBufferUsd,
-        address[] memory hooks
+        address[] memory hooks,
+        bytes32 trackingCode
     ) external {
         FeatureFlag.ensureAccessToFeature(Flags.COMMIT_ORDER);
 
@@ -224,9 +226,10 @@ contract OrderModule is IOrderModule {
             accountId,
             AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
         );
+        Runtime_commitOrder memory runtime;
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+        runtime.addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
@@ -238,9 +241,7 @@ contract OrderModule is IOrderModule {
 
         validateOrderHooks(hooks);
 
-        Runtime_commitOrder memory runtime;
-
-        runtime.oraclePrice = market.getOraclePrice(addresses);
+        runtime.oraclePrice = market.getOraclePrice(runtime.addresses);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
@@ -267,7 +268,7 @@ contract OrderModule is IOrderModule {
             market,
             tradeParams,
             marketConfig,
-            addresses
+            runtime.addresses
         );
 
         runtime.commitmentTime = block.timestamp.to64();
@@ -281,7 +282,8 @@ contract OrderModule is IOrderModule {
             runtime.commitmentTime,
             sizeDelta,
             trade.orderFee,
-            trade.keeperFee
+            trade.keeperFee,
+            trackingCode
         );
     }
 
@@ -380,7 +382,6 @@ contract OrderModule is IOrderModule {
                 // fees and we want to avoid attributing price PnL (due to pd adjusted oracle price) now as its already
                 // tracked in the new position price PnL.
                 //
-
                 // The value passed is then just realized profits/losses of previous position, including fees paid during
                 // this order settlement.
                 trade.newMarginUsd.toInt() - trade.collateralUsd.toInt(),

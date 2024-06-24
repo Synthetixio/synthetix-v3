@@ -4,9 +4,11 @@ import {
   handleMarketUsdDeposited,
   handleMarketUsdWithdrawn,
 } from '../mainnet';
-import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
-import { createMarketUsdDepositedEvent } from './event-factories/createMarketUsdDepositedEvent';
-import { createMarketUsdWithdrawnEvent } from './event-factories/createMarketUsdWithdrawnEvent';
+import {
+  createMarketUsdWithdrawnEvent,
+  createMarketRegisteredEvent,
+  createMarketUsdDepositedEvent,
+} from './event-factories';
 
 export default function test(): void {
   assert.entityCount('Market', 0);
