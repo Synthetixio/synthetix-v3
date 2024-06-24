@@ -52,7 +52,7 @@ describe('RewardsManagerModule', function () {
 
     await RewardDistributorPoolLevel.connect(owner).initialize(
       systems().Core.address,
-      ethers.constants.AddressZero,
+      Collateral.address,
       'Fake Pool Level Distributor'
     );
   });
@@ -70,7 +70,11 @@ describe('RewardsManagerModule', function () {
     //register pool level rd
     await systems()
       .Core.connect(owner)
-      .registerRewardsDistributor(poolId, ethers.constants.AddressZero, RewardDistributor.address);
+      .registerRewardsDistributor(
+        poolId,
+        ethers.constants.AddressZero,
+        RewardDistributorPoolLevel.address
+      );
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -576,12 +580,14 @@ describe('RewardsManagerModule', function () {
       );
       await RewardDistributorPoolLevel.connect(owner).distributeRewards(
         poolId,
-        collateralAddress(),
+        ethers.constants.AddressZero,
         rewardAmount,
         0, // timestamp
         0
       );
     });
+
+    const claimRestore = snapshotCheckpoint(provider);
 
     it('only works with owner', async () => {
       await assertRevert(
@@ -623,6 +629,7 @@ describe('RewardsManagerModule', function () {
     });
 
     describe('successful claim', () => {
+      before(claimRestore);
       before('claim', async () => {
         await systems()
           .Core.connect(user1)
@@ -710,15 +717,12 @@ describe('RewardsManagerModule', function () {
     });
 
     describe('successful claim (pool level)', () => {
+      before(claimRestore);
       before('claim', async () => {
         await systems()
           .Core.connect(user1)
-          .claimRewards(
-            accountId,
-            poolId,
-            ethers.constants.AddressZero,
-            RewardDistributorPoolLevel.address
-          );
+          // NOTE: we use `collateralAddress` instead of `ethers.utils.AddressZero` here becuase here the claim function will look at the distributor address to determine if its pool level
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributorPoolLevel.address);
       });
 
       it('pays out', async () => {
@@ -726,12 +730,6 @@ describe('RewardsManagerModule', function () {
       });
 
       it('returns no rewards remaining', async () => {
-        await systems().Core.callStatic.updateRewards(
-          poolId,
-          ethers.constants.AddressZero,
-          accountId
-        );
-
         const availableRewards = await systems()
           .Core.connect(user1)
           .getAvailableRewards(
@@ -742,6 +740,19 @@ describe('RewardsManagerModule', function () {
           );
 
         assertBn.equal(availableRewards, 0);
+
+        await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+
+        const availableRewards2 = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributorPoolLevel.address
+          );
+
+        assertBn.equal(availableRewards2, 0);
       });
     });
   });
@@ -798,7 +809,7 @@ describe('RewardsManagerModule', function () {
           .removeRewardsDistributor(
             poolId,
             ethers.constants.AddressZero,
-            RewardDistributor.address
+            RewardDistributorPoolLevel.address
           );
       });
 
@@ -879,7 +890,7 @@ describe('RewardsManagerModule', function () {
             .registerRewardsDistributor(
               poolId,
               ethers.constants.AddressZero,
-              RewardDistributor.address
+              RewardDistributorPoolLevel.address
             ),
           'InvalidParameter("distributor", "cant be re-registered")',
           systems().Core

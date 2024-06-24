@@ -48,9 +48,11 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address distributor
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
-        SetUtil.Bytes32Set storage rewardIds = collateralType == address(0)
-            ? pool.rewardIds
-            : pool.vaults[collateralType].rewardIds;
+        (
+            bytes32 rewardId,
+            SetUtil.Bytes32Set storage rewardIds,
+            RewardDistribution.Data storage rd
+        ) = _getRewardStorage(poolId, collateralType, distributor);
 
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
@@ -67,13 +69,10 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("distributor", "invalid interface");
         }
 
-        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
-
         if (rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter("distributor", "is already registered");
         }
 
-				RewardDistribution.Data storage rd = collateralType == address(0) ? pool.rewardsToVaults[rewardId] : pool.vaults[collateralType].rewards[rewardId];
         if (address(rd.distributor) != address(0)) {
             revert ParameterError.InvalidParameter("distributor", "cant be re-registered");
         }
@@ -83,7 +82,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
 
-				rd.distributor = IRewardDistributor(distributor);
+        rd.distributor = IRewardDistributor(distributor);
 
         emit RewardsDistributorRegistered(poolId, collateralType, distributor);
     }
@@ -160,9 +159,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
     ) external view returns (uint256) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
+        RewardDistribution.Data storage reward = vault.rewards[rewardId];
 
-        if (address(vault.rewards[rewardId].distributor) != distributor) {
-            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
+        if (address(reward.distributor) != distributor) {
+            // might be pool level RD
+            rewardId = _getRewardId(poolId, address(0), distributor);
+            reward = Pool.load(poolId).rewardsToVaults[rewardId];
+            if (address(reward.distributor) != distributor) {
+                revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
+            }
         }
 
         return vault.getReward(accountId, rewardId);
@@ -182,9 +187,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
+        RewardDistribution.Data storage reward = vault.rewards[rewardId];
 
-        if (address(vault.rewards[rewardId].distributor) != distributor) {
-            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
+        if (address(reward.distributor) != distributor) {
+            // might be pool level RD
+            rewardId = _getRewardId(poolId, address(0), distributor);
+            reward = vault.rewards[rewardId];
+            if (address(Pool.load(poolId).rewardsToVaults[rewardId].distributor) != distributor) {
+                revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
+            }
         }
 
         uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
@@ -192,16 +203,19 @@ contract RewardsManagerModule is IRewardsManagerModule {
             accountId.toBytes32()
         );
 
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
         uint256 rewardAmount = vault.updateReward(
             Vault.PositionSelector(accountId, poolId, collateralType),
             rewardId,
+            distributor,
             totalSharesD18,
             actorSharesD18
         );
 
-        RewardDistribution.Data storage reward = vault.rewards[rewardId];
         reward.claimStatus[accountId].pendingSendD18 = 0;
-        bool success = vault.rewards[rewardId].distributor.payout(
+        bool success = IRewardDistributor(distributor).payout(
             accountId,
             poolId,
             collateralType,
@@ -233,10 +247,13 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint32 duration
     ) internal {
         Pool.Data storage pool = Pool.load(poolId);
-        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+        (
+            bytes32 rewardId,
+            SetUtil.Bytes32Set storage rewardIds,
+            RewardDistribution.Data storage rd
+        ) = _getRewardStorage(poolId, collateralType, rewardsDistributor);
 
         // Identify the reward id for the caller, and revert if it is not a registered reward distributor.
-        bytes32 rewardId = _getRewardId(poolId, collateralType, rewardsDistributor);
         if (!rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter(
                 "poolId-collateralType-distributor",
@@ -244,9 +261,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             );
         }
 
-        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
-
-        reward.rewardPerShareD18 += reward
+        rd.rewardPerShareD18 += rd
             .distribute(
                 // if the rewards to be distributed are at the pool level, we want to use the pool distribution (trickle down happens later)
                 collateralType == address(0)
@@ -318,13 +333,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address distributor
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
-        SetUtil.Bytes32Set storage rewardIds = collateralType == address(0) ? pool.vaults[collateralType].rewardIds : pool.rewardIds;
+        (
+            bytes32 rewardId,
+            SetUtil.Bytes32Set storage rewardIds,
+            RewardDistribution.Data storage rd
+        ) = _getRewardStorage(poolId, collateralType, distributor);
 
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
-
-        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         if (!rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter("distributor", "is not registered");
@@ -332,12 +349,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         rewardIds.remove(rewardId);
 
-        RewardDistribution.Data storage reward = collateralType == address(0) ? pool.vaults[collateralType].rewards[rewardId] : pool.rewardsToVaults[rewardId];
-
         // ensure rewards emission is stopped (users can still come in to claim rewards after the fact)
-        reward.rewardPerShareD18 += reward
+        rd.rewardPerShareD18 += rd
             .distribute(
-                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+                collateralType == address(0)
+                    ? pool.vaultsDebtDistribution
+                    : pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
                 0,
                 0,
                 0
@@ -346,5 +363,30 @@ contract RewardsManagerModule is IRewardsManagerModule {
             .to128();
 
         emit RewardsDistributorRemoved(poolId, collateralType, distributor);
+    }
+
+    function _getRewardStorage(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    )
+        internal
+        view
+        returns (
+            bytes32 rewardId,
+            SetUtil.Bytes32Set storage rewardIds,
+            RewardDistribution.Data storage reward
+        )
+    {
+        Pool.Data storage pool = Pool.load(poolId);
+        rewardId = _getRewardId(poolId, collateralType, distributor);
+
+        if (collateralType == address(0)) {
+            rewardIds = pool.rewardIds;
+            reward = pool.rewardsToVaults[rewardId];
+        } else {
+            rewardIds = pool.vaults[collateralType].rewardIds;
+            reward = pool.vaults[collateralType].rewards[rewardId];
+        }
     }
 }

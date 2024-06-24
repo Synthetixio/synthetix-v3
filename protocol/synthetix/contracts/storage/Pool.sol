@@ -15,6 +15,8 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *

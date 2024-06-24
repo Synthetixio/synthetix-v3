@@ -7,6 +7,8 @@ import "./RewardDistribution.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
  *
@@ -153,12 +155,20 @@ library Vault {
 
             RewardDistribution.Data storage dist = self.rewards[rewardIds[i]];
 
-            if (address(dist.distributor) == address(0)) {
+            address distributorAddress = address(dist.distributor);
+            if (distributorAddress == address(0)) {
                 continue;
             }
 
-            distributors[i] = address(dist.distributor);
-            rewards[i] = updateReward(self, pos, rewardIds[i], totalSharesD18, actorSharesD18);
+            distributors[i] = distributorAddress;
+            rewards[i] = updateReward(
+                self,
+                pos,
+                rewardIds[i],
+                distributorAddress,
+                totalSharesD18,
+                actorSharesD18
+            );
         }
     }
 
@@ -177,10 +187,6 @@ library Vault {
         );
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
-
-        if (address(dist.distributor) == address(0)) {
-            revert RewardDistributorNotFound();
-        }
 
         uint256 currentRewardPerShare = dist.rewardPerShareD18;
 
@@ -202,16 +208,13 @@ library Vault {
         Data storage self,
         PositionSelector memory pos,
         bytes32 rewardId,
+        address distributor,
         uint256 totalSharesD18,
         uint256 actorSharesD18
     ) internal returns (uint256) {
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
-        if (address(dist.distributor) == address(0)) {
-            revert RewardDistributorNotFound();
-        }
-
-        dist.distributor.onPositionUpdated(
+        IRewardDistributor(distributor).onPositionUpdated(
             pos.accountId,
             pos.poolId,
             pos.collateralType,
