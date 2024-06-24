@@ -22,7 +22,7 @@ export enum ChainSelector {
 }
 
 export enum WormholeChainSelector {
-  mothership = '13370',
+  mothership = '10002',
   satellite1 = '10005',
   satellite2 = '43113',
 }
@@ -91,6 +91,11 @@ before(`setup integration chains`, async function () {
   const mothership = await spinChain<Proxies['mothership']>({
     networkName: 'sepolia',
     cannonfile: 'cannonfile.test.toml',
+    cannonfileSettings: {
+      wormhole_chain_id: '10002',
+      wormhole_core: '0xBc9C458D6294a40599FB3485fB079429C0732833',
+      wormhole_relayer: '0x7F3f57D17088c062236883428CCBC254933A776C',
+    },
     typechainFolder,
     writeDeployments,
     chainSlector: ChainSelector.mothership,
@@ -113,15 +118,25 @@ before(`setup integration chains`, async function () {
     spinChain<Proxies['satellite1']>({
       networkName: 'optimistic-sepolia',
       cannonfile: 'cannonfile.satellite.test.toml',
-      cannonfileSettings,
+      cannonfileSettings: {
+        ...cannonfileSettings,
+        wormhole_chain_id: '10005',
+        wormhole_core: '0x41e689A993322c2B3dE4569084D6F979dc39f095',
+        wormhole_relayer: '0xb75cba272fe03534d7859FEF56418EBC5C6BBbED',
+      },
       typechainFolder,
       writeDeployments,
       chainSlector: ChainSelector.satellite1,
     }),
     spinChain<Proxies['satellite2']>({
       networkName: 'avalanche-fuji',
-      cannonfile: 'cannonfile.avalanche-fuji-satelite.test.toml',
-      cannonfileSettings,
+      cannonfile: 'cannonfile.satellite.test.toml',
+      cannonfileSettings: {
+        ...cannonfileSettings,
+        wormhole_chain_id: '43113',
+        wormhole_core: '0x40342Cb59035F004043DE1b30C04A69D06C900A2',
+        wormhole_relayer: '0xd0cB7Be9789f328Db6B67C80564ee4c54FA9200e',
+      },
       typechainFolder,
       writeDeployments,
       chainSlector: ChainSelector.satellite2,

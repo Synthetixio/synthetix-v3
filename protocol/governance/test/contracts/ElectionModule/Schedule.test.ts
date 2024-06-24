@@ -23,7 +23,7 @@ describe('ElectionModule - schedule', () => {
 
   before('register emitters', async function () {
     await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
-      [13370],
+      [10002],
       [c.GovernanceProxy.address]
     );
   });

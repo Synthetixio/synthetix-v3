@@ -13,7 +13,7 @@ describe('Evaluation', function () {
 
   before('register emitters', async function () {
     await chains.mothership.GovernanceProxy.connect(chains.mothership.signer).setRegisteredEmitters(
-      [13370],
+      [10002],
       [chains.mothership.GovernanceProxy.address]
     );
   });
