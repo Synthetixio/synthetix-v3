@@ -1,5 +1,4 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handleVaultLiquidation } from '../mainnet';
 import { createVaultLiquidationEvent } from './event-factories';
@@ -7,14 +6,20 @@ import { createVaultLiquidationEvent } from './event-factories';
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+
+  const poolId = 1;
+  const debtLiquidated = 300;
+  const collateralLiquidated = 200;
+  const amountRewarded = 100;
+  const liquidatedAsAccountId = 10;
   const newVaultLiquidationEvent = createVaultLiquidationEvent(
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    BigInt.fromI32(300),
-    BigInt.fromI32(200),
-    BigInt.fromI32(100),
-    BigInt.fromI32(10),
-    Address.fromString(address2),
+    poolId,
+    address,
+    debtLiquidated,
+    collateralLiquidated,
+    amountRewarded,
+    liquidatedAsAccountId,
+    address2,
     now,
     now - 1000
   );

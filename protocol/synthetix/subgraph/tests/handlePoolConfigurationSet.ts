@@ -1,8 +1,11 @@
 import { assert } from 'matchstick-as';
 import { ethereum, store } from '@graphprotocol/graph-ts';
 import { handleMarketCreated, handlePoolConfigurationSet, handlePoolCreated } from '../mainnet';
-import { createPoolConfigurationSetEvent, createPoolCreatedEvent } from './event-factories';
-import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
+import {
+  createPoolConfigurationSetEvent,
+  createPoolCreatedEvent,
+  createMarketRegisteredEvent,
+} from './event-factories';
 
 export default function test(): void {
   const sender = '0x6942000000000000000000000000000000000000';

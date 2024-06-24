@@ -20,31 +20,23 @@ export default function test(): void {
   const newPoolEvent = createPoolCreatedEvent(1, address, now, now - 1000);
   handlePoolCreated(newPoolEvent);
 
-  const rewardsClaimed = createRewardsClaimedEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(2),
-    Address.fromString(address),
-    Address.fromString(address2),
-    BigInt.fromI32(500),
-    now,
-    now - 1000
-  );
+  const rewardsClaimed = createRewardsClaimedEvent(1, 2, address, address2, 500, now, now - 1000);
 
   const rewardsDistributedEvent = createRewardsDistributedEvent(
-    BigInt.fromI32(2),
-    Address.fromString(address),
-    Address.fromString(address2),
-    BigInt.fromI32(200),
-    BigInt.fromI64(now),
-    BigInt.fromI32(300),
+    2,
+    address,
+    address2,
+    200,
+    now,
+    300,
     now,
     now - 1000
   );
 
   const rewardsDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    Address.fromString(address2),
+    1,
+    address,
+    address2,
     now,
     now - 1000
   );
@@ -117,11 +109,11 @@ export default function test(): void {
     '500'
   );
   const rewardsClaimed2 = createRewardsClaimedEvent(
-    BigInt.fromI32(1),
-    BigInt.fromI32(2),
-    Address.fromString(address),
-    Address.fromString(address2),
-    BigInt.fromI32(800),
+    1,
+    2,
+    address,
+    address2,
+    800,
     now + 1000,
     now,
     2

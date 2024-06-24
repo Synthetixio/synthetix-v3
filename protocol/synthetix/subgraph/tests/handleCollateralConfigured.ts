@@ -1,32 +1,42 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
+import { store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handleCollateralConfigured } from '../mainnet';
-import { createCollateralConfiguredEvent } from './event-factories';
+import { createCollateralConfiguredEvent } from './event-factories/createCollateralConfiguredEvent';
 
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const issuanceRatioEventOne = 200;
+  const liquidationRatioEventOne = 50;
+  const liquidationRewardsEventOne = 90;
+  const oracleNodeId = 10;
+  const minDelegationEventOne = 500;
+
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
-    Address.fromString(address),
+    address,
     true,
-    BigInt.fromI32(200),
-    BigInt.fromI32(50),
-    BigInt.fromI32(90),
-    Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(10))),
-    BigInt.fromI32(500),
+    issuanceRatioEventOne,
+    liquidationRatioEventOne,
+    liquidationRewardsEventOne,
+    oracleNodeId,
+    minDelegationEventOne,
     now,
     now - 1000
   );
   handleCollateralConfigured(newCollateralConfiguredEvent);
+  const issuanceRatioEventTwo = 300;
+  const liquidationRatioEventTwo = 60;
+  const liquidationRewardsEventTwo = 80;
+  const minDelegationEventTwo = 400;
   const newCollateralConfiguredEvent2 = createCollateralConfiguredEvent(
-    Address.fromString(address),
+    address,
     true,
-    BigInt.fromI32(300),
-    BigInt.fromI32(60),
-    BigInt.fromI32(80),
-    Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(10))),
-    BigInt.fromI32(400),
+    issuanceRatioEventTwo,
+    liquidationRatioEventTwo,
+    liquidationRewardsEventTwo,
+    oracleNodeId,
+    minDelegationEventTwo,
     now + 1000,
     now
   );
