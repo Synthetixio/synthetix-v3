@@ -16,7 +16,7 @@ contract CoreProxyMock {
         uint32 // duration_
     ) public returns (uint256) {
         amount = amount_;
-				return 0;
+        return 0;
     }
 
     address public poolOwner;

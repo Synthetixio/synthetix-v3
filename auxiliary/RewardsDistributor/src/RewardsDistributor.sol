@@ -128,9 +128,9 @@ contract RewardsDistributor is IRewardDistributor {
             duration_
         );
 
-				rewardedAmount = rewardedAmount + amount_ - cancelledAmount;
+        rewardedAmount = rewardedAmount + amount_ - cancelledAmount;
 
-				// we check at the end because its the easiest way to verify that the end state is ok
+        // we check at the end because its the easiest way to verify that the end state is ok
         uint256 balance = IERC20(payoutToken).balanceOf(address(this));
         if (rewardedAmount > balance) {
             revert NotEnoughBalance(amount_, balance);

@@ -58,7 +58,6 @@ library RewardDistribution {
          * @dev Date on which this distribution entry was last updated.
          */
         uint32 lastUpdate;
-
         /**
          * @dev Value to be distributed as rewards in a scheduled form. This value is set to `scheduledValueD18` after the start + duration is elapsed
          */
@@ -124,18 +123,16 @@ library RewardDistribution {
             self.lastUpdate = 0;
 
             diffD18 += updateEntry(self, totalSharesD18);
-				} else {
-					if (self.start + self.duration > start) {
+        } else if (self.start + self.duration <= start) {
+            self.nextScheduledValueD18 = amountD18.to128();
+            self.nextStart = start;
+            self.nextDuration = duration;
+        } else {
             revert ParameterError.InvalidParameter(
                 "start",
                 "must be after currently active distribution"
             );
-					}
-
-						self.nextScheduledValueD18 = amountD18.to128();
-						self.nextStart = start;
-						self.nextDuration = duration;
-				}
+        }
     }
 
     /**
@@ -249,19 +246,19 @@ library RewardDistribution {
                 curUpdateDistributedD18 =
                     (curUpdateDistributedD18 * (curTime - self.start).toInt()) /
                     self.duration.toInt();
-						} else {
-							// if we have reached the end of the distribution, we should cycle through to the next distribution (if any)
-							curUpdateDistributedD18 = self.scheduledValueD18;
-							self.start = self.nextStart;
-							self.duration = self.nextDuration;
-							self.scheduledValueD18 = self.nextScheduledValueD18;
-							self.nextStart = 0;
-							self.nextDuration = 0;
-							self.nextScheduledValueD18 = 0;
+            } else {
+                // if we have reached the end of the distribution, we should cycle through to the next distribution (if any)
+                curUpdateDistributedD18 = self.scheduledValueD18;
+                self.start = self.nextStart;
+                self.duration = self.nextDuration;
+                self.scheduledValueD18 = self.nextScheduledValueD18;
+                self.nextStart = 0;
+                self.nextDuration = 0;
+                self.nextScheduledValueD18 = 0;
 
-							// start processing the new entry also
-							valuePerShareChangeD18 = updateEntry(self, totalSharesAmountD18);
-						}
+                // start processing the new entry also
+                valuePerShareChangeD18 = updateEntry(self, totalSharesAmountD18);
+            }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
             valuePerShareChangeD18 += (curUpdateDistributedD18 - lastUpdateDistributedD18)

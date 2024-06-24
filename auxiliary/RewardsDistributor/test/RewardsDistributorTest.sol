@@ -15,7 +15,7 @@ contract CoreProxyMock {
     uint256 public amount;
     uint64 public start;
     uint32 public duration;
-		uint256 public cancelledAmount;
+    uint256 public cancelledAmount;
     function distributeRewards(
         uint128 poolId_,
         address collateralType_,
@@ -29,7 +29,7 @@ contract CoreProxyMock {
         start = start_;
         duration = duration_;
 
-				return cancelledAmount;
+        return cancelledAmount;
     }
 
     address public poolOwner;
@@ -43,9 +43,9 @@ contract CoreProxyMock {
         poolOwner = poolOwner_;
     }
 
-		function setCancelledAmount(uint256 cancelled) public {
-			cancelledAmount = cancelled;
-		}
+    function setCancelledAmount(uint256 cancelled) public {
+        cancelledAmount = cancelled;
+    }
 }
 
 contract RewardsDistributorTest is Test {
@@ -61,7 +61,7 @@ contract RewardsDistributorTest is Test {
     uint128 internal accountId = 1;
     uint128 internal poolId = 1;
     address internal collateralType;
-		address internal collateralType2;
+    address internal collateralType2;
     uint64 internal start = 12345678;
     uint32 internal duration = 3600;
 
@@ -76,7 +76,7 @@ contract RewardsDistributorTest is Test {
         rewardsManager = new CoreProxyMock(BOSS);
 
         collateralType = address(sUSDC);
-				collateralType2 = address(SNX);
+        collateralType2 = address(SNX);
 
         address payoutToken = address(SNX);
         string memory name = "whatever";
@@ -241,11 +241,11 @@ contract RewardsDistributorTest is Test {
         SNX.mint(address(rewardsDistributor), 1_000e18);
 
         uint256 amount = 100e18;
-				uint256 onceCancelledAmount = 50e18;
+        uint256 onceCancelledAmount = 50e18;
 
         vm.startPrank(BOSS);
         rewardsDistributor.distributeRewards(poolId, collateralType, amount, start, duration);
-				rewardsManager.setCancelledAmount(onceCancelledAmount);
+        rewardsManager.setCancelledAmount(onceCancelledAmount);
         rewardsDistributor.distributeRewards(poolId, address(0), amount, start, duration);
         vm.stopPrank();
 
@@ -254,7 +254,7 @@ contract RewardsDistributorTest is Test {
         assertEq(rewardsManager.amount(), amount);
         assertEq(rewardsManager.start(), start);
         assertEq(rewardsManager.duration(), duration);
-				assertEq(rewardsDistributor.rewardedAmount(), 2 * amount - onceCancelledAmount);
+        assertEq(rewardsDistributor.rewardedAmount(), 2 * amount - onceCancelledAmount);
     }
 
     function test_onPositionUpdated() public {
