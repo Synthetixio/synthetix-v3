@@ -101,6 +101,9 @@ library ErrorUtil {
     /// @notice Thrown when an invalid Core as passed was specified.
     error InvalidCoreAddress(address synthetixCore);
 
+    /// @notice Thrown when an account is not authorized to perform an action.
+    error Unauthorized(address caller);
+
     /// @notice Thrown when a specified hook is not whitelisted, or does not match spec, or otherwise.
     error InvalidHook(address hook);
 

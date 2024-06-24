@@ -141,7 +141,10 @@ library Position {
         uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
-        if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
+        if (
+            delegatedCollateralValueUsd + market.depositedCollateral[addresses.sUsd].toInt() <
+            minimumCredit.toInt()
+        ) {
             revert ErrorUtil.InsufficientLiquidity();
         }
     }
