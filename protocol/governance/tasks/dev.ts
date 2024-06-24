@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { cannonBuild } from '@synthetixio/core-modules/test/helpers/cannon';
+import { cannonBuild } from '@synthetixio/core-utils/utils/bootstrap/cannon-build';
 import { ethers } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
