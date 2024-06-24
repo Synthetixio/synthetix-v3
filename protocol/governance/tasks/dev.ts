@@ -56,36 +56,35 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
       )
     );
 
-    for (const [index, chain] of Object.entries(chains)) {
-      const node = nodes[index as unknown as number]!;
-      const rpcUrl = node.provider.connection.url;
+    for (const [index, config] of Object.entries(chains)) {
+      const chain = nodes[index as unknown as number]!;
 
       console.log();
-      console.log(`Chain: ${chain.name}`);
-      console.log(`  cannonfile: ${path.basename(node.options.cannonfile)}`);
-      console.log(`  network: ${chain.networkName}`);
-      console.log(`  chainId: ${node.options.chainId}`);
-      console.log(`  rpc: ${rpcUrl}`);
-      console.log(`  GovernanceProxy: ${node.outputs.contracts?.GovernanceProxy.address}`);
+      console.log(`Chain: ${config.name}`);
+      console.log(`  cannonfile: ${path.basename(chain.options.cannonfile)}`);
+      console.log(`  network: ${config.networkName}`);
+      console.log(`  chainId: ${chain.options.chainId}`);
+      console.log(`  rpc: ${chain.node.rpcUrl}`);
+      console.log(`  GovernanceProxy: ${chain.outputs.contracts?.GovernanceProxy.address}`);
 
-      const wormholeMockAddress = node.outputs.contracts!.WormholeMock.address;
+      const wormholeMockAddress = chain.outputs.contracts!.WormholeMock.address;
 
       // Ensure govProxy is an instance of an ethers.Contract
       const wormholeMock = new ethers.Contract(
         wormholeMockAddress,
-        node.outputs.contracts!.WormholeMock.abi as ethers.ContractInterface, // Replace this with the actual ABI of the contract
-        node.provider
+        chain.outputs.contracts!.WormholeMock.abi as ethers.ContractInterface, // Replace this with the actual ABI of the contract
+        chain.provider
       );
 
       wormholeMock
-        .connect(node.provider)
+        .connect(chain.provider)
         .attach(wormholeMock.address)
         .on('LogMessagePublished', async (evt: ethers.Event) => {
-          const emitterAddress = node.outputs.contracts!.GovernanceProxy.address;
+          const emitterAddress = chain.outputs.contracts!.GovernanceProxy.address;
 
           const encodedValue = ethers.utils.defaultAbiCoder.encode(
             ['address', 'uint16', 'uint64'], // Types
-            [emitterAddress, chain.wormholeChainId, evt.args?.sequence] // Values
+            [emitterAddress, config.wormholeChainId, evt.args?.sequence] // Values
           );
 
           const payloadTypes = [
