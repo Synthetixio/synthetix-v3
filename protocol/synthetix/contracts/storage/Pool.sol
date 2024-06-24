@@ -414,13 +414,17 @@ library Pool {
                     dist.rewardPerShareD18 - dist.claimStatus[actorId].lastRewardPerShareD18
                 );
 
-                if (distAmount == 0) {
+                uint256 vaultTotalShares = self
+                    .vaults[pos.collateralType]
+                    .currentEpoch()
+                    .accountsDebtDistribution
+                    .totalSharesD18;
+                if (distAmount == 0 || vaultTotalShares == 0) {
                     continue;
                 }
 
-                // TODO: check that vault shares are same as the total shares for the ultimate distribution. if not, load distribution info
                 self.vaults[pos.collateralType].rewards[rewardId].rewardPerShareD18 += distAmount
-                    .divDecimal(vaultSharesD18)
+                    .divDecimal(vaultTotalShares)
                     .to128();
 
                 dist.claimStatus[actorId].lastRewardPerShareD18 = dist.rewardPerShareD18;
