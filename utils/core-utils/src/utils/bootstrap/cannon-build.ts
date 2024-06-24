@@ -81,6 +81,7 @@ export async function cannonBuild(options: BuildOptions) {
   ) as ethers.providers.Web3Provider;
 
   return {
+    node,
     packageRef,
     options,
     provider: ethersProvider,

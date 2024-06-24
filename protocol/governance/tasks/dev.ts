@@ -43,7 +43,8 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
     'custom port for chains to run on, increments for satellite chains by 1',
     '19000'
   )
-  .setAction(async ({ owner, port }, hre) => {
+  .addFlag('wipe', 'wipe previous cannon builds')
+  .setAction(async ({ owner, port, wipe }, hre) => {
     const nodes = await Promise.all(
       chains.map(({ networkName, cannonfile }, index) =>
         _spinChain({
@@ -52,6 +53,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
           cannonfile,
           ownerAddress: owner,
           port: Number(port) + index,
+          wipe,
         })
       )
     );
@@ -127,12 +129,14 @@ async function _spinChain({
   cannonfile,
   ownerAddress,
   port,
+  wipe = true,
 }: {
   hre: HardhatRuntimeEnvironment;
   networkName: string;
   cannonfile: string;
   ownerAddress: string;
   port: number;
+  wipe?: boolean;
 }) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
@@ -150,7 +154,7 @@ async function _spinChain({
     cannonfile: path.join(hre.config.paths.root, cannonfile),
     chainId,
     impersonate: ownerAddress,
-    wipe: true,
+    wipe,
     getArtifact: async (contractName: string) =>
       await hre.run('cannon:get-artifact', { name: contractName }),
     pkgInfo: require(path.join(hre.config.paths.root, 'package.json')),
