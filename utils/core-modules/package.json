@@ -22,13 +22,9 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@foundry-rs/hardhat-anvil": "^0.1.7",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@usecannon/builder": "2.15.2",
-    "@usecannon/cli": "2.15.2",
     "ethers": "^5.7.2",
-    "get-port": "^7.0.0",
     "hardhat": "^2.19.5",
     "viem": "^2.9.31"
   },
