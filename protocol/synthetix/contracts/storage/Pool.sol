@@ -15,8 +15,6 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *
@@ -397,9 +395,9 @@ library Pool {
         bytes32[] memory poolRewardIds = new bytes32[](self.rewardIds.length());
 
         {
-            bytes32 actorId = pos.collateralType.toBytes32();
+            uint256 actorId = pos.collateralType.to256();
             uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
-            uint256 vaultSharesD18 = self.vaultsDebtDistribution.getActorShares(actorId);
+            uint256 vaultSharesD18 = self.vaultsDebtDistribution.getActorShares(bytes32(actorId));
 
             uint256 numRewards = self.rewardIds.length();
             for (uint256 i = 0; i < numRewards; i++) {
@@ -413,8 +411,7 @@ library Pool {
                 dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 
                 uint256 distAmount = vaultSharesD18.mulDecimal(
-                    dist.rewardPerShareD18 -
-                        dist.claimStatus[uint256(actorId)].lastRewardPerShareD18
+                    dist.rewardPerShareD18 - dist.claimStatus[actorId].lastRewardPerShareD18
                 );
 
                 if (distAmount == 0) {
@@ -426,7 +423,7 @@ library Pool {
                     .divDecimal(vaultSharesD18)
                     .to128();
 
-                dist.claimStatus[uint256(actorId)].lastRewardPerShareD18 = dist.rewardPerShareD18;
+                dist.claimStatus[actorId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
                 poolRewardIds[i] = rewardId;
             }

@@ -7,8 +7,6 @@ import "./RewardDistribution.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
  *
