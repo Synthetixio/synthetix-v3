@@ -43,9 +43,7 @@
   "devDependencies": {
     "@foundry-rs/hardhat-anvil": "^0.1.7",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@types/debug": "^4.1.12",
     "@types/micromatch": "^4",
-    "@types/pako": "^2.0.3",
     "@types/prompts": "^2.4.9",
     "ethers": "^5.7.2",
     "get-port": "^7.0.0",
@@ -56,7 +54,8 @@
     "solc": "0.8.21",
     "solidity-ast": "^0.4.55",
     "typechain": "8.3.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "viem": "^2.9.31"
   },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",

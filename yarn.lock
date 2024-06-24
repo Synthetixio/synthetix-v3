@@ -2937,7 +2937,6 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
-    viem: "npm:^2.9.31"
   languageName: unknown
   linkType: soft
 
@@ -2961,9 +2960,7 @@ __metadata:
     "@ethersproject/abi": "npm:^5.7.0"
     "@foundry-rs/hardhat-anvil": "npm:^0.1.7"
     "@istanbuljs/nyc-config-typescript": "npm:^1.0.2"
-    "@types/debug": "npm:^4.1.12"
     "@types/micromatch": "npm:^4"
-    "@types/pako": "npm:^2.0.3"
     "@types/prompts": "npm:^2.4.9"
     "@usecannon/builder": "npm:2.15.2"
     "@usecannon/cli": "npm:2.15.2"
@@ -2983,6 +2980,7 @@ __metadata:
     solidity-ast: "npm:^0.4.55"
     typechain: "npm:8.3.2"
     typescript: "npm:^5.3.3"
+    viem: "npm:^2.9.31"
   peerDependencies:
     "@usecannon/builder": ^2.15.2
     "@usecannon/cli": ^2.15.2
@@ -3525,15 +3523,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/debug@npm:^4.1.12":
-  version: 4.1.12
-  resolution: "@types/debug@npm:4.1.12"
-  dependencies:
-    "@types/ms": "npm:*"
-  checksum: 10/47876a852de8240bfdaf7481357af2b88cb660d30c72e73789abf00c499d6bc7cd5e52f41c915d1b9cd8ec9fef5b05688d7b7aef17f7f272c2d04679508d1053
-  languageName: node
-  linkType: hard
-
 "@types/form-data@npm:0.0.33":
   version: 0.0.33
   resolution: "@types/form-data@npm:0.0.33"
@@ -3678,13 +3667,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ms@npm:*":
-  version: 0.7.34
-  resolution: "@types/ms@npm:0.7.34"
-  checksum: 10/f38d36e7b6edecd9badc9cf50474159e9da5fa6965a75186cceaf883278611b9df6669dc3a3cc122b7938d317b68a9e3d573d316fcb35d1be47ec9e468c6bd8a
-  languageName: node
-  linkType: hard
-
 "@types/mustache@npm:^4.2.5":
   version: 4.2.5
   resolution: "@types/mustache@npm:4.2.5"
@@ -3736,13 +3718,6 @@ __metadata:
   version: 2.4.1
   resolution: "@types/normalize-package-data@npm:2.4.1"
   checksum: 10/e87bccbf11f95035c89a132b52b79ce69a1e3652fe55962363063c9c0dae0fe2477ebc585e03a9652adc6f381d24ba5589cc5e51849df4ced3d3e004a7d40ed5
-  languageName: node
-  linkType: hard
-
-"@types/pako@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "@types/pako@npm:2.0.3"
-  checksum: 10/afa618a0a05a931216703a30f4cba6902ce5cd4db8170a480f95bc8e268afebb3bb8deea4444e8292aba86348e400e068af1b5f4c75b9185b3a7efd1999fb78e
   languageName: node
   linkType: hard
 
