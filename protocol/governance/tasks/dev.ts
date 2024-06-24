@@ -12,23 +12,32 @@ const chains = [
   {
     name: 'mothership',
     networkName: 'sepolia',
-    cannonfile: 'cannonfile.sepolia-mothership.test.toml',
-    chainSelector: '16015286601757825753',
-    wormholeChainId: '10002',
+    cannonfile: 'cannonfile.test.toml',
+    settings: {
+      "wormhole_chain_id": "10002",
+      "wormhole_core": "0xBc9C458D6294a40599FB3485fB079429C0732833",
+      "wormhole_relayer": "0x7F3f57D17088c062236883428CCBC254933A776C"
+    }
   },
   {
     name: 'satellite1',
     networkName: 'optimistic-sepolia',
-    cannonfile: 'cannonfile.optimistic-sepolia-satelite.test.toml',
-    chainSelector: '2664363617261496610',
-    wormholeChainId: '10005',
+    cannonfile: 'cannonfile.satellite.test.toml',
+    settings: {
+      "wormhole_chain_id": "10005",
+      "wormhole_core": "0x41e689A993322c2B3dE4569084D6F979dc39f095",
+      "wormhole_relayer": "0xb75cba272fe03534d7859FEF56418EBC5C6BBbED"
+    }
   },
   {
     name: 'satellite2',
     networkName: 'avalanche-fuji',
-    cannonfile: 'cannonfile.avalanche-fuji-satelite.test.toml',
-    chainSelector: '14767482510784806043',
-    wormholeChainId: '43113',
+    cannonfile: 'cannonfile.satellite.test.toml',
+    settings: {
+      "wormhole_chain_id": "10002",
+      "wormhole_core": "0x40342Cb59035F004043DE1b30C04A69D06C900A2",
+      "wormhole_relayer": "0xd0cB7Be9789f328Db6B67C80564ee4c54FA9200e"
+    }
   },
 ] as const;
 
@@ -46,7 +55,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
   .addFlag('wipe', 'wipe previous cannon builds')
   .setAction(async ({ owner, port, wipe }, hre) => {
     const nodes = await Promise.all(
-      chains.map(({ networkName, cannonfile }, index) =>
+      chains.map(({ networkName, cannonfile, settings }, index) =>
         _spinChain({
           hre,
           networkName,
@@ -54,6 +63,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
           ownerAddress: owner,
           port: Number(port) + index,
           wipe,
+          settings
         })
       )
     );
@@ -130,6 +140,7 @@ async function _spinChain({
   ownerAddress,
   port,
   wipe = true,
+  settings
 }: {
   hre: HardhatRuntimeEnvironment;
   networkName: string;
@@ -137,6 +148,7 @@ async function _spinChain({
   ownerAddress: string;
   port: number;
   wipe?: boolean;
+  settings: {[key: string]: string}
 }) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
@@ -155,6 +167,7 @@ async function _spinChain({
     chainId,
     impersonate: ownerAddress,
     wipe,
+    settings,
     getArtifact: async (contractName: string) =>
       await hre.run('cannon:get-artifact', { name: contractName }),
     pkgInfo: require(path.join(hre.config.paths.root, 'package.json')),
