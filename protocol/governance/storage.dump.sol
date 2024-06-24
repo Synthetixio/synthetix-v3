@@ -355,7 +355,7 @@ library ElectionSettings {
         uint64 votingPeriodDuration;
         uint64 maxDateAdjustmentTolerance;
     }
-    function load(uint epochIndex) internal pure returns (Data storage settings) {
+    function load(uint256 epochIndex) internal pure returns (Data storage settings) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionSettings", epochIndex));
         assembly {
             settings.slot := s

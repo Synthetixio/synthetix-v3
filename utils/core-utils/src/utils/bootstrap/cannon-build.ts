@@ -1,15 +1,11 @@
-import { AnvilServer } from '@foundry-rs/hardhat-anvil/dist/src/anvil-server';
 import { ContractArtifact, traceActions } from '@usecannon/builder';
-import { build, inspect, loadCannonfile, resolveCliSettings } from '@usecannon/cli';
+import { build, loadCannonfile } from '@usecannon/cli';
 import { getChainById } from '@usecannon/cli/dist/src/chains';
 import { ethers } from 'ethers';
 import * as viem from 'viem';
+import { launchCannonNode } from './cannon-node';
 
-import type { ChainBuilderContext } from '@usecannon/builder';
-interface NodeOptions {
-  port?: number;
-  chainId?: number;
-}
+import type { ChainBuilderContext } from '@usecannon/builder/src/types';
 
 interface BuildOptions {
   cannonfile: string;
@@ -24,32 +20,14 @@ interface BuildOptions {
   settings?: { [key: string]: any };
 }
 
-interface InspectOptions {
-  packageRef: string;
-  chainId: number;
-  writeDeployments: string;
-}
-
 export type BuildOutputs = Partial<
   Pick<ChainBuilderContext, 'imports' | 'contracts' | 'txns' | 'settings'>
 >;
+
 export type CannonProvider = viem.PublicClient & viem.TestClient & viem.WalletClient;
 
-export async function launchNode(options: NodeOptions = {}) {
-  if (typeof options.port === 'undefined' || options.port === 0) {
-    const { default: getPort } = await import('get-port');
-    options.port = await getPort();
-  }
-
-  const { port } = options;
-  const server = await AnvilServer.launch({ launch: true, ...options }, false);
-  const rpcUrl = `http://127.0.0.1:${port}/`;
-
-  return { server, port, rpcUrl };
-}
-
 export async function cannonBuild(options: BuildOptions) {
-  const node = await launchNode({ chainId: options.chainId, port: options.port });
+  const node = await launchCannonNode({ chainId: options.chainId, port: options.port });
 
   const providerOptions = {
     mode: 'anvil',
@@ -93,7 +71,7 @@ export async function cannonBuild(options: BuildOptions) {
   });
 
   // Include provider error parsing
-  provider = augmentProvider(provider, outputs);
+  provider = _augmentProvider(provider, outputs);
 
   const packageRef = `${name}:${version}`;
 
@@ -103,7 +81,6 @@ export async function cannonBuild(options: BuildOptions) {
   ) as ethers.providers.Web3Provider;
 
   return {
-    node,
     packageRef,
     options,
     provider: ethersProvider,
@@ -111,7 +88,10 @@ export async function cannonBuild(options: BuildOptions) {
   };
 }
 
-function augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs) {
+/**
+ * Augment provider to include all tracing data from artifacts
+ */
+function _augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs) {
   const provider = originalProvider.extend(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     traceActions(outputs) as any
@@ -137,17 +117,4 @@ function augmentProvider(originalProvider: CannonProvider, outputs: BuildOutputs
   } as typeof originalRequest;
 
   return provider;
-}
-
-export async function cannonInspect(options: InspectOptions) {
-  const cliSettings = resolveCliSettings();
-  return inspect(
-    options.packageRef,
-    cliSettings,
-    options.chainId,
-    '',
-    false,
-    options.writeDeployments,
-    true
-  );
 }

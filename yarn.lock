@@ -2933,15 +2933,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-modules@workspace:utils/core-modules"
   dependencies:
-    "@foundry-rs/hardhat-anvil": "npm:^0.1.7"
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@usecannon/builder": "npm:2.15.2"
-    "@usecannon/cli": "npm:2.15.2"
     ethers: "npm:^5.7.2"
-    get-port: "npm:^7.0.0"
     hardhat: "npm:^2.19.5"
-    viem: "npm:^2.9.31"
   languageName: unknown
   linkType: soft
 
@@ -2963,14 +2958,17 @@ __metadata:
   resolution: "@synthetixio/core-utils@workspace:utils/core-utils"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
+    "@foundry-rs/hardhat-anvil": "npm:^0.1.7"
     "@istanbuljs/nyc-config-typescript": "npm:^1.0.2"
     "@types/micromatch": "npm:^4"
     "@types/prompts": "npm:^2.4.9"
     "@usecannon/builder": "npm:2.15.2"
+    "@usecannon/cli": "npm:2.15.2"
     chalk: "npm:^4.1.2"
     ethereumjs-util: "npm:^7.1.5"
     ethers: "npm:^5.7.2"
     fast-glob: "npm:^3.3.2"
+    get-port: "npm:^7.0.0"
     hardhat: "npm:^2.19.5"
     micromatch: "npm:^4.0.5"
     mocha: "npm:^10.3.0"
@@ -2982,12 +2980,16 @@ __metadata:
     solidity-ast: "npm:^0.4.55"
     typechain: "npm:8.3.2"
     typescript: "npm:^5.3.3"
+    viem: "npm:^2.9.31"
   peerDependencies:
-    "@usecannon/builder": ^2.4.7
+    "@usecannon/builder": ^2.15.2
+    "@usecannon/cli": ^2.15.2
     ethers: ^5.7.2
     solidity-ast: ^0.4.0
   peerDependenciesMeta:
     "@usecannon/builder":
+      optional: true
+    "@usecannon/cli":
       optional: true
     ethers:
       optional: true
