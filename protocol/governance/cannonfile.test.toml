@@ -2,6 +2,15 @@ name = "synthetix-governance"
 version = "<%= package.version %>-testable"
 include = ["cannonfile.toml"]
 
+[setting.wormhole_chain_id]
+defaultValue = "10002"
+
+[setting.wormhole_core]
+defaultValue = "0xBc9C458D6294a40599FB3485fB079429C0732833"
+
+[setting.wormhole_relayer]
+defaultValue = "0x7F3f57D17088c062236883428CCBC254933A776C"
+
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
 
@@ -24,14 +33,15 @@ artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectio
 [contract.TestableEpochStorage]
 artifact = "contracts/generated/test/TestableEpochStorage.sol:TestableEpochStorage"
 
-#TODO use create 2 and hardcode the contract addresses as settings
 [contract.WormholeMock]
 artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
-args = ["13370"]
+args = ["<%= settings.wormhole_chain_id %>"]
+create2 = true
 
 [contract.WormholeRelayerMock]
 artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
-args = ["<%= contracts.WormholeMock.address %>"]
+args = ["<%= settings.wormhole_core %>"]
+create2 = true
 
 # Core Router + Testable modules
 [router.TestRouter]

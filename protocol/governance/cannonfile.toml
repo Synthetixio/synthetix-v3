@@ -3,6 +3,12 @@ description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
+[setting.wormhole_core]
+defaultValue = "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.wormhole_relayer]
+defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
+
 [setting.initial_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
@@ -33,15 +39,6 @@ artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
-# @TODO: delete WormholeMocks on cannonfile.toml but make it work without needing them
-[contract.WormholeMock]
-artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
-args = ["13370"]
-
-[contract.WormholeRelayerMock]
-artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
-args = ["<%= contracts.WormholeMock.address %>"]
-
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
@@ -68,8 +65,8 @@ args = [
     [
         "<%= settings.initial_council_member %>",
     ],
-    "<%= contracts.WormholeMock.address %>",
-    "<%= contracts.WormholeRelayerMock.address %>",
+    "<%= settings.wormhole_core %>",
+    "<%= settings.wormhole_relayer %>",
     "<%= settings.minimum_active_members %>",
     "<%= settings.initial_nomination_period_start_date %>",
     "<%= settings.administration_period_duration %>",

@@ -1,6 +1,0 @@
-name = "synthetix-governance"
-version = "<%= package.version %>-test-sat"
-include = ["cannonfile.avalanche-fuji-satelite.toml"]
-
-[contract.SnapshotRecordMock]
-artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"

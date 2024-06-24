@@ -2,5 +2,24 @@ name = "synthetix-governance"
 version = "<%= package.version %>-test-sat"
 include = ["cannonfile.satellite.toml"]
 
+[setting.wormhole_chain_id]
+defaultValue = "10005"
+
+[setting.wormhole_core]
+defaultValue = "0x41e689A993322c2B3dE4569084D6F979dc39f095"
+
+[setting.wormhole_relayer]
+defaultValue = "0xb75cba272fe03534d7859FEF56418EBC5C6BBbED"
+
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
+
+[contract.WormholeMock]
+artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
+args = ["<%= settings.wormhole_chain_id %>"]
+create2 = true
+
+[contract.WormholeRelayerMock]
+artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
+args = ["<%= settings.wormhole_core %>"]
+create2 = true
