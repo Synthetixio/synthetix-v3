@@ -254,7 +254,7 @@ contract RewardsDistributorTest is Test {
         assertEq(rewardsManager.amount(), amount);
         assertEq(rewardsManager.start(), start);
         assertEq(rewardsManager.duration(), duration);
-				assertEq(rewardsDistributor.rewardedAmount(), 2 * amount - onceCancelledAmount);
+				assertEq(rewardsDistributor.rewardedAmount(), 150e18);
     }
 
     function test_onPositionUpdated() public {
