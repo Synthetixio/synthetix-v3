@@ -87,7 +87,7 @@ library RewardDistribution {
         int256 amountD18,
         uint64 start,
         uint32 duration
-    ) internal returns (int256 diffD18) {
+    ) internal returns (int256 diffD18, uint256 cancelledAmount) {
         uint256 totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
@@ -124,6 +124,7 @@ library RewardDistribution {
 
             diffD18 += updateEntry(self, totalSharesD18);
         } else if (self.start + self.duration <= start) {
+            cancelledAmount = self.nextScheduledValueD18.toUint();
             self.nextScheduledValueD18 = amountD18.to128();
             self.nextStart = start;
             self.nextDuration = duration;

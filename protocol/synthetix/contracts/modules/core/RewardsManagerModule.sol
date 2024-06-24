@@ -91,15 +91,16 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external override {
-        _distributeRewards(
-            poolId,
-            collateralType,
-            ERC2771Context._msgSender(),
-            amount,
-            start,
-            duration
-        );
+    ) external override returns (uint256) {
+        return
+            _distributeRewards(
+                poolId,
+                collateralType,
+                ERC2771Context._msgSender(),
+                amount,
+                start,
+                duration
+            );
     }
 
     function distributeRewardsByOwner(
@@ -109,13 +110,14 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external override {
+    ) external override returns (uint256) {
         Pool.Data storage pool = Pool.load(poolId);
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        _distributeRewards(poolId, collateralType, rewardsDistributor, amount, start, duration);
+        return
+            _distributeRewards(poolId, collateralType, rewardsDistributor, amount, start, duration);
     }
 
     /**
@@ -224,7 +226,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) internal {
+    ) internal returns (uint256) {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
@@ -239,15 +241,14 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
-        reward.rewardPerShareD18 += reward
-            .distribute(
-                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
-                amount.toInt(),
-                start,
-                duration
-            )
-            .toUint()
-            .to128();
+        (int256 diffReward, uint256 cancelledAmount) = reward.distribute(
+            pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+            amount.toInt(),
+            start,
+            duration
+        );
+
+        reward.rewardPerShareD18 += diffReward.toUint().to128();
 
         emit RewardsDistributed(
             poolId,
@@ -257,6 +258,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
             start,
             duration
         );
+
+        return cancelledAmount;
     }
 
     /**
@@ -325,15 +328,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
         // ensure rewards emission is stopped (users can still come in to claim rewards after the fact)
-        reward.rewardPerShareD18 += reward
-            .distribute(
-                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
-                0,
-                0,
-                0
-            )
-            .toUint()
-            .to128();
+
+        (int256 diffReward, ) = reward.distribute(
+            pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+            0,
+            0,
+            0
+        );
+
+        reward.rewardPerShareD18 += diffReward.toUint().to128();
 
         emit RewardsDistributorRemoved(poolId, collateralType, distributor);
     }
