@@ -1,6 +1,7 @@
 import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import hre from 'hardhat';
 
+import type { ITrustedMulticallForwarder } from '../typechain-types/contracts/interfaces/external';
 import type {
   GovernanceProxy,
   CouncilToken,
@@ -13,6 +14,8 @@ interface Contracts {
   CouncilToken: CouncilToken;
   CouncilTokenModule: CouncilTokenModule;
   SnapshotRecordMock: SnapshotRecordMock;
+  ['trusted_multicall_forwarder.TrustedMulticallForwarder']: ITrustedMulticallForwarder;
+  TrustedMulticallForwarder: ITrustedMulticallForwarder;
 }
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Contracts>({
@@ -36,6 +39,9 @@ export function bootstrap() {
       CouncilToken: getContract('CouncilToken'),
       CouncilTokenModule: getContract('CouncilTokenModule'),
       SnapshotRecordMock: getContract('SnapshotRecordMock'),
+      TrustedMulticallForwarder: getContract(
+        'trusted_multicall_forwarder.TrustedMulticallForwarder'
+      ),
     });
   });
 
