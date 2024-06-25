@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "hardhat clean && rm -rf test/generated contracts/generated",
     "build": "yarn clean && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
-    "build-testable": "yarn build cannonfile.test.toml ccip_mothership_chain_id=13370",
+    "build-testable": "yarn build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "yarn build-testable && hardhat test",
     "coverage": "yarn build && hardhat coverage --network hardhat",
