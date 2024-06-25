@@ -52,8 +52,7 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
     'custom port for chains to run on, increments for satellite chains by 1',
     '19000'
   )
-  .addFlag('wipe', 'wipe previous cannon builds')
-  .setAction(async ({ owner, port, wipe }, hre) => {
+  .setAction(async ({ owner, port }, hre) => {
     const nodes = await Promise.all(
       chains.map(({ networkName, cannonfile, settings }, index) =>
         _spinChain({
@@ -62,7 +61,6 @@ task('dev', 'spins up locally 3 nodes ready for test purposes')
           cannonfile,
           ownerAddress: owner,
           port: Number(port) + index,
-          wipe,
           settings,
         })
       )
@@ -139,7 +137,6 @@ async function _spinChain({
   cannonfile,
   ownerAddress,
   port,
-  wipe = true,
   settings,
 }: {
   hre: HardhatRuntimeEnvironment;
@@ -147,7 +144,6 @@ async function _spinChain({
   cannonfile: string;
   ownerAddress: string;
   port: number;
-  wipe?: boolean;
   settings: { [key: string]: string };
 }) {
   if (!hre.config.networks[networkName]) {
@@ -166,7 +162,7 @@ async function _spinChain({
     cannonfile: path.join(hre.config.paths.root, cannonfile),
     chainId,
     impersonate: ownerAddress,
-    wipe,
+    wipe: true,
     settings,
     getArtifact: async (contractName: string) =>
       await hre.run('cannon:get-artifact', { name: contractName }),
