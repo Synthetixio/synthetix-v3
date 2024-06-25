@@ -3,7 +3,7 @@ defaultValue = "governance"
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+defaultValue = "0xe8E38f98738a82A4a9da708E0C15Eb08CabD2eFA"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"

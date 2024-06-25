@@ -18,6 +18,24 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     error MessageAlreadyProcessed();
     error UnregisteredEmitter();
 
+    event logCCMessage(string message);
+
+    function sendCCMessage(
+        string memory message,
+        uint16 targetChain,
+        address targetAddress
+    ) external payable {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        bytes memory payload = abi.encodeWithSignature("recCCMessage(string)", message);
+        transmit(wh, targetChain, targetAddress, payload, 0, 100000);
+    }
+
+    function recCCMessage(string memory message) external {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        require(address(wh.wormholeRelayer) == msg.sender, "Only relayer");
+        emit logCCMessage(message);
+    }
+
     function setRegisteredEmitters(uint16[] memory chainIds, address[] memory emitters) external {
         OwnableStorage.onlyOwner();
 

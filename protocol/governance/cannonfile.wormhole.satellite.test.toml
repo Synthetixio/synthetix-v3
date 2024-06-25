@@ -1,0 +1,76 @@
+name = "wormhole"
+description = "On-chain voting for synthetix councils"
+version = "<%= package.version %>"
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
+
+[setting.wormhole_core]
+defaultValue = "0x27812285fbe85BA1DF242929B906B31EE3dd1b9f" # sepolia https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.wormhole_relayer]
+defaultValue = "0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE" # sepolia relayer https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.initial_council_member]
+defaultValue = "0xe8E38f98738a82A4a9da708E0C15Eb08CabD2eFA"
+
+[setting.minimum_active_members]
+defaultValue = "1"
+
+[setting.initial_nomination_period_start_date]
+defaultValue = "0" # defaults to "block.timestamp + administration_period_duration" when given "0"
+
+[setting.administration_period_duration]
+defaultValue = "60" # days
+
+[setting.nomination_period_duration]
+defaultValue = "15" # days
+
+[setting.voting_period_duration]
+defaultValue = "15" # days
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.ElectionInspectorModule]
+artifact = "contracts/modules/core/ElectionInspectorModule.sol:ElectionInspectorModule"
+
+[contract.ElectionModule]
+artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
+
+[contract.SnapshotVotePowerModule]
+artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
+
+[router.CoreRouter]
+contracts = [
+    "AssociatedSystemsModule",
+    "ElectionInspectorModule",
+    "ElectionModule",
+    "SnapshotVotePowerModule",
+    "InitialModuleBundle",
+]
+
+[invoke.upgrade_core_proxy]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.CoreRouter.address %>"]
+factory.GovernanceProxy.abiOf = ["CoreRouter"]
+factory.GovernanceProxy.event = "Upgraded"
+factory.GovernanceProxy.arg = 0
+factory.GovernanceProxy.highlight = true
+
+[invoke.init_election_module]
+target = ["GovernanceProxy"]
+func = "initOrUpdateElectionSettings(address[],address,address,uint8,uint64,uint64,uint64,uint64)"
+args = [
+    [
+        "<%= settings.initial_council_member %>",
+    ],
+    "<%= settings.wormhole_core %>",
+    "<%= settings.wormhole_relayer %>",
+    "<%= settings.minimum_active_members %>",
+    "<%= settings.initial_nomination_period_start_date %>",
+    "<%= settings.administration_period_duration %>",
+    "<%= settings.nomination_period_duration %>",
+    "<%= settings.voting_period_duration %>",
+]
+from = "<%= settings.owner %>"
