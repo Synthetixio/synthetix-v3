@@ -325,6 +325,9 @@ library RewardDistribution {
         uint64 start;
         uint32 duration;
         uint32 lastUpdate;
+        int128 nextScheduledValueD18;
+        uint64 nextStart;
+        uint32 nextDuration;
     }
 }
 
