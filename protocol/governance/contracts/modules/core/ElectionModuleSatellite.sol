@@ -31,6 +31,7 @@ contract ElectionModuleSatellite is
     using SetUtil for SetUtil.AddressSet;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
+    uint64 internal constant _MOTHERSHIP_CHAIN_ID = 0;
 
     /**
      * @dev Utility method for initializing a new Satellite chain
@@ -108,7 +109,7 @@ contract ElectionModuleSatellite is
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         // solhint-disable-next-line
-        uint16 targetChain = uint16(wh.getChainIdAt(0));
+        uint16 targetChain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
 
         transmit(
             wh,
@@ -130,7 +131,7 @@ contract ElectionModuleSatellite is
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
         // solhint-disable-next-line
-        uint16 targetChain = uint16(wh.getChainIdAt(0));
+        uint16 targetChain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
         transmit(
             wh,
             targetChain,

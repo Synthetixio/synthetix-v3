@@ -171,7 +171,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64[] memory chains = wh.getSupportedNetworks();
         for (uint256 i = 0; i < chains.length; i++) {
             // solhint-disable-next-line
-            if (chains[i] == uint64(wh.getChainIdAt(0))) {
+            if (chains[i] == uint64(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID))) {
                 currentEpoch.nominationPeriodStartDate = newNominationPeriodStartDate;
                 currentEpoch.votingPeriodStartDate = newVotingPeriodStartDate;
                 currentEpoch.endDate = newEpochEndDate;
@@ -232,7 +232,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
         // solhint-disable-next-line
-        uint16 chain = uint16(wh.getChainIdAt(0));
+        uint16 chain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
 
         transmit(
             wh,
