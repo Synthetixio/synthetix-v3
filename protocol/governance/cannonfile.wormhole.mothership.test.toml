@@ -1,4 +1,4 @@
-name = "wormhole"
+name = "wormhole-integration-sep"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
