@@ -485,8 +485,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             );
         }
 
-        election.resolved = true;
-
         emit EpochStarted(council.currentElectionId);
     }
 

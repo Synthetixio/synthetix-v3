@@ -286,7 +286,6 @@ library CrossChainDebtShare {
 library Election {
     struct Data {
         bool evaluated;
-        bool resolved;
         uint256 numEvaluatedBallots;
         SetUtil.AddressSet nominees;
         SetUtil.AddressSet winners;

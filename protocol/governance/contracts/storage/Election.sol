@@ -9,8 +9,6 @@ library Election {
     struct Data {
         // True if ballots have been counted in this election
         bool evaluated;
-        // True if NFTs have been re-shuffled in this election
-        bool resolved;
         // Number of counted ballots in this election
         uint256 numEvaluatedBallots;
         // List of nominated candidates in this election
