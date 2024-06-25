@@ -76,7 +76,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 receiverValue,
         uint256 gasLimit
     ) internal returns (uint64 sequence) {
-        (uint256 requiredMsgValue, ) = self.wormholeRelayer.quoteEVMDeliveryPrice(
+        (uint256 cost, ) = self.wormholeRelayer.quoteEVMDeliveryPrice(
             targetChain,
             receiverValue,
             gasLimit
@@ -93,8 +93,8 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         } else {
             // If the target chain is different, we need to send the message to the WormholeRelayer
             // to be sent to the target chain
-            if (msg.value < requiredMsgValue) revert InsufficientValue();
-            sequence = self.wormholeRelayer.sendPayloadToEvm(
+            if (msg.value < cost) revert InsufficientValue();
+            sequence = self.wormholeRelayer.sendPayloadToEvm{value: cost}(
                 targetChain,
                 targetAddress,
                 payload,
@@ -106,16 +106,17 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     }
 
     /**
-     * @notice Returns the cost (in wei) of a greeting
+     * @notice Returns the cost (in wei) of a cross-chain message
      */
-    function quoteCrossChainGreeting(
+    function quoteCrossChainDeliveryPrice(
         uint16 targetChain,
+        uint256 receiverValue,
         uint256 gasLimit
     ) public view returns (uint256 cost) {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         // Cost of requesting a message to be sent to
         // chain 'targetChain' with a gasLimit of 'GAS_LIMIT'
-        (cost, ) = wh.wormholeRelayer.quoteEVMDeliveryPrice(targetChain, 0, gasLimit);
+        (cost, ) = wh.wormholeRelayer.quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
     }
 
     function toAddress(bytes32 _bytes) internal pure returns (address) {
