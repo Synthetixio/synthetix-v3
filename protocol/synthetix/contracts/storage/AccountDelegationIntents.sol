@@ -29,14 +29,14 @@ library AccountDelegationIntents {
     }
 
     function addIntent(Data storage self, DelegationIntent.Data storage delegationIntent) internal {
-        self.intentsId.add(delegationIntent.id);
+        self.intentsId.add(delegationIntent.declarationTime);
         self
             .intentsByPair[
                 keccak256(
                     abi.encodePacked(delegationIntent.poolId, delegationIntent.collateralType)
                 )
             ]
-            .add(delegationIntent.id);
+            .add(delegationIntent.declarationTime);
 
         self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
             .deltaCollateralAmountD18;
@@ -50,18 +50,18 @@ library AccountDelegationIntents {
         Data storage self,
         DelegationIntent.Data storage delegationIntent
     ) internal {
-        if (!self.intentsId.contains(delegationIntent.id)) {
+        if (!self.intentsId.contains(delegationIntent.declarationTime)) {
             return;
         }
 
-        self.intentsId.remove(delegationIntent.id);
+        self.intentsId.remove(delegationIntent.declarationTime);
         self
             .intentsByPair[
                 keccak256(
                     abi.encodePacked(delegationIntent.poolId, delegationIntent.collateralType)
                 )
             ]
-            .remove(delegationIntent.id);
+            .remove(delegationIntent.declarationTime);
 
         self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
             .deltaCollateralAmountD18;
@@ -69,12 +69,12 @@ library AccountDelegationIntents {
 
     function getIntent(
         Data storage self,
-        uint256 intentId
+        uint32 declarationTime
     ) internal view returns (DelegationIntent.Data storage) {
-        if (!self.intentsId.contains(intentId)) {
+        if (!self.intentsId.contains(declarationTime)) {
             revert IVaultModule.InvalidDelegationIntent();
         }
-        return DelegationIntent.load(intentId);
+        return DelegationIntent.load(declarationTime);
     }
 
     /**
@@ -88,10 +88,13 @@ library AccountDelegationIntents {
         return self.intentsByPair[keccak256(abi.encodePacked(poolId, collateralType))].values();
     }
 
-    function isInCurrentEpoch(Data storage self, uint256 intentId) internal view returns (bool) {
+    function isInCurrentEpoch(
+        Data storage self,
+        uint32 declarationTime
+    ) internal view returns (bool) {
         // Notice: not checking that `self.delegationIntentsEpoch == account.currentDelegationIntentsEpoch` since
         // it was loadValid and getValid use it at load time
-        return self.intentsId.contains(intentId);
+        return self.intentsId.contains(declarationTime);
     }
 
     /**
@@ -100,7 +103,7 @@ library AccountDelegationIntents {
     function cleanAllExpiredIntents(Data storage self) internal {
         uint256[] memory intentIds = self.intentsId.values();
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i].to32());
             if (intent.intentExpired()) {
                 removeIntent(self, intent);
             }

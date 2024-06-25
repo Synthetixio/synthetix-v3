@@ -45,12 +45,12 @@ interface IVaultModule {
     /**
      * @notice Thrown when the specified intent is not expired yet.
      */
-    error DelegationIntentNotExpired(uint256 intentId);
+    error DelegationIntentNotExpired(uint32 intentId);
 
     /**
      * @notice Thrown when the specified intent is not in current epoch (it was nuked in a liquidation or administrative fix).
      */
-    error DelegationIntentNotInCurrentEpoch(uint256 intentId);
+    error DelegationIntentNotInCurrentEpoch(uint32 intentId);
 
     /**
      * @notice Thrown when the specified intent is not executable due to pending intents.
@@ -92,7 +92,6 @@ interface IVaultModule {
      * @param collateralType The address of the collateral associated to the position.
      * @param collateralDeltaAmount The new amount of the position, denominated with 18 decimals of precision.
      * @param leverage The new leverage value of the position, denominated with 18 decimals of precision.
-     * @param intentId The id of the intent to update the position.
      * @param declarationTime The time at which the intent was declared.
      * @param processingStartTime The time at which the intent can be processed.
      * @param processingEndTime The time at which the intent will no longer be able to be processed.
@@ -104,7 +103,6 @@ interface IVaultModule {
         address collateralType,
         int256 collateralDeltaAmount,
         uint256 leverage,
-        uint256 intentId,
         uint32 declarationTime,
         uint32 processingStartTime,
         uint32 processingEndTime,
@@ -113,13 +111,13 @@ interface IVaultModule {
 
     /**
      * @notice Emitted when an intent is removed (due to succesful execution or expiration).
-     * @param intentId The id of the intent to update the position.
+     * @param intentId The id (declaration timestamp) of the intent to update the position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
      * @param collateralType The address of the collateral associated to the position.
      */
     event DelegationIntentRemoved(
-        uint256 intentId,
+        uint32 intentId,
         uint128 indexed accountId,
         uint128 indexed poolId,
         address collateralType
@@ -127,13 +125,13 @@ interface IVaultModule {
 
     /**
      * @notice Emitted when an intent is skipped due to the intent not being executable at that time.
-     * @param intentId The id of the intent to update the position.
+     * @param intentId The id (declaration timestamp) of the intent to update the position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
      * @param collateralType The address of the collateral associated to the position.
      */
     event DelegationIntentSkipped(
-        uint256 intentId,
+        uint32 intentId,
         uint128 indexed accountId,
         uint128 indexed poolId,
         address collateralType
@@ -141,13 +139,13 @@ interface IVaultModule {
 
     /**
      * @notice Emitted when an intent is processed.
-     * @param intentId The id of the intent to update the position.
+     * @param intentId The id (declaration timestamp) of the intent to update the position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
      * @param collateralType The address of the collateral associated to the position.
      */
     event DelegationIntentProcessed(
-        uint256 intentId,
+        uint32 intentId,
         uint128 indexed accountId,
         uint128 indexed poolId,
         address collateralType
@@ -184,7 +182,7 @@ interface IVaultModule {
      * @param collateralType The address of the collateral used in the position.
      * @param deltaAmountD18 The delta amount of collateral delegated in the position, denominated with 18 decimals of precision.
      * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
-     * @return intentId The id of the new intent to update the delegated amount.
+     * @return intentDeclarationTime The intent declaration time used as the id of the new intent to update the delegated amount.
      * Requirements:
      *
      * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
@@ -199,7 +197,7 @@ interface IVaultModule {
         address collateralType,
         int256 deltaAmountD18,
         uint256 leverage
-    ) external returns (uint256 intentId);
+    ) external returns (uint32 intentDeclarationTime);
 
     /**
      * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by intent ids.
@@ -266,7 +264,7 @@ interface IVaultModule {
     /**
      * @notice Returns details of the requested intent.
      * @param accountId The id of the account owning the intent.
-     * @param intentId The id of the intents.
+     * @param intentId The id (declaration timestamp) of the intents.
      * @return poolId The id of the pool associated with the position.
      * @return collateralType The address of the collateral used in the position.
      * @return deltaCollateralAmountD18 The delta amount of collateral delegated in the position, denominated with 18 decimals of precision.
@@ -275,7 +273,7 @@ interface IVaultModule {
      */
     function getAccountIntent(
         uint128 accountId,
-        uint256 intentId
+        uint32 intentId
     )
         external
         view

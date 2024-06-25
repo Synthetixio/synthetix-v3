@@ -84,7 +84,7 @@ contract VaultModule is IVaultModule {
         address collateralType,
         int256 deltaCollateralAmountD18,
         uint256 leverage
-    ) external override returns (uint256 intentId) {
+    ) external override returns (uint32 intentDeclarationTime) {
         // Ensure the caller is authorized to represent the account.
         FeatureFlag.ensureAccessToFeature(_TWO_STEPS_DELEGATE_FEATURE_FLAG);
         Account.Data storage account = Account.loadAccountAndValidatePermission(
@@ -153,15 +153,14 @@ contract VaultModule is IVaultModule {
         }
 
         // Create a new delegation intent.
-        intentId = DelegationIntent.nextId();
-        DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
-        intent.id = intentId;
+        intentDeclarationTime = block.timestamp.to32();
+        DelegationIntent.Data storage intent = DelegationIntent.load(intentDeclarationTime);
+        intent.declarationTime = intentDeclarationTime;
         intent.accountId = accountId;
         intent.poolId = poolId;
         intent.collateralType = collateralType;
         intent.deltaCollateralAmountD18 = deltaCollateralAmountD18;
         intent.leverage = leverage;
-        intent.declarationTime = block.timestamp.to32();
 
         // Add intent to the account's delegation intents.
         accountIntents.addIntent(intent);
@@ -173,7 +172,6 @@ contract VaultModule is IVaultModule {
             collateralType,
             deltaCollateralAmountD18,
             leverage,
-            intentId,
             intent.declarationTime,
             intent.processingStartTime(),
             intent.processingEndTime(),
@@ -198,15 +196,15 @@ contract VaultModule is IVaultModule {
             .getDelegationIntents();
 
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
-            if (!accountIntents.isInCurrentEpoch(intent.id)) {
-                revert DelegationIntentNotInCurrentEpoch(intent.id);
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i].to32());
+            if (!accountIntents.isInCurrentEpoch(intent.declarationTime)) {
+                revert DelegationIntentNotInCurrentEpoch(intent.declarationTime);
             }
 
             if (!intent.isExecutable()) {
                 // emit an Skipped event
                 emit DelegationIntentSkipped(
-                    intent.id,
+                    intent.declarationTime,
                     accountId,
                     intent.poolId,
                     intent.collateralType
@@ -216,7 +214,7 @@ contract VaultModule is IVaultModule {
                 if (intent.intentExpired()) {
                     accountIntents.removeIntent(intent);
                     emit DelegationIntentRemoved(
-                        intent.id,
+                        intent.declarationTime,
                         accountId,
                         intent.poolId,
                         intent.collateralType
@@ -242,7 +240,7 @@ contract VaultModule is IVaultModule {
             // Remove the intent.
             accountIntents.removeIntent(intent);
             emit DelegationIntentRemoved(
-                intent.id,
+                intent.declarationTime,
                 accountId,
                 intent.poolId,
                 intent.collateralType
@@ -250,7 +248,7 @@ contract VaultModule is IVaultModule {
 
             // emit an event
             emit DelegationIntentProcessed(
-                intent.id,
+                intent.declarationTime,
                 accountId,
                 intent.poolId,
                 intent.collateralType
@@ -289,7 +287,7 @@ contract VaultModule is IVaultModule {
             .load(accountId)
             .getDelegationIntents();
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i].to32());
             accountIntents.removeIntent(intent);
         }
     }
@@ -312,12 +310,12 @@ contract VaultModule is IVaultModule {
             .load(accountId)
             .getDelegationIntents();
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i].to32());
             if (intent.accountId != accountId) {
                 revert InvalidDelegationIntent();
             }
             if (!intent.intentExpired()) {
-                revert DelegationIntentNotExpired(intent.id);
+                revert DelegationIntentNotExpired(intent.declarationTime);
             }
             accountIntents.removeIntent(intent);
         }
@@ -418,7 +416,7 @@ contract VaultModule is IVaultModule {
      */
     function getAccountIntent(
         uint128 accountId,
-        uint256 intentId
+        uint32 intentId
     ) external view override returns (uint128, address, int256, uint256, uint32) {
         DelegationIntent.Data storage intent = Account
             .load(accountId)
@@ -459,7 +457,7 @@ contract VaultModule is IVaultModule {
             : maxProcessableIntent;
         expiredIntents = new uint256[](max);
         for (uint256 i = 0; i < max; i++) {
-            if (DelegationIntent.load(allIntents[i]).intentExpired()) {
+            if (DelegationIntent.load(allIntents[i].to32()).intentExpired()) {
                 expiredIntents[foundItems] = allIntents[i];
                 foundItems++;
             }
@@ -483,7 +481,7 @@ contract VaultModule is IVaultModule {
             : maxProcessableIntent;
         executableIntents = new uint256[](max);
         for (uint256 i = 0; i < max; i++) {
-            if (DelegationIntent.load(allIntents[i]).isExecutable()) {
+            if (DelegationIntent.load(allIntents[i].to32()).isExecutable()) {
                 executableIntents[foundItems] = allIntents[i];
                 foundItems++;
             }
@@ -517,7 +515,7 @@ contract VaultModule is IVaultModule {
         );
         accumulatedIntentDelta = 0;
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i].to32());
             if (!intent.intentExpired()) {
                 accumulatedIntentDelta += intent.deltaCollateralAmountD18;
             }
