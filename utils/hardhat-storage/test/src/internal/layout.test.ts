@@ -77,15 +77,15 @@ describe('internal/layout.ts', function () {
     });
 
     it('should return correct size for static "array"', async function () {
-      expect(getStorageSlotSize({ type: 'array', value: { type: 'uint8' }, length: 5 })).toBe(5);
-      expect(getStorageSlotSize({ type: 'array', value: { type: 'uint128' }, length: 3 })).toBe(48);
+      expect(getStorageSlotSize({ type: 'array', value: { type: 'uint8' }, length: 5 })).toBe(32);
+      expect(getStorageSlotSize({ type: 'array', value: { type: 'uint128' }, length: 3 })).toBe(64);
       expect(
         getStorageSlotSize({
           type: 'array',
           value: { type: 'array', value: { type: 'uint8' }, length: 3 },
           length: 2,
         })
-      ).toBe(6);
+      ).toBe(64);
     });
 
     it('fails when trying to calculate size for "fixed" & "ufixed"', async function () {
@@ -103,32 +103,32 @@ describe('internal/layout.ts', function () {
           type: 'struct',
           members: [{ type: 'uint8' }, { type: 'uint16' }, { type: 'uint32' }, { type: 'uint64' }],
         })
-      ).toBe(15); // 1 + 2 + 4 + 8
+      ).toBe(32); // 1 + 2 + 4 + 8 = 15 rounded to 32
 
       expect(
         getStorageSlotSize({
           type: 'struct',
           members: [{ type: 'int128' }, { type: 'uint64' }, { type: 'uint64' }],
         })
-      ).toBe(32); // 8 + 8
+      ).toBe(32); // 8 + 8 = 16 rounded to 32
 
       expect(
         getStorageSlotSize({
           type: 'struct',
           members: [{ type: 'uint8' }, { type: 'uint256' }, { type: 'uint8' }],
         })
-      ).toBe(65); // 1 (aligned to 32) + 32 + 1
+      ).toBe(96); // 1 (aligned to 32) + 32 + 1 = 65 rounded to 96
 
       expect(
         getStorageSlotSize({
           type: 'struct',
           members: [
-            { type: 'uint8' },
-            { type: 'struct', members: [{ type: 'uint8' }, { type: 'uint16' }] },
-            { type: 'uint32' },
+            { type: 'uint8' }, // size 1
+            { type: 'struct', members: [{ type: 'uint8' }, { type: 'uint16' }] }, // size 32
+            { type: 'uint32' }, // size 4
           ],
         })
-      ).toBe(8); // 1 + 3 + 4
+      ).toBe(96); // it uses 3 slots because the child struct starts on a new slot
     });
   });
 });

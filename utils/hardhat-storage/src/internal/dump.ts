@@ -6,18 +6,18 @@ import {
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import {
   GetArtifactFunction,
-  StorageArtifact,
-  StorageDump,
   StorageArraySlot,
+  StorageArtifact,
   StorageBuiltinValueSlot,
   StorageBuiltInValueType,
+  StorageDump,
   StorageLayout,
   StorageSlot,
   StorageSlotBase,
 } from '../types';
 import { findNodeReferenceWithArtifact } from './artifacts';
 import { findAll, findContract } from './finders';
-import { getStorageSlotSize } from './layout';
+import { hidrateSlotsLayout } from './layout';
 
 interface ContractOrLibrary extends ContractDefinition {
   kind: 'contract' | 'library';
@@ -28,6 +28,15 @@ interface Params {
   contracts: string[];
   version?: string;
   license?: string;
+}
+
+class TypeNameError extends Error {
+  typeName: TypeName;
+
+  constructor(typeName: TypeName, message: string) {
+    super(`${typeName.type}: ${message}`);
+    this.typeName = typeName;
+  }
 }
 
 export async function dumpStorage({ getArtifact, contracts }: Params) {
@@ -45,15 +54,17 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
     const fqName = `${sourceName}:${contractName}`;
 
     for (const structDefinition of findAll(contractNode, 'StructDefinition')) {
-      const struct: StorageSlot[] = [];
+      const slots: StorageSlot[] = [];
 
       for (const member of structDefinition.members) {
         const storageSlot = await _astVariableToStorageSlot(getArtifact, artifact, member);
-        struct.push(storageSlot);
+        slots.push(storageSlot);
       }
 
-      if (struct.length) {
-        result.structs[structDefinition.name] = struct;
+      hidrateSlotsLayout(slots);
+
+      if (slots.length) {
+        result.structs[structDefinition.name] = slots;
       }
     }
 
@@ -89,14 +100,11 @@ async function _typeNameToStorageSlot(
     const { type, ...restAttrs } = attrs;
     // order keys for consistency:
     const slot = (name ? { type, name, ...restAttrs } : { type, ...restAttrs }) as StorageSlot;
-
     return slot;
   };
 
   const _error = (msg: string) => {
-    const err = new Error(`"${typeName.type}": ${msg}`);
-    (err as any).typeName = typeName;
-    throw err;
+    throw new TypeNameError(typeName, msg);
   };
 
   if (typeName.type === 'ElementaryTypeName') {
@@ -180,9 +188,7 @@ async function _typeNameToStorageSlot(
     return _createSlot({ type: 'struct', members });
   }
 
-  const err = new Error(`"${typeName.type}" not implemented for generating storage layout`);
-  (err as any).typeName = typeName;
-  throw err;
+  throw new TypeNameError(typeName, 'not implemented for generating storage layout');
 }
 
 function _isBuiltInType(storageSlot: StorageSlotBase): storageSlot is StorageBuiltinValueSlot {

@@ -25,23 +25,30 @@ contract ExampleContract {
         uint64 size8;
     }
 
+    struct SomeStruct {
+        uint256 field2;
+        address field1;
+    }
+
     struct Data {
         address owner;
         address anotherOwner;
         uint128 sharingSlot1;
         uint128 sharingSlot2;
         EnumExample enumExample;
+        uint8 afterEnumValue;
         mapping(address => uint128) simpleMapping;
         uint8 afterMappingSlot;
         address[] dynamicArray;
-        uint256[3] staticArray;
-        uint unsignedInt; // solhint-disable-line explicit-types
+        uint32[3] staticArray;
+        uint8 unsignedInt; // solhint-disable-line explicit-types
         uint256 unsignedInt256;
         uint8 unsignedInt8;
         int256 signedInt256;
         mapping(ExampleKeyContract => SubData) mappingWithNestedStruct;
         string someStringValue;
         SimpleStruct simpleStruct;
+        uint8 afterStructStartsNewSlot;
     }
 
     uint128 public constant SOME_CONSTANT = 445;
