@@ -69,19 +69,13 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         runtime.fillPrice = asyncOrder.validateCancellation(settlementStrategy, price);
 
         if (runtime.settlementReward > 0) {
-            // deduct keeper reward
-            (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) = PerpsAccount
-                .load(runtime.accountId)
-                .deductFromAccount(runtime.settlementReward);
-            for (uint256 i = 0; i < deductedSynthIds.length; i++) {
-                if (deductedAmount[i] > 0) {
-                    emit CollateralDeducted(
-                        runtime.accountId,
-                        deductedSynthIds[i],
-                        deductedAmount[i]
-                    );
-                }
-            }
+            // charge account the settlement reward
+            uint256 accountDebt = PerpsAccount.load(runtime.accountId).charge(
+                -runtime.settlementReward.toInt()
+            );
+
+            emit AccountCharged(runtime.accountId, runtime.settlementReward.toInt(), accountDebt);
+
             // pay keeper
             PerpsMarketFactory.load().withdrawMarketUsd(
                 ERC2771Context._msgSender(),

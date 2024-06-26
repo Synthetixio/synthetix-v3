@@ -77,16 +77,6 @@ describe('Account Debt', () => {
     const openOrderFee = computeFees(wei(0), wei(50), initialFillPrice, orderFees);
     const closeOrderFee = computeFees(wei(50), wei(-50), finalFillPrice, orderFees);
 
-    let synthUsedForOpenOrderFee: Wei, synthUsedForCloseOrderFee: Wei;
-    before('identify synth amount required to pay open order fee', async () => {
-      const { synthToBurn } = await systems().SpotMarket.quoteSellExactOut(
-        synthMarkets()[0].marketId(),
-        openOrderFee.totalFees,
-        bn(0)
-      );
-      synthUsedForOpenOrderFee = wei(synthToBurn);
-    });
-
     before(`open position size ${size.toString()}`, async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(startingPrice.toBN());
 
@@ -107,15 +97,6 @@ describe('Account Debt', () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(endingPrice.toBN());
     });
 
-    before('identify synth amount required to pay open order fee', async () => {
-      const { synthToBurn } = await systems().SpotMarket.quoteSellExactOut(
-        synthMarkets()[0].marketId(),
-        closeOrderFee.totalFees,
-        bn(0)
-      );
-      synthUsedForCloseOrderFee = wei(synthToBurn);
-    });
-
     before('close position', async () => {
       await openPosition({
         systems,
@@ -133,59 +114,40 @@ describe('Account Debt', () => {
     return {
       openOrderFee,
       closeOrderFee,
-      synthUsedForOpenOrderFee: () => synthUsedForOpenOrderFee,
-      synthUsedForCloseOrderFee: () => synthUsedForCloseOrderFee,
+      totalFees: openOrderFee.totalFees.add(closeOrderFee.totalFees),
       pnl: finalFillPrice.sub(initialFillPrice).mul(size),
     };
   };
 
   let currentDebt: Wei;
   describe('negative pnl', () => {
-    let startingCollateralAmount: Wei;
-    before('identify collateral amount', async () => {
-      startingCollateralAmount = wei(
-        await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
-      );
-    });
-
-    const {
-      pnl: expectedPnl,
-      synthUsedForOpenOrderFee,
-      synthUsedForCloseOrderFee,
-    } = openAndClosePosition(wei(50), wei(2000), wei(1500));
+    const { pnl: expectedPnl, totalFees } = openAndClosePosition(wei(50), wei(2000), wei(1500));
 
     it('accrues correct amount of debt', async () => {
-      currentDebt = expectedPnl;
+      currentDebt = expectedPnl.sub(totalFees);
       assertBn.equal(currentDebt.abs().toBN(), await systems().PerpsMarket.debt(accountId));
-    });
-
-    it('used collateral to pay order fees', async () => {
-      const synthUsedForFees = synthUsedForOpenOrderFee().add(synthUsedForCloseOrderFee());
-      assertBn.equal(
-        startingCollateralAmount.sub(synthUsedForFees).toBN(),
-        await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
-      );
     });
   });
 
   describe('positive pnl to lower debt', () => {
-    const { pnl: expectedPnl } = openAndClosePosition(wei(50), wei(1500), wei(1750));
+    const { pnl: expectedPnl, totalFees } = openAndClosePosition(wei(50), wei(1500), wei(1750));
 
     it('reduces debt', async () => {
-      currentDebt = currentDebt.add(expectedPnl);
+      currentDebt = currentDebt.add(expectedPnl).sub(totalFees);
       assertBn.equal(currentDebt.abs().toBN(), await systems().PerpsMarket.debt(accountId));
     });
   });
 
   describe('positive pnl to eliminate debt and add snxUSD', () => {
-    const { pnl: expectedPnl, closeOrderFee } = openAndClosePosition(wei(50), wei(1750), wei(2250));
+    const { pnl: expectedPnl, totalFees } = openAndClosePosition(wei(50), wei(1750), wei(2250));
 
     it('sets debt to 0', async () => {
       assertBn.equal(0, await systems().PerpsMarket.debt(accountId));
     });
 
     it('sets snxUSD to leftover profit', async () => {
-      currentDebt = currentDebt.add(expectedPnl).sub(closeOrderFee.totalFees);
+      // removes fees from snxUSD if available
+      currentDebt = currentDebt.add(expectedPnl).sub(totalFees);
       assertBn.equal(
         currentDebt.toBN(),
         await systems().PerpsMarket.getCollateralAmount(accountId, 0)
@@ -194,21 +156,14 @@ describe('Account Debt', () => {
   });
 
   describe('negative pnl reduces snxUSD', () => {
-    const {
-      pnl: expectedPnl,
-      openOrderFee,
-      closeOrderFee,
-    } = openAndClosePosition(wei(50), wei(2250), wei(2150));
+    const { pnl: expectedPnl, totalFees } = openAndClosePosition(wei(50), wei(2250), wei(2150));
 
     it('debt is still 0', async () => {
       assertBn.equal(0, await systems().PerpsMarket.debt(accountId));
     });
 
     it('reduces snxUSD amount', async () => {
-      currentDebt = currentDebt
-        .add(expectedPnl)
-        .sub(openOrderFee.totalFees)
-        .sub(closeOrderFee.totalFees);
+      currentDebt = currentDebt.add(expectedPnl).sub(totalFees);
       assertBn.equal(
         currentDebt.abs().toBN(),
         await systems().PerpsMarket.getCollateralAmount(accountId, 0)
@@ -217,10 +172,10 @@ describe('Account Debt', () => {
   });
 
   describe('negative pnl adds debt', () => {
-    const { pnl: expectedPnl, openOrderFee } = openAndClosePosition(wei(50), wei(2150), wei(1800));
+    const { pnl: expectedPnl, totalFees } = openAndClosePosition(wei(50), wei(2150), wei(1800));
 
     it('adds debt', async () => {
-      currentDebt = currentDebt.add(expectedPnl).sub(openOrderFee.totalFees);
+      currentDebt = currentDebt.add(expectedPnl).sub(totalFees);
       assertBn.equal(currentDebt.abs().toBN(), await systems().PerpsMarket.debt(accountId));
     });
 

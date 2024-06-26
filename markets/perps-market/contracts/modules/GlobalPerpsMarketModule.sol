@@ -42,27 +42,6 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setSynthDeductionPriority(
-        uint128[] memory newSynthDeductionPriority
-    ) external override {
-        OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.load().updateSynthDeductionPriority(
-            newSynthDeductionPriority
-        );
-
-        emit SynthDeductionPrioritySet(newSynthDeductionPriority);
-    }
-
-    /**
-     * @inheritdoc IGlobalPerpsMarketModule
-     */
-    function getSynthDeductionPriority() external view override returns (uint128[] memory) {
-        return GlobalPerpsMarketConfiguration.load().synthDeductionPriority;
-    }
-
-    /**
-     * @inheritdoc IGlobalPerpsMarketModule
-     */
     function setKeeperRewardGuards(
         uint256 minKeeperRewardUsd,
         uint256 minKeeperProfitRatioD18,

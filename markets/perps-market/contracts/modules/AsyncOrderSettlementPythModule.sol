@@ -79,7 +79,6 @@ contract AsyncOrderSettlementPythModule is
             .validateRequest(settlementStrategy, price);
         asyncOrder.validateAcceptablePrice(runtime.fillPrice);
 
-        runtime.amountToDeduct = runtime.totalFees;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
@@ -89,7 +88,10 @@ contract AsyncOrderSettlementPythModule is
         (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
             runtime.fillPrice
         );
-        perpsAccount.applyPnl(runtime.pnl);
+
+        runtime.chargedAmount = runtime.pnl - runtime.totalFees.toInt();
+        perpsAccount.charge(runtime.chargedAmount);
+        emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
         // after pnl is realized, update position
         runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
@@ -109,29 +111,7 @@ contract AsyncOrderSettlementPythModule is
             runtime.updateData.interestRate
         );
 
-        // since margin is deposited when trader deposits, as long as the owed collateral is deducted
-        // from internal accounting, fees are automatically realized by the stakers
-        if (runtime.amountToDeduct > 0) {
-            (runtime.deductedSynthIds, runtime.deductedAmount) = perpsAccount.deductFromAccount(
-                runtime.amountToDeduct
-            );
-            for (
-                runtime.synthDeductionIterator = 0;
-                runtime.synthDeductionIterator < runtime.deductedSynthIds.length;
-                runtime.synthDeductionIterator++
-            ) {
-                if (runtime.deductedAmount[runtime.synthDeductionIterator] > 0) {
-                    emit CollateralDeducted(
-                        runtime.accountId,
-                        runtime.deductedSynthIds[runtime.synthDeductionIterator],
-                        runtime.deductedAmount[runtime.synthDeductionIterator]
-                    );
-                }
-            }
-        }
-        runtime.settlementReward =
-            settlementStrategy.settlementReward +
-            KeeperCosts.load().getSettlementKeeperCosts();
+        runtime.settlementReward = AsyncOrder.settlementRewardCost(settlementStrategy);
 
         if (runtime.settlementReward > 0) {
             // pay keeper

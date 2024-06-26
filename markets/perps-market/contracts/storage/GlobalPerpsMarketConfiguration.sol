@@ -39,9 +39,10 @@ library GlobalPerpsMarketConfiguration {
         // solhint-disable-next-line var-name-mixedcase
         mapping(uint128 => uint256) __unused_1;
         /**
-         * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
+         * @dev previously synth deduction priority
          */
-        uint128[] synthDeductionPriority;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128[] __unused_2;
         /**
          * @dev minimum configured keeper reward for the sender who liquidates the account
          */
@@ -151,17 +152,6 @@ library GlobalPerpsMarketConfiguration {
         uint256 minCap = minimumKeeperRewardCap(self, costOfExecutionInUsd);
         uint256 maxCap = maximumKeeperRewardCap(self, availableMarginInUsd);
         return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
-    }
-
-    function updateSynthDeductionPriority(
-        Data storage self,
-        uint128[] memory newSynthDeductionPriority
-    ) internal {
-        delete self.synthDeductionPriority;
-
-        for (uint256 i = 0; i < newSynthDeductionPriority.length; i++) {
-            self.synthDeductionPriority.push(newSynthDeductionPriority[i]);
-        }
     }
 
     function collectFees(
