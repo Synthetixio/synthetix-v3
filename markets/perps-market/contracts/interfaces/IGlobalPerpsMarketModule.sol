@@ -13,12 +13,6 @@ interface IGlobalPerpsMarketModule {
     event InterestRateUpdated(uint128 indexed superMarketId, uint128 interestRate);
 
     /**
-     * @notice Gets fired when the synth deduction priority is updated by owner.
-     * @param newSynthDeductionPriority new synth id priority order for deductions.
-     */
-    event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
-
-    /**
      * @notice Gets fired when keeper reward guard is set or updated.
      * @param minKeeperRewardUsd Minimum keeper reward expressed as USD value.
      * @param minKeeperProfitRatioD18 Minimum keeper profit ratio used together with minKeeperRewardUsd to calculate the minimum.
@@ -96,20 +90,6 @@ interface IGlobalPerpsMarketModule {
         external
         view
         returns (uint256[] memory supportedCollaterals);
-
-    /**
-     * @notice Sets the synth deduction priority ordered list.
-     * @dev The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
-     * @param newSynthDeductionPriority Ordered array of synth market ids for deduction priority.
-     */
-    function setSynthDeductionPriority(uint128[] memory newSynthDeductionPriority) external;
-
-    /**
-     * @notice Gets the synth deduction priority ordered list.
-     * @dev The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
-     * @return synthDeductionPriority Ordered array of synth market ids for deduction priority.
-     */
-    function getSynthDeductionPriority() external view returns (uint128[] memory);
 
     /**
      * @notice Sets the keeper reward guard (min and max).
