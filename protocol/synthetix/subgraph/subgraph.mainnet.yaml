@@ -22,7 +22,7 @@ dataSources:
         - MarketManagerModule
         - CollateralType
         - AccountModule
-        - AccountPermissionUsers
+        - AccountPermissionUser
         - VaultModule
         - Position
         - IssueUSDModule

@@ -1,10 +1,10 @@
 import { PermissionRevoked } from './generated/CoreProxy/CoreProxy';
-import { Account, AccountPermissionUsers } from './generated/schema';
+import { Account, AccountPermissionUser } from './generated/schema';
 import { Bytes, store } from '@graphprotocol/graph-ts';
 
 export function handlePermissionRevoked(event: PermissionRevoked): void {
   const account = Account.load(event.params.accountId.toString());
-  const permissions = AccountPermissionUsers.load(
+  const permissions = AccountPermissionUser.load(
     event.params.accountId.toString().concat('-').concat(event.params.user.toHex())
   );
   if (account !== null && permissions !== null) {
@@ -18,7 +18,7 @@ export function handlePermissionRevoked(event: PermissionRevoked): void {
     // remove the entity from the store
     if (newState.length === 0) {
       store.remove(
-        'AccountPermissionUsers',
+        'AccountPermissionUser',
         event.params.accountId.toString().concat('-').concat(event.params.user.toHex())
       );
       const newAccountIdsState: string[] = [];
