@@ -251,7 +251,7 @@ interface IMarketManagerModule {
     function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
 
     /**
-     * @notice allows for a market to set its delegation and delegation delay and window times. (See SIP-366). By default, there is no delay and infinite windows.
+     * @notice allows for a market to set its delegation and undelegation delay and window times. (See SIP-366). By default, there is no delay and infinite windows.
      * @param marketId the id of the market that wants to set delegation times.
      * @param delegateCollateralDelay the minimum number of delay seconds to delegation
      * @param delegateCollateralWindow the maximum number of seconds that an delegation can be executed after the delay.
@@ -267,7 +267,7 @@ interface IMarketManagerModule {
     ) external;
 
     /**
-     * @notice Retrieve the delegation and delegation delay and window times of a market
+     * @notice Retrieve the delegation and undelegation delay and window times of a market
      * @param marketId the id of the market
      */
     function getDelegationCollateralConfiguration(
