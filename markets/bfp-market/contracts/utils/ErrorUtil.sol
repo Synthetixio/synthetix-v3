@@ -72,7 +72,7 @@ library ErrorUtil {
     error CanLiquidatePosition();
 
     /// @notice Thrown when an account has insufficient collateral to transfer.
-    error InsufficientCollateral(uint128 synthMarketId, uint256 available, uint256 value);
+    error InsufficientCollateral(address collateralAddress, uint256 available, uint256 value);
 
     /// @notice Thrown when an account tries to withdrawAll without having any collateral.
     error NilCollateral();
@@ -87,28 +87,28 @@ library ErrorUtil {
     error MaxCollateralExceeded(uint256 value, uint256 max);
 
     /// @notice Thrown when the supplied collateral is unsupported.
-    error UnsupportedCollateral(uint128 synthMarketId);
+    error UnsupportedCollateral(address collateralAddress);
 
     /// @notice Thrown when the input arrays have mismatched lengths.
     error ArrayLengthMismatch();
 
     /// @notice Thrown when configuring margin where a previously added collateral was wrongly removed.
-    error MissingRequiredCollateral(uint128 synthMarketId);
-
-    /// @notice Thrown when and action is only allowed by account owner.
-    error OnlyAccountOwner();
+    error MissingRequiredCollateral(address collateralAddress);
 
     /// @notice Thrown when an invalid reward distributor was specified.
     error InvalidRewardDistributor(address distributor);
+
+    /// @notice Thrown when an invalid Core as passed was specified.
+    error InvalidCoreAddress(address synthetixCore);
+
+    /// @notice Thrown when an account is not authorized to perform an action.
+    error Unauthorized(address caller);
 
     /// @notice Thrown when a specified hook is not whitelisted, or does not match spec, or otherwise.
     error InvalidHook(address hook);
 
     /// @notice Thrown when there are too many hooks specified.
     error MaxHooksExceeded();
-
-    /// @notice Thrown when you trying to merge an account with a position that wasn't created in the same block.
-    error PositionTooOld();
 
     /// @notice Thrown when collateral is found when none was expected to exist.
     error CollateralFound();
@@ -127,4 +127,7 @@ library ErrorUtil {
 
     /// @notice Thrown when passed incorrect parameter.
     error InvalidParameter(string parameter, string reason);
+
+    /// @notice Thrown when there's not enough liquidity to open a position.
+    error InsufficientLiquidity();
 }
