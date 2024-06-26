@@ -398,12 +398,16 @@ describe('PerpMarketFactoryModule Utilization', () => {
       await fastForwardBySec(provider(), genNumber(1, SECONDS_ONE_DAY));
       // Decrease amount of staked collateral on the core side.
       const stakedCollateralAddress = stakedCollateral().address;
-      await Core.connect(staker()).delegateCollateral(
-        stakerAccountId,
-        poolId,
-        stakedCollateralAddress,
-        wei(stakedAmount).mul(0.9).toBN(),
-        bn(1)
+      await withExplicitEvmMine(
+        () =>
+          Core.connect(staker()).delegateCollateral(
+            stakerAccountId,
+            poolId,
+            stakedCollateralAddress,
+            wei(stakedAmount).mul(0.9).toBN(),
+            bn(1)
+          ),
+        provider()
       );
 
       const utilizationDigest2 = await BfpMarketProxy.getUtilizationDigest(marketId);
