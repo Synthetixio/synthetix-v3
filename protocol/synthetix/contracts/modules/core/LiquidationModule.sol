@@ -14,8 +14,6 @@ import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
-import "../../storage/AccountDelegationIntents.sol";
-
 /**
  * @title Module for liquidated positions and vaults that are below the liquidation ratio.
  * @dev See ILiquidationModule.
@@ -35,7 +33,7 @@ contract LiquidationModule is ILiquidationModule {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
-    using AccountDelegationIntents for AccountDelegationIntents.Data;
+    using Account for Account.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
@@ -118,7 +116,7 @@ contract LiquidationModule is ILiquidationModule {
         );
 
         // Clean any outstanding intents to delegate collateral
-        AccountDelegationIntents.getValid(accountId).cleanAllIntents();
+        Account.load(accountId).cleanAllIntents();
 
         emit Liquidation(
             accountId,

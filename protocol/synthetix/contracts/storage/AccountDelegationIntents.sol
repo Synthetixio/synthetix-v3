@@ -20,64 +20,12 @@ library AccountDelegationIntents {
     using Account for Account.Data;
 
     struct Data {
-        uint128 accountId;
-        uint128 delegationIntentsEpoch; // nonce used to nuke previous intents using a new era (useful on liquidations)
         SetUtil.UintSet intentsId;
         mapping(bytes32 => SetUtil.UintSet) intentsByPair; // poolId/collateralType => intentIds[]
         // accounting for the intents collateral delegated
         // Per Collateral
         SetUtil.AddressSet delegatedCollaterals;
         mapping(address => int256) netDelegatedAmountPerCollateral; // collateralType => net delegatedCollateralAmount
-    }
-
-    /**
-     * @dev Returns the account delegation intents stored at the specified account id.
-     */
-    function load(
-        uint128 accountId,
-        uint128 delegationIntentsEpoch
-    ) internal pure returns (Data storage accountDelegationIntents) {
-        bytes32 s = keccak256(
-            abi.encode(
-                "io.synthetix.synthetix.AccountDelegationIntents",
-                accountId,
-                delegationIntentsEpoch
-            )
-        );
-        assembly {
-            accountDelegationIntents.slot := s
-        }
-    }
-
-    /**
-     * @dev Returns the account delegation intents stored at the specified account id.
-     */
-    function loadValid(
-        uint128 accountId
-    ) internal view returns (Data storage accountDelegationIntents) {
-        uint128 delegationIntentsEpoch = Account.load(accountId).currentDelegationIntentsEpoch;
-        accountDelegationIntents = load(accountId, delegationIntentsEpoch);
-        if (
-            accountDelegationIntents.accountId != 0 &&
-            (accountDelegationIntents.accountId != accountId ||
-                accountDelegationIntents.delegationIntentsEpoch != delegationIntentsEpoch)
-        ) {
-            revert IVaultModule.InvalidDelegationIntent();
-        }
-    }
-
-    /**
-     * @dev Returns the account delegation intents stored at the specified account id. Checks if it's valid
-     */
-    function getValid(uint128 accountId) internal returns (Data storage accountDelegationIntents) {
-        accountDelegationIntents = loadValid(accountId);
-        if (accountDelegationIntents.accountId == 0) {
-            // Uninitialized storage will have a 0 accountId; it means we need to initialize it (new accountDelegationIntents era)
-            accountDelegationIntents.accountId = accountId;
-            accountDelegationIntents.delegationIntentsEpoch = Account
-                .load(accountId)
-                .currentDelegationIntentsEpoch;
-        }
     }
 
     function addIntent(Data storage self, DelegationIntent.Data storage delegationIntent) internal {
@@ -157,14 +105,5 @@ library AccountDelegationIntents {
                 removeIntent(self, intent);
             }
         }
-    }
-
-    /**
-     * @dev Cleans all intents (expired and not) related to the account. This should be called upon liquidation.
-     */
-    function cleanAllIntents(Data storage self) internal {
-        // Nuke all intents by incrementing the delegationIntentsEpoch nonce
-        // This is useful to avoid iterating over all intents to remove them and risking a for loop revert.
-        Account.load(self.accountId).getNewDelegationIntentsEpoch();
     }
 }

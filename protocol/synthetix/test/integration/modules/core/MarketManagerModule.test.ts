@@ -552,12 +552,12 @@ describe('MarketManagerModule', function () {
     });
   });
 
-  describe('setDelegateCollateralDelay()', () => {
+  describe('setDelegationCollateralConfiguration()', () => {
     before(restore);
 
     it('only works for market', async () => {
       await assertRevert(
-        systems().Core.setDelegateCollateralDelay(marketId(), 86400),
+        systems().Core.setDelegationCollateralConfiguration(marketId(), 86400, 86400, 86400, 86400),
         'Unauthorized',
         systems().Core
       );
@@ -566,96 +566,23 @@ describe('MarketManagerModule', function () {
     describe('success', () => {
       let tx: ethers.providers.TransactionResponse;
       before('exec', async () => {
-        tx = await MockMarket().setDelegateCollateralDelay(60);
+        tx = await MockMarket().setDelegationCollateralConfiguration(60, 61, 62, 63);
       });
 
-      it('sets the value', async () => {
-        assertBn.equal(await systems().Core.getDelegateCollateralDelay(marketId()), 60);
-      });
-
-      it('emits', async () => {
-        await assertEvent(tx, `SetDelegateCollateralDelay(${marketId()}, 60)`, systems().Core);
-      });
-    });
-  });
-
-  describe('setDelegateCollateralWindow()', () => {
-    before(restore);
-
-    it('only works for market', async () => {
-      await assertRevert(
-        systems().Core.setDelegateCollateralWindow(marketId(), 86400),
-        'Unauthorized',
-        systems().Core
-      );
-    });
-
-    describe('success', () => {
-      let tx: ethers.providers.TransactionResponse;
-      before('exec', async () => {
-        tx = await MockMarket().setDelegateCollateralWindow(70);
-      });
-
-      it('sets the value', async () => {
-        assertBn.equal(await systems().Core.getDelegateCollateralWindow(marketId()), 70);
+      it('sets the values', async () => {
+        const config = await systems().Core.getDelegationCollateralConfiguration(marketId());
+        assertBn.equal(config.delegateCollateralDelay, 60);
+        assertBn.equal(config.delegateCollateralWindow, 61);
+        assertBn.equal(config.undelegateCollateralDelay, 62);
+        assertBn.equal(config.undelegateCollateralWindow, 63);
       });
 
       it('emits', async () => {
-        await assertEvent(tx, `SetDelegateCollateralWindow(${marketId()}, 70)`, systems().Core);
-      });
-    });
-  });
-
-  describe('setUndelegateCollateralDelay()', () => {
-    before(restore);
-
-    it('only works for market', async () => {
-      await assertRevert(
-        systems().Core.setUndelegateCollateralDelay(marketId(), 86400),
-        'Unauthorized',
-        systems().Core
-      );
-    });
-
-    describe('success', () => {
-      let tx: ethers.providers.TransactionResponse;
-      before('exec', async () => {
-        tx = await MockMarket().setUndelegateCollateralDelay(80);
-      });
-
-      it('sets the value', async () => {
-        assertBn.equal(await systems().Core.getUndelegateCollateralDelay(marketId()), 80);
-      });
-
-      it('emits', async () => {
-        await assertEvent(tx, `SetUndelegateCollateralDelay(${marketId()}, 80)`, systems().Core);
-      });
-    });
-  });
-
-  describe('setUndelegateCollateralWindow()', () => {
-    before(restore);
-
-    it('only works for market', async () => {
-      await assertRevert(
-        systems().Core.setUndelegateCollateralWindow(marketId(), 86400),
-        'Unauthorized',
-        systems().Core
-      );
-    });
-
-    describe('success', () => {
-      let tx: ethers.providers.TransactionResponse;
-      before('exec', async () => {
-        tx = await MockMarket().setUndelegateCollateralWindow(90);
-      });
-
-      it('sets the value', async () => {
-        assertBn.equal(await systems().Core.getUndelegateCollateralWindow(marketId()), 90);
-      });
-
-      it('emits', async () => {
-        await assertEvent(tx, `SetUndelegateCollateralWindow(${marketId()}, 90)`, systems().Core);
+        await assertEvent(
+          tx,
+          `SetDelegateCollateralConfiguration(${marketId()}, 60, 61, 62, 63)`,
+          systems().Core
+        );
       });
     });
   });

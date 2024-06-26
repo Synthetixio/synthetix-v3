@@ -91,10 +91,7 @@ describe('VaultModule Two-step Delegation views', function () {
   });
 
   before('set initial market window times', async () => {
-    await MockMarket.setDelegateCollateralDelay(200);
-    await MockMarket.setDelegateCollateralWindow(200);
-    await MockMarket.setUndelegateCollateralDelay(200);
-    await MockMarket.setUndelegateCollateralWindow(200);
+    await MockMarket.setDelegationCollateralConfiguration(200, 200, 200, 200);
   });
 
   const intentIds = new Array<BigNumber>();

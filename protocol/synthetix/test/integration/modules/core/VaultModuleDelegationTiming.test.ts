@@ -9,7 +9,7 @@ import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import { delegateCollateral, declareDelegateIntent } from '../../../common';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('VaultModule Two-step Delegation', function () {
+describe('VaultModule Two-step Delegation timing', function () {
   const {
     signers,
     systems,
@@ -104,8 +104,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     before('declare intent to delegate', async () => {
@@ -154,8 +159,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setUndelegateCollateralDelay(100);
-      await MockMarket.setUndelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        previousConfiguration[0],
+        previousConfiguration[1],
+        100,
+        20
+      );
     });
 
     before('first delegete some', async () => {
@@ -203,6 +213,76 @@ describe('VaultModule Two-step Delegation', function () {
 
     it('fails to execute an un-delegation if window is already closed (too late)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 121, provider());
+
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
+        `DelegationIntentExpired`,
+        systems().Core
+      );
+    });
+  });
+
+  describe('Delegation Timing failures with global params', async () => {
+    let intentId: BigNumber;
+    let declareDelegateIntentTime: number;
+    before('set global window times', async () => {
+      await systems()
+        .Core.connect(owner)
+        .setConfig(
+          ethers.utils.formatBytes32String('delegateCollateralDelay_min'),
+          ethers.utils.hexZeroPad(bn(120).toHexString(), 32)
+        ); // use 120 as the global min delay
+      await systems()
+        .Core.connect(owner)
+        .setConfig(
+          ethers.utils.formatBytes32String('delegateCollateralWindow_max'),
+          ethers.utils.hexZeroPad(bn(10).toHexString(), 32)
+        ); // use 10 as the global max window
+    });
+
+    before('set market window times', async () => {
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        10,
+        200,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
+    });
+
+    before('declare intent to delegate', async () => {
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+
+      declareDelegateIntentTime = await getTime(provider());
+    });
+
+    after(restore);
+
+    it('fails to execute a delegation if window is not open (too soon)', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 115, provider());
+
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
+        `DelegationIntentNotReady`,
+        systems().Core
+      );
+    });
+
+    it('fails to execute a delegation if window is already closed (too late)', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 131, provider());
 
       await assertRevert(
         systems()
@@ -292,8 +372,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     before('declare intent to delegate', async () => {
@@ -371,8 +456,13 @@ describe('VaultModule Two-step Delegation', function () {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(10000);
-      await MockMarket.setDelegateCollateralWindow(2000);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        10000,
+        2000,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     before('declare intent to delegate', async () => {
@@ -391,8 +481,13 @@ describe('VaultModule Two-step Delegation', function () {
     });
 
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(20);
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
     });
 
     it('sanity check. The intent exists', async () => {
@@ -419,8 +514,14 @@ describe('VaultModule Two-step Delegation', function () {
     let declareDelegateIntentTime: number;
     before(restore);
     before('set market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(150);
-      // Note: not setting the window size (it means defaults to 0) - forever expiration to execute, immediate expiration to delete
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        150,
+        0,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
+      // Note: not setting the window size to zero - forever expiration to execute, immediate expiration to delete
     });
 
     before('declare intent to delegate', async () => {
@@ -504,15 +605,9 @@ describe('VaultModule Two-step Delegation', function () {
     });
 
     before('set both market window times', async () => {
-      await MockMarket.setDelegateCollateralDelay(100);
-      await MockMarket.setUndelegateCollateralDelay(100);
-      await MockMarket.setDelegateCollateralWindow(0);
-      await MockMarket.setUndelegateCollateralWindow(0);
+      await MockMarket.setDelegationCollateralConfiguration(100, 0, 100, 0);
 
-      await SecondMockMarket.setDelegateCollateralDelay(200);
-      await SecondMockMarket.setUndelegateCollateralDelay(200);
-      await SecondMockMarket.setDelegateCollateralWindow(20);
-      await SecondMockMarket.setUndelegateCollateralWindow(20);
+      await SecondMockMarket.setDelegationCollateralConfiguration(200, 20, 200, 20);
     });
 
     before('declare intent to delegate', async () => {

@@ -59,7 +59,8 @@ export const stake = async (
   poolId: number,
   accountId: number,
   user: ethers.Signer,
-  delegateAmount: ethers.BigNumber = depositAmount
+  delegateAmount: ethers.BigNumber = depositAmount,
+  useLegacyDelegateCollateral: boolean = false
 ) => {
   const { Core, CollateralMock } = systems;
   await CollateralMock.mint(await user.getAddress(), delegateAmount.mul(1000));
@@ -73,33 +74,53 @@ export const stake = async (
   // stake collateral
   await Core.connect(user).deposit(accountId, CollateralMock.address, delegateAmount.mul(300));
 
-  // invest in the pool
-  await Core.connect(user).declareIntentToDelegateCollateral(
-    accountId,
-    poolId,
-    CollateralMock.address,
-    delegateAmount,
-    ethers.utils.parseEther('1')
-  );
+  if (useLegacyDelegateCollateral) {
+    // invest in the pool
+    await Core.connect(user).delegateCollateral(
+      accountId,
+      poolId,
+      CollateralMock.address,
+      delegateAmount,
+      ethers.utils.parseEther('1')
+    );
 
-  await Core.connect(user).processIntentToDelegateCollateralByPair(
-    accountId,
-    poolId,
-    CollateralMock.address
-  );
+    // also for convenience invest in the 0 pool
+    await Core.connect(user).delegateCollateral(
+      accountId,
+      0,
+      CollateralMock.address,
+      delegateAmount,
+      ethers.utils.parseEther('1')
+    );
+  } else {
+    // invest in the pool
+    await Core.connect(user).declareIntentToDelegateCollateral(
+      accountId,
+      poolId,
+      CollateralMock.address,
+      delegateAmount,
+      ethers.utils.parseEther('1')
+    );
 
-  // also for convenience invest in the 0 pool
-  await Core.connect(user).declareIntentToDelegateCollateral(
-    accountId,
-    0,
-    CollateralMock.address,
-    delegateAmount,
-    ethers.utils.parseEther('1')
-  );
+    await Core.connect(user).processIntentToDelegateCollateralByPair(
+      accountId,
+      poolId,
+      CollateralMock.address
+    );
 
-  await Core.connect(user).processIntentToDelegateCollateralByPair(
-    accountId,
-    0,
-    CollateralMock.address
-  );
+    // also for convenience invest in the 0 pool
+    await Core.connect(user).declareIntentToDelegateCollateral(
+      accountId,
+      0,
+      CollateralMock.address,
+      delegateAmount,
+      ethers.utils.parseEther('1')
+    );
+
+    await Core.connect(user).processIntentToDelegateCollateralByPair(
+      accountId,
+      0,
+      CollateralMock.address
+    );
+  }
 };

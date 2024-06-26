@@ -58,8 +58,10 @@ export function bootstrap() {
   };
 }
 
-export function bootstrapWithStakedPool() {
-  return createStakedPool(bootstrap());
+export function bootstrapWithStakedPool(useLegacyMode: boolean = false) {
+  const r = createStakedPool(bootstrap(), bn(1), bn(1000), useLegacyMode);
+
+  return r;
 }
 
 export function bootstrapWithMockMarketAndPool() {

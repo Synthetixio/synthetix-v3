@@ -63,6 +63,11 @@ interface IVaultModule {
     );
 
     /**
+     * @notice Thrown when the both legacy and two steps delegation is enabled.
+     */
+    error LegacyAndTwoStepsDelegateCollateralEnabled();
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
@@ -147,6 +152,30 @@ interface IVaultModule {
         uint128 indexed poolId,
         address collateralType
     );
+
+    /**
+     * @notice Updates an account's delegated collateral amount for the specified pool and collateral type pair.
+     * @param accountId The id of the account associated with the position that will be updated.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral used in the position.
+     * @param amount The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
+     * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
+     *
+     * Requirements:
+     *
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+     * - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+     * - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function delegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint256 amount,
+        uint256 leverage
+    ) external;
 
     /**
      * @notice Declare an intent to update the delegated amount for the specified pool and collateral type pair.
