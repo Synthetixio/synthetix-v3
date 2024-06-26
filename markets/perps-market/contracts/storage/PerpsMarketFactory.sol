@@ -7,11 +7,11 @@ import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
 import {LiquidationAssetManager} from "../storage/LiquidationAssetManager.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
@@ -23,6 +23,7 @@ library PerpsMarketFactory {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarket for PerpsMarket.Data;
     using LiquidationAssetManager for LiquidationAssetManager.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
 
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
@@ -116,10 +117,11 @@ library PerpsMarketFactory {
         address synth = self.spotMarket.getSynth(collateralId);
         self.synthetix.withdrawMarketCollateral(self.perpsMarketId, synth, amount);
 
-        (synthValue, ) = self.spotMarket.quoteSellExactIn(
-            collateralId,
+        (synthValue, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
             amount,
-            Price.Tolerance.DEFAULT
+            self.spotMarket,
+            PerpsPrice.Tolerance.DEFAULT,
+            false
         );
 
         PerpsCollateralConfiguration.loadValidLam(collateralId).distributeCollateral(synth, amount);

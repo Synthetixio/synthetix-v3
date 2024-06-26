@@ -216,13 +216,6 @@ export function bootstrapMarkets(data: BootstrapArgs) {
       );
   });
 
-  // auto add all synth markets in the row they were created for deduction priority
-  before('set synth deduction priority', async () => {
-    // first item is always snxUSD
-    const synthIds = [bn(0), ...synthMarkets().map((s) => s.marketId())];
-    await systems().PerpsMarket.connect(owner()).setSynthDeductionPriority(synthIds);
-  });
-
   before('set reward distributor', async () => {
     const { collateralLiquidateRewardRatio } = data;
     await systems()

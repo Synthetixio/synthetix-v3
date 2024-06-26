@@ -97,6 +97,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 seizedMarginValue,
                 true
             );
+            // clear debt
+            account.updateAccountDebt(-(account.debt.toInt()));
+
+            emit AccountMarginLiquidation(accountId, seizedMarginValue, liquidationReward);
         } else {
             revert NotEligibleForMarginLiquidation(accountId);
         }
@@ -167,9 +171,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     function canLiquidateMarginOnly(
         uint128 accountId
     ) external view override returns (bool isEligible) {
-        (isEligible, ) = PerpsAccount.load(accountId).isEligibleForMarginLiquidation(
-            PerpsPrice.Tolerance.DEFAULT
-        );
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        if (account.hasOpenPositions()) {
+            return false;
+        } else {
+            (isEligible, ) = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.DEFAULT);
+        }
     }
 
     /**

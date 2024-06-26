@@ -1,7 +1,7 @@
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { depositCollateral, discountedValue, openPosition } from '../helpers';
+import { calculateFillPrice, depositCollateral, discountedValue, openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
@@ -77,7 +77,6 @@ describe('Account margins - Multicollateral - InsufficientCollateralAvailableFor
   let btcAmount: Wei, btcMarketId: ethers.BigNumber;
 
   before('identify', async () => {
-    spotMarket = systems().SpotMarket;
     btcMarketId = synthMarkets()[0].marketId();
     btcAmount = wei(
       await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
@@ -124,13 +123,11 @@ describe('Account margins - Multicollateral - InsufficientCollateralAvailableFor
     });
 
     let expectedWithdrawableMargin: Wei;
-    it('should have correct available margin', async () => {
+    it('should have correct withdrawable margin', async () => {
       const { totalPnl } = await systems().PerpsMarket.getOpenPosition(
         accountId,
         perpsMarkets()[0].marketId()
       );
-
-      console.log(availableTradingMargin, requiredMargin, totalPnl);
       expectedWithdrawableMargin = availableTradingMargin.sub(requiredMargin).add(totalPnl);
 
       assertBn.equal(
@@ -140,18 +137,43 @@ describe('Account margins - Multicollateral - InsufficientCollateralAvailableFor
     });
 
     it('reverts when attempting to withdraw more than available', async () => {
-      const { synthToBurn: btcSynthToWithdraw } = await systems().SpotMarket.quoteSellExactOut(
-        btcMarketId,
-        expectedWithdrawableMargin.add(1).toBN(),
-        bn(0)
-      );
+      const amountToWithdraw = expectedWithdrawableMargin.add(wei(1));
+      const btcToWithdraw = amountToWithdraw.div(SYNTH_BTC_PRICE).toBN();
 
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(accountId, btcMarketId, btcSynthToWithdraw.mul(-1)),
+          .modifyCollateral(accountId, btcMarketId, btcToWithdraw.mul(-1)),
         'InsufficientCollateralAvailableForWithdraw'
       );
+    });
+  });
+
+  describe('close position, accruing debt', () => {
+    let pnl: Wei;
+
+    before(async () => {
+      const initialFillPrice = calculateFillPrice(wei(0), wei(100), wei(10), wei(20000));
+      const finalFillPrice = calculateFillPrice(wei(10), wei(100), wei(-10), wei(19500));
+      pnl = finalFillPrice.sub(initialFillPrice).mul(wei(10));
+      await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(19500));
+
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        accountId,
+        keeper: trader1(),
+        marketId: perpsMarkets()[0].marketId(),
+        sizeDelta: bn(-10),
+        settlementStrategyId: perpsMarkets()[0].strategyId(),
+        price: bn(19500),
+      });
+    });
+
+    it('cannot withdraw due to debt', async () => {
+      assertBn.equal(await systems().PerpsMarket.getWithdrawableMargin(accountId), 0);
+      assertBn.equal(await systems().PerpsMarket.debt(accountId), pnl.abs().toBN());
     });
   });
 });

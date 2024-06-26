@@ -131,6 +131,7 @@ describe('Account margins - Multicollateral', () => {
   let btcAmount: Wei, ethAmount: Wei, btcMarketId: ethers.BigNumber;
 
   before('identify', async () => {
+    btcMarketId = synthMarkets()[0].marketId();
     btcAmount = wei(
       await systems().PerpsMarket.getCollateralAmount(accountId, synthMarkets()[0].marketId())
     );
@@ -240,10 +241,8 @@ describe('Account margins - Multicollateral', () => {
     it('has correct withdrawable margin', async () => {
       accruedDebt = await systems().PerpsMarket.debt(accountId);
 
-      assertBn.equal(
-        await systems().PerpsMarket.getWithdrawableMargin(accountId),
-        availableTradingMargin.sub(accruedDebt).toBN()
-      );
+      // not allowed to withdraw when account has debt
+      assertBn.equal(await systems().PerpsMarket.getWithdrawableMargin(accountId), 0);
 
       assertBn.equal(
         await systems().PerpsMarket.getAvailableMargin(accountId),

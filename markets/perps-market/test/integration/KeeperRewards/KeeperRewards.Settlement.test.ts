@@ -183,23 +183,12 @@ describe('Keeper Rewards - Settlement', () => {
     await assertEvent(settleTx, `MarketUpdated(${params.join(', ')})`, systems().PerpsMarket);
   });
 
-  it('emits collateral deducted events', async () => {
-    let pendingTotalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward.add(
-      KeeperCosts.settlementCost
-    );
+  it('emits account charged event', async () => {
     const accountId = 2;
-
-    const collateral = collateralsTestCase[0].collateralData.collaterals[0];
-    const synthMarket = 0;
-    let deductedCollateralAmount: ethers.BigNumber = bn(0);
-    deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingTotalFees)
-      ? collateral.snxUSDAmount()
-      : pendingTotalFees;
-    pendingTotalFees = pendingTotalFees.sub(deductedCollateralAmount);
-
+    const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward.add(KeeperCosts.settlementCost);
     await assertEvent(
       settleTx,
-      `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
+      `AccountCharged(${accountId}, ${totalFees.mul(-1)}, 0)`, // 0 debt since snxUSD available
       systems().PerpsMarket
     );
   });

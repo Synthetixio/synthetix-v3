@@ -7,7 +7,6 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "./PerpsAccount.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
@@ -23,6 +22,7 @@ library GlobalPerpsMarket {
     using SafeCastU128 for uint128;
     using DecimalMath for uint256;
     using SetUtil for SetUtil.UintSet;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarket"));
@@ -62,6 +62,10 @@ library GlobalPerpsMarket {
         mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
+        /**
+         * @dev Total debt that hasn't been paid across all accounts.
+         */
+        uint256 totalAccountsDebt;
     }
 
     function load() internal pure returns (Data storage marketData) {
@@ -113,11 +117,14 @@ library GlobalPerpsMarket {
             if (collateralId == SNX_USD_MARKET_ID) {
                 total += self.collateralAmounts[collateralId];
             } else {
-                (uint256 collateralValue, ) = spotMarket.quoteSellExactIn(
-                    collateralId,
-                    self.collateralAmounts[collateralId],
-                    Price.Tolerance.DEFAULT
-                );
+                (uint256 collateralValue, ) = PerpsCollateralConfiguration
+                    .load(collateralId)
+                    .valueInUsd(
+                        self.collateralAmounts[collateralId],
+                        spotMarket,
+                        PerpsPrice.Tolerance.DEFAULT,
+                        false
+                    );
                 total += collateralValue;
             }
         }
@@ -137,6 +144,11 @@ library GlobalPerpsMarket {
         } else if (collateralAmount == 0 && isActiveCollateral) {
             self.activeCollateralTypes.remove(collateralId.to256());
         }
+    }
+
+    function updateDebt(Data storage self, int256 debtDelta) internal {
+        int256 newTotalAccountsDebt = self.totalAccountsDebt.toInt() + debtDelta;
+        self.totalAccountsDebt = newTotalAccountsDebt < 0 ? 0 : newTotalAccountsDebt.toUint();
     }
 
     /**

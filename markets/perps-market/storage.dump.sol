@@ -573,8 +573,6 @@ interface IAsyncOrderSettlementPythModule {
         int256 pnl;
         uint256 chargedInterest;
         int256 accruedFunding;
-        uint256 pnlUint;
-        uint256 amountToDeduct;
         uint256 settlementReward;
         uint256 fillPrice;
         uint256 totalFees;
@@ -585,6 +583,8 @@ interface IAsyncOrderSettlementPythModule {
         uint256 synthDeductionIterator;
         uint128[] deductedSynthIds;
         uint256[] deductedAmount;
+        int256 chargedAmount;
+        uint256 newAccountDebt;
     }
 }
 
@@ -679,6 +679,7 @@ library GlobalPerpsMarket {
         mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
+        uint256 totalAccountsDebt;
     }
     function load() internal pure returns (Data storage marketData) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
@@ -695,7 +696,7 @@ library GlobalPerpsMarketConfiguration {
         address feeCollector;
         mapping(address => uint256) referrerShare;
         mapping(uint128 => uint256) __unused_1;
-        uint128[] synthDeductionPriority;
+        uint128[] __unused_2;
         uint256 minKeeperRewardUsd;
         uint256 maxKeeperRewardUsd;
         uint128 maxPositionsPerAccount;

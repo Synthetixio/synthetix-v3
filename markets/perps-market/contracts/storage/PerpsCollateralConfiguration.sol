@@ -22,7 +22,7 @@ library PerpsCollateralConfiguration {
 
     struct Data {
         /**
-         * @dev Collateral Id (same as synth id)
+         * @dev Collateral Id
          */
         uint128 id;
         /**
