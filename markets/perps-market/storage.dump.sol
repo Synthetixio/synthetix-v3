@@ -211,15 +211,16 @@ library Config {
 library DelegationIntent {
     bytes32 private constant _ATOMIC_VALUE_LATEST_ID = "delegateIntent_idAsNonce";
     struct Data {
-        uint32 declarationTime;
+        uint256 id;
         uint128 accountId;
         uint128 poolId;
         address collateralType;
         int256 deltaCollateralAmountD18;
         uint256 leverage;
+        uint32 declarationTime;
     }
-    function load(uint32 declarationTime) internal pure returns (Data storage delegationIntent) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", declarationTime));
+    function load(uint256 id) internal pure returns (Data storage delegationIntent) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", id));
         assembly {
             delegationIntent.slot := s
         }

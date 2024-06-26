@@ -32,10 +32,9 @@ library DelegationIntent {
      */
     struct Data {
         /**
-         * @notice The timestamp at which the intent was declared
-         * @dev declarationTime is also used as id since it's unique for each intent
+         * @notice An incrementing id (nonce) to ensure the  uniqueness of the intent and prevent replay attacks
          */
-        uint32 declarationTime;
+        uint256 id;
         /**
          * @notice The ID of the account that has an outstanding intent to delegate a new amount of collateral to
          */
@@ -61,15 +60,17 @@ library DelegationIntent {
          * @dev The system currently only supports 1x leverage
          */
         uint256 leverage;
+        /**
+         * @notice The timestamp at which the intent was declared
+         */
+        uint32 declarationTime;
     }
 
     /**
-     * @dev Returns the delegation intent stored at the specified nonce id/timestamp.
+     * @dev Returns the delegation intent stored at the specified nonce id.
      */
-    function load(uint32 declarationTime) internal pure returns (Data storage delegationIntent) {
-        bytes32 s = keccak256(
-            abi.encode("io.synthetix.synthetix.DelegationIntent", declarationTime)
-        );
+    function load(uint256 id) internal pure returns (Data storage delegationIntent) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", id));
         assembly {
             delegationIntent.slot := s
         }
@@ -78,14 +79,21 @@ library DelegationIntent {
     /**
      * @dev Returns the delegation intent stored at the specified nonce id. Checks if it's valid
      */
-    function loadValid(
-        uint32 declarationTime
-    ) internal view returns (Data storage delegationIntent) {
-        delegationIntent = load(declarationTime);
+    function loadValid(uint256 id) internal view returns (Data storage delegationIntent) {
+        delegationIntent = load(id);
 
-        if (delegationIntent.declarationTime != declarationTime) {
+        if (delegationIntent.id != id) {
             revert IVaultModule.DelegationIntentNotExists();
         }
+    }
+
+    function latestId() internal view returns (uint256) {
+        return Config.readUint(_ATOMIC_VALUE_LATEST_ID, 0);
+    }
+
+    function nextId() internal returns (uint256 id) {
+        id = Config.readUint(_ATOMIC_VALUE_LATEST_ID, 0) + 1;
+        Config.put(_ATOMIC_VALUE_LATEST_ID, bytes32(id));
     }
 
     function processingStartTime(Data storage self) internal view returns (uint32) {

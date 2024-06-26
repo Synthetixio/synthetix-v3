@@ -1,6 +1,5 @@
 import type { CoreProxy } from '../generated/typechain';
 import { BigNumber, ethers, Contract } from 'ethers';
-import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 type SystemArgs = {
   Core: CoreProxy | Contract;
@@ -36,28 +35,37 @@ export async function declareDelegateIntent(
   if (shouldCleanBefore) {
     await systems().Core.connect(owner).forceDeleteAllAccountIntents(accountId);
   }
-  const receipt = await (
-    await systems()
-      .Core.connect(signer)
-      .declareIntentToDelegateCollateral(
+  const intentId: BigNumber = await systems()
+    .Core.connect(signer)
+    .callStatic.declareIntentToDelegateCollateral(
+      accountId,
+      poolId,
+      collateralAddress,
+      await expectedToDeltaDelegatedCollateral(
+        systems,
         accountId,
         poolId,
         collateralAddress,
-        await expectedToDeltaDelegatedCollateral(
-          systems,
-          accountId,
-          poolId,
-          collateralAddress,
-          fixedDepositAmount
-        ),
-        leverage
-      )
-  ).wait();
-
-  return findSingleEvent({
-    receipt,
-    eventName: 'DelegationIntentDeclared',
-  }).args['declarationTime'];
+        fixedDepositAmount
+      ),
+      leverage
+    );
+  await systems()
+    .Core.connect(signer)
+    .declareIntentToDelegateCollateral(
+      accountId,
+      poolId,
+      collateralAddress,
+      await expectedToDeltaDelegatedCollateral(
+        systems,
+        accountId,
+        poolId,
+        collateralAddress,
+        fixedDepositAmount
+      ),
+      leverage
+    );
+  return intentId;
 }
 
 export async function delegateCollateral(
