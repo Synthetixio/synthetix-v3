@@ -37,7 +37,6 @@ import {
 import { ethers } from 'ethers';
 import { calcFillPrice } from '../../calculations';
 import { shuffle } from 'lodash';
-import { delegateCollateral } from '@synthetixio/main/test/common';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -45,7 +44,6 @@ describe('OrderModule', () => {
     systems,
     restore,
     provider,
-    owner,
     keeper,
     collateralsWithoutSusd,
     markets,
@@ -1481,7 +1479,7 @@ describe('OrderModule', () => {
     });
 
     it('should accurately account for utilization when holding for a long time', async () => {
-      const { BfpMarketProxy } = systems();
+      const { BfpMarketProxy, Core } = systems();
 
       const { collateral, collateralDepositAmount, trader, marketId, market } = await depositMargin(
         bs,
@@ -1511,10 +1509,7 @@ describe('OrderModule', () => {
       const { stakedAmount, staker, stakerAccountId, collateral: stakedCollateral, id } = pool();
       // Unstake 50% of the delegated amount on the core side, this should lead to a increased utilization rate.
       const newDelegated = wei(stakedAmount).mul(0.5).toBN();
-      await delegateCollateral(
-        systems,
-        owner(),
-        staker(),
+      await Core.connect(staker()).delegateCollateral(
         stakerAccountId,
         id,
         stakedCollateral().address,
