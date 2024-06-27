@@ -444,4 +444,49 @@ library PerpsMarket {
     ) internal view returns (Position.Data storage position) {
         position = load(marketId).positions[accountId];
     }
+
+    function validateLimitOrderSize(
+        Data storage self,
+        uint256 maxSize,
+        uint256 maxValue,
+        uint256 price,
+        int128 amount
+    ) internal view {
+        int256 newMarketSize = self.size.toInt() + (MathUtil.abs(amount).toInt() * 2);
+        int256 newLongSize = newMarketSize + self.skew;
+        int256 newShortSize = newMarketSize - self.skew;
+
+        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
+        if (maxSize < MathUtil.abs(newLongSize / 2)) {
+            revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                self.id,
+                maxSize,
+                newLongSize / 2
+            );
+        } else if (maxSize < MathUtil.abs(newShortSize / 2)) {
+            revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                self.id,
+                maxSize,
+                newShortSize / 2
+            );
+        }
+
+        // same check but with value (size * price)
+        // note that if maxValue param is set to 0, this validation is skipped
+        if (maxValue > 0 && maxValue < MathUtil.abs(newLongSize / 2).mulDecimal(price)) {
+            revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
+                self.id,
+                maxValue,
+                newLongSize / 2,
+                price
+            );
+        } else if (maxValue > 0 && maxValue < MathUtil.abs(newShortSize / 2).mulDecimal(price)) {
+            revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
+                self.id,
+                maxValue,
+                newShortSize / 2,
+                price
+            );
+        }
+    }
 }

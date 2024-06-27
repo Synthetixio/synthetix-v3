@@ -84,6 +84,10 @@ library GlobalPerpsMarketConfiguration {
          * @dev interest rate gradient applied to utilization after hitting the gradient breakpoint
          */
         uint128 highUtilizationInterestRateGradient;
+        /**
+         * @dev Percentage share of fees for each limit order relayer address
+         */
+        mapping(address => uint256) relayerShare;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -167,23 +171,23 @@ library GlobalPerpsMarketConfiguration {
             return (referralFees, 0);
         }
 
-        uint256 feeCollectorQuote = self.feeCollector.quoteFees(
+        feeCollectorFees = self.feeCollector.quoteFees(
             factory.perpsMarketId,
             remainingFees,
             ERC2771Context._msgSender()
         );
 
-        if (feeCollectorQuote == 0) {
+        if (feeCollectorFees == 0) {
             return (referralFees, 0);
         }
 
-        if (feeCollectorQuote > remainingFees) {
-            feeCollectorQuote = remainingFees;
+        if (feeCollectorFees > remainingFees) {
+            feeCollectorFees = remainingFees;
         }
 
-        factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorQuote);
+        factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorFees);
 
-        return (referralFees, feeCollectorQuote);
+        return (referralFees, feeCollectorFees);
     }
 
     function updateCollateral(
@@ -215,6 +219,23 @@ library GlobalPerpsMarketConfiguration {
         if (referrerShareRatio > 0) {
             referralFeesSent = fees.mulDecimal(referrerShareRatio);
             factory.withdrawMarketUsd(referrer, referralFeesSent);
+        }
+    }
+
+    function _collectRelayerFees(
+        Data storage self,
+        uint256 fees,
+        address relayer,
+        PerpsMarketFactory.Data storage factory
+    ) private returns (uint256 relayerFeesSent) {
+        if (fees == 0 || relayer == address(0)) {
+            return 0;
+        }
+
+        uint256 relayerShareRatio = self.relayerShare[relayer];
+        if (relayerShareRatio > 0) {
+            relayerFeesSent = fees.mulDecimal(relayerShareRatio);
+            factory.withdrawMarketUsd(relayer, relayerFeesSent);
         }
     }
 }

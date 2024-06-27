@@ -6,3 +6,4 @@ export * from './computeFees';
 export * from './requiredMargins';
 export * from './createAccountAndPosition';
 export * from './interestRate';
+export * from './limitOrderHelper';

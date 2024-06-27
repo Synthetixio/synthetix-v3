@@ -45,6 +45,9 @@ artifact = "PerpsMarketModule"
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
 
+[contract.LimitOrderModule]
+artifact = "LimitOrderModule"
+
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 
@@ -79,6 +82,7 @@ contracts = [
     "LiquidationModule",
     "MarketConfigurationModule",
     "GlobalPerpsMarketModule",
+    "LimitOrderModule",
 ]
 
 [invoke.upgrade_proxy]
@@ -127,6 +131,12 @@ target = ["PerpsMarketProxy"]
 func = "setFeatureFlagAllowAll"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('perpsSystem') %>", true]
+
+[invoke.addLimitOrderToFeatureFlag]
+target = ["PerpsMarketProxy"]
+func = "setFeatureFlagAllowAll"
+from = "<%= settings.owner %>"
+args = ["<%= formatBytes32String('limitOrder') %>", true]
 
 # add snxUSD as the only priority to deduct from on a given account, as default
 [invoke.setSynthDeductionPriority]
