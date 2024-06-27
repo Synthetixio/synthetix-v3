@@ -97,37 +97,17 @@ library DelegationIntent {
     }
 
     function processingStartTime(Data storage self) internal view returns (uint32) {
-        (uint32 requiredDelayTime, ) = Pool
-            .loadExisting(self.poolId)
-            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 < 0);
-        return self.declarationTime + requiredDelayTime;
+        (uint32 _processingStartTime, ) = getProcessingWindow(self);
+        return _processingStartTime;
     }
 
     function processingEndTime(Data storage self) internal view returns (uint32) {
-        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
-            .loadExisting(self.poolId)
-            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 < 0);
-
-        // Apply default (forever) window time if not set
-        if (requiredWindowTime == 0) {
-            requiredWindowTime = 86400 * 360; // 1 year
-        }
-
-        return self.declarationTime + requiredDelayTime + requiredWindowTime;
+        (, uint32 _processingEndTime) = getProcessingWindow(self);
+        return _processingEndTime;
     }
 
     function checkIsExecutable(Data storage self) internal view {
-        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
-            .loadExisting(self.poolId)
-            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 < 0);
-
-        // Apply default (forever) window time if not set
-        if (requiredWindowTime == 0) {
-            requiredWindowTime = 86400 * 360; // 1 year
-        }
-
-        uint32 _processingStartTime = self.declarationTime + requiredDelayTime;
-        uint32 _processingEndTime = _processingStartTime + requiredWindowTime;
+        (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
 
         if (block.timestamp < _processingStartTime)
             revert IVaultModule.DelegationIntentNotReady(
@@ -139,9 +119,21 @@ library DelegationIntent {
     }
 
     function isExecutable(Data storage self) internal view returns (bool) {
+        (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
+
+        return block.timestamp >= _processingStartTime && block.timestamp < _processingEndTime;
+    }
+
+    function intentExpired(Data storage self) internal view returns (bool) {
+        (, uint32 _processingEndTime) = getProcessingWindow(self);
+
+        return block.timestamp >= _processingEndTime;
+    }
+
+    function getProcessingWindow(Data storage self) internal view returns (uint32, uint32) {
         (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
             .loadExisting(self.poolId)
-            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 > 0);
+            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 < 0);
 
         // Apply default (forever) window time if not set
         if (requiredWindowTime == 0) {
@@ -151,16 +143,6 @@ library DelegationIntent {
         uint32 _processingStartTime = self.declarationTime + requiredDelayTime;
         uint32 _processingEndTime = _processingStartTime + requiredWindowTime;
 
-        return block.timestamp >= _processingStartTime && block.timestamp < _processingEndTime;
-    }
-
-    function intentExpired(Data storage self) internal view returns (bool) {
-        (uint32 requiredDelayTime, uint32 requiredWindowTime) = Pool
-            .loadExisting(self.poolId)
-            .getRequiredDelegationDelayAndWindow(self.deltaCollateralAmountD18 < 0);
-
-        // Note: here we don't apply the forever defaul if window time is not set to allow the intent to expire. If it's zero it means is not configured, then it can expire immediately.
-        uint32 _processingEndTime = self.declarationTime + requiredDelayTime + requiredWindowTime;
-        return block.timestamp >= _processingEndTime;
+        return (_processingStartTime, _processingEndTime);
     }
 }
