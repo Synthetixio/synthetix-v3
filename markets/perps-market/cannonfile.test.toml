@@ -48,6 +48,9 @@ artifact = "LiquidationModule"
 [contract.CollateralConfigurationModule]
 artifact = "CollateralConfigurationModule"
 
+[contract.LimitOrderModule]
+artifact = "LimitOrderModule"
+
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
 
@@ -83,6 +86,7 @@ contracts = [
     "MarketConfigurationModule",
     "CollateralConfigurationModule",
     "GlobalPerpsMarketModule",
+    "LimitOrderModule",
 ]
 
 [invoke.upgrade_proxy]
@@ -131,6 +135,12 @@ target = ["PerpsMarketProxy"]
 func = "setFeatureFlagAllowAll"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('perpsSystem') %>", true]
+
+[invoke.addLimitOrderToFeatureFlag]
+target = ["PerpsMarketProxy"]
+func = "setFeatureFlagAllowAll"
+from = "<%= settings.owner %>"
+args = ["<%= formatBytes32String('limitOrder') %>", true]
 
 [contract.MockPythERC7412Wrapper]
 artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"

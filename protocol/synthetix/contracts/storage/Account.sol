@@ -167,6 +167,30 @@ library Account {
         recordInteraction(account);
     }
 
+    // NOTE go over this method with Sunny in more detail
+    /**
+     * @dev Loads the Account object for the specified accountId,
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These
+     * are different actions but they are merged in a single function
+     * because loading an account and checking for a permission is a very
+     * common use case in other parts of the code.
+     */
+    function loadAccountAndValidateSignerPermission(
+        uint128 accountId,
+        bytes32 permission,
+        address signingAddress
+    ) internal {
+        Data storage account = Account.load(accountId);
+
+        if (!account.rbac.authorized(permission, signingAddress)) {
+            revert PermissionDenied(accountId, permission, signingAddress);
+        }
+
+        // TODO record interaction??? look into it
+        recordInteraction(account);
+    }
+
     /**
      * @dev Loads the Account object for the specified accountId,
      * and validates that sender has the specified permission. It also resets
