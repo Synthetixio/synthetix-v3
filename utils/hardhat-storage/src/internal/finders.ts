@@ -16,8 +16,8 @@ function _visit<T extends ASTNodeTypeString>(
   nodeTypes: T | T[],
   visitorFn: (node: ASTTypeMap[T]) => false | void
 ) {
+  const visitor: { [nodeType: string]: (node: ASTTypeMap[T]) => false | void } = {};
   let cancelled = false;
-  const visitor = {} as any;
 
   const astNodesArr = Array.isArray(astNodes) ? astNodes : [astNodes];
   const nodeTypesArr = Array.isArray(nodeTypes) ? nodeTypes : [nodeTypes];
@@ -42,7 +42,7 @@ export function findAll<T extends ASTNodeTypeString>(
   nodeTypes: T | T[],
   filterFn: (node: ASTTypeMap[T]) => boolean = () => true
 ) {
-  let results: ASTTypeMap[T][] = [];
+  const results: ASTTypeMap[T][] = [];
 
   _visit(astNodes, nodeTypes, (node) => {
     if (filterFn(node)) results.push(node);

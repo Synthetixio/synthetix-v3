@@ -1,8 +1,8 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as parser from '@solidity-parser/parser';
 import { ASTNodeTypeString, ContractDefinition } from '@solidity-parser/parser/src/ast-types';
 import { GetArtifactFunction, StorageArtifact } from '../types';
+import { safeReadFile } from './file-helpers';
 import {
   ASTTypeMap,
   findAll,
@@ -11,19 +11,6 @@ import {
   getCanonicalImportedSymbolName,
 } from './finders';
 import { ensureTrailingSlash, isExplicitRelativePath, removeBasePath } from './path-helpers';
-
-async function _safeReadFile(filepath: string) {
-  try {
-    return await fs.readFile(filepath, { encoding: 'utf8' });
-  } catch (err: unknown) {
-    if (_isNodeError(err) && err.code === 'ENOENT') return;
-    throw err;
-  }
-}
-
-function _isNodeError(err: unknown): err is Error & { code?: string } {
-  return err instanceof Error && typeof (err as Error & { code?: string }).code === 'string';
-}
 
 export async function readArtifact(projectRoot: string, sourceName: string, sourcePrefix = '') {
   if (sourcePrefix && !sourceName.startsWith(ensureTrailingSlash(sourcePrefix))) {
@@ -35,7 +22,7 @@ export async function readArtifact(projectRoot: string, sourceName: string, sour
     : sourceName;
 
   const sourceFullPath = path.resolve(projectRoot, sourcePath);
-  const sourceCode = await _safeReadFile(sourceFullPath);
+  const sourceCode = await safeReadFile(sourceFullPath);
 
   if (sourceCode === undefined) {
     throw new Error(`Could not find "${sourceName}" at "${sourceFullPath}"`);
@@ -99,7 +86,7 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
     const childNode = findOne(
       parentNode,
       nodeTypes,
-      (node) => (node as any).name === childNodeName
+      (node) => (node as { name: string }).name === childNodeName
     );
 
     if (!childNode) {
@@ -110,7 +97,11 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
   }
 
   // Check if it's defined on the same file
-  const localNode = findOne(artifact.ast, nodeTypes, (node) => (node as any).name === nodePath);
+  const localNode = findOne(
+    artifact.ast,
+    nodeTypes,
+    (node) => (node as { name: string }).name === nodePath
+  );
 
   if (localNode) return [artifact, localNode];
 
@@ -123,7 +114,7 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
     const foundNode = findOne(
       importedArtifact.ast,
       nodeTypes,
-      (node) => (node as any).name === canonicalNodeName
+      (node) => (node as { name: string }).name === canonicalNodeName
     );
     if (foundNode) return [importedArtifact, foundNode];
   } else {
@@ -134,7 +125,7 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
       const foundNode = findOne(
         importedArtifact.ast,
         nodeTypes,
-        (node) => (node as any).name === nodePath
+        (node) => (node as { name: string }).name === nodePath
       );
       if (foundNode) return [importedArtifact, foundNode];
     }

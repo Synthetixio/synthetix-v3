@@ -9,8 +9,8 @@ import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { GetArtifactFunction } from '../types';
 import { createError } from './error';
 import { findOne } from './finders';
+import { isPresent } from './is-present';
 import { iterateSlotAssignments } from './iterators';
-import { isPresent } from './misc';
 
 interface Params {
   contracts: string[];

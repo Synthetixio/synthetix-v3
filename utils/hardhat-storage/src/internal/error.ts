@@ -43,7 +43,9 @@ function _renderTitle(node: ASTNode | AssemblyItem) {
     case 'VariableDeclaration':
       return render(node);
     default:
-      return typeof (node as any).name === 'string' ? (node as any).name : node.type;
+      return typeof (node as { name: string }).name === 'string'
+        ? (node as { name: string }).name
+        : node.type;
   }
 }
 

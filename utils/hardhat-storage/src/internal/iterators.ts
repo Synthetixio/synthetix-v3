@@ -2,10 +2,9 @@ import {
   AssemblyAssignment,
   ContractDefinition,
   FunctionDefinition,
-  SourceUnit,
 } from '@solidity-parser/parser/src/ast-types';
 import { StorageArtifact } from '../types';
-import { findAll, findOne } from './finders';
+import { findAll } from './finders';
 
 export function* iterateContracts(
   artifacts: StorageArtifact[]

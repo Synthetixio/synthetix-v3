@@ -18,8 +18,8 @@ declare module 'hardhat/types/runtime' {
 }
 
 extendEnvironment((hre: HardhatRuntimeEnvironment) => {
-  hre.runValidateContracts = async (): Promise<void> => {
-    return hre.run(SUBTASK_VALIDATE_CONTRACTS);
+  hre.runValidateContracts = async (params: Params): Promise<void> => {
+    return hre.run(SUBTASK_VALIDATE_CONTRACTS, params);
   };
 });
 

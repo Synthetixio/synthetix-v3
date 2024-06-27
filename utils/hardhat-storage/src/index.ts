@@ -7,6 +7,7 @@ import './subtasks/get-artifacts';
 import './subtasks/validate-contracts';
 import './tasks/dump';
 import './tasks/generate-testable';
+import './tasks/layout';
 import './tasks/validate';
 import './tasks/verify';
 
