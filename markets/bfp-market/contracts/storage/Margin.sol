@@ -413,6 +413,7 @@ library Margin {
 
     /// @dev Returns whether an account in a specific market's margin can be liquidated.
     function isMarginLiquidatable(
+        Margin.Data storage accountMargin,
         uint128 accountId,
         PerpMarket.Data storage market,
         Margin.MarginValues memory marginValues,
@@ -420,6 +421,10 @@ library Margin {
     ) internal view returns (bool) {
         // Cannot liquidate margin when there is an open position.
         if (market.positions[accountId].size != 0) {
+            return false;
+        }
+        // Cannot liquidate margin when there is no debt.
+        if (accountMargin.debtUsd == 0) {
             return false;
         }
 
