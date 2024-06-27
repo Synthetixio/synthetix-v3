@@ -1,12 +1,10 @@
 import path from 'node:path';
-import { filterContracts } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { dumpStorage } from '../internal/dump';
-import { readHardhatArtifact } from '../internal/read-hardhat-artifact';
 import { logInChunks } from '../internal/log-in-chunks';
-import { TASK_STORAGE_DUMP, TASK_STORAGE_VALIDATE } from '../task-names';
 import { writeJsonFile } from '../internal/write-json-file';
+import { TASK_STORAGE_DUMP } from '../task-names';
 
 interface Params {
   output: string;
@@ -29,15 +27,13 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
 
     const now = Date.now();
 
+    const { contracts, getArtifact } = await hre.runGetArtifacts();
+
     if (!noValidate) {
-      await hre.run(TASK_STORAGE_VALIDATE, { quiet: true });
+      await hre.runValidateContracts({ contracts, getArtifact });
     }
 
-    const allFqNames = await hre.artifacts.getAllFullyQualifiedNames();
-    const contracts = filterContracts(allFqNames, hre.config.storage.artifacts);
-    const getArtifact = (fqName: string) => readHardhatArtifact(hre, fqName);
-
-    const dump = await dumpStorage({ getArtifact, contracts });
+    const dump = await dumpStorage({ contracts, getArtifact });
 
     if (output) {
       await writeJsonFile(path.resolve(hre.config.paths.root, output), dump);

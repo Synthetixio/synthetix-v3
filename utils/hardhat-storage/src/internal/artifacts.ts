@@ -15,10 +15,14 @@ import { ensureTrailingSlash, isExplicitRelativePath, removeBasePath } from './p
 async function _safeReadFile(filepath: string) {
   try {
     return await fs.readFile(filepath, { encoding: 'utf8' });
-  } catch (err: any) {
-    if (err.code === 'ENOENT') return;
+  } catch (err: unknown) {
+    if (_isNodeError(err) && err.code === 'ENOENT') return;
     throw err;
   }
+}
+
+function _isNodeError(err: unknown): err is Error & { code?: string } {
+  return err instanceof Error && typeof (err as Error & { code?: string }).code === 'string';
 }
 
 export async function readArtifact(projectRoot: string, sourceName: string, sourcePrefix = '') {

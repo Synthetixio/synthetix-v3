@@ -1,17 +1,6 @@
 import { StorageSlot } from '../types';
 
-type StorageLayoutSlot = StorageSlot & { offset: number; slot: string; size: number };
-
 const SLOT_SIZE = 32;
-
-export function getStorageLayout(slots: StorageSlot[]) {
-  const layout: StorageLayoutSlot[] = [];
-
-  for (const slot of slots) {
-  }
-
-  return layout;
-}
 
 const _parseBasicTypeSize = (type: string, max = 256) => {
   const match = type.match(/^[a-z]+([1-9]+[0-9]*)?$/);
