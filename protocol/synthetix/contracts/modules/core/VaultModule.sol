@@ -419,7 +419,7 @@ contract VaultModule is IVaultModule {
     function getAccountIntent(
         uint128 accountId,
         uint256 intentId
-    ) external view override returns (uint128, address, int256, uint256, uint32) {
+    ) external view override returns (uint128, address, int256, uint256, uint32, uint32, uint32) {
         DelegationIntent.Data storage intent = Account
             .load(accountId)
             .getDelegationIntents()
@@ -429,7 +429,9 @@ contract VaultModule is IVaultModule {
             intent.collateralType,
             intent.deltaCollateralAmountD18,
             intent.leverage,
-            intent.declarationTime
+            intent.declarationTime,
+            intent.processingStartTime(),
+            intent.processingEndTime()
         );
     }
 

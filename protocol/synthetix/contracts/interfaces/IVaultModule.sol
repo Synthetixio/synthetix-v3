@@ -272,6 +272,8 @@ interface IVaultModule {
      * @return deltaCollateralAmountD18 The delta amount of collateral delegated in the position, denominated with 18 decimals of precision.
      * @return leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
      * @return declarationTime The time at which the intent was declared.
+     * @return processingStartTime The time at which the intent execution window starts.
+     * @return processingEndTime The time at which the intent execution window ends.
      */
     function getAccountIntent(
         uint128 accountId,
@@ -284,7 +286,9 @@ interface IVaultModule {
             address collateralType,
             int256 deltaCollateralAmountD18,
             uint256 leverage,
-            uint32 declarationTime
+            uint32 declarationTime,
+            uint32 processingStartTime,
+            uint32 processingEndTime
         );
 
     /**
