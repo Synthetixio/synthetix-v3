@@ -67,17 +67,16 @@ describe('VaultModule Two-step Delegation timing', function () {
 
   before('add second collateral type', async () => {
     // add collateral
-    await (
-      await systems().Core.connect(owner).configureCollateral({
-        tokenAddress: systems().Collateral2Mock.address,
-        oracleNodeId: oracleNodeId(),
-        issuanceRatioD18: '5000000000000000000',
-        liquidationRatioD18: '1500000000000000000',
-        liquidationRewardD18: '20000000000000000000',
-        minDelegationD18: '20000000000000000000',
-        depositingEnabled: true,
-      })
-    ).wait();
+
+    await systems().Core.connect(owner).configureCollateral({
+      tokenAddress: systems().Collateral2Mock.address,
+      oracleNodeId: oracleNodeId(),
+      issuanceRatioD18: '5000000000000000000',
+      liquidationRatioD18: '1500000000000000000',
+      liquidationRewardD18: '20000000000000000000',
+      minDelegationD18: '20000000000000000000',
+      depositingEnabled: true,
+    });
 
     await systems()
       .Core.connect(owner)
@@ -103,6 +102,7 @@ describe('VaultModule Two-step Delegation timing', function () {
   describe('Delegation Timing failures', async () => {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
+    before(restore);
     before('set market window times', async () => {
       const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
       await MockMarket.setDelegationCollateralConfiguration(
@@ -128,28 +128,30 @@ describe('VaultModule Two-step Delegation timing', function () {
       declareDelegateIntentTime = await getTime(provider());
     });
 
-    after(restore);
-
-    it('fails to execute a delegation if window is not open (too soon)', async () => {
+    it('skips the execution of a delegation if window is not open (too soon)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 95, provider());
 
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentNotReady`,
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentSkipped(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
         systems().Core
       );
     });
 
-    it('fails to execute a delegation if window is already closed (too late)', async () => {
+    it('removes a delegation if window is already closed (too late)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 121, provider());
 
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentExpired`,
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentRemoved(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
         systems().Core
       );
     });
@@ -158,6 +160,8 @@ describe('VaultModule Two-step Delegation timing', function () {
   describe('Un-Delegation Timing failures', async () => {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
+    before(restore);
+
     before('set market window times', async () => {
       const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
       await MockMarket.setDelegationCollateralConfiguration(
@@ -197,28 +201,30 @@ describe('VaultModule Two-step Delegation timing', function () {
       declareDelegateIntentTime = await getTime(provider());
     });
 
-    after(restore);
-
-    it('fails to execute an un-delegation if window is not open (too soon)', async () => {
+    it('skips the execution of an un-delegation if window is not open (too soon)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 95, provider());
 
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentNotReady`,
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentSkipped(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
         systems().Core
       );
     });
 
-    it('fails to execute an un-delegation if window is already closed (too late)', async () => {
+    it('removes an un-delegation if window is already closed (too late)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 121, provider());
 
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentExpired`,
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentRemoved(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
         systems().Core
       );
     });
@@ -227,18 +233,20 @@ describe('VaultModule Two-step Delegation timing', function () {
   describe('Delegation Timing failures with global params', async () => {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
+    before(restore);
+
     before('set global window times', async () => {
       await systems()
         .Core.connect(owner)
         .setConfig(
           ethers.utils.formatBytes32String('delegateCollateralDelay_min'),
-          ethers.utils.hexZeroPad(bn(120).toHexString(), 32)
+          ethers.utils.hexZeroPad(ethers.BigNumber.from(120).toHexString(), 32)
         ); // use 120 as the global min delay
       await systems()
         .Core.connect(owner)
         .setConfig(
           ethers.utils.formatBytes32String('delegateCollateralWindow_max'),
-          ethers.utils.hexZeroPad(bn(10).toHexString(), 32)
+          ethers.utils.hexZeroPad(ethers.BigNumber.from(10).toHexString(), 32)
         ); // use 10 as the global max window
     });
 
@@ -267,28 +275,30 @@ describe('VaultModule Two-step Delegation timing', function () {
       declareDelegateIntentTime = await getTime(provider());
     });
 
-    after(restore);
-
-    it('fails to execute a delegation if window is not open (too soon)', async () => {
+    it('skips the execution of a delegation if window is not open (too soon)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 115, provider());
 
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentNotReady`,
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentSkipped(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
         systems().Core
       );
     });
 
-    it('fails to execute a delegation if window is already closed (too late)', async () => {
+    it('removes a delegation if window is already closed (too late)', async () => {
       await fastForwardTo(declareDelegateIntentTime + 131, provider());
 
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .processIntentToDelegateCollateralByIntents(accountId, [intentId]),
-        `DelegationIntentExpired`,
+      const tx = await systems()
+        .Core.connect(user2)
+        .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+      await assertEvent(
+        tx,
+        `DelegationIntentRemoved(${intentId}, ${accountId}, ${poolId}, "${collateralAddress()}")`,
         systems().Core
       );
     });
@@ -296,6 +306,8 @@ describe('VaultModule Two-step Delegation timing', function () {
 
   describe('Force Delete intents (only system owner)', async () => {
     let intentId: BigNumber;
+    before(restore);
+
     before('declare intent to delegate', async () => {
       intentId = await declareDelegateIntent(
         systems,
@@ -371,6 +383,8 @@ describe('VaultModule Two-step Delegation timing', function () {
   describe('Self Delete intents (only account owner)', async () => {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
+    before(restore);
+
     before('set market window times', async () => {
       const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
       await MockMarket.setDelegationCollateralConfiguration(
@@ -455,6 +469,8 @@ describe('VaultModule Two-step Delegation timing', function () {
   describe('Edge case - Self delete after configuration change', async () => {
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
+    before(restore);
+
     before('set market window times', async () => {
       const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
       await MockMarket.setDelegationCollateralConfiguration(
@@ -541,7 +557,8 @@ describe('VaultModule Two-step Delegation timing', function () {
 
     it('sanity check 1. The intent exists', async () => {
       const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
-      assertBn.equal(intent[0], accountId);
+      assertBn.equal(intent[0], poolId);
+      assert.equal(intent[1], collateralAddress());
     });
 
     it('fails to delete before window starts', async () => {
@@ -551,11 +568,23 @@ describe('VaultModule Two-step Delegation timing', function () {
 
     it('sanity check 2. The intent exists', async () => {
       const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
-      assertBn.equal(intent[0], accountId);
+      assertBn.equal(intent[0], poolId);
+      assert.equal(intent[1], collateralAddress());
+    });
+
+    it('fails to delete after the window starts', async () => {
+      await fastForwardTo(declareDelegateIntentTime + 200, provider());
+      await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
+    });
+
+    it('sanity check 3. The intent exists', async () => {
+      const intent = await systems().Core.connect(user1).getAccountIntent(accountId, intentId);
+      assertBn.equal(intent[0], poolId);
+      assert.equal(intent[1], collateralAddress());
     });
 
     it('can force delete all expired account intents', async () => {
-      await fastForwardTo(declareDelegateIntentTime + 155, provider());
+      await fastForwardTo(declareDelegateIntentTime + 150 + 86400 * 360 + 1, provider());
       await systems().Core.connect(user1).deleteAllExpiredIntents(accountId);
     });
 
@@ -575,6 +604,8 @@ describe('VaultModule Two-step Delegation timing', function () {
     let secondMarketId: BigNumber;
     let intentId: BigNumber;
     let declareDelegateIntentTime: number;
+
+    before(restore);
 
     before('deploy and connect a second fake market', async () => {
       const factory = await hre.ethers.getContractFactory('MockMarket');
