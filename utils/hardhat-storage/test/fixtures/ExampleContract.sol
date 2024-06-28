@@ -46,7 +46,7 @@ contract ExampleContract {
         uint8 unsignedInt8;
         SubData bigStruct;
         int256 signedInt256;
-        mapping(ExampleKeyContract => SubData) mappingWithNestedStruct;
+        mapping(ExampleContract => SubData) mappingWithNestedStruct;
         string someStringValue;
         SimpleStruct simpleStruct;
         uint8 afterStructStartsNewSlot;
@@ -72,5 +72,3 @@ contract ExampleContract {
         }
     }
 }
-
-contract ExampleKeyContract {}

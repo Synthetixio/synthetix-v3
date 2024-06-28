@@ -3,7 +3,13 @@ import * as parser from '@solidity-parser/parser';
 import { ASTNodeTypeString, ContractDefinition } from '@solidity-parser/parser/src/ast-types';
 import { GetArtifactFunction, StorageArtifact } from '../types';
 import { readFileSafe } from './file-helpers';
-import { ASTTypeMap, findAll, findContractStrict, findOne, getCanonicalImportedSymbolName } from './finders';
+import {
+  ASTTypeMap,
+  findAll,
+  findContractStrict,
+  findOne,
+  getCanonicalImportedSymbolName,
+} from './finders';
 import { ensureTrailingSlash, isExplicitRelativePath, removeBasePath } from './path-helpers';
 
 export async function readArtifact(projectRoot: string, sourceName: string, sourcePrefix = '') {

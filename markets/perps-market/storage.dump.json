@@ -1116,9 +1116,7 @@
               {
                 "type": "enum",
                 "name": "strategyType",
-                "members": [
-                  "PYTH"
-                ]
+                "members": ["PYTH"]
               },
               {
                 "type": "uint256",
@@ -1378,9 +1376,7 @@
         {
           "type": "enum",
           "name": "strategyType",
-          "members": [
-            "PYTH"
-          ],
+          "members": ["PYTH"],
           "size": 1,
           "slot": "0",
           "offset": 0

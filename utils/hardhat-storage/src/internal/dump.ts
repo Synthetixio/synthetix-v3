@@ -1,4 +1,8 @@
-import { ContractDefinition, TypeName, VariableDeclaration } from '@solidity-parser/parser/src/ast-types';
+import {
+  ContractDefinition,
+  TypeName,
+  VariableDeclaration,
+} from '@solidity-parser/parser/src/ast-types';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import {
   GetArtifactFunction,
