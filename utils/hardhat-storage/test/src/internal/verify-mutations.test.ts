@@ -25,8 +25,8 @@ describe('internal/verify-mutations.ts', function () {
 
       expect(verifyMutations(curr, {})).toMatchObject([
         {
-          kind: 'add',
           type: 'log',
+          kind: 'add',
           message: 'Added contract AddedContract at contracts/AddedContract.sol',
         },
       ]);
@@ -39,8 +39,8 @@ describe('internal/verify-mutations.ts', function () {
 
       expect(verifyMutations({}, prev)).toMatchObject([
         {
-          kind: 'del',
           type: 'log',
+          kind: 'del',
           message: 'Deleted contract DeletedContract at contracts/DeletedContract.sol',
         },
       ]);
@@ -57,8 +57,8 @@ describe('internal/verify-mutations.ts', function () {
 
       expect(verifyMutations(curr, prev)).toMatchObject([
         {
-          kind: 'add',
           type: 'log',
+          kind: 'add',
           message: 'Added struct Contract.NewStruct at contracts/Contract.sol',
         },
       ]);
@@ -75,9 +75,27 @@ describe('internal/verify-mutations.ts', function () {
 
       expect(verifyMutations(curr, prev)).toMatchObject([
         {
-          kind: 'del',
           type: 'log',
+          kind: 'del',
           message: 'Deleted struct Contract.DeletedStruct at contracts/Contract.sol',
+        },
+      ]);
+    });
+
+    it('should throw an error when changing the type of a variable', async function () {
+      const curr = fixtureSingleContractDump('Contract', {
+        Data: [{ type: 'uint128', name: 'someValue' }],
+      });
+      const prev = fixtureSingleContractDump('Contract', {
+        Data: [{ type: 'uint64', name: 'someValue' }],
+      });
+
+      expect(verifyMutations(curr, prev)).toMatchObject([
+        {
+          type: 'error',
+          kind: 'update',
+          message:
+            'Invalid modification of value "uint128 someValue" in Contract.Data at contracts/Contract.sol',
         },
       ]);
     });

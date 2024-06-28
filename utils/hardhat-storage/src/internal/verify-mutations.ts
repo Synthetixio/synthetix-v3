@@ -63,10 +63,6 @@ export function verifyMutations(curr: StorageDump, prev: StorageDump) {
       // There are no changes on this struct
       if (areDeepEqual(currStruct, prevStruct)) continue;
 
-      // const slots = [...(prevStruct || []), ...(currStruct || [])].sort((a, b) => {
-      //   return Number.parseInt(a.slot!) - Number.parseInt(b.slot!);
-      // });
-
       // Check that the same variable in the struct was not modified
       const commonVariableNames = _intersection(
         currStruct.map((s) => s.name!),
@@ -74,7 +70,7 @@ export function verifyMutations(curr: StorageDump, prev: StorageDump) {
       );
       for (const name of commonVariableNames) {
         const currSlot = currStruct.find((s) => s.name === name)!;
-        const prevSlot = currStruct.find((s) => s.name === name)!;
+        const prevSlot = prevStruct.find((s) => s.name === name)!;
 
         if (
           currSlot.slot !== prevSlot.slot ||
@@ -84,7 +80,7 @@ export function verifyMutations(curr: StorageDump, prev: StorageDump) {
           mutations.push({
             type: 'error',
             kind: 'update',
-            message: `Invalid modification of value ${currSlot.type} ${name} in ${contractName}.${structName} at ${sourceName}`,
+            message: `Invalid modification of value "${currSlot.type} ${name}" in ${contractName}.${structName} at ${sourceName}`,
           });
           continue;
         }
