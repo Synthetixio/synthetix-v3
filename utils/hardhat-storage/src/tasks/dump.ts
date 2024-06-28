@@ -48,12 +48,12 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
       });
     }
 
-    if (output) {
+    if (output && dump) {
       await writeJsonFile(target, dump);
     }
 
     if (log) {
-      logInChunks(dump);
+      if (dump) logInChunks(dump);
     } else if (!quiet) {
       logger.success(`Storage dump finished in ${Date.now() - now}ms`);
     }

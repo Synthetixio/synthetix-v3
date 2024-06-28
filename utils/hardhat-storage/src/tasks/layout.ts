@@ -34,6 +34,8 @@ task(TASK_STORAGE_LAYOUT, 'Pretty print the storage layout of all the contracts'
     const { contracts, getArtifact } = await hre.runGetArtifacts();
     const dump = await dumpStorage({ contracts, getArtifact });
 
+    if (!dump) return;
+
     console.log();
 
     for (const fqName of Object.keys(dump)) {
