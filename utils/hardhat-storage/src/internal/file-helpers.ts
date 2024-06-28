@@ -36,5 +36,5 @@ export async function readJsonFileSafe<T = unknown>(filepath: string) {
 
 export async function writeJsonFile(target: string, content: unknown) {
   const data = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
-  return writeFile(target, data);
+  return writeFile(target, data + '\n');
 }

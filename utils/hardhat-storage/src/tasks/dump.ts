@@ -1,11 +1,11 @@
 import path from 'node:path';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
-import { StorageDump } from 'types';
 import { dumpStorage } from '../internal/dump';
 import { readJsonFileSafe, writeJsonFile } from '../internal/file-helpers';
 import { logInChunks } from '../internal/log-in-chunks';
 import { TASK_STORAGE_DUMP } from '../task-names';
+import { StorageDump } from '../types';
 
 interface Params {
   output: string;
