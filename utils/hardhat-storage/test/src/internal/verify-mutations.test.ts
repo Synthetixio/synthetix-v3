@@ -99,5 +99,43 @@ describe('internal/verify-mutations.ts', function () {
         },
       ]);
     });
+
+    it('should allow to rename variables if the slot does not change', async function () {
+      const curr = fixtureSingleContractDump('Contract', {
+        Data: [{ type: 'uint128', name: 'value' }],
+      });
+      const prev = fixtureSingleContractDump('Contract', {
+        Data: [{ type: 'uint128', name: 'updatedValue' }],
+      });
+
+      expect(verifyMutations(curr, prev)).toMatchObject([
+        {
+          type: 'log',
+          kind: 'update',
+          message:
+            'Renamed variable "uint128 updatedValue" in Contract.Data at contracts/Contract.sol',
+        },
+      ]);
+    });
+
+    it('does not allow to delete variables', async function () {
+      const curr = fixtureSingleContractDump('Contract', {
+        Data: [{ type: 'uint128', name: 'first' }],
+      });
+      const prev = fixtureSingleContractDump('Contract', {
+        Data: [
+          { type: 'uint128', name: 'first' },
+          { type: 'uint128', name: 'second' },
+        ],
+      });
+
+      expect(verifyMutations(curr, prev)).toMatchObject([
+        {
+          type: 'error',
+          kind: 'del',
+          message: 'Deleted variable "uint128 second" in Contract.Data at contracts/Contract.sol',
+        },
+      ]);
+    });
   });
 });

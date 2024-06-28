@@ -1,5 +1,5 @@
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { StorageDump, StorageMutation } from '../types';
+import { StorageDump, StorageMutation, StorageSlot } from '../types';
 import { areDeepEqual } from './are-deep-equal';
 
 export function verifyMutations(curr: StorageDump, prev: StorageDump) {
@@ -85,6 +85,30 @@ export function verifyMutations(curr: StorageDump, prev: StorageDump) {
           continue;
         }
       }
+
+      // Do not allow to remove variables (they should be renamed to unused)
+      for (const prevSlot of prevStruct) {
+        const currSlot = currStruct.find((s) => s.name === prevSlot.name);
+
+        // Variable is still there, nothing to check
+        if (currSlot) continue;
+
+        const renamedSlot = currStruct.find((slot) => _haveSameSlot(slot, prevSlot));
+
+        if (renamedSlot) {
+          mutations.push({
+            type: 'log',
+            kind: 'update',
+            message: `Renamed variable "${prevSlot.type} ${prevSlot.name}" in ${contractName}.${structName} at ${sourceName}`,
+          });
+        } else {
+          mutations.push({
+            type: 'error',
+            kind: 'del',
+            message: `Deleted variable "${prevSlot.type} ${prevSlot.name}" in ${contractName}.${structName} at ${sourceName}`,
+          });
+        }
+      }
     }
   }
 
@@ -99,4 +123,8 @@ function _getUniqKeys(...objs: ({ [k: string]: unknown } | undefined)[]) {
 
 function _intersection<T>(a: T[], b: T[]) {
   return a.filter((v) => b.includes(v));
+}
+
+function _haveSameSlot(a: StorageSlot, b: StorageSlot) {
+  return a.slot === b.slot && a.offset === b.offset && a.size === b.size && a.type === b.type;
 }
