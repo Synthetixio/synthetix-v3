@@ -5,9 +5,10 @@ export async function readFile(filepath: string) {
   return fs.readFile(filepath, { encoding: 'utf8' }).then((res) => res.toString());
 }
 
-export async function safeReadFile(filepath: string) {
+export async function readFileSafe(filepath: string) {
   try {
-    return readFile(filepath);
+    const result = await readFile(filepath);
+    return result;
   } catch (err: unknown) {
     if (_isNodeError(err) && err.code === 'ENOENT') return;
     throw err;
@@ -26,6 +27,11 @@ export async function writeFile(target: string, content: string) {
 export async function readJsonFile<T = unknown>(filepath: string) {
   const content = await readFile(filepath);
   return JSON.parse(content) as T;
+}
+
+export async function readJsonFileSafe<T = unknown>(filepath: string) {
+  const content = await readFileSafe(filepath);
+  return content ? (JSON.parse(content) as T) : undefined;
 }
 
 export async function writeJsonFile(target: string, content: unknown) {

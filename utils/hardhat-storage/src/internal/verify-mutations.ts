@@ -2,7 +2,7 @@ import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { StorageDump, StorageMutation, StorageSlot } from '../types';
 import { areDeepEqual } from './are-deep-equal';
 
-export function verifyMutations(curr: StorageDump, prev: StorageDump) {
+export function verifyMutations(curr?: StorageDump, prev?: StorageDump) {
   // 1. Do not change 'slot' or 'offset' on any storage slot
   // 2. Show a warning when renaming a slot
   // 2. Show a warning when changing type
@@ -14,8 +14,8 @@ export function verifyMutations(curr: StorageDump, prev: StorageDump) {
   for (const fqName of contractNames) {
     const { contractName, sourceName } = parseFullyQualifiedName(fqName);
 
-    const currStorageDump = curr[fqName];
-    const prevStorageDump = prev[fqName];
+    const currStorageDump = curr?.[fqName];
+    const prevStorageDump = prev?.[fqName];
 
     // Check if the contract was added or deleted
     if (currStorageDump && !prevStorageDump) {

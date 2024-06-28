@@ -1,14 +1,16 @@
 import path from 'node:path';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
+import { StorageDump } from 'types';
 import { dumpStorage } from '../internal/dump';
-import { writeJsonFile } from '../internal/file-helpers';
+import { readJsonFileSafe, writeJsonFile } from '../internal/file-helpers';
 import { logInChunks } from '../internal/log-in-chunks';
 import { TASK_STORAGE_DUMP } from '../task-names';
 
 interface Params {
   output: string;
   noValidate: boolean;
+  noVerify: boolean;
   quiet: boolean;
   log: boolean;
 }
@@ -20,12 +22,14 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     'storage.dump.json'
   )
   .addFlag('noValidate', 'Do not perform static validations on contracts before generating')
+  .addFlag('noVerify', 'Do not verify storage mutations before replacing dump')
   .addFlag('quiet', 'only emit errors to the console')
   .addFlag('log', 'log json result to the console')
   .setAction(async (params: Params, hre) => {
-    const { output, noValidate, log, quiet } = params;
+    const { output, noValidate, noVerify, log, quiet } = params;
 
     const now = Date.now();
+    const target = path.resolve(hre.config.paths.root, output);
 
     const { contracts, getArtifact } = await hre.runGetArtifacts();
 
@@ -35,8 +39,17 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
 
     const dump = await dumpStorage({ contracts, getArtifact });
 
+    if (!noVerify) {
+      const prev = await readJsonFileSafe<StorageDump>(target);
+      await hre.runVerifyContracts({
+        curr: dump,
+        prev,
+        quiet: log || quiet,
+      });
+    }
+
     if (output) {
-      await writeJsonFile(path.resolve(hre.config.paths.root, output), dump);
+      await writeJsonFile(target, dump);
     }
 
     if (log) {

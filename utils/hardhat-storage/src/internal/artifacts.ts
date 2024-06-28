@@ -2,14 +2,8 @@ import path from 'node:path';
 import * as parser from '@solidity-parser/parser';
 import { ASTNodeTypeString, ContractDefinition } from '@solidity-parser/parser/src/ast-types';
 import { GetArtifactFunction, StorageArtifact } from '../types';
-import { safeReadFile } from './file-helpers';
-import {
-  ASTTypeMap,
-  findAll,
-  findContractStrict,
-  findOne,
-  getCanonicalImportedSymbolName,
-} from './finders';
+import { readFileSafe } from './file-helpers';
+import { ASTTypeMap, findAll, findContractStrict, findOne, getCanonicalImportedSymbolName } from './finders';
 import { ensureTrailingSlash, isExplicitRelativePath, removeBasePath } from './path-helpers';
 
 export async function readArtifact(projectRoot: string, sourceName: string, sourcePrefix = '') {
@@ -22,7 +16,7 @@ export async function readArtifact(projectRoot: string, sourceName: string, sour
     : sourceName;
 
   const sourceFullPath = path.resolve(projectRoot, sourcePath);
-  const sourceCode = await safeReadFile(sourceFullPath);
+  const sourceCode = await readFileSafe(sourceFullPath);
 
   if (sourceCode === undefined) {
     throw new Error(`Could not find "${sourceName}" at "${sourceFullPath}"`);

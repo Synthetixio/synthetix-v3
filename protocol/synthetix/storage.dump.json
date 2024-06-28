@@ -1,64 +1,24 @@
 {
-  "contracts/modules/NewContract.sol:NewContract": {
-    "name": "NewContract",
-    "kind": "contract",
-    "structs": {
-      "NumberValues": [
-        {
-          "type": "uint128",
-          "name": "first",
-          "size": 16,
-          "slot": "0",
-          "offset": 0
-        },
-        {
-          "type": "uint128",
-          "name": "second",
-          "size": 16,
-          "slot": "0",
-          "offset": 16
-        }
-      ]
-    }
-  },
-  "contracts/modules/EditedContract.sol:EditedContract": {
-    "name": "EditedContract",
-    "kind": "contract",
-    "structs": {
-      "NumberValues": [
-        {
-          "type": "uint128",
-          "name": "first",
-          "size": 16,
-          "slot": "0",
-          "offset": 0
-        },
-        {
-          "type": "uint128",
-          "name": "middle",
-          "size": 16,
-          "slot": "0",
-          "offset": 16
-        },
-        {
-          "type": "uint128",
-          "name": "second",
-          "size": 16,
-          "slot": "1",
-          "offset": 0
-        }
-      ]
-    }
-  },
   "contracts/storage/Account.sol:Account": {
     "name": "Account",
     "kind": "library",
     "structs": {
       "Data": [
         {
+          "type": "uint128",
+          "name": "id",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
           "type": "struct",
-          "name": "renamed",
+          "name": "rbac",
           "members": [
+            {
+              "type": "address",
+              "name": "owner"
+            },
             {
               "type": "mapping",
               "name": "permissions",
@@ -126,21 +86,21 @@
           "type": "uint64",
           "name": "lastInteraction",
           "size": 8,
-          "slot": "2",
+          "slot": "7",
           "offset": 0
         },
         {
           "type": "uint64",
           "name": "__slotAvailableForFutureUse",
           "size": 8,
-          "slot": "2",
+          "slot": "7",
           "offset": 8
         },
         {
           "type": "uint128",
           "name": "__slot2AvailableForFutureUse",
           "size": 16,
-          "slot": "2",
+          "slot": "7",
           "offset": 16
         },
         {
@@ -206,7 +166,7 @@
             ]
           },
           "size": 32,
-          "slot": "3",
+          "slot": "8",
           "offset": 0
         }
       ]
@@ -353,7 +313,7 @@
             ]
           },
           "size": 32,
-          "slot": "2",
+          "slot": "4",
           "offset": 0
         }
       ]
@@ -507,7 +467,7 @@
             "type": "uint64"
           },
           "size": 32,
-          "slot": "2",
+          "slot": "4",
           "offset": 0
         },
         {
@@ -520,7 +480,7 @@
             "type": "uint64"
           },
           "size": 32,
-          "slot": "3",
+          "slot": "5",
           "offset": 0
         }
       ]
@@ -597,6 +557,261 @@
     "name": "Market",
     "kind": "library",
     "structs": {
+      "Data": [
+        {
+          "type": "uint128",
+          "name": "id",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "marketAddress",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "netIssuanceD18",
+          "size": 16,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "creditCapacityD18",
+          "size": 16,
+          "slot": "2",
+          "offset": 16
+        },
+        {
+          "type": "int128",
+          "name": "lastDistributedMarketBalanceD18",
+          "size": 16,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "inRangePools",
+          "members": [
+            {
+              "type": "uint128",
+              "name": "idCount"
+            },
+            {
+              "type": "array",
+              "name": "nodes",
+              "value": {
+                "type": "struct",
+                "name": "Node",
+                "members": [
+                  {
+                    "type": "uint128",
+                    "name": "id"
+                  },
+                  {
+                    "type": "int128",
+                    "name": "priority"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "mapping",
+              "name": "indices",
+              "key": {
+                "type": "uint128"
+              },
+              "value": {
+                "type": "uint256"
+              }
+            }
+          ],
+          "size": 96,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "outRangePools",
+          "members": [
+            {
+              "type": "uint128",
+              "name": "idCount"
+            },
+            {
+              "type": "array",
+              "name": "nodes",
+              "value": {
+                "type": "struct",
+                "name": "Node",
+                "members": [
+                  {
+                    "type": "uint128",
+                    "name": "id"
+                  },
+                  {
+                    "type": "int128",
+                    "name": "priority"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "mapping",
+              "name": "indices",
+              "key": {
+                "type": "uint128"
+              },
+              "value": {
+                "type": "uint256"
+              }
+            }
+          ],
+          "size": 96,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "poolsDebtDistribution",
+          "members": [
+            {
+              "type": "uint128",
+              "name": "totalSharesD18"
+            },
+            {
+              "type": "int128",
+              "name": "valuePerShareD27"
+            },
+            {
+              "type": "mapping",
+              "name": "actorInfo",
+              "key": {
+                "type": "bytes32"
+              },
+              "value": {
+                "type": "struct",
+                "members": [
+                  {
+                    "type": "uint128",
+                    "name": "sharesD18"
+                  },
+                  {
+                    "type": "int128",
+                    "name": "lastValuePerShareD27"
+                  }
+                ]
+              }
+            }
+          ],
+          "size": 64,
+          "slot": "10",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "pools",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "uint128",
+                "name": "creditCapacityAmountD18"
+              },
+              {
+                "type": "uint128",
+                "name": "pendingDebtD18"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "12",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "depositedCollateral",
+          "value": {
+            "type": "struct",
+            "name": "DepositedCollateral",
+            "members": [
+              {
+                "type": "address",
+                "name": "collateralType"
+              },
+              {
+                "type": "uint256",
+                "name": "amountD18"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "13",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "maximumDepositableD18",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "14",
+          "offset": 0
+        },
+        {
+          "type": "uint32",
+          "name": "minDelegateTime",
+          "size": 4,
+          "slot": "15",
+          "offset": 0
+        },
+        {
+          "type": "uint32",
+          "name": "__reservedForLater1",
+          "size": 4,
+          "slot": "15",
+          "offset": 4
+        },
+        {
+          "type": "uint64",
+          "name": "__reservedForLater2",
+          "size": 8,
+          "slot": "15",
+          "offset": 8
+        },
+        {
+          "type": "uint64",
+          "name": "__reservedForLater3",
+          "size": 8,
+          "slot": "15",
+          "offset": 16
+        },
+        {
+          "type": "uint64",
+          "name": "__reservedForLater4",
+          "size": 8,
+          "slot": "15",
+          "offset": 24
+        },
+        {
+          "type": "uint256",
+          "name": "minLiquidityRatioD18",
+          "size": 32,
+          "slot": "16",
+          "offset": 0
+        }
+      ],
       "DepositedCollateral": [
         {
           "type": "address",
@@ -1026,35 +1241,35 @@
             ]
           },
           "size": 32,
-          "slot": "7",
+          "slot": "8",
           "offset": 0
         },
         {
           "type": "uint64",
           "name": "lastConfigurationTime",
           "size": 8,
-          "slot": "8",
+          "slot": "9",
           "offset": 0
         },
         {
           "type": "uint64",
           "name": "__reserved1",
           "size": 8,
-          "slot": "8",
+          "slot": "9",
           "offset": 8
         },
         {
           "type": "uint64",
           "name": "__reserved2",
           "size": 8,
-          "slot": "8",
+          "slot": "9",
           "offset": 16
         },
         {
           "type": "uint64",
           "name": "__reserved3",
           "size": 8,
-          "slot": "8",
+          "slot": "9",
           "offset": 24
         },
         {
@@ -1077,14 +1292,14 @@
             ]
           },
           "size": 32,
-          "slot": "9",
+          "slot": "10",
           "offset": 0
         },
         {
           "type": "bool",
           "name": "collateralDisabledByDefault",
           "size": 1,
-          "slot": "10",
+          "slot": "11",
           "offset": 0
         }
       ]
@@ -1647,7 +1862,7 @@
             }
           ],
           "size": 64,
-          "slot": "2",
+          "slot": "3",
           "offset": 0
         },
         {
@@ -1660,7 +1875,7 @@
             "type": "int256"
           },
           "size": 32,
-          "slot": "3",
+          "slot": "5",
           "offset": 0
         },
         {
@@ -1673,7 +1888,7 @@
             "type": "uint64"
           },
           "size": 32,
-          "slot": "4",
+          "slot": "6",
           "offset": 0
         }
       ]

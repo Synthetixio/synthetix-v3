@@ -5,6 +5,7 @@ import './type-extensions';
 import './subtasks/generate-testable-storage';
 import './subtasks/get-artifacts';
 import './subtasks/validate-contracts';
+import './subtasks/verify-contracts';
 import './tasks/dump';
 import './tasks/generate-testable';
 import './tasks/layout';

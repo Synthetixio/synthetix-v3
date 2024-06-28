@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "SKIP:build": "yarn build:contracts",
-    "SKIP:build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "SKIP:build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
