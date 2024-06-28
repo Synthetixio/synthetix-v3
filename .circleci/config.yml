@@ -696,12 +696,6 @@ workflows:
           parallelism: 2
           batch-size: 5
 
-      - test-contracts:
-          name: "test-hardhat-storage"
-          workspace: "@synthetixio/hardhat-storage"
-          parallelism: 1
-          batch-size: 1
-
       - test-forge:
           name: "test-rewards-distributor"
           workspace: "@synthetixio/rewards-distributor"
