@@ -32,13 +32,11 @@ task(
 
     const mutations = verifyMutations(curr, prev);
 
-    // if (mutations.some((m) => m.type === 'error')) {
-    //   const errors = mutations.filter((m) => m.type === 'error');
-    //   for (const m of errors) _printMutation(m);
-    //   throw new Error(
-    //     'Found storage modifications on contracts, please fix them before continuing'
-    //   );
-    // }
+    if (mutations.some((m) => m.type === 'error')) {
+      const errors = mutations.filter((m) => m.type === 'error');
+      for (const m of errors) _printMutation(m);
+      throw new Error('Found invalid storage mutations, please fix them before continuing');
+    }
 
     if (!quiet) {
       for (const m of mutations) _printMutation(m);

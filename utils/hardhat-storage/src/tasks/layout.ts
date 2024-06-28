@@ -36,12 +36,14 @@ task(TASK_STORAGE_LAYOUT, 'Pretty print the storage layout of all the contracts'
 
     console.log();
 
-    for (const [fqName, storageDump] of Object.entries(dump)) {
-      const kind = storageDump?.kind;
+    for (const fqName of Object.keys(dump)) {
+      const storageDump = dump[fqName]!;
+      const kind = storageDump!.kind;
 
       console.log(`${bold(underline(`${kind} ${fqName}`))}`);
 
-      for (const [structName, slots] of Object.entries(storageDump.structs)) {
+      for (const structName of Object.keys(storageDump.structs)) {
+        const slots = storageDump.structs[structName]!;
         console.log(`  struct ${structName}`);
 
         const table = new Table({
