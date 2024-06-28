@@ -146,10 +146,27 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
           "type": "uint8",
         },
         {
+          "members": [
+            {
+              "name": "someString",
+              "type": "string",
+            },
+            {
+              "name": "someValue",
+              "type": "uint256",
+            },
+          ],
+          "name": "bigStruct",
+          "offset": 0,
+          "size": 64,
+          "slot": "11",
+          "type": "struct",
+        },
+        {
           "name": "signedInt256",
           "offset": 0,
           "size": 32,
-          "slot": "11",
+          "slot": "13",
           "type": "int256",
         },
         {
@@ -159,7 +176,7 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
           "name": "mappingWithNestedStruct",
           "offset": 0,
           "size": 32,
-          "slot": "12",
+          "slot": "14",
           "type": "mapping",
           "value": {
             "members": [
@@ -179,7 +196,7 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
           "name": "someStringValue",
           "offset": 0,
           "size": 32,
-          "slot": "13",
+          "slot": "15",
           "type": "string",
         },
         {
@@ -204,14 +221,14 @@ exports[`internal/dump.ts single contract with state variables, contracts and st
           "name": "simpleStruct",
           "offset": 0,
           "size": 32,
-          "slot": "14",
+          "slot": "16",
           "type": "struct",
         },
         {
           "name": "afterStructStartsNewSlot",
           "offset": 0,
           "size": 1,
-          "slot": "15",
+          "slot": "17",
           "type": "uint8",
         },
       ],

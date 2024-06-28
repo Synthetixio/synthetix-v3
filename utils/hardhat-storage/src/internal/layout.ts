@@ -1,3 +1,4 @@
+import { clone } from '@synthetixio/core-utils/utils/misc/clone';
 import { StorageSlot } from '../types';
 
 const SLOT_SIZE = 32;
@@ -92,9 +93,11 @@ export function sumStorageSlotSizes(slotsSizes: number[], fillLastSlot = false):
  * Taking into account how should they share slots when necessary.
  */
 export function hidrateSlotsLayout(slots: StorageSlot[]) {
-  for (let i = 0; i < slots.length; i++) {
-    const prev: StorageSlot | undefined = slots[i - 1];
-    const slot = slots[i];
+  const cloned = clone(slots);
+
+  for (let i = 0; i < cloned.length; i++) {
+    const prev: StorageSlot | undefined = cloned[i - 1];
+    const slot = cloned[i];
 
     slot.size = getStorageSlotSize(slot);
     slot.slot = '0';
@@ -109,8 +112,13 @@ export function hidrateSlotsLayout(slots: StorageSlot[]) {
         slot.slot = prev.slot;
         slot.offset = SLOT_SIZE - remaining;
       } else {
-        slot.slot = (Number.parseInt(prev.slot!) + 1).toString();
+        // In the case that the previous variable occupies more than a single
+        // slot, namely structs.
+        const prevAmount = Math.ceil((prev.offset! + prev.size!) / SLOT_SIZE);
+        slot.slot = (Number.parseInt(prev.slot!) + prevAmount).toString();
       }
     }
   }
+
+  return cloned;
 }

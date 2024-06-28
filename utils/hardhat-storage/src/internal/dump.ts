@@ -1,8 +1,4 @@
-import {
-  ContractDefinition,
-  TypeName,
-  VariableDeclaration,
-} from '@solidity-parser/parser/src/ast-types';
+import { ContractDefinition, TypeName, VariableDeclaration } from '@solidity-parser/parser/src/ast-types';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import {
   GetArtifactFunction,
@@ -61,10 +57,8 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
         slots.push(storageSlot);
       }
 
-      hidrateSlotsLayout(slots);
-
       if (slots.length) {
-        result.structs[structDefinition.name] = slots;
+        result.structs[structDefinition.name] = hidrateSlotsLayout(slots);
       }
     }
 

@@ -65,12 +65,20 @@ export type StorageSlot =
   | StorageArraySlot
   | StorageEnumSlot;
 
+export type StorageLayoutStructs = { [structName: string]: StorageSlot[] | undefined };
+
 export interface StorageLayout {
   kind: 'contract' | 'library';
   name: string;
-  structs: { [structName: string]: StorageSlot[] };
+  structs: StorageLayoutStructs;
 }
 
 export interface StorageDump {
-  [contractName: string]: StorageLayout;
+  [contractName: string]: StorageLayout | undefined;
+}
+
+export interface StorageMutation {
+  type: 'log' | 'warn' | 'error';
+  kind: 'add' | 'update' | 'del';
+  message: string;
 }

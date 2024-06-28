@@ -1,12 +1,14 @@
 import path from 'node:path';
 import { task } from 'hardhat/config';
 import { readJsonFile } from '../internal/file-helpers';
+import { verifyMutations } from '../internal/verify-mutations';
 import { TASK_STORAGE_VERIFY } from '../task-names';
-import { StorageDump, StorageLayout } from '../types';
+import { StorageDump, StorageMutation } from '../types';
 
 interface Params {
   previous: string;
   current: string;
+  quiet: boolean;
 }
 
 task(
@@ -23,40 +25,35 @@ task(
     'More recent storage dump to compare to',
     'storage.dump.json'
   )
-  .setAction(async ({ previous, current }: Required<Params>, hre) => {
+  .addFlag('quiet', 'only emit errors to the console')
+  .setAction(async ({ previous, current, quiet }: Required<Params>, hre) => {
     const curr = await readJsonFile<StorageDump>(path.resolve(hre.config.paths.root, current));
     const prev = await readJsonFile<StorageDump>(path.resolve(hre.config.paths.root, previous));
 
-    // 1. Do not change 'slot' or 'offset' on any storage slot
-    // 2. Show a warning when renaming a slot
-    // 2. Show a warning when changing type
-    // 3. Do not allow to remove variables
+    const mutations = verifyMutations(curr, prev);
 
-    const contractNames = _getUniqKeys(curr, prev);
+    // if (mutations.some((m) => m.type === 'error')) {
+    //   const errors = mutations.filter((m) => m.type === 'error');
+    //   for (const m of errors) _printMutation(m);
+    //   throw new Error(
+    //     'Found storage modifications on contracts, please fix them before continuing'
+    //   );
+    // }
 
-    for (const fqName of contractNames) {
-      const currStorageDump = curr[fqName] as StorageLayout | undefined;
-      const prevStorageDump = prev[fqName] as StorageLayout | undefined;
-
-      const structNames = _getUniqKeys(currStorageDump?.structs, prevStorageDump?.structs);
-      for (const structName of structNames) {
-        const currStruct = currStorageDump?.structs[structName];
-        const prevStruct = prevStorageDump?.structs[structName];
-
-        const slots = [...(prevStruct || []), ...(currStruct || [])].sort((a, b) => {
-          return Number.parseInt(a.slot!) - Number.parseInt(b.slot!);
-        });
-
-        for (const slot of slots) {
-          // validate
-          slot;
-        }
-      }
+    if (!quiet) {
+      for (const m of mutations) _printMutation(m);
+      console.log();
     }
+
+    return mutations;
   });
 
-function _getUniqKeys(...objs: ({ [k: string]: unknown } | undefined)[]) {
-  const set = new Set<string>();
-  for (const obj of objs) for (const k of Object.keys(obj || {})) set.add(k);
-  return Array.from(set).sort();
+const prefixes = {
+  add: '+ ',
+  update: '+-',
+  del: '- ',
+} satisfies Record<StorageMutation['kind'], string>;
+
+function _printMutation(mutation: StorageMutation) {
+  console[mutation.type](`${prefixes[mutation.kind]} ${mutation.message}`);
 }

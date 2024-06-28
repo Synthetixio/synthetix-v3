@@ -44,6 +44,7 @@ contract ExampleContract {
         uint8 unsignedInt; // solhint-disable-line explicit-types
         uint256 unsignedInt256;
         uint8 unsignedInt8;
+        SubData bigStruct;
         int256 signedInt256;
         mapping(ExampleKeyContract => SubData) mappingWithNestedStruct;
         string someStringValue;
