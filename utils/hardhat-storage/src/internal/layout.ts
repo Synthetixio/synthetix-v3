@@ -127,6 +127,11 @@ export function hidrateSlotsLayout(slots: StorageSlot[]) {
   return cloned;
 }
 
+/**
+ * Get the amount of bts for the given type, e.g.
+ *   _parseBasicTypeSize('uint128', 256) => 128
+ *   _parseBasicTypeSize('int', 256) => 256
+ */
 function _parseBasicTypeSize(type: string, max = 256) {
   const match = type.match(/^[a-z]+([1-9]+[0-9]*)?$/);
   if (!match) throw new Error(`Invalid type "${type}"`);
