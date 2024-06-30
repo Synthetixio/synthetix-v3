@@ -3,15 +3,6 @@ import { StorageSlot } from '../types';
 
 const SLOT_SIZE = 32;
 
-const _parseBasicTypeSize = (type: string, max = 256) => {
-  const match = type.match(/^[a-z]+([1-9]+[0-9]*)?$/);
-  if (!match) throw new Error(`Invalid type "${type}"`);
-  if (!match[1]) return max;
-  const bits = Number.parseInt(match[1]);
-  if (bits === 0 || bits > max) throw new Error(`Invalid type "${type}"`);
-  return bits;
-};
-
 /**
  * Get the size on the storage layout for the given variable types.
  * Keep in mind that this function gets the static size for the slot, and not
@@ -38,26 +29,32 @@ export function getStorageSlotSize(slot: StorageSlot): number {
     return bits / 8;
   }
 
+  // These types always occupy 32 bytes, which only include a pointer to the real
+  // storage slot being used to save the data.
   if (['bytes', 'string', 'mapping'].includes(slot.type)) {
     return SLOT_SIZE;
   }
 
   if (slot.type === 'array') {
+    // Dynamic arrays always occupy 32 bytes, because the data is saved on another slot.
     if (!Number.isSafeInteger(slot.length)) return SLOT_SIZE;
+    // Static arrays save the data in place.
     const valueSize = getStorageSlotSize(slot.value);
     return sumStorageSlotSizes(new Array(slot.length).fill(valueSize), true);
   }
 
+  // bytesX size work the same as static arrays
   if (slot.type.startsWith('bytes')) {
     const bytes = _parseBasicTypeSize(slot.type, SLOT_SIZE);
     return bytes;
   }
 
+  // These are not fully implemented yet: https://docs.soliditylang.org/en/latest/types.html#fixed-point-numbers
   if (slot.type.startsWith('ufixed') || slot.type.startsWith('fixed')) {
-    // These are not fully implemented yet: https://docs.soliditylang.org/en/latest/types.html#fixed-point-numbers
     throw new Error(`Type "${slot.type}" for storage size calculation not implemented`);
   }
 
+  // structs are saved in place, occupying the sum of all of its members
   if (slot.type === 'struct') {
     const sizes = slot.members.map(getStorageSlotSize).flat();
     return sumStorageSlotSizes(sizes, true);
@@ -69,6 +66,13 @@ export function getStorageSlotSize(slot: StorageSlot): number {
   throw err;
 }
 
+/**
+ * Calculate the sum of the given slot sizes using slot assignment logic. If the
+ * current one does not get into the remaining space from the previous slot, it
+ * should start from a new one.
+ * @param slotsSizes an array of slot size values
+ * @param fillLastSlot true if it should full the size for the last slot, to occupy it completely
+ */
 export function sumStorageSlotSizes(slotsSizes: number[], fillLastSlot = false): number {
   let size = 0;
 
@@ -121,4 +125,13 @@ export function hidrateSlotsLayout(slots: StorageSlot[]) {
   }
 
   return cloned;
+}
+
+function _parseBasicTypeSize(type: string, max = 256) {
+  const match = type.match(/^[a-z]+([1-9]+[0-9]*)?$/);
+  if (!match) throw new Error(`Invalid type "${type}"`);
+  if (!match[1]) return max;
+  const bits = Number.parseInt(match[1]);
+  if (bits === 0 || bits > max) throw new Error(`Invalid type "${type}"`);
+  return bits;
 }
