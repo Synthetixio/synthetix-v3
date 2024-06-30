@@ -11,7 +11,12 @@ import {
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
-import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
+import {
+  bootstrapPerpsMarkets,
+  bootstrapTraders,
+  createRewardsDistributor,
+  PerpsMarketData,
+} from './';
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
 import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
@@ -76,7 +81,10 @@ export function bootstrap() {
     // set max collateral amt for snxUSD to maxUINT
     await contracts.PerpsMarket.connect(getSigners()[0]).setCollateralConfiguration(
       0, // snxUSD
-      ethers.constants.MaxUint256
+      ethers.constants.MaxUint256,
+      0, // upperLimitDiscount
+      0, // lowerLimitDiscount
+      0 // discountScalar
     );
   });
 
@@ -89,7 +97,11 @@ export function bootstrap() {
 }
 
 type BootstrapArgs = {
-  synthMarkets: SynthArguments;
+  synthMarkets: (SynthArguments[number] & {
+    upperLimitDiscount?: ethers.BigNumber;
+    lowerLimitDiscount?: ethers.BigNumber;
+    discountScalar?: ethers.BigNumber;
+  })[];
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
   liquidationGuards?: {
@@ -105,16 +117,30 @@ type BootstrapArgs = {
   };
   maxPositionsPerAccount?: ethers.BigNumber;
   maxCollateralsPerAccount?: ethers.BigNumber;
+  collateralLiquidateRewardRatio?: ethers.BigNumber;
   skipKeeperCostOracleNode?: boolean;
+  skipRegisterDistributors?: boolean;
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
   const chainStateWithPerpsMarkets = bootstrapPerpsMarkets(data.perpsMarkets, undefined);
 
-  const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
+  const { synthMarkets, marketOwner } = bootstrapSynthMarkets(
+    data.synthMarkets,
+    chainStateWithPerpsMarkets
+  );
 
-  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId, staker } =
-    chainStateWithPerpsMarkets;
+  const {
+    systems,
+    signers,
+    provider,
+    owner,
+    perpsMarkets,
+    poolId,
+    collateralAddress,
+    superMarketId,
+    staker,
+  } = chainStateWithPerpsMarkets;
   const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
     signers,
@@ -156,16 +182,20 @@ export function bootstrapMarkets(data: BootstrapArgs) {
   });
 
   // auto set all synth markets collaterals to max
-  before('set collateral max', async () => {
-    for (const { marketId } of synthMarkets()) {
+  before('set collateral config', async () => {
+    for (const [i, { marketId, synthAddress }] of synthMarkets().entries()) {
+      const { upperLimitDiscount, lowerLimitDiscount, discountScalar } = data.synthMarkets[i];
+
       await systems()
         .PerpsMarket.connect(owner())
-        .setCollateralConfiguration(marketId(), ethers.constants.MaxUint256);
-    }
-  });
+        .setCollateralConfiguration(
+          marketId(),
+          ethers.constants.MaxUint256,
+          upperLimitDiscount || bn(0),
+          lowerLimitDiscount || bn(0),
+          discountScalar || bn(0)
+        );
 
-  before('set max market collateral allowed for all synths', async () => {
-    for (const { synthAddress } of synthMarkets()) {
       await systems()
         .Core.connect(owner())
         .configureMaximumMarketCollateral(
@@ -186,12 +216,38 @@ export function bootstrapMarkets(data: BootstrapArgs) {
       );
   });
 
-  // auto add all synth markets in the row they were created for deduction priority
-  before('set synth deduction priority', async () => {
-    // first item is always snxUSD
-    const synthIds = [bn(0), ...synthMarkets().map((s) => s.marketId())];
-    await systems().PerpsMarket.connect(owner()).setSynthDeductionPriority(synthIds);
+  before('set reward distributor', async () => {
+    const { collateralLiquidateRewardRatio } = data;
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setCollateralLiquidateRewardRatio(
+        collateralLiquidateRewardRatio ? collateralLiquidateRewardRatio : 0 // set to zero means no rewards based on collateral only
+      );
+
+    if (!data.skipRegisterDistributors) {
+      // Deploy and register a new distributor for each collateral
+      for (const { marketId, synthAddress } of synthMarkets()) {
+        // Deploy the new rewards distributor
+        const distributorAddress = await createRewardsDistributor(
+          owner(),
+          systems().Core,
+          systems().PerpsMarket,
+          poolId,
+          collateralAddress(),
+          synthAddress(),
+          18,
+          marketId()
+        );
+
+        await systems()
+          .PerpsMarket.connect(owner())
+          .registerDistributor(synthAddress(), distributorAddress, marketId(), [
+            collateralAddress(),
+          ]);
+      }
+    }
   });
+
   const { liquidationGuards } = data;
   if (liquidationGuards) {
     before('set liquidation guards', async () => {
@@ -233,6 +289,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     keeperCostOracleNode: () => keeperCostOracleNode,
     synthMarkets,
     superMarketId,
+    synthMarketOwner: marketOwner,
     poolId,
   };
 }

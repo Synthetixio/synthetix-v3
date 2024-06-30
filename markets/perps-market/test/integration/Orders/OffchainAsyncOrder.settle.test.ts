@@ -310,6 +310,22 @@ describe('Settle Offchain Async Order test', () => {
             );
           });
 
+          it('emits AccountCharged event', async () => {
+            const snxUsdAmount =
+              testCase.collateralData.collaterals[0].synthMarket === undefined
+                ? testCase.collateralData.collaterals[0].snxUSDAmount()
+                : bn(0);
+            const chargeAmount = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const accruedDebt = chargeAmount.gt(snxUsdAmount)
+              ? chargeAmount.sub(snxUsdAmount)
+              : bn(0);
+            await assertEvent(
+              settleTx,
+              `AccountCharged(2, ${chargeAmount.mul(-1)}, ${accruedDebt})`,
+              systems().PerpsMarket
+            );
+          });
+
           it('emits market updated event', async () => {
             const price = bn(1000);
             const marketSize = bn(1);
@@ -336,31 +352,6 @@ describe('Settle Offchain Async Order test', () => {
               `MarketUpdated(${params.join(', ')})`,
               systems().PerpsMarket
             );
-          });
-
-          it('emits collateral deducted events', async () => {
-            let pendingTotalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
-            const accountId = 2;
-
-            for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
-              const collateral = testCase.collateralData.collaterals[i];
-              const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
-              let deductedCollateralAmount: ethers.BigNumber = bn(0);
-              if (synthMarket == 0) {
-                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingTotalFees)
-                  ? collateral.snxUSDAmount()
-                  : pendingTotalFees;
-              } else {
-                deductedCollateralAmount = pendingTotalFees.div(10_000);
-              }
-              pendingTotalFees = pendingTotalFees.sub(deductedCollateralAmount);
-
-              await assertEvent(
-                settleTx,
-                `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
-                systems().PerpsMarket
-              );
-            }
           });
 
           it('check position is live', async () => {

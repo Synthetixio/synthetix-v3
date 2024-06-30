@@ -129,7 +129,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 );
             }
 
-            int256 totalDebt = collateralValue.toInt() + totalMarketDebt;
+            int256 totalDebt = collateralValue.toInt() +
+                totalMarketDebt -
+                globalMarket.totalAccountsDebt.toInt();
             return MathUtil.max(0, totalDebt).toUint();
         }
 

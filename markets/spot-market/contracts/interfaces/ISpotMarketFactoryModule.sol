@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
+import {Price} from "../storage/Price.sol";
 
 /**
  * @title Module for spot market factory
@@ -217,4 +218,17 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthMarketId synth market id value
      */
     function getNominatedMarketOwner(uint128 synthMarketId) external view returns (address);
+
+    /**
+     * @notice Get current price based on type of transaction and tolerance
+     * @param marketId synth market id value
+     * @param transactionType type of txn
+     * @param priceTolerance staleness tolerance to use for price
+     * @return price current price of the synth
+     */
+    function indexPrice(
+        uint128 marketId,
+        uint128 transactionType,
+        Price.Tolerance priceTolerance
+    ) external view returns (uint256 price);
 }

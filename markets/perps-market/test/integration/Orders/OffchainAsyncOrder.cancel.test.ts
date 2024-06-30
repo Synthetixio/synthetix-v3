@@ -236,9 +236,15 @@ describe('Cancel Offchain Async Order test', () => {
           let cancelTx: ethers.ContractTransaction;
           let accountBalanceBefore: ethers.BigNumber;
           let keeperBalanceBefore: ethers.BigNumber;
+          let expectedDebt: ethers.BigNumber;
           const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
 
           before('collect initial balances', async () => {
+            // if snxUSD available, subtract settlementReward from snxUSD otherwise add to debt
+            const startingSnxUSDBalance = await systems().PerpsMarket.getCollateralAmount(2, 0);
+            const leftoverSnxUsd = startingSnxUSDBalance.sub(settlementReward);
+            expectedDebt = leftoverSnxUsd.lt(0) ? leftoverSnxUsd.abs() : wei(0).toBN();
+
             accountBalanceBefore = await systems().PerpsMarket.getAvailableMargin(2);
             keeperBalanceBefore = await systems().USD.balanceOf(await keeper().getAddress());
           });
@@ -275,29 +281,13 @@ describe('Cancel Offchain Async Order test', () => {
             );
           });
 
-          it('emits collateral deducted events', async () => {
-            let pendingSettlementRewards = settlementReward;
-            const accountId = 2;
-
-            for (let i = 0; i < testCase.collateralData.collaterals.length; i++) {
-              const collateral = testCase.collateralData.collaterals[i];
-              const synthMarket = collateral.synthMarket ? collateral.synthMarket().marketId() : 0;
-              let deductedCollateralAmount: ethers.BigNumber = bn(0);
-              if (synthMarket == 0) {
-                deductedCollateralAmount = collateral.snxUSDAmount().lt(pendingSettlementRewards)
-                  ? collateral.snxUSDAmount()
-                  : pendingSettlementRewards;
-              } else {
-                deductedCollateralAmount = pendingSettlementRewards.div(10_000);
-              }
-              pendingSettlementRewards = pendingSettlementRewards.sub(deductedCollateralAmount);
-
-              await assertEvent(
-                cancelTx,
-                `CollateralDeducted(${accountId}, ${synthMarket}, ${deductedCollateralAmount})`,
-                systems().PerpsMarket
-              );
-            }
+          it('emits AccountCharged event', async () => {
+            const params = [2, settlementReward, expectedDebt];
+            await assertEvent(
+              cancelTx,
+              `AccountCharged(${params.join(', ')})`,
+              systems().PerpsMarket
+            );
           });
 
           it('updates balances accordingly', async () => {
@@ -305,6 +295,8 @@ describe('Cancel Offchain Async Order test', () => {
             const keeperBalanceAfter = await systems().USD.balanceOf(await keeper().getAddress());
             assertBn.equal(keeperBalanceAfter, keeperBalanceBefore.add(settlementReward));
             assertBn.equal(accountBalanceAfter, accountBalanceBefore.sub(settlementReward));
+
+            assertBn.equal(await systems().PerpsMarket.debt(2), expectedDebt);
           });
 
           it('check account open position market ids', async () => {
