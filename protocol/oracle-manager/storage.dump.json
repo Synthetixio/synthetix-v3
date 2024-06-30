@@ -1,0 +1,177 @@
+{
+  "contracts/interfaces/external/IPyth.sol:PythStructs": {
+    "name": "PythStructs",
+    "kind": "contract",
+    "structs": {
+      "Price": [
+        {
+          "type": "int64",
+          "name": "price",
+          "size": 8,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "conf",
+          "size": 8,
+          "slot": "0",
+          "offset": 8
+        },
+        {
+          "type": "int32",
+          "name": "expo",
+          "size": 4,
+          "slot": "0",
+          "offset": 16
+        },
+        {
+          "type": "uint256",
+          "name": "publishTime",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ],
+      "PriceFeed": [
+        {
+          "type": "bytes32",
+          "name": "id",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "price",
+          "members": [
+            {
+              "type": "int64",
+              "name": "price"
+            },
+            {
+              "type": "uint64",
+              "name": "conf"
+            },
+            {
+              "type": "int32",
+              "name": "expo"
+            },
+            {
+              "type": "uint256",
+              "name": "publishTime"
+            }
+          ],
+          "size": 64,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "emaPrice",
+          "members": [
+            {
+              "type": "int64",
+              "name": "price"
+            },
+            {
+              "type": "uint64",
+              "name": "conf"
+            },
+            {
+              "type": "int32",
+              "name": "expo"
+            },
+            {
+              "type": "uint256",
+              "name": "publishTime"
+            }
+          ],
+          "size": 64,
+          "slot": "3",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/NodeDefinition.sol:NodeDefinition": {
+    "name": "NodeDefinition",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "enum",
+          "name": "nodeType",
+          "members": [
+            "NONE",
+            "REDUCER",
+            "EXTERNAL",
+            "CHAINLINK",
+            "UNISWAP",
+            "PYTH",
+            "PRICE_DEVIATION_CIRCUIT_BREAKER",
+            "STALENESS_CIRCUIT_BREAKER",
+            "CONSTANT",
+            "PYTH_OFFCHAIN_LOOKUP"
+          ],
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bytes",
+          "name": "parameters",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "parents",
+          "value": {
+            "type": "bytes32"
+          },
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/NodeOutput.sol:NodeOutput": {
+    "name": "NodeOutput",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "int256",
+          "name": "price",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "timestamp",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "__slotAvailableForFutureUse1",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "__slotAvailableForFutureUse2",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}

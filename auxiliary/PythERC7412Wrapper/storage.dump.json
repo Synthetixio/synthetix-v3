@@ -1,0 +1,41 @@
+{
+  "contracts/storage/Price.sol:Price": {
+    "name": "Price",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "mapping",
+          "name": "benchmarkPrices",
+          "key": {
+            "type": "uint64"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "int64",
+                "name": "price"
+              },
+              {
+                "type": "uint64",
+                "name": "conf"
+              },
+              {
+                "type": "int32",
+                "name": "expo"
+              },
+              {
+                "type": "uint256",
+                "name": "publishTime"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}

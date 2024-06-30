@@ -1,38 +1,48 @@
-import { filterContracts } from '@synthetixio/core-utils/utils/hardhat/contracts';
-import { getFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { VariableDeclaration } from 'solidity-ast/types';
-import { createError } from './error';
-import { iterateContracts, iterateVariables } from './iterators';
-import { ValidateParams } from './validate';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { GetArtifactFunction } from '../types';
+import { findContractTree } from './artifacts';
+import { createError, ValidationError } from './error';
+import { findAll } from './finders';
 
-export function validateMutableStateVariables({ sourceUnits, skip }: ValidateParams) {
-  const contractNodes = [
-    // Filter out contracts that are marked to be skipped
-    ...iterateContracts(sourceUnits, (sourceUnit, contractNode) => {
-      const sourceName = sourceUnit.absolutePath;
-      const contractName = contractNode.name;
-      const fqName = getFullyQualifiedName(sourceName, contractName);
-      return filterContracts([fqName, sourceName, contractName], skip).length === 0;
-    }),
-  ];
+import type {
+  StateVariableDeclarationVariable,
+  VariableDeclaration,
+} from '@solidity-parser/parser/src/ast-types';
 
-  // Find state variables
-  const invalidVars = [...iterateVariables(contractNodes, _isMutableStateVariable)];
-
-  return invalidVars.map(([sourceUnit, contractNode, variableNode]) =>
-    createError({
-      message:
-        'Unsafe state variable declaration. Mutable state variables cannot be declared on a contract behind a Proxy',
-      sourceUnit,
-      nodes: [contractNode, variableNode],
-    })
-  );
+interface Params {
+  contracts: string[];
+  getArtifact: GetArtifactFunction;
 }
 
-function _isMutableStateVariable(variableNode: VariableDeclaration) {
+export async function validateMutableStateVariables({ contracts, getArtifact }: Params) {
+  const errors: ValidationError[] = [];
+
+  for (const fqName of contracts) {
+    const { sourceName, contractName } = parseFullyQualifiedName(fqName);
+    const artifact = await getArtifact(sourceName);
+    const contractNodes = await findContractTree(getArtifact, artifact, contractName);
+
+    for (const contractNode of contractNodes) {
+      for (const node of findAll(contractNode, 'VariableDeclaration', _isMutableStateVariable)) {
+        errors.push(
+          createError({
+            message:
+              'Unsafe state variable declaration. Mutable state variables cannot be declared on a contract behind a Proxy',
+            sourceName,
+            nodes: [contractNode, node],
+          })
+        );
+      }
+    }
+  }
+
+  return errors;
+}
+
+function _isMutableStateVariable(node: VariableDeclaration) {
   return (
-    variableNode.stateVariable &&
-    variableNode.mutability !== 'constant' &&
-    variableNode.mutability !== 'immutable'
+    node.isStateVar &&
+    !node.isDeclaredConst &&
+    !(node as StateVariableDeclarationVariable).isImmutable
   );
 }

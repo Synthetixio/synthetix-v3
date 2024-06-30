@@ -1,35 +1,33 @@
 import path from 'node:path';
-import { compileSolidityFolder } from '@synthetixio/core-utils/utils/solidity/compiler';
+import { readArtifact } from '../../../src/internal/artifacts';
 import { dumpStorage } from '../../../src/internal/dump';
 
-const version = '0.8.17';
-
 describe('internal/dump.ts', function () {
-  jest.setTimeout(120000);
-
   it('single contract with state variables, contracts and structs', async function () {
-    const astNodes = await compileSolidityFolder({
-      version,
-      rootDir: path.resolve(__dirname, '..', '..', 'fixtures'),
-      sources: 'ExampleContract.sol',
-    });
+    async function getArtifact(sourceName: string) {
+      const projectRoot = path.resolve(__dirname, '..', '..', 'fixtures');
+      return readArtifact(projectRoot, sourceName);
+    }
 
-    const result = await dumpStorage(astNodes, version);
+    const contracts = ['ExampleContract.sol:ExampleContract'];
+
+    const result = await dumpStorage({ getArtifact, contracts });
     expect(result).toMatchSnapshot();
   });
 
   it('sample-project contract with storage and interface', async function () {
-    const astNodes = await compileSolidityFolder({
-      version,
-      rootDir: path.resolve(__dirname, '..', '..', '..', '..', 'sample-project'),
-      sources: [
-        'contracts/storage/GlobalStorage.sol',
-        'contracts/interfaces/ISomeModule.sol',
-        'contracts/modules/SomeModule.sol',
-      ],
-    });
+    async function getArtifact(sourceName: string) {
+      const projectRoot = path.resolve(__dirname, '..', '..', '..', '..', 'sample-project');
+      return readArtifact(projectRoot, sourceName);
+    }
 
-    const result = await dumpStorage(astNodes, version);
+    const contracts = [
+      'contracts/storage/GlobalStorage.sol:GlobalStorage',
+      'contracts/interfaces/ISomeModule.sol:ISomeModule',
+      'contracts/modules/SomeModule.sol:SomeModule',
+    ];
+
+    const result = await dumpStorage({ getArtifact, contracts });
     expect(result).toMatchSnapshot();
   });
 });

@@ -23,10 +23,9 @@ const config = {
     timeout: 30_000,
   },
   storage: {
-    artifacts: [...commonConfig.storage.artifacts, '!contracts/external/**/*'],
-    skip: [
-      ...commonConfig.storage.skip,
-      'contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor',
+    artifacts: [
+      ...commonConfig.storage.artifacts,
+      '!contracts/modules/PerpRewardDistributorModule/PerpRewardDistributor.sol:PerpRewardDistributor',
     ],
   },
 };

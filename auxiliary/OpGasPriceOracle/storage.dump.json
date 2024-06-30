@@ -1,0 +1,66 @@
+{
+  "contracts/OpGasPriceOracle.sol:OpGasPriceOracle": {
+    "name": "OpGasPriceOracle",
+    "kind": "contract",
+    "structs": {
+      "RuntimeParams": [
+        {
+          "type": "uint256",
+          "name": "l1SettleGasUnits",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l2SettleGasUnits",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l1FlagGasUnits",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l2FlagGasUnits",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l1LiquidateGasUnits",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l2LiquidateGasUnits",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "numberOfUpdatedFeeds",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "executionKind",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}

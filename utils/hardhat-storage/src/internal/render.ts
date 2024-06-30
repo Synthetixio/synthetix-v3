@@ -1,32 +1,20 @@
-import { Node, YulNode } from 'solidity-ast/node';
-import {
-  ArrayTypeName,
-  Block,
+import type {
+  ASTNode,
+  AssemblyItem,
+  PragmaDirective,
+  SourceUnit,
   ContractDefinition,
+  BaseASTNode,
+  StructDefinition,
+  VariableDeclaration,
   ElementaryTypeName,
-  ElementaryTypeNameExpression,
+  ArrayTypeName,
+  UserDefinedTypeName,
+  ImportDirective,
+  Mapping,
   EnumDefinition,
   EnumValue,
-  FunctionCall,
-  FunctionDefinition,
-  Identifier,
-  InlineAssembly,
-  Literal,
-  Mapping,
-  MemberAccess,
-  ParameterList,
-  PragmaDirective,
-  StructDefinition,
-  UnaryOperation,
-  BinaryOperation,
-  UserDefinedTypeName,
-  VariableDeclaration,
-  VariableDeclarationStatement,
-  YulAssignment,
-  YulBlock,
-  YulIdentifier,
-  YulLiteral,
-} from 'solidity-ast/types';
+} from '@solidity-parser/parser/src/ast-types';
 
 const TAB = '  ';
 
@@ -34,15 +22,15 @@ const TAB = '  ';
  * Minimal solidity renderer, only renders contracts with storage slot assignments
  * and struct declarations.
  */
-export function render<T extends Node | YulNode>(node: T) {
-  if (!_has(_render, node.nodeType)) {
+export function render<T extends BaseASTNode | ASTNode | AssemblyItem>(node: T) {
+  if (!_has(_render, node.type)) {
     console.log(JSON.stringify(node, null, 2));
-    throw new Error(`Rendering of node of type "${node?.nodeType}" not implemented`);
+    throw new Error(`Rendering of node of type "${node?.type}" not implemented`);
   }
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return _render[node.nodeType](node as any);
+    return _render[node.type](node as any);
   } catch (err) {
     console.log(JSON.stringify(node, null, 2));
     throw err;
@@ -51,69 +39,116 @@ export function render<T extends Node | YulNode>(node: T) {
 
 function _renderSemicolons(parentType: keyof typeof _colons) {
   return function (node: Parameters<typeof render>[0]) {
-    const semi = _colons[parentType].includes(node.nodeType) ? ';' : '';
+    const semi = _colons[parentType].includes(node.type) ? ';' : '';
     return render(node) + semi;
   };
 }
 
 const _colons = {
   ContractDefinition: [
-    'ErrorDefinition',
+    'CustomErrorDefinition',
     'EventDefinition',
     'ModifierDefinition',
-    'UsingForDirective',
+    'UsingForDeclaration',
     'VariableDeclaration',
   ],
   StructDefinition: ['VariableDeclaration'],
   Block: [
     'EmitStatement',
     'ExpressionStatement',
-    'Return',
+    'ReturnStatement',
     'RevertStatement',
     'VariableDeclarationStatement',
   ],
-  YulBlock: [
-    'YulAssignment',
-    'YulBreak',
-    'YulContinue',
-    'YulExpressionStatement',
-    'YulLeave',
-    'YulVariableDeclaration',
-  ],
+};
+
+const _normalize = {
+  int: 'int256',
+  uint: 'uint256',
+  byte: 'bytes1',
+  ufixed: 'ufixed128x18',
+  fixed: 'fixed128x18',
 };
 
 const _render = {
+  SourceUnit(node: SourceUnit) {
+    const children: string[] = node.children.map(render);
+    return children.join('\n\n');
+  },
+
   PragmaDirective(node: PragmaDirective) {
-    const [solidity, ...version] = node.literals;
-    return `pragma ${solidity} ${version.join('')};`;
+    return `pragma ${node.name} ${node.value};`;
+  },
+
+  ImportDirective(node: ImportDirective) {
+    if (node.symbolAliases) {
+      const aliases = node.symbolAliases.map(([from, to]) => `${from}${to ? ` as ${to}` : ''}`);
+      return `import {${aliases.join(', ')}} from "${node.pathLiteral.value}";`;
+    } else {
+      return `import "${node.pathLiteral.value}";`;
+    }
+  },
+
+  ContractDefinition(node: ContractDefinition) {
+    const children: string = node.subNodes
+      .map(_renderSemicolons('ContractDefinition'))
+      .map(_indent())
+      .join('\n');
+
+    return [`${node.kind} ${node.name} {`, children, '}'].join('\n');
+  },
+
+  StructDefinition(node: StructDefinition) {
+    const vars: string = node.members
+      .map(_renderSemicolons('StructDefinition'))
+      .map(_indent())
+      .join('\n');
+
+    return [`struct ${node.name} {`, vars, '}'].join('\n');
   },
 
   VariableDeclaration(node: VariableDeclaration) {
     const val: string[] = [render(node.typeName!) as string];
 
-    if (node.stateVariable) val.push(node.visibility);
-    if (node.mutability !== 'mutable') val.push(node.mutability);
-    if (node.storageLocation !== 'default') val.push(node.storageLocation);
+    if (node.visibility && !['internal', 'default'].includes(node.visibility)) {
+      val.push(node.visibility);
+    }
+
+    if (node.isDeclaredConst) val.push('constant');
+    if (node.storageLocation) val.push(node.storageLocation);
+
+    if (typeof node.name !== 'string' || !node.name) {
+      throw new Error('Missing variable name');
+    }
 
     val.push(node.name);
-
-    if (node.value) val.push('=', render(node.value));
 
     return `${val.join(' ')}`;
   },
 
-  VariableDeclarationStatement(node: VariableDeclarationStatement): string {
-    if (node.declarations.length !== 1 || !node.declarations[0]) {
-      throw new Error('Rendering of node not implemented');
-    }
-
-    const declaration = render(node.declarations[0]);
-
-    return node.initialValue ? `${declaration} = ${render(node.initialValue)}` : declaration;
+  ElementaryTypeName(node: ElementaryTypeName) {
+    const key = node.name as keyof typeof _normalize;
+    return _normalize[key] || key;
   },
 
-  ElementaryTypeName(node: ElementaryTypeName) {
-    return node.name;
+  ArrayTypeName(node: ArrayTypeName): string {
+    if (node.length) {
+      throw new Error('Rendering of ArrayTypeName with length not implemented');
+    }
+
+    return `${render(node.baseTypeName)}[]`;
+  },
+
+  Mapping(node: Mapping): string {
+    if (node.keyName || node.valueName) {
+      throw new Error('Rendering of Mapping with keyName or valueName not implemented');
+    }
+
+    return `mapping(${render(node.keyType)} => ${render(node.valueType)})`;
+  },
+
+  UserDefinedTypeName(node: UserDefinedTypeName) {
+    return node.namePath;
   },
 
   EnumDefinition(node: EnumDefinition) {
@@ -124,129 +159,6 @@ const _render = {
 
   EnumValue(node: EnumValue) {
     return node.name;
-  },
-
-  UserDefinedTypeName(node: UserDefinedTypeName) {
-    if (node.typeDescriptions.typeString?.startsWith('contract ')) {
-      return 'address';
-    }
-
-    return node.pathNode!.name;
-  },
-
-  Mapping(node: Mapping): string {
-    return `mapping(${render(node.keyType)} => ${render(node.valueType)})`;
-  },
-
-  ArrayTypeName(node: ArrayTypeName): string {
-    return `${render(node.baseType)}[]`;
-  },
-
-  Literal(node: Literal) {
-    if (!node.isPure || !['number', 'string'].includes(node.kind)) {
-      throw new Error('Rendering of node not implemented');
-    }
-
-    return node.kind === 'string' ? `"${node.value}"` : `${node.value}`;
-  },
-
-  YulLiteral(node: YulLiteral) {
-    if (!['number', 'string'].includes(node.kind)) {
-      throw new Error('Rendering of node not implemented');
-    }
-
-    return node.kind === 'string' ? `"${node.value}"` : `${node.value}`;
-  },
-
-  ContractDefinition(node: ContractDefinition) {
-    const children: string = node.nodes
-      .map(_renderSemicolons('ContractDefinition'))
-      .map(_indent())
-      .join('\n');
-    return [`${node.contractKind} ${node.name} {`, children, '}'].join('\n');
-  },
-
-  StructDefinition(node: StructDefinition) {
-    if (node.visibility !== 'public') throw new Error('Rendering of node not implemented');
-    const vars: string = node.members
-      .map(_renderSemicolons('StructDefinition'))
-      .map(_indent())
-      .join('\n');
-    return [`struct ${node.name} {`, vars, '}'].join('\n');
-  },
-
-  FunctionDefinition(node: FunctionDefinition) {
-    if (node.kind !== 'function') throw new Error('Rendering of node not implemented');
-    if (node.modifiers.length) throw new Error('Rendering of node not implemented');
-    if (node.overrides) throw new Error('Rendering of node not implemented');
-
-    const params: string = render(node.parameters);
-    const attrs: string[] = [node.visibility, node.stateMutability];
-
-    if (node.virtual) attrs.push('virtual');
-    if (node.returnParameters.parameters.length) {
-      attrs.push(`returns (${render(node.returnParameters)})`);
-    }
-
-    const semi = node.body ? '' : ';';
-    const block: string = node.body ? render(node.body) : '';
-
-    return `function ${node.name}(${params}) ${attrs.join(' ')}${semi}${block}`;
-  },
-
-  ParameterList(node: ParameterList): string {
-    return node.parameters.map(render).join(', ');
-  },
-
-  Block(node: Block) {
-    if (!Array.isArray(node.statements) || !node.statements.length) return ' {}';
-    const statements: string[] = node.statements.map(_renderSemicolons('Block')).map(_indent());
-    return [' {', ...statements, '}'].join('\n');
-  },
-
-  YulBlock(node: YulBlock) {
-    if (!Array.isArray(node.statements) || !node.statements.length) return ' {}';
-    const statements: string[] = node.statements.map(render).map(_indent());
-    return ['assembly {', ...statements, '}'].join('\n');
-  },
-
-  YulAssignment(node: YulAssignment): string {
-    if (node.variableNames.length !== 1) throw new Error('Rendering of node not implemented');
-    return `${render(node.variableNames[0])} := ${render(node.value)}`;
-  },
-
-  InlineAssembly(node: InlineAssembly): string {
-    return render(node.AST);
-  },
-
-  FunctionCall(node: FunctionCall) {
-    const name: string = render(node.expression);
-    const params: string[] = node.arguments.map(render);
-    return `${name}(${params.join(', ')})`;
-  },
-
-  Identifier(node: Identifier) {
-    return node.name;
-  },
-
-  YulIdentifier(node: YulIdentifier) {
-    return node.name;
-  },
-
-  ElementaryTypeNameExpression(node: ElementaryTypeNameExpression) {
-    return node.typeName.name;
-  },
-
-  MemberAccess(node: MemberAccess): string {
-    return `${render(node.expression)}.${node.memberName}`;
-  },
-
-  UnaryOperation(node: UnaryOperation): string {
-    return `${node.operator}${render(node.subExpression)}`;
-  },
-
-  BinaryOperation(node: BinaryOperation): string {
-    return `${render(node.leftExpression)} ${node.operator} ${render(node.rightExpression)}`;
   },
 };
 
