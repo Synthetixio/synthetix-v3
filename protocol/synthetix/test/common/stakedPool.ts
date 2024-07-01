@@ -9,8 +9,11 @@ export const bn = (n: number) => wei(n).toBN();
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const LEGACY_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String('delegateCollateral');
-const TWO_STEPS_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String(
-  'twoStepsDelegateCollateral'
+const DECLARE_DELEGATE_FEATURE_FLAG = ethers.utils.formatBytes32String(
+  'declareIntentToDelegateColl'
+);
+const PROCESS_DELEGATE_FEATURE_FLAG = ethers.utils.formatBytes32String(
+  'processIntentToDelegateColl'
 );
 
 export const createStakedPool = (
@@ -38,7 +41,10 @@ export const createStakedPool = (
       .Core.setFeatureFlagAllowAll(LEGACY_DELEGATION_FEATURE_FLAG, useLegacyDelegateCollateral);
     await r
       .systems()
-      .Core.setFeatureFlagAllowAll(TWO_STEPS_DELEGATION_FEATURE_FLAG, !useLegacyDelegateCollateral);
+      .Core.setFeatureFlagAllowAll(DECLARE_DELEGATE_FEATURE_FLAG, !useLegacyDelegateCollateral);
+    await r
+      .systems()
+      .Core.setFeatureFlagAllowAll(PROCESS_DELEGATE_FEATURE_FLAG, !useLegacyDelegateCollateral);
   });
 
   before('setup oracle manager node', async () => {

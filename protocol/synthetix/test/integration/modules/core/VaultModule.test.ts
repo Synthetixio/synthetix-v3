@@ -301,7 +301,7 @@ describe('VaultModule', function () {
 
     verifyUsesFeatureFlag(
       () => systems().Core,
-      'twoStepsDelegateCollateral',
+      'declareIntentToDelegateColl',
       async () =>
         systems()
           .Core.connect(user1)
@@ -322,8 +322,8 @@ describe('VaultModule', function () {
 
     describe('when both FF are enabled', async () => {
       const LEGACY_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String('delegateCollateral');
-      const TWO_STEPS_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String(
-        'twoStepsDelegateCollateral'
+      const DECLARE_DELEGATE_FEATURE_FLAG = ethers.utils.formatBytes32String(
+        'declareIntentToDelegateColl'
       );
 
       const restore = snapshotCheckpoint(provider);
@@ -331,7 +331,7 @@ describe('VaultModule', function () {
 
       before('enable both FFs', async () => {
         await systems().Core.setFeatureFlagAllowAll(LEGACY_DELEGATION_FEATURE_FLAG, true);
-        await systems().Core.setFeatureFlagAllowAll(TWO_STEPS_DELEGATION_FEATURE_FLAG, true);
+        await systems().Core.setFeatureFlagAllowAll(DECLARE_DELEGATE_FEATURE_FLAG, true);
       });
 
       it('fails when trying to use declareIntentToDelegateCollateral()', async () => {
