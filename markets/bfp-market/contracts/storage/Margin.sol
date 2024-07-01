@@ -101,13 +101,18 @@ library Margin {
         int256 amountDeltaUsd,
         AddressRegistry.Data memory addresses
     ) internal {
-        // Nothing to update, this is a no-op.
+        uint128 previousDebt = accountMargin.debtUsd;
+
         if (amountDeltaUsd == 0) {
+            // If there was debt, clear it. This is a no-op if there was no debt.
+            if (previousDebt > 0) {
+                accountMargin.debtUsd = 0;
+                market.updateDebtAndCollateral(-previousDebt.toInt(), 0, addresses.sUsd);
+            }
             return;
         }
 
         uint256 availableUsdCollateral = accountMargin.collaterals[addresses.sUsd];
-        uint128 previousDebt = accountMargin.debtUsd;
 
         if (amountDeltaUsd >= 0) {
             // >0 means profitable position, including the outstanding debt.
