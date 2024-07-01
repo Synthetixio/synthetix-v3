@@ -88,6 +88,11 @@ interface IGlobalPerpsMarketModule {
     error InvalidReferrerShareRatio(uint256 shareRatioD18);
 
     /**
+     * @notice Thrown when a relayer share gets set to larger than 100%
+     */
+    error InvalidRelayerShareRatio(uint256 shareRatioD18);
+
+    /**
      * @notice Thrown when gradient breakpoint is lower than low gradient or higher than high gradient
      */
     error InvalidInterestRateParameters(
@@ -282,4 +287,18 @@ interface IGlobalPerpsMarketModule {
      * @dev InterestRateUpdated event is emitted
      */
     function updateInterestRate() external;
+
+    /**
+     * @notice Update the referral share percentage for a relayer
+     * @param relayer The address of the relayer
+     * @param shareRatioD18 The new share percentage for the relayer
+     */
+    function updateRelayerShare(address relayer, uint256 shareRatioD18) external;
+
+    /**
+     * @notice get the referral share percentage for the specified relayer
+     * @param relayer The address of the relayer
+     * @return shareRatioD18 The configured share percentage for the relayer
+     */
+    function getRelayerShare(address relayer) external view returns (uint256 shareRatioD18);
 }

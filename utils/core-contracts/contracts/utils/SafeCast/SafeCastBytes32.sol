@@ -12,4 +12,8 @@ library SafeCastBytes32 {
     function toUint(bytes32 x) internal pure returns (uint) {
         return uint(x);
     }
+
+    function toUint8(bytes32 x) internal pure returns (uint8) {
+        return uint8(uint(x) & 0xff);
+    }
 }
