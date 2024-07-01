@@ -34,11 +34,14 @@ library WormholeCrossChain {
         mapping(bytes32 => bool) hasProcessedMessage;
     }
 
+    ///@dev adds supported network to storage, used for cross-chain network verification
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
     function addSupportedNetwork(Data storage self, uint16 chainId) internal {
         self.supportedNetworks.add(chainId);
         emit NewSupportedCrossChainNetwork(chainId);
     }
 
+    ///@dev adds registered emitter to storage, used for cross-chain contract verification
     function addEmitter(Data storage self, uint16 chainId, address emitter) internal {
         // solhint-disable-next-line
         self.registeredEmitters[chainId] = bytes32(uint256(uint160(emitter)));
@@ -52,6 +55,8 @@ library WormholeCrossChain {
         }
     }
 
+    ///@dev confirms that the chainId is registered in storage, reverts if not
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
     function validateChainId(Data storage self, uint256 chainId) internal view {
         if (!self.supportedNetworks.contains(chainId)) {
             revert UnsupportedNetwork(chainId.to64());
@@ -69,10 +74,12 @@ library WormholeCrossChain {
         return bytes32(uint256(uint160(address(this))));
     }
 
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
     function getChainIdAt(Data storage self, uint64 index) internal view returns (uint64) {
         return self.supportedNetworks.valueAt(index + 1).to64();
     }
 
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
     function getSupportedNetworks(Data storage self) internal view returns (uint64[] memory) {
         SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
         uint256[] memory supportedChains = supportedNetworks.values();
@@ -82,10 +89,5 @@ library WormholeCrossChain {
             chains[i] = chainId;
         }
         return chains;
-    }
-
-    function getWormholeRelayer() internal view returns (IWormholeRelayer) {
-        Data storage wh = load();
-        return wh.wormholeRelayer;
     }
 }

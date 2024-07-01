@@ -47,6 +47,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit MessageReceived(message);
     }
 
+    ///@dev Initializes the election module
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         IWormhole wormholeCore,

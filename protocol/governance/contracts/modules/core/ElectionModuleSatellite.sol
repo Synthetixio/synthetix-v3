@@ -78,6 +78,7 @@ contract ElectionModuleSatellite is
         return Council.load().initialized;
     }
 
+    ///@dev Casts vote on mothership chain
     function cast(
         address[] calldata candidates,
         uint256[] calldata amounts
@@ -121,6 +122,7 @@ contract ElectionModuleSatellite is
         );
     }
 
+    ///@dev Withdraws a vote that has already been casted by the sender
     function withdrawVote(address[] calldata candidates) public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 

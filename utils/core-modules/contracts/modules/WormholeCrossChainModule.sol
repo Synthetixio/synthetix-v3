@@ -18,6 +18,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     error MessageAlreadyProcessed();
     error UnregisteredEmitter();
 
+    ///@dev Sets supported emitters and chain ids
     function setRegisteredEmitters(uint16[] memory chainIds, address[] memory emitters) external {
         OwnableStorage.onlyOwner();
 
@@ -36,6 +37,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         }
     }
 
+    ///@dev Implementation from IWormholeReciever, necessary to receive and process messages from the WormholeRelayer
     function receiveEncodedMsg(
         bytes memory encodedMsg,
         bytes[] memory, // additionalVaas
@@ -68,6 +70,14 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         _checkSuccess(success, result);
     }
 
+    ///@dev used to set the wormhole relayer, incase we switch from the standard relayer to a custom one
+    function setWormholeRelayer(IWormholeRelayer wormholeRelayer) external {
+        OwnableStorage.onlyOwner();
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        wh.wormholeRelayer = wormholeRelayer;
+    }
+
+    ///@dev Transmits a message to another chain
     function transmit(
         WormholeCrossChain.Data storage self,
         uint16 targetChain,
@@ -76,11 +86,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 receiverValue,
         uint256 gasLimit
     ) internal returns (uint64 sequence) {
-        (uint256 cost, ) = self.wormholeRelayer.quoteEVMDeliveryPrice(
-            targetChain,
-            receiverValue,
-            gasLimit
-        );
+        uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
         if (targetChain == self.wormholeCore.chainId()) {
             // If the target chain is the same as the current chain, we can call the method directly
             (bool success, bytes memory result) = address(this).call(payload);
@@ -105,9 +111,20 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         }
     }
 
-    /**
-     * @notice Returns the cost (in wei) of a cross-chain message
-     */
+    ///@dev returns wormhole core contract address
+    function getWormholeCore() external view returns (IWormhole) {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        return wh.wormholeCore;
+    }
+
+    ///@dev returns wormhole relayer contract address
+    function getWormholeRelayer() external view returns (IWormholeRelayer) {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        return wh.wormholeRelayer;
+    }
+
+    ///@dev Returns the cost (in wei) of a cross-chain message
+    ///@notice all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
     function quoteCrossChainDeliveryPrice(
         uint16 targetChain,
         uint256 receiverValue,
@@ -119,11 +136,13 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         (cost, ) = wh.wormholeRelayer.quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
     }
 
+    ///@dev wormhole contracts store addresses as bytes, which is why we need a function to convert between types
     function toAddress(bytes32 _bytes) internal pure returns (address) {
         // solhint-disable-next-line
         return address(uint160(uint256(_bytes)));
     }
 
+    ///@dev wormhole contracts store addresses as bytes, which is why we need a function to convert between types
     function toBytes32(address _address) internal pure returns (bytes32) {
         // solhint-disable-next-line
         return bytes32(uint256(uint160(_address)));
