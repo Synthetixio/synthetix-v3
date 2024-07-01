@@ -111,6 +111,8 @@ interface IRewardsManagerModule {
      * @param amount The amount of rewards to be distributed.
      * @param start The date at which the rewards will begin to be claimable.
      * @param duration The period after which all distributed rewards will be claimable.
+     * @return cancelledAmount the amount of reward which was previously issued on a call to `distributeRewards`, but will ultimately not be distributed due to
+     * the duration period being interrupted by the start of this new distribution
      */
     function distributeRewards(
         uint128 poolId,
@@ -118,7 +120,7 @@ interface IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external;
+    ) external returns (uint256 cancelledAmount);
 
     /**
      * @notice Called by owner of a pool to set rewards for vault participants. This method
@@ -140,7 +142,7 @@ interface IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external;
+    ) external returns (uint256 cancelledAmount);
 
     /**
      * @notice Allows a user with appropriate permissions to claim rewards associated with a position.

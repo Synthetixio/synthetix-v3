@@ -18,7 +18,6 @@ contract RewardsDistributorConstructorTest is Test {
 
     uint128 internal accountId = 1;
     uint128 internal poolId = 1;
-    address internal collateralType;
     uint64 internal start = 12345678;
     uint32 internal duration = 3600;
 
@@ -26,7 +25,6 @@ contract RewardsDistributorConstructorTest is Test {
         BOB = vm.addr(0xB0B);
         rewardsManager = new EmptyContract();
         sUSDC = new MintableToken("sUSDC", 18);
-        collateralType = address(sUSDC);
     }
 
     function test_constructor_wrongDecimalsSpecified() public {
@@ -42,7 +40,6 @@ contract RewardsDistributorConstructorTest is Test {
         new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T6D),
             18, // not matching the token 6 decimals
             "6 Decimals token payouts"
@@ -54,7 +51,6 @@ contract RewardsDistributorConstructorTest is Test {
         RewardsDistributor rewardsDistributor = new RewardsDistributor(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(TKN),
             18,
             "18 Decimals token payouts"
