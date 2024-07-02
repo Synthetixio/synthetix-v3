@@ -4,10 +4,17 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IExternalNode, NodeOutput, NodeDefinition} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
-import "./interfaces/IOVM_GasPriceOracle.sol";
+import "./interfaces/IOVM_GasPriceOracle_fjord.sol";
 
 contract OpGasPriceOracle is IExternalNode {
     using SafeCastU256 for uint256;
+
+    enum OvmGasPriceOracleMode {
+        BEDROCK,
+        ECOTONE,
+        FJORD,
+        UNDEFINED
+    }
 
     address public immutable ovmGasPriceOracleAddress;
 
@@ -15,6 +22,7 @@ contract OpGasPriceOracle is IExternalNode {
     uint256 public constant KIND_FLAG = 1;
     uint256 public constant KIND_LIQUIDATE = 2;
     struct RuntimeParams {
+        // Set up params
         // Order execution
         uint256 l1SettleGasUnits;
         uint256 l2SettleGasUnits;
@@ -24,6 +32,10 @@ contract OpGasPriceOracle is IExternalNode {
         // Liquidate (Rate limited)
         uint256 l1LiquidateGasUnits;
         uint256 l2LiquidateGasUnits;
+        // Fjord update params
+        uint256 settleTxSize;
+        uint256 flagTxSize;
+        uint256 liquidateTxSize;
         // Call params
         uint256 numberOfUpdatedFeeds;
         uint256 executionKind;
@@ -41,6 +53,7 @@ contract OpGasPriceOracle is IExternalNode {
         bytes32[] memory runtimeValues
     ) external view returns (NodeOutput.Data memory nodeOutput) {
         RuntimeParams memory runtimeParams;
+        // Splitting into two decodes to avoid stack too deep error
         (
             ,
             runtimeParams.l1SettleGasUnits,
@@ -48,8 +61,52 @@ contract OpGasPriceOracle is IExternalNode {
             runtimeParams.l1FlagGasUnits,
             runtimeParams.l2FlagGasUnits,
             runtimeParams.l1LiquidateGasUnits,
-            runtimeParams.l2LiquidateGasUnits
-        ) = abi.decode(parameters, (address, uint256, uint256, uint256, uint256, uint256, uint256));
+            runtimeParams.l2LiquidateGasUnits,
+            ,
+            ,
+
+        ) = abi.decode(
+            parameters,
+            (
+                address,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256
+            )
+        );
+
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            runtimeParams.settleTxSize,
+            runtimeParams.flagTxSize,
+            runtimeParams.liquidateTxSize
+        ) = abi.decode(
+            parameters,
+            (
+                address,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256
+            )
+        );
 
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
             if (runtimeKeys[i] == "executionKind") {
@@ -73,15 +130,32 @@ contract OpGasPriceOracle is IExternalNode {
         RuntimeParams memory runtimeParams
     ) internal view returns (uint256 costOfExecutionGrossEth) {
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);
-        bool isEcotone;
-        try ovmGasPriceOracle.isEcotone() returns (bool _isEcotone) {
-            isEcotone = _isEcotone;
+        OvmGasPriceOracleMode oracleMode;
+
+        try ovmGasPriceOracle.isFjord() returns (bool _isFjord) {
+            oracleMode = _isFjord ? OvmGasPriceOracleMode.FJORD : OvmGasPriceOracleMode.UNDEFINED;
         } catch {
-            // If the call fails, we assume it's not an ecotone. Explicitly setting it to false to avoid missunderstandings
-            isEcotone = false;
+            oracleMode = OvmGasPriceOracleMode.UNDEFINED;
         }
 
-        if (isEcotone) {
+        if (oracleMode == OvmGasPriceOracleMode.UNDEFINED) {
+            try ovmGasPriceOracle.isEcotone() returns (bool _isEcotone) {
+                oracleMode = _isEcotone
+                    ? OvmGasPriceOracleMode.ECOTONE
+                    : OvmGasPriceOracleMode.BEDROCK;
+            } catch {
+                // If the call fails, we assume it's not an ecotone. Explicitly setting it to false to avoid missunderstandings
+                oracleMode = OvmGasPriceOracleMode.BEDROCK;
+            }
+        }
+
+        if (oracleMode == OvmGasPriceOracleMode.FJORD) {
+            uint256 gasPriceL2 = ovmGasPriceOracle.baseFee();
+            (, uint256 gasUnitsL2, uint256 unsignedTxSize) = getGasUnits(runtimeParams);
+            uint256 l1CostGrossEth = ovmGasPriceOracle.getL1FeeUpperBound(unsignedTxSize);
+
+            costOfExecutionGrossEth = (l1CostGrossEth + (gasUnitsL2 * gasPriceL2));
+        } else if (oracleMode == OvmGasPriceOracleMode.ECOTONE) {
             // If it's an ecotone, use the new formula and interface
             uint256 gasPriceL2 = ovmGasPriceOracle.baseFee();
             uint256 baseFeeScalar = ovmGasPriceOracle.baseFeeScalar();
@@ -90,7 +164,7 @@ contract OpGasPriceOracle is IExternalNode {
             uint256 blobBaseFee = ovmGasPriceOracle.blobBaseFee();
             uint256 decimals = ovmGasPriceOracle.decimals();
 
-            (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
+            (uint256 gasUnitsL1, uint256 gasUnitsL2, ) = getGasUnits(runtimeParams);
 
             uint256 l1GasPrice = (baseFeeScalar *
                 l1BaseFee *
@@ -107,7 +181,7 @@ contract OpGasPriceOracle is IExternalNode {
             uint256 decimals = ovmGasPriceOracle.decimals();
             uint256 scalar = ovmGasPriceOracle.scalar();
 
-            (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
+            (uint256 gasUnitsL1, uint256 gasUnitsL2, ) = getGasUnits(runtimeParams);
 
             costOfExecutionGrossEth = ((((gasUnitsL1 + overhead) * l1BaseFee * scalar) /
                 10 ** decimals) + (gasUnitsL2 * gasPriceL2));
@@ -116,18 +190,21 @@ contract OpGasPriceOracle is IExternalNode {
 
     function getGasUnits(
         RuntimeParams memory runtimeParams
-    ) internal pure returns (uint256 gasUnitsL1, uint256 gasUnitsL2) {
+    ) internal pure returns (uint256 gasUnitsL1, uint256 gasUnitsL2, uint256 unsignedTxSize) {
         if (runtimeParams.executionKind == KIND_SETTLEMENT) {
             gasUnitsL1 = runtimeParams.l1SettleGasUnits;
             gasUnitsL2 = runtimeParams.l2SettleGasUnits;
+            unsignedTxSize = runtimeParams.settleTxSize;
         } else if (runtimeParams.executionKind == KIND_FLAG) {
             // Flag gas units
             gasUnitsL1 = runtimeParams.numberOfUpdatedFeeds * runtimeParams.l1FlagGasUnits;
             gasUnitsL2 = runtimeParams.numberOfUpdatedFeeds * runtimeParams.l2FlagGasUnits;
+            unsignedTxSize = runtimeParams.flagTxSize;
         } else if (runtimeParams.executionKind == KIND_LIQUIDATE) {
             // Iterations is fixed to 1 for liquidations
             gasUnitsL1 = runtimeParams.l1LiquidateGasUnits;
             gasUnitsL2 = runtimeParams.l2LiquidateGasUnits;
+            unsignedTxSize = runtimeParams.liquidateTxSize;
         } else {
             revert("Invalid execution kind");
         }
@@ -141,17 +218,20 @@ contract OpGasPriceOracle is IExternalNode {
 
         // must be able to decode parameters
         RuntimeParams memory runtimeParams;
-        (
-            ,
-            runtimeParams.l1SettleGasUnits,
-            runtimeParams.l2SettleGasUnits,
-            runtimeParams.l1FlagGasUnits,
-            runtimeParams.l2FlagGasUnits,
-            runtimeParams.l1LiquidateGasUnits,
-            runtimeParams.l2LiquidateGasUnits
-        ) = abi.decode(
+        (, , , , , , , , , runtimeParams.liquidateTxSize) = abi.decode(
             nodeDefinition.parameters,
-            (address, uint256, uint256, uint256, uint256, uint256, uint256)
+            (
+                address,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256,
+                uint256
+            )
         );
 
         // Must be able to call the oracle
