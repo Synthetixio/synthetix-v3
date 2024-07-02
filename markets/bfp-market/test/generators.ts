@@ -64,11 +64,6 @@ export const genBoolean = () => genOneOf([true, false]);
 
 export const genBootstrap = () => ({
   initialEthPrice: bn(genNumber(1900, 2500)),
-  pool: {
-    // 50M USD of staked collateral.
-    stakedCollateralPrice: bn(100),
-    stakedAmount: bn(500_000),
-  },
   global: {
     pythPublishTimeMin: 12,
     pythPublishTimeMax: 60,
@@ -83,12 +78,10 @@ export const genBootstrap = () => ({
     keeperFlagGasUnits: 1_200_000,
     keeperLiquidateMarginGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
-    keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Temporary dummy address to be reconfigurd later.
     collateralDiscountScalar: bn(1),
     minCollateralDiscount: bn(0.01),
     maxCollateralDiscount: bn(0.05),
-    sellExactInMaxSlippagePercent: bn(genNumber(0.03, 0.05)),
     utilizationBreakpointPercent: bn(genNumber(0.65, 0.85)),
     lowUtilizationSlopePercent: bn(genNumber(0.0002, 0.0003)),
     highUtilizationSlopePercent: bn(genNumber(0.005, 0.015)),
@@ -200,6 +193,7 @@ export const genOrder = async (
     desiredSize?: BigNumber; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
     desiredPriceImpactPercentage?: number;
     desiredHooks?: string[];
+    desiredTrackingCode?: string;
   }
 ) => {
   const { BfpMarketProxy } = systems();
@@ -249,6 +243,7 @@ export const genOrder = async (
     orderFee,
     keeperFee,
     hooks: options?.desiredHooks ?? [],
+    trackingCode: options?.desiredTrackingCode ?? genBytes32(),
   };
 };
 
@@ -290,5 +285,6 @@ export const genOrderFromSizeDelta = async (
     orderFee,
     keeperFee,
     hooks: [] as string[],
+    trackingCode: genBytes32(),
   };
 };

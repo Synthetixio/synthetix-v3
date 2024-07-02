@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/buyback-snx",
-  "version": "3.3.18",
+  "version": "3.3.19",
   "description": "Market buys and burns SNX",
   "publishConfig": {
     "access": "public"
@@ -28,7 +28,6 @@
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/router": "3.3.7",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",

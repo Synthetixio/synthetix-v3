@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/bfp-market",
-  "version": "3.3.18",
+  "version": "3.3.20",
   "description": "L1 perp market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -29,12 +29,10 @@
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "3.3.7",
-    "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
     "@types/lodash": "^4.14.199",
     "@types/mocha-each": "2.0.1",
-    "@usecannon/cli": "2.13.6",
+    "@usecannon/cli": "2.15.2",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "lodash": "^4.17.21",

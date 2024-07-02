@@ -1,0 +1,37 @@
+{
+  "name": "@synthetixio/erc-4626-to-assets-ratio-oracle",
+  "version": "3.3.19",
+  "description": "ERC 4626 to Assets Oracle Node",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
+    "clean": "hardhat clean",
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
+    "check:storage": "git diff --exit-code storage.dump.sol",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "publish-contracts": "cannon publish erc-4626-to-assets-ratio-oracle:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
+    "docgen": "hardhat docgen"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/main": "workspace:*",
+    "@synthetixio/wei": "^2.74.4",
+    "@usecannon/cli": "2.15.2",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.19.5",
+    "solidity-docgen": "^0.6.0-beta.36"
+  }
+}

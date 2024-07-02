@@ -1,5 +1,5 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt, store } from '@graphprotocol/graph-ts';
+import { store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import {
   handleRewardsDistributed,
@@ -21,19 +21,19 @@ export default function test(): void {
   handlePoolCreated(newPoolEvent);
 
   const rewardsDistributedEvent = createRewardsDistributedEvent(
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    Address.fromString(address2),
-    BigInt.fromI32(200),
-    BigInt.fromI64(now),
-    BigInt.fromI32(300),
+    1,
+    address,
+    address2,
+    200,
+    now,
+    300,
     now,
     now - 1000
   );
   const rewardsDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    Address.fromString(address2),
+    1,
+    address,
+    address2,
     now,
     now - 1000
   );
@@ -135,12 +135,12 @@ export default function test(): void {
     store.get('AccountRewardsDistributor', `1-${address}-${address2}`)!.get('total_claimed')
   );
   const rewardsDistributedEvent2 = createRewardsDistributedEvent(
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    Address.fromString(address2),
-    BigInt.fromI32(500),
-    BigInt.fromI64(now + 1000),
-    BigInt.fromI32(1000),
+    1,
+    address,
+    address2,
+    500,
+    now + 1000,
+    1000,
     now + 1000,
     now,
     2
@@ -256,13 +256,44 @@ export default function test(): void {
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at_block', now.toString());
 
   const rewardsDistributedEvent3 = createRewardsDistributorRemovedEvent(
-    BigInt.fromI32(1),
-    Address.fromString(address),
-    Address.fromString(address2),
+    1,
+    address,
+    address2,
     now + 1000,
     now
   );
 
   handleRewardsDistributorRemoved(rewardsDistributedEvent3);
   assert.fieldEquals('RewardsDistributor', address2, 'isActive', 'false');
+
+  const snxDistributor = '0x45063dcd92f56138686810eacb1b510c941d6593';
+  const pdao = '0xbb63ca5554dc4ccaca4edd6ecc2837d5efe83c82';
+
+  // Pdao situation
+  const rewardsDistributedFromPdaoEvent = createRewardsDistributedEvent(
+    1,
+    address,
+    pdao,
+    200,
+    1716127200,
+    300,
+    1716127200,
+    1716127200 - 1000
+  );
+
+  const rewardsSnxDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
+    1,
+    address,
+    snxDistributor,
+    1716127200,
+    1716127200 - 1000
+  );
+
+  handleRewardsDistributorRegistered(rewardsSnxDistributorRegisteredEvent);
+  handleRewardsDistributed(rewardsDistributedFromPdaoEvent);
+
+  assert.fieldEquals('RewardsDistributor', snxDistributor, 'isActive', 'true');
+  assert.fieldEquals('RewardsDistribution', `${pdao}-1716127200-1`, 'duration', '300');
+  assert.fieldEquals('RewardsDistribution', `${pdao}-1716127200-1`, 'start', '1716127200');
+  assert.fieldEquals('RewardsDistribution', `${pdao}-1716127200-1`, 'distributor', snxDistributor);
 }

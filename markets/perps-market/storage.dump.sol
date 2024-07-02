@@ -868,9 +868,11 @@ library PerpsMarketFactory {
 
 // @custom:artifact contracts/storage/PerpsPrice.sol:PerpsPrice
 library PerpsPrice {
+    uint256 private constant ONE_MONTH = 2592000;
     enum Tolerance {
         DEFAULT,
-        STRICT
+        STRICT,
+        ONE_MONTH
     }
     struct Data {
         bytes32 feedId;

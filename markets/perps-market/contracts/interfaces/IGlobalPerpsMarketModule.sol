@@ -175,6 +175,15 @@ interface IGlobalPerpsMarketModule {
     function totalGlobalCollateralValue() external view returns (uint256 totalCollateralValue);
 
     /**
+     * @notice Gets the total collateral value of all deposited collateral from all traders.
+     * @param collateralId the id of the collateral (0 for snxUSD)
+     * @return collateralValue value of all collateral for collateral id
+     */
+    function globalCollateralValue(
+        uint128 collateralId
+    ) external view returns (uint256 collateralValue);
+
+    /**
      * @notice Sets the fee collector contract.
      * @dev must conform to the IFeeCollector interface
      * @param feeCollector address of the fee collector contract

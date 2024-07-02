@@ -944,7 +944,7 @@ describe('LiquidationModule', () => {
         const tradersToUse = traders().slice(0, 2);
 
         for (const trader of tradersToUse) {
-          const marginUsdDepositAmount = genOneOf([1000, 5000, 10_000]);
+          const marginUsdDepositAmount = genOneOf([2000, 5000, 10_000]);
           const collateral = genOneOf(collaterals());
 
           const { collateralDepositAmount: collateralDepositAmount1 } = await depositMargin(

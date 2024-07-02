@@ -450,7 +450,7 @@ describe('LiquidationModule', () => {
     ]).it(
       'should emit all events in correct order (%s)',
       async (_, getCollateral: () => PerpCollateral) => {
-        const { BfpMarketProxy, Core, SpotMarket } = systems();
+        const { BfpMarketProxy, Core } = systems();
 
         const orderSide = genSide();
         const { trader, market, marketId, collateralDepositAmount, collateral } =
@@ -486,7 +486,7 @@ describe('LiquidationModule', () => {
         const blockTime = (await provider().getBlock(receipt.blockNumber)).timestamp;
         const keeperAddress = await keeper().getAddress();
         const distributorAddress = collateral.rewardDistributorAddress();
-        const collateralAddress = collateral.synthAddress();
+        const collateralAddress = collateral.address();
         const poolCollateralAddress = pool().collateral().address;
         const poolId = pool().id;
 
@@ -518,16 +518,12 @@ describe('LiquidationModule', () => {
           ];
         }
 
-        // Create a contract that can parse all events emitted.
-        //
-        // This isn't necessary for sUSD collateral but it doesn't affect the correctness of this test.
-        const spotMarketEvents = SpotMarket.interface.format(utils.FormatTypes.full);
         const coreEvents = Core.interface.format(utils.FormatTypes.full) as string[];
         const contractsWithAllEvents = extendContractAbi(
           BfpMarketProxy,
-          coreEvents
-            .concat(spotMarketEvents)
-            .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
+          coreEvents.concat([
+            'event Transfer(address indexed from, address indexed to, uint256 value)',
+          ])
         );
         await assertEvents(receipt, expectedEvents, contractsWithAllEvents);
       }
