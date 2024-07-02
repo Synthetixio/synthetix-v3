@@ -1,0 +1,25 @@
+name = "synthetix-governance"
+description = "On-chain voting for synthetix councils"
+version = "<%= package.version %>"
+
+include = ["./cannonfile.toml"]
+
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.salt]
+defaultValue = "governance"
+
+[setting.wormhole_core]
+defaultValue = "0x31377888146f3253211EFEf5c676D41ECe7D58Fe" # https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.wormhole_relayer]
+defaultValue = "0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE" # https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.initial_council_member]
+defaultValue = "<%= settings.owner %>"
+
+[contract.SnapshotRecordMock]
+artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
+salt = "<%= settings.salt %>"
+create2 = true
