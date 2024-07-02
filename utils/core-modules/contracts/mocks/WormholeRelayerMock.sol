@@ -36,7 +36,9 @@ contract WormholeRelayerMock {
         address targetAddress,
         bytes memory payload,
         uint256 receiverValue,
-        uint256 gasLimit
+        uint256 gasLimit,
+        uint16 /*refundChain*/,
+        address /*refundAddress*/
     ) external payable returns (uint64 sequence) {
         bytes memory _payload = abi.encode(
             targetChain,

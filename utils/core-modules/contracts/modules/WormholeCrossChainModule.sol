@@ -86,7 +86,6 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 receiverValue,
         uint256 gasLimit
     ) internal returns (uint64 sequence) {
-        uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
         if (targetChain == self.wormholeCore.chainId()) {
             // If the target chain is the same as the current chain, we can call the method directly
             (bool success, bytes memory result) = address(this).call(payload);
@@ -99,14 +98,15 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         } else {
             // If the target chain is different, we need to send the message to the WormholeRelayer
             // to be sent to the target chain
-            if (msg.value < cost) revert InsufficientValue();
+            uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
             sequence = self.wormholeRelayer.sendPayloadToEvm{value: cost}(
                 targetChain,
                 targetAddress,
                 payload,
                 receiverValue,
-                gasLimit
-                // TODO: do we add refund addresses? who should get the refund and on what chain?
+                gasLimit,
+                self.wormholeCore.chainId(),
+                ERC2771Context._msgSender()
             );
         }
     }
