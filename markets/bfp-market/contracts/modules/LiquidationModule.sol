@@ -27,6 +27,7 @@ contract LiquidationModule is ILiquidationModule {
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using Margin for Margin.Data;
 
     // --- Immutables --- //
 
@@ -371,9 +372,15 @@ contract LiquidationModule is ILiquidationModule {
             market.getOraclePrice(addresses),
             addresses
         );
+
         if (
             marginValues.collateralUsd == 0 ||
-            !Margin.isMarginLiquidatable(accountId, market, marginValues, addresses)
+            !Margin.load(accountId, marketId).isMarginLiquidatable(
+                accountId,
+                market,
+                marginValues,
+                addresses
+            )
         ) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
@@ -514,7 +521,13 @@ contract LiquidationModule is ILiquidationModule {
             return false;
         }
 
-        return Margin.isMarginLiquidatable(accountId, market, marginValues, addresses);
+        return
+            Margin.load(accountId, marketId).isMarginLiquidatable(
+                accountId,
+                market,
+                marginValues,
+                addresses
+            );
     }
 
     /// @inheritdoc ILiquidationModule

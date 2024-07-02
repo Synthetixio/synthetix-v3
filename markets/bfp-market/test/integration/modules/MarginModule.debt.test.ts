@@ -403,6 +403,21 @@ describe('MarginModule Debt', async () => {
       assert.equal(isMarginLiquidatable, false);
     });
 
+    it('should return false if no debt', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: 1 })
+      );
+
+      const isMarginLiquidatable = await BfpMarketProxy.isMarginLiquidatable(
+        trader.accountId,
+        marketId
+      );
+      assert.equal(isMarginLiquidatable, false);
+    });
+
     it('should return false when account has no collateral', async () => {
       const { BfpMarketProxy } = systems();
 

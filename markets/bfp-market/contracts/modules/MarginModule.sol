@@ -83,11 +83,6 @@ contract MarginModule is IMarginModule {
             addresses
         );
 
-        // Make sure margin isn't liquidatable due to debt.
-        if (Margin.isMarginLiquidatable(accountId, market, marginValues, addresses)) {
-            revert ErrorUtil.InsufficientMargin();
-        }
-
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
