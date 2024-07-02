@@ -41,7 +41,7 @@ interface IWormholeReceiver {
      * @param deliveryHash - the VAA hash of the deliveryVAA.
      *
      */
-    function receiveEncodedMsg(
+    function receiveWormholeMessages(
         bytes memory payload,
         bytes[] memory additionalMessages,
         bytes32 sourceAddress,
