@@ -382,6 +382,7 @@ contract UtilsModule {
 // @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule
 contract VaultModule {
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
+    bytes32 private constant _TWO_STEPS_DELEGATE_FEATURE_FLAG = "twoStepsDelegateCollateral";
 }
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
@@ -396,14 +397,25 @@ library Account {
         AccountRBAC.Data rbac;
         uint64 lastInteraction;
         uint64 __slotAvailableForFutureUse;
-        uint128 __slot2AvailableForFutureUse;
+        uint128 currentDelegationIntentsEpoch;
         mapping(address => Collateral.Data) collaterals;
+        mapping(uint128 => AccountDelegationIntents.Data) delegationIntents;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
             account.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/AccountDelegationIntents.sol:AccountDelegationIntents
+library AccountDelegationIntents {
+    struct Data {
+        SetUtil.UintSet intentsId;
+        mapping(bytes32 => SetUtil.UintSet) intentsByPair;
+        SetUtil.AddressSet delegatedCollaterals;
+        mapping(address => int256) netDelegatedAmountPerCollateral;
     }
 }
 
@@ -491,6 +503,26 @@ library CrossChain {
     }
 }
 
+// @custom:artifact contracts/storage/DelegationIntent.sol:DelegationIntent
+library DelegationIntent {
+    bytes32 private constant _ATOMIC_VALUE_LATEST_ID = "delegateIntent_idAsNonce";
+    struct Data {
+        uint256 id;
+        uint128 accountId;
+        uint128 poolId;
+        address collateralType;
+        int256 deltaCollateralAmountD18;
+        uint256 leverage;
+        uint32 declarationTime;
+    }
+    function load(uint256 id) internal pure returns (Data storage delegationIntent) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", id));
+        assembly {
+            delegationIntent.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/storage/Distribution.sol:Distribution
 library Distribution {
     struct Data {
@@ -523,10 +555,12 @@ library Market {
         DepositedCollateral[] depositedCollateral;
         mapping(address => uint256) maximumDepositableD18;
         uint32 minDelegateTime;
+        uint32 undelegateCollateralDelay;
+        uint32 undelegateCollateralWindow;
+        uint32 delegateCollateralDelay;
+        uint32 delegateCollateralWindow;
         uint32 __reservedForLater1;
         uint64 __reservedForLater2;
-        uint64 __reservedForLater3;
-        uint64 __reservedForLater4;
         uint256 minLiquidityRatioD18;
     }
     struct DepositedCollateral {
@@ -590,6 +624,8 @@ library OracleManager {
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_DELEGATE_COLLATERAL_DELAY_MIN = "delegateCollateralDelay_min";
+    bytes32 private constant _CONFIG_DELEGATE_COLLATERAL_WINDOW_MAX = "delegateCollateralWindow_max";
     struct Data {
         uint128 id;
         string name;

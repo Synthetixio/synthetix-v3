@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./AccountRBAC.sol";
 import "./Collateral.sol";
 import "./Pool.sol";
+import "./AccountDelegationIntents.sol";
 
 import "../interfaces/ICollateralModule.sol";
 
@@ -54,11 +55,18 @@ library Account {
         AccountRBAC.Data rbac;
         uint64 lastInteraction;
         uint64 __slotAvailableForFutureUse;
-        uint128 __slot2AvailableForFutureUse;
+        /**
+         * @dev Account Delegation Intents index is used to nuke previous intents using a new epoch (useful on liquidations).
+         */
+        uint128 currentDelegationIntentsEpoch;
         /**
          * @dev Address set of collaterals that are being used in the system by this account.
          */
         mapping(address => Collateral.Data) collaterals;
+        /**
+         * @dev Delegation Intents by epoch. Will use `currentDelegationIndentsEpoch` to point to the latest active delegation intents for this account.
+         */
+        mapping(uint128 => AccountDelegationIntents.Data) delegationIntents;
     }
 
     /**
@@ -206,5 +214,18 @@ library Account {
         ) {
             revert ICollateralModule.InsufficientAccountCollateral(amountD18);
         }
+    }
+
+    function getDelegationIntents(
+        Data storage self
+    ) internal view returns (AccountDelegationIntents.Data storage) {
+        return self.delegationIntents[self.currentDelegationIntentsEpoch];
+    }
+
+    /**
+     * @dev It "deletes" all the account intents by moving to a new delegation intents epoch
+     */
+    function cleanAllIntents(Data storage self) internal {
+        self.currentDelegationIntentsEpoch += 1;
     }
 }
