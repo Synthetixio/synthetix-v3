@@ -53,10 +53,17 @@ describe('LegacyMarket', function () {
   let cannonProvider: ethers.providers.JsonRpcProvider;
 
   before('deploy', async () => {
-    const { provider, signers, outputs } =
-      hre.network.name === 'cannon' ? await hre.run('cannon:build') : await doForkDeploy();
+    const {
+      provider: rawProvider,
+      signers,
+      outputs,
+    } = hre.network.name === 'cannon'
+      ? await hre.run('cannon:build', { cannonfile: 'cannonfile.test.toml' })
+      : await doForkDeploy();
 
-    [owner] = signers as ethers.Signer[];
+    const provider = new ethers.providers.Web3Provider(rawProvider);
+
+    owner = provider.getSigner(signers[0].address);
 
     // default test user
     snxStakerAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
@@ -117,7 +124,9 @@ describe('LegacyMarket', function () {
       outputs.contracts.SNXDistributor.abi
     );
 
-    await rewardEscrow.connect(owner).setPermittedEscrowCreator(await owner.getAddress(), true);
+    await rewardEscrow
+      .connect(await getImpersonatedSigner(provider, await rewardEscrow.owner()))
+      .setPermittedEscrowCreator(await owner.getAddress(), true);
 
     cannonProvider = provider;
   });
