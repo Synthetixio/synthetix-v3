@@ -31,7 +31,7 @@ interface IElectionModuleSatellite {
     /// @notice Allows to withdraw a casted vote on the current network.
     function withdrawVote(address[] calldata candidates) external payable;
 
-    /// @dev Burn the council tokens from the given members; receiving end of CCIP members dismissal
+    /// @dev Burn the council tokens from the given members; receiving end of members dismissal via Wormhole
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;
 
     /// @dev Tweak the epoch dates to the given ones, without validation because we assume that it was started from mothership
@@ -42,7 +42,7 @@ interface IElectionModuleSatellite {
         uint64 epochEndDate
     ) external;
 
-    /// @dev Burn current epoch council tokens and assign new ones, setup epoch dates. Receiving end of CCIP epoch resolution.
+    /// @dev Burn current epoch council tokens and assign new ones, setup epoch dates. Receiving end of epoch resolution via Wormhole.
     function _recvResolve(
         uint256 epochIndex,
         uint64 epochStartDate,

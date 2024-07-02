@@ -87,12 +87,6 @@ export async function spinChain<GovernanceProxy>({
     signer
   ) as SnapshotRecordMock;
 
-  // const CcipRouter = new ethers.Contract(
-  //   outputs.contracts!.CcipRouterMock.address,
-  //   outputs.contracts!.CcipRouterMock.abi,
-  //   signer
-  // ) as CcipRouterMock;
-
   const WormholeMock = new ethers.Contract(
     outputs.contracts!.WormholeMock.address,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -97,7 +97,7 @@ interface IElectionModule is IElectionModuleSatellite {
     /// @notice Self-withdrawal of nominations during the Nomination period
     function withdrawNomination() external;
 
-    /// @dev Internal voting logic, receiving end of CCIP voting
+    /// @dev Internal voting logic, receiving end of voting via Wormhole
     function _recvCast(
         uint256 epochIndex,
         address voter,
