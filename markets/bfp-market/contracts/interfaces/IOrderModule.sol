@@ -12,11 +12,11 @@ interface IOrderModule is IBasePerpMarket {
         /// Size to modify when settled
         int128 sizeDelta;
         /// block.timestamp of when the order was committed
-        uint256 commitmentTime;
+        uint64 commitmentTime;
         /// The max acceptable price tolerance for settlement
         uint256 limitPrice;
         /// A tip in USD to pay for settlement keepers
-        uint256 keeperFeeBufferUsd;
+        uint128 keeperFeeBufferUsd;
         /// A list of whitelisted hook addresses to invoke after settlement
         address[] hooks;
         /// True if order expired and must be canceled, false otherwise
@@ -37,10 +37,11 @@ interface IOrderModule is IBasePerpMarket {
     event OrderCommitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        uint256 commitmentTime,
+        uint64 commitmentTime,
         int128 sizeDelta,
         uint256 estimatedOrderFee,
-        uint256 estimatedKeeperFee
+        uint256 estimatedKeeperFee,
+        bytes32 trackingCode
     );
 
     /// @notice Emitted when a pending order was successfully settled.
@@ -57,12 +58,12 @@ interface IOrderModule is IBasePerpMarket {
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        uint256 settlementTime,
+        uint64 settlementTime,
         int128 sizeDelta,
         uint256 orderFee,
         uint256 keeperFee,
-        int256 accruedFunding,
-        uint256 accruedUtilization,
+        int128 accruedFunding,
+        uint128 accruedUtilization,
         int256 pnl,
         uint256 fillPrice,
         uint128 accountDebt
@@ -92,8 +93,9 @@ interface IOrderModule is IBasePerpMarket {
         uint128 marketId,
         int128 sizeDelta,
         uint256 limitPrice,
-        uint256 keeperFeeBufferUsd,
-        address[] memory hooks
+        uint128 keeperFeeBufferUsd,
+        address[] memory hooks,
+        bytes32 trackingCode
     ) external;
 
     /// @notice Settles a previously committed order by `accountId` and `marketId`.
@@ -150,7 +152,7 @@ interface IOrderModule is IBasePerpMarket {
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,
-        uint256 keeperFeeBufferUsd
+        uint128 keeperFeeBufferUsd
     ) external view returns (uint256 orderFee, uint256 keeperFee);
 
     /// @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.

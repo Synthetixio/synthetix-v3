@@ -1,0 +1,27 @@
+name = "erc-4626-to-assets-ratio-oracle"
+version = "<%= package.version %>"
+description = "<%= package.description %>"
+
+# Mocks are deployed so the cannonfile will build successfully by default
+[clone.ausdc_token_mock]
+source = "mintable-token@permissionless-mint"
+target = "synthetix-mock-tokens@ausdc"
+options.name = "aUSDC Mock"
+options.symbol = "aUSDC"
+options.decimals = "6"
+
+[clone.statausdc_token_mock]
+source = "erc4626"
+target = "synthetix-mock-tokens@statausdc"
+options.asset = "<%= ausdc_token_mock.MintableToken.address %>"
+options.name = "stataUSDC Mock"
+options.symbol = "stataUSDC"
+
+[var.vault_address]
+vault = "<%= statausdc_token_mock.Token.address %>"
+
+# Changing the vault will change the address of the node, per CREATE2
+[deploy.ERC4626ToAssetsRatioOracle]
+artifact = "contracts/ERC4626ToAssetsRatioOracle.sol:ERC4626ToAssetsRatioOracle"
+args = ["<%= settings.vault %>"]
+create2 = true

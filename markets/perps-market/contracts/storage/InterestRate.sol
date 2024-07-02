@@ -5,6 +5,7 @@ import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contra
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {Position} from "./Position.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 
 library InterestRate {
@@ -34,7 +35,9 @@ library InterestRate {
         }
     }
 
-    function update() internal returns (uint128 newInterestRate, uint256 currentInterestAccrued) {
+    function update(
+        PerpsPrice.Tolerance priceTolerance
+    ) internal returns (uint128 newInterestRate, uint256 currentInterestAccrued) {
         Data storage self = load();
 
         (
@@ -53,7 +56,9 @@ library InterestRate {
             return (0, self.interestAccrued);
         }
 
-        (uint128 currentUtilizationRate, , ) = GlobalPerpsMarket.load().utilizationRate();
+        (uint128 currentUtilizationRate, , ) = GlobalPerpsMarket.load().utilizationRate(
+            priceTolerance
+        );
 
         self.interestAccrued = calculateNextInterest(self);
 

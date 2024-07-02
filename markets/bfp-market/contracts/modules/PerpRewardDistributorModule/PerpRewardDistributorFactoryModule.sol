@@ -5,6 +5,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ISynthetixSystem} from "../../external/ISynthetixSystem.sol";
 import {IPerpRewardDistributorFactoryModule} from "../../interfaces/IPerpRewardDistributorFactoryModule.sol";
 import {IPerpRewardDistributor} from "../../interfaces/IPerpRewardDistributor.sol";
 import {PerpMarketConfiguration} from "../../storage/PerpMarketConfiguration.sol";
@@ -12,6 +13,25 @@ import {ErrorUtil} from "../../utils/ErrorUtil.sol";
 
 contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModule {
     using Clones for address;
+
+    // --- Immutables --- //
+
+    address immutable SYNTHETIX_CORE;
+    address immutable SYNTHETIX_SUSD;
+    address immutable ORACLE_MANAGER;
+
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
+        }
+    }
 
     // --- Mutations --- //
 
@@ -50,7 +70,7 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         address distributorAddress = globalConfig.rewardDistributorImplementation.clone();
         IPerpRewardDistributor distributor = IPerpRewardDistributor(distributorAddress);
         distributor.initialize(
-            address(globalConfig.synthetix),
+            SYNTHETIX_CORE,
             address(this),
             data.poolId,
             data.collateralTypes,

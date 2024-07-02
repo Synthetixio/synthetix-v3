@@ -77,6 +77,7 @@ contract AsyncOrderSettlementPythModule is
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
+        asyncOrder.validateAcceptablePrice(runtime.fillPrice);
 
         runtime.amountToDeduct = runtime.totalFees;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;

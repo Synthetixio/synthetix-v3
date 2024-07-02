@@ -1,7 +1,7 @@
 import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
 import { CollateralMock } from '@synthetixio/main/typechain-types';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
 import {
   SpotMarketProxy,

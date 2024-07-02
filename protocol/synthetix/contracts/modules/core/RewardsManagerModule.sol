@@ -85,31 +85,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint64 start,
         uint32 duration
     ) external override {
-        Pool.Data storage pool = Pool.load(poolId);
-        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
-
-        // Identify the reward id for the caller, and revert if it is not a registered reward distributor.
-        bytes32 rewardId = _getRewardId(poolId, collateralType, ERC2771Context._msgSender());
-        if (!rewardIds.contains(rewardId)) {
-            revert ParameterError.InvalidParameter(
-                "poolId-collateralType-distributor",
-                "reward is not registered"
-            );
-        }
-
-        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
-
-        reward.rewardPerShareD18 += reward
-            .distribute(
-                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
-                amount.toInt(),
-                start,
-                duration
-            )
-            .toUint()
-            .to128();
-
-        emit RewardsDistributed(
+        _distributeRewards(
             poolId,
             collateralType,
             ERC2771Context._msgSender(),
@@ -117,6 +93,22 @@ contract RewardsManagerModule is IRewardsManagerModule {
             start,
             duration
         );
+    }
+
+    function distributeRewardsByOwner(
+        uint128 poolId,
+        address collateralType,
+        address rewardsDistributor,
+        uint256 amount,
+        uint64 start,
+        uint32 duration
+    ) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
+        }
+
+        _distributeRewards(poolId, collateralType, rewardsDistributor, amount, start, duration);
     }
 
     /**
@@ -216,6 +208,48 @@ contract RewardsManagerModule is IRewardsManagerModule {
         );
 
         return rewardAmount;
+    }
+
+    function _distributeRewards(
+        uint128 poolId,
+        address collateralType,
+        address rewardsDistributor,
+        uint256 amount,
+        uint64 start,
+        uint32 duration
+    ) internal {
+        Pool.Data storage pool = Pool.load(poolId);
+        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+
+        // Identify the reward id for the caller, and revert if it is not a registered reward distributor.
+        bytes32 rewardId = _getRewardId(poolId, collateralType, rewardsDistributor);
+        if (!rewardIds.contains(rewardId)) {
+            revert ParameterError.InvalidParameter(
+                "poolId-collateralType-distributor",
+                "reward is not registered"
+            );
+        }
+
+        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
+
+        reward.rewardPerShareD18 += reward
+            .distribute(
+                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+                amount.toInt(),
+                start,
+                duration
+            )
+            .toUint()
+            .to128();
+
+        emit RewardsDistributed(
+            poolId,
+            collateralType,
+            ERC2771Context._msgSender(),
+            amount,
+            start,
+            duration
+        );
     }
 
     /**

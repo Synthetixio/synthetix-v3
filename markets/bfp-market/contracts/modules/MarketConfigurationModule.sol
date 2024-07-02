@@ -30,12 +30,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperCancellationGasUnits = data.keeperCancellationGasUnits;
         config.keeperFlagGasUnits = data.keeperFlagGasUnits;
         config.keeperLiquidateMarginGasUnits = data.keeperLiquidateMarginGasUnits;
-        config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
         config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
         config.collateralDiscountScalar = data.collateralDiscountScalar;
         config.minCollateralDiscount = data.minCollateralDiscount;
         config.maxCollateralDiscount = data.maxCollateralDiscount;
-        config.sellExactInMaxSlippagePercent = data.sellExactInMaxSlippagePercent;
         config.utilizationBreakpointPercent = data.utilizationBreakpointPercent;
         config.lowUtilizationSlopePercent = data.lowUtilizationSlopePercent;
         config.highUtilizationSlopePercent = data.highUtilizationSlopePercent;
@@ -45,10 +43,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     /// @inheritdoc IMarketConfigurationModule
     function setMarketConfigurationById(
-        uint128 marketId,
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
+        uint128 marketId = data.marketId;
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
         PerpMarket.exists(marketId);
