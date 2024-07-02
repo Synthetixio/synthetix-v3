@@ -244,7 +244,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 membersToDismiss,
                 council.currentElectionId
             ),
-            msg.value,
+            0,
             _CROSSCHAIN_GAS_LIMIT
         );
 

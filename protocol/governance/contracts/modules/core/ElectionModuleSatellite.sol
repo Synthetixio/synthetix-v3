@@ -117,7 +117,7 @@ contract ElectionModuleSatellite is
             targetChain,
             toAddress(wh.registeredEmitters[targetChain]),
             payload,
-            msg.value,
+            0,
             _CROSSCHAIN_GAS_LIMIT
         );
     }
@@ -145,7 +145,7 @@ contract ElectionModuleSatellite is
                 block.chainid,
                 candidates
             ),
-            msg.value,
+            0,
             _CROSSCHAIN_GAS_LIMIT
         );
     }
