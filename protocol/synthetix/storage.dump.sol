@@ -367,7 +367,6 @@ contract PoolModule {
 
 // @custom:artifact contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule
 contract RewardsManagerModule {
-    uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
     bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
 }
 
