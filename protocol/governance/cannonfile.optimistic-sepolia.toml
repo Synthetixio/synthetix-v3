@@ -30,7 +30,7 @@ from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
 args = [
     [
-        "10002",
+        "10004",
         "10005",
     ],
     [
