@@ -79,7 +79,7 @@ contract WormholeRelayerMock {
 
         if (targetChain != WORMHOLE.chainId()) revert InvalidTargetChain(targetChain);
 
-        targetReceiver.receiveEncodedMsg{value: receiverValue}(
+        targetReceiver.receiveWormholeMessages{value: receiverValue}(
             encodedDeliveryVAA,
             new bytes[](0),
             toBytes32(emitterAddress),

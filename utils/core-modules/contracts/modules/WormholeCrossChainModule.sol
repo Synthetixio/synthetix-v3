@@ -38,7 +38,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     }
 
     ///@dev Implementation from IWormholeReciever, necessary to receive and process messages from the WormholeRelayer
-    function receiveEncodedMsg(
+    function receiveWormholeMessages(
         bytes memory encodedMsg,
         bytes[] memory, // additionalVaas
         bytes32, // sender
