@@ -83,8 +83,6 @@ describe('cross chain election testing', function () {
       ];
       await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(_chains, _emitters);
 
-      console.l;
-    }
   });
 
   describe('on initialization', function () {
