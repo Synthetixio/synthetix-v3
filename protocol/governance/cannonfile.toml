@@ -3,6 +3,13 @@ description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
+# Deployment Owner, defaults to first hardhat account
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.salt]
+defaultValue = "governance"
+
 [setting.wormhole_core]
 defaultValue = "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
 

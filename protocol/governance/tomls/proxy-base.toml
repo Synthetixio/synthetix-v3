@@ -1,9 +1,7 @@
 [setting.salt]
 defaultValue = "governance"
 
-# Deployment Owner, defaults to first hardhat account
 [setting.owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
