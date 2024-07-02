@@ -23,3 +23,24 @@ defaultValue = "<%= settings.owner %>"
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
 salt = "<%= settings.salt %>"
 create2 = true
+
+[invoke.set_registered_emitters]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setRegisteredEmitters"
+args = [
+    [
+        "10002",
+        "10005",
+    ],
+    [
+        "0x4066a172DD5D21E4f787C07D3118D0876296750B",
+        "0x4066a172DD5D21E4f787C07D3118D0876296750B",
+    ],
+]
+
+[invoke.set_snapshot_record]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setSnapshotContract"
+args = ["<%= contracts.SnapshotRecordMock.address %>", true]
