@@ -5,10 +5,10 @@ version = "<%= package.version %>"
 include = ["./cannonfile.toml"]
 
 [setting.owner]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+defaultValue = "0x431D454Bd4d352A0b1f45AE11EF1182bBEec6a7B"
 
 [setting.salt]
-defaultValue = "governance"
+defaultValue = "governance-test-v0"
 
 [setting.wormhole_core]
 defaultValue = "0x4a8bc80Ed5a4067f1CCf107057b8270E0cC11A78" # https://docs.wormhole.com/wormhole/reference/constants
