@@ -201,4 +201,52 @@ describe('SnapshotVotePowerModule', function () {
       });
     });
   });
+
+  // Do not allow the user to do both operations on the same TX because
+  // it could be used to rig voting power using flash loans
+  describe('when taking snapshot and ballot using multicall', function () {
+    before(restore);
+
+    before('set snapshot contract', async function () {
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
+    });
+
+    before('advance time', async function () {
+      const settings = await c.GovernanceProxy.getEpochSchedule();
+      await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
+    });
+
+    it('reverts', async function () {
+      await assertRevert(
+        c.TrustedMulticallForwarder.connect(user).aggregate3([
+          {
+            target: c.GovernanceProxy.address,
+            requireSuccess: true,
+            callData: c.GovernanceProxy.interface.encodeFunctionData('takeVotePowerSnapshot', [
+              c.SnapshotRecordMock.address,
+            ]),
+          },
+          {
+            target: c.SnapshotRecordMock.address,
+            requireSuccess: true,
+            callData: c.SnapshotRecordMock.interface.encodeFunctionData('setBalanceOfOnPeriod', [
+              await user.getAddress(),
+              100,
+              1, // snapshotId
+            ]),
+          },
+          {
+            target: c.GovernanceProxy.address,
+            requireSuccess: true,
+            callData: c.GovernanceProxy.interface.encodeFunctionData('prepareBallotWithSnapshot', [
+              c.SnapshotRecordMock.address,
+              await user.getAddress(),
+            ]),
+          },
+        ]),
+        'SnapshotUnavailable',
+        c.TrustedMulticallForwarder
+      );
+    });
+  });
 });

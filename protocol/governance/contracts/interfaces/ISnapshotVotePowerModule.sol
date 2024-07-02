@@ -7,6 +7,7 @@ interface ISnapshotVotePowerModule {
     error SnapshotNotTaken(address snapshotContract, uint128 electionId);
     error NoPower(uint256, address);
     error InvalidSnapshotContract();
+    error SnapshotUnavailable();
 
     function setSnapshotContract(address snapshotContract, bool enabled) external;
 

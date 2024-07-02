@@ -33,18 +33,18 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             revert InvalidSnapshotContract();
         }
 
-        SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = snapshotVotePower.epochs[
-            electionId
-        ];
+        SnapshotVotePowerEpoch.Data storage epochData = snapshotVotePower.epochs[electionId];
 
-        if (snapshotVotePowerEpoch.snapshotId > 0) {
-            revert SnapshotAlreadyTaken(snapshotVotePowerEpoch.snapshotId);
+        if (epochData.snapshotId > 0) {
+            revert SnapshotAlreadyTaken(epochData.snapshotId);
         }
 
+        uint128 createdAt = block.timestamp.to128();
         snapshotId = ISnapshotRecord(snapshotContract).currentPeriodId();
-        ISnapshotRecord(snapshotContract).takeSnapshot(block.timestamp.to128());
+        ISnapshotRecord(snapshotContract).takeSnapshot(createdAt);
 
-        snapshotVotePowerEpoch.snapshotId = snapshotId;
+        epochData.snapshotId = snapshotId;
+        epochData.createdAt = createdAt;
     }
 
     function getVotePowerSnapshotId(
@@ -67,25 +67,30 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             revert InvalidSnapshotContract();
         }
 
-        if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
+        SnapshotVotePowerEpoch.Data storage epochData = snapshotVotePower.epochs[currentEpoch];
+
+        if (epochData.snapshotId == 0) {
             revert SnapshotNotTaken(snapshotContract, currentEpoch);
         }
 
-        power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
-            voter,
-            snapshotVotePower.epochs[currentEpoch].snapshotId
-        );
-
-        if (power == 0) {
-            revert NoPower(snapshotVotePower.epochs[currentEpoch].snapshotId, voter);
+        // We need to not allow the takeVotePowerSnapshot & prepareBallotWithSnapshot methods
+        // to not be called on the same tx/block so the user cannot augment voting power with flashloans
+        if (epochData.createdAt <= block.timestamp.to128()) {
+            revert SnapshotUnavailable();
         }
 
-        if (snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] > 0) {
+        power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(voter, epochData.snapshotId);
+
+        if (power == 0) {
+            revert NoPower(epochData.snapshotId, voter);
+        }
+
+        if (epochData.recordedVotingPower[voter] > 0) {
             revert BallotAlreadyPrepared(voter, currentEpoch);
         }
 
         Ballot.Data storage ballot = Ballot.load(currentEpoch, voter, block.chainid);
         ballot.votingPower += power;
-        snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] = power;
+        epochData.recordedVotingPower[voter] = power;
     }
 }
