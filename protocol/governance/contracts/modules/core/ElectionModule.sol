@@ -152,7 +152,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override {
+    ) external payable override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
@@ -381,7 +381,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
-    function evaluate(uint256 numBallots) external override {
+    function evaluate(uint256 numBallots) external payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
         Council.Data storage council = Council.load();

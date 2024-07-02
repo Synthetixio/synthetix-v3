@@ -72,7 +72,7 @@ interface IElectionModule is IElectionModuleSatellite {
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external;
+    ) external payable;
 
     /// @notice Adjust settings that will be used on next epoch
     function setNextElectionSettings(
@@ -115,7 +115,7 @@ interface IElectionModule is IElectionModuleSatellite {
     ) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
-    function evaluate(uint256 numBallots) external;
+    function evaluate(uint256 numBallots) external payable;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
     function resolve() external payable;
