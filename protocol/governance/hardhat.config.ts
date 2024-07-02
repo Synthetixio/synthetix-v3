@@ -1,7 +1,8 @@
 import commonConfig from '@synthetixio/common-config/hardhat.config';
-
 import 'solidity-docgen';
 import { templates } from '@synthetixio/docgen';
+
+import './tasks/dev';
 
 const config = {
   ...commonConfig,
@@ -17,15 +18,10 @@ const config = {
   docgen: {
     exclude: [
       './interfaces/external',
-      './interfaces/IUtilsModule.sol',
-      './errors',
-      './routers',
       './modules',
-      './mixins',
       './mocks',
       './storage',
       './submodules',
-      './utils',
       './Proxy.sol',
     ],
     templates,
