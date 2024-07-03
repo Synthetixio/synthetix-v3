@@ -79,30 +79,38 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 gasLimit
     ) internal returns (uint64 sequence) {
         uint256 targetChainsLength = targetChains.length;
+        uint256 totalCost = receiverValue * targetChainsLength;
         for (uint256 i; i < targetChainsLength; i++) {
             uint16 targetChain = targetChains[i];
 
             if (targetChain == self.wormholeCore.chainId()) {
                 // If the target chain is the same as the current chain, we can call the method directly
-                (bool success, bytes memory result) = address(this).call(payload);
-                if (!success) {
-                    uint256 len = result.length;
-                    assembly {
-                        revert(add(result, 0x20), len)
-                    }
-                }
+                (bool success, bytes memory result) = address(this).call{value: receiverValue}(
+                    payload
+                );
+                _checkSuccess(success, result);
             } else {
                 // If the target chain is different, we need to transmit the message to the WormholeRelayer
                 // to be sent to the target chain
+                uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
                 sequence = transmit(
                     self,
                     targetChain,
                     toAddress(self.registeredEmitters[targetChain]),
                     payload,
                     receiverValue,
-                    gasLimit
+                    gasLimit,
+                    cost
                 );
+                totalCost += cost;
             }
+        }
+        uint256 refundAmount = msg.value - totalCost;
+        if (refundAmount > 0) {
+            (bool success, bytes memory result) = ERC2771Context._msgSender().call{
+                value: refundAmount
+            }("");
+            _checkSuccess(success, result);
         }
     }
 
@@ -113,9 +121,9 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         address targetAddress,
         bytes memory payload,
         uint256 receiverValue,
-        uint256 gasLimit
+        uint256 gasLimit,
+        uint256 cost
     ) internal returns (uint64 sequence) {
-        uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
         sequence = self.wormholeRelayer.sendPayloadToEvm{value: cost}(
             targetChain,
             targetAddress,
