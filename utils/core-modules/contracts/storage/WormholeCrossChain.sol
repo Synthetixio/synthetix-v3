@@ -75,17 +75,17 @@ library WormholeCrossChain {
     }
 
     ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
-    function getChainIdAt(Data storage self, uint64 index) internal view returns (uint64) {
-        return self.supportedNetworks.valueAt(index + 1).to64();
+    function getChainIdAt(Data storage self, uint64 index) internal view returns (uint16) {
+        return self.supportedNetworks.valueAt(index + 1).to16();
     }
 
     ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
-    function getSupportedNetworks(Data storage self) internal view returns (uint64[] memory) {
+    function getSupportedNetworks(Data storage self) internal view returns (uint16[] memory) {
         SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
         uint256[] memory supportedChains = supportedNetworks.values();
-        uint64[] memory chains = new uint64[](supportedChains.length);
+        uint16[] memory chains = new uint16[](supportedChains.length);
         for (uint256 i = 0; i < supportedChains.length; i++) {
-            uint64 chainId = supportedChains[i].to64();
+            uint16 chainId = supportedChains[i].to16();
             chains[i] = chainId;
         }
         return chains;

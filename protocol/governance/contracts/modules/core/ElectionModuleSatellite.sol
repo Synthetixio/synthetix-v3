@@ -109,13 +109,14 @@ contract ElectionModuleSatellite is
         );
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        // solhint-disable-next-line
-        uint16 targetChain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
 
-        transmit(
+        uint16[] memory targetChains = new uint16[](1);
+        targetChains[0] = wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID);
+
+        broadcast(
             wh,
-            targetChain,
-            toAddress(wh.registeredEmitters[targetChain]),
+            targetChains,
+            // toAddress(wh.registeredEmitters[targetChain]), //TODO
             payload,
             0,
             _CROSSCHAIN_GAS_LIMIT
@@ -132,12 +133,13 @@ contract ElectionModuleSatellite is
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        // solhint-disable-next-line
-        uint16 targetChain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
-        transmit(
+        uint16[] memory targetChains = new uint16[](1);
+        targetChains[0] = wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID);
+
+        broadcast(
             wh,
-            targetChain,
-            toAddress(wh.registeredEmitters[targetChain]),
+            targetChains,
+            // toAddress(wh.registeredEmitters[targetChain]), //TODO
             abi.encodeWithSelector(
                 IElectionModule._recvWithdrawVote.selector,
                 currentEpoch,

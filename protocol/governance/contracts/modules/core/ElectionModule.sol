@@ -169,32 +169,21 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        uint64[] memory chains = wh.getSupportedNetworks();
-        for (uint256 i = 0; i < chains.length; i++) {
-            // solhint-disable-next-line
-            if (chains[i] == uint64(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID))) {
-                currentEpoch.nominationPeriodStartDate = newNominationPeriodStartDate;
-                currentEpoch.votingPeriodStartDate = newVotingPeriodStartDate;
-                currentEpoch.endDate = newEpochEndDate;
-            } else {
-                transmit(
-                    wh,
-                    // solhint-disable-next-line
-                    uint16(chains[i]),
-                    // solhint-disable-next-line
-                    toAddress(wh.registeredEmitters[uint16(chains[i])]),
-                    abi.encodeWithSelector(
-                        this._recvTweakEpochSchedule.selector,
-                        council.currentElectionId,
-                        newEpoch.nominationPeriodStartDate,
-                        newEpoch.votingPeriodStartDate,
-                        newEpoch.endDate
-                    ),
-                    0,
-                    _CROSSCHAIN_GAS_LIMIT
-                );
-            }
-        }
+        uint16[] memory chains = wh.getSupportedNetworks();
+        broadcast(
+            wh,
+            chains,
+            // toAddress(wh.registeredEmitters[uint16(chains[i])]), //TODO
+            abi.encodeWithSelector(
+                this._recvTweakEpochSchedule.selector,
+                council.currentElectionId,
+                newEpoch.nominationPeriodStartDate,
+                newEpoch.votingPeriodStartDate,
+                newEpoch.endDate
+            ),
+            0,
+            _CROSSCHAIN_GAS_LIMIT
+        );
 
         emit EpochScheduleUpdated(
             newEpoch.nominationPeriodStartDate,
@@ -229,16 +218,14 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         Council.Data storage council = Council.load();
         Epoch.Data storage epoch = council.getCurrentEpoch();
-
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        // solhint-disable-next-line
-        uint16 chain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
+        uint16[] memory chains = wh.getSupportedNetworks();
 
-        transmit(
+        broadcast(
             wh,
-            chain,
-            toAddress(wh.registeredEmitters[chain]),
+            chains,
+            // toAddress(wh.registeredEmitters[chain]), //TODO
             abi.encodeWithSelector(
                 this._recvDismissMembers.selector,
                 membersToDismiss,
@@ -393,25 +380,21 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         if (election.nominees.values().length < electionSettings.minimumActiveMembers) {
             WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-            uint64[] memory chains = wh.getSupportedNetworks();
-            for (uint256 i = 0; i < chains.length; i++) {
-                transmit(
-                    wh,
-                    // solhint-disable-next-line
-                    uint16(chains[i]),
-                    // solhint-disable-next-line
-                    toAddress(wh.registeredEmitters[uint16(chains[i])]),
-                    abi.encodeWithSelector(
-                        this._recvTweakEpochSchedule.selector,
-                        council.currentElectionId,
-                        epoch.nominationPeriodStartDate,
-                        epoch.votingPeriodStartDate,
-                        epoch.endDate + electionSettings.votingPeriodDuration
-                    ),
-                    0,
-                    _CROSSCHAIN_GAS_LIMIT
-                );
-            }
+            uint16[] memory chains = wh.getSupportedNetworks();
+            broadcast(
+                wh,
+                chains,
+                // toAddress(wh.registeredEmitters[uint16(chains[i])]), //TODO
+                abi.encodeWithSelector(
+                    this._recvTweakEpochSchedule.selector,
+                    council.currentElectionId,
+                    epoch.nominationPeriodStartDate,
+                    epoch.votingPeriodStartDate,
+                    epoch.endDate + electionSettings.votingPeriodDuration
+                ),
+                0,
+                _CROSSCHAIN_GAS_LIMIT
+            );
         } else {
             if (election.evaluated) revert ElectionAlreadyEvaluated();
 
@@ -464,27 +447,23 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        uint64[] memory chains = wh.getSupportedNetworks();
-        for (uint256 i = 0; i < chains.length; i++) {
-            transmit(
-                wh,
-                // solhint-disable-next-line
-                uint16(chains[i]),
-                // solhint-disable-next-line
-                toAddress(wh.registeredEmitters[uint16(chains[i])]),
-                abi.encodeWithSelector(
-                    this._recvResolve.selector,
-                    council.currentElectionId,
-                    nextEpoch.startDate,
-                    nextEpoch.nominationPeriodStartDate,
-                    nextEpoch.votingPeriodStartDate,
-                    nextEpoch.endDate,
-                    election.winners.values()
-                ),
-                0,
-                _CROSSCHAIN_GAS_LIMIT
-            );
-        }
+        uint16[] memory chains = wh.getSupportedNetworks();
+        broadcast(
+            wh,
+            chains,
+            // toAddress(wh.registeredEmitters[uint16(chains[i])]), //TODO
+            abi.encodeWithSelector(
+                this._recvResolve.selector,
+                council.currentElectionId,
+                nextEpoch.startDate,
+                nextEpoch.nominationPeriodStartDate,
+                nextEpoch.votingPeriodStartDate,
+                nextEpoch.endDate,
+                election.winners.values()
+            ),
+            0,
+            _CROSSCHAIN_GAS_LIMIT
+        );
 
         emit EpochStarted(council.currentElectionId);
     }

@@ -70,11 +70,40 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         _checkSuccess(success, result);
     }
 
-    ///@dev used to set the wormhole relayer, incase we switch from the standard relayer to a custom one
-    function setWormholeRelayer(IWormholeRelayer wormholeRelayer) external {
-        OwnableStorage.onlyOwner();
-        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        wh.wormholeRelayer = wormholeRelayer;
+    function broadcast(
+        WormholeCrossChain.Data storage self,
+        uint16[] memory targetChains,
+        // address /*targetAddress*/, //TODO fix
+        bytes memory payload,
+        uint256 receiverValue,
+        uint256 gasLimit
+    ) internal returns (uint64 sequence) {
+        uint256 targetChainsLength = targetChains.length;
+        for (uint256 i; i < targetChainsLength; i++) {
+            uint16 targetChain = targetChains[i];
+
+            if (targetChain == self.wormholeCore.chainId()) {
+                // If the target chain is the same as the current chain, we can call the method directly
+                (bool success, bytes memory result) = address(this).call(payload);
+                if (!success) {
+                    uint256 len = result.length;
+                    assembly {
+                        revert(add(result, 0x20), len)
+                    }
+                }
+            } else {
+                // If the target chain is different, we need to transmit the message to the WormholeRelayer
+                // to be sent to the target chain
+                sequence = transmit(
+                    self,
+                    targetChain,
+                    toAddress(self.registeredEmitters[targetChain]),
+                    payload,
+                    receiverValue,
+                    gasLimit
+                );
+            }
+        }
     }
 
     ///@dev Transmits a message to another chain
@@ -86,29 +115,16 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 receiverValue,
         uint256 gasLimit
     ) internal returns (uint64 sequence) {
-        if (targetChain == self.wormholeCore.chainId()) {
-            // If the target chain is the same as the current chain, we can call the method directly
-            (bool success, bytes memory result) = address(this).call(payload);
-            if (!success) {
-                uint256 len = result.length;
-                assembly {
-                    revert(add(result, 0x20), len)
-                }
-            }
-        } else {
-            // If the target chain is different, we need to send the message to the WormholeRelayer
-            // to be sent to the target chain
-            uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
-            sequence = self.wormholeRelayer.sendPayloadToEvm{value: cost}(
-                targetChain,
-                targetAddress,
-                payload,
-                receiverValue,
-                gasLimit,
-                self.wormholeCore.chainId(),
-                ERC2771Context._msgSender()
-            );
-        }
+        uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
+        sequence = self.wormholeRelayer.sendPayloadToEvm{value: cost}(
+            targetChain,
+            targetAddress,
+            payload,
+            receiverValue,
+            gasLimit,
+            self.wormholeCore.chainId(),
+            ERC2771Context._msgSender()
+        );
     }
 
     ///@dev returns wormhole core contract address
