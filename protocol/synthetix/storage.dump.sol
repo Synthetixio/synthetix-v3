@@ -382,7 +382,8 @@ contract UtilsModule {
 // @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule
 contract VaultModule {
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
-    bytes32 private constant _TWO_STEPS_DELEGATE_FEATURE_FLAG = "twoStepsDelegateCollateral";
+    bytes32 private constant _DECLARE_DELEGATE_FEATURE_FLAG = "declareIntentToDelegateColl";
+    bytes32 private constant _PROCESS_DELEGATE_FEATURE_FLAG = "processIntentToDelegateColl";
 }
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
