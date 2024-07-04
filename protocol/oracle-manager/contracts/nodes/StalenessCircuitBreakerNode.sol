@@ -8,7 +8,7 @@ import {NodeOutput} from "../storage/NodeOutput.sol";
 library StalenessCircuitBreakerNode {
     using SafeCastBytes32 for bytes32;
 
-    error StalenessToleranceExceeded();
+    error StalenessToleranceExceeded(int256 price, uint256 staleTimestamp);
 
     function process(
         NodeDefinition.Data memory nodeDefinition,
@@ -34,7 +34,7 @@ library StalenessCircuitBreakerNode {
         if (block.timestamp - priceNodeOutput.timestamp <= stalenessTolerance) {
             return priceNodeOutput;
         } else if (nodeDefinition.parents.length == 1) {
-            revert StalenessToleranceExceeded();
+            revert StalenessToleranceExceeded(priceNodeOutput.price, priceNodeOutput.timestamp);
         }
         // If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
         return NodeDefinition.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
