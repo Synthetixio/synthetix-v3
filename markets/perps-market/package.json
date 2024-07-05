@@ -32,7 +32,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
-    "@usecannon/cli": "2.15.5",
+    "@usecannon/cli": "2.15.6",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
