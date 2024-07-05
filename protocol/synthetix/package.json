@@ -11,7 +11,7 @@
     "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
-    "check:storage": "git diff --exit-code storage.dump.sol",
+    "check:storage": "git diff --exit-code storage.dump.json",
     "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",

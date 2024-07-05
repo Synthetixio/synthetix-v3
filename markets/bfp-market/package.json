@@ -6,7 +6,7 @@
     "build": "yarn build:contracts",
     "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
-    "check:storage": "git diff --exit-code storage.dump.sol",
+    "check:storage": "git diff --exit-code storage.dump.json",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",
     "cannon-build": "hardhat cannon:build",

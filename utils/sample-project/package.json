@@ -7,7 +7,7 @@
     "clean": "hardhat clean",
     "build": "yarn build:contracts",
     "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
-    "check:storage": "git diff --exit-code storage.dump.sol",
+    "check:storage": "git diff --exit-code storage.dump.json",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat"
   },
