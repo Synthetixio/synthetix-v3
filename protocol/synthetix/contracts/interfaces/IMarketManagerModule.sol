@@ -123,6 +123,18 @@ interface IMarketManagerModule {
     ) external returns (uint256 feeAmount);
 
     /**
+     * @notice Get the amount of fees paid in USD for a call to `depositMarketUsd` and `withdrawMarketUsd` for the given market and amount
+     * @param marketId The market to check fees for
+     * @param amount The amount deposited or withdrawn in USD
+     * @return depositFeeAmount the amount of USD paid for a call to `depositMarketUsd`, always 0
+     * @return withdrawFeeAmount the amount of USD paid for a call to `withdrawMarketUsd`, always 0
+     */
+    function getMarketFees(
+        uint128 marketId,
+        uint256 amount
+    ) external view returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount);
+
+    /**
      * @notice Returns the total withdrawable snxUSD amount for the specified market.
      * @param marketId The id of the market whose withdrawable USD amount is being queried.
      * @return withdrawableD18 The total amount of snxUSD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.

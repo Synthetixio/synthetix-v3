@@ -285,6 +285,14 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
+    function getMarketFees(
+        uint128,
+        uint256 amount
+    ) external view override returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount) {}
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
     function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external override {
         Market.Data storage market = Market.load(marketId);
 
