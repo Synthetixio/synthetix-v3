@@ -22,9 +22,10 @@ defaultValue = "snax"
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
-[import.pyth]
+[clone.pyth]
 source = "pyth"
-args = [120, 1] # 120s, 1wei
+options.validTimePeriod = 120
+options.singleUpdateFeeInWei = 1
 
 # --- Module Contracts --- #
 
