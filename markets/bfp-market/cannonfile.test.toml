@@ -24,8 +24,8 @@ preset = "<%= settings.synthetixPreset %>"
 
 [clone.pyth]
 source = "pyth"
-options.validTimePeriod = 120
-options.singleUpdateFeeInWei = 1
+options.validTimePeriod = "120"
+options.singleUpdateFeeInWei = "1"
 
 # --- Module Contracts --- #
 
