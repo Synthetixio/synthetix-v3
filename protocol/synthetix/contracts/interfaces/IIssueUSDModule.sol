@@ -42,13 +42,6 @@ interface IIssueUSDModule {
         address indexed sender
     );
 
-    event IssuanceFeePaid(
-        uint128 indexed accountId,
-        uint128 indexed poolId,
-        address collateralType,
-        uint256 feeAmount
-    );
-
     /**
      * @notice Mints {amount} of snxUSD with the specified liquidity position.
      * @param accountId The id of the account that is minting snxUSD.
