@@ -11,7 +11,7 @@ defaultValue = "0x431D454Bd4d352A0b1f45AE11EF1182bBEec6a7B"
 defaultValue = "governance-test-v1"
 
 [setting.wormhole_core]
-defaultValue = "0x31377888146f3253211EFEf5c676D41ECe7D58Fe" # https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0x79A1027a6A159502049F10906D333EC57E95F083" # https://docs.wormhole.com/wormhole/reference/constants
 
 [setting.wormhole_relayer]
 defaultValue = "0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE" # https://docs.wormhole.com/wormhole/reference/constants
