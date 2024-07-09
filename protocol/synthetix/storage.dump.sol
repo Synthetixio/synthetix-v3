@@ -354,10 +354,6 @@ contract MarketManagerModule {
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
-    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
-    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -367,7 +363,6 @@ contract PoolModule {
 
 // @custom:artifact contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule
 contract RewardsManagerModule {
-    uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
     bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
 }
 
