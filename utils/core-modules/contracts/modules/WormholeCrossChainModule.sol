@@ -39,41 +39,28 @@ contract WormholeCrossChainModule is IWormholeReceiver {
 
     ///@dev Implementation from IWormholeReciever, necessary to receive and process messages from the WormholeRelayer
     function receiveWormholeMessages(
-        bytes memory encodedMsg,
-        bytes[] memory, // additionalVaas
-        bytes32, // sender
-        uint16, // sourceChain
-        bytes32 //deliveryId
+        bytes memory payload,
+        bytes[] memory /*additionalMessages*/,
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
     ) public payable override {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         if (ERC2771Context._msgSender() != address(wh.wormholeRelayer)) revert OnlyRelayer();
 
-        (IWormhole.VM memory vm, bool valid, string memory reason) = wh
-            .wormholeCore
-            .parseAndVerifyVM(encodedMsg);
+        if (wh.registeredEmitters[sourceChain] != sourceAddress) revert UnregisteredEmitter();
 
-        //1. Check Wormhole Guardian Signatures
-        //  If the VM is NOT valid, will return the reason it's not valid
-        //  If the VM IS valid, reason will be blank
-        if (!valid) revert InvalidVM(reason);
+        if (wh.hasProcessedMessage[deliveryHash]) revert MessageAlreadyProcessed();
+        wh.hasProcessedMessage[deliveryHash] = true;
 
-        //2. Check if the Emitter Chain contract is registered
-        if (wh.registeredEmitters[vm.emitterChainId] != vm.emitterAddress)
-            revert UnregisteredEmitter();
-
-        //3. Check that the message hasn't already been processed
-        if (wh.hasProcessedMessage[vm.hash]) revert MessageAlreadyProcessed();
-        wh.hasProcessedMessage[vm.hash] = true;
-
-        // do the thing!
-        (bool success, bytes memory result) = address(this).call(vm.payload);
+        (bool success, bytes memory result) = address(this).call(payload);
         _checkSuccess(success, result);
     }
 
     function broadcast(
         WormholeCrossChain.Data storage self,
         uint16[] memory targetChains,
-        // address /*targetAddress*/, //TODO fix
+        // address /*targetAddress*/,
         bytes memory payload,
         uint256 receiverValue,
         uint256 gasLimit
@@ -82,7 +69,6 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 totalCost = receiverValue * targetChainsLength;
         for (uint256 i; i < targetChainsLength; i++) {
             uint16 targetChain = targetChains[i];
-
             if (targetChain == self.wormholeCore.chainId()) {
                 // If the target chain is the same as the current chain, we can call the method directly
                 (bool success, bytes memory result) = address(this).call{value: receiverValue}(
