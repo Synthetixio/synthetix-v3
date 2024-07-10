@@ -14,6 +14,9 @@ defaultValue = "0x4235288801B10D43d381E1a7ff495c44EbDD669a"
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
 
+[contract.CouncilMemberMock]
+artifact = "contracts/mocks/CouncilMemberMock.sol:CouncilMemberMock"
+
 # Testable storage contracts
 [contract.TestableCouncilStorage]
 artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
@@ -48,6 +51,8 @@ create2 = true
 contracts = [
     # Extend Original Core Router
     "CoreRouter",
+    # Helper contract to debug council members functionality
+    "CouncilMemberMock",
     # Testable storage contracts
     "TestableCouncilStorage",
     "TestableBallotStorage",

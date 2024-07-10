@@ -1,6 +1,6 @@
+import { equal } from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import assert from 'assert';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 
@@ -87,7 +87,7 @@ describe('ElectionModule - voting', function () {
 
         it('succeeds if user withdraws his own vote', async () => {
           await c.GovernanceProxy.connect(user).withdrawVote([await user.getAddress()]);
-          assert.equal(
+          equal(
             await c.GovernanceProxy.connect(user).hasVoted(
               await user.getAddress(),
               (await user.provider!.getNetwork()).chainId

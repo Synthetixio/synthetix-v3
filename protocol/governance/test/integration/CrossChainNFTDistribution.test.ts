@@ -1,7 +1,8 @@
-import assert from 'assert';
-// import { ethers } from 'ethers';
-import { WormholeChainSelector, integrationBootstrap } from './bootstrap';
+import { equal } from 'node:assert/strict';
 import { typedValues } from '../helpers/object';
+// import { ethers } from 'ethers';
+import { integrationBootstrap, WormholeChainSelector } from './bootstrap';
+
 // import { WormholeMock__factory } from '../generated/typechain';
 
 describe('cross chain nft distribution', function () {
@@ -26,7 +27,7 @@ describe('cross chain nft distribution', function () {
   it('allows owner mint nft', async function () {
     for (const chain of Object.values(chains)) {
       const ownerAddress = await chain.signer.getAddress();
-      assert.equal((await chain.CouncilToken.balanceOf(ownerAddress)).toString(), '1');
+      equal((await chain.CouncilToken.balanceOf(ownerAddress)).toString(), '1');
     }
   });
 
