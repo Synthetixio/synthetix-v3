@@ -7,6 +7,7 @@ import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { typedValues } from '../helpers/object';
 import { integrationBootstrap, WormholeChainSelector } from './bootstrap';
+import { BigNumber } from 'ethers/lib/ethers';
 
 function generateRandomAddresses() {
   const wallets = [];
@@ -870,13 +871,42 @@ describe('SynthetixElectionModule - Elections', () => {
                     describe('when the election is resolved', () => {
                       before('resolve', async () => {
                         const { mothership } = chains;
+
+                        await mothership.WormholeRelayerMock.setCost(ethers.utils.parseEther('1'));
+
+                        const balanceBefore = await chains.mothership.signer.getBalance();
+
+                        let quote1 =
+                          await chains.mothership.WormholeRelayerMock.quoteEVMDeliveryPrice(
+                            WormholeChainSelector.satellite1,
+                            0,
+                            100000
+                          );
+                        let quote2 =
+                          await chains.mothership.WormholeRelayerMock.quoteEVMDeliveryPrice(
+                            WormholeChainSelector.satellite2,
+                            0,
+                            100000
+                          );
+
+                        let quoteSum = quote1.nativePriceQuote.add(quote2.nativePriceQuote);
+
+                        // we send the quote (for both chains), plus one extra ether. the extra ether should be refunded
+                        let value = quoteSum.add(ethers.utils.parseEther('1'));
+
                         const rx = await (
                           await mothership.GovernanceProxy.resolve({
-                            value: ethers.utils.parseEther('1'),
+                            value: value.toString(),
                           })
                         ).wait();
 
                         await deliverResolve(rx);
+
+                        const balanceAfter = await chains.mothership.signer.getBalance();
+                        const gasUsed = rx.gasUsed.mul(rx.effectiveGasPrice);
+
+                        // balance should be 2 ether less, minus the gas used. The extra eth sent should be refunded
+                        assertBn.near(balanceBefore.sub(balanceAfter).sub(gasUsed), quoteSum);
                       });
 
                       it('shows the expected NFT owners', async () => {

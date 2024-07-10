@@ -26,6 +26,7 @@ contract WormholeRelayerMock {
     );
 
     IWormhole private immutable WORMHOLE;
+    uint256 private cost;
 
     constructor(address _wormhole) {
         WORMHOLE = IWormhole(_wormhole);
@@ -40,6 +41,8 @@ contract WormholeRelayerMock {
         uint16 /*refundChain*/,
         address /*refundAddress*/
     ) external payable returns (uint64 sequence) {
+        (uint256 _cost, ) = quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
+        if (msg.value < _cost) revert("Insufficient payment");
         bytes memory _payload = abi.encode(
             targetChain,
             WORMHOLE.chainId(),
@@ -102,12 +105,16 @@ contract WormholeRelayerMock {
         );
     }
 
+    function setCost(uint256 _cost) external {
+        cost = _cost;
+    }
+
     function quoteEVMDeliveryPrice(
         uint16, // targetChain
         uint256, // receiverValue
         uint256 // gasLimit
-    ) public pure returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused) {
-        return (0, 0);
+    ) public view returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused) {
+        return (cost, 0);
     }
 
     function toBytes32(address _address) internal pure returns (bytes32) {
