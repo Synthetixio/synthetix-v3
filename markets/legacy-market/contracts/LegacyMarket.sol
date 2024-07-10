@@ -55,6 +55,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
+    error V2xPaused();
 
     // solhint-disable-next-line no-empty-blocks
     constructor() Ownable(ERC2771Context._msgSender()) {}
@@ -156,8 +157,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         // now burn it
         uint256 beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
         oldSynthetix.burnSynths(amount);
-        if (iss.debtBalanceOf(address(this), "sUSD") != beforeDebt - amount) {
-            revert Paused();
+        uint256 afterDebt = iss.debtBalanceOf(address(this), "sUSD");
+
+        // approximately equal check because some rounding error can happen on the v2x side
+        if (beforeDebt - afterDebt < amount - 1) {
+            revert V2xPaused();
         }
 
         // now mint same amount of snxUSD (called a "withdraw" in v3 land)
@@ -180,7 +184,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     /**
      * @inheritdoc ILegacyMarket
      */
-    function migrateOnBehalf(address staker, uint128 accountId) external onlyOwner {
+    function migrateOnBehalf(address staker, uint128 accountId) external {
         _migrate(staker, accountId);
     }
 
@@ -236,6 +240,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             );
 
             return;
+        } else if (
+            ERC2771Context._msgSender() != staker &&
+            ERC2771Context._msgSender() != OwnableStorage.load().owner
+        ) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         // start building the staker's v3 account
@@ -247,7 +256,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         // create the most-equivalent mechanism for v3 to match the vesting entries: a "lock"
         uint256 curTime = block.timestamp;
         for (uint256 i = 0; i < oldEscrows.length; i++) {
-            if (oldEscrows[i].endTime > curTime) {
+            if (oldEscrows[i].endTime > curTime && oldEscrows[i].escrowAmount > 0) {
                 v3System.createLock(
                     accountId,
                     address(oldSynthetix),
@@ -348,9 +357,13 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     function _calculateDebtValueMigrated(
         uint256 debtSharesMigrated
     ) internal view returns (uint256 portionMigrated) {
-        (uint256 totalSystemDebt, uint256 totalDebtShares, ) = IIssuer(
+        (uint256 totalSystemDebt, uint256 totalDebtShares, bool isStale) = IIssuer(
             v2xResolver.getAddress("Issuer")
         ).allNetworksDebtInfo();
+
+        if (isStale) {
+            revert V2xPaused();
+        }
 
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
     }
