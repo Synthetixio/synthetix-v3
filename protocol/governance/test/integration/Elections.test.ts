@@ -119,22 +119,6 @@ describe('SynthetixElectionModule - Elections', () => {
     );
   });
 
-  before('register emitters', async function () {
-    for (const chain of typedValues(chains)) {
-      const _chains = [
-        WormholeChainSelector.mothership,
-        WormholeChainSelector.satellite1,
-        WormholeChainSelector.satellite2,
-      ];
-      const _emitters = [
-        chains.mothership.GovernanceProxy.address,
-        chains.satellite1.GovernanceProxy.address,
-        chains.satellite2.GovernanceProxy.address,
-      ];
-      await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(_chains, _emitters);
-    }
-  });
-
   before('fund addresses', async () => {
     await Promise.all(
       Object.values(chains).map(async (chain) => {

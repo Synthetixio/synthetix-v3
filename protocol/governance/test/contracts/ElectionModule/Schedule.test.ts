@@ -4,8 +4,8 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
-import { bootstrap } from '../../bootstrap';
 import { ElectionPeriod } from '../../constants';
+import { bootstrap } from '../bootstrap';
 
 describe('ElectionModule - schedule', () => {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
@@ -19,13 +19,6 @@ describe('ElectionModule - schedule', () => {
 
   before('identify signers', async () => {
     [owner, user] = getSigners();
-  });
-
-  before('register emitters', async function () {
-    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
-      [10002],
-      [c.GovernanceProxy.address]
-    );
   });
 
   // ----------------------------------

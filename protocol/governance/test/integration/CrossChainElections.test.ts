@@ -75,50 +75,6 @@ describe('cross chain election testing', function () {
     voter = await fixtureSignerOnChains();
   });
 
-  before('register emitters', async function () {
-    for (const chain of typedValues(chains)) {
-      const _chains = [
-        WormholeChainSelector.mothership,
-        WormholeChainSelector.satellite1,
-        WormholeChainSelector.satellite2,
-      ];
-      const _emitters = [
-        chains.mothership.GovernanceProxy.address,
-        chains.satellite1.GovernanceProxy.address,
-        chains.satellite2.GovernanceProxy.address,
-      ];
-      await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(_chains, _emitters);
-
-      console.log(
-        'Mothership WormholeRelayerMock address: ',
-        chains.mothership.WormholeRelayerMock.address
-      );
-      console.log(
-        'Mothership WormholeRelayerMock address on gov proxy: ',
-        await chains.mothership.GovernanceProxy.getWormholeRelayer(),
-        '/n'
-      );
-      console.log(
-        'Satellite 1 WormholeRelayerMock address: ',
-        chains.satellite1.WormholeRelayerMock.address
-      );
-      console.log(
-        'Satellite 1 WormholeRelayerMock address on gov proxy: ',
-        await chains.satellite1.GovernanceProxy.getWormholeRelayer(),
-        '/n'
-      );
-      console.log(
-        'Satellite 2 WormholeRelayerMock address: ',
-        chains.satellite2.WormholeRelayerMock.address
-      );
-      console.log(
-        'Satellite 2 WormholeRelayerMock address on gov proxy: ',
-        await chains.satellite2.GovernanceProxy.getWormholeRelayer(),
-        '/n'
-      );
-    }
-  });
-
   describe('on initialization', function () {
     it('shows that the current period is Administration', async function () {
       assertBn.equal(

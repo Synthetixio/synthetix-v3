@@ -71,3 +71,9 @@ factory.GovernanceProxy.abiOf = ["TestRouter"]
 factory.GovernanceProxy.event = "Upgraded"
 factory.GovernanceProxy.arg = 0
 factory.GovernanceProxy.highlight = true
+
+[invoke.set_registered_emitters]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setRegisteredEmitters"
+args = [["10002"], ["<%= contracts.InitialProxy.address %>"]]

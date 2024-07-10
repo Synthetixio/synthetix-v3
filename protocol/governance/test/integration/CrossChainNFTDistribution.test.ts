@@ -8,22 +8,6 @@ import { integrationBootstrap, WormholeChainSelector } from './bootstrap';
 describe('cross chain nft distribution', function () {
   const { chains } = integrationBootstrap();
 
-  before('register emitters', async function () {
-    for (const chain of typedValues(chains)) {
-      const _chains = [
-        WormholeChainSelector.mothership,
-        WormholeChainSelector.satellite1,
-        WormholeChainSelector.satellite2,
-      ];
-      const _emitters = [
-        chains.mothership.GovernanceProxy.address,
-        chains.satellite1.GovernanceProxy.address,
-        chains.satellite2.GovernanceProxy.address,
-      ];
-      await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(_chains, _emitters);
-    }
-  });
-
   it('allows owner mint nft', async function () {
     for (const chain of Object.values(chains)) {
       const ownerAddress = await chain.signer.getAddress();
