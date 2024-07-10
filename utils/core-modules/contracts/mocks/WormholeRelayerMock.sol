@@ -42,6 +42,7 @@ contract WormholeRelayerMock {
         address /*refundAddress*/
     ) external payable returns (uint64 sequence) {
         (uint256 _cost, ) = quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
+        // solhint-disable-next-line custom-errors
         if (msg.value < _cost) revert("Insufficient payment");
         bytes memory _payload = abi.encode(
             targetChain,

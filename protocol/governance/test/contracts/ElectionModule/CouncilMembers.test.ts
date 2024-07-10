@@ -12,13 +12,11 @@ function _sortedDeepEqual(actual: string[], expected: string[]) {
 describe('ElectionModule - council members', function () {
   const { c, getSigners, snapshotCheckpoint } = bootstrap();
 
-  let owner: ethers.Signer;
   let members: string[];
 
   const MINIMUM_COUNCIL_MEMBERS = 3;
 
   before('identify signers', async function () {
-    [owner] = getSigners();
     members = await Promise.all(
       getSigners()
         .slice(1, 5)

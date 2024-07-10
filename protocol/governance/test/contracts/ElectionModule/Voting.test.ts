@@ -7,12 +7,11 @@ import { bootstrap } from '../bootstrap';
 describe('ElectionModule - voting', function () {
   const { c, getSigners, getProvider } = bootstrap();
 
-  let owner: ethers.Signer;
   let user: ethers.Signer;
   let otherUser: ethers.Signer;
 
   before('identify signers', async function () {
-    [owner, user, otherUser] = getSigners();
+    [, user, otherUser] = getSigners();
   });
 
   before('create voting power for user', async function () {
