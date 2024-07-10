@@ -7,7 +7,6 @@ import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
 import { typedValues } from '../helpers/object';
 import { integrationBootstrap, WormholeChainSelector } from './bootstrap';
-import { BigNumber } from 'ethers/lib/ethers';
 
 function generateRandomAddresses() {
   const wallets = [];
@@ -876,23 +875,23 @@ describe('SynthetixElectionModule - Elections', () => {
 
                         const balanceBefore = await chains.mothership.signer.getBalance();
 
-                        let quote1 =
+                        const quote1 =
                           await chains.mothership.WormholeRelayerMock.quoteEVMDeliveryPrice(
                             WormholeChainSelector.satellite1,
                             0,
                             100000
                           );
-                        let quote2 =
+                        const quote2 =
                           await chains.mothership.WormholeRelayerMock.quoteEVMDeliveryPrice(
                             WormholeChainSelector.satellite2,
                             0,
                             100000
                           );
 
-                        let quoteSum = quote1.nativePriceQuote.add(quote2.nativePriceQuote);
+                        const quoteSum = quote1.nativePriceQuote.add(quote2.nativePriceQuote);
 
                         // we send the quote (for both chains), plus one extra ether. the extra ether should be refunded
-                        let value = quoteSum.add(ethers.utils.parseEther('1'));
+                        const value = quoteSum.add(ethers.utils.parseEther('1'));
 
                         const rx = await (
                           await mothership.GovernanceProxy.resolve({
