@@ -2,11 +2,12 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
-import {IWormhole} from "./../interfaces/IWormhole.sol";
-import {IWormholeReceiver} from "./../interfaces/IWormholeReceiver.sol";
+import {IWormhole} from "../interfaces/IWormhole.sol";
+import {IWormholeReceiver} from "../interfaces/IWormholeReceiver.sol";
+import {IWormholeRelayer} from "../interfaces/IWormholeRelayer.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import "../storage/WormholeCrossChain.sol";
+import {WormholeCrossChain} from "../storage/WormholeCrossChain.sol";
 
 /**
  * @title Module with assorted cross-chain functions.

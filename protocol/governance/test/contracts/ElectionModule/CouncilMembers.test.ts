@@ -2,8 +2,8 @@ import { deepEqual } from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
-import { bootstrap } from '../../bootstrap';
 import { ElectionPeriod } from '../../constants';
+import { bootstrap } from '../bootstrap';
 
 function _sortedDeepEqual(actual: string[], expected: string[]) {
   deepEqual([...actual].sort(), [...expected].sort());
@@ -24,12 +24,6 @@ describe('ElectionModule - council members', function () {
         .slice(1, 5)
         .map((m) => m.getAddress())
     );
-  });
-
-  before('register emitters', async function () {
-    await c.GovernanceProxy.connect(owner)
-      .setRegisteredEmitters([10002], [c.GovernanceProxy.address])
-      .then((tx) => tx.wait());
   });
 
   before('update settings', async function () {

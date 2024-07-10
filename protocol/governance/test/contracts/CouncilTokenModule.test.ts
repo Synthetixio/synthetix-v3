@@ -1,8 +1,8 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from '../bootstrap';
 import { CouncilTokenModule } from '../generated/typechain/CouncilTokenModule';
+import { bootstrap } from './bootstrap';
 
 describe('CouncilTokenModule', function () {
   const { c, getSigners } = bootstrap();

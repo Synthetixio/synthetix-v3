@@ -2,11 +2,11 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import {IWormhole} from "./../interfaces/IWormhole.sol";
-import {IWormholeRelayer} from "./../interfaces/IWormholeRelayer.sol";
+import {IWormhole} from "../interfaces/IWormhole.sol";
+import {IWormholeRelayer} from "../interfaces/IWormholeRelayer.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title System wide configuration for anything related to cross-chain
@@ -37,6 +37,10 @@ library WormholeCrossChain {
     ///@dev adds supported network to storage, used for cross-chain network verification
     ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function addSupportedNetwork(Data storage self, uint16 chainId) internal {
+        if (self.supportedNetworks.contains(chainId)) {
+            self.supportedNetworks.remove(chainId);
+        }
+
         self.supportedNetworks.add(chainId);
         emit NewSupportedCrossChainNetwork(chainId);
     }

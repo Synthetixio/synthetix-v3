@@ -15,12 +15,6 @@ interface Proxies {
   satellite2: AvalancheFujiGovernanceProxy;
 }
 
-export enum ChainSelector {
-  mothership = '16015286601757825753',
-  satellite1 = '2664363617261496610',
-  satellite2 = '14767482510784806043',
-}
-
 export enum WormholeChainSelector {
   mothership = '10002',
   satellite1 = '10005',
@@ -92,13 +86,12 @@ before(`setup integration chains`, async function () {
     networkName: 'sepolia',
     cannonfile: 'cannonfile.test.toml',
     cannonfileSettings: {
-      wormhole_chain_id: '10002',
+      wormhole_chain_id: WormholeChainSelector.mothership,
       wormhole_core: '0xBc9C458D6294a40599FB3485fB079429C0732833',
       wormhole_relayer: '0xF9fa9Ee589a188D5B934399C3F76552aF607CEf4',
     },
     typechainFolder,
     writeDeployments,
-    chainSlector: ChainSelector.mothership,
   });
 
   const schedule = await mothership.GovernanceProxy.getEpochSchedule();
@@ -120,26 +113,24 @@ before(`setup integration chains`, async function () {
       cannonfile: 'cannonfile.satellite.test.toml',
       cannonfileSettings: {
         ...cannonfileSettings,
-        wormhole_chain_id: '10005',
+        wormhole_chain_id: WormholeChainSelector.satellite1,
         wormhole_core: '0x41e689A993322c2B3dE4569084D6F979dc39f095',
         wormhole_relayer: '0xEE157C6561BFd2F8a70d778d0B08dd53B2EBC77e',
       },
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.satellite1,
     }),
     spinChain<Proxies['satellite2']>({
       networkName: 'avalanche-fuji',
       cannonfile: 'cannonfile.satellite.test.toml',
       cannonfileSettings: {
         ...cannonfileSettings,
-        wormhole_chain_id: '43113',
+        wormhole_chain_id: WormholeChainSelector.satellite2,
         wormhole_core: '0x40342Cb59035F004043DE1b30C04A69D06C900A2',
         wormhole_relayer: '0x9685E27446167Fd7D4F6000b21F435f5a955D379',
       },
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.satellite2,
     }),
   ]);
 
@@ -148,6 +139,16 @@ before(`setup integration chains`, async function () {
     satellite1,
     satellite2,
   } satisfies Chains);
+
+  // Configure multichain messaging
+  const chainSelectors = typedValues(WormholeChainSelector);
+  const proxyAddresses = typedValues(chains).map((chain) => chain.GovernanceProxy.address);
+  for (const chain of typedValues(chains)) {
+    await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(
+      chainSelectors,
+      proxyAddresses
+    );
+  }
 });
 
 before('snapshot checkpoint', createSnapshots);

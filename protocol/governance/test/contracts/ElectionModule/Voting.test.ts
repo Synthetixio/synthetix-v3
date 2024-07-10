@@ -2,7 +2,7 @@ import { equal } from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
-import { bootstrap } from '../../bootstrap';
+import { bootstrap } from '../bootstrap';
 
 describe('ElectionModule - voting', function () {
   const { c, getSigners, getProvider } = bootstrap();
@@ -13,13 +13,6 @@ describe('ElectionModule - voting', function () {
 
   before('identify signers', async function () {
     [owner, user, otherUser] = getSigners();
-  });
-
-  before('register emitters', async function () {
-    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
-      [10002],
-      [c.GovernanceProxy.address]
-    );
   });
 
   before('create voting power for user', async function () {

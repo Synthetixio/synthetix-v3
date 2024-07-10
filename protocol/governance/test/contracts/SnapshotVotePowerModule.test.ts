@@ -4,7 +4,7 @@ import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from './bootstrap';
 
 describe('SnapshotVotePowerModule', function () {
   const { c, getSigners, getProvider } = bootstrap();
