@@ -30,12 +30,12 @@ library WormholeCrossChain {
         IWormhole wormholeCore;
         IWormholeRelayer wormholeRelayer;
         SetUtil.UintSet supportedNetworks;
-        mapping(uint16 => bytes32) registeredEmitters; //chain id => emitter address (bytes32)
+        mapping(uint16 => bytes32) registeredEmitters; //chain id => emitter address (bytes32). If we want to add support for multiple emitters per chain, we pack the address and chain into a single bytes32 that maps to boolean.
         mapping(bytes32 => bool) hasProcessedMessage;
     }
 
     ///@dev adds supported network to storage, used for cross-chain network verification
-    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function addSupportedNetwork(Data storage self, uint16 chainId) internal {
         self.supportedNetworks.add(chainId);
         emit NewSupportedCrossChainNetwork(chainId);
@@ -56,7 +56,7 @@ library WormholeCrossChain {
     }
 
     ///@dev confirms that the chainId is registered in storage, reverts if not
-    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function validateChainId(Data storage self, uint256 chainId) internal view {
         if (!self.supportedNetworks.contains(chainId)) {
             revert UnsupportedNetwork(chainId.to64());
@@ -74,12 +74,12 @@ library WormholeCrossChain {
         return bytes32(uint256(uint160(address(this))));
     }
 
-    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function getChainIdAt(Data storage self, uint64 index) internal view returns (uint16) {
         return self.supportedNetworks.valueAt(index + 1).to16();
     }
 
-    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function getSupportedNetworks(Data storage self) internal view returns (uint16[] memory) {
         SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
         uint256[] memory supportedChains = supportedNetworks.values();

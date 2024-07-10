@@ -173,7 +173,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         broadcast(
             wh,
             chains,
-            // toAddress(wh.registeredEmitters[uint16(chains[i])]), //TODO
             abi.encodeWithSelector(
                 this._recvTweakEpochSchedule.selector,
                 council.currentElectionId,
@@ -225,7 +224,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         broadcast(
             wh,
             chains,
-            // toAddress(wh.registeredEmitters[chain]), //TODO
             abi.encodeWithSelector(
                 this._recvDismissMembers.selector,
                 membersToDismiss,
@@ -384,7 +382,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             broadcast(
                 wh,
                 chains,
-                // toAddress(wh.registeredEmitters[uint16(chains[i])]), //TODO
                 abi.encodeWithSelector(
                     this._recvTweakEpochSchedule.selector,
                     council.currentElectionId,
@@ -451,7 +448,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         broadcast(
             wh,
             chains,
-            // toAddress(wh.registeredEmitters[uint16(chains[i])]), //TODO
             abi.encodeWithSelector(
                 this._recvResolve.selector,
                 council.currentElectionId,

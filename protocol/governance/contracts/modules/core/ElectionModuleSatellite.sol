@@ -113,14 +113,7 @@ contract ElectionModuleSatellite is
         uint16[] memory targetChains = new uint16[](1);
         targetChains[0] = wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID);
 
-        broadcast(
-            wh,
-            targetChains,
-            // toAddress(wh.registeredEmitters[targetChain]), //TODO
-            payload,
-            0,
-            _CROSSCHAIN_GAS_LIMIT
-        );
+        broadcast(wh, targetChains, payload, 0, _CROSSCHAIN_GAS_LIMIT);
     }
 
     ///@dev Withdraws a vote that has already been casted by the sender
@@ -139,7 +132,6 @@ contract ElectionModuleSatellite is
         broadcast(
             wh,
             targetChains,
-            // toAddress(wh.registeredEmitters[targetChain]), //TODO
             abi.encodeWithSelector(
                 IElectionModule._recvWithdrawVote.selector,
                 currentEpoch,

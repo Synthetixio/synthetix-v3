@@ -134,7 +134,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     }
 
     ///@dev Returns the cost (in wei) of a cross-chain message
-    ///@notice all chain ids are specific to wormhole, and is not in parity with standard network ids //TODO add link here
+    ///@notice all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function quoteCrossChainDeliveryPrice(
         uint16 targetChain,
         uint256 receiverValue,
