@@ -1,9 +1,5 @@
 import { equal } from 'node:assert/strict';
-import { typedValues } from '../helpers/object';
-// import { ethers } from 'ethers';
-import { integrationBootstrap, WormholeChainSelector } from './bootstrap';
-
-// import { WormholeMock__factory } from '../generated/typechain';
+import { integrationBootstrap } from './bootstrap';
 
 describe('cross chain nft distribution', function () {
   const { chains } = integrationBootstrap();

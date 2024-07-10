@@ -5,7 +5,6 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import { ElectionPeriod } from '../constants';
-import { typedValues } from '../helpers/object';
 import { integrationBootstrap, WormholeChainSelector } from './bootstrap';
 
 function generateRandomAddresses() {
