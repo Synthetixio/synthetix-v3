@@ -69,7 +69,7 @@ contract WormholeRelayerMock {
             address targetAddress,
             address emitterAddress,
             uint64 sequence,
-            ,
+            bytes memory payload,
             uint256 receiverValue,
 
         ) = abi.decode(
@@ -82,7 +82,7 @@ contract WormholeRelayerMock {
         if (targetChain != WORMHOLE.chainId()) revert InvalidTargetChain(targetChain);
 
         targetReceiver.receiveWormholeMessages{value: receiverValue}(
-            encodedDeliveryVAA,
+            payload,
             new bytes[](0),
             toBytes32(emitterAddress),
             emitterChainId,
