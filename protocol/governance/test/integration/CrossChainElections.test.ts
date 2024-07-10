@@ -52,8 +52,11 @@ describe('cross chain election testing', function () {
       [emitterAddress, emitterChainId, event.args?.sequence] // Values
     );
 
-    console.log("WormholeRelayerMock address: ", chains.mothership.WormholeRelayerMock.address)
-    console.log("WormholeRelayerMock address on gov proxy: ", await chains.mothership.GovernanceProxy.getWormholeRelayer())
+    console.log('WormholeRelayerMock address: ', chains.mothership.WormholeRelayerMock.address);
+    console.log(
+      'WormholeRelayerMock address on gov proxy: ',
+      await chains.mothership.GovernanceProxy.getWormholeRelayer()
+    );
 
     // request delivery from wormhole standard relayer on the mothership chain
     await chains.mothership.WormholeRelayerMock.deliver(
@@ -86,12 +89,33 @@ describe('cross chain election testing', function () {
       ];
       await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(_chains, _emitters);
 
-      console.log("Mothership WormholeRelayerMock address: ", chains.mothership.WormholeRelayerMock.address)
-      console.log("Mothership WormholeRelayerMock address on gov proxy: ", await chains.mothership.GovernanceProxy.getWormholeRelayer(), "/n")
-      console.log("Satellite 1 WormholeRelayerMock address: ", chains.satellite1.WormholeRelayerMock.address)
-      console.log("Satellite 1 WormholeRelayerMock address on gov proxy: ", await chains.satellite1.GovernanceProxy.getWormholeRelayer(), "/n")
-      console.log("Satellite 2 WormholeRelayerMock address: ", chains.satellite2.WormholeRelayerMock.address)
-      console.log("Satellite 2 WormholeRelayerMock address on gov proxy: ", await chains.satellite2.GovernanceProxy.getWormholeRelayer(), "/n")
+      console.log(
+        'Mothership WormholeRelayerMock address: ',
+        chains.mothership.WormholeRelayerMock.address
+      );
+      console.log(
+        'Mothership WormholeRelayerMock address on gov proxy: ',
+        await chains.mothership.GovernanceProxy.getWormholeRelayer(),
+        '/n'
+      );
+      console.log(
+        'Satellite 1 WormholeRelayerMock address: ',
+        chains.satellite1.WormholeRelayerMock.address
+      );
+      console.log(
+        'Satellite 1 WormholeRelayerMock address on gov proxy: ',
+        await chains.satellite1.GovernanceProxy.getWormholeRelayer(),
+        '/n'
+      );
+      console.log(
+        'Satellite 2 WormholeRelayerMock address: ',
+        chains.satellite2.WormholeRelayerMock.address
+      );
+      console.log(
+        'Satellite 2 WormholeRelayerMock address on gov proxy: ',
+        await chains.satellite2.GovernanceProxy.getWormholeRelayer(),
+        '/n'
+      );
     }
   });
 
