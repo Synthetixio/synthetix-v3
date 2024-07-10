@@ -35,8 +35,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
     using Distribution for Distribution.Data;
     using RewardDistribution for RewardDistribution.Data;
 
-    uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
-
     bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
 
     /**
@@ -56,11 +54,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
-        }
-
-        // Limit the maximum amount of rewards distributors can be connected to each vault to prevent excessive gas usage on other calls
-        if (rewardIds.length() > _MAX_REWARD_DISTRIBUTIONS) {
-            revert ParameterError.InvalidParameter("index", "too large");
         }
 
         if (
