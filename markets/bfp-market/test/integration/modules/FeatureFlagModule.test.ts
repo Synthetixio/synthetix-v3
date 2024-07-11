@@ -87,7 +87,7 @@ describe('FeatureFlagModule', () => {
       BfpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
-        collateral.synthMarketId(),
+        collateral.address(),
         amountDelta
       ),
       `FeatureUnavailable("${feature}")`,
@@ -113,7 +113,7 @@ describe('FeatureFlagModule', () => {
       BfpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
-        collateral.synthMarketId(),
+        collateral.address(),
         collateralDepositAmount.mul(-1)
       ),
       `FeatureUnavailable("${feature}")`,
@@ -150,7 +150,8 @@ describe('FeatureFlagModule', () => {
         order.sizeDelta,
         order.limitPrice,
         order.keeperFeeBufferUsd,
-        [ADDRESS0]
+        [ADDRESS0],
+        order.trackingCode
       ),
       `FeatureUnavailable("${feature}")`,
       BfpMarketProxy

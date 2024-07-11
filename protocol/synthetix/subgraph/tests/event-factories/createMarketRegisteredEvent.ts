@@ -1,6 +1,7 @@
-import { BigInt, ethereum, Address } from '@graphprotocol/graph-ts';
+import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
+import { MarketRegistered } from '../../mainnet/generated/CoreProxy/CoreProxy';
 import { newTypedMockEvent } from 'matchstick-as';
-import { MarketRegistered as MarketRegisteredEvent } from '../../mainnet/generated/CoreProxy/CoreProxy';
+import { createBlock } from './utils';
 
 export function createMarketRegisteredEvent(
   market: string,
@@ -8,10 +9,10 @@ export function createMarketRegisteredEvent(
   sender: string,
   timestamp: i64,
   blockNumber: i64,
-  logIndex: i64
-): MarketRegisteredEvent {
-  const event = newTypedMockEvent<MarketRegisteredEvent>();
-
+  logIndex: i32
+): MarketRegistered {
+  const event = newTypedMockEvent<MarketRegistered>();
+  const block = createBlock(timestamp, blockNumber);
   event.parameters.push(
     new ethereum.EventParam('market', ethereum.Value.fromAddress(Address.fromString(market)))
   );
@@ -20,8 +21,8 @@ export function createMarketRegisteredEvent(
     new ethereum.EventParam('sender', ethereum.Value.fromAddress(Address.fromString(sender)))
   );
 
-  event.block.timestamp = BigInt.fromI64(timestamp);
-  event.block.number = BigInt.fromI64(blockNumber);
+  event.block.timestamp = BigInt.fromI64(block['timestamp']);
+  event.block.number = BigInt.fromI64(block['blockNumber']);
   event.logIndex = BigInt.fromI64(logIndex);
 
   return event;

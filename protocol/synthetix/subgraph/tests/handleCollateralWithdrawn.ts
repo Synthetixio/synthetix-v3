@@ -1,5 +1,4 @@
 import { assert } from 'matchstick-as';
-import { Address, BigInt, Bytes } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import {
   handleCollateralConfigured,
@@ -15,28 +14,28 @@ import {
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const issuanceRatio = 200;
+  const liquidationRatio = 50;
+  const liquidationRewards = 90;
+  const oracleNodeId = 13;
+  const minDelegation = 500;
   const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
-    Address.fromString(address),
+    address,
     true,
-    BigInt.fromI32(200),
-    BigInt.fromI32(50),
-    BigInt.fromI32(90),
-    Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(13))),
-    BigInt.fromI32(500),
+    issuanceRatio,
+    liquidationRatio,
+    liquidationRewards,
+    oracleNodeId,
+    minDelegation,
     now,
     now - 1000
   );
-  const newCollateralDepositEvent = createDepositEvent(
-    23,
-    Address.fromString(address),
-    BigInt.fromI32(555),
-    now + 1000,
-    now
-  );
+  const accountId = 23;
+  const newCollateralDepositEvent = createDepositEvent(accountId, address, 555, now + 1000, now);
   const newCollateralWithdrawnEvent = createWithdrawnEvent(
-    23,
-    Address.fromString(address),
-    BigInt.fromI32(100),
+    accountId,
+    address,
+    100,
     now + 2000,
     now + 1000
   );

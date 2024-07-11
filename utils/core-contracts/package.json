@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-contracts",
-  "version": "3.3.17",
+  "version": "3.4.0",
   "publishConfig": {
     "access": "public"
   },
@@ -20,7 +20,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "test": "hardhat test --network hardhat",
-    "coverage": "hardhat coverage --network hardhat",
+    "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "build-testable": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"

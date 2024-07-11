@@ -13,12 +13,6 @@ defaultValue = "main"
 [setting.synthetixPackage]
 defaultValue = "synthetix:latest"
 
-[setting.spotMarketPreset]
-defaultValue = "main"
-
-[setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:latest"
-
 [setting.salt]
 defaultValue = "snax"
 
@@ -28,10 +22,6 @@ defaultValue = "snax"
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
 
-[import.spotMarket]
-source = "<%= settings.spotMarketPackage %>"
-preset = "<%= settings.spotMarketPreset %>"
-
 [import.pyth]
 source = "pyth"
 args = [120, 1] # 120s, 1wei
@@ -40,15 +30,15 @@ args = [120, 1] # 120s, 1wei
 
 [contract.OrderModule]
 artifact = "OrderModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
@@ -56,15 +46,15 @@ args = []
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarginModule]
 artifact = "MarginModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
@@ -76,6 +66,10 @@ args = []
 
 [contract.SettlementHookModule]
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
+args = []
+
+[contract.SplitAccountConfigurationModule]
+artifact = "contracts/modules/SplitAccountConfigurationModule.sol:SplitAccountConfigurationModule"
 args = []
 
 # --- Distributor contract --- #
@@ -96,7 +90,7 @@ salt = "<%= settings.salt %>"
 
 [contract.__TestHelperModule]
 artifact = "contracts/mocks/modules/__TestHelperModule.sol:__TestHelperModule"
-args = []
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 
 # --- Core router --- #
 
@@ -114,6 +108,7 @@ contracts = [
     "LiquidationModule",
     "PerpRewardDistributorFactoryModule",
     "SettlementHookModule",
+    "SplitAccountConfigurationModule",
     "__TestHelperModule",
 ]
 
@@ -202,18 +197,6 @@ args = ["<%= contracts.InitialBfpMarketProxy.address %>"]
 salt = "3"
 
 # --- Market Post BFP Deployment Configuration --- #
-
-[invoke.set_synthetix]
-target = ["BfpMarketProxy"]
-fromCall.func = "owner"
-func = "setSynthetix"
-args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
-
-[invoke.set_spot_market]
-target = ["BfpMarketProxy"]
-fromCall.func = "owner"
-func = "setSpotMarket"
-args = ["<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
 
 [invoke.set_pyth]
 target = ["BfpMarketProxy"]

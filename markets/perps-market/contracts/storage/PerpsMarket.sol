@@ -267,7 +267,10 @@ library PerpsMarket {
         // update position to new position
         // Note: once market interest rate is updated, the current accrued interest is saved
         // to figure out the unrealized interest for the position
-        (uint128 interestRate, uint256 currentInterestAccrued) = InterestRate.update();
+        // when we update market size, use a 1 month price tolerance for calculating minimum credit
+        (uint128 interestRate, uint256 currentInterestAccrued) = InterestRate.update(
+            PerpsPrice.Tolerance.ONE_MONTH
+        );
         oldPosition.update(newPosition, currentInterestAccrued);
 
         return
@@ -423,12 +426,15 @@ library PerpsMarket {
         return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
     }
 
-    function requiredCredit(uint128 marketId) internal view returns (uint256) {
+    function requiredCredit(
+        uint128 marketId,
+        PerpsPrice.Tolerance tolerance
+    ) internal view returns (uint256) {
         return
             PerpsMarket
                 .load(marketId)
                 .size
-                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT))
+                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, tolerance))
                 .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
     }
 

@@ -9,6 +9,7 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {InterestRate} from "../storage/InterestRate.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
@@ -141,6 +142,15 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         returns (uint256 totalCollateralValue)
     {
         return GlobalPerpsMarket.load().totalCollateralValue();
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function globalCollateralValue(
+        uint128 collateralId
+    ) external view override returns (uint256 collateralValue) {
+        return GlobalPerpsMarket.load().collateralAmounts[collateralId];
     }
 
     /**
@@ -301,7 +311,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      * @inheritdoc IGlobalPerpsMarketModule
      */
     function updateInterestRate() external override {
-        (uint128 interestRate, ) = InterestRate.update();
+        (uint128 interestRate, ) = InterestRate.update(PerpsPrice.Tolerance.DEFAULT);
 
         emit InterestRateUpdated(PerpsMarketFactory.load().perpsMarketId, interestRate);
     }

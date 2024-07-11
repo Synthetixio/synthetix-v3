@@ -26,15 +26,15 @@ preset = "<%= settings.synthetixPreset %>"
 
 [contract.OrderModule]
 artifact = "OrderModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.PerpMarketFactoryModule]
 artifact = "PerpMarketFactoryModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
@@ -42,15 +42,15 @@ args = []
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarginModule]
 artifact = "MarginModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.PerpRewardDistributorFactoryModule]
 artifact = "contracts/modules/PerpRewardDistributorModule/PerpRewardDistributorFactoryModule.sol:PerpRewardDistributorFactoryModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
@@ -62,6 +62,10 @@ args = []
 
 [contract.SettlementHookModule]
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
+args = []
+
+[contract.SplitAccountConfigurationModule]
+artifact = "contracts/modules/SplitAccountConfigurationModule.sol:SplitAccountConfigurationModule"
 args = []
 
 # --- Distributor contract --- #
@@ -94,6 +98,7 @@ contracts = [
     "LiquidationModule",
     "PerpRewardDistributorFactoryModule",
     "SettlementHookModule",
+    "SplitAccountConfigurationModule",
 ]
 
 # --- Proxy post deployment --- #
@@ -122,6 +127,12 @@ args = [
 factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
 factory.PerpAccountProxy.event = "AssociatedSystemSet"
 factory.PerpAccountProxy.arg = 2
+
+[invoke.set_reward_distributor_implementation]
+target = ["BfpMarketProxy"]
+fromCall.func = "owner"
+func = "setRewardDistributorImplementation"
+args = ["<%= contracts.PerpRewardDistributor.address %>"]
 
 # --- Core feature flags --- #
 
