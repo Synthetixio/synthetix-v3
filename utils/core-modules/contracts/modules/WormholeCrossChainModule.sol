@@ -157,6 +157,11 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         return wh.wormholeRelayer;
     }
 
+    function getSupportedNetworks() external view returns (uint16[] memory) {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        return WormholeCrossChain.getSupportedNetworks(wh);
+    }
+
     ///@dev Returns the cost (in wei) of a cross-chain message
     ///@notice all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function quoteCrossChainDeliveryPrice(
