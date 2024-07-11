@@ -69,6 +69,13 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 11155420,
     },
+    ['arbitrum-sepolia']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://arbitrum-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 421614,
+    },
     ['optimistic-mainnet']: {
       url:
         process.env.NETWORK_ENDPOINT ||

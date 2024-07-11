@@ -5,16 +5,16 @@ version = "<%= package.version %>"
 include = ["./cannonfile.toml"]
 
 [setting.owner]
-defaultValue = "0x431D454Bd4d352A0b1f45AE11EF1182bBEec6a7B"
+defaultValue = "0xe8E38f98738a82A4a9da708E0C15Eb08CabD2eFA"
 
 [setting.salt]
 defaultValue = "governance-test-v1"
 
 [setting.wormhole_core]
-defaultValue = "0x31377888146f3253211EFEf5c676D41ECe7D58Fe" # https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35" # https://docs.wormhole.com/wormhole/reference/constants
 
 [setting.wormhole_relayer]
-defaultValue = "0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE" # https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470" # https://docs.wormhole.com/wormhole/reference/constants
 
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"
@@ -28,7 +28,7 @@ create2 = true
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
-args = [["10003"], ["0xD9fA68AD1Cc69EB1e72B043ABe313c0191a38cB1"]]
+args = [["10005"], ["0xD9fA68AD1Cc69EB1e72B043ABe313c0191a38cB1"]]
 
 [invoke.set_snapshot_record]
 target = ["GovernanceProxy"]

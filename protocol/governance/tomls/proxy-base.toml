@@ -14,5 +14,5 @@ salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
 
-[provision.trusted_multicall_forwarder]
+[pull.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"
