@@ -8,7 +8,7 @@ include = ["./cannonfile.toml"]
 defaultValue = "0xe8E38f98738a82A4a9da708E0C15Eb08CabD2eFA"
 
 [setting.salt]
-defaultValue = "governance-test-v1"
+defaultValue = "governance-test-v3"
 
 [setting.wormhole_core]
 defaultValue = "0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35" # https://docs.wormhole.com/wormhole/reference/constants
