@@ -5,7 +5,7 @@ version = "<%= package.version %>"
 include = ["./cannonfile.toml"]
 
 [setting.owner]
-defaultValue = "0xe8E38f98738a82A4a9da708E0C15Eb08CabD2eFA"
+defaultValue = "0x73570075092502472e4b61a7058df1a4a1db12f2"
 
 [setting.salt]
 defaultValue = "governance-test-v3"
