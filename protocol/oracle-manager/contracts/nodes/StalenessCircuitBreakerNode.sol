@@ -31,6 +31,10 @@ library StalenessCircuitBreakerNode {
             runtimeValues
         );
 
+        if (block.timestamp <= priceNodeOutput.timestamp) {
+            return priceNodeOutput;
+        }
+
         if (block.timestamp - priceNodeOutput.timestamp <= stalenessTolerance) {
             return priceNodeOutput;
         } else if (nodeDefinition.parents.length == 1) {
