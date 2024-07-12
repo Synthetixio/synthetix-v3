@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
-version = "<%= package.version %>"
+version = "4"
 
 include = ["./cannonfile.satellite.toml", "./tomls/testable-contracts.toml"]
 
@@ -19,6 +19,26 @@ defaultValue = "0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470" # https://docs.wormh
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"
 
+[setting.initial_epoch_index]
+defaultValue = "0"
+
+[setting.initial_epoch_start_date]
+defaultValue = "1720800612"
+
+[setting.initial_nomination_period_start_date]
+defaultValue = "1725984612"
+
+[setting.initial_voting_period_start_date]
+defaultValue = "1727280612"
+
+[setting.initial_epoch_end_date]
+defaultValue = "1728576612"
+
+[contract.SnapshotRecordMock]
+artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
+salt = "<%= settings.salt %>"
+create2 = true
+
 [router.CoreRouter]
 contracts = [
     # Satellite Core Contracts
@@ -35,11 +55,6 @@ contracts = [
     "TestableElectionStorage",
     "TestableEpochStorage",
 ]
-
-[contract.SnapshotRecordMock]
-artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
-salt = "<%= settings.salt %>"
-create2 = true
 
 [invoke.set_registered_emitters]
 target = ["GovernanceProxy"]
