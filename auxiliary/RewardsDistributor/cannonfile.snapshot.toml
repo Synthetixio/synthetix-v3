@@ -1,5 +1,5 @@
 name = "synthetix-snapshot-rewards"
-version = "<%= package.version %>"
+version = "0.2.0"
 description = "Maintains snapshots of account balances in a pool"
 
 [setting.synthetixPackage]

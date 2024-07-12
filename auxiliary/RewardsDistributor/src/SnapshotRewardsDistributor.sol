@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IERC721} from "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {ISnapshotRecord} from "@synthetixio/governance/contracts/interfaces/external/ISnapshotRecord.sol";
-import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {IAccountModule} from "@synthetixio/main/contracts/interfaces/IAccountModule.sol";
 import {IVaultModule} from "@synthetixio/main/contracts/interfaces/IVaultModule.sol";
 
 contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
+    error DebtShareNotFound();
+
     address private rewardsManager;
     IERC721 private accountToken;
     uint128 public servicePoolId;
@@ -73,8 +75,9 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
         address collateralType,
         uint256 // actorSharesD18
     ) external {
-        if (msg.sender != rewardsManager) {
-            revert AccessError.Unauthorized(msg.sender);
+        address sender = ERC2771Context._msgSender();
+        if (sender != rewardsManager) {
+            revert AccessError.Unauthorized(sender);
         }
 
         if (poolId != servicePoolId) {
@@ -155,7 +158,10 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
             }
         }
 
-        require(i < 0, "SynthetixDebtShare: not found in recent history");
+        if (i >= 0) {
+            revert DebtShareNotFound();
+        }
+
         return 0;
     }
 
@@ -174,7 +180,10 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
             }
         }
 
-        require(i < 0, "SynthetixDebtShare: not found in recent history");
+        if (i >= 0) {
+            revert DebtShareNotFound();
+        }
+
         return 0;
     }
 
@@ -191,8 +200,9 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
     }
 
     function takeSnapshot(uint128 id) external {
-        if (!authorizedToSnapshot[msg.sender]) {
-            revert AccessError.Unauthorized(msg.sender);
+        address sender = ERC2771Context._msgSender();
+        if (!authorizedToSnapshot[sender]) {
+            revert AccessError.Unauthorized(sender);
         }
         if (id <= currentPeriodId) {
             revert ParameterError.InvalidParameter("id", "period id must always increase");

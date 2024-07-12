@@ -3039,7 +3039,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/governance@workspace:*, @synthetixio/governance@workspace:protocol/governance":
+"@synthetixio/governance@workspace:protocol/governance":
   version: 0.0.0-use.local
   resolution: "@synthetixio/governance@workspace:protocol/governance"
   dependencies:
@@ -3202,8 +3202,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/rewards-distributor@workspace:auxiliary/RewardsDistributor"
   dependencies:
-    "@synthetixio/governance": "workspace:*"
-    "@synthetixio/main": "workspace:*"
     "@usecannon/cli": "npm:2.15.2"
     forge-std: "github:foundry-rs/forge-std#master"
   languageName: unknown
