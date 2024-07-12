@@ -2,13 +2,13 @@ name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 
-include = ["./cannonfile.toml"]
+include = ["./cannonfile.satellite.toml", "./tomls/testable-contracts.toml"]
 
 [setting.owner]
 defaultValue = "0x73570075092502472e4b61a7058df1a4a1db12f2"
 
 [setting.salt]
-defaultValue = "governance-test-v3"
+defaultValue = "governance-test-v4"
 
 [setting.wormhole_core]
 defaultValue = "0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35" # https://docs.wormhole.com/wormhole/reference/constants
@@ -18,6 +18,23 @@ defaultValue = "0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470" # https://docs.wormh
 
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"
+
+[router.CoreRouter]
+contracts = [
+    # Satellite Core Contracts
+    "AssociatedSystemsModule",
+    "ElectionModuleSatellite",
+    "SnapshotVotePowerModule",
+    "InitialModuleBundle",
+
+    # Testable storage contracts
+    "TestableCouncilStorage",
+    "TestableBallotStorage",
+    "TestableSnapshotVotePowerStorage",
+    "TestableElectionSettingsStorage",
+    "TestableElectionStorage",
+    "TestableEpochStorage",
+]
 
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"

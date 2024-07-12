@@ -1,0 +1,18 @@
+# Testable storage contracts
+[contract.TestableCouncilStorage]
+artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
+
+[contract.TestableBallotStorage]
+artifact = "contracts/generated/test/TestableBallotStorage.sol:TestableBallotStorage"
+
+[contract.TestableSnapshotVotePowerStorage]
+artifact = "contracts/generated/test/TestableSnapshotVotePowerStorage.sol:TestableSnapshotVotePowerStorage"
+
+[contract.TestableElectionSettingsStorage]
+artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:TestableElectionSettingsStorage"
+
+[contract.TestableElectionStorage]
+artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
+
+[contract.TestableEpochStorage]
+artifact = "contracts/generated/test/TestableEpochStorage.sol:TestableEpochStorage"
