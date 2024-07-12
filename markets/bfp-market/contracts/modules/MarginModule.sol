@@ -527,6 +527,16 @@ contract MarginModule is IMarginModule {
         // Infer the remaining sUSD to burn from `ERC2771Context._msgSender()` after attributing sUSD in margin.
         uint128 amountToBurn = decreaseDebtAmount - sUsdToDeduct;
         if (amountToBurn > 0) {
+            AddressRegistry.Data memory addresses = AddressRegistry.Data({
+                synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                sUsd: SYNTHETIX_SUSD,
+                oracleManager: ORACLE_MANAGER
+            });
+
+            uint256 oraclePrice = market.getOraclePrice(addresses);
+            (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+            emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+
             ISynthetixSystem(SYNTHETIX_CORE).depositMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
