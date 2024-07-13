@@ -1,0 +1,2 @@
+name = "flash-loan-util"
+version = "<%= package.version %>-testable"
