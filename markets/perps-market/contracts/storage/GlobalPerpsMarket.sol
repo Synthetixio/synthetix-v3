@@ -97,9 +97,6 @@ library GlobalPerpsMarket {
 
             accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId, priceTolerance);
         }
-
-        // add the sUSD collateral value to the minimum credit since it's used as escrow
-        accumulatedMinimumCredit += self.collateralAmounts[SNX_USD_MARKET_ID];
     }
 
     function totalCollateralValue(Data storage self) internal view returns (uint256 total) {
