@@ -70,8 +70,6 @@ interface IMarketManagerModule {
         uint256 depositedCollateralValue
     );
 
-    event MarketSystemFeePaid(uint128 indexed marketId, uint256 feeAmount);
-
     /**
      * @notice Emitted when a market sets an updated minimum delegation time
      * @param marketId The id of the market that the setting is applied to
@@ -117,7 +115,7 @@ interface IMarketManagerModule {
      * @param marketId The id of the market in which snxUSD will be deposited.
      * @param target The address of the account on who's behalf the deposit will be made.
      * @param amount The amount of snxUSD to be deposited, denominated with 18 decimals of precision.
-     * @return feeAmount the amount of fees paid (billed as additional debt towards liquidity providers)
+     * @return feeAmount Fee collected by the core system. Always 0 in the current implementation.
      */
     function depositMarketUsd(
         uint128 marketId,
@@ -132,7 +130,7 @@ interface IMarketManagerModule {
      * @param marketId The id of the market from which snxUSD will be withdrawn.
      * @param target The address of the account that will receive the withdrawn snxUSD.
      * @param amount The amount of snxUSD to be withdraw, denominated with 18 decimals of precision.
-     * @return feeAmount the amount of fees paid (billed as additional debt towards liquidity providers)
+     * @return feeAmount Fee collected by the core system. Always 0 in the current implementation.
      */
     function withdrawMarketUsd(
         uint128 marketId,
@@ -144,8 +142,8 @@ interface IMarketManagerModule {
      * @notice Get the amount of fees paid in USD for a call to `depositMarketUsd` and `withdrawMarketUsd` for the given market and amount
      * @param marketId The market to check fees for
      * @param amount The amount deposited or withdrawn in USD
-     * @return depositFeeAmount the amount of USD paid for a call to `depositMarketUsd`
-     * @return withdrawFeeAmount the amount of USD paid for a call to `withdrawMarketUsd`
+     * @return depositFeeAmount the amount of USD paid for a call to `depositMarketUsd`, always 0
+     * @return withdrawFeeAmount the amount of USD paid for a call to `withdrawMarketUsd`, always 0
      */
     function getMarketFees(
         uint128 marketId,

@@ -8,13 +8,13 @@ defaultValue = "10000000000000000"
 defaultValue = "500000000000000000"
 
 [provision.snx]
-source = "mintable-token@permissionless-mint"
+source = "mintable-token:1.8@permissionless-mint"
 options.symbol = "SNX"
 options.name = "Mintable SNX"
 options.salt = "snx"
 
 [provision.usd]
-source = "mintable-token@permissionless-mint"
+source = "mintable-token:1.8@permissionless-mint"
 options.symbol = "USD"
 options.name = "Mintable USD"
 options.salt = "usd"
