@@ -2,10 +2,10 @@ import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
-import { FlashLoanUtil } from '../generated/typechain';
+import { PerpsFlashLoanUtil } from '../generated/typechain';
 
 interface Contracts {
-  flash_loan_util: FlashLoanUtil;
+  perps_flash_loan_util: PerpsFlashLoanUtil;
   'pyth.Pyth': ethers.Contract;
   'snx.MintableToken': ethers.Contract;
   'usd.MintableToken': ethers.Contract;

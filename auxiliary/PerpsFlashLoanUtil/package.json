@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/flash-loan-util",
+  "name": "@synthetixio/perps-flash-loan-util",
   "version": "3.4.0",
   "description": "Flash loan utility contract for Synthetix V3",
   "publishConfig": {
@@ -15,7 +15,7 @@
     "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "publish-contracts": "cannon publish flash-loan-util:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "publish-contracts": "cannon publish perps-flash-loan-util:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
     "deploy": "yarn build && yarn publish-contracts",
     "docgen": "hardhat docgen"
   },

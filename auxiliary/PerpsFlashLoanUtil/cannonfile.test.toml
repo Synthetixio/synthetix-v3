@@ -1,2 +1,2 @@
-name = "flash-loan-util"
+name = "perps-flash-loan-util"
 version = "<%= package.version %>-testable"

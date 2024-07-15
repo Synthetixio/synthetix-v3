@@ -9,13 +9,16 @@ import {ISynthetixCore} from "@synthetixio/v3-contracts/contracts/interfaces/ISy
 import {ISpotMarketProxy} from "@synthetixio/v3-contracts/contracts/interfaces/ISpotMarketProxy.sol";
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
-contract FlashLoanUtil is FlashLoanSimpleReceiverBase {
+contract PerpsFlashLoanUtil is FlashLoanSimpleReceiverBase {
     ISynthetixCore public synthetixCore;
     ISpotMarketProxy public spotMarketProxy;
     ISwapRouter public router;
     address public USDC;
     address public snxUSD;
     uint24 public poolFee;
+
+    // TODO: add pool fee mapping to each margin type
+    // TODO: maybe use pool address instead of pool fee
 
     bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
 
@@ -38,14 +41,15 @@ contract FlashLoanUtil is FlashLoanSimpleReceiverBase {
 
     function requestFlashLoan(
         uint256 _amount,
-        address _collateralType,
+        address _marginType,
         uint128 _marketId,
         uint128 _accountId
     ) public {
         // Check if this contract has the necessary permissions, if not, grant them
-        if (!synthetixCore.hasPermission(_accountId, _ADMIN_PERMISSION, address(this))) {
-            synthetixCore.grantPermission(_accountId, _ADMIN_PERMISSION, address(this));
-        }
+        // TODO: Margin permission
+        // if (!perpsmarketproxy.hasPermission(_accountId, _MARGIN_PERMISSION, address(this))) {
+        //     perpsmarketproxy.grantPermission(_accountId, _ADMIN_PERMISSION, address(this));
+        // }
 
         // Encode the required params and request the flash loan
         address receiverAddress = address(this);
@@ -82,10 +86,10 @@ contract FlashLoanUtil is FlashLoanSimpleReceiverBase {
         IERC20(USDC).approve(address(spotMarketProxy), amount);
         spotMarketProxy.wrap(marketId, amount, 0);
 
-        // Repay Debt
+        //TODO: Repay Debt in perps
         synthetixCore.burnUsd(accountId, poolId, snxUSD, amount);
 
-        // Withdraw Margin
+        // Withdraw Margin in perps
         synthetixCore.withdraw(accountId, collateralType, amount);
 
         // Unwrap collateral to its original form
@@ -100,9 +104,12 @@ contract FlashLoanUtil is FlashLoanSimpleReceiverBase {
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: unwrappedAmount,
-                amountOutMinimum: 0
+                amountOutMinimum: // TODO: calculate minimum amount received - call price view function on Uniswap to get this
+                // sell 1M ETH for x$ swapExactTokensForToken
             });
             unwrappedAmount = router.exactInput(swapParams);
+
+            // TODO: set pool
         }
 
         // Repay flash loan
@@ -115,7 +122,7 @@ contract FlashLoanUtil is FlashLoanSimpleReceiverBase {
         IERC20(collateralType).transfer(sender, remainingCollateral);
 
         // Revoke permission after the operation has completed
-        synthetixCore.revokePermission(accountId, _ADMIN_PERMISSION, address(this));
+        // synthetixCore.revokePermission(accountId, _ADMIN_PERMISSION, address(this));
 
         return true;
     }

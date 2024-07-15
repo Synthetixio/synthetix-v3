@@ -1,3 +1,0 @@
-name = "flash-loan-util"
-version = "<%= package.version %>"
-description = "Flash loan utility contract for Synthetix V3"
