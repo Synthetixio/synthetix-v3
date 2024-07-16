@@ -59,7 +59,12 @@ describe('Position - interest rates - reset', () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
-      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId()));
+
+      const snxUsdValue = wei(await systems().PerpsMarket.globalCollateralValue(0));
+      // remove snxUSD collateral value from min credit (which is added in contracts)
+      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId())).sub(
+        snxUsdValue
+      );
 
       const utilRate = minCredit.div(delegatedCollateral);
       const currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
