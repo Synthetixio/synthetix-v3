@@ -32,7 +32,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         //TODO delete once working
         //TODO delete once working
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        require(address(wh.wormholeRelayer) == ERC2771Context._msgSender(), "Only relayer");
+        WormholeCrossChain.onlyCrossChain();
         emit MessageSent(message);
     }
 
