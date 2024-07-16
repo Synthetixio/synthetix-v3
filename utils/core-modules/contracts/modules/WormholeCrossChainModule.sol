@@ -30,8 +30,6 @@ contract WormholeCrossChainModule is IWormholeReceiver {
 
     function _recMessage(string memory message) external {
         //TODO delete once working
-        //TODO delete once working
-        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         WormholeCrossChain.onlyCrossChain();
         emit MessageSent(message);
     }
