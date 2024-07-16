@@ -1,6 +1,7 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
-version = "4"
+version = "5"
+preset = "test"
 
 include = ["./cannonfile.toml", "./tomls/testable-contracts.toml"]
 
@@ -61,10 +62,17 @@ contracts = [
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
-args = [["10003"], ["0xD9fA68AD1Cc69EB1e72B043ABe313c0191a38cB1"]]
+args = [["10003"], ["0x43028D9Cc7e3BD425b15Ba335059F64595c3E000"]]
+
+[invoke.set_balance_of_on_period]
+target = ["SnapshotRecordMock"]
+from = "<%= settings.owner %>"
+func = "setBalanceOfOnPeriod"
+args = ["<%= settings.owner %>", "100", "1"]
 
 [invoke.set_snapshot_record]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setSnapshotContract"
 args = ["<%= contracts.SnapshotRecordMock.address %>", true]
+
