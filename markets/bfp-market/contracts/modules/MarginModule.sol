@@ -533,8 +533,10 @@ contract MarginModule is IMarginModule {
                 oracleManager: ORACLE_MANAGER
             });
 
-            uint256 oraclePrice = market.getOraclePrice(addresses);
-            (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+            (uint128 utilizationRate, ) = market.recomputeUtilization(
+                market.getOraclePrice(addresses),
+                addresses
+            );
             emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
             ISynthetixSystem(SYNTHETIX_CORE).depositMarketUsd(
