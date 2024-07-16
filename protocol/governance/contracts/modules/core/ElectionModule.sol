@@ -30,7 +30,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     using Ballot for Ballot.Data;
     using Epoch for Epoch.Data;
 
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 
     event MessageReceived(string indexed message);
@@ -180,8 +179,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 newEpoch.votingPeriodStartDate,
                 newEpoch.endDate
             ),
-            0,
-            _CROSSCHAIN_GAS_LIMIT
+            0
         );
 
         emit EpochScheduleUpdated(
@@ -229,8 +227,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 membersToDismiss,
                 council.currentElectionId
             ),
-            0,
-            _CROSSCHAIN_GAS_LIMIT
+            0
         );
 
         CouncilMembers.Data storage membersStore = CouncilMembers.load();
@@ -389,8 +386,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                     epoch.votingPeriodStartDate,
                     epoch.endDate + electionSettings.votingPeriodDuration
                 ),
-                0,
-                _CROSSCHAIN_GAS_LIMIT
+                0
             );
         } else {
             if (election.evaluated) revert ElectionAlreadyEvaluated();
@@ -457,8 +453,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 nextEpoch.endDate,
                 election.winners.values()
             ),
-            0,
-            _CROSSCHAIN_GAS_LIMIT
+            0
         );
 
         emit EpochStarted(council.currentElectionId);

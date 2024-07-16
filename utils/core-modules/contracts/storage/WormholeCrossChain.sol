@@ -28,6 +28,7 @@ library WormholeCrossChain {
 
     struct Data {
         IWormhole wormholeCore;
+        uint256 gasLimit;
         IWormholeRelayer wormholeRelayer;
         SetUtil.UintSet supportedNetworks;
         mapping(uint16 => bytes32) registeredEmitters; //chain id => emitter address (bytes32). If we want to add support for multiple emitters per chain, we pack the address and chain into a single bytes32 that maps to boolean.
@@ -50,6 +51,10 @@ library WormholeCrossChain {
         // solhint-disable-next-line
         self.registeredEmitters[chainId] = bytes32(uint256(uint160(emitter)));
         emit NewEmitter(chainId, emitter);
+    }
+
+    function setGasLimit(Data storage self, uint256 gasLimit) internal {
+        self.gasLimit = gasLimit;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -93,5 +98,19 @@ library WormholeCrossChain {
             chains[i] = chainId;
         }
         return chains;
+    }
+
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
+    function getRegisteredEmitters(Data storage self) internal view returns (bytes32[] memory) {
+        uint16[] memory chainIds = getSupportedNetworks(self);
+        bytes32[] memory emitters = new bytes32[](chainIds.length);
+        for (uint256 i = 0; i < chainIds.length; i++) {
+            emitters[i] = self.registeredEmitters[chainIds[i]];
+        }
+        return emitters;
+    }
+
+    function hasProcessedMsg(Data storage self, bytes32 msgHash) internal view returns (bool) {
+        return self.hasProcessedMessage[msgHash];
     }
 }

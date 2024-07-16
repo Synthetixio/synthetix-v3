@@ -10,6 +10,34 @@ interface IElectionModuleSatellite {
 
     event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
 
+    event InitializedSatellite(
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate,
+        address[] councilMembers
+    );
+
+    event EpochSetup(
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    );
+
+    event EpochScheduleTweaked(
+        uint256 epochIndex,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    );
+
+    event VoteCastSent(address sender, address[] candidates, uint256[] amounts);
+
+    event VoteWithdrawnSent(address sender, address[] candidates);
+
     /// @dev Initialize first epoch of the current election module. Can only be called once.
     function initElectionModuleSatellite(
         uint256 epochIndex,

@@ -30,7 +30,6 @@ contract ElectionModuleSatellite is
     using Epoch for Epoch.Data;
     using SetUtil for SetUtil.AddressSet;
 
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint64 internal constant _MOTHERSHIP_CHAIN_ID = 0;
 
     /**
@@ -68,6 +67,15 @@ contract ElectionModuleSatellite is
             epochEndDate,
             councilMembers
         );
+
+        emit InitializedSatellite(
+            epochIndex,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate,
+            councilMembers
+        );
     }
 
     function isElectionModuleInitialized() public view override returns (bool) {
@@ -80,7 +88,7 @@ contract ElectionModuleSatellite is
 
     ///@dev Casts vote on mothership chain
     function cast(
-        address[] calldata candidates,
+        address[] calldata candidates, //TODO can we change the signature here to just use address candidate
         uint256[] calldata amounts
     ) public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
@@ -113,7 +121,9 @@ contract ElectionModuleSatellite is
         uint16[] memory targetChains = new uint16[](1);
         targetChains[0] = wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID);
 
-        broadcast(wh, targetChains, payload, 0, _CROSSCHAIN_GAS_LIMIT);
+        broadcast(wh, targetChains, payload, 0);
+
+        emit VoteCastSent(sender, candidates, amounts);
     }
 
     ///@dev Withdraws a vote that has already been casted by the sender
@@ -139,9 +149,10 @@ contract ElectionModuleSatellite is
                 block.chainid,
                 candidates
             ),
-            0,
-            _CROSSCHAIN_GAS_LIMIT
+            0
         );
+
+        emit VoteWithdrawnSent(sender, candidates);
     }
 
     function _recvDismissMembers(
@@ -191,6 +202,13 @@ contract ElectionModuleSatellite is
             votingPeriodStartDate,
             epochEndDate
         );
+
+        emit EpochScheduleTweaked(
+            epochIndex,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
     }
 
     function _setupEpoch(
@@ -216,5 +234,13 @@ contract ElectionModuleSatellite is
 
         _removeAllCouncilMembers(prevEpochIndex);
         _addCouncilMembers(councilMembers, epochIndex);
+
+        emit EpochSetup(
+            epochIndex,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
     }
 }

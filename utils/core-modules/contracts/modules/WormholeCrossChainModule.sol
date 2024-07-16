@@ -25,13 +25,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         //TODO delete once working
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         uint16[] memory chains = WormholeCrossChain.getSupportedNetworks(wh);
-        broadcast(
-            wh,
-            chains,
-            abi.encodeWithSelector(this._recMessage.selector, message),
-            0,
-            100000
-        );
+        broadcast(wh, chains, abi.encodeWithSelector(this._recMessage.selector, message), 0);
     }
 
     function _recMessage(string memory message) external {
@@ -68,7 +62,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         bytes32 sourceAddress,
         uint16 sourceChain,
         bytes32 deliveryHash
-    ) public payable override {
+    ) external payable override {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         if (ERC2771Context._msgSender() != address(wh.wormholeRelayer)) revert OnlyRelayer();
 
@@ -86,8 +80,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint16[] memory targetChains,
         // address /*targetAddress*/,
         bytes memory payload,
-        uint256 receiverValue,
-        uint256 gasLimit
+        uint256 receiverValue
     ) internal returns (uint64 sequence) {
         uint256 targetChainsLength = targetChains.length;
         uint256 totalCost = receiverValue * targetChainsLength;
@@ -102,14 +95,17 @@ contract WormholeCrossChainModule is IWormholeReceiver {
             } else {
                 // If the target chain is different, we need to transmit the message to the WormholeRelayer
                 // to be sent to the target chain
-                uint256 cost = quoteCrossChainDeliveryPrice(targetChain, receiverValue, gasLimit);
+                uint256 cost = quoteCrossChainDeliveryPrice(
+                    targetChain,
+                    receiverValue,
+                    self.gasLimit
+                );
                 sequence = transmit(
                     self,
                     targetChain,
                     toAddress(self.registeredEmitters[targetChain]),
                     payload,
                     receiverValue,
-                    gasLimit,
                     cost
                 );
                 totalCost += cost;
@@ -131,7 +127,6 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         address targetAddress,
         bytes memory payload,
         uint256 receiverValue,
-        uint256 gasLimit,
         uint256 cost
     ) internal returns (uint64 sequence) {
         sequence = self.wormholeRelayer.sendPayloadToEvm{value: cost}(
@@ -139,10 +134,16 @@ contract WormholeCrossChainModule is IWormholeReceiver {
             targetAddress,
             payload,
             receiverValue,
-            gasLimit,
+            self.gasLimit,
             self.wormholeCore.chainId(),
             ERC2771Context._msgSender()
         );
+    }
+
+    function setGasLimit(uint256 gasLimit) external {
+        OwnableStorage.onlyOwner();
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        WormholeCrossChain.setGasLimit(wh, gasLimit);
     }
 
     ///@dev returns wormhole core contract address
@@ -162,6 +163,16 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         return WormholeCrossChain.getSupportedNetworks(wh);
     }
 
+    function getRegisteredEmitters() external view returns (bytes32[] memory) {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        return WormholeCrossChain.getRegisteredEmitters(wh);
+    }
+
+    function hasProcessedMsg(bytes32 deliveryHash) external view returns (bool) {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        return wh.hasProcessedMessage[deliveryHash];
+    }
+
     ///@dev Returns the cost (in wei) of a cross-chain message
     ///@notice all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function quoteCrossChainDeliveryPrice(
@@ -170,8 +181,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         uint256 gasLimit
     ) public view returns (uint256 cost) {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        // Cost of requesting a message to be sent to
-        // chain 'targetChain' with a gasLimit of 'GAS_LIMIT'
+        // Cost of requesting a message to be sent to `targetChain` with `gasLimit`
         (cost, ) = wh.wormholeRelayer.quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
     }
 

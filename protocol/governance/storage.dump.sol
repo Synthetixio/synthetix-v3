@@ -203,6 +203,7 @@ library WormholeCrossChain {
     bytes32 private constant _SLOT_WORMHOLE_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.core-modules.WormholeCrossChain"));
     struct Data {
         address wormholeCore;
+        uint256 gasLimit;
         address wormholeRelayer;
         SetUtil.UintSet supportedNetworks;
         mapping(uint16 => bytes32) registeredEmitters;
@@ -218,13 +219,11 @@ library WormholeCrossChain {
 
 // @custom:artifact contracts/modules/core/ElectionModule.sol:ElectionModule
 contract ElectionModule {
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 }
 
 // @custom:artifact contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite
 contract ElectionModuleSatellite {
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint64 internal constant _MOTHERSHIP_CHAIN_ID = 0;
 }
 
