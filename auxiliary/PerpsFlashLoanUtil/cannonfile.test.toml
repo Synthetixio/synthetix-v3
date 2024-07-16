@@ -1,2 +1,42 @@
 name = "perps-flash-loan-util"
 version = "<%= package.version %>-testable"
+
+[setting.synthetix_core_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.spot_market_proxy_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.perps_market_proxy_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.quoter_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.router_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[provision.usdc]
+source = "mintable-token:1.8@permissionless-mint"
+options.symbol = "USDC"
+options.name = "Mintable USDC"
+options.salt = "usdc"
+
+[provision.snxusd]
+source = "mintable-token:1.8@permissionless-mint"
+options.symbol = "snxUSD"
+options.name = "Mintable snxUSD"
+options.salt = "snxusd"
+
+[contract.perps_flash_loan_util]
+artifact = "contracts/PerpsFlashLoanUtil.sol:PerpsFlashLoanUtil"
+args = [
+    "<%= imports.usdc.contracts.MintableToken.address %>",
+    "<%= imports.snxusd.contracts.MintableToken.address %>",
+    "<%= settings.synthetix_core_address %>",
+    "<%= settings.spot_market_proxy_address %>",
+    "<%= settings.perps_market_proxy_address %>",
+    "<%= settings.quoter_address %>",
+    "<%= settings.router_address %>"
+]
+create2 = true

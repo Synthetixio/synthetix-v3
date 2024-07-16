@@ -5,10 +5,13 @@ import { ethers } from 'ethers';
 import { PerpsFlashLoanUtil } from '../generated/typechain';
 
 interface Contracts {
-  perps_flash_loan_util: PerpsFlashLoanUtil;
-  'pyth.Pyth': ethers.Contract;
-  'snx.MintableToken': ethers.Contract;
-  'usd.MintableToken': ethers.Contract;
+  PerpsFlashLoanUtil: PerpsFlashLoanUtil;
+  MintableToken: ethers.Contract;
+  SynthetixCore: ethers.Contract;
+  SpotMarketProxy: ethers.Contract;
+  PerpsMarketProxy: ethers.Contract;
+  Quoter: ethers.Contract;
+  SwapRouter: ethers.Contract;
 }
 
 const params = { cannonfile: 'cannonfile.test.toml' };

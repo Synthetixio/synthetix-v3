@@ -1,3 +1,37 @@
 name = "perps-flash-loan-util"
 version = "<%= package.version %>"
-description = "Flash loan utility contract for closing perps positions"
+description = "Flash loan utility contract for closing perps v3 positions"
+
+[setting.usdc_token]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.snxusd_token]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.synthetix_core_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.spot_market_proxy_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.perps_market_proxy_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.quoter_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.router_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[contract.perps_flash_loan_util]
+artifact = "contracts/PerpsFlashLoanUtil.sol:PerpsFlashLoanUtil"
+args = [
+    "<%= settings.usdc_token %>",
+    "<%= settings.snxusd_token %>",
+    "<%= settings.synthetix_core_address %>",
+    "<%= settings.spot_market_proxy_address %>",
+    "<%= settings.perps_market_proxy_address %>",
+    "<%= settings.quoter_address %>",
+    "<%= settings.router_address %>"
+]
+create2 = true
