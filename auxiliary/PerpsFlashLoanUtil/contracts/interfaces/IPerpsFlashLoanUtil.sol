@@ -38,9 +38,9 @@ interface IPerpsFlashLoanUtil {
     ) external returns (bool success);
 
     /**
-     * @notice Sets the Uniswap pool fee for a given collateral type.
+     * @notice Sets the Uniswap pool address for a given collateral type.
      * @param _collateralType The address of the collateral type.
-     * @param _poolFee The pool fee to be set for the collateral type.
+     * @param _poolAddress The pool address to be set for the collateral type.
      */
-    function setPoolFee(address _collateralType, uint24 _poolFee) external;
+    function setPoolAddress(address _collateralType, address _poolAddress) external;
 }

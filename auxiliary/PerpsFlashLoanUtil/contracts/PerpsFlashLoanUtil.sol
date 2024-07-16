@@ -27,7 +27,7 @@ contract PerpsFlashLoanUtil is FlashLoanSimpleReceiverBase, IPerpsFlashLoanUtil 
 
     IQuoter public quoter;
     ISwapRouter public router;
-    mapping(address => uint24) public poolFees;
+    mapping(address => address) public poolAddresses;
 
     address public USDC;
     address public snxUSD;
@@ -113,8 +113,8 @@ contract PerpsFlashLoanUtil is FlashLoanSimpleReceiverBase, IPerpsFlashLoanUtil 
         if (collateralType != USDC) {
             IERC20(collateralType).approve(address(router), unwrappedAmount);
 
-            uint24 poolFee = poolFees[collateralType];
-            require(poolFee > 0, "Pool fee not set");
+            address poolAddress = poolAddresses[collateralType];
+            require(poolAddress != address(0), "Pool address not set");
 
             uint256 amountOutMinimum = quoter.quoteExactInput(
                 abi.encodePacked(collateralType, poolFee, USDC),
@@ -122,7 +122,7 @@ contract PerpsFlashLoanUtil is FlashLoanSimpleReceiverBase, IPerpsFlashLoanUtil 
             );
 
             ISwapRouter.ExactInputParams memory swapParams = ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(collateralType, poolFee, USDC),
+                path: abi.encodePacked(collateralType, poolAddress, USDC),
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: unwrappedAmount,
@@ -144,9 +144,9 @@ contract PerpsFlashLoanUtil is FlashLoanSimpleReceiverBase, IPerpsFlashLoanUtil 
     /**
      * @inheritdoc IPerpsFlashLoanUtil
      */
-    function setPoolFee(address _collateralType, uint24 _poolFee) external override {
+    function setPoolAddress(address _collateralType, address _poolAddress) external override {
         OwnableStorage.onlyOwner();
-        poolFees[_collateralType] = _poolFee;
+        poolAddresses[_collateralType] = _poolAddress;
     }
 
     receive() external payable {}
