@@ -172,11 +172,12 @@ library Position {
      */
     function validateNextPositionEnoughMargin(
         Position.Data memory newPosition,
+        int128 oldPositionSize,
         uint256 oraclePrice,
         uint256 im,
-        uint256 mm,
         uint256 nextMarginUsd
     ) internal pure {
+        int128 sizeDelta = oldPositionSize - newPosition.size;
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
@@ -184,7 +185,7 @@ library Position {
         // NOTE: The `min(delta, 0)` as we only want to _reduce_ their remaining margin, not increase it in the case where
         // a discount is applied for reducing skew.
         int256 fillPremium = MathUtil.min(
-            newPosition.size.mulDecimal(oraclePrice.toInt() - newPosition.entryPrice.toInt()),
+            sizeDelta.mulDecimal(oraclePrice.toInt() - newPosition.entryPrice.toInt()),
             0
         );
         uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
@@ -298,9 +299,9 @@ library Position {
             // Check new position margin validations.
             validateNextPositionEnoughMargin(
                 newPosition,
+                currentPosition.size,
                 params.oraclePrice,
                 runtime.im,
-                runtime.mm,
                 runtime.discountedNextMarginUsd
             );
 
