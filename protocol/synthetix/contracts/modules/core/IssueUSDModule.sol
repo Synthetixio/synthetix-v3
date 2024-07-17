@@ -78,16 +78,6 @@ contract IssueUSDModule is IIssueUSDModule {
             );
         }
 
-        uint256 feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_MINT_FEE_RATIO, 0));
-        address feeAddress = address(0);
-        address configFeeAddress = Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0));
-
-        if (feeAmount > 0 && configFeeAddress != address(0)) {
-            feeAddress = configFeeAddress;
-        }
-
-        newDebt += feeAmount.toInt();
-
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         if (newDebt > 0) {
@@ -99,7 +89,7 @@ contract IssueUSDModule is IIssueUSDModule {
         }
 
         // Increase the debt of the position
-        pool.assignDebtToAccount(collateralType, accountId, (amount + feeAmount).toInt());
+        pool.assignDebtToAccount(collateralType, accountId, amount.toInt());
 
         // Decrease the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
@@ -110,12 +100,6 @@ contract IssueUSDModule is IIssueUSDModule {
         usdToken.asToken().mint(address(this), amount);
 
         account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(amount);
-
-        if (feeAmount > 0 && feeAddress != address(0)) {
-            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
-
-            emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
-        }
 
         emit UsdMinted(accountId, poolId, collateralType, amount, ERC2771Context._msgSender());
     }
@@ -146,18 +130,9 @@ contract IssueUSDModule is IIssueUSDModule {
             revert InsufficientDebt(debt);
         }
 
-        uint256 feePercent = Config.readUint(_CONFIG_BURN_FEE_RATIO, 0);
-        uint256 feeAmount = amount - amount.divDecimal(DecimalMath.UNIT + feePercent);
-        address feeAddress = address(0);
-        address configFeeAddress = Config.readAddress(_CONFIG_BURN_FEE_ADDRESS, address(0));
-
-        if (feeAmount > 0 && configFeeAddress != address(0)) {
-            feeAddress = configFeeAddress;
-        }
         // Only allow burning the total debt of the position
-        if (amount.toInt() > debt + debt.mulDecimal(feePercent.toInt())) {
-            feeAmount = debt.toUint().mulDecimal(feePercent);
-            amount = debt.toUint() + feeAmount;
+        if (amount.toInt() > debt) {
+            amount = debt.toUint();
         }
 
         AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
@@ -167,13 +142,8 @@ contract IssueUSDModule is IIssueUSDModule {
 
         account.collaterals[usdToken.getAddress()].decreaseAvailableCollateral(amount);
 
-        if (feeAmount > 0 && feeAddress != address(0)) {
-            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
-
-            emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
-        }
         // Decrease the debt of the position
-        pool.assignDebtToAccount(collateralType, accountId, -(amount - feeAmount).toInt());
+        pool.assignDebtToAccount(collateralType, accountId, -amount.toInt());
 
         // Increase the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);

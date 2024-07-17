@@ -113,6 +113,12 @@ contract OpGasPriceOracle {
     uint256 public constant KIND_SETTLEMENT = 0;
     uint256 public constant KIND_FLAG = 1;
     uint256 public constant KIND_LIQUIDATE = 2;
+    enum OvmGasPriceOracleMode {
+        BEDROCK,
+        ECOTONE,
+        FJORD,
+        UNDEFINED
+    }
     struct RuntimeParams {
         uint256 l1SettleGasUnits;
         uint256 l2SettleGasUnits;
@@ -120,6 +126,9 @@ contract OpGasPriceOracle {
         uint256 l2FlagGasUnits;
         uint256 l1LiquidateGasUnits;
         uint256 l2LiquidateGasUnits;
+        uint256 settleTxSize;
+        uint256 flagTxSize;
+        uint256 liquidateTxSize;
         uint256 numberOfUpdatedFeeds;
         uint256 executionKind;
     }
