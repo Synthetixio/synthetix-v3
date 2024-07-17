@@ -117,7 +117,7 @@ contract PerpsFlashLoanUtil is FlashLoanSimpleReceiverBase, IPerpsFlashLoanUtil 
             require(poolAddress != address(0), "Pool address not set");
 
             uint256 amountOutMinimum = quoter.quoteExactInput(
-                abi.encodePacked(collateralType, poolFee, USDC),
+                abi.encodePacked(collateralType, poolAddress, USDC),
                 unwrappedAmount
             );
 
