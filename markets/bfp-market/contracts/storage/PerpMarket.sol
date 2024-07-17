@@ -178,10 +178,18 @@ library PerpMarket {
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price,
-        AddressRegistry.Data memory addresses
+        AddressRegistry.Data memory addresses,
+        int128 sizeDelta
     ) internal view returns (uint256) {
+        uint128 futureSize = self.size;
+        if (sizeDelta != 0) {
+            futureSize = sizeDelta > 0
+                ? self.size + sizeDelta.toUint()
+                : self.size - MathUtil.abs(sizeDelta).to128();
+        }
+
         return
-            self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            futureSize.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
             self.depositedCollateral[addresses.sUsd];
     }
 
