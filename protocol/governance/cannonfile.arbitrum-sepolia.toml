@@ -6,7 +6,7 @@ preset = "test"
 include = ["./cannonfile.satellite.toml", "./tomls/testable-contracts.toml"]
 
 [setting.owner]
-defaultValue = "0x73570075092502472e4b61a7058df1a4a1db12f2"
+defaultValue = "0x73570075092502472E4b61A7058Df1A4a1DB12f2"
 
 [setting.salt]
 defaultValue = "governance-test-v4"
@@ -24,16 +24,16 @@ defaultValue = "<%= settings.owner %>"
 defaultValue = "0"
 
 [setting.initial_epoch_start_date]
-defaultValue = "1720800612"
+defaultValue = "0"
 
 [setting.initial_nomination_period_start_date]
-defaultValue = "1725984612"
+defaultValue = "0"
 
 [setting.initial_voting_period_start_date]
-defaultValue = "1727280612"
+defaultValue = "0"
 
 [setting.initial_epoch_end_date]
-defaultValue = "1728576612"
+defaultValue = "0"
 
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
@@ -57,12 +57,6 @@ contracts = [
     "TestableEpochStorage",
 ]
 
-[invoke.set_registered_emitters]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setRegisteredEmitters"
-args = [["10005"], ["0x43028D9Cc7e3BD425b15Ba335059F64595c3E000"]]
-
 [invoke.set_balance_of_on_period]
 target = ["SnapshotRecordMock"]
 from = "<%= settings.owner %>"
@@ -74,3 +68,9 @@ target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setSnapshotContract"
 args = ["<%= contracts.SnapshotRecordMock.address %>", true]
+
+[invoke.set_registered_emitters]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setRegisteredEmitters"
+args = [["10005"], ["0x43028D9Cc7e3BD425b15Ba335059F64595c3E000"]]

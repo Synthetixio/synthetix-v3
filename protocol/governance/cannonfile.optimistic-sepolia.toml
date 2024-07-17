@@ -58,12 +58,6 @@ contracts = [
     "TestableEpochStorage",
 ]
 
-[invoke.set_registered_emitters]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setRegisteredEmitters"
-args = [["10003"], ["0x43028D9Cc7e3BD425b15Ba335059F64595c3E000"]]
-
 [invoke.set_balance_of_on_period]
 target = ["SnapshotRecordMock"]
 from = "<%= settings.owner %>"
@@ -76,3 +70,8 @@ from = "<%= settings.owner %>"
 func = "setSnapshotContract"
 args = ["<%= contracts.SnapshotRecordMock.address %>", true]
 
+[invoke.set_registered_emitters]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setRegisteredEmitters"
+args = [["10003"], ["0x43028D9Cc7e3BD425b15Ba335059F64595c3E000"]]
