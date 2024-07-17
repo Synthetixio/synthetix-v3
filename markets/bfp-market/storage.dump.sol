@@ -713,6 +713,7 @@ contract PerpAccountModule {
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 fromAccountCollateral;
+        int256 fromSize;
     }
 }
 
