@@ -29,10 +29,10 @@ library WormholeCrossChain {
     struct Data {
         IWormhole wormholeCore;
         IWormholeRelayer wormholeRelayer;
+        uint256 gasLimit;
         SetUtil.UintSet supportedNetworks;
         mapping(uint16 => bytes32) registeredEmitters; //chain id => emitter address (bytes32). If we want to add support for multiple emitters per chain, we pack the address and chain into a single bytes32 that maps to boolean.
         mapping(bytes32 => bool) hasProcessedMessage;
-        uint256 gasLimit;
     }
 
     ///@dev adds supported network to storage, used for cross-chain network verification

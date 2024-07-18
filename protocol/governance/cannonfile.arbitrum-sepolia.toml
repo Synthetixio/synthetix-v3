@@ -9,7 +9,7 @@ include = ["./cannonfile.satellite.toml", "./tomls/testable-contracts.toml"]
 defaultValue = "0x73570075092502472E4b61A7058Df1A4a1DB12f2"
 
 [setting.salt]
-defaultValue = "governance-test-v4"
+defaultValue = "governance-test-v5"
 
 [setting.wormhole_core]
 defaultValue = "0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35" # https://docs.wormhole.com/wormhole/reference/constants
@@ -73,4 +73,4 @@ args = ["<%= settings.owner %>", "100", "1"]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
-args = [["10005"], ["0x43028D9Cc7e3BD425b15Ba335059F64595c3E000"]]
+args = [["10005"], ["0xCf84c9C2be639AE363713857d797e857Ba9B89c3"]]
