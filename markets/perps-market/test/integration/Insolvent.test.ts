@@ -17,7 +17,7 @@ const interestRateParams = {
   highUtilGradient: wei(0.01),
 };
 
-describe('Position - interest rates', () => {
+describe('Insolvent test', () => {
   const { systems, perpsMarkets, superMarketId, provider, trader1, keeper, staker } =
     bootstrapMarkets({
       interestRateParams: {
@@ -54,7 +54,11 @@ describe('Position - interest rates', () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
-      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId()));
+
+      const snxUsdValue = wei(await systems().PerpsMarket.globalCollateralValue(0));
+      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId())).sub(
+        snxUsdValue
+      );
 
       const utilRate = delegatedCollateral.gt(0) ? minCredit.div(delegatedCollateral) : wei(1);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
