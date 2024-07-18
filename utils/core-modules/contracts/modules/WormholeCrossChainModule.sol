@@ -40,14 +40,16 @@ contract WormholeCrossChainModule is IWormholeReceiver {
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        if (chainIds.length != emitters.length) {
+        uint256 length = chainIds.length;
+
+        if (length != emitters.length) {
             revert ParameterError.InvalidParameter(
                 "emitters",
                 "must match length of supportedNetworks"
             );
         }
 
-        for (uint256 i = 0; i < chainIds.length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             WormholeCrossChain.addSupportedNetwork(wh, chainIds[i]);
             WormholeCrossChain.addEmitter(wh, chainIds[i], emitters[i]);
         }

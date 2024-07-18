@@ -63,11 +63,11 @@ from = "<%= settings.owner %>"
 func = "setBalanceOfOnPeriod"
 args = ["<%= settings.owner %>", "100", "1"]
 
-[invoke.set_snapshot_record]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setSnapshotContract"
-args = ["<%= contracts.SnapshotRecordMock.address %>", true]
+# [invoke.set_snapshot_record]
+# target = ["GovernanceProxy"]
+# from = "<%= settings.owner %>"
+# func = "setSnapshotContract"
+# args = ["<%= contracts.SnapshotRecordMock.address %>", true]
 
 [invoke.set_registered_emitters]
 target = ["GovernanceProxy"]
