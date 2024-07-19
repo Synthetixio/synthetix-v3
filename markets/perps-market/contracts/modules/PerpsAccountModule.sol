@@ -9,11 +9,13 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
+import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {InterestRate} from "../storage/InterestRate.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
@@ -94,14 +96,21 @@ contract PerpsAccountModule is IPerpsAccountModule {
 
     // 1. call depositMarketUsd and deposit amount directly to core system
     // 2. look up account and reduce debt by amount
-    // 3b. quoteUnwrap() -> inchQuote -> returnAmount
     function payDebt(uint128 accountId, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         Account.exists(accountId);
+
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        uint256 debtPaid = account.payDebt(amount);
 
-        account.payDebt(amount);
+        emit DebtPaid(accountId, debtPaid, ERC2771Context._msgSender());
 
-        emit DebtPaid(accountId, amount, ERC2771Context._msgSender());
+        // update interest rate after debt paid since credit capacity for market has increased
+        (uint128 interestRate, ) = InterestRate.update(PerpsPrice.Tolerance.DEFAULT);
+        emit IGlobalPerpsMarketModule.InterestRateUpdated(
+            PerpsMarketFactory.load().perpsMarketId,
+            interestRate
+        );
     }
 
     /**
