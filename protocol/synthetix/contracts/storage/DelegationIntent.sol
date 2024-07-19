@@ -32,10 +32,6 @@ library DelegationIntent {
      */
     struct Data {
         /**
-         * @notice An incrementing id (nonce) to ensure the  uniqueness of the intent and prevent replay attacks
-         */
-        uint256 id;
-        /**
          * @notice The ID of the account that has an outstanding intent to delegate a new amount of collateral to
          */
         uint128 accountId;
@@ -82,7 +78,8 @@ library DelegationIntent {
     function loadValid(uint256 id) internal view returns (Data storage delegationIntent) {
         delegationIntent = load(id);
 
-        if (delegationIntent.id != id) {
+        // Notice, using declarationTime as a proxy for existence to reduce the struct by one slot removing the id
+        if (delegationIntent.declarationTime == 0) {
             revert IVaultModule.DelegationIntentNotExists();
         }
     }

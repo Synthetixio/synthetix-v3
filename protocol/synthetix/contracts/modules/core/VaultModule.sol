@@ -156,7 +156,6 @@ contract VaultModule is IVaultModule {
         // Create a new delegation intent.
         intentId = DelegationIntent.nextId();
         DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
-        intent.id = intentId;
         intent.accountId = accountId;
         intent.poolId = poolId;
         intent.collateralType = collateralType;
@@ -199,15 +198,16 @@ contract VaultModule is IVaultModule {
             .getDelegationIntents();
 
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
-            if (!accountIntents.isInCurrentEpoch(intent.id)) {
-                revert DelegationIntentNotInCurrentEpoch(intent.id);
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
+            if (!accountIntents.isInCurrentEpoch(intentId)) {
+                revert DelegationIntentNotInCurrentEpoch(intentId);
             }
 
             if (!intent.isExecutable()) {
                 // emit an Skipped event
                 emit DelegationIntentSkipped(
-                    intent.id,
+                    intentId,
                     accountId,
                     intent.poolId,
                     intent.collateralType
@@ -217,7 +217,7 @@ contract VaultModule is IVaultModule {
                 if (intent.intentExpired()) {
                     accountIntents.removeIntent(intent);
                     emit DelegationIntentRemoved(
-                        intent.id,
+                        intentId,
                         accountId,
                         intent.poolId,
                         intent.collateralType
@@ -242,16 +242,11 @@ contract VaultModule is IVaultModule {
 
             // Remove the intent.
             accountIntents.removeIntent(intent);
-            emit DelegationIntentRemoved(
-                intent.id,
-                accountId,
-                intent.poolId,
-                intent.collateralType
-            );
+            emit DelegationIntentRemoved(intentId, accountId, intent.poolId, intent.collateralType);
 
             // emit an event
             emit DelegationIntentProcessed(
-                intent.id,
+                intentId,
                 accountId,
                 intent.poolId,
                 intent.collateralType
@@ -313,12 +308,13 @@ contract VaultModule is IVaultModule {
             .load(accountId)
             .getDelegationIntents();
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
             if (intent.accountId != accountId) {
                 revert InvalidDelegationIntent();
             }
             if (!intent.intentExpired()) {
-                revert DelegationIntentNotExpired(intent.id);
+                revert DelegationIntentNotExpired(intentId);
             }
             accountIntents.removeIntent(intent);
         }
