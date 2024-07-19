@@ -211,7 +211,6 @@ library Config {
 library DelegationIntent {
     bytes32 private constant _ATOMIC_VALUE_LATEST_ID = "delegateIntent_idAsNonce";
     struct Data {
-        uint256 id;
         uint128 accountId;
         uint128 poolId;
         address collateralType;

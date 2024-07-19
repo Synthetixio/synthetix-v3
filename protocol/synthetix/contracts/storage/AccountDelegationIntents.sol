@@ -28,15 +28,19 @@ library AccountDelegationIntents {
         mapping(address => int256) netDelegatedAmountPerCollateral; // collateralType => net delegatedCollateralAmount
     }
 
-    function addIntent(Data storage self, DelegationIntent.Data storage delegationIntent) internal {
-        self.intentsId.add(delegationIntent.id);
+    function addIntent(
+        Data storage self,
+        DelegationIntent.Data storage delegationIntent,
+        uint256 intentId
+    ) internal {
+        self.intentsId.add(intentId);
         self
             .intentsByPair[
                 keccak256(
                     abi.encodePacked(delegationIntent.poolId, delegationIntent.collateralType)
                 )
             ]
-            .add(delegationIntent.id);
+            .add(intentId);
 
         self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
             .deltaCollateralAmountD18;
@@ -48,20 +52,21 @@ library AccountDelegationIntents {
 
     function removeIntent(
         Data storage self,
-        DelegationIntent.Data storage delegationIntent
+        DelegationIntent.Data storage delegationIntent,
+        uint256 intentId
     ) internal {
-        if (!self.intentsId.contains(delegationIntent.id)) {
+        if (!self.intentsId.contains(intentId)) {
             return;
         }
 
-        self.intentsId.remove(delegationIntent.id);
+        self.intentsId.remove(intentId);
         self
             .intentsByPair[
                 keccak256(
                     abi.encodePacked(delegationIntent.poolId, delegationIntent.collateralType)
                 )
             ]
-            .remove(delegationIntent.id);
+            .remove(intentId);
 
         self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
             .deltaCollateralAmountD18;
@@ -100,9 +105,10 @@ library AccountDelegationIntents {
     function cleanAllExpiredIntents(Data storage self) internal {
         uint256[] memory intentIds = self.intentsId.values();
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
             if (intent.intentExpired()) {
-                removeIntent(self, intent);
+                removeIntent(self, intent, intentId);
             }
         }
     }

@@ -164,7 +164,7 @@ contract VaultModule is IVaultModule {
         intent.declarationTime = block.timestamp.to32();
 
         // Add intent to the account's delegation intents.
-        accountIntents.addIntent(intent);
+        accountIntents.addIntent(intent, intentId);
 
         // emit an event
         emit DelegationIntentDeclared(
@@ -215,7 +215,7 @@ contract VaultModule is IVaultModule {
 
                 // If expired, remove the intent.
                 if (intent.intentExpired()) {
-                    accountIntents.removeIntent(intent);
+                    accountIntents.removeIntent(intent, intentId);
                     emit DelegationIntentRemoved(
                         intentId,
                         accountId,
@@ -241,7 +241,7 @@ contract VaultModule is IVaultModule {
             );
 
             // Remove the intent.
-            accountIntents.removeIntent(intent);
+            accountIntents.removeIntent(intent, intentId);
             emit DelegationIntentRemoved(intentId, accountId, intent.poolId, intent.collateralType);
 
             // emit an event
@@ -285,8 +285,9 @@ contract VaultModule is IVaultModule {
             .load(accountId)
             .getDelegationIntents();
         for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
-            accountIntents.removeIntent(intent);
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
+            accountIntents.removeIntent(intent, intentId);
         }
     }
 
@@ -316,7 +317,7 @@ contract VaultModule is IVaultModule {
             if (!intent.intentExpired()) {
                 revert DelegationIntentNotExpired(intentId);
             }
-            accountIntents.removeIntent(intent);
+            accountIntents.removeIntent(intent, intentId);
         }
     }
 
