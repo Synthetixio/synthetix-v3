@@ -50,13 +50,6 @@ factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
 
-[contract.SNXDistributor]
-artifact = "SNXDistributor"
-
-args = ["<%= contracts.Proxy.address %>"]
-
-depends = ["invoke.upgradeProxy"]
-
 [invoke.setSystemAddresses]
 target = ["Proxy"]
 from = "<%= settings.owner %>"
@@ -64,7 +57,7 @@ func = "setSystemAddresses"
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
     "<%= imports.v3.contracts.CoreProxy.address %>",
-    "<%= contracts.SNXDistributor.address %>",
+    "<%= AddressZero %>",                                   # snx distributor no longer needed
 ]
 
 # add pool owner to pool feature flag allow list
@@ -103,6 +96,18 @@ args = []
 extra.marketId.event = "MarketRegistered"
 extra.marketId.arg = 1
 depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
+
+# tell the v3 system its ok for this market to assume unlimited debt (to allow underwarter stakers to be converted and then liquidated)
+[invoke.setConfigAssociateUnlimitedDebt]
+target = ["v3.CoreProxy"]
+fromCall.func = "owner"
+func = "setConfig"
+args = [
+    "<%= keccak256(defaultAbiCoder.encode(['bytes32', 'uint256'], [formatBytes32String('associateDebtRatioExclusion'), settings.marketId])) %>",
+    "<%= hexZeroPad(contracts.Proxy.address, 32) %>",
+]
+
+depends = ['invoke.registerMarket']
 
 # set up on v2x
 [invoke.associate]

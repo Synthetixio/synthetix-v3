@@ -12,6 +12,7 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
+import "../../storage/Config.sol";
 
 /**
  * @title Module for associating debt with the system.
@@ -81,11 +82,18 @@ contract AssociateDebtModule is IAssociateDebtModule {
         );
 
         // Reverts if this debt increase would make the position liquidatable
-        _verifyCollateralRatio(
-            collateralType,
-            updatedDebt > 0 ? updatedDebt.toUint() : 0,
-            actorCollateralValue
-        );
+        // Certain "trusted" markets are allowed to overcome this restriction
+        if (
+            Config.readAddress(
+                keccak256(abi.encode(bytes32("associateDebtRatioExclusion"), marketId))
+            ) != marketData.marketAddress
+        ) {
+            _verifyCollateralRatio(
+                collateralType,
+                updatedDebt > 0 ? updatedDebt.toUint() : 0,
+                actorCollateralValue
+            );
+        }
 
         emit DebtAssociated(marketId, poolId, collateralType, accountId, amount, updatedDebt);
 
