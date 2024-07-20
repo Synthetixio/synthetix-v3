@@ -26,7 +26,7 @@ library UniswapNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
         (
             address token,
             address stablecoin,

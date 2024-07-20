@@ -30,38 +30,38 @@ library ReducerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (NodeOutput.Data memory nodeOutput) {
+    ) internal pure returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.RECENT) {
-            return recent(parentNodeOutputs);
+            nodeOutput = recent(parentNodeOutputs);
         }
         if (operation == Operations.MIN) {
-            return min(parentNodeOutputs);
+            nodeOutput = min(parentNodeOutputs);
         }
         if (operation == Operations.MAX) {
-            return max(parentNodeOutputs);
+            nodeOutput = max(parentNodeOutputs);
         }
         if (operation == Operations.MEAN) {
-            return mean(parentNodeOutputs);
+            nodeOutput = mean(parentNodeOutputs);
         }
         if (operation == Operations.MEDIAN) {
-            return median(parentNodeOutputs);
+            nodeOutput = median(parentNodeOutputs);
         }
         if (operation == Operations.MUL) {
-            return mul(parentNodeOutputs);
+            nodeOutput = mul(parentNodeOutputs);
         }
         if (operation == Operations.DIV) {
-            return div(parentNodeOutputs);
+            nodeOutput = div(parentNodeOutputs);
         }
         if (operation == Operations.MULDECIMAL) {
-            return mulDecimal(parentNodeOutputs);
+            nodeOutput = mulDecimal(parentNodeOutputs);
         }
         if (operation == Operations.DIVDECIMAL) {
-            return divDecimal(parentNodeOutputs);
+            nodeOutput = divDecimal(parentNodeOutputs);
         }
 
-        revert UnsupportedOperation(operation);
+        possibleError = abi.encodeWithSelector(UnsupportedOperation.selector, operation);
     }
 
     function median(

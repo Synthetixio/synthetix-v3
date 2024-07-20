@@ -16,6 +16,11 @@ interface INodeModule {
      */
     error InvalidNodeDefinition(NodeDefinition.Data nodeType);
 
+		/**
+		 * @notice An array of revert reasons when an array of nodes is processed, but some of the nodes failed
+		 */ 
+		error Errors(bytes[] revertReasons);
+
     /**
      * @notice Emitted when `registerNode` is called.
      * @param nodeId The id of the registered node.

@@ -14,7 +14,7 @@ library StalenessCircuitBreakerNode {
         NodeDefinition.Data memory nodeDefinition,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
         uint256 stalenessTolerance = abi.decode(nodeDefinition.parameters, (uint256));
 
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
@@ -25,23 +25,29 @@ library StalenessCircuitBreakerNode {
         }
 
         bytes32 priceNodeId = nodeDefinition.parents[0];
-        NodeOutput.Data memory priceNodeOutput = NodeDefinition.process(
+				NodeOutput.Data memory priceNodeOutput;
+        (possibleError, priceNodeOutput) = NodeDefinition.process(
             priceNodeId,
             runtimeKeys,
             runtimeValues
         );
 
+				if (possibleError.length > 0) {
+					return (possibleError, nodeOutput);
+				}
+
         if (block.timestamp - stalenessTolerance <= priceNodeOutput.timestamp) {
-            return priceNodeOutput;
+            return (possibleError, priceNodeOutput);
         } else if (nodeDefinition.parents.length == 1) {
-            revert StalenessToleranceExceeded(
+            possibleError = abi.encodeWithSelector(StalenessToleranceExceeded.selector,
                 nodeDefinition.parents[0],
                 priceNodeOutput.price,
                 priceNodeOutput.timestamp
             );
-        }
-        // If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
-        return NodeDefinition.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
+				} else {
+						// If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
+						nodeOutput = NodeDefinition.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
+				}
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {

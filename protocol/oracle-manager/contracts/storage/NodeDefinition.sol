@@ -94,25 +94,26 @@ library NodeDefinition {
         bytes32 nodeId,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal view returns (NodeOutput.Data memory price) {
+    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory price) {
         if (runtimeKeys.length != runtimeValues.length) {
-            revert ParameterError.InvalidParameter(
+            possibleError = abi.encodeWithSignature(ParameterError.InvalidParameter.selector,
                 "runtimeValues",
                 "must be same length as runtimeKeys"
             );
+						return;
         }
 
         Data storage nodeDefinition = load(nodeId);
         NodeType nodeType = nodeDefinition.nodeType;
 
         if (nodeType == NodeType.REDUCER) {
-            return
+            (possibleError, price) =
                 ReducerNode.process(
                     _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
                     nodeDefinition.parameters
                 );
         } else if (nodeType == NodeType.EXTERNAL) {
-            return
+            (possibleError, price) =
                 ExternalNode.process(
                     _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
                     nodeDefinition.parameters,
@@ -120,30 +121,31 @@ library NodeDefinition {
                     runtimeValues
                 );
         } else if (nodeType == NodeType.CHAINLINK) {
-            return ChainlinkNode.process(nodeDefinition.parameters);
+            (possibleError, price) = ChainlinkNode.process(nodeDefinition.parameters);
         } else if (nodeType == NodeType.UNISWAP) {
-            return UniswapNode.process(nodeDefinition.parameters);
+            (possibleError, price) = UniswapNode.process(nodeDefinition.parameters);
         } else if (nodeType == NodeType.PYTH) {
-            return PythNode.process(nodeDefinition.parameters);
+            (possibleError, price) = PythNode.process(nodeDefinition.parameters);
         } else if (nodeType == NodeType.PYTH_OFFCHAIN_LOOKUP) {
-            return
+            (possibleError, price) =
                 PythOffchainLookupNode.process(
                     nodeDefinition.parameters,
                     runtimeKeys,
                     runtimeValues
                 );
         } else if (nodeType == NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER) {
-            return
+            (possibleError, price) =
                 PriceDeviationCircuitBreakerNode.process(
                     _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
                     nodeDefinition.parameters
                 );
         } else if (nodeType == NodeType.STALENESS_CIRCUIT_BREAKER) {
-            return StalenessCircuitBreakerNode.process(nodeDefinition, runtimeKeys, runtimeValues);
+            (possibleError, price) = StalenessCircuitBreakerNode.process(nodeDefinition, runtimeKeys, runtimeValues);
         } else if (nodeType == NodeType.CONSTANT) {
-            return ConstantNode.process(nodeDefinition.parameters);
-        }
-        revert UnprocessableNode(nodeId);
+            (possibleError, price) = ConstantNode.process(nodeDefinition.parameters);
+				} else {
+						possibleError = abi.encodeWithSelector(UnprocessableNode.selector, nodeId);
+				}
     }
 
     /**
