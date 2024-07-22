@@ -178,18 +178,29 @@ library PerpMarket {
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
+        return
+            self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            self.depositedCollateral[addresses.sUsd];
+    }
+
+    /// @dev Returns the market's required minimum backing credit in USD.
+    function getMinimumCreditWithTradeSize(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig,
+        uint256 price,
         AddressRegistry.Data memory addresses,
         int128 sizeDelta
     ) internal view returns (uint256) {
-        uint128 futureSize = self.size;
+        uint128 size = self.size;
         if (sizeDelta != 0) {
-            futureSize = sizeDelta > 0
-                ? self.size + sizeDelta.toUint()
-                : self.size - MathUtil.abs(sizeDelta).to128();
+            size = sizeDelta > 0
+                ? size + sizeDelta.toUint()
+                : size - MathUtil.abs(sizeDelta).to128();
         }
-
         return
-            futureSize.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
             self.depositedCollateral[addresses.sUsd];
     }
 

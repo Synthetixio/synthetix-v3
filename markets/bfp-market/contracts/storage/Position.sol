@@ -139,12 +139,13 @@ library Position {
         AddressRegistry.Data memory addresses,
         int128 sizeDelta
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCredit(
+        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
             marketConfig,
             oraclePrice,
             addresses,
             sizeDelta
         );
+
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
         if (
@@ -158,7 +159,7 @@ library Position {
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
-     * NOTE: The previous margin (which may include a discount on the collteral; used for liquidation checks) includes the
+     * NOTE: The previous margin (which may include a discount on the collateral; used for liquidation checks) includes the
      * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
      * This is important as it helps avoid instant liquidations immediately after settlement.
      */

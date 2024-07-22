@@ -168,8 +168,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             market.getMinimumCredit(
                 PerpMarketConfiguration.load(marketId),
                 market.getOraclePrice(addresses),
-                addresses,
-                0
+                addresses
             );
     }
 
