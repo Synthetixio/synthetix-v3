@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
-version = "5"
+version = "6"
 preset = "test"
 
 include = ["./cannonfile.toml", "./tomls/testable-contracts.toml"]
@@ -9,7 +9,7 @@ include = ["./cannonfile.toml", "./tomls/testable-contracts.toml"]
 defaultValue = "0x73570075092502472e4b61a7058df1a4a1db12f2"
 
 [setting.salt]
-defaultValue = "governance-test-v5"
+defaultValue = "governance-test-v6"
 
 [setting.wormhole_core]
 defaultValue = "0x31377888146f3253211EFEf5c676D41ECe7D58Fe" # https://docs.wormhole.com/wormhole/reference/constants
@@ -74,10 +74,16 @@ args = ["<%= settings.owner %>", "100", "1"]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
-args = [["10003"], ["0xCf84c9C2be639AE363713857d797e857Ba9B89c3"]]
+args = [["10003"], ["0xB5BBEa9D6c0d57cc0061ee5A005F0863c0a43aad"]]
 
 [invoke.set_gas_limit]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setGasLimit"
 args = ["100000"]
+
+[invoke.set_snapshot_record]
+from = "<%= settings.owner %>"
+target = ["GovernanceProxy"]
+func = "setSnapshotContract"
+args = ["<%= contracts.SnapshotRecordMock.address %>", true]
