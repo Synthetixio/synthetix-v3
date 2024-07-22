@@ -103,6 +103,34 @@ describe('OrderModule', () => {
       );
     });
 
+    it('should revert on a too large order', async () => {
+      const { BfpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 9,
+      });
+
+      const tooLargeOrderSizeDelta = order.sizeDelta.mul(999);
+
+      await assertRevert(
+        BfpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          tooLargeOrderSizeDelta,
+          order.limitPrice,
+          order.keeperFeeBufferUsd,
+          order.hooks,
+          genBytes32()
+        ),
+        'InsufficientLiquidity()',
+        BfpMarketProxy
+      );
+    });
+
     it('should emit all events in correct order');
 
     it('should revert insufficient margin when margin is less than initial margin', async () => {
