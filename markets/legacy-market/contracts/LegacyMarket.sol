@@ -224,9 +224,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         uint256 cratio = (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix))) /
             debtValueMigrated;
 
+        // if not the owner and the account is not liquidatable, fail
         if (
             ERC2771Context._msgSender() != staker &&
-            ERC2771Context._msgSender() != OwnableStorage.load().owner
+            ERC2771Context._msgSender() != OwnableStorage.load().owner &&
+            cratio >= v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
         ) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
