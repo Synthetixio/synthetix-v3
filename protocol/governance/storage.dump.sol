@@ -203,8 +203,8 @@ library WormholeCrossChain {
     bytes32 private constant _SLOT_WORMHOLE_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.core-modules.WormholeCrossChain"));
     struct Data {
         address wormholeCore;
-        uint256 gasLimit;
         address wormholeRelayer;
+        uint256 gasLimit;
         SetUtil.UintSet supportedNetworks;
         mapping(uint16 => bytes32) registeredEmitters;
         mapping(bytes32 => bool) hasProcessedMessage;

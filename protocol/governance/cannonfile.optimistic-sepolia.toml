@@ -75,3 +75,9 @@ target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
 args = [["10003"], ["0xCf84c9C2be639AE363713857d797e857Ba9B89c3"]]
+
+[invoke.set_gas_limit]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setGasLimit"
+args = ["100000"]
