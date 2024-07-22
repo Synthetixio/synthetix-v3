@@ -85,7 +85,8 @@ contract AssociateDebtModule is IAssociateDebtModule {
         // Certain "trusted" markets are allowed to overcome this restriction
         if (
             Config.readAddress(
-                keccak256(abi.encode(bytes32("associateDebtRatioExclusion"), marketId))
+                keccak256(abi.encode(bytes32("associateDebtRatioExclusion"), marketId)),
+                address(0)
             ) != marketData.marketAddress
         ) {
             _verifyCollateralRatio(
