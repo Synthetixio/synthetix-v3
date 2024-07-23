@@ -14,7 +14,11 @@ import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
 
-    function setSnapshotContract(address snapshotContract, bool enabled) external override {
+    function setSnapshotContract(
+        address snapshotContract,
+        bool enabled,
+        VotePowerType votePowerType,
+    ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
@@ -85,7 +89,11 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         }
 
         Ballot.Data storage ballot = Ballot.load(currentEpoch, voter, block.chainid);
-        ballot.votingPower += power;
+        ballot.votingPower += getVotePower(power);
         snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] = power;
+    }
+
+    function getVotePower(power, algorthim) {
+
     }
 }

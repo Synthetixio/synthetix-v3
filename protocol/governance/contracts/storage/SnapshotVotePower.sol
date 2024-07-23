@@ -4,8 +4,15 @@ pragma solidity ^0.8.0;
 import {SnapshotVotePowerEpoch} from "./SnapshotVotePowerEpoch.sol";
 
 library SnapshotVotePower {
+    enum VotePowerType {
+        SQRT,
+        LINEAR,
+        SARASA,
+    }
+
     struct Data {
         bool enabled;
+        VotePowerType votePowerType;
         mapping(uint128 => SnapshotVotePowerEpoch.Data) epochs;
     }
 
