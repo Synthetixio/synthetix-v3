@@ -120,7 +120,7 @@ interface IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external returns (uint256 cancelledAmount);
+    ) external returns (int256 cancelledAmount);
 
     /**
      * @notice Called by owner of a pool to set rewards for vault participants. This method
@@ -142,7 +142,7 @@ interface IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external returns (uint256 cancelledAmount);
+    ) external returns (int256 cancelledAmount);
 
     /**
      * @notice Allows a user with appropriate permissions to claim rewards associated with a position.

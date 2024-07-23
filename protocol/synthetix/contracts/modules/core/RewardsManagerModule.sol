@@ -89,7 +89,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external override returns (uint256) {
+    ) external override returns (int256) {
         return
             _distributeRewards(
                 poolId,
@@ -108,7 +108,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external override returns (uint256) {
+    ) external override returns (int256) {
         Pool.Data storage pool = Pool.load(poolId);
         if (pool.owner != ERC2771Context._msgSender()) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
@@ -240,7 +240,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) internal returns (uint256) {
+    ) internal returns (int256) {
         Pool.Data storage pool = Pool.load(poolId);
         (
             bytes32 rewardId,
@@ -258,7 +258,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         //RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
-        (int256 diffReward, uint256 cancelledAmount) = rd.distribute(
+        (int256 diffReward, int256 cancelledAmount) = rd.distribute(
             // if the rewards to be distributed are at the pool level, we want to use the pool distribution (trickle down happens later)
             collateralType == address(0)
                 ? pool.vaultsDebtDistribution
