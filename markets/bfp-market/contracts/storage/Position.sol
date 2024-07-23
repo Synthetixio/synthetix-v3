@@ -177,7 +177,7 @@ library Position {
         uint256 im,
         uint256 nextMarginUsd
     ) internal pure {
-        int128 sizeDelta = oldPositionSize - newPosition.size;
+        int128 sizeDelta = newPosition.size - oldPositionSize;
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.

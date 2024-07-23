@@ -2071,7 +2071,7 @@ describe('OrderModule', () => {
       );
       const otherOrder = await genOrder(bs, market, otherCollateral, otherCollateralDepositAmount, {
         desiredSide: 1,
-        desiredLeverage: 1,
+        desiredLeverage: 2,
         desiredKeeperFeeBufferUsd: 0,
         desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
       });
@@ -2091,8 +2091,9 @@ describe('OrderModule', () => {
           desiredMarket: market,
         })
       );
+
       const mainOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 17,
+        desiredLeverage: 10,
         desiredSide: 1,
         desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
       });
