@@ -37,7 +37,6 @@ abiOf = ["InitialModuleBundle"]
 # deploy the legacy market
 [contract.Market]
 artifact = "LegacyMarket"
-from = "<%= settings.owner %>"
 
 [invoke.upgradeProxy]
 target = ["InitialProxy"]

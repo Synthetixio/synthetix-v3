@@ -4,7 +4,12 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assert from 'assert';
 import Wei, { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
-import { calcPricePnl, calcTransactionCostInUsd } from '../../calculations';
+import {
+  calcPricePnl,
+  calcTransactionCostInUsd,
+  calcUtilization,
+  calcUtilizationRate,
+} from '../../calculations';
 import {
   bn,
   genBootstrap,
@@ -239,6 +244,100 @@ describe('MarginModule Debt', async () => {
       assertBn.isZero(d3.debtUsd);
     });
 
+    it('should remove debt and emit event for utilization recomputed', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredCollateral: genOneOf(collateralsWithoutSusd()),
+          desiredMarginUsdDepositAmount: 10_000,
+        })
+      );
+
+      // Before doing anything, verify this trader has zero debt.
+      const d1 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.isZero(d1.debtUsd);
+
+      const orderSide = genSide();
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1,
+        desiredSide: orderSide,
+      });
+
+      // Price moves, causing a 10% loss.
+      const newMarketOraclePrice = wei(openOrder.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Fast-forward to accrue utilization and funding.
+      await fastForwardBySec(provider(), SECONDS_ONE_DAY);
+
+      // Close the position at a loss.
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: openOrder.sizeDelta.mul(-1),
+      });
+      const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const closeOrderEvent = findEventSafe(closeReceipt, 'OrderSettled', BfpMarketProxy);
+
+      // Amount of debt on emitted matches current reported digest.
+      const d2 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      // Mint an exact amount of sUSD to pay the accountDebt.
+      await mintAndApprove(
+        bs,
+        getSusdCollateral(collaterals()), // sUSD
+        closeOrderEvent.args.accountDebt,
+        trader.signer
+      );
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.connect(trader.signer).payDebt(
+            trader.accountId,
+            marketId,
+            closeOrderEvent.args.accountDebt
+          ),
+        provider()
+      );
+
+      const utilizationRecomputedEvent = findEventSafe(
+        receipt,
+        'UtilizationRecomputed',
+        BfpMarketProxy
+      );
+
+      const marketSkew = utilizationRecomputedEvent.args.skew;
+      const { skew } = await BfpMarketProxy.getMarketDigest(marketId);
+
+      const computedUtilizationRate = utilizationRecomputedEvent.args.utilizationRate;
+      const expectedUtilization = await calcUtilization(bs, marketId);
+      const expectedUtilizationRate = await calcUtilizationRate(bs, expectedUtilization);
+      const utilizationDigest = await BfpMarketProxy.getUtilizationDigest(marketId);
+
+      assertBn.equal(utilizationDigest.utilization, expectedUtilization.toBN());
+      assertBn.equal(utilizationDigest.currentUtilizationRate, expectedUtilizationRate.toBN());
+      assertBn.equal(utilizationDigest.lastComputedUtilizationRate, computedUtilizationRate);
+      assertBn.equal(skew, marketSkew);
+
+      await assertEvent(
+        receipt,
+        `UtilizationRecomputed(${marketId}, ${marketSkew}, ${computedUtilizationRate})`,
+        BfpMarketProxy
+      );
+
+      await assertEvent(
+        receipt,
+        `DebtPaid(${trader.accountId}, ${marketId}, ${d2.debtUsd}, 0, 0)`,
+        BfpMarketProxy
+      );
+
+      // All debt paid off.
+      const d3 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      assertBn.isZero(d3.debtUsd);
+    });
+
     it('should allow sending an amount greater than the debt', async () => {
       const { BfpMarketProxy } = systems();
 
@@ -395,6 +494,21 @@ describe('MarginModule Debt', async () => {
       );
       const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, openOrder);
+
+      const isMarginLiquidatable = await BfpMarketProxy.isMarginLiquidatable(
+        trader.accountId,
+        marketId
+      );
+      assert.equal(isMarginLiquidatable, false);
+    });
+
+    it('should return false if no debt', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: 1 })
+      );
 
       const isMarginLiquidatable = await BfpMarketProxy.isMarginLiquidatable(
         trader.accountId,
