@@ -97,13 +97,10 @@ library RewardDistribution {
             );
         }
 
-				if (start == 0) {
-					// zero start is often used as a check for whether there is a distribution or not
-					revert ParameterError.InvalidParameter(
-						"start",
-						"cannot start at 0"
-					);
-				}
+        if (start == 0) {
+            // zero start is often used as a check for whether there is a distribution or not
+            revert ParameterError.InvalidParameter("start", "cannot start at 0");
+        }
 
         uint256 curTime = block.timestamp;
 
@@ -117,7 +114,7 @@ library RewardDistribution {
             self.nextStart = start;
             self.nextDuration = duration;
 
-						// is the new distribution starting before the end of the old distribution
+            // is the new distribution starting before the end of the old distribution
             if (self.start + self.duration > start) {
                 // since we are cutting short the active distribution, cancel its expected cancelled value
                 cancelledAmount +=
@@ -127,7 +124,7 @@ library RewardDistribution {
 
                 // solhint-disable-next-line numcast/safe-cast
                 self.duration = uint32(start - self.start);
-								self.scheduledValueD18 -= cancelledAmount.to128();
+                self.scheduledValueD18 -= cancelledAmount.to128();
             }
         } else {
             // if we are cutting off a current distribution, cancel its value

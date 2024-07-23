@@ -95,6 +95,11 @@ contract VaultModule is IVaultModule {
             );
         }
 
+        // distribute any outstanding rewards distributor value to vaults prior to updating positions
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
         // Update the account's position for the given pool and collateral type,
         // Note: This will trigger an update in the entire debt distribution chain.
         uint256 collateralPrice = _updatePosition(
@@ -147,10 +152,6 @@ contract VaultModule is IVaultModule {
             newCollateralAmountD18,
             leverage,
             ERC2771Context._msgSender()
-        );
-
-        Pool.load(poolId).updateRewardsToVaults(
-            Vault.PositionSelector(accountId, poolId, collateralType)
         );
     }
 

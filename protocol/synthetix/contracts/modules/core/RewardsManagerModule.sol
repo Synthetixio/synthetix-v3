@@ -353,7 +353,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
                 ? pool.vaultsDebtDistribution
                 : pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
             0,
-            0,
+            1,
             0
         );
 
