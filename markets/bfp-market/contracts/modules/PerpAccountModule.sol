@@ -84,6 +84,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 fromAccountCollateral;
+        int256 fromSize;
     }
 
     /// @inheritdoc IPerpAccountModule
@@ -464,9 +465,13 @@ contract PerpAccountModule is IPerpAccountModule {
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+        runtime.fromSize = fromPosition.size;
 
+        if (runtime.fromSize == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
         // Cannot merge unless accounts are on the same side.
-        if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
+        if (!MathUtil.sameSide(runtime.fromSize, toPosition.size)) {
             revert ErrorUtil.InvalidPositionSide();
         }
 
