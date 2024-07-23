@@ -367,6 +367,9 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Move position `from` -> `to`.
         runtime.sizeToMove = fromPosition.size.mulDecimal(proportion.toInt()).to128();
+        if (runtime.sizeToMove == 0) {
+            revert ErrorUtil.AccountSplitProportionTooSmall();
+        }
 
         if (fromPosition.size < 0) {
             fromPosition.size += MathUtil.abs(runtime.sizeToMove).toInt().to128();
@@ -404,6 +407,9 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Ensure we validate remaining `fromAccount` margin > IM when position still remains.
         if (proportion < DecimalMath.UNIT) {
+            if (fromPosition.size == 0) {
+                revert ErrorUtil.AccountSplitProportionTooSmall();
+            }
             (runtime.fromIm, ) = Position.getLiquidationMarginUsd(
                 fromPosition.size,
                 runtime.oraclePrice,
