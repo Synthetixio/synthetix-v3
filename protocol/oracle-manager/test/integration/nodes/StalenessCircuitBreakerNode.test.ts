@@ -10,6 +10,7 @@ describe('StalenessCircuitBreakerNode', function () {
   const { getContract, getSigners, getProvider } = bootstrap();
   let owner: Signer;
   let staleNodeId: string;
+  let futureNodeId: string;
   let freshNodeId: string;
   let fallbackNodeId: string;
   let zeroPriceNodeId: string;
@@ -25,6 +26,7 @@ describe('StalenessCircuitBreakerNode', function () {
 
     const currentTimestamp = (await getProvider().getBlock('latest')).timestamp;
     staleNodeId = await deployAndRegisterExternalNode(100, currentTimestamp - 100);
+    futureNodeId = await deployAndRegisterExternalNode(69, currentTimestamp + 100);
     freshNodeId = await deployAndRegisterExternalNode(200, currentTimestamp - 10);
     fallbackNodeId = await deployAndRegisterExternalNode(300, currentTimestamp);
     zeroPriceNodeId = await deployAndRegisterExternalNode(0, currentTimestamp);
@@ -99,6 +101,19 @@ describe('StalenessCircuitBreakerNode', function () {
       'StalenessToleranceExceeded("0x130355ed239616bc684cde399accc114b83de2a7734528931428b7ecd64c3258", "100"',
       NodeModule
     );
+  });
+
+  it('allows price update from the future', async () => {
+    // Register staleness circuit breaker node with stale parent
+    const NodeParameters = abi.encode(['uint'], [stalenessTolerance]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      futureNodeId,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      futureNodeId,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
+    assertBn.equal(69, nodeOutput.price);
   });
 
   async function deployAndRegisterExternalNode(price: BigNumberish, timestamp: BigNumberish) {
