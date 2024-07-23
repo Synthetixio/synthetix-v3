@@ -114,7 +114,7 @@ library Margin {
 
         uint256 availableUsdCollateral = accountMargin.collaterals[addresses.sUsd];
 
-        if (amountDeltaUsd >= 0) {
+        if (amountDeltaUsd > 0) {
             // >0 means profitable position, including the outstanding debt.
             accountMargin.debtUsd = 0;
             accountMargin.collaterals[addresses.sUsd] += MathUtil.abs(amountDeltaUsd).to128();
