@@ -31,7 +31,7 @@ library PerpMarket {
     // --- Constants --- //
 
     bytes32 constant GLOBAL_DATA_SLOT_NAME =
-    keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
+        keccak256(abi.encode("io.synthetix.bfp-market.GlobalPerpMarket"));
 
     /// @dev Average over 4 years, including leap year.
     uint256 constant AVG_SECONDS_PER_YEAR = 31556952;
@@ -133,7 +133,7 @@ library PerpMarket {
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
         int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
-                            oldPosition.getAccruedFunding(self, newPosition.entryPrice);
+            oldPosition.getAccruedFunding(self, newPosition.entryPrice);
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
 
@@ -238,11 +238,11 @@ library PerpMarket {
 
         return
             MathUtil
-            .min(
-                lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()),
-                DecimalMath.UNIT
-            )
-            .to128();
+                .min(
+                    lockedCollateralUsd.divDecimal(delegatedCollateralValueUsd.toUint()),
+                    DecimalMath.UNIT
+                )
+                .to128();
     }
 
     /// @dev Given the utilization, determine instantaneous the asymmetric funding rate (i.e. interest rate).
@@ -276,9 +276,9 @@ library PerpMarket {
     ) internal view returns (uint128) {
         return
             self
-            .currentUtilizationRateComputed
-            .mulDecimal(getProportionalUtilizationElapsed(self))
-            .to128();
+                .currentUtilizationRateComputed
+                .mulDecimal(getProportionalUtilizationElapsed(self))
+                .to128();
     }
 
     /// @dev Recompute and store utilization rate given current market conditions.
@@ -337,7 +337,7 @@ library PerpMarket {
         }
         // Ensures the proportionalSkew is between -1 and 1.
         int256 pSkewBounded = MathUtil.min(
-            MathUtil.max(- (DecimalMath.UNIT).toInt(), pSkew),
+            MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
 
@@ -390,7 +390,7 @@ library PerpMarket {
         fundingRate = getCurrentFundingRate(self);
 
         // The minus sign is needed as funding flows in the opposite direction to skew.
-        int256 avgFundingRate = - (self.currentFundingRateComputed + fundingRate).divDecimal(
+        int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
@@ -416,11 +416,11 @@ library PerpMarket {
         // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 1
         //                         = 80
         return
-        // solhint-disable-next-line numcast/safe-cast
+            // solhint-disable-next-line numcast/safe-cast
             uint128(marketConfig.makerFee + marketConfig.takerFee)
-            .mulDecimal(marketConfig.skewScale)
-            .mulDecimal(marketConfig.liquidationLimitScalar)
-            .to128();
+                .mulDecimal(marketConfig.skewScale)
+                .mulDecimal(marketConfig.liquidationLimitScalar)
+                .to128();
     }
 
     /// @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
@@ -428,13 +428,13 @@ library PerpMarket {
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
     )
-    internal
-    view
-    returns (
-        uint128 maxLiquidatableCapacity,
-        uint128 remainingCapacity,
-        uint128 lastLiquidationTime
-    )
+        internal
+        view
+        returns (
+            uint128 maxLiquidatableCapacity,
+            uint128 remainingCapacity,
+            uint128 lastLiquidationTime
+        )
     {
         maxLiquidatableCapacity = getMaxLiquidatableCapacity(marketConfig);
 
@@ -518,7 +518,7 @@ library PerpMarket {
         uint256 collateralAvailable;
         uint256 collateralPrice;
 
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             collateralAddress = globalMarginConfig.supportedCollaterals[i];
             collateralAvailable = self.depositedCollateral[collateralAddress];
 
