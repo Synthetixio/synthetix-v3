@@ -58,6 +58,20 @@ library RewardDistribution {
          * @dev Date on which this distribution entry was last updated.
          */
         uint32 lastUpdate;
+        /**
+         * @dev Value to be distributed as rewards in a scheduled form. This value is set to `scheduledValueD18` after the start + duration is elapsed
+         */
+        int128 nextScheduledValueD18;
+        /**
+         * @dev Date at which the entry's rewards will begin to be claimable. This value is set to `scheduledValueD18` after the start + duration is elapsed
+         *
+         * Note: Set to <= block.timestamp to distribute immediately to currently participating users.
+         */
+        uint64 nextStart;
+        /**
+         * @dev Time span after the start date, in which the whole of the entry's rewards will become claimable. This value is set to `scheduledValueD18` after the start + duration is elapsed
+         */
+        uint32 nextDuration;
     }
 
     /**
@@ -73,7 +87,7 @@ library RewardDistribution {
         int256 amountD18,
         uint64 start,
         uint32 duration
-    ) internal returns (int256 diffD18) {
+    ) internal returns (int256 diffD18, uint256 cancelledAmount) {
         uint256 totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
@@ -98,8 +112,8 @@ library RewardDistribution {
             self.start = 0;
             self.duration = 0;
             self.scheduledValueD18 = 0;
-            // Else, schedule the amount to distribute.
-        } else {
+            // Else, if we don't have any distribution already, schedule the amount to distribute.
+        } else if (self.scheduledValueD18 == 0) {
             self.scheduledValueD18 = amountD18.to128();
 
             self.start = start;
@@ -109,6 +123,16 @@ library RewardDistribution {
             self.lastUpdate = 0;
 
             diffD18 += updateEntry(self, totalSharesD18);
+        } else if (self.start + self.duration <= start) {
+            cancelledAmount = self.nextScheduledValueD18.toUint();
+            self.nextScheduledValueD18 = amountD18.to128();
+            self.nextStart = start;
+            self.nextDuration = duration;
+        } else {
+            revert ParameterError.InvalidParameter(
+                "start",
+                "must be after currently active distribution"
+            );
         }
     }
 
@@ -216,17 +240,29 @@ library RewardDistribution {
 
             // If the current time is beyond the duration, then consider all scheduled value to be distributed.
             // Else, the amount distributed is proportional to the elapsed time.
-            int256 curUpdateDistributedD18 = self.scheduledValueD18;
+            int256 curUpdateDistributedD18;
             if (curTime < self.start + self.duration) {
                 // Note: Not using an intermediate time ratio variable
                 // in the following calculation to maintain precision.
                 curUpdateDistributedD18 =
                     (curUpdateDistributedD18 * (curTime - self.start).toInt()) /
                     self.duration.toInt();
+            } else {
+                // if we have reached the end of the distribution, we should cycle through to the next distribution (if any)
+                curUpdateDistributedD18 = self.scheduledValueD18;
+                self.start = self.nextStart;
+                self.duration = self.nextDuration;
+                self.scheduledValueD18 = self.nextScheduledValueD18;
+                self.nextStart = 0;
+                self.nextDuration = 0;
+                self.nextScheduledValueD18 = 0;
+
+                // start processing the new entry also
+                valuePerShareChangeD18 = updateEntry(self, totalSharesAmountD18);
             }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
-            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18)
+            valuePerShareChangeD18 += (curUpdateDistributedD18 - lastUpdateDistributedD18)
                 .divDecimal(totalSharesAmountD18.toInt());
         }
 
