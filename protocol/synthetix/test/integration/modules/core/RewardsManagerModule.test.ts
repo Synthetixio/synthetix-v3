@@ -128,6 +128,20 @@ describe('RewardsManagerModule', function () {
         });
       });
 
+      it('only allows distribution with start time greater than 0', async () => {
+        await assertRevert(
+          RewardDistributor.connect(owner).distributeRewards(
+            poolId,
+            collateralAddress(),
+            rewardAmount,
+            0, // timestamp
+            0
+          ),
+          'InvalidParameter("start", "cannot start at 0")',
+          systems().Core
+        );
+      });
+
       describe('instantaneous', () => {
         describe('in the past', () => {
           before(restore);
@@ -140,16 +154,6 @@ describe('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               rewardAmount,
-              0, // timestamp
-              0
-            );
-
-            startTime = await getTime(provider());
-
-            await RewardDistributor.connect(owner).distributeRewards(
-              poolId,
-              collateralAddress(),
-              rewardAmount,
               1, // timestamp
               0
             );
@@ -160,7 +164,17 @@ describe('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               rewardAmount,
-              1, // timestamp
+              2, // timestamp
+              0
+            );
+
+            startTime = await getTime(provider());
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              2, // timestamp
               0
             );
 

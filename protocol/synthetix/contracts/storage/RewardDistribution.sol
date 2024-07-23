@@ -93,26 +93,31 @@ library RewardDistribution {
         if (totalSharesD18 == 0) {
             revert ParameterError.InvalidParameter(
                 "amount",
-                "can't distribute to empty distribution"
+                "cannot distribute to empty distribution"
             );
         }
+
+				if (start == 0) {
+					// zero start is often used as a check for whether there is a distribution or not
+					revert ParameterError.InvalidParameter(
+						"start",
+						"cannot start at 0"
+					);
+				}
 
         uint256 curTime = block.timestamp;
 
         // Unlocks the entry's distributed amount into its value per share.
         diffD18 += updateEntry(self, totalSharesD18);
 
-        // If the current time is past the end of the entry's duration,
-        // update any rewards which may have accrued since last run.
-        // (instant distribution--immediately disperse amount).
-
         // is there a distribution already in progress
-        if (curTime < start && start < self.start + self.duration) {
+        if (curTime < start && start < self.start + self.duration && self.start > 0) {
             cancelledAmount = self.nextScheduledValueD18;
             self.nextScheduledValueD18 = amountD18.to128();
             self.nextStart = start;
             self.nextDuration = duration;
 
+						// is the new distribution starting before the end of the old distribution
             if (self.start + self.duration > start) {
                 // since we are cutting short the active distribution, cancel its expected cancelled value
                 cancelledAmount +=
@@ -122,6 +127,7 @@ library RewardDistribution {
 
                 // solhint-disable-next-line numcast/safe-cast
                 self.duration = uint32(start - self.start);
+								self.scheduledValueD18 -= cancelledAmount.to128();
             }
         } else {
             // if we are cutting off a current distribution, cancel its value
