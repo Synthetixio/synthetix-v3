@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {SnapshotVotePower} from "../storage/SnapshotVotePower.sol";
+
 interface ISnapshotVotePowerModule {
     error SnapshotAlreadyTaken(uint128 snapshotId);
     error BallotAlreadyPrepared(address voter, uint256 electionId);
@@ -8,7 +10,11 @@ interface ISnapshotVotePowerModule {
     error NoPower(uint256, address);
     error InvalidSnapshotContract();
 
-    function setSnapshotContract(address snapshotContract, bool enabled) external;
+    function setSnapshotContract(
+        address snapshotContract,
+        bool enabled,
+        SnapshotVotePower.WeightType weight
+    ) external;
 
     function takeVotePowerSnapshot(address snapshotContract) external returns (uint128 snapshotId);
 

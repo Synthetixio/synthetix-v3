@@ -342,8 +342,13 @@ library Epoch {
 
 // @custom:artifact contracts/storage/SnapshotVotePower.sol:SnapshotVotePower
 library SnapshotVotePower {
+    enum WeightType {
+        Sqrt,
+        Linear
+    }
     struct Data {
         bool enabled;
+        SnapshotVotePower.WeightType weight;
         mapping(uint128 => SnapshotVotePowerEpoch.Data) epochs;
     }
     function load(address snapshotContract) internal pure returns (Data storage self) {

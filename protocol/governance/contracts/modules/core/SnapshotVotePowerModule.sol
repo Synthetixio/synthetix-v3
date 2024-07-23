@@ -17,12 +17,14 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     function setSnapshotContract(
         address snapshotContract,
         bool enabled,
-        VotePowerType votePowerType,
+        SnapshotVotePower.WeightType weight
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
-        SnapshotVotePower.load(snapshotContract).enabled = enabled;
+        SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+        snapshotVotePower.enabled = enabled;
+        snapshotVotePower.weight = weight;
     }
 
     function takeVotePowerSnapshot(
@@ -61,7 +63,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     function prepareBallotWithSnapshot(
         address snapshotContract,
         address voter
-    ) external override returns (uint256 power) {
+    ) external override returns (uint256 votingPower) {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
         uint128 currentEpoch = Council.load().currentElectionId.to128();
@@ -75,25 +77,24 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             revert SnapshotNotTaken(snapshotContract, currentEpoch);
         }
 
-        power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
-            voter,
-            snapshotVotePower.epochs[currentEpoch].snapshotId
-        );
-
-        if (power == 0) {
-            revert NoPower(snapshotVotePower.epochs[currentEpoch].snapshotId, voter);
-        }
-
         if (snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] > 0) {
             revert BallotAlreadyPrepared(voter, currentEpoch);
         }
 
+        uint256 balance = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
+            voter,
+            snapshotVotePower.epochs[currentEpoch].snapshotId
+        );
+
         Ballot.Data storage ballot = Ballot.load(currentEpoch, voter, block.chainid);
-        ballot.votingPower += getVotePower(power);
-        snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] = power;
-    }
 
-    function getVotePower(power, algorthim) {
+        votingPower = SnapshotVotePower.calculateVotePower(snapshotVotePower.weight, balance);
 
+        if (votingPower == 0) {
+            revert NoPower(snapshotVotePower.epochs[currentEpoch].snapshotId, voter);
+        }
+
+        ballot.votingPower += votingPower;
+        snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] = votingPower;
     }
 }
