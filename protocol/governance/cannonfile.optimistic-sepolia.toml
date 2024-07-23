@@ -86,4 +86,4 @@ args = ["100000"]
 from = "<%= settings.owner %>"
 target = ["GovernanceProxy"]
 func = "setSnapshotContract"
-args = ["<%= contracts.SnapshotRecordMock.address %>", true]
+args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true]

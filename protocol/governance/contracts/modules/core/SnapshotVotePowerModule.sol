@@ -16,8 +16,8 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
 
     function setSnapshotContract(
         address snapshotContract,
-        bool enabled,
-        SnapshotVotePower.WeightType weight
+        SnapshotVotePower.WeightType weight,
+        bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
@@ -73,28 +73,32 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             revert InvalidSnapshotContract();
         }
 
-        if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
+        SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = snapshotVotePower.epochs[
+            currentEpoch
+        ];
+
+        if (snapshotVotePowerEpoch.snapshotId == 0) {
             revert SnapshotNotTaken(snapshotContract, currentEpoch);
         }
 
-        if (snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] > 0) {
+        if (snapshotVotePowerEpoch.recordedVotingPower[voter] > 0) {
             revert BallotAlreadyPrepared(voter, currentEpoch);
         }
 
         uint256 balance = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
             voter,
-            snapshotVotePower.epochs[currentEpoch].snapshotId
+            snapshotVotePowerEpoch.snapshotId
         );
+
+        votingPower = SnapshotVotePower.calculateVotingPower(snapshotVotePower.weight, balance);
+
+        if (votingPower == 0) {
+            revert NoPower(snapshotVotePowerEpoch.snapshotId, voter);
+        }
 
         Ballot.Data storage ballot = Ballot.load(currentEpoch, voter, block.chainid);
 
-        votingPower = SnapshotVotePower.calculateVotePower(snapshotVotePower.weight, balance);
-
-        if (votingPower == 0) {
-            revert NoPower(snapshotVotePower.epochs[currentEpoch].snapshotId, voter);
-        }
-
         ballot.votingPower += votingPower;
-        snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] = votingPower;
+        snapshotVotePowerEpoch.recordedVotingPower[voter] = votingPower;
     }
 }

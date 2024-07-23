@@ -106,14 +106,17 @@ describe('SynthetixElectionModule - Elections', () => {
     const { mothership, satellite1, satellite2 } = chains;
     await mothership.GovernanceProxy.setSnapshotContract(
       mothership.SnapshotRecordMock.address,
+      0,
       true
     );
     await satellite1.GovernanceProxy.setSnapshotContract(
       satellite1.SnapshotRecordMock.address,
+      0,
       true
     );
     await satellite2.GovernanceProxy.setSnapshotContract(
       satellite2.SnapshotRecordMock.address,
+      0,
       true
     );
   });
@@ -240,6 +243,7 @@ describe('SynthetixElectionModule - Elections', () => {
             await assertRevert(
               mothership.GovernanceProxy.setSnapshotContract(
                 mothership.SnapshotRecordMock.address,
+                0,
                 true
               ),
               'NotCallableInCurrentPeriod'
@@ -247,6 +251,7 @@ describe('SynthetixElectionModule - Elections', () => {
             await assertRevert(
               satellite1.GovernanceProxy.setSnapshotContract(
                 satellite1.SnapshotRecordMock.address,
+                0,
                 true
               ),
               'NotCallableInCurrentPeriod'
@@ -254,6 +259,7 @@ describe('SynthetixElectionModule - Elections', () => {
             await assertRevert(
               satellite2.GovernanceProxy.setSnapshotContract(
                 satellite2.SnapshotRecordMock.address,
+                0,
                 true
               ),
               'NotCallableInCurrentPeriod'
@@ -274,27 +280,27 @@ describe('SynthetixElectionModule - Elections', () => {
 
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[0].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId.toString()
           );
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[1].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId.toString()
           );
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[2].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId.toString()
           );
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[3].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId.toString()
           );
           await mothership.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[4].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId.toString()
           );
 
@@ -309,27 +315,27 @@ describe('SynthetixElectionModule - Elections', () => {
 
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[0].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId1.toString()
           );
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[1].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId1.toString()
           );
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[2].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId1.toString()
           );
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[3].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId1.toString()
           );
           await satellite1.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[4].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId1.toString()
           );
 
@@ -344,27 +350,27 @@ describe('SynthetixElectionModule - Elections', () => {
 
           await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[0].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId2.toString()
           );
           await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[1].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId2.toString()
           );
           await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[2].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId2.toString()
           );
           await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[3].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId2.toString()
           );
           await satellite2.SnapshotRecordMock.setBalanceOfOnPeriod(
             addresses[4].address,
-            ethers.utils.parseEther('100'),
+            100,
             snapshotId2.toString()
           );
         });
@@ -625,28 +631,28 @@ describe('SynthetixElectionModule - Elections', () => {
 
                   await mothership.GovernanceProxy.connect(
                     addresses[0].connect(mothership.provider)
-                  ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
+                  ).cast([epoch.winners()[0]], [10]);
 
                   await mothership.GovernanceProxy.connect(
                     addresses[1].connect(mothership.provider)
-                  ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
+                  ).cast([epoch.winners()[0]], [10]);
 
                   // addresses[2] didn't declare cross chain debt shares yet
                   await assertRevert(
                     mothership.GovernanceProxy.connect(
                       addresses[2].connect(mothership.provider)
-                    ).cast([addresses[4].address], [ethers.utils.parseEther('100')]),
+                    ).cast([addresses[4].address], [10]),
                     'NoVotingPower',
                     mothership.GovernanceProxy
                   );
 
                   await mothership.GovernanceProxy.connect(
                     addresses[3].connect(mothership.provider)
-                  ).cast([addresses[1].address], [ethers.utils.parseEther('100')]);
+                  ).cast([addresses[1].address], [10]);
 
                   await mothership.GovernanceProxy.connect(
                     addresses[4].connect(mothership.provider)
-                  ).cast([epoch.winners()[0]], [ethers.utils.parseEther('100')]);
+                  ).cast([epoch.winners()[0]], [10]);
                 });
 
                 it('do not allow partial voting', async () => {
@@ -654,7 +660,7 @@ describe('SynthetixElectionModule - Elections', () => {
                   await assertRevert(
                     mothership.GovernanceProxy.connect(
                       addresses[0].connect(mothership.provider)
-                    ).cast([addresses[3].address], [ethers.utils.parseEther('10')]),
+                    ).cast([addresses[3].address], [13]),
                     'InvalidBallot',
                     mothership.GovernanceProxy
                   );
@@ -699,11 +705,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       ballotForFirstAddress.votedCandidates,
                       ballotForFirstAddress.votingPower,
                     ],
-                    [
-                      [ethers.utils.parseEther('100')],
-                      [epoch.winners()[0]],
-                      ethers.utils.parseEther('100'),
-                    ]
+                    [[ethers.BigNumber.from(10)], [epoch.winners()[0]], ethers.BigNumber.from(10)]
                   );
 
                   assert.deepEqual(
@@ -712,11 +714,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       ballotForSecondAddress.votedCandidates,
                       ballotForSecondAddress.votingPower,
                     ],
-                    [
-                      [ethers.utils.parseEther('100')],
-                      [epoch.winners()[0]],
-                      ethers.utils.parseEther('100'),
-                    ]
+                    [[ethers.BigNumber.from(10)], [epoch.winners()[0]], ethers.BigNumber.from(10)]
                   );
 
                   //  should be empty
@@ -726,7 +724,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       ballotForThirdAddress.votedCandidates,
                       ballotForThirdAddress.votingPower,
                     ],
-                    [[], [], ethers.utils.parseEther('0')]
+                    [[], [], ethers.BigNumber.from(0)]
                   );
 
                   assert.deepEqual(
@@ -735,11 +733,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       ballotForFourthAddress.votedCandidates,
                       ballotForFourthAddress.votingPower,
                     ],
-                    [
-                      [ethers.utils.parseEther('100')],
-                      [addresses[1].address],
-                      ethers.utils.parseEther('100'),
-                    ]
+                    [[ethers.BigNumber.from(10)], [addresses[1].address], ethers.BigNumber.from(10)]
                   );
 
                   assert.deepEqual(
@@ -748,11 +742,7 @@ describe('SynthetixElectionModule - Elections', () => {
                       ballotForFifthAddress.votedCandidates,
                       ballotForFifthAddress.votingPower,
                     ],
-                    [
-                      [ethers.utils.parseEther('100')],
-                      [epoch.winners()[0]],
-                      ethers.utils.parseEther('100'),
-                    ]
+                    [[ethers.BigNumber.from(10)], [epoch.winners()[0]], ethers.BigNumber.from(10)]
                   );
                 });
 

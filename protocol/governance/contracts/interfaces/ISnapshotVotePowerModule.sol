@@ -12,8 +12,8 @@ interface ISnapshotVotePowerModule {
 
     function setSnapshotContract(
         address snapshotContract,
-        bool enabled,
-        SnapshotVotePower.WeightType weight
+        SnapshotVotePower.WeightType weight,
+        bool enabled
     ) external;
 
     function takeVotePowerSnapshot(address snapshotContract) external returns (uint128 snapshotId);
@@ -21,5 +21,5 @@ interface ISnapshotVotePowerModule {
     function prepareBallotWithSnapshot(
         address snapshotContract,
         address voter
-    ) external returns (uint256 power);
+    ) external returns (uint256 votingPower);
 }

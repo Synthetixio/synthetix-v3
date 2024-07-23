@@ -27,7 +27,7 @@ library SnapshotVotePower {
         }
     }
 
-    function calculateVotePower(
+    function calculateVotingPower(
         SnapshotVotePower.WeightType weight,
         uint256 ballotBalance
     ) internal pure returns (uint256 votePower) {
