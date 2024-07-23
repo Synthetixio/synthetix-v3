@@ -264,7 +264,7 @@ describe('OrderModule', () => {
         desiredLeverage: 6,
       });
       await commitAndSettle(bs, marketId, trader, order);
-      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should result in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       const newMarketOraclePrice = wei(order.oraclePrice)
@@ -610,7 +610,7 @@ describe('OrderModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order1);
 
-      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should result in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       const newMarketOraclePrice = wei(order1.oraclePrice)
@@ -655,7 +655,7 @@ describe('OrderModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order1);
 
-      // Price falls/rises between 10% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should result in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       const newMarketOraclePrice = wei(order1.oraclePrice)
@@ -1297,7 +1297,7 @@ describe('OrderModule', () => {
         const d1 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
         assertBn.gt(d1.position.remainingMarginUsd, im);
 
-        // Modify the position to be < IM by changing collateral value. This can also be acheived by moving
+        // Modify the position to be < IM by changing collateral value. This can also be achieved by moving
         // market price but market price also affects IM so this is a bit easier.
         //
         // `remainingMarginUsd` is basically collateralValueUsd + otherStuff where `otherStuff` is largely
@@ -1548,7 +1548,7 @@ describe('OrderModule', () => {
       const { accruedUtilization: accruedUtilizationBeforeRecompute } =
         await BfpMarketProxy.getPositionDigest(trader.accountId, marketId);
 
-      // Recompute utilization, to get the utlization rate updated due to the un-delegation
+      // Recompute utilization, to get the utilization rate updated due to the un-delegation
       const recomputeTx = await BfpMarketProxy.recomputeUtilization(marketId);
       const recomputeTimestamp = await getTxTime(provider(), recomputeTx);
 
