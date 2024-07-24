@@ -110,14 +110,17 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
         uint256 prevBalance = balances[accountId][accountIdx].amount;
 
         // subtract balance from previous owner
+        // solhint-disable-next-line
         accountBalances[balances[accountId][idIdx].owner][oldAccountIdx].amount -= uint128(
             prevBalance
         );
 
         // add balance to new owner
+        // solhint-disable-next-line
         accountBalances[account][accountIdx].amount += uint128(newAmount);
 
         // update account id record
+        // solhint-disable-next-line
         balances[accountId][idIdx].amount = uint128(newAmount);
         balances[accountId][idIdx].owner = account;
 
@@ -130,6 +133,7 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
     function updatePeriod(PeriodBalance[] storage bals) internal returns (uint256) {
         uint256 balanceCount = bals.length;
         if (balanceCount == 0 || bals[balanceCount - 1].periodId != currentPeriodId) {
+            // solhint-disable-next-line
             bals.push(PeriodBalance(0, uint128(currentPeriodId), address(0)));
 
             if (balanceCount > 0) {
@@ -145,15 +149,18 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
 
     function balanceOfOnPeriod(address account, uint256 periodId) public view returns (uint256) {
         uint256 accountPeriodHistoryCount = accountBalances[account].length;
-
+        // solhint-disable-next-line
         int256 oldestHistoryIterate = int256(
             MAX_PERIOD_ITERATE < accountPeriodHistoryCount
                 ? accountPeriodHistoryCount - MAX_PERIOD_ITERATE
                 : 0
         );
         int256 i;
+        // solhint-disable-next-line
         for (i = int256(accountPeriodHistoryCount) - 1; i >= oldestHistoryIterate; i--) {
+            // solhint-disable-next-line
             if (accountBalances[account][uint256(i)].periodId <= periodId) {
+                // solhint-disable-next-line
                 return uint256(accountBalances[account][uint256(i)].amount);
             }
         }
@@ -167,15 +174,18 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
 
     function balanceOfOnPeriod(uint128 accountId, uint256 periodId) public view returns (uint256) {
         uint256 accountPeriodHistoryCount = balances[accountId].length;
-
+        // solhint-disable-next-line
         int256 oldestHistoryIterate = int256(
             MAX_PERIOD_ITERATE < accountPeriodHistoryCount
                 ? accountPeriodHistoryCount - MAX_PERIOD_ITERATE
                 : 0
         );
         int256 i;
+        // solhint-disable-next-line
         for (i = int256(accountPeriodHistoryCount) - 1; i >= oldestHistoryIterate; i--) {
+            // solhint-disable-next-line
             if (balances[accountId][uint256(i)].periodId <= periodId) {
+                // solhint-disable-next-line
                 return uint256(balances[accountId][uint256(i)].amount);
             }
         }
