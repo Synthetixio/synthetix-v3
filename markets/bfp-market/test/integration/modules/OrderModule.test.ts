@@ -2075,7 +2075,7 @@ describe('OrderModule', () => {
       // Configure a static realistic market configuration.
       await setMarketConfigurationById(bs, market.marketId(), {
         skewScale: bn(7_500_000),
-        maxMarketSize: bn(1_000_000),
+        maxMarketSize: bn(10_000_000),
         incrementalMarginScalar: bn(1),
         minMarginRatio: bn(0.03),
         maintenanceMarginScalar: bn(0.75),
@@ -2100,7 +2100,7 @@ describe('OrderModule', () => {
       );
       const otherOrder = await genOrder(bs, market, otherCollateral, otherCollateralDepositAmount, {
         desiredSide: 1,
-        desiredLeverage: 1,
+        desiredLeverage: 2,
         desiredKeeperFeeBufferUsd: 0,
         desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
       });
@@ -2120,8 +2120,9 @@ describe('OrderModule', () => {
           desiredMarket: market,
         })
       );
+
       const mainOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 9,
+        desiredLeverage: 10,
         desiredSide: 1,
         desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
       });
