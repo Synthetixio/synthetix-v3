@@ -605,6 +605,11 @@ library Position {
         Margin.MarginValues memory marginValues,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
+        // A zero sized position means there is no position.
+        if (size == 0) {
+            return 2 ** 256 - 1;
+        }
+
         // `margin / mm <= 1` means liquidation.
         (, uint256 mm) = getLiquidationMarginUsd(
             size,
@@ -613,6 +618,7 @@ library Position {
             marketConfig,
             addresses
         );
+
         return marginValues.discountedMarginUsd.divDecimal(mm);
     }
 
