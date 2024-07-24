@@ -27,6 +27,14 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         snapshotVotePower.weight = weight;
     }
 
+    function setScale(address snapshotContract, uint256 scale) external {
+        OwnableStorage.onlyOwner();
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+
+        SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+        snapshotVotePower.scale = scale;
+    }
+
     function takeVotePowerSnapshot(
         address snapshotContract
     ) external override returns (uint128 snapshotId) {
@@ -90,7 +98,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             snapshotVotePowerEpoch.snapshotId
         );
 
-        votingPower = SnapshotVotePower.calculateVotingPower(snapshotVotePower.weight, balance);
+        votingPower = SnapshotVotePower.calculateVotingPower(snapshotVotePower, balance);
 
         if (votingPower == 0) {
             revert NoPower(snapshotVotePowerEpoch.snapshotId, voter);

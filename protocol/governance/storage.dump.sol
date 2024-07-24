@@ -344,11 +344,13 @@ library Epoch {
 library SnapshotVotePower {
     enum WeightType {
         Sqrt,
-        Linear
+        Linear,
+        Scaled
     }
     struct Data {
         bool enabled;
         SnapshotVotePower.WeightType weight;
+        uint256 scale;
         mapping(uint128 => SnapshotVotePowerEpoch.Data) epochs;
     }
     function load(address snapshotContract) internal pure returns (Data storage self) {

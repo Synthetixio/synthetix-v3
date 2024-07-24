@@ -9,12 +9,14 @@ library SnapshotVotePower {
 
     enum WeightType {
         Sqrt,
-        Linear
+        Linear,
+        Scaled
     }
 
     struct Data {
         bool enabled;
         SnapshotVotePower.WeightType weight;
+        uint256 scale; // 18 decimals
         mapping(uint128 => SnapshotVotePowerEpoch.Data) epochs;
     }
 
@@ -28,15 +30,20 @@ library SnapshotVotePower {
     }
 
     function calculateVotingPower(
-        SnapshotVotePower.WeightType weight,
+        SnapshotVotePower.Data storage self,
         uint256 ballotBalance
-    ) internal pure returns (uint256 votePower) {
-        if (weight == WeightType.Sqrt) {
+    ) internal view returns (uint256 votePower) {
+        if (self.weight == WeightType.Sqrt) {
             return MathUtil.sqrt(ballotBalance);
         }
 
-        if (weight == WeightType.Linear) {
+        if (self.weight == WeightType.Linear) {
             return ballotBalance;
+        }
+
+        if (self.weight == WeightType.Scaled) {
+            // solhint-disable-next-line
+            return (ballotBalance * self.scale) / 10 ** 18;
         }
 
         revert InvalidWeightType();
