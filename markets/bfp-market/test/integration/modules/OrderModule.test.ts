@@ -194,6 +194,7 @@ describe('OrderModule', () => {
 
       const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
         desiredSize: bn(5_000),
+        desiredLeverage: 3,
       });
       await commitAndSettle(bs, marketId, trader1, order1);
 
