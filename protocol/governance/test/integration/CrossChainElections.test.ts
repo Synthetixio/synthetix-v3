@@ -108,10 +108,12 @@ describe('cross chain election testing', function () {
   describe('successful voting on all chains', function () {
     before('prepare snapshot record on all chains', async function () {
       for (const chain of typedValues(chains)) {
-        await chain.GovernanceProxy.connect(chain.signer).setSnapshotContract(
+        const tx = await chain.GovernanceProxy.connect(chain.signer).setSnapshotContract(
           chain.SnapshotRecordMock.address,
+          0,
           true
         );
+        await tx.wait();
       }
     });
 
@@ -130,7 +132,7 @@ describe('cross chain election testing', function () {
         await chain.GovernanceProxy.takeVotePowerSnapshot(chain.SnapshotRecordMock.address);
         await chain.SnapshotRecordMock.setBalanceOfOnPeriod(
           await voter[chainName].getAddress(),
-          ethers.utils.parseEther('100'),
+          100,
           snapshotId1.toString()
         );
         await chain.GovernanceProxy.prepareBallotWithSnapshot(
@@ -145,7 +147,7 @@ describe('cross chain election testing', function () {
 
       const tx = await mothership.GovernanceProxy.connect(voter.mothership).cast(
         [await nominee.mothership.getAddress()],
-        [ethers.utils.parseEther('100')],
+        [10],
         {
           gasLimit: 9000000,
         }
@@ -165,7 +167,7 @@ describe('cross chain election testing', function () {
 
       const tx = await satellite1.GovernanceProxy.connect(voter.satellite1).cast(
         [await nominee.mothership.getAddress()],
-        [ethers.utils.parseEther('100')]
+        [10]
       );
 
       await deliverCrossChainCast(
@@ -187,7 +189,7 @@ describe('cross chain election testing', function () {
 
       const tx = await satellite2.GovernanceProxy.connect(voter.satellite2).cast(
         [await nominee.mothership.getAddress()],
-        [ethers.utils.parseEther('100')]
+        [10]
       );
 
       await deliverCrossChainCast(

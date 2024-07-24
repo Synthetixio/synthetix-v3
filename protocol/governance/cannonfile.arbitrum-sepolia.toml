@@ -67,7 +67,7 @@ args = ["<%= settings.owner %>", "100", "1"]
 # target = ["GovernanceProxy"]
 # from = "<%= settings.owner %>"
 # func = "setSnapshotContract"
-# args = ["<%= contracts.SnapshotRecordMock.address %>", true]
+# args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true]
 
 [invoke.set_registered_emitters]
 target = ["GovernanceProxy"]

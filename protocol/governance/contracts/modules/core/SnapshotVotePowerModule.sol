@@ -14,11 +14,17 @@ import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
 
-    function setSnapshotContract(address snapshotContract, bool enabled) external override {
+    function setSnapshotContract(
+        address snapshotContract,
+        SnapshotVotePower.WeightType weight,
+        bool enabled
+    ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
-        SnapshotVotePower.load(snapshotContract).enabled = enabled;
+        SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+        snapshotVotePower.enabled = enabled;
+        snapshotVotePower.weight = weight;
     }
 
     function takeVotePowerSnapshot(
@@ -57,7 +63,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     function prepareBallotWithSnapshot(
         address snapshotContract,
         address voter
-    ) external override returns (uint256 power) {
+    ) external override returns (uint256 votingPower) {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
         uint128 currentEpoch = Council.load().currentElectionId.to128();
@@ -67,26 +73,33 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             revert InvalidSnapshotContract();
         }
 
-        if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
+        SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = snapshotVotePower.epochs[
+            currentEpoch
+        ];
+
+        if (snapshotVotePowerEpoch.snapshotId == 0) {
             revert SnapshotNotTaken(snapshotContract, currentEpoch);
         }
 
-        power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
-            voter,
-            snapshotVotePower.epochs[currentEpoch].snapshotId
-        );
-
-        if (power == 0) {
-            revert NoPower(snapshotVotePower.epochs[currentEpoch].snapshotId, voter);
-        }
-
-        if (snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] > 0) {
+        if (snapshotVotePowerEpoch.recordedVotingPower[voter] > 0) {
             revert BallotAlreadyPrepared(voter, currentEpoch);
         }
 
+        uint256 balance = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
+            voter,
+            snapshotVotePowerEpoch.snapshotId
+        );
+
+        votingPower = SnapshotVotePower.calculateVotingPower(snapshotVotePower.weight, balance);
+
+        if (votingPower == 0) {
+            revert NoPower(snapshotVotePowerEpoch.snapshotId, voter);
+        }
+
         Ballot.Data storage ballot = Ballot.load(currentEpoch, voter, block.chainid);
-        ballot.votingPower += power;
-        snapshotVotePower.epochs[currentEpoch].recordedVotingPower[voter] = power;
+
+        ballot.votingPower += votingPower;
+        snapshotVotePowerEpoch.recordedVotingPower[voter] = votingPower;
     }
 
     function getPreparedBallot(address voter) external view override returns (uint256 power) {
