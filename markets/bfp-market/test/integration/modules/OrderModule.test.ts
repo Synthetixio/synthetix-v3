@@ -108,14 +108,16 @@ describe('OrderModule', () => {
       const { BfpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs)
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 100_000,
+        })
       );
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 10,
+        desiredSize: bn(1_000_000),
       });
 
-      const tooLargeOrderSizeDelta = order.sizeDelta.mul(999);
+      const tooLargeOrderSizeDelta = order.sizeDelta.mul(100);
 
       await assertRevert(
         BfpMarketProxy.connect(trader.signer).commitOrder(
@@ -188,13 +190,11 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs, {
           desiredTrader: tradersGenerator.next().value,
-          desiredMarginUsdDepositAmount: 20_000,
         })
       );
 
       const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
-        desiredSize: bn(5_000),
-        desiredLeverage: 3,
+        desiredLeverage: 0.5,
       });
       await commitAndSettle(bs, marketId, trader1, order1);
 
