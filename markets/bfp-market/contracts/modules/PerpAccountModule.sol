@@ -221,7 +221,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         if (toId == fromId) {
-            revert ErrorUtil.DuplicateAccountIds();
+            revert ErrorUtil.DuplicateEntries();
         }
 
         Runtime_splitAccount memory runtime;
@@ -442,7 +442,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Cannot merge the same two accounts.
         if (toId == fromId) {
-            revert ErrorUtil.DuplicateAccountIds();
+            revert ErrorUtil.DuplicateEntries();
         }
 
         Runtime_mergeAccounts memory runtime;
