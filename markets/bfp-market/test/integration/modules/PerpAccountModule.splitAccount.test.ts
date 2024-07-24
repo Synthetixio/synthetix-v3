@@ -2,13 +2,24 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
-import { commitAndSettle, commitOrder, depositMargin, withExplicitEvmMine } from '../../helpers';
+import {
+  commitAndSettle,
+  commitOrder,
+  depositMargin,
+  getFastForwardTimestamp,
+  getPythPriceDataByMarketId,
+  getSusdCollateral,
+  payDebt,
+  setMarketConfiguration,
+  withExplicitEvmMine,
+} from '../../helpers';
 import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PerpAccountModule splitAccount', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, owner, systems, restore, provider } = bs;
+  const { collaterals, markets, traders, owner, systems, restore, provider } = bs;
 
   beforeEach(restore);
 
@@ -133,6 +144,113 @@ describe('PerpAccountModule splitAccount', () => {
         bn(0)
       ),
       `ZeroProportion()`,
+      BfpMarketProxy
+    );
+  });
+
+  it('should revert if proportion is causing size to be 0 due to rounding', async () => {
+    const { BfpMarketProxy } = systems();
+
+    const sUSD = getSusdCollateral(collaterals());
+
+    const market = markets()[1];
+    const marketId = market.marketId();
+    const trader0 = traders()[0];
+    const trader1 = traders()[1];
+
+    await setMarketConfiguration(bs, {
+      minKeeperFeeUsd: bn(100),
+      maxKeeperFeeUsd: bn(100),
+    });
+
+    // We want to split such that the from account is left with:
+    // - 0 size
+    // - nonzero collateral
+    // - nonzer0 debt
+    // Where the debt is nearly as much as the the collateral
+
+    // If we allow this, the account would left in a margin liquidatable state
+    // and the user can profit from the liquidation reward.
+
+    // Even if this action were not profitable for the user, it
+    // is draining value from the LPs and can be repeated without
+    // bound. Hence we need this to revert.
+
+    // Create the initial position
+    const depositUsdAmount = 1000;
+    await market.aggregator().mockSetCurrentPrice(bn(5000));
+
+    const { collateral, collateralDepositAmount } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: trader0,
+        desiredMarket: market,
+        desiredCollateral: sUSD,
+        desiredMarginUsdDepositAmount: depositUsdAmount,
+      })
+    );
+    const iniitialOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSize: wei(0.99).toBN(),
+      desiredKeeperFeeBufferUsd: 10,
+      desiredPriceImpactPercentage: 0.5,
+    });
+
+    await commitAndSettle(bs, marketId, trader0, iniitialOrder);
+    // Pay debt from the order fee so we can withdraw a bit
+    await payDebt(bs, marketId, trader0);
+
+    // Trader goes into profit and he can remove some of his collateral
+    await market.aggregator().mockSetCurrentPrice(bn(6500));
+
+    await BfpMarketProxy.connect(trader0.signer).modifyCollateral(
+      trader0.accountId,
+      marketId,
+      sUSD.address(),
+      bn(-750)
+    );
+
+    // Trader builds up debt by commiting an order and cancelling it
+    // Trader can use a priceLimit such that the order is not filled
+    const cancellableOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredSize: wei(0.99).toBN(),
+      desiredKeeperFeeBufferUsd: 10,
+      desiredPriceImpactPercentage: 0.5,
+    });
+
+    await commitOrder(bs, marketId, trader0, cancellableOrder);
+
+    // Execution window passes
+    const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader0);
+    const config = await BfpMarketProxy.getMarketConfiguration();
+    const staleTime = publishTime + 1 + config.maxOrderAge.toNumber();
+    await fastForwardTo(staleTime, provider());
+    const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+    // Cancel the order
+    await BfpMarketProxy.connect(trader1.signer).cancelOrder(
+      trader0.accountId,
+      marketId,
+      updateData
+    );
+
+    // Whitelist trader0
+    const trader0Address = await trader0.signer.getAddress();
+    await BfpMarketProxy.setEndorsedSplitAccounts([trader0Address]);
+
+    const toTraderAccountId = 777;
+    const tx = await BfpMarketProxy.connect(trader0.signer)['createAccount(uint128)'](
+      toTraderAccountId
+    );
+    await tx.wait();
+
+    await assertRevert(
+      BfpMarketProxy.connect(trader0.signer).splitAccount(
+        trader0.accountId,
+        toTraderAccountId,
+        marketId,
+        '1' // Split by 0.0000...001%
+      ),
+      'AccountSplitProportionTooSmall()',
       BfpMarketProxy
     );
   });

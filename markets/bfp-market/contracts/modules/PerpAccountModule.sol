@@ -368,6 +368,7 @@ contract PerpAccountModule is IPerpAccountModule {
         // Move position `from` -> `to`.
         runtime.sizeToMove = fromPosition.size.mulDecimal(proportion.toInt()).to128();
         if (runtime.sizeToMove == 0) {
+            // This avoids users from creating postions where the size is 0 due to rounding errors.
             revert ErrorUtil.AccountSplitProportionTooSmall();
         }
 
@@ -408,6 +409,7 @@ contract PerpAccountModule is IPerpAccountModule {
         // Ensure we validate remaining `fromAccount` margin > IM when position still remains.
         if (proportion < DecimalMath.UNIT) {
             if (fromPosition.size == 0) {
+                // This avoids users from creating postions where the size is 0 due to rounding errors.
                 revert ErrorUtil.AccountSplitProportionTooSmall();
             }
             (runtime.fromIm, ) = Position.getLiquidationMarginUsd(
