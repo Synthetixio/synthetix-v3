@@ -420,7 +420,6 @@ contract MarginModule is IMarginModule {
         delete globalMarginConfig.supportedCollaterals;
 
         // Update with passed in configuration.
-        address[] memory newSupportedCollaterals = new address[](runtime.lengthAfter);
         for (uint256 i = 0; i < runtime.lengthAfter; ) {
             address collateralAddress = collateralAddresses[i];
 
@@ -461,13 +460,12 @@ contract MarginModule is IMarginModule {
                 rewardDistributors[i],
                 true
             );
-            newSupportedCollaterals[i] = collateralAddress;
 
             unchecked {
                 ++i;
             }
         }
-        globalMarginConfig.supportedCollaterals = newSupportedCollaterals;
+        globalMarginConfig.supportedCollaterals = collateralAddresses;
 
         for (uint256 i = 0; i < runtime.lengthBefore; ) {
             address collateral = runtime.previousSupportedCollaterals[i];
