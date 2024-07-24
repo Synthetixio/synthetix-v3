@@ -201,4 +201,88 @@ describe('SnapshotVotePowerModule', function () {
       });
     });
   });
+  describe('#getPreparedBallot', function () {
+    before(restore);
+
+    it('calculates sqrt', async function () {
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, true);
+      const settings = await c.GovernanceProxy.getEpochSchedule();
+      await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
+      await c.GovernanceProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
+
+      const snapshotId = await c.GovernanceProxy.getVotePowerSnapshotId(
+        c.SnapshotRecordMock.address,
+        await c.GovernanceProxy.Council_get_currentElectionId()
+      );
+
+      await c.SnapshotRecordMock.setBalanceOfOnPeriod(await user.getAddress(), 100, snapshotId);
+
+      await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
+
+      await c.GovernanceProxy.prepareBallotWithSnapshot(
+        c.SnapshotRecordMock.address,
+        await user.getAddress()
+      );
+
+      const votingPower = await c.GovernanceProxy.getPreparedBallot(await user.getAddress());
+
+      assertBn.equal(votingPower, 10);
+    });
+
+    it('calculates linear', async function () {
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 1, true);
+      const settings = await c.GovernanceProxy.getEpochSchedule();
+      await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
+      await c.GovernanceProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
+
+      const snapshotId = await c.GovernanceProxy.getVotePowerSnapshotId(
+        c.SnapshotRecordMock.address,
+        await c.GovernanceProxy.Council_get_currentElectionId()
+      );
+
+      await c.SnapshotRecordMock.setBalanceOfOnPeriod(await user.getAddress(), 100, snapshotId);
+
+      await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
+
+      await c.GovernanceProxy.prepareBallotWithSnapshot(
+        c.SnapshotRecordMock.address,
+        await user.getAddress()
+      );
+
+      const votingPower = await c.GovernanceProxy.getPreparedBallot(await user.getAddress());
+
+      assertBn.equal(votingPower, 100);
+    });
+
+    it('calculates with weight of 0.5', async function () {
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 2, true);
+
+      await c.GovernanceProxy.setScale(
+        c.SnapshotRecordMock.address,
+        ethers.utils.parseEther('0.5')
+      );
+
+      const settings = await c.GovernanceProxy.getEpochSchedule();
+      await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
+      await c.GovernanceProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
+
+      const snapshotId = await c.GovernanceProxy.getVotePowerSnapshotId(
+        c.SnapshotRecordMock.address,
+        await c.GovernanceProxy.Council_get_currentElectionId()
+      );
+
+      await c.SnapshotRecordMock.setBalanceOfOnPeriod(await user.getAddress(), 100, snapshotId);
+
+      await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
+
+      await c.GovernanceProxy.prepareBallotWithSnapshot(
+        c.SnapshotRecordMock.address,
+        await user.getAddress()
+      );
+
+      const votingPower = await c.GovernanceProxy.getPreparedBallot(await user.getAddress());
+
+      assertBn.equal(votingPower, 50);
+    });
+  });
 });
