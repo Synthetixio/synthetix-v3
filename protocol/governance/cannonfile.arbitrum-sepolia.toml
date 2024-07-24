@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
-version = "6"
+version = "7"
 preset = "test"
 
 include = ["./cannonfile.satellite.toml", "./tomls/testable-contracts.toml"]
@@ -9,7 +9,7 @@ include = ["./cannonfile.satellite.toml", "./tomls/testable-contracts.toml"]
 defaultValue = "0x73570075092502472E4b61A7058Df1A4a1DB12f2"
 
 [setting.salt]
-defaultValue = "governance-test-v6"
+defaultValue = "governance-test-v7"
 
 [setting.wormhole_core]
 defaultValue = "0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35" # https://docs.wormhole.com/wormhole/reference/constants
@@ -73,10 +73,10 @@ args = ["<%= settings.owner %>", "100", "1"]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
-args = [["10005"], ["0xB5BBEa9D6c0d57cc0061ee5A005F0863c0a43aad"]]
+args = [["10005"], ["0x0AFb5ef6DBe62702142Fa018BE0D21196E666796"]]
 
 [invoke.set_gas_limit]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setGasLimit"
-args = ["100000"]
+args = ["1000000"]

@@ -101,4 +101,10 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         ballot.votingPower += votingPower;
         snapshotVotePowerEpoch.recordedVotingPower[voter] = votingPower;
     }
+
+    function getPreparedBallot(address voter) external view override returns (uint256 power) {
+        uint128 currentEpoch = Council.load().currentElectionId.to128();
+        Ballot.Data storage ballot = Ballot.load(currentEpoch, voter, block.chainid);
+        return ballot.votingPower;
+    }
 }
