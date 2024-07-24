@@ -177,6 +177,7 @@ library Position {
         uint256 im,
         uint256 nextMarginUsd
     ) internal pure {
+        // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
         int128 sizeDelta = newPosition.size - oldPositionSize;
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
