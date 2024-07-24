@@ -112,7 +112,7 @@ describe('OrderModule', () => {
       );
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 9,
+        desiredLeverage: 10,
       });
 
       const tooLargeOrderSizeDelta = order.sizeDelta.mul(999);
@@ -188,11 +188,12 @@ describe('OrderModule', () => {
         bs,
         genTrader(bs, {
           desiredTrader: tradersGenerator.next().value,
-          desiredMarginUsdDepositAmount: 15_000,
+          desiredMarginUsdDepositAmount: 20_000,
         })
       );
+
       const order1 = await genOrder(bs, market, collateral1, collateralDepositAmount1, {
-        desiredLeverage: 10,
+        desiredSize: bn(5_000),
       });
       await commitAndSettle(bs, marketId, trader1, order1);
 
