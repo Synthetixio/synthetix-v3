@@ -120,12 +120,15 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             uint256 collateralValue = globalMarket.totalCollateralValue();
             int256 totalMarketDebt;
 
-            SetUtil.UintSet storage activeMarkets = globalMarket.activeMarkets;
-            uint256 activeMarketsLength = activeMarkets.length();
-            for (uint256 i = 1; i <= activeMarketsLength; i++) {
-                uint128 marketId = activeMarkets.valueAt(i).to128();
-                totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
-                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            uint256[] memory activeMarkets = globalMarket.activeMarkets.values();
+
+            uint256[] memory prices = PerpsPrice.getCurrentPrices(
+                activeMarkets,
+                PerpsPrice.Tolerance.DEFAULT
+            );
+            for (uint256 i = 1; i <= activeMarkets.length; i++) {
+                totalMarketDebt += PerpsMarket.load(activeMarkets[i - 1].to128()).marketDebt(
+                    prices[i]
                 );
             }
 

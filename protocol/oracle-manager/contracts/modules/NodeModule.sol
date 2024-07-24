@@ -68,12 +68,12 @@ contract NodeModule is INodeModule {
      * @inheritdoc INodeModule
      */
     function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node) {
-				bytes memory err;
+        bytes memory err;
         (err, node) = NodeDefinition.process(nodeId, new bytes32[](0), new bytes32[](0));
 
-				if(err.length > 0) {
-					RevertUtil.revertWithReason(err);
-				}
+        if (err.length > 0) {
+            RevertUtil.revertWithReason(err);
+        }
     }
 
     /**
@@ -84,40 +84,44 @@ contract NodeModule is INodeModule {
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
     ) external view returns (NodeOutput.Data memory node) {
-				bytes memory err;
+        bytes memory err;
         (err, node) = NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
 
-				if (err.length > 0) {
-					RevertUtil.revertWithReason(err);
-				}
+        if (err.length > 0) {
+            RevertUtil.revertWithReason(err);
+        }
     }
 
-		function processManyWithRuntime(
-				bytes32[] memory nodeIds,
-				bytes32[] memory runtimeKeys,
-				bytes32[] memory runtimeValues
-		) external view returns (NodeOutput.Data[] memory nodes) {
-			nodes = new NodeOutput.Data[](nodeIds.length);
-			bytes[] memory errors = new bytes[](nodeIds.length);
-			uint errIdx = 0;
+    function processManyWithRuntime(
+        bytes32[] memory nodeIds,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data[] memory nodes) {
+        nodes = new NodeOutput.Data[](nodeIds.length);
+        bytes[] memory errors = new bytes[](nodeIds.length);
+        uint256 errIdx = 0;
 
-			for (uint i = 0;i < nodeIds.length;i++) {
-				(errors[errIdx], nodes[i]) = NodeDefinition.process(nodeIds[i], runtimeKeys, runtimeValues);
+        for (uint256 i = 0; i < nodeIds.length; i++) {
+            (errors[errIdx], nodes[i]) = NodeDefinition.process(
+                nodeIds[i],
+                runtimeKeys,
+                runtimeValues
+            );
 
-				if (errors[errIdx].length > 0) {
-					errIdx++;
-				}
-			}
+            if (errors[errIdx].length > 0) {
+                errIdx++;
+            }
+        }
 
-			if (errIdx > 0) {
-				// have to shorten the length of the memory array (can only do so by creating a new one with the new length and copying over)
-				bytes[] memory copiedErrors = new bytes[](errIdx);
-				for(uint i = 0; i < errIdx;i++) {
-					copiedErrors[i] = errors[i];
-				}
-				revert Errors(copiedErrors);
-			}
-		}
+        if (errIdx > 0) {
+            // have to shorten the length of the memory array (can only do so by creating a new one with the new length and copying over)
+            bytes[] memory copiedErrors = new bytes[](errIdx);
+            for (uint256 i = 0; i < errIdx; i++) {
+                copiedErrors[i] = errors[i];
+            }
+            revert Errors(copiedErrors);
+        }
+    }
 
     /**
      * @dev Returns node definition data for a given node id.

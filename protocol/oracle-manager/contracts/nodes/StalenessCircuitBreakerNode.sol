@@ -25,29 +25,34 @@ library StalenessCircuitBreakerNode {
         }
 
         bytes32 priceNodeId = nodeDefinition.parents[0];
-				NodeOutput.Data memory priceNodeOutput;
+        NodeOutput.Data memory priceNodeOutput;
         (possibleError, priceNodeOutput) = NodeDefinition.process(
             priceNodeId,
             runtimeKeys,
             runtimeValues
         );
 
-				if (possibleError.length > 0) {
-					return (possibleError, nodeOutput);
-				}
+        if (possibleError.length > 0) {
+            return (possibleError, nodeOutput);
+        }
 
         if (block.timestamp - stalenessTolerance <= priceNodeOutput.timestamp) {
             return (possibleError, priceNodeOutput);
         } else if (nodeDefinition.parents.length == 1) {
-            possibleError = abi.encodeWithSelector(StalenessToleranceExceeded.selector,
+            possibleError = abi.encodeWithSelector(
+                StalenessToleranceExceeded.selector,
                 nodeDefinition.parents[0],
                 priceNodeOutput.price,
                 priceNodeOutput.timestamp
             );
-				} else {
-						// If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
-						nodeOutput = NodeDefinition.process(nodeDefinition.parents[1], runtimeKeys, runtimeValues);
-				}
+        } else {
+            // If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
+            (possibleError, nodeOutput) = NodeDefinition.process(
+                nodeDefinition.parents[1],
+                runtimeKeys,
+                runtimeValues
+            );
+        }
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {

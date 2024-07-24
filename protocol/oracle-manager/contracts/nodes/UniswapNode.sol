@@ -60,7 +60,7 @@ library UniswapNode {
             ? price.upscale(scale.toUint())
             : price.downscale((-scale).toUint());
 
-        return NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
+        nodeOutput = NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
     }
 
     function getQuoteAtTick(

@@ -34,11 +34,14 @@ library PriceDeviationCircuitBreakerNode {
                     if (primaryPrice == 0) {
                         possibleError = abi.encodeWithSelector(InvalidInputPrice.selector);
                     } else {
-                        possibleError = abi.encodeWithSelector(DeviationToleranceExceeded.selector, difference / abs(primaryPrice));
+                        possibleError = abi.encodeWithSelector(
+                            DeviationToleranceExceeded.selector,
+                            difference / abs(primaryPrice)
+                        );
                     }
                 }
 
-								return (possibleError, nodeOutput);
+                return (possibleError, nodeOutput);
             }
         }
 

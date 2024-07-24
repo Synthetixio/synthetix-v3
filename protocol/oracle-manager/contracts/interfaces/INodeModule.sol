@@ -16,10 +16,10 @@ interface INodeModule {
      */
     error InvalidNodeDefinition(NodeDefinition.Data nodeType);
 
-		/**
-		 * @notice An array of revert reasons when an array of nodes is processed, but some of the nodes failed
-		 */ 
-		error Errors(bytes[] revertReasons);
+    /**
+     * @notice An array of revert reasons when an array of nodes is processed, but some of the nodes failed
+     */
+    error Errors(bytes[] revertReasons);
 
     /**
      * @notice Emitted when `registerNode` is called.
@@ -87,4 +87,10 @@ interface INodeModule {
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
     ) external view returns (NodeOutput.Data memory node);
+
+    function processManyWithRuntime(
+        bytes32[] memory nodeIds,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data[] memory nodes);
 }

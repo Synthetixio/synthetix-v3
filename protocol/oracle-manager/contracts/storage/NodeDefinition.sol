@@ -20,6 +20,11 @@ library NodeDefinition {
      */
     error UnprocessableNode(bytes32 nodeId);
 
+    /**
+     * @notice An array of revert reasons when an array of nodes is processed, but some of the nodes failed
+     */
+    error Errors(bytes[] revertReasons);
+
     enum NodeType {
         NONE,
         REDUCER,
@@ -96,30 +101,41 @@ library NodeDefinition {
         bytes32[] memory runtimeValues
     ) internal view returns (bytes memory possibleError, NodeOutput.Data memory price) {
         if (runtimeKeys.length != runtimeValues.length) {
-            possibleError = abi.encodeWithSignature(ParameterError.InvalidParameter.selector,
+            possibleError = abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
                 "runtimeValues",
                 "must be same length as runtimeKeys"
             );
-						return;
+            return (possibleError, price);
         }
 
         Data storage nodeDefinition = load(nodeId);
         NodeType nodeType = nodeDefinition.nodeType;
 
+        (
+            bytes[] memory errors,
+            NodeOutput.Data[] memory parentNodeOutputs
+        ) = _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues);
+
+        for (uint256 i = 0; i < errors.length; i++) {
+            if (errors[i].length > 0) {
+                // for now to keep things simpler, we revert if we have parent nodes giving a series of errors
+                revert Errors(errors);
+            }
+        }
+
         if (nodeType == NodeType.REDUCER) {
-            (possibleError, price) =
-                ReducerNode.process(
-                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
-                    nodeDefinition.parameters
-                );
+            (possibleError, price) = ReducerNode.process(
+                parentNodeOutputs,
+                nodeDefinition.parameters
+            );
         } else if (nodeType == NodeType.EXTERNAL) {
-            (possibleError, price) =
-                ExternalNode.process(
-                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
-                    nodeDefinition.parameters,
-                    runtimeKeys,
-                    runtimeValues
-                );
+            (possibleError, price) = ExternalNode.process(
+                parentNodeOutputs,
+                nodeDefinition.parameters,
+                runtimeKeys,
+                runtimeValues
+            );
         } else if (nodeType == NodeType.CHAINLINK) {
             (possibleError, price) = ChainlinkNode.process(nodeDefinition.parameters);
         } else if (nodeType == NodeType.UNISWAP) {
@@ -127,25 +143,27 @@ library NodeDefinition {
         } else if (nodeType == NodeType.PYTH) {
             (possibleError, price) = PythNode.process(nodeDefinition.parameters);
         } else if (nodeType == NodeType.PYTH_OFFCHAIN_LOOKUP) {
-            (possibleError, price) =
-                PythOffchainLookupNode.process(
-                    nodeDefinition.parameters,
-                    runtimeKeys,
-                    runtimeValues
-                );
+            (possibleError, price) = PythOffchainLookupNode.process(
+                nodeDefinition.parameters,
+                runtimeKeys,
+                runtimeValues
+            );
         } else if (nodeType == NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER) {
-            (possibleError, price) =
-                PriceDeviationCircuitBreakerNode.process(
-                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
-                    nodeDefinition.parameters
-                );
+            (possibleError, price) = PriceDeviationCircuitBreakerNode.process(
+                parentNodeOutputs,
+                nodeDefinition.parameters
+            );
         } else if (nodeType == NodeType.STALENESS_CIRCUIT_BREAKER) {
-            (possibleError, price) = StalenessCircuitBreakerNode.process(nodeDefinition, runtimeKeys, runtimeValues);
+            (possibleError, price) = StalenessCircuitBreakerNode.process(
+                nodeDefinition,
+                runtimeKeys,
+                runtimeValues
+            );
         } else if (nodeType == NodeType.CONSTANT) {
             (possibleError, price) = ConstantNode.process(nodeDefinition.parameters);
-				} else {
-						possibleError = abi.encodeWithSelector(UnprocessableNode.selector, nodeId);
-				}
+        } else {
+            possibleError = abi.encodeWithSelector(UnprocessableNode.selector, nodeId);
+        }
     }
 
     /**
@@ -155,10 +173,19 @@ library NodeDefinition {
         Data storage nodeDefinition,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
+    )
+        private
+        view
+        returns (bytes[] memory possibleErrors, NodeOutput.Data[] memory parentNodeOutputs)
+    {
+        possibleErrors = new bytes[](nodeDefinition.parents.length);
         parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            parentNodeOutputs[i] = process(nodeDefinition.parents[i], runtimeKeys, runtimeValues);
+            (possibleErrors[i], parentNodeOutputs[i]) = process(
+                nodeDefinition.parents[i],
+                runtimeKeys,
+                runtimeValues
+            );
         }
     }
 }
