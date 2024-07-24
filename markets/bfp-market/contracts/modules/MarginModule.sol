@@ -387,6 +387,7 @@ contract MarginModule is IMarginModule {
         runtime.lengthAfter = collateralAddresses.length;
         runtime.maxApproveAmount = type(uint256).max;
         runtime.previousSupportedCollaterals = globalMarginConfig.supportedCollaterals;
+
         // Number of synth collaterals to configure exceeds system maxmium.
         if (runtime.lengthAfter > MAX_SUPPORTED_MARGIN_COLLATERALS) {
             revert ErrorUtil.MaxCollateralExceeded(
@@ -422,8 +423,17 @@ contract MarginModule is IMarginModule {
         address[] memory newSupportedCollaterals = new address[](runtime.lengthAfter);
         for (uint256 i = 0; i < runtime.lengthAfter; ) {
             address collateralAddress = collateralAddresses[i];
+
+            // Verify this is not a duplicate collateralAddress.
+            for (uint256 j = i + 1; j < runtime.lengthAfter; j++) {
+                if (collateralAddress == collateralAddresses[j]) {
+                    revert ErrorUtil.DuplicateEntries();
+                }
+            }
+
             // Perform approve _once_ when this collateral is added as a supported collateral.
             ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, runtime.maxApproveAmount);
+
             // sUSD must have a 0x0 reward distributor.
             address distributor = rewardDistributors[i];
 
