@@ -19,21 +19,6 @@ contract WormholeCrossChainModule is IWormholeReceiver {
     error MessageAlreadyProcessed();
     error UnregisteredEmitter();
 
-    event MessageSent(string indexed message); //TODO delete once working
-
-    function sendMessage(string memory message) external payable {
-        //TODO delete once working
-        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        uint16[] memory chains = WormholeCrossChain.getSupportedNetworks(wh);
-        broadcast(wh, chains, abi.encodeWithSelector(this._recMessage.selector, message), 0);
-    }
-
-    function _recMessage(string memory message) external {
-        //TODO delete once working
-        WormholeCrossChain.onlyCrossChain();
-        emit MessageSent(message);
-    }
-
     ///@dev Sets supported emitters and chain ids
     function setRegisteredEmitters(uint16[] memory chainIds, address[] memory emitters) external {
         OwnableStorage.onlyOwner();
