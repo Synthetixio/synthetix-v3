@@ -17,7 +17,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 // import assert from 'assert';
 // import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
-describe.only('Settle Offchain Limit Order tests', () => {
+describe('Settle Offchain Limit Order tests', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, signers, owner } =
     bootstrapMarkets({
       synthMarkets: [
