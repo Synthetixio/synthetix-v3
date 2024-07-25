@@ -11,11 +11,15 @@ import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Help
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 contract RewardsDistributor is IRewardDistributor {
     error NotEnoughRewardsLeft(uint256 amountRequested, uint256 amountLeft);
     error NotEnoughBalance(uint256 amountRequested, uint256 currentBalance);
 
     using ERC20Helper for address;
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
 
     address public rewardManager;
     uint128 public poolId;
@@ -120,7 +124,7 @@ contract RewardsDistributor is IRewardDistributor {
         // this is necessary to avoid rounding issues when doing actual payouts
         uint256 adjustedAmount = (amount_ * SYSTEM_PRECISION) / precision;
 
-        uint256 cancelledAmount = IRewardsManagerModule(rewardManager).distributeRewards(
+        int256 cancelledAmount = IRewardsManagerModule(rewardManager).distributeRewards(
             poolId_,
             collateralType_,
             adjustedAmount,
@@ -128,7 +132,7 @@ contract RewardsDistributor is IRewardDistributor {
             duration_
         );
 
-        rewardedAmount = rewardedAmount + amount_ - cancelledAmount;
+        rewardedAmount = ((rewardedAmount + amount_).toInt() - cancelledAmount).toUint();
 
         // we check at the end because its the easiest way to verify that the end state is ok
         uint256 balance = IERC20(payoutToken).balanceOf(address(this));

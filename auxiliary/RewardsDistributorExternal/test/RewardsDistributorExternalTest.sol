@@ -80,7 +80,6 @@ contract RewardsDistributorExternalTest is Test {
         rewardsDistributor = new RewardsDistributorExternal(
             address(rewardsManager),
             poolId,
-            collateralType,
             payoutToken,
             SNX.decimals(),
             name,
@@ -88,10 +87,9 @@ contract RewardsDistributorExternalTest is Test {
         );
     }
 
-    function test_constructor_arguments() public {
+    function test_constructor_arguments() public view {
         assertEq(rewardsDistributor.rewardManager(), address(rewardsManager));
         assertEq(rewardsDistributor.name(), "whatever");
-        assertEq(rewardsDistributor.collateralType(), address(sUSDC));
         assertEq(rewardsDistributor.payoutToken(), address(SNX));
         assertEq(rewardsDistributor.token(), address(SNX));
         assertEq(rewardsDistributor.authorizedExternalDistributor(), address(EXTERNALDISTRIBUTOR));
