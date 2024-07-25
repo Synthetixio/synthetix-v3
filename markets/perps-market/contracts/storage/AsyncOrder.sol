@@ -313,7 +313,7 @@ library AsyncOrder {
 
         // only account for negative pnl
         runtime.currentAvailableMargin += MathUtil.min(
-            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize),
+            calculateFillPricePnl(runtime.fillPrice, orderPrice, runtime.sizeDelta),
             0
         );
 
@@ -511,14 +511,14 @@ library AsyncOrder {
     }
 
     /**
-     * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
+     * @notice PnL incurred from closing old position/opening new position based on fill price
      */
-    function calculateStartingPnl(
+    function calculateFillPricePnl(
         uint256 fillPrice,
         uint256 marketPrice,
-        int128 size
+        int128 sizeDelta
     ) internal pure returns (int256) {
-        return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
+        return sizeDelta.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
     }
 
     /**
