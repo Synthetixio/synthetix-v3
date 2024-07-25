@@ -66,6 +66,15 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
             }
         }
 
+        // Inefficient but necessary O(n^2) loop to verify in-place there are no duplicates collateralTypes.
+        for (uint256 i = 0; i < collateralTypesLength; i++) {
+            for (uint256 j = i + 1; j < collateralTypesLength; j++) {
+                if (data.collateralTypes[i] == data.collateralTypes[j]) {
+                    revert ErrorUtil.DuplicateEntries();
+                }
+            }
+        }
+
         // Create a new distributor by cloning an existing implementation.
         address distributorAddress = globalConfig.rewardDistributorImplementation.clone();
         IPerpRewardDistributor distributor = IPerpRewardDistributor(distributorAddress);

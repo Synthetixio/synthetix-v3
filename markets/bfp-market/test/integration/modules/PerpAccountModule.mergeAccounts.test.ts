@@ -102,7 +102,7 @@ describe('PerpAccountModule mergeAccounts', () => {
         fromTrader.accountId,
         1
       ),
-      `DuplicateAccountIds`,
+      `DuplicateEntries`,
       BfpMarketProxy
     );
   });
