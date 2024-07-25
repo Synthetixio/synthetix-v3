@@ -609,7 +609,7 @@ library Position {
     ) internal view returns (uint256) {
         // A zero sized position means there is no position.
         if (size == 0) {
-            return 2 ** 256 - 1;
+            return type(uint256).max;
         }
 
         // `margin / mm <= 1` means liquidation.
