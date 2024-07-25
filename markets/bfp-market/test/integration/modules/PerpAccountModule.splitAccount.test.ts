@@ -50,7 +50,7 @@ describe('PerpAccountModule splitAccount', () => {
         fromTrader.accountId,
         1
       ),
-      `DuplicateAccountIds`,
+      `DuplicateEntries`,
       BfpMarketProxy
     );
   });
