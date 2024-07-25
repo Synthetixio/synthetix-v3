@@ -190,8 +190,8 @@ library PerpMarket {
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price,
-        AddressRegistry.Data memory addresses,
-        int128 sizeDelta
+        int128 sizeDelta,
+        AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         uint128 size = self.size + MathUtil.abs(sizeDelta).to128();
 

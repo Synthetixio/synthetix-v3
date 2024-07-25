@@ -142,8 +142,8 @@ library Position {
         uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
             marketConfig,
             oraclePrice,
-            addresses,
-            sizeDelta
+            sizeDelta,
+            addresses
         );
 
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
