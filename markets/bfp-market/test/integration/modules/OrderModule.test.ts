@@ -104,7 +104,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert on a too large order', async () => {
+    it('should revert on a too large order going below minimumCredit', async () => {
       const { BfpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
@@ -113,17 +113,18 @@ describe('OrderModule', () => {
         })
       );
 
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredSize: bn(1_000_000),
-      });
+      const marketConfig = await BfpMarketProxy.getMarketConfigurationById(marketId);
+      const expectedMinimumCredit = collateralDepositAmount.mul(marketConfig.minCreditPercent);
 
-      const tooLargeOrderSizeDelta = order.sizeDelta.mul(100);
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: expectedMinimumCredit,
+      });
 
       await assertRevert(
         BfpMarketProxy.connect(trader.signer).commitOrder(
           trader.accountId,
           marketId,
-          tooLargeOrderSizeDelta,
+          order.sizeDelta,
           order.limitPrice,
           order.keeperFeeBufferUsd,
           order.hooks,
