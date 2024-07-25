@@ -38,6 +38,7 @@ import {
 import { ethers } from 'ethers';
 import { calcFillPrice, calcPricePnl } from '../../calculations';
 import { shuffle } from 'lodash';
+import { DEFAULT_SETTLEMENT_STRATEGY } from '@synthetixio/perps-market/test/integration/bootstrap';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -104,7 +105,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert on a too large order going below minimumCredit', async () => {
+    it('should revert commiting a too large order going below minimumCredit', async () => {
       const { BfpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
         bs,
@@ -130,6 +131,52 @@ describe('OrderModule', () => {
           order.hooks,
           genBytes32()
         ),
+        'InsufficientLiquidity()',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert settling a too large order going below minimumCredit', async () => {
+      const { BfpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarginUsdDepositAmount: 100_000,
+          desiredCollateral: genOneOf(collateralsWithoutSusd()),
+        })
+      );
+
+      const marketConfig = await BfpMarketProxy.getMarketConfigurationById(marketId);
+      const expectedMinimumCredit = collateralDepositAmount.mul(marketConfig.minCreditPercent);
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 0.95,
+      });
+
+      await BfpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd,
+        order.hooks,
+        genBytes32()
+      );
+
+      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+      const settlementTime = publishTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1;
+      await fastForwardTo(settlementTime, provider());
+
+      const newPrice = order.sizeDelta.gt(0)
+        ? wei(order.oraclePrice).mul(0.75)
+        : wei(order.oraclePrice).mul(1.25);
+
+      await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+      await assertRevert(
+        BfpMarketProxy.connect(trader.signer).settleOrder(trader.accountId, marketId, updateData),
         'InsufficientLiquidity()',
         BfpMarketProxy
       );
