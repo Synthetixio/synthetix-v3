@@ -116,6 +116,9 @@ library ErrorUtil {
     /// @notice Thrown when user trying to split an account with too large porportion.
     error AccountSplitProportionTooLarge();
 
+    /// @notice Thrown when user trying to split an account with too small porportion, this can cause weird rounding exploits.
+    error AccountSplitProportionTooSmall();
+
     /// @notice Thrown when user trying to split an account with 0 porportion.
     error ZeroProportion();
 
