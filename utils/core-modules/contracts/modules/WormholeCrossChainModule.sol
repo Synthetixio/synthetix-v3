@@ -131,6 +131,11 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         WormholeCrossChain.setGasLimit(wh, gasLimit);
     }
 
+    function getGasLimit() external view returns (uint256) {
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+        return wh.gasLimit;
+    }
+
     ///@dev returns wormhole core contract address
     function getWormholeCore() external view returns (IWormhole) {
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
