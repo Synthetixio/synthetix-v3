@@ -275,25 +275,45 @@ library Position {
         runtime.positionDecreasing =
             MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        if (!runtime.positionDecreasing) {
-            // We need discounted margin collateral as we're verifying for liquidation here.
-            //
-            // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
-            // incurred fees hence get `getNextMarginUsd` -fees.
-            runtime.discountedNextMarginUsd = getNextMarginUsd(
-                marginValuesForLiqValidation.discountedMarginUsd,
-                runtime.orderFee,
-                runtime.keeperFee
-            );
 
-            (runtime.im, runtime.mm) = getLiquidationMarginUsd(
-                newPosition.size,
-                params.oraclePrice,
-                marginValuesForLiqValidation.collateralUsd,
-                marketConfig,
-                addresses
-            );
+        (runtime.im, runtime.mm) = getLiquidationMarginUsd(
+            newPosition.size,
+            params.oraclePrice,
+            marginValuesForLiqValidation.collateralUsd,
+            marketConfig,
+            addresses
+        );
 
+        // We need discounted margin collateral as we're verifying for liquidation here.
+        //
+        // NOTE:  We create the new margin manually rather than using marginValuesForLiqValidation.discountedMarginUsd as the pnl adjustment for that margin is based on the oracle price rather than the fillPrice.
+        // And when this order settles the pnl will be realised with the fill price.
+        // We also  need to deduct the fees for setteling this order.
+        runtime.discountedNextMarginUsd = getNextMarginUsd(
+            MathUtil
+                .max(
+                    marginValuesForLiqValidation.discountedCollateralUsd.toInt() +
+                        Margin.getPnlAdjustmentUsd(
+                            accountId,
+                            market,
+                            params.oraclePrice,
+                            params.fillPrice
+                        ),
+                    0
+                )
+                .toUint(),
+            runtime.orderFee,
+            runtime.keeperFee
+        );
+        if (runtime.positionDecreasing) {
+            // In some cases a postion can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completly.
+            if (
+                newPosition.size > 0 &&
+                runtime.discountedNextMarginUsd.divDecimal(runtime.mm) <= DecimalMath.UNIT
+            ) {
+                revert ErrorUtil.CanLiquidatePosition();
+            }
+        } else {
             // Check the minimum credit requirements are still met.
             validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
 
