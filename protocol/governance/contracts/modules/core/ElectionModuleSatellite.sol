@@ -32,9 +32,7 @@ contract ElectionModuleSatellite is
 
     uint64 internal constant _MOTHERSHIP_CHAIN_ID = 0;
 
-    /**
-     * @dev Utility method for initializing a new Satellite chain
-     */
+    /// @inheritdoc	IElectionModuleSatellite
     function initElectionModuleSatellite(
         uint256 epochIndex,
         uint64 epochStartDate,
@@ -78,6 +76,7 @@ contract ElectionModuleSatellite is
         );
     }
 
+    /// @inheritdoc	IElectionModuleSatellite
     function isElectionModuleInitialized() public view override returns (bool) {
         return _isInitialized();
     }
@@ -86,7 +85,7 @@ contract ElectionModuleSatellite is
         return Council.load().initialized;
     }
 
-    ///@dev Casts vote on mothership chain
+    /// @inheritdoc	IElectionModuleSatellite
     function cast(
         address[] calldata candidates, //TODO can we change the signature here to just use address candidate
         uint256[] calldata amounts
@@ -126,7 +125,7 @@ contract ElectionModuleSatellite is
         emit VoteCastSent(sender, candidates, amounts);
     }
 
-    ///@dev Withdraws a vote that has already been casted by the sender
+    /// @inheritdoc	IElectionModuleSatellite
     function withdrawVote(address[] calldata candidates) public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
