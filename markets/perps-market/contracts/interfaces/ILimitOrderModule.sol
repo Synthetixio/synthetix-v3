@@ -66,6 +66,13 @@ interface ILimitOrderModule {
     );
 
     /**
+     * @notice Thrown when attempting to use two makers or two takers
+     * @param shortIsMaker is the short a maker?
+     * @param longIsMaker is the long a maker?
+     */
+    error MismatchingMakerTakerLimitOrder(bool shortIsMaker, bool longIsMaker);
+
+    /**
      * @notice Thrown when attempting to use an invalid relayer
      * @param relayer address of the relayer submitted with a limit order
      */
