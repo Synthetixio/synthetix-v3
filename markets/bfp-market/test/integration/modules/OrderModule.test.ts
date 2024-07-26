@@ -660,6 +660,88 @@ describe('OrderModule', () => {
       );
     });
 
+    it('should revert when reducing order makes position liquidatable', async () => {
+      const { BfpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(traders());
+      const mainTrader = tradersGenerator.next().value;
+      const otherTrader = tradersGenerator.next().value;
+      const market = markets()[0];
+      const marketId = market.marketId();
+
+      await market.aggregator().mockSetCurrentPrice(bn(3000));
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const collateralPrice = bn(3000);
+      await collateral.setPrice(collateralPrice);
+
+      // MainTrader puts on a trade of size 4 with 3k sUSD collateral
+      const sUSD = getSusdCollateral(collaterals());
+
+      const tradeAmount = bn(4); // 4 eth
+
+      const { collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: mainTrader,
+          desiredMarginUsdDepositAmount: 3000,
+          desiredCollateral: sUSD,
+          desiredMarket: market,
+        })
+      );
+
+      const openOrder = await genOrder(bs, market, sUSD, collateralDepositAmount, {
+        desiredSize: tradeAmount,
+      });
+
+      await commitAndSettle(bs, marketId, mainTrader, openOrder);
+
+      // OtherTrader puts on a trade of size 1000 with 1000 eth collateral, moving the skew and increasing the fill price
+      const { collateralDepositAmount: otherTraderCollateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: otherTrader,
+          desiredMarket: market,
+          desiredCollateral: collateral,
+          desiredMarginUsdDepositAmount: wei(1000).mul(collateralPrice).toNumber(),
+        })
+      );
+      // The other trader commits their order just after and gets it settled before MainTrader's order
+      const otherTraderOrder = await genOrder(
+        bs,
+        market,
+        collateral,
+        otherTraderCollateralDepositAmount,
+        {
+          desiredLeverage: 2,
+          desiredSide: -1,
+        }
+      );
+
+      await commitAndSettle(bs, marketId, otherTrader, otherTraderOrder);
+
+      // index token price drops
+      const newMarketOraclePrice1 = wei(openOrder.oraclePrice).mul(0.81).toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
+
+      // MainTrader tries to commit an order closing 90% of their position.
+      const openOrder2 = await genOrder(bs, market, sUSD, tradeAmount, {
+        desiredSize: wei(tradeAmount).mul(-1).mul(0.9).toBN(),
+      });
+      await assertRevert(
+        BfpMarketProxy.connect(mainTrader.signer).commitOrder(
+          mainTrader.accountId,
+          marketId,
+          openOrder2.sizeDelta,
+          openOrder2.limitPrice,
+          openOrder2.keeperFeeBufferUsd,
+          openOrder2.hooks,
+          genBytes32()
+        ),
+        'CanLiquidatePosition()',
+        BfpMarketProxy
+      );
+    });
+
     it('should revert when placing a position into instant liquidation due to post settlement position (concrete)', async () => {
       const { BfpMarketProxy } = systems();
 
@@ -2031,6 +2113,94 @@ describe('OrderModule', () => {
           genBytes32()
         ),
         'InsufficientMargin()',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when reducing order makes position liquidatable', async () => {
+      const { BfpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(traders());
+      const mainTrader = tradersGenerator.next().value;
+      const otherTrader = tradersGenerator.next().value;
+
+      const market = markets()[0];
+      const marketId = market.marketId();
+
+      await market.aggregator().mockSetCurrentPrice(bn(3000));
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const collateralPrice = bn(3000);
+      await collateral.setPrice(collateralPrice);
+
+      // MainTrader puts on a trade of size 4 with 3k sUSD collateral
+      const sUSD = getSusdCollateral(collaterals());
+      const tradeAmount = bn(4); // 4 eth
+      const { collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: mainTrader,
+          desiredMarginUsdDepositAmount: 3000,
+          desiredCollateral: sUSD,
+          desiredMarket: market,
+        })
+      );
+
+      const openOrder = await genOrder(bs, market, sUSD, collateralDepositAmount, {
+        desiredSize: tradeAmount,
+      });
+
+      await commitAndSettle(bs, marketId, mainTrader, openOrder);
+
+      // OtherTrader puts on a trade of size 1000 with 1000 eth collateral, moving the skew and increasing the fill price
+      const { collateralDepositAmount: otherTraderCollateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: otherTrader,
+          desiredMarket: market,
+          desiredCollateral: collateral,
+          desiredMarginUsdDepositAmount: wei(1000).mul(collateralPrice).toNumber(),
+        })
+      );
+
+      // Main trader commit an trade that would decrease their position with 90%.
+      const openOrder2 = await genOrder(bs, market, sUSD, tradeAmount, {
+        desiredSize: wei(tradeAmount).mul(-1).mul(0.9).toBN(),
+        desiredPriceImpactPercentage: 0.5,
+      });
+      await commitOrder(bs, marketId, mainTrader, openOrder2);
+      // The other trader commits their order just after and gets it settled before MainTrader's order
+      const otherTraderOrder = await genOrder(
+        bs,
+        market,
+        collateral,
+        otherTraderCollateralDepositAmount,
+        {
+          desiredLeverage: 2,
+          desiredSide: -1,
+        }
+      );
+      await commitAndSettle(bs, marketId, otherTrader, otherTraderOrder);
+
+      // Price drops before MainTrader's order is settled
+      const newMarketOraclePrice1 = wei(openOrder.oraclePrice).mul(0.81).toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
+
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(
+        bs,
+        marketId,
+        mainTrader
+      );
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+      await fastForwardTo(settlementTime, provider());
+
+      await assertRevert(
+        BfpMarketProxy.connect(bs.keeper()).settleOrder(
+          mainTrader.accountId,
+          marketId,
+          updateData,
+          { value: updateFee }
+        ),
+        'CanLiquidatePosition()',
         BfpMarketProxy
       );
     });
