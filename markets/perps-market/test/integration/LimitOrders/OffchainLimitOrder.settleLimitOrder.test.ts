@@ -52,14 +52,20 @@ describe('Settle Offchain Limit Order tests', () => {
     relayer = signers()[8];
   });
 
-  // TODO set on a per market level
-  before('set fee collector and referral', async () => {
+  before('identify actors, set fee collector, set relayer fees, set market fees', async () => {
+    ethMarketId = perpsMarkets()[0].marketId();
+    btcSynth = synthMarkets()[0];
     await systems()
       .PerpsMarket.connect(owner())
       .setFeeCollector(systems().FeeCollectorMock.address);
     await systems()
       .PerpsMarket.connect(owner())
       .updateRelayerShare(await relayer.getAddress(), relayerRatio.toBN()); // 30%
+    const nonZeroLimitOrderMakerFee = bn(0.0002); // 2bps
+    const nonZeroLimitOrderTakerFee = bn(0.0006); // 6bps
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setLimitOrderFees(ethMarketId, nonZeroLimitOrderMakerFee, nonZeroLimitOrderTakerFee);
   });
 
   // let btcSynth: SynthMarkets[number];
@@ -67,11 +73,6 @@ describe('Settle Offchain Limit Order tests', () => {
   const PERPS_COMMIT_LIMIT_ORDER_PERMISSION_NAME = ethers.utils.formatBytes32String(
     'PERPS_COMMIT_LIMIT_ORDER'
   );
-
-  before('identify actors', async () => {
-    ethMarketId = perpsMarkets()[0].marketId();
-    btcSynth = synthMarkets()[0];
-  });
 
   const restoreToCommit = snapshotCheckpoint(provider);
 
@@ -147,45 +148,55 @@ describe('Settle Offchain Limit Order tests', () => {
       trader1() as ethers.Wallet,
       systems().PerpsMarket.address
     );
-    console.log('signer should be the account owner');
-    console.log('short order signer', await trader1().getAddress());
     const signedLongOrder = await signOrder(
       longOrder,
       trader2() as ethers.Wallet,
       systems().PerpsMarket.address
     );
-    console.log('long order signer', await trader2().getAddress());
     tx = await systems()
       .PerpsMarket.connect(owner())
       .settleLimitOrder(shortOrder, signedShortOrder, longOrder, signedLongOrder);
+
+    const pnlShort = 0,
+      pnlLong = 0;
+    const accruedFundingShort = 0,
+      accruedFundingLong = 0;
+    const newPositionSizeShort = 0,
+      newPositionSizeLong = 0;
+    const limitOrderFeesShort = 599999700000000000,
+      limitOrderFeesLong = 599999700000000000;
+    const relayerFees = 0;
+    const feeCollectorFees = 0;
+    const chargedInterestShort = 0,
+      chargedInterestLong = 0;
     const orderSettledEventsArgs = {
       trader1: [
         `${ethMarketId}`,
         `${shortOrder.accountId}`,
         `${price}`,
-        `${0}`,
-        `${0}`,
+        `${pnlShort}`,
+        `${accruedFundingShort}`,
         `${shortOrder.amount}`,
-        `${0}`,
-        `${0}`,
-        `${0}`,
-        `${0}`,
+        `${newPositionSizeShort}`,
+        `${limitOrderFeesShort}`,
+        `${relayerFees}`,
+        `${feeCollectorFees}`,
         `"${shortOrder.trackingCode}"`,
-        `${0}`,
+        `${chargedInterestShort}`,
       ].join(', '),
       trader2: [
         `${ethMarketId}`,
         `${longOrder.accountId}`,
         `${price}`,
-        `${0}`,
-        `${0}`,
+        `${pnlLong}`,
+        `${accruedFundingLong}`,
         `${longOrder.amount}`,
-        `${0}`,
-        `${0}`,
-        `${0}`,
-        `${0}`,
+        `${newPositionSizeLong}`,
+        `${limitOrderFeesLong}`,
+        `${relayerFees}`,
+        `${feeCollectorFees}`,
         `"${longOrder.trackingCode.toString()}"`,
-        `${0}`,
+        `${chargedInterestLong}`,
       ].join(', '),
     };
     // TODO fix this test
@@ -211,6 +222,10 @@ describe('Settle Offchain Limit Order tests', () => {
         0,
       ].join(', '),
     };
+    const collateralDeductedEventsArgs = {
+      trader1: [`${shortOrder.accountId}`, `${0}`, `${limitOrderFeesShort}`].join(', '),
+      trader2: [`${longOrder.accountId}`, `${0}`, `${limitOrderFeesLong}`].join(', '),
+    };
     await assertEvent(
       tx,
       `LimitOrderSettled(${orderSettledEventsArgs.trader1})`,
@@ -229,6 +244,16 @@ describe('Settle Offchain Limit Order tests', () => {
     await assertEvent(
       tx,
       `MarketUpdated(${marketUpdateEventsArgs.trader2})`,
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      tx,
+      `CollateralDeducted(${collateralDeductedEventsArgs.trader1})`,
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      tx,
+      `CollateralDeducted(${collateralDeductedEventsArgs.trader2})`,
       systems().PerpsMarket
     );
   });

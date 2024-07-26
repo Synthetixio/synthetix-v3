@@ -187,7 +187,7 @@ library Account {
             revert PermissionDenied(accountId, permission, signingAddress);
         }
 
-        // TODO record interaction??? look into it
+        // NOTE do we want limit order matching to count on the withdrawal timeout?
         recordInteraction(account);
     }
 

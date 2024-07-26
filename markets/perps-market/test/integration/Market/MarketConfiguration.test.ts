@@ -18,7 +18,7 @@ describe('MarketConfiguration', () => {
   const fixture = {
     token: 'snxETH',
     marketName: 'TestPerpsMarket',
-    orderFees: { makerFee: 0, takerFee: 1 },
+    orderFees: { makerFee: 0, takerFee: 1, limitOrderMakerFee: 1, limitOrderTakerFee: 2 },
     settlementStrategy: {
       strategyType: 0,
       commitmentPriceDelay: 0,
@@ -254,6 +254,26 @@ describe('MarketConfiguration', () => {
       systems().PerpsMarket
     );
   });
+
+  it('owner can set limit order fees and events are emitted', async () => {
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setLimitOrderFees(
+          marketId,
+          fixture.orderFees.limitOrderMakerFee,
+          fixture.orderFees.limitOrderTakerFee
+        ),
+      'LimitOrderFeesSet(' +
+        marketId.toString() +
+        ', ' +
+        fixture.orderFees.limitOrderMakerFee.toString() +
+        ', ' +
+        fixture.orderFees.limitOrderTakerFee.toString() +
+        ')',
+      systems().PerpsMarket
+    );
+  });
   it('owner can set max market size and events are emitted', async () => {
     await assertEvent(
       await systems()
@@ -365,6 +385,17 @@ describe('MarketConfiguration', () => {
       systems()
         .PerpsMarket.connect(randomUser)
         .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee),
+      'Unauthorized',
+      systems().PerpsMarket
+    );
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setLimitOrderFees(
+          marketId,
+          fixture.orderFees.limitOrderMakerFee,
+          fixture.orderFees.limitOrderTakerFee
+        ),
       'Unauthorized',
       systems().PerpsMarket
     );
