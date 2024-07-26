@@ -45,6 +45,8 @@ describe('Settle Offchain Limit Order tests', () => {
   let longOrder: Order;
   const price = bn(999.9995);
   const amount = bn(1);
+  const nonZeroLimitOrderMakerFee = bn(0.0002); // 2bps
+  const nonZeroLimitOrderTakerFee = bn(0.0006); // 6bps
   let relayer: ethers.Signer;
   const relayerRatio = wei(0.3); // 30%
 
@@ -61,8 +63,6 @@ describe('Settle Offchain Limit Order tests', () => {
     await systems()
       .PerpsMarket.connect(owner())
       .updateRelayerShare(await relayer.getAddress(), relayerRatio.toBN()); // 30%
-    const nonZeroLimitOrderMakerFee = bn(0.0002); // 2bps
-    const nonZeroLimitOrderTakerFee = bn(0.0006); // 6bps
     await systems()
       .PerpsMarket.connect(owner())
       .setLimitOrderFees(ethMarketId, nonZeroLimitOrderMakerFee, nonZeroLimitOrderTakerFee);
@@ -163,12 +163,23 @@ describe('Settle Offchain Limit Order tests', () => {
       accruedFundingLong = 0;
     const newPositionSizeShort = 0,
       newPositionSizeLong = 0;
-    const limitOrderFeesShort = 599999700000000000,
-      limitOrderFeesLong = 599999700000000000;
+    const limitOrderFeesShort = amount
+        .mul(price)
+        .div(bn(1))
+        .mul(nonZeroLimitOrderMakerFee)
+        .div(bn(1))
+        .toString(),
+      limitOrderFeesLong = amount
+        .mul(price)
+        .div(bn(1))
+        .mul(nonZeroLimitOrderTakerFee)
+        .div(bn(1))
+        .toString();
     const relayerFees = 0;
     const feeCollectorFees = 0;
     const chargedInterestShort = 0,
       chargedInterestLong = 0;
+
     const orderSettledEventsArgs = {
       trader1: [
         `${ethMarketId}`,
@@ -195,7 +206,7 @@ describe('Settle Offchain Limit Order tests', () => {
         `${limitOrderFeesLong}`,
         `${relayerFees}`,
         `${feeCollectorFees}`,
-        `"${longOrder.trackingCode.toString()}"`,
+        `"${longOrder.trackingCode}"`,
         `${chargedInterestLong}`,
       ].join(', '),
     };
@@ -315,6 +326,26 @@ describe('Settle Offchain Limit Order tests', () => {
         .PerpsMarket.connect(owner())
         .settleLimitOrder(shortOrder, signedShortOrder, badLongOrder, badSignedLongOrder),
       `LimitOrderAmountError(${shortOrder.amount}, ${badLongOrder.amount})`
+    );
+  });
+
+  it('fails when the orders are both makers', async () => {
+    const badLongOrder = { ...longOrder, limitOrderMaker: true };
+    const signedShortOrder = await signOrder(
+      shortOrder,
+      trader1() as ethers.Wallet,
+      systems().PerpsMarket.address
+    );
+    const badSignedLongOrder = await signOrder(
+      badLongOrder,
+      trader2() as ethers.Wallet,
+      systems().PerpsMarket.address
+    );
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(owner())
+        .settleLimitOrder(shortOrder, signedShortOrder, badLongOrder, badSignedLongOrder),
+      `MismatchingMakerTakerLimitOrder(${shortOrder.limitOrderMaker}, ${badLongOrder.limitOrderMaker})`
     );
   });
 

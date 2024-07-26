@@ -91,6 +91,7 @@ export function createMatchingLimitOrders(orderArgs: OrderCreationArgs): {
     ...orderArgs,
     isShort: true,
     accountId: orderArgs.accountId - 1,
+    isMaker: !orderArgs.isMaker,
   });
   return {
     shortOrder: oppositeOrder,
