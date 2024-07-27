@@ -330,6 +330,59 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
+    function setDelegationCollateralConfiguration(
+        uint128 marketId,
+        uint32 delegateCollateralDelay,
+        uint32 delegateCollateralWindow,
+        uint32 undelegateCollateralDelay,
+        uint32 undelegateCollateralWindow
+    ) external override {
+        Market.Data storage market = Market.load(marketId);
+
+        if (ERC2771Context._msgSender() != market.marketAddress)
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
+
+        market.delegateCollateralDelay = delegateCollateralDelay;
+        market.delegateCollateralWindow = delegateCollateralWindow;
+        market.undelegateCollateralDelay = undelegateCollateralDelay;
+        market.undelegateCollateralWindow = undelegateCollateralWindow;
+
+        emit SetDelegateCollateralConfiguration(
+            marketId,
+            delegateCollateralDelay,
+            delegateCollateralWindow,
+            undelegateCollateralDelay,
+            undelegateCollateralWindow
+        );
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function getDelegationCollateralConfiguration(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (
+            uint32 delegateCollateralDelay,
+            uint32 delegateCollateralWindow,
+            uint32 undelegateCollateralDelay,
+            uint32 undelegateCollateralWindow
+        )
+    {
+        Market.Data storage market = Market.load(marketId);
+
+        delegateCollateralDelay = market.delegateCollateralDelay;
+        delegateCollateralWindow = market.delegateCollateralWindow;
+        undelegateCollateralDelay = market.undelegateCollateralDelay;
+        undelegateCollateralWindow = market.undelegateCollateralWindow;
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
     function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
         Market.Data storage market = Market.load(marketId);

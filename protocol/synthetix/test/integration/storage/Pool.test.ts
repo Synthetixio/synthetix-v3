@@ -105,13 +105,16 @@ describe('Pool', function () {
         before('increase collateral', async () => {
           await systems()
             .Core.connect(user1)
-            .delegateCollateral(
+            .declareIntentToDelegateCollateral(
               accountId,
               poolId,
               collateralAddress(),
               depositAmount.mul(2),
               ethers.utils.parseEther('1')
             );
+          await systems()
+            .Core.connect(user1)
+            .processIntentToDelegateCollateralByPair(accountId, poolId, collateralAddress());
         });
 
         it('the ultimate capacity of the pool ends up higher', async () => {

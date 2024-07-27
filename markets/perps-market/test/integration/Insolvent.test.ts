@@ -4,6 +4,7 @@ import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { delegateCollateral } from '@synthetixio/main/test/common';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 
@@ -18,7 +19,7 @@ const interestRateParams = {
 };
 
 describe('Position - interest rates', () => {
-  const { systems, perpsMarkets, superMarketId, provider, trader1, keeper, staker } =
+  const { systems, perpsMarkets, superMarketId, provider, owner, trader1, keeper, staker } =
     bootstrapMarkets({
       interestRateParams: {
         lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
@@ -83,15 +84,16 @@ describe('Position - interest rates', () => {
       systems().CollateralMock.address
     );
     // very low amount to make market insolvent
-    await systems()
-      .Core.connect(staker())
-      .delegateCollateral(
-        1,
-        1,
-        systems().CollateralMock.address,
-        wei(currentCollateralAmount).mul(wei(0.1)).toBN(),
-        ethers.utils.parseEther('1')
-      );
+    await delegateCollateral(
+      systems,
+      owner(),
+      staker(),
+      1,
+      1,
+      systems().CollateralMock.address,
+      wei(currentCollateralAmount).mul(wei(0.1)).toBN(),
+      ethers.utils.parseEther('1')
+    );
   });
 
   // trader 1
