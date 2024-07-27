@@ -174,6 +174,24 @@ describe('PerpRewardDistributorFactoryModule', () => {
         BfpMarketProxy
       );
     });
+
+    it('should revert when there are duplicate poolCollaterals', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const from = owner();
+      const collateralType = genAddress();
+
+      await assertRevert(
+        BfpMarketProxy.connect(from).createRewardDistributor({
+          poolId: pool().id,
+          collateralTypes: [collateralType, genAddress(), collateralType],
+          name: genBytes32(),
+          token: genAddress(),
+        }),
+        'DuplicateEntries()',
+        BfpMarketProxy
+      );
+    });
   });
 
   describe('Core.RewardsManagerModule.claimReward', () => {

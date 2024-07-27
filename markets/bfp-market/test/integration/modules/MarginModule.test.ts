@@ -1853,30 +1853,7 @@ describe('MarginModule', async () => {
     });
   });
 
-  describe('setMarginMarginCollateralConfiguration', () => {
-    it('should revert when config arrays has mismatched lengths', async () => {
-      const { BfpMarketProxy } = systems();
-      const from = owner();
-
-      const collateralAddresses = [collaterals()[0].address(), collaterals()[1].address()];
-      const maxAllowables = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
-      const skewScales = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
-      const oracleNodeIds = genListOf(genNumber(3, 10), () => genBytes32());
-      const rewardDistributors = genListOf(genNumber(3, 10), () => genAddress());
-
-      await assertRevert(
-        BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
-          collateralAddresses,
-          oracleNodeIds,
-          maxAllowables,
-          skewScales,
-          rewardDistributors
-        ),
-        `ArrayLengthMismatch()`,
-        BfpMarketProxy
-      );
-    });
-
+  describe('setMarginCollateralConfiguration', () => {
     it('should configure and return many collaterals configured', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();
@@ -2099,6 +2076,29 @@ describe('MarginModule', async () => {
       assert.equal(collaterals.length, 0);
     });
 
+    it('should revert when config arrays has mismatched lengths', async () => {
+      const { BfpMarketProxy } = systems();
+      const from = owner();
+
+      const collateralAddresses = [collaterals()[0].address(), collaterals()[1].address()];
+      const maxAllowables = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
+      const skewScales = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
+      const oracleNodeIds = genListOf(genNumber(3, 10), () => genBytes32());
+      const rewardDistributors = genListOf(genNumber(3, 10), () => genAddress());
+
+      await assertRevert(
+        BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
+          collateralAddresses,
+          oracleNodeIds,
+          maxAllowables,
+          skewScales,
+          rewardDistributors
+        ),
+        `ArrayLengthMismatch()`,
+        BfpMarketProxy
+      );
+    });
+
     it('should revert when non-owner', async () => {
       const { BfpMarketProxy } = systems();
       const from = await traders()[0].signer.getAddress();
@@ -2125,7 +2125,7 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should revert when an collateralAddress is supplied as collateral', async () => {
+    it('should revert when a non collateralAddress is supplied as collateral', async () => {
       const { BfpMarketProxy } = systems();
       const from = owner();
 
@@ -2229,6 +2229,40 @@ describe('MarginModule', async () => {
           newRewardDistributors
         ),
         `MaxCollateralExceeded("${collateralsToConfigure}", "${MAX_SUPPORTED_MARGIN_COLLATERALS}")`,
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when a duplicate collateralAddress is found', async () => {
+      const { BfpMarketProxy } = systems();
+      const from = owner();
+
+      const collateralsToConfigure = [
+        collaterals()[0],
+        collaterals()[1],
+        collaterals()[0], // [0] is duplicated.
+      ];
+      const collateralAddresses = collateralsToConfigure.map((c) => c.address());
+      const oracleNodeIds = genListOf(collateralsToConfigure.length, () => genBytes32());
+      const maxAllowables = genListOf(collateralsToConfigure.length, () =>
+        bn(genNumber(10_000, 100_000))
+      );
+      const skewScales = genListOf(collateralsToConfigure.length, () =>
+        bn(genNumber(10_000, 100_000))
+      );
+      const rewardDistributors = collateralsToConfigure.map(({ rewardDistributorAddress }) =>
+        rewardDistributorAddress()
+      );
+
+      await assertRevert(
+        BfpMarketProxy.connect(from).setMarginCollateralConfiguration(
+          collateralAddresses,
+          oracleNodeIds,
+          maxAllowables,
+          skewScales,
+          rewardDistributors
+        ),
+        `DuplicateEntries()`,
         BfpMarketProxy
       );
     });

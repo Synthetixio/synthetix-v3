@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/legacy-market",
-  "version": "3.3.4",
+  "version": "3.3.6",
   "description": "Contract for migration from v2x to v3",
   "private": true,
   "scripts": {
