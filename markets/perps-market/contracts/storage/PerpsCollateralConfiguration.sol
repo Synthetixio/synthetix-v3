@@ -137,8 +137,8 @@ library PerpsCollateralConfiguration {
         if (useDiscount && skewScale != 0) {
             uint256 impactOnSkew = amount.divDecimal(skewScale).mulDecimal(self.discountScalar);
             discount = (
-                MathUtil.max(
-                    MathUtil.min(impactOnSkew, self.lowerLimitDiscount),
+                MathUtil.min(
+                    MathUtil.max(impactOnSkew, self.lowerLimitDiscount),
                     self.upperLimitDiscount
                 )
             );
