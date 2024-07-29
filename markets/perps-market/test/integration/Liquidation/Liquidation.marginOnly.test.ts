@@ -234,6 +234,8 @@ describe('liquidation margin only', () => {
       await ethSynth.sellAggregator().mockSetCurrentPrice(bn(1500));
 
       seizedCollateralValue = await systems().PerpsMarket.totalCollateralValue(2);
+      console.log('available margin', await systems().PerpsMarket.getAvailableMargin(2));
+      console.log('seized value', seizedCollateralValue);
 
       // liquidate margin only
       liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidateMarginOnly(2);
