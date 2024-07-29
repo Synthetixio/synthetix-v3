@@ -88,8 +88,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         (bool isEligible, ) = account.isEligibleForMarginLiquidation(PerpsPrice.Tolerance.STRICT);
         if (isEligible) {
             // margin is sent to liquidation rewards distributor in getMarginLiquidationCostAndSeizeMargin
-            uint256 seizedMarginValue = account.seizeCollateral();
             uint256 marginLiquidateCost = KeeperCosts.load().getFlagKeeperCosts(account.id);
+            uint256 seizedMarginValue = account.seizeCollateral();
 
             // keeper is rewarded in _liquidateAccount
             liquidationReward = _liquidateAccount(

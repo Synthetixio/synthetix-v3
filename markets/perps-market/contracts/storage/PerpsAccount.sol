@@ -19,8 +19,6 @@ import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsCollateralConfiguration} from "./PerpsCollateralConfiguration.sol";
 
-// import "hardhat/console.sol";
-
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -177,13 +175,11 @@ library PerpsAccount {
             totalCollateralValue
         );
 
-        int256 liquidationCost = globalConfig
+        int256 totalLiquidationReward = globalConfig
             .keeperReward(liquidationRewardForKeeper, totalLiquidationCost, totalCollateralValue)
             .toInt();
 
-        // console.log("liquidationCost", liquidationCost.toUint());
-
-        availableMargin = getAvailableMargin(self, stalenessTolerance) - liquidationCost;
+        availableMargin = getAvailableMargin(self, stalenessTolerance) - totalLiquidationReward;
         isEligible = availableMargin < 0;
     }
 

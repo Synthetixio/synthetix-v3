@@ -230,12 +230,11 @@ describe('liquidation margin only', () => {
   describe('move synth prices to make account liquidatable', async () => {
     let liquidateTxn: ethers.providers.TransactionResponse, seizedCollateralValue: ethers.BigNumber;
     before(async () => {
+      // these values make the account have margin but not enough to cover the liquidation reward
       await btcSynth.sellAggregator().mockSetCurrentPrice(bn(25_000));
-      await ethSynth.sellAggregator().mockSetCurrentPrice(bn(1500));
+      await ethSynth.sellAggregator().mockSetCurrentPrice(bn(1465));
 
       seizedCollateralValue = await systems().PerpsMarket.totalCollateralValue(2);
-      console.log('available margin', await systems().PerpsMarket.getAvailableMargin(2));
-      console.log('seized value', seizedCollateralValue);
 
       // liquidate margin only
       liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidateMarginOnly(2);
