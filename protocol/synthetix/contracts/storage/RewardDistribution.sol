@@ -97,53 +97,42 @@ library RewardDistribution {
             );
         }
 
-        if (start == 0) {
-            // zero start is often used as a check for whether there is a distribution or not
-            revert ParameterError.InvalidParameter("start", "cannot start at 0");
-        }
-
         uint256 curTime = block.timestamp;
 
         // Unlocks the entry's distributed amount into its value per share.
         diffD18 += updateEntry(self, totalSharesD18);
 
-        // is there a distribution already in progress
-        if (curTime < start && start < self.start + self.duration && self.start > 0) {
-            cancelledAmount = self.nextScheduledValueD18;
+        // no matter what distribution gets applied, the next scheduled value (if any) gets cancelled)
+        cancelledAmount = self.nextScheduledValueD18;
+
+        // is this going to be a new active distribution, or a next distribution?
+        // its an active distribution if there is no "active" distribution, or if the new distribution starts before the end of the current active distro
+        if (
+            start == 0 ||
+            self.scheduledValueD18 == 0 ||
+            curTime > self.start + self.duration ||
+            start < self.start + self.duration
+        ) {
+            if (curTime < self.start || start < self.start || self.duration == 0) {
+                cancelledAmount += self.scheduledValueD18;
+            } else {
+                cancelledAmount +=
+                    (self.scheduledValueD18 * (self.start + self.duration - curTime).toInt()) /
+                    self.duration.toInt();
+            }
+            self.nextScheduledValueD18 = 0;
+            self.nextStart = 0;
+            self.nextDuration = 0;
+            self.scheduledValueD18 = amountD18.to128();
+            self.start = start;
+            self.duration = duration;
+            self.lastUpdate = 0;
+            diffD18 += updateEntry(self, totalSharesD18);
+            // its a next distribution if none of the above applies
+        } else {
             self.nextScheduledValueD18 = amountD18.to128();
             self.nextStart = start;
             self.nextDuration = duration;
-
-            // is the new distribution starting before the end of the old distribution
-            if (self.start + self.duration > start) {
-                // since we are cutting short the active distribution, cancel its expected cancelled value
-                cancelledAmount +=
-                    self.scheduledValueD18 -
-                    (self.scheduledValueD18 * (self.start - start).to256().toInt()) /
-                    self.duration.to256().toInt();
-
-                // solhint-disable-next-line numcast/safe-cast
-                self.duration = uint32(start - self.start);
-                self.scheduledValueD18 -= cancelledAmount.to128();
-            }
-        } else {
-            // if we are cutting off a current distribution, cancel its value
-            if (self.duration > 0) {
-                cancelledAmount =
-                    self.scheduledValueD18 -
-                    (self.scheduledValueD18 * (curTime - start).toInt()) /
-                    self.duration.to256().toInt();
-            }
-
-            self.scheduledValueD18 = amountD18.to128();
-
-            self.start = start;
-            self.duration = duration;
-
-            // The amount is actually the amount distributed already *plus* whatever has been specified now.
-            self.lastUpdate = 0;
-
-            diffD18 += updateEntry(self, totalSharesD18);
         }
     }
 

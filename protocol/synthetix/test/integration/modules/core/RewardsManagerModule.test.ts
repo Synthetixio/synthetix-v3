@@ -147,17 +147,13 @@ describe('RewardsManagerModule', function () {
         });
       });
 
-      it('only allows distribution with start time greater than 0', async () => {
-        await assertRevert(
-          RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            0, // timestamp
-            0
-          ),
-          'InvalidParameter("start", "cannot start at 0")',
-          systems().Core
+      it('allows distribution with start time equal to 0', async () => {
+        await RewardDistributor.connect(owner).callStatic.distributeRewards(
+          poolId,
+          collateralAddress(),
+          rewardAmount,
+          0, // timestamp
+          0
         );
       });
 

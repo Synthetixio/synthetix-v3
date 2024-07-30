@@ -132,6 +132,8 @@ contract RewardsDistributor is IRewardDistributor {
             duration_
         );
 
+        uint256 adjustedAmount = (amount_ * precision) / SYSTEM_PRECISION;
+
         rewardedAmount = ((rewardedAmount + amount_).toInt() - cancelledAmount).toUint();
 
         // we check at the end because its the easiest way to verify that the end state is ok
