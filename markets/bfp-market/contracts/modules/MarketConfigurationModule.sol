@@ -49,7 +49,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId = data.marketId;
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
-        PerpMarket.exists(marketId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarket.recomputeFunding(market, marketId);
 
         PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
