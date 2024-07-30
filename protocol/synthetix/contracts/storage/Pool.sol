@@ -419,6 +419,9 @@ library Pool {
                     .currentEpoch()
                     .accountsDebtDistribution
                     .totalSharesD18;
+
+                dist.claimStatus[actorId].lastRewardPerShareD18 = dist.rewardPerShareD18;
+
                 if (distAmount == 0 || vaultTotalShares == 0) {
                     continue;
                 }
@@ -426,8 +429,6 @@ library Pool {
                 self.vaults[pos.collateralType].rewards[rewardId].rewardPerShareD18 += distAmount
                     .divDecimal(vaultTotalShares)
                     .to128();
-
-                dist.claimStatus[actorId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
                 poolRewardIds[i] = rewardId;
             }

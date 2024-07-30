@@ -798,7 +798,7 @@ describe('RewardsManagerModule', function () {
 
         assertBn.equal(availableRewards, 0);
 
-        await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+        await systems().Core.updateRewards(poolId, collateralAddress(), accountId);
 
         const availableRewards2 = await systems()
           .Core.connect(user1)
@@ -813,6 +813,8 @@ describe('RewardsManagerModule', function () {
       });
 
       it('user in 2nd collateral type cant claim anything (because they came in later)', async () => {
+        await systems().Core.updateRewards(poolId, Collateral2.address, 2222);
+
         const availableRewards = await systems()
           .Core.connect(user1)
           .getAvailableRewards(
