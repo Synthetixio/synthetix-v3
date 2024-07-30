@@ -121,6 +121,14 @@ library LiquidationAssetManager {
         // Infer the ratio of size to distribute, proportional to value of each delegated collateral.
         uint256 remainingAmountToDistribute = amount;
         for (uint256 j = 0; j < poolCollateralTypesLength; ) {
+            // skip if collateral value is 0 (will revert on RewardsDistribution.distribute)
+            if (collateralValuesUsd[j] == 0) {
+                unchecked {
+                    ++j;
+                }
+                continue;
+            }
+
             // Ensure total amounts fully distributed, the last collateral receives the remainder.
             if (j == poolCollateralTypesLength - 1) {
                 distributor.distributeRewards(
