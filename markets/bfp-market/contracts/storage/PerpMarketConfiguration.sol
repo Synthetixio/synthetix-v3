@@ -52,7 +52,7 @@ library PerpMarketConfiguration {
         uint128 minCollateralDiscount;
         /// Maximum discount applied on deposited margin collateral.
         uint128 maxCollateralDiscount;
-        /// Dictates wheter or not the utilization rate should use high or low slope
+        /// Dictates whether or not the utilization rate should use high or low slope
         uint128 utilizationBreakpointPercent;
         /// Used for utilization interest when below utilization breakpoint
         uint128 lowUtilizationSlopePercent;
