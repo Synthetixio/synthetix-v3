@@ -12,7 +12,7 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 
-describe.only('MarketConfigurationModule', async () => {
+describe('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collateralsWithoutSusd, traders, owner, systems, restore, provider } = bs;
 
