@@ -7,9 +7,12 @@ contract ConfigurerTimelock {
     event TransactionApproved(uint256 indexed index);
     event TransactionStaged(uint256 indexed index, bytes data);
 
+    error ExecutionError(bytes reason);
     error OnlyConfigurer();
     error OnlyRiskProvider();
     error TransactionAlreadyApproved();
+    error TransactionValueMismatch();
+    error TransactionCannotBeExecuted(ConfigurerTimelockStorage.TxsErrors error);
 
     constructor(address configurer, address riskProvider, uint256 timelockPeriod) {
         ConfigurerTimelockStorage.ConfigurerTimelockData storage data = ConfigurerTimelockStorage
@@ -19,7 +22,7 @@ contract ConfigurerTimelock {
         data.timelockPeriod = timelockPeriod;
     }
 
-    function stageTransaction(bytes memory _data) public returns (uint256 index) {
+    function stageTransaction(bytes memory _data, uint256 value) public returns (uint256 index) {
         ConfigurerTimelockStorage.ConfigurerTimelockData storage data = ConfigurerTimelockStorage
             .loadConfigurerTimelockData();
         if (ERC2771Context._msgSender() != data.configurer) revert OnlyConfigurer();
@@ -28,6 +31,7 @@ contract ConfigurerTimelock {
                 timestamp: uint240(block.timestamp),
                 approved: false,
                 executed: false,
+                value: value,
                 data: _data
             })
         );
@@ -46,5 +50,18 @@ contract ConfigurerTimelock {
 
         emit TransactionApproved(index);
         transaction.approved = true;
+    }
+
+    function executeTransaction(uint256 index) public payable {
+        ConfigurerTimelockStorage.Transaction storage transaction = ConfigurerTimelockStorage
+            .getTransaction(index);
+        if (msg.value != transaction.value) revert TransactionValueMismatch();
+        (bool status, ConfigurerTimelockStorage.TxsErrors error) = ConfigurerTimelockStorage
+            .canTransactionBeExecuted(transaction);
+        if (!status) revert TransactionCannotBeExecuted(error);
+
+        transaction.executed = true;
+        (bool success, bytes memory reason) = address(this).call(transaction.data);
+        if (!success) revert ExecutionError(reason);
     }
 }

@@ -16,7 +16,14 @@ library ConfigurerTimelockStorage {
         uint240 timestamp;
         bool approved;
         bool executed;
+        uint256 value;
         bytes data;
+    }
+
+    enum TxsErrors {
+        NotApproved,
+        AlreadyExecuted,
+        Timelock
     }
 
     function loadConfigurerTimelockData()
@@ -46,13 +53,14 @@ library ConfigurerTimelockStorage {
         return ConfigurerTimelockStorage.loadConfigurerTimelockData().timelockPeriod;
     }
 
-    function canTransactionBeExecuted(uint256 index) internal view returns (bool) {
+    function canTransactionBeExecuted(
+        Transaction storage txs
+    ) internal view returns (bool status, TxsErrors error) {
         ConfigurerTimelockData storage configurerTimelock = ConfigurerTimelockStorage
             .loadConfigurerTimelockData();
-        return
-            configurerTimelock.transactions[index].approved &&
-            !configurerTimelock.transactions[index].executed &&
-            configurerTimelock.transactions[index].timestamp + configurerTimelock.timelockPeriod <=
-            block.timestamp;
+        if (!txs.approved) return (false, TxsErrors.NotApproved);
+        if (txs.executed) return (false, TxsErrors.AlreadyExecuted);
+        if (txs.timestamp + configurerTimelock.timelockPeriod <= block.timestamp)
+            return (false, TxsErrors.Timelock);
     }
 }
