@@ -172,7 +172,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             );
     }
 
-    function minimumCreditWithTradeSize(uint128 marketId, int128 sizeDelta) external view returns (uint256) {
+    function minimumCreditWithTradeSize(
+        uint128 marketId,
+        int128 sizeDelta
+    ) external view returns (uint256) {
         // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
@@ -184,11 +187,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         });
         return
             market.getMinimumCreditWithTradeSize(
-            PerpMarketConfiguration.load(marketId),
-            market.getOraclePrice(addresses),
-            sizeDelta,
-            addresses
-        );
+                PerpMarketConfiguration.load(marketId),
+                market.getOraclePrice(addresses),
+                sizeDelta,
+                addresses
+            );
     }
 
     /// @inheritdoc IERC165
