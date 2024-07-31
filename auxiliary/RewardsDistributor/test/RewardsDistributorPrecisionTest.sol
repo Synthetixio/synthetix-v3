@@ -8,15 +8,16 @@ import {MintableToken} from "./MintableToken.sol";
 
 contract CoreProxyMock {
     uint256 public amount;
+    int256 cancelledAmount;
     function distributeRewards(
         uint128, // poolId_,
         address, // collateralType_,
         uint256 amount_,
         uint64, // start_,
         uint32 // duration_
-    ) public returns (uint256) {
+    ) public returns (int256) {
         amount = amount_;
-        return 0;
+        return cancelledAmount;
     }
 
     address public poolOwner;
@@ -28,6 +29,10 @@ contract CoreProxyMock {
 
     constructor(address poolOwner_) {
         poolOwner = poolOwner_;
+    }
+
+    function setCancelledAmount(int256 cancelled) external {
+        cancelledAmount = cancelled;
     }
 }
 
@@ -76,10 +81,21 @@ contract RewardsDistributorPrecisionTest is Test {
             start,
             duration
         );
+        rewardsManager.setCancelledAmount(50e18);
+        rewardsDistributor.distributeRewards(
+            poolId,
+            collateralType,
+            distributionAmount,
+            start,
+            duration
+        );
         vm.stopPrank();
 
         // check that rewards manager only deals with 18 decimals
         assertEq(rewardsManager.amount(), 100e18);
+
+        // check that the rewardedAmount was adjusted as expected from the cancelled value
+        assertEq(rewardsDistributor.rewardedAmount(), 150e6);
 
         uint256 fractionAmount = 0.001e6;
 
@@ -120,10 +136,21 @@ contract RewardsDistributorPrecisionTest is Test {
             start,
             duration
         );
+        rewardsManager.setCancelledAmount(50e18);
+        rewardsDistributor.distributeRewards(
+            poolId,
+            collateralType,
+            distributionAmount,
+            start,
+            duration
+        );
         vm.stopPrank();
 
         // check that rewards manager only deals with 18 decimals
         assertEq(rewardsManager.amount(), 100e18);
+
+        // check that the rewardedAmount was adjusted as expected from the cancelled value
+        assertEq(rewardsDistributor.rewardedAmount(), 150e33);
 
         uint256 fractionAmount = 0.001e33;
 

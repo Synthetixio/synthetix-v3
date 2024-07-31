@@ -132,9 +132,10 @@ contract RewardsDistributor is IRewardDistributor {
             duration_
         );
 
-        uint256 adjustedAmount = (amount_ * precision) / SYSTEM_PRECISION;
+        int256 adjustedCancelledAmount = (cancelledAmount * precision.toInt()) /
+            SYSTEM_PRECISION.toInt();
 
-        rewardedAmount = ((rewardedAmount + amount_).toInt() - cancelledAmount).toUint();
+        rewardedAmount = ((rewardedAmount + amount_).toInt() - adjustedCancelledAmount).toUint();
 
         // we check at the end because its the easiest way to verify that the end state is ok
         uint256 balance = IERC20(payoutToken).balanceOf(address(this));
