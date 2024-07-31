@@ -38,7 +38,6 @@ import {
 import { ethers } from 'ethers';
 import { calcFillPrice, calcPricePnl } from '../../calculations';
 import { shuffle } from 'lodash';
-import { DEFAULT_SETTLEMENT_STRATEGY } from '@synthetixio/perps-market/test/integration/bootstrap';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -145,118 +144,6 @@ describe('OrderModule', () => {
           order.hooks,
           genBytes32()
         ),
-        'InsufficientLiquidity()',
-        BfpMarketProxy
-      );
-    });
-
-    it.only('should revert settling a too large order going below minimumCredit', async () => {
-      const { BfpMarketProxy, Core } = systems();
-
-      // Change staking to the minimum amount
-      const { stakerAccountId, id: poolId, collateral: stakedCollateral, staker } = pool();
-      const { minDelegationD18 } = await Core.getCollateralConfiguration(
-        stakedCollateral().address
-      );
-      const stakedCollateralAddress = stakedCollateral().address;
-      await Core.connect(staker()).delegateCollateral(
-        stakerAccountId,
-        poolId,
-        stakedCollateralAddress,
-        minDelegationD18,
-        bn(1)
-      );
-
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
-        bs,
-        genTrader(bs, {
-          desiredMarginUsdDepositAmount: 1_000,
-          desiredCollateral: getSusdCollateral(collaterals()),
-        })
-      );
-
-      const { trader: trader2, collateralDepositAmount: collateralDepositAmount2 } =
-        await depositMargin(
-          bs,
-          genTrader(bs, {
-            desiredMarginUsdDepositAmount: 1_000,
-            desiredCollateral: collateral,
-            desiredMarket: market,
-          })
-        );
-
-      const marketConfig = await BfpMarketProxy.getMarketConfigurationById(marketId);
-      const minimumCreditPercent = marketConfig.minCreditPercent;
-      let minimumCredit = await BfpMarketProxy.minimumCredit(marketId);
-      console.log('minimumCredit', minimumCredit.toString());
-      const collateralPrice = await collateral.getPrice();
-
-      const orderSide = 1;
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredSize: bn(200),
-        desiredSide: orderSide,
-      });
-
-      const expectedMinimumCredit = minimumCredit
-        .add(order.sizeDelta)
-        .mul(collateralPrice)
-        .mul(minimumCreditPercent)
-        .div(bn(1e18));
-      console.log('expectedMinimumCredit', expectedMinimumCredit.toString());
-
-      let withdrawable = await Core.getWithdrawableMarketUsd(marketId);
-      let { totalCollateralValueUsd } = await BfpMarketProxy.getMarketDigest(marketId);
-      let delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd);
-      console.log('delegatedAmountUsd', delegatedAmountUsd.toBN().toString());
-
-      await BfpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd,
-        order.hooks,
-        genBytes32()
-      );
-
-      const minCreditWithTradeSize = await BfpMarketProxy.minimumCreditWithTradeSize(
-        marketId,
-        order.sizeDelta
-      );
-
-      console.log('minCreditWithTradeSize', minCreditWithTradeSize.toString());
-
-      // Size of the order is just below the minimumCredit
-      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredSize: expectedMinimumCredit.sub(1),
-        desiredSide: orderSide,
-      });
-
-      await commitAndSettle(bs, marketId, trader2, order2);
-
-      minimumCredit = await BfpMarketProxy.minimumCredit(marketId);
-      console.log('after trade 2 is settled minimumCredit', minimumCredit.toString());
-
-      // const currentCollateralAmount = await systems().Core.getPositionCollateral(
-      //   trader.accountId,
-      //   1,
-      //   collateral.address()
-      // );
-
-      withdrawable = await Core.getWithdrawableMarketUsd(marketId);
-      let { totalCollateralValueUsd: totalCollateralValueUsd2 } =
-        await BfpMarketProxy.getMarketDigest(marketId);
-      delegatedAmountUsd = wei(withdrawable).sub(totalCollateralValueUsd2);
-      console.log('delegatedAmountUsd', delegatedAmountUsd.toBN().toString());
-
-      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
-
-      const settlementTime = publishTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay;
-      await fastForwardTo(settlementTime, provider());
-
-      await assertRevert(
-        BfpMarketProxy.connect(trader.signer).settleOrder(trader.accountId, marketId, updateData),
         'InsufficientLiquidity()',
         BfpMarketProxy
       );
@@ -2292,6 +2179,71 @@ describe('OrderModule', () => {
           value: updateFee,
         }),
         'InsufficientMargin()',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when order minimumCredit is exceeded', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+      const trader1 = tradersGenerator.next().value;
+      const trader2 = tradersGenerator.next().value;
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      await collateral.setPrice(wei(1).toBN());
+      const collateralDepositAmount = 10_000; // 1 sUSD = 1 token.
+
+      // Explicitly set price to be a round number to make the math easier.
+      await market.aggregator().mockSetCurrentPrice(wei(10_000).toBN());
+
+      await setMarketConfigurationById(bs, market.marketId(), {
+        minCreditPercent: wei(1).toBN(), // 10% of OI
+      });
+
+      // 10k USD into each trader's margin account.
+      for (const trader of [trader1, trader2]) {
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: trader,
+            desiredMarket: market,
+            desiredMarginUsdDepositAmount: collateralDepositAmount,
+            desiredCollateral: collateral,
+          })
+        );
+      }
+
+      // Open position for trader1.
+      const order1 = await genOrder(bs, market, collateral, wei(collateralDepositAmount).toBN(), {
+        desiredLeverage: 1,
+        desiredSide: 1,
+      });
+      await commitOrder(bs, marketId, trader1, order1);
+
+      // Open position for trader2.
+      const order2 = await genOrder(bs, market, collateral, wei(collateralDepositAmount).toBN(), {
+        desiredLeverage: 1,
+        desiredSide: 1,
+      });
+      await commitAndSettle(bs, marketId, trader2, order2);
+
+      // Massively increase the required min credit.
+      await setMarketConfigurationById(bs, market.marketId(), {
+        minCreditPercent: wei(10_000).toBN(),
+      });
+
+      // commitAndSettle of order2 should have advanced block.timestamp to where order1 can be settled.
+      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader1);
+      const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+      await assertRevert(
+        BfpMarketProxy.connect(bs.keeper()).settleOrder(trader1.accountId, marketId, updateData, {
+          value: updateFee,
+        }),
+        'InsufficientLiquidity()',
         BfpMarketProxy
       );
     });
