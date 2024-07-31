@@ -172,6 +172,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             );
     }
 
+    /// @notice includes the order sizeDelta in the calculation of the minimum credit amount
     function minimumCreditWithTradeSize(
         uint128 marketId,
         int128 sizeDelta
