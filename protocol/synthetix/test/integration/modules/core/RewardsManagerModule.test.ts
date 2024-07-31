@@ -1,5 +1,6 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert/strict';
 import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
@@ -593,7 +594,36 @@ describe('RewardsManagerModule', function () {
       );
     });
 
-    // the results of this function are verified elsewhere
+    it('returns expected values', async () => {
+      await RewardDistributor.connect(owner).distributeRewards(
+        poolId,
+        collateralAddress(),
+        rewardAmount,
+        1, // timestamp
+        0
+      );
+      await RewardDistributorPoolLevel.connect(owner).distributeRewards(
+        poolId,
+        ethers.constants.AddressZero,
+        rewardAmount.div(2),
+        1, // timestamp
+        0
+      );
+
+      const [rewardAmounts, distributorAddresses] = await systems().Core.callStatic.updateRewards(
+        poolId,
+        collateralAddress(),
+        accountId
+      );
+
+      assert(rewardAmounts.length, 2);
+      assert(distributorAddresses.length, 2);
+
+      assert(distributorAddresses[0], RewardDistributorPoolLevel.address);
+      assert(distributorAddresses[1], RewardDistributor.address);
+      assertBn.equal(rewardAmounts[0], rewardAmount.div(2));
+      assertBn.equal(rewardAmounts[1], rewardAmount);
+    });
   });
 
   describe('claimRewards()', async () => {

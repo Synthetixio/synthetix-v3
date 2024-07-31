@@ -426,6 +426,8 @@ library Pool {
                     continue;
                 }
 
+                // have to set the distributor address here to simplify certain downstream processes
+                self.vaults[pos.collateralType].rewards[rewardId].distributor = dist.distributor;
                 self.vaults[pos.collateralType].rewards[rewardId].rewardPerShareD18 += distAmount
                     .divDecimal(vaultTotalShares)
                     .to128();
@@ -446,6 +448,18 @@ library Pool {
 
         rewards = new uint256[](poolAmounts.length + vaultAmounts.length);
         distributors = new address[](poolAddrs.length + vaultAddrs.length);
+
+        for (uint256 i = 0; i < rewards.length; i++) {
+            rewards[i] = i < poolAmounts.length
+                ? poolAmounts[i]
+                : vaultAmounts[i - poolAmounts.length];
+        }
+
+        for (uint256 i = 0; i < distributors.length; i++) {
+            distributors[i] = i < poolAddrs.length
+                ? poolAddrs[i]
+                : vaultAddrs[i - poolAddrs.length];
+        }
     }
 
     /**
