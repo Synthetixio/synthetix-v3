@@ -282,7 +282,7 @@ describe('RewardsManagerModule', function () {
 
             it('is distributed', async () => {
               // should have received 2 distributions
-              await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+              await systems().Core.updateRewards(poolId, collateralAddress(), accountId);
 
               const rewardsAvailable = await systems()
                 .Core.connect(user1)
@@ -645,6 +645,8 @@ describe('RewardsManagerModule', function () {
         0
       );
 
+      await systems().Core.updateRewards(poolId, collateralAddress(), accountId);
+
       // for the pool rewards distributor, have a new user join in after the distribution to verify
       // they dont get unjustified stake
       await (await systems().Core.connect(owner)['createAccount(uint128)']('2222')).wait();
@@ -668,6 +670,39 @@ describe('RewardsManagerModule', function () {
             ethers.utils.parseEther('1')
           )
       ).wait();
+
+      // have a new user join in after the distribution to verify
+      // they dont get unjustified stake
+      await (
+        await systems()
+          .CollateralMock.connect(owner)
+          .mint(await owner.getAddress(), rewardAmount)
+      ).wait();
+      await (
+        await systems()
+          .CollateralMock.connect(owner)
+          .approve(systems().Core.address, ethers.constants.MaxUint256)
+      ).wait();
+      await (
+        await systems().Core.connect(owner).deposit(2222, collateralAddress(), rewardAmount)
+      ).wait();
+      await (
+        await systems()
+          .Core.connect(owner)
+          .delegateCollateral(
+            2222,
+            poolId,
+            collateralAddress(),
+            rewardAmount,
+            ethers.utils.parseEther('1')
+          )
+      ).wait();
+
+      const availableRewards = await systems()
+        .Core.connect(user1)
+        .getAvailableRewards(2222, poolId, collateralAddress(), RewardDistributorPoolLevel.address);
+
+      console.log('POST AVAILABLE REWARDED', availableRewards);
     });
 
     const claimRestore = snapshotCheckpoint(provider);
@@ -724,7 +759,7 @@ describe('RewardsManagerModule', function () {
       });
 
       it('returns no rewards remaining', async () => {
-        await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
+        await systems().Core.updateRewards(poolId, collateralAddress(), accountId);
 
         const availableRewards = await systems()
           .Core.connect(user1)
@@ -770,7 +805,7 @@ describe('RewardsManagerModule', function () {
         it('pays out', async () => {
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),
-            rewardAmount.add(rewardAmount.div(2))
+            rewardAmount.add(rewardAmount.div(4))
           );
         });
 
@@ -793,7 +828,7 @@ describe('RewardsManagerModule', function () {
 
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),
-            rewardAmount.add(rewardAmount.div(2))
+            rewardAmount.add(rewardAmount.div(4))
           );
         });
       });
@@ -838,6 +873,19 @@ describe('RewardsManagerModule', function () {
         assertBn.equal(availableRewards2, 0);
       });
 
+      it('user who joined after distribution has no rewards', async () => {
+        const availableRewards = await systems()
+          .Core.connect(user1)
+          .getAvailableRewards(
+            2222,
+            poolId,
+            collateralAddress(),
+            RewardDistributorPoolLevel.address
+          );
+
+        assertBn.equal(availableRewards, 0);
+      });
+
       it('user in 2nd collateral type cant claim anything (because they came in later)', async () => {
         await systems().Core.updateRewards(poolId, Collateral2.address, 2222);
 
@@ -852,7 +900,8 @@ describe('RewardsManagerModule', function () {
 
         assertBn.equal(availableRewards, 0);
 
-        await systems().Core.callStatic.updateRewards(poolId, Collateral2.address, 2222);
+        await systems().Core.updateRewards(poolId, collateralAddress(), 2222);
+        await systems().Core.updateRewards(poolId, Collateral2.address, 2222);
 
         const availableRewards2 = await systems()
           .Core.connect(owner)

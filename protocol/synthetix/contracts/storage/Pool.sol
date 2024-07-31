@@ -420,7 +420,11 @@ library Pool {
                     .accountsDebtDistribution
                     .totalSharesD18;
 
+                // need to make sure we update reward per share or else new vaults in the pool will get rewards they are not supposed to
                 dist.claimStatus[actorId].lastRewardPerShareD18 = dist.rewardPerShareD18;
+
+                // need to set pool reward ids because any newly introduced users in the same pool will similarly need to have their lastreward updated to prevent double reward
+                poolRewardIds[i] = rewardId;
 
                 if (distAmount == 0 || vaultTotalShares == 0) {
                     continue;
@@ -431,8 +435,6 @@ library Pool {
                 self.vaults[pos.collateralType].rewards[rewardId].rewardPerShareD18 += distAmount
                     .divDecimal(vaultTotalShares)
                     .to128();
-
-                poolRewardIds[i] = rewardId;
             }
         }
 
