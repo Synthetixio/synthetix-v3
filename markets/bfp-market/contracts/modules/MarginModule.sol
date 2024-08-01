@@ -209,13 +209,8 @@ contract MarginModule is IMarginModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
 
         (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
@@ -297,13 +292,8 @@ contract MarginModule is IMarginModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
 
         (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
