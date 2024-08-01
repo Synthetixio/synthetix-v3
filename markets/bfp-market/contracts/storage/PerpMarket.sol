@@ -123,7 +123,8 @@ library PerpMarket {
     function updateDebtCorrection(
         PerpMarket.Data storage self,
         Position.Data storage oldPosition,
-        Position.Data memory newPosition
+        Position.Data memory newPosition,
+        uint256 oraclePrice
     ) internal {
         // This is needed to perform a fast constant time op for overall market debt.
         //
@@ -133,7 +134,7 @@ library PerpMarket {
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
         int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
-            oldPosition.getAccruedFunding(self, newPosition.entryPrice);
+            oldPosition.getAccruedFunding(self, oraclePrice);
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
 
