@@ -51,6 +51,11 @@ library GlobalPerpsMarket {
         uint256 withdrawAmount
     );
 
+    /**
+     * @notice Thrown when an order puts the market above its credit capacity by checking it's utilization
+     */
+    error ExceedsMarketCreditCapacity(int256 delegatedCollateral, int256 newLockedCredit);
+
     struct Data {
         /**
          * @dev Set of liquidatable account ids.
@@ -75,13 +80,24 @@ library GlobalPerpsMarket {
         }
     }
 
+    /**
+     * @notice Check whether, given the new locked credit delta, if the market is still solvent given its credit capacity from the core system.
+     */
+    function validateMarketCapacity(Data storage self, int256 lockedCreditDelta) internal view {
+        int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
+        int256 lockedCredit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt() +
+            lockedCreditDelta;
+
+        if (delegatedCollateralValue < lockedCredit) {
+            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, lockedCredit);
+        }
+    }
+
     function utilizationRate(
         Data storage self,
         PerpsPrice.Tolerance minCreditPriceTolerance
     ) internal view returns (uint128 rate, uint256 delegatedCollateralValue, uint256 lockedCredit) {
-        uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
-        int256 delegatedCollateralValueInt = withdrawableUsd.toInt() -
-            totalCollateralValue(self).toInt();
+        int256 delegatedCollateralValueInt = getDelegatedCollateralValue(self);
         lockedCredit = minimumCredit(self, minCreditPriceTolerance);
         if (delegatedCollateralValueInt <= 0) {
             return (DecimalMath.UNIT_UINT128, 0, lockedCredit);
@@ -90,6 +106,11 @@ library GlobalPerpsMarket {
         delegatedCollateralValue = delegatedCollateralValueInt.toUint();
 
         rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
+    }
+
+    function getDelegatedCollateralValue(Data storage self) internal view returns (int256) {
+        uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
+        return withdrawableUsd.toInt() - totalCollateralValue(self).toInt();
     }
 
     function minimumCredit(
@@ -102,9 +123,6 @@ library GlobalPerpsMarket {
 
             accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId, priceTolerance);
         }
-
-        // add the sUSD collateral value to the minimum credit since it's used as escrow
-        accumulatedMinimumCredit += self.collateralAmounts[SNX_USD_MARKET_ID];
     }
 
     function totalCollateralValue(Data storage self) internal view returns (uint256 total) {
