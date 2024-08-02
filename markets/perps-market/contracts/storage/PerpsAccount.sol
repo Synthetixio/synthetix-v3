@@ -255,24 +255,27 @@ library PerpsAccount {
         GlobalPerpsMarket.load().updateCollateralAmount(collateralId, amountDelta);
     }
 
-    function payDebt(Data storage self, uint256 amount) internal {
+    function payDebt(Data storage self, uint256 amount) internal returns (uint256 debtPaid) {
         if (self.debt == 0) {
             revert NonexistentDebt(self.id);
         }
 
+        /*
+            1. if the debt is less than the amount, set debt to 0 and only deposit debt amount
+            2. if the debt is more than the amount, subtract the amount from the debt
+            3. excess amount is ignored
+        */
+
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
+
+        debtPaid = MathUtil.min(self.debt, amount);
+        updateAccountDebt(self, -debtPaid.toInt());
+
         perpsMarketFactory.synthetix.depositMarketUsd(
             perpsMarketFactory.perpsMarketId,
             ERC2771Context._msgSender(),
-            amount
+            debtPaid
         );
-
-        if (self.debt < amount) {
-            self.debt = 0;
-            updateCollateralAmount(self, SNX_USD_MARKET_ID, (amount - self.debt).toInt());
-        } else {
-            self.debt -= amount;
-        }
     }
 
     /**
