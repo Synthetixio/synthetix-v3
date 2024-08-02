@@ -30,7 +30,7 @@ commands:
               anvil --version
             else
               curl -L https://foundry.paradigm.xyz | bash
-              foundryup
+              foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c 
             fi
 
       - save_cache:
