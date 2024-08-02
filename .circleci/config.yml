@@ -24,10 +24,20 @@ commands:
           command: |-
             export PATH="$PATH:$HOME/.foundry/bin"
             echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
-            . "$HOME/.cargo/env"
-            curl -L https://foundry.paradigm.xyz | bash
-            foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
+            expected_version="forge 0.2.0 (6de15b013 2024-07-23T11:21:28.391167000Z)"
+            foundry_version=$(forge --version)
+
+            if [ "$expected_version" = "$foundry_version" ]; then
+              echo "Foundry Forge version matches the expected version:"
+              echo "Version: $foundry_version"
+            else
+              echo "Foundry Forge version does not match the expected version."
+              echo "Found: $foundry_version"
+              echo "Expected: $expected_version"
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              . "$HOME/.cargo/env"
+              curl -L https://foundry.paradigm.xyz | bash
+              foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
 
       - save_cache:
           key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
