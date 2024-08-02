@@ -58,7 +58,7 @@ const ethDiscountConfig = {
   upperLimitDiscount: bn(0.05),
   lowerLimitDiscount: bn(0.01),
   discountScalar: bn(2),
-  skewScale: bn(10_000),
+  skewScale: bn(50_000),
 };
 
 const ETH_SYNTH_PRICE = bn(2000),

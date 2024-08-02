@@ -139,8 +139,9 @@ export const discountedValue = async (inputs: ValueInputs) => {
       const { amount, config, price } = input;
       const { skewScale, discountScalar, lowerLimitDiscount, upperLimitDiscount } = config;
       const impactOnSkew = amount.div(wei(skewScale)).mul(wei(discountScalar));
-      const discount = Wei.max(
-        Wei.min(impactOnSkew, wei(lowerLimitDiscount)),
+
+      const discount = Wei.min(
+        Wei.max(impactOnSkew, wei(lowerLimitDiscount)),
         wei(upperLimitDiscount)
       );
 
