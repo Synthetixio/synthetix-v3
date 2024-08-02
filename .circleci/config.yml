@@ -24,6 +24,7 @@ commands:
           command: |-
             export PATH="$PATH:$HOME/.foundry/bin"
             echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+            curl https://sh.rustup.rs -sSf | sh
             curl -L https://foundry.paradigm.xyz | bash
             foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
 
