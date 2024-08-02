@@ -426,6 +426,17 @@ library PerpsMarket {
         return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
     }
 
+    function requiredCreditForSize(
+        Data storage self,
+        int256 positionSize,
+        PerpsPrice.Tolerance tolerance
+    ) internal view returns (int256) {
+        return
+            positionSize
+                .mulDecimal(PerpsPrice.getCurrentPrice(self.id, tolerance).toInt())
+                .mulDecimal(PerpsMarketConfiguration.load(self.id).lockedOiRatioD18.toInt());
+    }
+
     function requiredCredit(
         uint128 marketId,
         PerpsPrice.Tolerance tolerance
