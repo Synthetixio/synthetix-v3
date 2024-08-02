@@ -14,5 +14,13 @@ library OrderFee {
          * @dev Taker fee. Applied when order (or partial order) is increasing skew.
          */
         uint256 takerFee;
+        /**
+         * @dev Limit order maker fee. Applied when limit order is fully matched.
+         */
+        uint256 limitOrderMakerFee;
+        /**
+         * @dev Limit order taker fee. Applied when limit order is fully matched.
+         */
+        uint256 limitOrderTakerFee;
     }
 }

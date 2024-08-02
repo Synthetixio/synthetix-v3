@@ -52,6 +52,18 @@ interface IMarketConfigurationModule {
     event OrderFeesSet(uint128 indexed marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
 
     /**
+     * @notice Gets fired when limit order fees are updated.
+     * @param marketId udpates fees to this specific market.
+     * @param limitOrderMakerFeeRatio the limit order maker fee ratio.
+     * @param limitOrderTakerFeeRatio the limit order taker fee ratio.
+     */
+    event LimitOrderFeesSet(
+        uint128 indexed marketId,
+        uint256 limitOrderMakerFeeRatio,
+        uint256 limitOrderTakerFeeRatio
+    );
+
+    /**
      * @notice Gets fired when funding parameters are updated.
      * @param marketId udpates funding parameters to this specific market.
      * @param skewScale the skew scale.
@@ -150,6 +162,18 @@ interface IMarketConfigurationModule {
      * @param takerFeeRatio the taker fee ratio.
      */
     function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external;
+
+    /**
+     * @notice Set limit order fees for a market with this function.
+     * @param marketId id of the market to set limit order fees.
+     * @param limitOrderMakerFeeRatio the limit order maker fee ratio.
+     * @param limitOrderTakerFeeRatio the limit order taker fee ratio.
+     */
+    function setLimitOrderFees(
+        uint128 marketId,
+        uint256 limitOrderMakerFeeRatio,
+        uint256 limitOrderTakerFeeRatio
+    ) external;
 
     /**
      * @notice Set node id for perps market
@@ -329,6 +353,16 @@ interface IMarketConfigurationModule {
     function getOrderFees(
         uint128 marketId
     ) external view returns (uint256 makerFeeRatio, uint256 takerFeeRatio);
+
+    /**
+     * @notice Gets the limit order fees of a market.
+     * @param marketId id of the market.
+     * @return limitOrderMakerFeeRatio the limit order maker fee ratio.
+     * @return limitOrderTakerFeeRatio the limit order taker fee ratio.
+     */
+    function getLimitOrderFees(
+        uint128 marketId
+    ) external view returns (uint256 limitOrderMakerFeeRatio, uint256 limitOrderTakerFeeRatio);
 
     /**
      * @notice Gets the locked OI ratio of a market.
