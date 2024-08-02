@@ -101,7 +101,9 @@ describe('InterestRate.tolerance', () => {
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
 
-      const minCredit = calculateMinCredit(withMontlyTolerance);
+      const snxUsdValue = wei(await systems().PerpsMarket.globalCollateralValue(0));
+      // remove snxUSD collateral value from min credit (which is added in contracts)
+      const minCredit = calculateMinCredit(withMontlyTolerance).sub(snxUsdValue);
 
       const utilRate = minCredit.div(delegatedCollateral);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
