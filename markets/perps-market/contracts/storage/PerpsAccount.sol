@@ -262,13 +262,8 @@ library PerpsAccount {
 
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
-        if ((self.debt.toInt() - amount.toInt()) > 0) {
-            updateAccountDebt(self, -amount.toInt());
-            debtPaid = amount;
-        } else {
-            debtPaid = self.debt;
-            updateAccountDebt(self, -self.debt.toInt());
-        }
+        debtPaid = MathUtil.min(self.debt, amount);
+        updateAccountDebt(self, -debtPaid.toInt());
 
         perpsMarketFactory.synthetix.depositMarketUsd(
             perpsMarketFactory.perpsMarketId,
