@@ -579,7 +579,7 @@ library Position {
             return healthData;
         }
 
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+        (, int256 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(price);
 
         healthData.accruedFunding = size
             .mulDecimal(
@@ -673,7 +673,7 @@ library Position {
             return 0;
         }
 
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+        (, int256 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(price);
         return
             self
                 .size
