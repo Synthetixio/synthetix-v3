@@ -6,6 +6,7 @@ parameters:
     default: "18.18.0"
 
 commands:
+  resource_class: large
   yarn-install:
     steps:
       - run: yarn install --immutable --immutable-cache
@@ -133,6 +134,7 @@ commands:
               echo "Pull Request already exists: $PR_URL"
             fi
 jobs:
+  resource_class: large
   build-testable:
     parameters:
       wat:
@@ -608,6 +610,7 @@ jobs:
 
 workflows:
   version: 2.1
+  resource_class: large
 
   skip:
     when:
