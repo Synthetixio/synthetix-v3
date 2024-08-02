@@ -6,7 +6,6 @@ parameters:
     default: "18.18.0"
 
 commands:
-  resource_class: large
   yarn-install:
     steps:
       - run: yarn install --immutable --immutable-cache
@@ -134,7 +133,6 @@ commands:
               echo "Pull Request already exists: $PR_URL"
             fi
 jobs:
-  resource_class: large
   build-testable:
     parameters:
       wat:
@@ -142,6 +140,7 @@ jobs:
         default: "--all"
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - install-foundry
@@ -258,6 +257,7 @@ jobs:
 
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     parallelism: << parameters.parallelism >>
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
@@ -336,6 +336,7 @@ jobs:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -344,6 +345,7 @@ jobs:
   size-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -353,6 +355,7 @@ jobs:
   verify-storage:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - install-foundry
@@ -364,6 +367,7 @@ jobs:
   lint:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -377,6 +381,7 @@ jobs:
   check-packages:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - run: yarn install --immutable --immutable-cache --check-cache
@@ -397,6 +402,7 @@ jobs:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
@@ -436,6 +442,7 @@ jobs:
   docgen-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
       GIT_PAGER: cat
@@ -493,6 +500,7 @@ jobs:
   update-subgraphs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
       GIT_PAGER: cat
@@ -541,6 +549,7 @@ jobs:
         default: 1
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     parallelism: << parameters.parallelism >>
     steps:
       - checkout
@@ -571,6 +580,7 @@ jobs:
 
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
 
     steps:
       - checkout
