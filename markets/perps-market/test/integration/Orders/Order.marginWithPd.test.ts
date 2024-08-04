@@ -6,7 +6,7 @@ import {
   openPosition,
   requiredMargins,
   getRequiredLiquidationRewardMargin,
-  expectedStartingPnl,
+  expectedFillPricePnl,
 } from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
@@ -116,7 +116,7 @@ describe('Orders - margin validation with p/d', () => {
       );
 
       const availableMargin = startingMargin.add(
-        expectedStartingPnl(RNDR_PRICE, fillPrice, newSize)
+        expectedFillPricePnl(RNDR_PRICE, fillPrice, newSize)
       );
 
       await assertRevert(

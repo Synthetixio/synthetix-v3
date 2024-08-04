@@ -47,6 +47,6 @@ export const getRequiredLiquidationRewardMargin = (
   return Wei.min(Wei.max(reward, minCap), maxCap);
 };
 
-export const expectedStartingPnl = (marketPrice: Wei, fillPrice: Wei, positionSize: Wei) => {
+export const expectedFillPricePnl = (marketPrice: Wei, fillPrice: Wei, positionSize: Wei) => {
   return Wei.min(positionSize.mul(marketPrice.sub(fillPrice)), wei(0));
 };

@@ -33,9 +33,10 @@ import {
   getPythPriceDataByMarketId,
   setMarketConfigurationById,
   withExplicitEvmMine,
+  setMarketConfiguration,
 } from '../../helpers';
 import { ethers } from 'ethers';
-import { calcFillPrice } from '../../calculations';
+import { calcFillPrice, calcPricePnl } from '../../calculations';
 import { shuffle } from 'lodash';
 
 describe('OrderModule', () => {
@@ -1700,6 +1701,69 @@ describe('OrderModule', () => {
       );
     });
 
+    it('should realize position when pnl matches debt', async () => {
+      const { BfpMarketProxy } = systems();
+      const {
+        trader,
+        market,
+        marketId,
+        collateral,
+        collateralDepositAmount,
+        marginUsdDepositAmount,
+      } = await depositMargin(bs, genTrader(bs));
+
+      // Frictionless market.
+      await setMarketConfigurationById(bs, marketId, {
+        makerFee: bn(0.0),
+        takerFee: bn(0.0),
+        maxFundingVelocity: bn(0),
+        skewScale: bn(1_000_000_000), // An extremely large skewScale to minimise price impact. (not allowed to be 0)
+      });
+
+      await setMarketConfiguration(bs, {
+        minKeeperFeeUsd: bn(0),
+        maxKeeperFeeUsd: bn(0),
+        lowUtilizationSlopePercent: bn(0),
+        highUtilizationSlopePercent: bn(0),
+      });
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: bn(1),
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+      // Price change causing 10% win.
+      const newPrice = order.sizeDelta.gt(0)
+        ? wei(order.oraclePrice).mul(1.1)
+        : wei(order.oraclePrice).mul(0.9);
+      await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+      const closeOrderSize = order.sizeDelta.mul(-1);
+      const fillPrice = await BfpMarketProxy.getFillPrice(marketId, closeOrderSize);
+      const debtToAdd = calcPricePnl(closeOrderSize, order.fillPrice, fillPrice);
+      // Add debt manually, matching the pnl.
+      // This will cause `amountDeltaUsd` sent to `realizeAccountPnlAndUpdate` to be 0, which is what we want to test.
+      await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.__test_addDebtUsdToAccountMargin(trader.accountId, marketId, debtToAdd),
+        provider()
+      );
+
+      const marketDigest = await BfpMarketProxy.getMarketDigest(marketId);
+      assertBn.gt(marketDigest.totalTraderDebtUsd, bn(0));
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(order.sizeDelta).mul(-1).toBN(),
+      });
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      const accountDigest = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const marketDigest1 = await BfpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.equal(marketDigest1.totalTraderDebtUsd, bn(0));
+      assertBn.isZero(accountDigest.debtUsd);
+      assertBn.equal(accountDigest.collateralUsd, marginUsdDepositAmount);
+    });
+
     it('should pay a non-zero settlement fee to keeper', async () => {
       const { BfpMarketProxy, USD } = systems();
 
@@ -1982,7 +2046,7 @@ describe('OrderModule', () => {
       // Configure a static realistic market configuration.
       await setMarketConfigurationById(bs, market.marketId(), {
         skewScale: bn(7_500_000),
-        maxMarketSize: bn(1_000_000),
+        maxMarketSize: bn(10_000_000),
         incrementalMarginScalar: bn(1),
         minMarginRatio: bn(0.03),
         maintenanceMarginScalar: bn(0.75),
@@ -2007,7 +2071,7 @@ describe('OrderModule', () => {
       );
       const otherOrder = await genOrder(bs, market, otherCollateral, otherCollateralDepositAmount, {
         desiredSide: 1,
-        desiredLeverage: 1,
+        desiredLeverage: 2,
         desiredKeeperFeeBufferUsd: 0,
         desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
       });
@@ -2027,8 +2091,9 @@ describe('OrderModule', () => {
           desiredMarket: market,
         })
       );
+
       const mainOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-        desiredLeverage: 9,
+        desiredLeverage: 10,
         desiredSide: 1,
         desiredPriceImpactPercentage: 0.5, // Assume the user doesn't care about price impact.
       });

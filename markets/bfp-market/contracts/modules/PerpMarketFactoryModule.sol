@@ -97,7 +97,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        (int128 fundingRate, ) = market.recomputeFunding(
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(
             market.getOraclePrice(
                 AddressRegistry.Data({
                     synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -106,12 +106,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 })
             )
         );
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
     }
 
     /// @inheritdoc IMarket
@@ -140,7 +135,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (, int128 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
+        (, int128 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(oraclePrice);
         int128 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
 
@@ -241,6 +236,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             oracleManager: ORACLE_MANAGER
         });
 
+        (int128 fundingRate, ) = market.getCurrentFundingRate();
         return
             IPerpMarketFactoryModule.MarketDigest(
                 depositedCollaterals,
@@ -249,7 +245,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.size,
                 market.getOraclePrice(addresses),
                 market.getCurrentFundingVelocity(),
-                market.getCurrentFundingRate(),
+                fundingRate,
                 market.currentUtilizationRateComputed,
                 remainingCapacity,
                 lastLiquidationTime,

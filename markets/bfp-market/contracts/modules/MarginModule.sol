@@ -208,17 +208,18 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.DebtFound(accountId, marketId);
         }
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        // To avoid stack too deep, the variables are declared here.
+        uint256 oraclePrice;
+        int128 fundingRate;
+        int128 fundingVelocity;
+        {
+            oraclePrice = market.getOraclePrice(addresses);
+            (fundingRate, , fundingVelocity) = market.recomputeFunding(oraclePrice);
+            emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
 
-        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
-        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+            (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+            emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+        }
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
@@ -296,18 +297,18 @@ contract MarginModule is IMarginModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
 
-        uint256 oraclePrice = market.getOraclePrice(addresses);
-        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        // To avoid stack too deep, the variables are declared here.
+        uint256 oraclePrice;
+        int128 fundingRate;
+        int128 fundingVelocity;
+        {
+            oraclePrice = market.getOraclePrice(addresses);
+            (fundingRate, , fundingVelocity) = market.recomputeFunding(oraclePrice);
+            emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
 
-        (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
-        emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
-
+            (uint128 utilizationRate, ) = market.recomputeUtilization(oraclePrice, addresses);
+            emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
+        }
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             FeatureFlag.ensureAccessToFeature(Flags.DEPOSIT);
@@ -387,7 +388,8 @@ contract MarginModule is IMarginModule {
         runtime.lengthAfter = collateralAddresses.length;
         runtime.maxApproveAmount = type(uint256).max;
         runtime.previousSupportedCollaterals = globalMarginConfig.supportedCollaterals;
-        // Number of synth collaterals to configure exceeds system maxmium.
+
+        // Number of synth collaterals to configure exceeds system maximum.
         if (runtime.lengthAfter > MAX_SUPPORTED_MARGIN_COLLATERALS) {
             revert ErrorUtil.MaxCollateralExceeded(
                 runtime.lengthAfter,
@@ -419,11 +421,19 @@ contract MarginModule is IMarginModule {
         delete globalMarginConfig.supportedCollaterals;
 
         // Update with passed in configuration.
-        address[] memory newSupportedCollaterals = new address[](runtime.lengthAfter);
         for (uint256 i = 0; i < runtime.lengthAfter; ) {
             address collateralAddress = collateralAddresses[i];
+
+            // Verify this is not a duplicate collateralAddress.
+            for (uint256 j = i + 1; j < runtime.lengthAfter; j++) {
+                if (collateralAddress == collateralAddresses[j]) {
+                    revert ErrorUtil.DuplicateEntries();
+                }
+            }
+
             // Perform approve _once_ when this collateral is added as a supported collateral.
             ITokenModule(collateralAddress).approve(SYNTHETIX_CORE, runtime.maxApproveAmount);
+
             // sUSD must have a 0x0 reward distributor.
             address distributor = rewardDistributors[i];
 
@@ -451,13 +461,12 @@ contract MarginModule is IMarginModule {
                 rewardDistributors[i],
                 true
             );
-            newSupportedCollaterals[i] = collateralAddress;
 
             unchecked {
                 ++i;
             }
         }
-        globalMarginConfig.supportedCollaterals = newSupportedCollaterals;
+        globalMarginConfig.supportedCollaterals = collateralAddresses;
 
         for (uint256 i = 0; i < runtime.lengthBefore; ) {
             address collateral = runtime.previousSupportedCollaterals[i];
