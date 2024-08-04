@@ -95,6 +95,13 @@ describe('RewardsManagerModule', function () {
         ethers.constants.AddressZero,
         RewardDistributorPoolLevel.address
       );
+
+    // register another pool level rd with the same top level vault level RD
+    const txn = await systems()
+      .Core.connect(owner)
+      .registerRewardsDistributor(poolId, ethers.constants.AddressZero, RewardDistributor.address);
+
+    await txn.wait();
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -206,7 +213,7 @@ describe('RewardsManagerModule', function () {
           });
 
           it('is distributed', async () => {
-            const availableRewards = await systems().Core.getAvailableRewards(
+            const availableRewards = await systems().Core.callStatic.getAvailableRewards(
               accountId,
               poolId,
               collateralAddress(),
@@ -254,7 +261,7 @@ describe('RewardsManagerModule', function () {
           it('is not distributed future yet', async () => {
             const rewardsAvailable = await systems()
               .Core.connect(user1)
-              .getAvailableRewards(
+              .callStatic.getAvailableRewards(
                 accountId,
                 poolId,
                 collateralAddress(),
@@ -286,7 +293,7 @@ describe('RewardsManagerModule', function () {
 
               const rewardsAvailable = await systems()
                 .Core.connect(user1)
-                .getAvailableRewards(
+                .callStatic.getAvailableRewards(
                   accountId,
                   poolId,
                   collateralAddress(),
@@ -342,7 +349,7 @@ describe('RewardsManagerModule', function () {
           it('is fully distributed', async () => {
             const availableRewards = await systems()
               .Core.connect(user1)
-              .getAvailableRewards(
+              .callStatic.getAvailableRewards(
                 accountId,
                 poolId,
                 collateralAddress(),
@@ -393,7 +400,7 @@ describe('RewardsManagerModule', function () {
           it('does not distribute future', async () => {
             const availableRewards = await systems()
               .Core.connect(user1)
-              .getAvailableRewards(
+              .callStatic.getAvailableRewards(
                 accountId,
                 poolId,
                 collateralAddress(),
@@ -412,7 +419,7 @@ describe('RewardsManagerModule', function () {
             it('is fully distributed', async () => {
               const availableRewards = await systems()
                 .Core.connect(user1)
-                .getAvailableRewards(
+                .callStatic.getAvailableRewards(
                   accountId,
                   poolId,
                   collateralAddress(),
@@ -452,7 +459,7 @@ describe('RewardsManagerModule', function () {
           it('distributes portion of rewards immediately', async () => {
             const availableRewards = await systems()
               .Core.connect(user1)
-              .getAvailableRewards(
+              .callStatic.getAvailableRewards(
                 accountId,
                 poolId,
                 collateralAddress(),
@@ -472,7 +479,7 @@ describe('RewardsManagerModule', function () {
             it('distributes more portion of rewards', async () => {
               const availableRewards = await systems()
                 .Core.connect(user1)
-                .getAvailableRewards(
+                .callStatic.getAvailableRewards(
                   accountId,
                   poolId,
                   collateralAddress(),
@@ -499,7 +506,7 @@ describe('RewardsManagerModule', function () {
               it('distributes portion of rewards immediately', async () => {
                 const availableRewards = await systems()
                   .Core.connect(user1)
-                  .getAvailableRewards(
+                  .callStatic.getAvailableRewards(
                     accountId,
                     poolId,
                     collateralAddress(),
@@ -523,7 +530,7 @@ describe('RewardsManagerModule', function () {
                 it('distributes more portion of rewards', async () => {
                   const availableRewards = await systems()
                     .Core.connect(user1)
-                    .getAvailableRewards(
+                    .callStatic.getAvailableRewards(
                       accountId,
                       poolId,
                       collateralAddress(),
@@ -602,6 +609,13 @@ describe('RewardsManagerModule', function () {
         1, // timestamp
         0
       );
+      await RewardDistributor.connect(owner).distributeRewards(
+        poolId,
+        ethers.constants.AddressZero,
+        rewardAmount.div(5),
+        1, // timestamp
+        0
+      );
       await RewardDistributorPoolLevel.connect(owner).distributeRewards(
         poolId,
         ethers.constants.AddressZero,
@@ -616,13 +630,15 @@ describe('RewardsManagerModule', function () {
         accountId
       );
 
-      assert(rewardAmounts.length, 2);
-      assert(distributorAddresses.length, 2);
+      assertBn.equal(rewardAmounts.length, 3);
+      assertBn.equal(distributorAddresses.length, 3);
 
-      assert(distributorAddresses[0], RewardDistributorPoolLevel.address);
-      assert(distributorAddresses[1], RewardDistributor.address);
+      assert(distributorAddresses[0], RewardDistributorPoolLevel.address); // the pool level distributor
+      assert(distributorAddresses[1], RewardDistributor.address); // the pool level distributor for the vault distributor
+      assert(distributorAddresses[2], RewardDistributor.address); // the vault level distributor for the vault distributor
       assertBn.equal(rewardAmounts[0], rewardAmount.div(2));
-      assertBn.equal(rewardAmounts[1], rewardAmount);
+      assertBn.equal(rewardAmounts[1], rewardAmount.div(5));
+      assertBn.equal(rewardAmounts[2], rewardAmount);
     });
   });
 
@@ -638,6 +654,13 @@ describe('RewardsManagerModule', function () {
         0
       );
       await RewardDistributorPoolLevel.connect(owner).distributeRewards(
+        poolId,
+        ethers.constants.AddressZero,
+        rewardAmount,
+        1, // timestamp
+        0
+      );
+      await RewardDistributor.connect(owner).distributeRewards(
         poolId,
         ethers.constants.AddressZero,
         rewardAmount,
@@ -697,12 +720,6 @@ describe('RewardsManagerModule', function () {
             ethers.utils.parseEther('1')
           )
       ).wait();
-
-      const availableRewards = await systems()
-        .Core.connect(user1)
-        .getAvailableRewards(2222, poolId, collateralAddress(), RewardDistributorPoolLevel.address);
-
-      console.log('POST AVAILABLE REWARDED', availableRewards);
     });
 
     const claimRestore = snapshotCheckpoint(provider);
@@ -752,10 +769,14 @@ describe('RewardsManagerModule', function () {
         await systems()
           .Core.connect(user1)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+        await systems()
+          .Core.connect(user1)
+          .claimPoolRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
       });
 
       it('pays out', async () => {
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+        // should have received 2x reward amount because both pool level and vault level should have dished
+        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount.mul(2));
       });
 
       it('returns no rewards remaining', async () => {
@@ -763,15 +784,35 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+          .callStatic.getAvailableRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributor.address
+          );
+
+        const availableRewardsPool = await systems()
+          .Core.connect(user1)
+          .callStatic.getAvailableRewards(
+            accountId,
+            poolId,
+            ethers.constants.AddressZero,
+            RewardDistributor.address
+          );
 
         assertBn.equal(availableRewards, 0);
+        assertBn.equal(availableRewardsPool, 0);
       });
 
       it('doesnt get any rewards on subsequent claim', async () => {
         const availableRewards = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+          .callStatic.getAvailableRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributor.address
+          );
 
         await assertRevert(
           systems()
@@ -781,7 +822,7 @@ describe('RewardsManagerModule', function () {
           systems().Core
         );
 
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount.mul(2));
         assertBn.equal(availableRewards, 0);
       });
 
@@ -805,14 +846,19 @@ describe('RewardsManagerModule', function () {
         it('pays out', async () => {
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),
-            rewardAmount.add(rewardAmount.div(4))
+            rewardAmount.mul(2).add(rewardAmount.div(4))
           );
         });
 
         it('returns no rewards remaining', async () => {
           const rewardAmount = await systems()
             .Core.connect(user1)
-            .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+            .callStatic.getAvailableRewards(
+              accountId,
+              poolId,
+              collateralAddress(),
+              RewardDistributor.address
+            );
 
           assertBn.equal(rewardAmount, 0);
         });
@@ -828,7 +874,7 @@ describe('RewardsManagerModule', function () {
 
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),
-            rewardAmount.add(rewardAmount.div(4))
+            rewardAmount.mul(2).add(rewardAmount.div(4))
           );
         });
       });
@@ -840,7 +886,12 @@ describe('RewardsManagerModule', function () {
         await systems()
           .Core.connect(user1)
           // NOTE: we use `collateralAddress` instead of `ethers.utils.AddressZero` here becuase here the claim function will look at the distributor address to determine if its pool level
-          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributorPoolLevel.address);
+          .claimPoolRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributorPoolLevel.address
+          );
       });
 
       it('pays out', async () => {
@@ -850,7 +901,7 @@ describe('RewardsManagerModule', function () {
       it('returns no rewards remaining', async () => {
         const availableRewards = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(
+          .callStatic.getAvailableRewards(
             accountId,
             poolId,
             collateralAddress(),
@@ -863,7 +914,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards2 = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(
+          .callStatic.getAvailableRewards(
             accountId,
             poolId,
             collateralAddress(),
@@ -876,7 +927,7 @@ describe('RewardsManagerModule', function () {
       it('user who joined after distribution has no rewards', async () => {
         const availableRewards = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(
+          .callStatic.getAvailableRewards(
             2222,
             poolId,
             collateralAddress(),
@@ -891,7 +942,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(
+          .callStatic.getAvailableRewards(
             2222,
             poolId,
             Collateral2.address,
@@ -905,7 +956,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards2 = await systems()
           .Core.connect(owner)
-          .getAvailableRewards(
+          .callStatic.getAvailableRewards(
             2222,
             poolId,
             Collateral2.address,
@@ -986,7 +1037,7 @@ describe('RewardsManagerModule', function () {
           systems().Core
         );
         await assertRevert(
-          RewardDistributor.connect(owner).distributeRewards(
+          RewardDistributorPoolLevel.connect(owner).distributeRewards(
             poolId,
             ethers.constants.AddressZero,
             rewardAmount,
@@ -1003,7 +1054,12 @@ describe('RewardsManagerModule', function () {
 
         const rewardAmount = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+          .callStatic.getAvailableRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributor.address
+          );
 
         await systems()
           .Core.connect(user1)
@@ -1020,7 +1076,12 @@ describe('RewardsManagerModule', function () {
 
         const afterRewardAmount = await systems()
           .Core.connect(user1)
-          .getAvailableRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+          .callStatic.getAvailableRewards(
+            accountId,
+            poolId,
+            collateralAddress(),
+            RewardDistributor.address
+          );
 
         // Ensure that the available rewards are now 0
         assertBn.equal(afterRewardAmount, 0);

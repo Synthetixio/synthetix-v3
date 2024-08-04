@@ -151,7 +151,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external view returns (uint256) {
+    ) external returns (uint256) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
         RewardDistribution.Data storage reward = vault.rewards[rewardId];
@@ -165,32 +165,59 @@ contract RewardsManagerModule is IRewardsManagerModule {
             }
         }
 
-        return vault.getReward(accountId, rewardId);
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
+        uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
+
+        return
+            vault.updateReward(
+                Vault.PositionSelector(accountId, poolId, collateralType),
+                rewardId,
+                distributor,
+                totalSharesD18,
+                actorSharesD18
+            );
     }
 
-    /**
-     * @inheritdoc IRewardsManagerModule
-     */
     function claimRewards(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         address distributor
     ) external override returns (uint256) {
+        return _claimRewards(accountId, poolId, collateralType, distributor, collateralType);
+    }
+
+    function claimPoolRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external override returns (uint256) {
+        return _claimRewards(accountId, poolId, collateralType, distributor, address(0));
+    }
+
+    function _claimRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor,
+        address distributorCollateral
+    ) internal returns (uint256) {
         FeatureFlag.ensureAccessToFeature(_CLAIM_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
+        bytes32 rewardId = _getRewardId(poolId, distributorCollateral, distributor);
         RewardDistribution.Data storage reward = vault.rewards[rewardId];
 
         if (address(reward.distributor) != distributor) {
-            // might be pool level RD
-            rewardId = _getRewardId(poolId, address(0), distributor);
-            reward = vault.rewards[rewardId];
-            if (address(Pool.load(poolId).rewardsToVaults[rewardId].distributor) != distributor) {
-                revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
-            }
+            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
         uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;

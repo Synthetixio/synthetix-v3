@@ -160,6 +160,21 @@ interface IRewardsManagerModule {
     ) external returns (uint256 amountClaimedD18);
 
     /**
+     * @notice Allows a user with appropriate permissions to claim rewards associated with a position for rewards issued at the pool level.
+     * @param accountId The id of the account that is to claim the rewards.
+     * @param poolId The id of the pool to claim rewards on.
+     * @param collateralType The address of the collateral used by the user to gain rewards from the pool level.
+     * @param distributor The address of the rewards distributor associated with the rewards being claimed.
+     * @return amountClaimedD18 The amount of rewards that were available for the account and thus claimed.
+     */
+    function claimPoolRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external returns (uint256 amountClaimedD18);
+
+    /**
      * @notice For a given position, return the rewards that can currently be claimed.
      * @param poolId The id of the pool being queried.
      * @param collateralType The address of the collateral used in the pool's rewards.
@@ -199,5 +214,5 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external view returns (uint256 rewardAmount);
+    ) external returns (uint256 rewardAmount);
 }
