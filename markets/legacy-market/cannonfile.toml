@@ -5,9 +5,6 @@ description = "Representation of Synthetix v2x, v3, and the LegacyMarket which a
 [setting.sc_pool_id]
 defaultValue = "1"
 
-[setting.market_id]
-defaultValue = "1"
-
 [setting.owner] # this has to be the same owner as CoreProxy
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
@@ -92,8 +89,8 @@ target = ["Proxy"]
 from = "<%= settings.owner %>"
 func = "registerMarket"
 args = []
-extra.marketId.event = "MarketRegistered"
-extra.marketId.arg = 1
+extra.market_id.event = "MarketRegistered"
+extra.market_id.arg = 1
 depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
 
 # tell the v3 system its ok for this market to assume unlimited debt (to allow underwarter stakers to be converted and then liquidated)
@@ -102,7 +99,7 @@ target = ["v3.CoreProxy"]
 fromCall.func = "owner"
 func = "setConfig"
 args = [
-    "<%= keccak256(defaultAbiCoder.encode(['bytes32', 'uint256'], [formatBytes32String('associateDebtRatioExclusion'), settings.marketId])) %>",
+    "<%= keccak256(defaultAbiCoder.encode(['bytes32', 'uint256'], [formatBytes32String('associateDebtRatioExclusion'), settings.market_id])) %>",
     "<%= hexZeroPad(contracts.Proxy.address, 32) %>",
 ]
 
