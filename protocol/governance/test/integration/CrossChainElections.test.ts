@@ -214,15 +214,15 @@ describe('cross chain election testing', function () {
 
       assert.equal(registeredEmitters.length, 3);
       assert.equal(supportedNetworks.length, 3);
-      
-      const tx = await mothership.GovernanceProxy.removeRegisteredEmitters(
-        [WormholeChainSelector.satellite1]
-      );
+
+      const tx = await mothership.GovernanceProxy.removeRegisteredEmitters([
+        WormholeChainSelector.satellite1,
+      ]);
       await tx.wait();
-      
+
       registeredEmitters = await mothership.GovernanceProxy.getRegisteredEmitters();
       supportedNetworks = await mothership.GovernanceProxy.getSupportedNetworks();
-      
+
       assert.equal(registeredEmitters.length, 2);
       assert.equal(supportedNetworks.length, 2);
     });
