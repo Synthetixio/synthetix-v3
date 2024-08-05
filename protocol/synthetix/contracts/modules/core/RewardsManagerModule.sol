@@ -125,7 +125,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override returns (uint256[] memory, address[] memory) {
+    ) external override returns (uint256[] memory, address[] memory, uint256) {
         Account.exists(accountId);
         Pool.Data storage pool = Pool.load(poolId);
         return
@@ -184,6 +184,42 @@ contract RewardsManagerModule is IRewardsManagerModule {
             );
     }
 
+    /**
+     * @inheritdoc IRewardsManagerModule
+     */
+    function getAvailablePoolRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external returns (uint256) {
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        bytes32 rewardId = _getRewardId(poolId, address(0), distributor);
+        RewardDistribution.Data storage reward = Pool.load(poolId).rewardsToVaults[rewardId];
+
+        if (address(reward.distributor) != distributor) {
+            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
+        }
+
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
+        uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
+        uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
+            accountId.toBytes32()
+        );
+
+        return
+            vault.updateReward(
+                Vault.PositionSelector(accountId, poolId, collateralType),
+                rewardId,
+                distributor,
+                totalSharesD18,
+                actorSharesD18
+            );
+    }
+
     function claimRewards(
         uint128 accountId,
         uint128 poolId,
@@ -214,7 +250,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         bytes32 rewardId = _getRewardId(poolId, distributorCollateral, distributor);
-        RewardDistribution.Data storage reward = vault.rewards[rewardId];
+        RewardDistribution.Data storage reward = distributorCollateral != address(0)
+            ? vault.rewards[rewardId]
+            : Pool.load(poolId).rewardsToVaults[rewardId];
 
         if (address(reward.distributor) != distributor) {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
@@ -236,7 +274,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             actorSharesD18
         );
 
-        reward.claimStatus[accountId].pendingSendD18 = 0;
+        vault.rewards[rewardId].claimStatus[accountId].pendingSendD18 = 0;
         bool success = IRewardDistributor(distributor).payout(
             accountId,
             poolId,

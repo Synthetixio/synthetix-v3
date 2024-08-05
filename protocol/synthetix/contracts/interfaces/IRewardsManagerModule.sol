@@ -181,12 +181,19 @@ interface IRewardsManagerModule {
      * @param accountId The id of the account whose available rewards are being queried.
      * @return claimableD18 An array of ids of the reward entries that are claimable by the position.
      * @return distributors An array with the addresses of the reward distributors associated with the claimable rewards.
+     * @return numPoolRewards Returns how many of the first returned rewards are pool level rewards (the rest are vault)
      */
     function updateRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external returns (uint256[] memory claimableD18, address[] memory distributors);
+    )
+        external
+        returns (
+            uint256[] memory claimableD18,
+            address[] memory distributors,
+            uint256 numPoolRewards
+        );
 
     /**
      * @notice Returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault.
@@ -202,7 +209,7 @@ interface IRewardsManagerModule {
     ) external view returns (uint256 rateD18);
 
     /**
-     * @notice Returns the amount of claimable rewards for a given accountId for a vault distributor.
+     * @notice Returns the amount of claimable rewards for a given account position for a vault distributor.
      * @param accountId The id of the account to look up rewards on.
      * @param poolId The id of the pool to claim rewards on.
      * @param collateralType The address of the collateral used in the pool's rewards.
@@ -210,6 +217,21 @@ interface IRewardsManagerModule {
      * @return rewardAmount The amount of available rewards that are available for the provided account.
      */
     function getAvailableRewards(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external returns (uint256 rewardAmount);
+
+    /**
+     * @notice Returns the amount of claimable rewards for a given account position for a pool level distributor.
+     * @param accountId The id of the account to look up rewards on.
+     * @param poolId The id of the pool to claim rewards on.
+     * @param collateralType The address of the collateral used in the pool's rewards.
+     * @param distributor The address of the rewards distributor associated with the rewards being claimed.
+     * @return rewardAmount The amount of available rewards that are available for the provided account.
+     */
+    function getAvailablePoolRewards(
         uint128 accountId,
         uint128 poolId,
         address collateralType,

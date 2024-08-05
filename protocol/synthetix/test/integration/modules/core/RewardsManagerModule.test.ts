@@ -883,15 +883,17 @@ describe('RewardsManagerModule', function () {
     describe('successful claim (pool level)', () => {
       before(claimRestore);
       before('claim', async () => {
-        await systems()
-          .Core.connect(user1)
-          // NOTE: we use `collateralAddress` instead of `ethers.utils.AddressZero` here becuase here the claim function will look at the distributor address to determine if its pool level
-          .claimPoolRewards(
-            accountId,
-            poolId,
-            collateralAddress(),
-            RewardDistributorPoolLevel.address
-          );
+        await (
+          await systems()
+            .Core.connect(user1)
+            // NOTE: we use `collateralAddress` instead of `ethers.utils.AddressZero` here becuase here the claim function will look at the distributor address to determine if its pool level
+            .claimPoolRewards(
+              accountId,
+              poolId,
+              collateralAddress(),
+              RewardDistributorPoolLevel.address
+            )
+        ).wait();
       });
 
       it('pays out', async () => {
@@ -901,7 +903,7 @@ describe('RewardsManagerModule', function () {
       it('returns no rewards remaining', async () => {
         const availableRewards = await systems()
           .Core.connect(user1)
-          .callStatic.getAvailableRewards(
+          .callStatic.getAvailablePoolRewards(
             accountId,
             poolId,
             collateralAddress(),

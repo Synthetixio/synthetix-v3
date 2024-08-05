@@ -391,7 +391,7 @@ library Pool {
     function updateRewardsToVaults(
         Data storage self,
         Vault.PositionSelector memory pos
-    ) internal returns (uint256[] memory rewards, address[] memory distributors) {
+    ) internal returns (uint256[] memory rewards, address[] memory distributors, uint256) {
         bytes32[] memory poolRewardIds = new bytes32[](self.rewardIds.length());
 
         {
@@ -399,8 +399,8 @@ library Pool {
             uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
             uint256 vaultSharesD18 = self.vaultsDebtDistribution.getActorShares(bytes32(actorId));
 
-            uint256 numRewards = self.rewardIds.length();
-            for (uint256 i = 0; i < numRewards; i++) {
+            //uint256 numRewards = self.rewardIds.length();
+            for (uint256 i = 0; i < self.rewardIds.length(); i++) {
                 bytes32 rewardId = self.rewardIds.valueAt(i + 1);
                 RewardDistribution.Data storage dist = self.rewardsToVaults[rewardId];
 
@@ -462,6 +462,8 @@ library Pool {
                 ? poolAddrs[i]
                 : vaultAddrs[i - poolAddrs.length];
         }
+
+        return (rewards, distributors, poolAmounts.length);
     }
 
     /**
