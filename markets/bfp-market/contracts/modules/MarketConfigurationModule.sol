@@ -79,13 +79,11 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             });
 
             uint256 oraclePrice = PerpMarket.getOraclePrice(market, addresses);
-            (int128 fundingRate, ) = PerpMarket.recomputeFunding(market, oraclePrice);
-            emit FundingRecomputed(
-                marketId,
-                market.skew,
-                fundingRate,
-                PerpMarket.getCurrentFundingVelocity(market)
+            (int128 fundingRate, , int128 fundingVelocity) = PerpMarket.recomputeFunding(
+                market,
+                oraclePrice
             );
+            emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
         }
 
         PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
