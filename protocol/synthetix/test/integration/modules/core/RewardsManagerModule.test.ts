@@ -624,14 +624,12 @@ describe('RewardsManagerModule', function () {
         0
       );
 
-      const [rewardAmounts, distributorAddresses] = await systems().Core.callStatic.updateRewards(
-        poolId,
-        collateralAddress(),
-        accountId
-      );
+      const [rewardAmounts, distributorAddresses, poolRewardsCount] =
+        await systems().Core.callStatic.updateRewards(poolId, collateralAddress(), accountId);
 
       assertBn.equal(rewardAmounts.length, 3);
       assertBn.equal(distributorAddresses.length, 3);
+      assertBn.equal(poolRewardsCount, 2);
 
       assert(distributorAddresses[0], RewardDistributorPoolLevel.address); // the pool level distributor
       assert(distributorAddresses[1], RewardDistributor.address); // the pool level distributor for the vault distributor
