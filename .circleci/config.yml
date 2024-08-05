@@ -43,6 +43,8 @@ commands:
           key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
           paths:
             - "~/.foundry"
+            - "~/.cargo"
+            - "~/.rustup"
 
   install-ipfs:
     steps:
