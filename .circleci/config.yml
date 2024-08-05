@@ -25,8 +25,8 @@ commands:
             curl https://sh.rustup.rs -sSf | sh -s -- -y
             . "$HOME/.cargo/env"
             curl -L https://foundry.paradigm.xyz | bash
-            source /home/circleci/.bashrc
-            foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
+            cd /.foundry/bin
+            ./foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
       - save_cache:
           key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
           paths:
