@@ -14,6 +14,13 @@ import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
 
+    event SnapshotContractSet(
+        address indexed snapshotContract,
+        bool indexed enabled,
+        SnapshotVotePower.WeightType weight
+    );
+
+    ///@notice Sets a snapshot contract to be used for voting power calculations
     function setSnapshotContract(
         address snapshotContract,
         SnapshotVotePower.WeightType weight,
@@ -25,6 +32,8 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         snapshotVotePower.enabled = enabled;
         snapshotVotePower.weight = weight;
+
+        emit SnapshotContractSet(snapshotContract, enabled, weight);
     }
 
     function setScale(address snapshotContract, uint256 scale) external {
@@ -32,6 +41,8 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+        if (snapshotVotePower.weight != SnapshotVotePower.WeightType.Scaled)
+            revert SnapshotVotePower.InvalidWeightType();
         snapshotVotePower.scale = scale;
     }
 

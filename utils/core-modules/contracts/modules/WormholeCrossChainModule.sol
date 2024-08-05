@@ -13,6 +13,8 @@ import {WormholeCrossChain} from "../storage/WormholeCrossChain.sol";
  * @title Module with assorted cross-chain functions.
  */
 contract WormholeCrossChainModule is IWormholeReceiver {
+    event GasLimitSet(uint256 gasLimit);
+
     error OnlyRelayer();
     error InsufficientValue();
     error InvalidVM(string reason);
@@ -36,7 +38,20 @@ contract WormholeCrossChainModule is IWormholeReceiver {
 
         for (uint256 i = 0; i < length; i++) {
             WormholeCrossChain.addSupportedNetwork(wh, chainIds[i]);
-            WormholeCrossChain.addEmitter(wh, chainIds[i], emitters[i]);
+            WormholeCrossChain.setEmitter(wh, chainIds[i], emitters[i]);
+        }
+    }
+
+    ///@dev Removes registered emitters and chain ids
+    function removeRegisteredEmitters(uint16[] memory chainIds) external {
+        OwnableStorage.onlyOwner();
+
+        WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
+
+        uint256 length = chainIds.length;
+        for (uint256 i = 0; i < length; i++) {
+            WormholeCrossChain.removeSupportedNetwork(wh, chainIds[i]);
+            WormholeCrossChain.setEmitter(wh, chainIds[i], address(0));
         }
     }
 
@@ -60,6 +75,9 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         _checkSuccess(success, result);
     }
 
+    ///@dev The method for calculating the refund assumes that `broadcast` is only called once per external function call.
+    /// If it were to be called more than once, the function would attempt to refund an excessive amount of ETH, as the msg.value amount will not be decreased after the first refund is made.
+    /// If the contract does not have excess ETH available the call will revert, however, if used as a module in a contract containing ETH, it would be a possible attack vector for draining the ETH balance.
     function broadcast(
         WormholeCrossChain.Data storage self,
         uint16[] memory targetChains,
@@ -105,7 +123,8 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         }
     }
 
-    ///@dev Transmits a message to another chain
+    ///@notice Transmits a message to another chain
+    ///@dev This function should not be called directly, instead use `broadcast` with an array length of 1
     function transmit(
         WormholeCrossChain.Data storage self,
         uint16 targetChain,
@@ -125,10 +144,12 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         );
     }
 
+    ///@notice Sets the gas limit for crosschain messages
     function setGasLimit(uint256 gasLimit) external {
         OwnableStorage.onlyOwner();
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
         WormholeCrossChain.setGasLimit(wh, gasLimit);
+        emit GasLimitSet(gasLimit);
     }
 
     function getGasLimit() external view returns (uint256) {

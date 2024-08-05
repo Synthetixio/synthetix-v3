@@ -38,16 +38,23 @@ library WormholeCrossChain {
     ///@dev adds supported network to storage, used for cross-chain network verification
     ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
     function addSupportedNetwork(Data storage self, uint16 chainId) internal {
-        if (self.supportedNetworks.contains(chainId)) {
-            self.supportedNetworks.remove(chainId);
+        if (!self.supportedNetworks.contains(chainId)) {
+            self.supportedNetworks.add(chainId);
+            emit NewSupportedCrossChainNetwork(chainId);
         }
+    }
 
-        self.supportedNetworks.add(chainId);
+    ///@dev removes supported network from storage
+    ///@dev all chain ids are specific to wormhole, and is not in parity with standard network ids https://docs.wormhole.com/wormhole/reference/constants#chain-ids
+    function removeSupportedNetwork(Data storage self, uint16 chainId) internal {
+        if (!self.supportedNetworks.contains(chainId)) revert UnsupportedNetwork(chainId);
+        self.supportedNetworks.remove(chainId);
         emit NewSupportedCrossChainNetwork(chainId);
     }
 
-    ///@dev adds registered emitter to storage, used for cross-chain contract verification
-    function addEmitter(Data storage self, uint16 chainId, address emitter) internal {
+    ///@dev adds or removes registered emitter to storage, used for cross-chain contract verification
+    ///@dev to remove an emitter, set the address to address(0)
+    function setEmitter(Data storage self, uint16 chainId, address emitter) internal {
         // solhint-disable-next-line
         self.registeredEmitters[chainId] = bytes32(uint256(uint160(emitter)));
         emit NewEmitter(chainId, emitter);
