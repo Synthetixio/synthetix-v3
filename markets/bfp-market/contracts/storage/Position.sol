@@ -136,9 +136,16 @@ library Position {
         PerpMarket.Data storage market,
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
-        AddressRegistry.Data memory addresses
+        AddressRegistry.Data memory addresses,
+        int128 sizeDelta
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
+        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
+            marketConfig,
+            oraclePrice,
+            sizeDelta,
+            addresses
+        );
+
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
         if (
@@ -295,7 +302,13 @@ library Position {
             );
 
             // Check the minimum credit requirements are still met.
-            validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
+            validateMinimumCredit(
+                market,
+                params.oraclePrice,
+                marketConfig,
+                addresses,
+                params.sizeDelta
+            );
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(

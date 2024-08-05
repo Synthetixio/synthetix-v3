@@ -177,11 +177,11 @@ describe('LiquidationModule', () => {
 
         const { trader, remainingSize, marketId } = await configurePartiallyLiquidatedPosition();
 
-        // Should be fullt exhausted.
+        // Should be fully exhausted.
         const cap1 = await BfpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
         assertBn.isZero(cap1.remainingCapacity);
 
-        // Endorsed liqudaitor to liquidate remaining capacity.
+        // Endorsed liquidator to liquidate remaining capacity.
         const d1 = await BfpMarketProxy.getAccountDigest(trader.accountId, marketId);
         assertBn.equal(d1.position.size, remainingSize);
 
@@ -676,7 +676,7 @@ describe('LiquidationModule', () => {
 
         await commitAndSettle(bs, marketId, trader, order);
 
-        // Price falls/rises between 10% should results in a healthFactor of < 1.
+        // Price falls/rises between 10% should result in a healthFactor of < 1.
         // Whether it goes up or down depends on the side of the order.
         const newMarketOraclePrice = wei(order.oraclePrice)
           .mul(orderSide === 1 ? 0.9 : 1.1)
@@ -722,7 +722,7 @@ describe('LiquidationModule', () => {
 
         await commitAndSettle(bs, marketId, trader, order);
 
-        // Price falls/rises between 10% should results in a healthFactor of < 1.
+        // Price falls/rises between 10% should result in a healthFactor of < 1.
         // Whether it goes up or down depends on the side of the order.
         const newMarketOraclePrice = wei(order.oraclePrice)
           .mul(orderSide === 1 ? 0.9 : 1.1)
@@ -732,7 +732,7 @@ describe('LiquidationModule', () => {
         const { liquidationRewardPercent: flagRewardPercent } = await setMarketConfigurationById(
           bs,
           marketId,
-          { liquidationRewardPercent: bn(0.0001) } // really small so we dont hit maxKeeperFeeUsd
+          { liquidationRewardPercent: bn(0.0001) } // really small so we don't hit maxKeeperFeeUsd
         );
         const { keeperProfitMarginPercent, keeperLiquidationGasUnits, keeperFlagGasUnits } =
           await setMarketConfiguration(bs, {
@@ -807,7 +807,7 @@ describe('LiquidationModule', () => {
         });
 
         await commitAndSettle(bs, marketId, trader, order);
-        // Price falls/rises between 10% should results in a healthFactor of < 1.
+        // Price falls/rises between 10% should result in a healthFactor of < 1.
         // Whether it goes up or down depends on the side of the order.
         const newMarketOraclePrice = wei(order.oraclePrice)
           .mul(orderSide === 1 ? 0.9 : 1.1)
@@ -816,7 +816,7 @@ describe('LiquidationModule', () => {
         const { liquidationRewardPercent: flagRewardPercent } = await setMarketConfigurationById(
           bs,
           marketId,
-          { liquidationRewardPercent: bn(0.0001) } // really small so we dont hit maxKeeperFeeUsd
+          { liquidationRewardPercent: bn(0.0001) } // really small so we don't hit maxKeeperFeeUsd
         );
         const { keeperProfitMarginUsd, keeperLiquidationGasUnits, keeperFlagGasUnits } =
           await setMarketConfiguration(bs, {

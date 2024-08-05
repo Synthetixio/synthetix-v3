@@ -123,7 +123,8 @@ library PerpMarket {
     function updateDebtCorrection(
         PerpMarket.Data storage self,
         Position.Data storage oldPosition,
-        Position.Data memory newPosition
+        Position.Data memory newPosition,
+        uint256 oraclePrice
     ) internal {
         // This is needed to perform a fast constant time op for overall market debt.
         //
@@ -133,7 +134,7 @@ library PerpMarket {
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
         int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
-            oldPosition.getAccruedFunding(self, newPosition.entryPrice);
+            oldPosition.getAccruedFunding(self, oraclePrice);
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
 
@@ -182,6 +183,21 @@ library PerpMarket {
     ) internal view returns (uint256) {
         return
             self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            self.depositedCollateral[addresses.sUsd];
+    }
+
+    /// @dev Returns the market's required minimum backing credit in USD.
+    function getMinimumCreditWithTradeSize(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig,
+        uint256 price,
+        int128 sizeDelta,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
+        uint128 size = self.size + MathUtil.abs(sizeDelta).to128();
+
+        return
+            size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
             self.depositedCollateral[addresses.sUsd];
     }
 

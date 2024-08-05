@@ -41,6 +41,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
+
+    // NOTE: below field is now unused but we leave it here to reduce maintenance burden
     ISNXDistributor public rewardsDistributor;
 
     error MigrationInProgress();
@@ -222,27 +224,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         uint256 cratio = (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix))) /
             debtValueMigrated;
 
-        // if the account needs to be liquidated, liquidate it here by unlocking the debt to all accounts and moving to a
+        // if not the owner and the account is not liquidatable, fail
         if (
-            cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
-        ) {
-            oldSynthetix.transfer(address(rewardsDistributor), collateralMigrated);
-            rewardsDistributor.notifyRewardAmount(collateralMigrated);
-
-            tmpLockedDebt = 0;
-            migrationInProgress = false;
-
-            emit AccountLiquidatedInMigration(
-                staker,
-                collateralMigrated,
-                debtValueMigrated,
-                cratio
-            );
-
-            return;
-        } else if (
             ERC2771Context._msgSender() != staker &&
-            ERC2771Context._msgSender() != OwnableStorage.load().owner
+            ERC2771Context._msgSender() != OwnableStorage.load().owner &&
+            cratio >= v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
         ) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }

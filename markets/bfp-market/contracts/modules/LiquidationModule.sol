@@ -110,7 +110,7 @@ contract LiquidationModule is ILiquidationModule {
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // Update market debt relative to the keeperFee incurred.
-        market.updateDebtCorrection(oldPosition, newPosition);
+        market.updateDebtCorrection(oldPosition, newPosition, oraclePrice);
     }
 
     /// @dev Invoked post flag when position is dead and set to liquidate or when liquidating margin only due to debt.
