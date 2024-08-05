@@ -199,13 +199,8 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int128 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(
-            market.id,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(price);
+        emit FundingRecomputed(market.id, market.skew, fundingRate, fundingVelocity);
     }
 
     // --- Mutations --- //

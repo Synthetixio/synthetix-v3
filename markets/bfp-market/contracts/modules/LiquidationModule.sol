@@ -76,13 +76,8 @@ contract LiquidationModule is ILiquidationModule {
             uint256 liqKeeperFee
         )
     {
-        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
 
         uint128 liqSize;
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(
