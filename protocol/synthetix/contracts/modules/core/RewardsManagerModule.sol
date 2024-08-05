@@ -157,12 +157,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         RewardDistribution.Data storage reward = vault.rewards[rewardId];
 
         if (address(reward.distributor) != distributor) {
-            // might be pool level RD
-            rewardId = _getRewardId(poolId, address(0), distributor);
-            reward = Pool.load(poolId).rewardsToVaults[rewardId];
-            if (address(reward.distributor) != distributor) {
-                revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
-            }
+            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
         Pool.load(poolId).updateRewardsToVaults(

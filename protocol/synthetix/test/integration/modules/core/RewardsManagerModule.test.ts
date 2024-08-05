@@ -791,7 +791,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewardsPool = await systems()
           .Core.connect(user1)
-          .callStatic.getAvailableRewards(
+          .callStatic.getAvailablePoolRewards(
             accountId,
             poolId,
             ethers.constants.AddressZero,
@@ -914,7 +914,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards2 = await systems()
           .Core.connect(user1)
-          .callStatic.getAvailableRewards(
+          .callStatic.getAvailablePoolRewards(
             accountId,
             poolId,
             collateralAddress(),
@@ -927,7 +927,7 @@ describe('RewardsManagerModule', function () {
       it('user who joined after distribution has no rewards', async () => {
         const availableRewards = await systems()
           .Core.connect(user1)
-          .callStatic.getAvailableRewards(
+          .callStatic.getAvailablePoolRewards(
             2222,
             poolId,
             collateralAddress(),
@@ -942,7 +942,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards = await systems()
           .Core.connect(user1)
-          .callStatic.getAvailableRewards(
+          .callStatic.getAvailablePoolRewards(
             2222,
             poolId,
             Collateral2.address,
@@ -956,7 +956,7 @@ describe('RewardsManagerModule', function () {
 
         const availableRewards2 = await systems()
           .Core.connect(owner)
-          .callStatic.getAvailableRewards(
+          .callStatic.getAvailablePoolRewards(
             2222,
             poolId,
             Collateral2.address,
