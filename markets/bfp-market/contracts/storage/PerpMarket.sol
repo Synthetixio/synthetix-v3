@@ -186,6 +186,21 @@ library PerpMarket {
             self.depositedCollateral[addresses.sUsd];
     }
 
+    /// @dev Returns the market's required minimum backing credit in USD.
+    function getMinimumCreditWithTradeSize(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig,
+        uint256 price,
+        int128 sizeDelta,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
+        uint128 size = self.size + MathUtil.abs(sizeDelta).to128();
+
+        return
+            size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            self.depositedCollateral[addresses.sUsd];
+    }
+
     /// @dev Returns the markets delegated collateral value in USD.
     function getDelegatedCollateralValueUsd(
         PerpMarket.Data storage self,
