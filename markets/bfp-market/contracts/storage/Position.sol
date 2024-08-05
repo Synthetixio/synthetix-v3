@@ -136,9 +136,16 @@ library Position {
         PerpMarket.Data storage market,
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
-        AddressRegistry.Data memory addresses
+        AddressRegistry.Data memory addresses,
+        int128 sizeDelta
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
+        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
+            marketConfig,
+            oraclePrice,
+            sizeDelta,
+            addresses
+        );
+
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
         if (
@@ -152,7 +159,7 @@ library Position {
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
-     * NOTE: The previous margin (which may include a discount on the collteral; used for liquidation checks) includes the
+     * NOTE: The previous margin (which may include a discount on the collateral; used for liquidation checks) includes the
      * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
      * This is important as it helps avoid instant liquidations immediately after settlement.
      */
@@ -295,7 +302,13 @@ library Position {
             );
 
             // Check the minimum credit requirements are still met.
-            validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
+            validateMinimumCredit(
+                market,
+                params.oraclePrice,
+                marketConfig,
+                addresses,
+                params.sizeDelta
+            );
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(
@@ -566,7 +579,7 @@ library Position {
             return healthData;
         }
 
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+        (, int256 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(price);
 
         healthData.accruedFunding = size
             .mulDecimal(
@@ -660,7 +673,7 @@ library Position {
             return 0;
         }
 
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+        (, int256 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(price);
         return
             self
                 .size
