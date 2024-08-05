@@ -15,6 +15,7 @@ import {IMarginModule} from "../interfaces/IMarginModule.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {Position} from "../storage/Position.sol";
+import {Order} from "../storage/Order.sol";
 import {Margin} from "../storage/Margin.sol";
 import {AddressRegistry} from "../storage/AddressRegistry.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
@@ -503,6 +504,12 @@ contract MarginModule is IMarginModule {
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
+        // Prevent debt payment if there is an pending order.
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta != 0) {
+            revert ErrorUtil.OrderFound();
+        }
 
         // We're storing debt separately to track the current debt before we pay down.
         uint128 debt = accountMargin.debtUsd;
