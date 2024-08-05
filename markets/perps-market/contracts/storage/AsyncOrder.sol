@@ -9,6 +9,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
+import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {KeeperCosts} from "./KeeperCosts.sol";
@@ -24,6 +25,7 @@ library AsyncOrder {
     using SafeCastU256 for uint256;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
     using KeeperCosts for KeeperCosts.Data;
 
@@ -313,7 +315,7 @@ library AsyncOrder {
 
         // only account for negative pnl
         runtime.currentAvailableMargin += MathUtil.min(
-            calculateStartingPnl(runtime.fillPrice, orderPrice, runtime.newPositionSize),
+            calculateFillPricePnl(runtime.fillPrice, orderPrice, runtime.sizeDelta),
             0
         );
 
@@ -345,6 +347,12 @@ library AsyncOrder {
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
+
+        int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
+            MathUtil.abs(runtime.newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt(),
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        GlobalPerpsMarket.load().validateMarketCapacity(lockedCreditDelta);
 
         runtime.newPosition = Position.Data({
             marketId: runtime.marketId,
@@ -511,14 +519,14 @@ library AsyncOrder {
     }
 
     /**
-     * @notice Initial pnl of a position after it's opened due to p/d fill price delta.
+     * @notice PnL incurred from closing old position/opening new position based on fill price
      */
-    function calculateStartingPnl(
+    function calculateFillPricePnl(
         uint256 fillPrice,
         uint256 marketPrice,
-        int128 size
+        int128 sizeDelta
     ) internal pure returns (int256) {
-        return size.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
+        return sizeDelta.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
     }
 
     /**
