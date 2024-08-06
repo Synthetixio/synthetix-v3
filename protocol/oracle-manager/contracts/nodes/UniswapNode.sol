@@ -26,7 +26,7 @@ library UniswapNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
         (
             address token,
             address stablecoin,
@@ -60,7 +60,7 @@ library UniswapNode {
             ? price.upscale(scale.toUint())
             : price.downscale((-scale).toUint());
 
-        return NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
+        nodeOutput = NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
     }
 
     function getQuoteAtTick(

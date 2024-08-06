@@ -17,7 +17,7 @@ library ChainlinkNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
         (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
             (address, uint256, uint8)
@@ -33,7 +33,7 @@ library ChainlinkNode {
             ? finalPrice.downscale(decimals - PRECISION)
             : finalPrice.upscale(PRECISION - decimals);
 
-        return NodeOutput.Data(finalPrice, updatedAt, 0, 0);
+        nodeOutput = NodeOutput.Data(finalPrice, updatedAt, 0, 0);
     }
 
     function getTwapPrice(
