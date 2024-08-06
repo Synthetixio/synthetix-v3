@@ -84,6 +84,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 fromAccountCollateral;
+        int256 fromSize;
     }
 
     /// @inheritdoc IPerpAccountModule
@@ -220,7 +221,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         if (toId == fromId) {
-            revert ErrorUtil.DuplicateAccountIds();
+            revert ErrorUtil.DuplicateEntries();
         }
 
         Runtime_splitAccount memory runtime;
@@ -366,6 +367,10 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Move position `from` -> `to`.
         runtime.sizeToMove = fromPosition.size.mulDecimal(proportion.toInt()).to128();
+        if (runtime.sizeToMove == 0) {
+            // This avoids users from creating postions where the size is 0 due to rounding errors.
+            revert ErrorUtil.AccountSplitProportionTooSmall();
+        }
 
         if (fromPosition.size < 0) {
             fromPosition.size += MathUtil.abs(runtime.sizeToMove).toInt().to128();
@@ -403,6 +408,10 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Ensure we validate remaining `fromAccount` margin > IM when position still remains.
         if (proportion < DecimalMath.UNIT) {
+            if (fromPosition.size == 0) {
+                // This avoids users from creating postions where the size is 0 due to rounding errors.
+                revert ErrorUtil.AccountSplitProportionTooSmall();
+            }
             (runtime.fromIm, ) = Position.getLiquidationMarginUsd(
                 fromPosition.size,
                 runtime.oraclePrice,
@@ -441,7 +450,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // Cannot merge the same two accounts.
         if (toId == fromId) {
-            revert ErrorUtil.DuplicateAccountIds();
+            revert ErrorUtil.DuplicateEntries();
         }
 
         Runtime_mergeAccounts memory runtime;
@@ -464,9 +473,13 @@ contract PerpAccountModule is IPerpAccountModule {
         if (market.orders[toId].sizeDelta != 0 || market.orders[fromId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
+        runtime.fromSize = fromPosition.size;
 
+        if (runtime.fromSize == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
         // Cannot merge unless accounts are on the same side.
-        if (!MathUtil.sameSide(fromPosition.size, toPosition.size)) {
+        if (!MathUtil.sameSide(runtime.fromSize, toPosition.size)) {
             revert ErrorUtil.InvalidPositionSide();
         }
 
@@ -582,7 +595,8 @@ contract PerpAccountModule is IPerpAccountModule {
                 market.currentUtilizationAccruedComputed,
                 fromPosition.entryPythPrice,
                 fromPosition.entryPythPrice
-            )
+            ),
+            runtime.oraclePrice
         );
 
         Position.Data memory mergedPosition = Position.Data(
@@ -595,7 +609,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Update debt correction for `to` position.
-        market.updateDebtCorrection(toPosition, mergedPosition);
+        market.updateDebtCorrection(toPosition, mergedPosition, runtime.oraclePrice);
 
         // Update position accounting `from` -> `to`.
         toPosition.update(mergedPosition);

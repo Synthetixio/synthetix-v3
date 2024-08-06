@@ -24,6 +24,7 @@ import {
   MaxUint128,
   SECONDS_ONE_DAY,
   commitAndSettle,
+  commitOrder,
   depositMargin,
   fastForwardBySec,
   findEventSafe,
@@ -47,7 +48,7 @@ describe('MarginModule Debt', async () => {
       await assertRevert(BfpMarketProxy.payDebt(1, 2, 0), 'ZeroAmount', BfpMarketProxy);
     });
 
-    it('should revert if account does not exists or missing permission', async () => {
+    it('should revert when account does not exists or missing permission', async () => {
       const { BfpMarketProxy } = systems();
       const invalidAccountId = genNumber(42069, 50000);
       await assertRevert(
@@ -57,7 +58,7 @@ describe('MarginModule Debt', async () => {
       );
     });
 
-    it('should revert if market does not exists', async () => {
+    it('should revert when market does not exists', async () => {
       const { BfpMarketProxy } = systems();
       const { trader } = await depositMargin(bs, genTrader(bs));
 
@@ -89,6 +90,7 @@ describe('MarginModule Debt', async () => {
       );
       const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, openOrder);
+
       // Price moves, causing a 10% loss.
       const newMarketOraclePrice1 = wei(openOrder.oraclePrice)
         .mul(openOrder.sizeDelta.gt(0) ? 0.9 : 1.1)
@@ -106,7 +108,7 @@ describe('MarginModule Debt', async () => {
       );
     });
 
-    it('should revert not enough balance', async () => {
+    it('should revert when not enough balance', async () => {
       const { BfpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
@@ -147,6 +149,23 @@ describe('MarginModule Debt', async () => {
           closeOrderEvent.args.accountDebt
         ),
         'InsufficientBalance',
+        BfpMarketProxy
+      );
+    });
+
+    it('should revert when an order is present', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: genOneOf(collateralsWithoutSusd()) })
+      );
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, openOrder);
+
+      await assertRevert(
+        BfpMarketProxy.connect(trader.signer).payDebt(trader.accountId, marketId, MaxUint128),
+        'OrderFound()',
         BfpMarketProxy
       );
     });
