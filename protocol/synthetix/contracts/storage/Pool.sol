@@ -399,7 +399,6 @@ library Pool {
             uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
             uint256 vaultSharesD18 = self.vaultsDebtDistribution.getActorShares(bytes32(actorId));
 
-            //uint256 numRewards = self.rewardIds.length();
             for (uint256 i = 0; i < self.rewardIds.length(); i++) {
                 bytes32 rewardId = self.rewardIds.valueAt(i + 1);
                 RewardDistribution.Data storage dist = self.rewardsToVaults[rewardId];
