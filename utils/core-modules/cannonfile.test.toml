@@ -46,6 +46,9 @@ artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 [contract.GenericModule]
 artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
 
+[contract.CcipRouterMock]
+artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
+
 # Setup Initial Proxy
 [contract.Proxy]
 artifact = "contracts/Proxy.sol:Proxy"
@@ -93,6 +96,5 @@ salt = "second"
 contracts = ["CoreModule", "NftModule"]
 salt = "third"
 
-# FeatureFlagModule Router
 [router.FeatureFlagModuleRouter]
 contracts = ["CoreModule", "FeatureFlagModule", "SampleFeatureFlagModule"]
