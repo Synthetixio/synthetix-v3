@@ -12,21 +12,11 @@ contract RewardsDistributorExternal is RewardsDistributor {
     constructor(
         address rewardManager_,
         uint128 poolId_,
-        address collateralType_,
         address payoutToken_,
         uint8 payoutTokenDecimals_,
         string memory name_,
         address authorizedExternalDistributor_
-    )
-        RewardsDistributor(
-            rewardManager_,
-            poolId_,
-            collateralType_,
-            payoutToken_,
-            payoutTokenDecimals_,
-            name_
-        )
-    {
+    ) RewardsDistributor(rewardManager_, poolId_, payoutToken_, payoutTokenDecimals_, name_) {
         if (authorizedExternalDistributor_ == address(0)) {
             revert ParameterError.InvalidParameter(
                 "authorizedExternalDistributor",
