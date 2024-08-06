@@ -11,15 +11,18 @@ import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Help
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 contract RewardsDistributor is IRewardDistributor {
     error NotEnoughRewardsLeft(uint256 amountRequested, uint256 amountLeft);
     error NotEnoughBalance(uint256 amountRequested, uint256 currentBalance);
 
     using ERC20Helper for address;
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
 
     address public rewardManager;
     uint128 public poolId;
-    address public collateralType;
     address public payoutToken;
     string public name;
 
@@ -29,19 +32,17 @@ contract RewardsDistributor is IRewardDistributor {
     bool public shouldFailPayout;
 
     // Internal tracking for the remaining rewards, it keeps value in payoutToken precision
-    uint256 public rewardsAmount = 0;
+    uint256 public rewardedAmount = 0;
 
     constructor(
         address rewardManager_,
         uint128 poolId_,
-        address collateralType_,
         address payoutToken_,
         uint8 payoutTokenDecimals_,
         string memory name_
     ) {
         rewardManager = rewardManager_; // Synthetix CoreProxy
         poolId = poolId_;
-        collateralType = collateralType_;
         payoutToken = payoutToken_;
         name = name_;
 
@@ -73,7 +74,7 @@ contract RewardsDistributor is IRewardDistributor {
     function payout(
         uint128, // accountId,
         uint128 poolId_,
-        address collateralType_,
+        address, // collateralType,
         address payoutTarget_, // msg.sender of claimRewards() call, payout target address
         uint256 payoutAmount_
     ) external returns (bool) {
@@ -90,20 +91,14 @@ contract RewardsDistributor is IRewardDistributor {
                 "Pool does not match the rewards pool"
             );
         }
-        if (collateralType_ != collateralType) {
-            revert ParameterError.InvalidParameter(
-                "collateralType",
-                "Collateral does not match the rewards token"
-            );
-        }
 
         // payoutAmount_ is always in 18 decimals precision, adjust actual payout amount to match payout token decimals
         uint256 adjustedAmount = (payoutAmount_ * precision) / SYSTEM_PRECISION;
 
-        if (adjustedAmount > rewardsAmount) {
-            revert NotEnoughRewardsLeft(adjustedAmount, rewardsAmount);
+        if (adjustedAmount > rewardedAmount) {
+            revert NotEnoughRewardsLeft(adjustedAmount, rewardedAmount);
         }
-        rewardsAmount = rewardsAmount - adjustedAmount;
+        rewardedAmount = rewardedAmount - adjustedAmount;
 
         payoutToken.safeTransfer(payoutTarget_, adjustedAmount);
 
@@ -124,30 +119,29 @@ contract RewardsDistributor is IRewardDistributor {
                 "Pool does not match the rewards pool"
             );
         }
-        if (collateralType_ != collateralType) {
-            revert ParameterError.InvalidParameter(
-                "collateralType",
-                "Collateral does not match the rewards token"
-            );
-        }
-
-        rewardsAmount = rewardsAmount + amount_;
-        uint256 balance = IERC20(payoutToken).balanceOf(address(this));
-        if (rewardsAmount > balance) {
-            revert NotEnoughBalance(amount_, balance);
-        }
 
         // amount_ is in payout token decimals precision, adjust actual distribution amount to 18 decimals that core is making its calculations in
         // this is necessary to avoid rounding issues when doing actual payouts
         uint256 adjustedAmount = (amount_ * SYSTEM_PRECISION) / precision;
 
-        IRewardsManagerModule(rewardManager).distributeRewards(
+        int256 cancelledAmount = IRewardsManagerModule(rewardManager).distributeRewards(
             poolId_,
             collateralType_,
             adjustedAmount,
             start_,
             duration_
         );
+
+        int256 adjustedCancelledAmount = (cancelledAmount * precision.toInt()) /
+            SYSTEM_PRECISION.toInt();
+
+        rewardedAmount = ((rewardedAmount + amount_).toInt() - adjustedCancelledAmount).toUint();
+
+        // we check at the end because its the easiest way to verify that the end state is ok
+        uint256 balance = IERC20(payoutToken).balanceOf(address(this));
+        if (rewardedAmount > balance) {
+            revert NotEnoughBalance(amount_, balance);
+        }
     }
 
     function onPositionUpdated(
