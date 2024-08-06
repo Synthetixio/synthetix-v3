@@ -13,7 +13,6 @@ contract MockRewardsDistributorExternal is BaseRewardsDistributor {
     constructor(
         address rewardManager_,
         uint128 poolId_,
-        address collateralType_,
         address payoutToken_,
         uint8 payoutTokenDecimals_,
         string memory name_,
@@ -22,7 +21,6 @@ contract MockRewardsDistributorExternal is BaseRewardsDistributor {
         BaseRewardsDistributor(
             rewardManager_,
             poolId_,
-            collateralType_,
             payoutToken_,
             payoutTokenDecimals_,
             name_,
