@@ -316,7 +316,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
             );
         }
 
-
         (int256 diffReward, int256 cancelledAmount) = rd.distribute(
             // if the rewards to be distributed are at the pool level, we want to use the pool distribution (trickle down happens later)
             collateralType == address(0)
