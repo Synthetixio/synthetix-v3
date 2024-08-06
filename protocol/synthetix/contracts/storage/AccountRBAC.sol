@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-import "hardhat/console.sol";
 
 /**
  * @title Object for tracking an accounts permissions (role based access control).
@@ -139,8 +138,6 @@ library AccountRBAC {
         bytes32 permission,
         address target
     ) internal view returns (bool) {
-        console.log("signing address aka target", target);
-        console.log("account owner self.owner", self.owner);
         return ((target == self.owner) ||
             hasPermission(self, _ADMIN_PERMISSION, target) ||
             hasPermission(self, permission, target));

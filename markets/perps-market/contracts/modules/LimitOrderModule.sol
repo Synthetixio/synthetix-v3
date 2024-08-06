@@ -7,7 +7,6 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-// import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ILimitOrderModule} from "../interfaces/ILimitOrderModule.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
@@ -23,6 +22,7 @@ import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
+import "hardhat/console.sol";
 
 /**
  * @title Module for settling signed P2P limit orders
@@ -79,7 +79,8 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
         LimitOrder.SignedOrderRequest calldata order,
         LimitOrder.Signature calldata sig
     ) external {
-        // TODO consider adding feature flag here
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+        FeatureFlag.ensureAccessToFeature(Flags.LIMIT_ORDER);
         checkSigPermission(order, sig);
         LimitOrder.Data storage limitOrderData = LimitOrder.load();
 
@@ -118,6 +119,8 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             shortOrder.marketId
         );
+        console.log("maxMarketSize", marketConfig.maxMarketSize);
+        console.log("maxMarketValue", marketConfig.maxMarketValue);
         perpsMarketData.validateLimitOrderSize(
             marketConfig.maxMarketSize,
             marketConfig.maxMarketValue,

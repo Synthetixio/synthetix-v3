@@ -17,7 +17,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 // import assert from 'assert';
 // import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
-describe('Settle Offchain Limit Order tests', () => {
+describe.only('Settle Offchain Limit Order tests', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, signers, owner } =
     bootstrapMarkets({
       synthMarkets: [
@@ -142,7 +142,7 @@ describe('Settle Offchain Limit Order tests', () => {
 
   const restoreToSnapshot = snapshotCheckpoint(provider);
 
-  it('settles the orders and emits the proper events', async () => {
+  it.only('settles the orders and emits the proper events', async () => {
     const signedShortOrder = await signOrder(
       shortOrder,
       trader1() as ethers.Wallet,
@@ -269,6 +269,52 @@ describe('Settle Offchain Limit Order tests', () => {
     );
   });
 
+  it.only('fails to cancel an already completed limit order', async () => {
+    const signedShortOrder = await signOrder(
+      shortOrder,
+      trader1() as ethers.Wallet,
+      systems().PerpsMarket.address
+    );
+    await assertRevert(
+      systems().PerpsMarket.connect(owner()).cancelLimitOrder(shortOrder, signedShortOrder),
+      `LimitOrderAlreadyUsed(${shortOrder.accountId}, ${shortOrder.nonce}, ${shortOrder.price}, ${shortOrder.amount})`
+    );
+  });
+
+  it.only('successfully cancels a new limit order', async () => {
+    const newNonceShortOrder = { ...shortOrder, nonce: 197889234 };
+    const signedNewNonceShortOrder = await signOrder(
+      newNonceShortOrder,
+      trader1() as ethers.Wallet,
+      systems().PerpsMarket.address
+    );
+    const successTx = await systems()
+      .PerpsMarket.connect(owner())
+      .cancelLimitOrder(newNonceShortOrder, signedNewNonceShortOrder);
+
+    await assertEvent(
+      successTx,
+      `LimitOrderCancelled(${newNonceShortOrder.accountId}, ${newNonceShortOrder.nonce}, ${newNonceShortOrder.price}, ${newNonceShortOrder.amount})`,
+      systems().PerpsMarket
+    );
+  });
+
+  it.only('fails to cancel a new limit order that is already settled', async () => {
+    const newNonceShortOrder = { ...shortOrder, nonce: 197889234 };
+    const signedNewNonceShortOrder = await signOrder(
+      newNonceShortOrder,
+      trader1() as ethers.Wallet,
+      systems().PerpsMarket.address
+    );
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(owner())
+        .cancelLimitOrder(newNonceShortOrder, signedNewNonceShortOrder),
+      `LimitOrderAlreadyUsed(${newNonceShortOrder.accountId}, ${newNonceShortOrder.nonce}, ${newNonceShortOrder.price}, ${newNonceShortOrder.amount})`
+    );
+  });
+
+  // TODO add the other transaction here and call rest
   it('fails when the relayers are different for each order', async () => {
     const badLongOrder = { ...longOrder, relayer: await trader1().getAddress() };
     const signedShortOrder = await signOrder(
