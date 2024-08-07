@@ -107,7 +107,7 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
         uint256 oldAccountIdx = updatePeriod(accountBalances[balances[accountId][idIdx].owner]);
         uint256 accountIdx = updatePeriod(accountBalances[account]);
 
-        uint256 prevBalance = balances[accountId][accountIdx].amount;
+        uint256 prevBalance = balances[accountId][idIdx].amount;
 
         // subtract balance from previous owner
         // solhint-disable-next-line
