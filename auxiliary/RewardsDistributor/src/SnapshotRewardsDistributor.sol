@@ -12,7 +12,7 @@ import {IAccountModule} from "@synthetixio/main/contracts/interfaces/IAccountMod
 import {IVaultModule} from "@synthetixio/main/contracts/interfaces/IVaultModule.sol";
 
 contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
-    error DebtShareNotFound();
+    error AccountNotFound();
 
     address private rewardsManager;
     IERC721 private accountToken;
@@ -166,7 +166,7 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
         }
 
         if (i >= 0) {
-            revert DebtShareNotFound();
+            revert AccountNotFound();
         }
 
         return 0;
@@ -191,7 +191,7 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
         }
 
         if (i >= 0) {
-            revert DebtShareNotFound();
+            revert AccountNotFound();
         }
 
         return 0;
