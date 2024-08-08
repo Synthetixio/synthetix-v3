@@ -130,6 +130,7 @@ library PerpsAccount {
     function charge(Data storage self, int256 amount) internal returns (uint256 debt) {
         uint256 newDebt;
         if (amount > 0) {
+            // Adding credit
             int256 leftoverDebt = self.debt.toInt() - amount;
             if (leftoverDebt > 0) {
                 newDebt = leftoverDebt.toUint();
@@ -138,11 +139,13 @@ library PerpsAccount {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -leftoverDebt);
             }
         } else {
+            // Adding debt
             int256 creditAvailable = self.collateralAmounts[SNX_USD_MARKET_ID].toInt();
             int256 leftoverCredit = creditAvailable + amount;
 
             if (leftoverCredit > 0) {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, amount);
+                newDebt = self.debt;
             } else {
                 updateCollateralAmount(self, SNX_USD_MARKET_ID, -creditAvailable);
                 newDebt = (self.debt.toInt() - leftoverCredit).toUint();
