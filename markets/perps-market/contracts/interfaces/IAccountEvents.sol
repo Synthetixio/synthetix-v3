@@ -6,10 +6,10 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IAccountEvents {
     /**
-     * @notice Gets fired when some collateral is deducted from the account for paying fees or liquidations.
-     * @param account Id of the account being deducted.
-     * @param synthMarketId Id of the synth deducted.
+     * @notice Gets fired anytime an account is charged with fees, paying settlement rewards.
+     * @param accountId Id of the account being deducted.
      * @param amount Amount of synth market deducted from the account.
+     * @param accountDebt current debt of the account after charged amount.
      */
-    event CollateralDeducted(uint256 account, uint128 synthMarketId, uint256 amount);
+    event AccountCharged(uint128 accountId, int256 amount, uint256 accountDebt);
 }

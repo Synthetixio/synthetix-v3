@@ -8,6 +8,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
+import {PerpsCollateralConfiguration} from "./PerpsCollateralConfiguration.sol";
 
 /**
  * @title This library contains all global perps market configuration data
@@ -15,6 +16,7 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 library GlobalPerpsMarketConfiguration {
     using DecimalMath for uint256;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
     using SetUtil for SetUtil.UintSet;
     using SafeCastU128 for uint128;
 
@@ -32,14 +34,15 @@ library GlobalPerpsMarketConfiguration {
          */
         mapping(address => uint256) referrerShare;
         /**
-         * @dev mapping of configured synthMarketId to max collateral amount.
-         * @dev USD token synth market id = 0
+         * @dev previously maxCollateralAmounts[collateralId] was used in storage slot
          */
-        mapping(uint128 => uint256) maxCollateralAmounts;
+        // solhint-disable-next-line var-name-mixedcase
+        mapping(uint128 => uint256) __unused_1;
         /**
-         * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
+         * @dev previously synth deduction priority
          */
-        uint128[] synthDeductionPriority;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128[] __unused_2;
         /**
          * @dev minimum configured keeper reward for the sender who liquidates the account
          */
@@ -84,6 +87,14 @@ library GlobalPerpsMarketConfiguration {
          * @dev interest rate gradient applied to utilization after hitting the gradient breakpoint
          */
         uint128 highUtilizationInterestRateGradient;
+        /**
+         * @dev ratio of the collateral liquidation reward. 1e18 is 100%.
+         */
+        uint128 collateralLiquidateRewardRatioD18;
+        /**
+         * @dev reward distributor implementation. This is used as a base to be cloned to distribute rewards to the liquidator.
+         */
+        address rewardDistributorImplementation;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -143,17 +154,6 @@ library GlobalPerpsMarketConfiguration {
         return MathUtil.min(MathUtil.max(minCap, keeperRewards + costOfExecutionInUsd), maxCap);
     }
 
-    function updateSynthDeductionPriority(
-        Data storage self,
-        uint128[] memory newSynthDeductionPriority
-    ) internal {
-        delete self.synthDeductionPriority;
-
-        for (uint256 i = 0; i < newSynthDeductionPriority.length; i++) {
-            self.synthDeductionPriority.push(newSynthDeductionPriority[i]);
-        }
-    }
-
     function collectFees(
         Data storage self,
         uint256 orderFees,
@@ -186,18 +186,23 @@ library GlobalPerpsMarketConfiguration {
         return (referralFees, feeCollectorQuote);
     }
 
-    function updateCollateral(
+    function calculateCollateralLiquidateReward(
         Data storage self,
-        uint128 synthMarketId,
+        uint256 notionalValue
+    ) internal view returns (uint256) {
+        return notionalValue.mulDecimal(self.collateralLiquidateRewardRatioD18);
+    }
+
+    function updateSupportedCollaterals(
+        Data storage self,
+        uint128 collateralId,
         uint256 maxCollateralAmount
     ) internal {
-        self.maxCollateralAmounts[synthMarketId] = maxCollateralAmount;
-
-        bool isSupportedCollateral = self.supportedCollateralTypes.contains(synthMarketId);
+        bool isSupportedCollateral = self.supportedCollateralTypes.contains(collateralId);
         if (maxCollateralAmount > 0 && !isSupportedCollateral) {
-            self.supportedCollateralTypes.add(synthMarketId.to256());
+            self.supportedCollateralTypes.add(collateralId.to256());
         } else if (maxCollateralAmount == 0 && isSupportedCollateral) {
-            self.supportedCollateralTypes.remove(synthMarketId.to256());
+            self.supportedCollateralTypes.remove(collateralId.to256());
         }
     }
 
