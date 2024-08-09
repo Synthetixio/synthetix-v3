@@ -6,8 +6,10 @@ description = "Maintains snapshots of account balances in a pool"
 defaultValue = "synthetix:latest@main"
 
 [setting.servicePoolId]
+defaultValue = "0"
 
 [setting.serviceCollateralAddress]
+defaultValue = "<%= AddressZero %>"
 
 [setting.snapper]
 defaultValue = "<%= AddressZero %>"
