@@ -3,8 +3,8 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
-import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
+import { bootstrap } from './bootstrap';
 
 interface ScheduleConfig {
   nominationPeriodStartDate: ethers.BigNumber;
@@ -15,18 +15,10 @@ interface ScheduleConfig {
 describe('ElectionSchedule', function () {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
-  let owner: ethers.Signer;
   let user: ethers.Signer;
 
   before('identify signers', function () {
-    [owner, user] = getSigners();
-  });
-
-  before('register emitters', async function () {
-    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
-      [10002],
-      [c.GovernanceProxy.address]
-    );
+    [, user] = getSigners();
   });
 
   describe('#getEpochSchedule', function () {

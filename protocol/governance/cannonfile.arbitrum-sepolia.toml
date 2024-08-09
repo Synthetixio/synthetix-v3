@@ -12,10 +12,10 @@ defaultValue = "0x73570075092502472E4b61A7058Df1A4a1DB12f2"
 defaultValue = "governance-test-v7"
 
 [setting.wormhole_core]
-defaultValue = "0x79A1027a6A159502049F10906D333EC57E95F083" # https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35" # https://docs.wormhole.com/wormhole/reference/constants
 
 [setting.wormhole_relayer]
-defaultValue = "0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE" # https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470" # https://docs.wormhole.com/wormhole/reference/constants
 
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"

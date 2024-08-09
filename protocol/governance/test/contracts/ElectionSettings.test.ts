@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from './bootstrap';
 
 interface ElectionSettings {
   epochSeatCount: ethers.BigNumberish;

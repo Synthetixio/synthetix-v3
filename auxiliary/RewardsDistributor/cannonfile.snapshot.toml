@@ -1,0 +1,27 @@
+name = "synthetix-snapshot-rewards"
+version = "<%= package.version %>"
+description = "Maintains snapshots of account balances in a pool"
+
+[setting.synthetixPackage]
+defaultValue = "synthetix:latest@main"
+
+[setting.servicePoolId]
+defaultValue = "0"
+
+[setting.serviceCollateralAddress]
+defaultValue = "<%= AddressZero %>"
+
+[setting.snapper]
+defaultValue = "<%= AddressZero %>"
+
+[import.synthetix]
+source = "<%= settings.synthetixPackage %>"
+
+[contract.RewardsDistributor]
+artifact = "SnapshotRewardsDistributor"
+args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
+    "<%= settings.servicePoolId %>",
+    "<%= settings.serviceCollateralAddress %>",
+    "<%= settings.snapper %>",
+]

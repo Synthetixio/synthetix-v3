@@ -1,14 +1,15 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
-version = "<%= package.version %>"
+version = "7"
+preset = "test"
 
-include = ["./cannonfile.toml"]
+include = ["./cannonfile.toml", "./tomls/testable-contracts.toml"]
 
 [setting.owner]
-defaultValue = "0x431D454Bd4d352A0b1f45AE11EF1182bBEec6a7B"
+defaultValue = "0x73570075092502472e4b61a7058df1a4a1db12f2"
 
 [setting.salt]
-defaultValue = "governance-test-v1"
+defaultValue = "governance-test-v7"
 
 [setting.wormhole_core]
 defaultValue = "0x31377888146f3253211EFEf5c676D41ECe7D58Fe" # https://docs.wormhole.com/wormhole/reference/constants
@@ -19,10 +20,55 @@ defaultValue = "0x93BAD53DDfB6132b0aC8E37f6029163E63372cEE" # https://docs.wormh
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"
 
+[setting.minimum_active_members]
+defaultValue = "1"
+
+[setting.initial_nomination_period_start_date]
+defaultValue = "0" # defaults to "block.timestamp + administration_period_duration" when given "0"
+
+[setting.administration_period_duration]
+defaultValue = "60" # days
+
+[setting.nomination_period_duration]
+defaultValue = "15" # days
+
+[setting.voting_period_duration]
+defaultValue = "15" # days
+
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
 salt = "<%= settings.salt %>"
 create2 = true
+
+[router.CoreRouter]
+contracts = [
+    # Core Contracts
+    "AssociatedSystemsModule",
+    "ElectionInspectorModule",
+    "ElectionModule",
+    "SnapshotVotePowerModule",
+    "InitialModuleBundle",
+
+    # Testable storage contracts
+    "TestableCouncilStorage",
+    "TestableBallotStorage",
+    "TestableSnapshotVotePowerStorage",
+    "TestableElectionSettingsStorage",
+    "TestableElectionStorage",
+    "TestableEpochStorage",
+]
+
+[invoke.set_balance_of_on_period]
+target = ["SnapshotRecordMock"]
+from = "<%= settings.owner %>"
+func = "setBalanceOfOnPeriod"
+args = ["<%= settings.owner %>", "100", "1"]
+
+# [invoke.set_snapshot_record]
+# target = ["GovernanceProxy"]
+# from = "<%= settings.owner %>"
+# func = "setSnapshotContract"
+# args = ["<%= contracts.SnapshotRecordMock.address %>", true]
 
 [invoke.set_registered_emitters]
 target = ["GovernanceProxy"]
@@ -30,17 +76,25 @@ from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
 args = [
     [
-        "10004",
         "10005",
+        "10004",
+        "10003",
     ],
     [
-        "0x4066a172DD5D21E4f787C07D3118D0876296750B",
-        "0x4066a172DD5D21E4f787C07D3118D0876296750B",
+        "0x0AFb5ef6DBe62702142Fa018BE0D21196E666796",
+        "0x0AFb5ef6DBe62702142Fa018BE0D21196E666796",
+        "0x0AFb5ef6DBe62702142Fa018BE0D21196E666796",
     ],
 ]
 
-[invoke.set_snapshot_record]
+[invoke.set_gas_limit]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
+func = "setGasLimit"
+args = ["1000000"]
+
+[invoke.set_snapshot_record]
+from = "<%= settings.owner %>"
+target = ["GovernanceProxy"]
 func = "setSnapshotContract"
-args = ["<%= contracts.SnapshotRecordMock.address %>", true]
+args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true]

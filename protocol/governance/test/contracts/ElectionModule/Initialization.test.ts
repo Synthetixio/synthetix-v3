@@ -5,9 +5,9 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
-import { bootstrap } from '../../bootstrap';
 import { ElectionPeriod } from '../../constants';
 import { GovernanceProxy } from '../../generated/typechain';
+import { bootstrap } from '../bootstrap';
 
 describe('ElectionModule - Initialization', function () {
   const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
@@ -39,13 +39,6 @@ describe('ElectionModule - Initialization', function () {
 
   before('identify signers', function () {
     [owner, user] = getSigners();
-  });
-
-  before('register emitters', async function () {
-    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
-      [10002],
-      [c.GovernanceProxy.address]
-    );
   });
 
   before('deploy uninitialized module', async function () {

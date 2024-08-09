@@ -6,7 +6,7 @@ import type {
   CouncilToken,
   CouncilTokenModule,
   SnapshotRecordMock,
-} from './generated/typechain';
+} from '../generated/typechain';
 
 interface Contracts {
   GovernanceProxy: GovernanceProxy;

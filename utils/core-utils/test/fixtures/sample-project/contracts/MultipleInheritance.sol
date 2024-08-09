@@ -1,4 +1,5 @@
 //SPDX-License-Identifier: MIT
+// solhint-disable one-contract-per-file
 pragma solidity >=0.8.11 <0.9.0;
 
 import {AnotherModule} from "./AnotherModule.sol";

@@ -204,6 +204,7 @@ library WormholeCrossChain {
     struct Data {
         address wormholeCore;
         address wormholeRelayer;
+        uint256 gasLimit;
         SetUtil.UintSet supportedNetworks;
         mapping(uint16 => bytes32) registeredEmitters;
         mapping(bytes32 => bool) hasProcessedMessage;
@@ -218,13 +219,11 @@ library WormholeCrossChain {
 
 // @custom:artifact contracts/modules/core/ElectionModule.sol:ElectionModule
 contract ElectionModule {
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 }
 
 // @custom:artifact contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite
 contract ElectionModuleSatellite {
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint64 internal constant _MOTHERSHIP_CHAIN_ID = 0;
 }
 
@@ -343,8 +342,15 @@ library Epoch {
 
 // @custom:artifact contracts/storage/SnapshotVotePower.sol:SnapshotVotePower
 library SnapshotVotePower {
+    enum WeightType {
+        Sqrt,
+        Linear,
+        Scaled
+    }
     struct Data {
         bool enabled;
+        SnapshotVotePower.WeightType weight;
+        uint256 scale;
         mapping(uint128 => SnapshotVotePowerEpoch.Data) epochs;
     }
     function load(address snapshotContract) internal pure returns (Data storage self) {

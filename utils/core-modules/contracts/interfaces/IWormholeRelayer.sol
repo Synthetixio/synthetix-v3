@@ -587,6 +587,7 @@ interface IWormholeRelayerDelivery is IWormholeRelayerBase {
     ) external payable;
 }
 
+// solhint-disable-next-line no-empty-blocks
 interface IWormholeRelayer is IWormholeRelayerDelivery, IWormholeRelayerSend {}
 
 /*

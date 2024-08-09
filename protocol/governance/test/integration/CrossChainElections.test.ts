@@ -26,7 +26,6 @@ describe('cross chain election testing', function () {
   ) => {
     const rx = await tx.wait();
 
-    // TODO use json abi here
     const abi = [
       'event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel)',
     ];
@@ -52,6 +51,12 @@ describe('cross chain election testing', function () {
       [emitterAddress, emitterChainId, event.args?.sequence] // Values
     );
 
+    console.log('WormholeRelayerMock address: ', chains.mothership.WormholeRelayerMock.address);
+    console.log(
+      'WormholeRelayerMock address on gov proxy: ',
+      await chains.mothership.GovernanceProxy.getWormholeRelayer()
+    );
+
     // request delivery from wormhole standard relayer on the mothership chain
     await chains.mothership.WormholeRelayerMock.deliver(
       [encodedValue],
@@ -67,22 +72,6 @@ describe('cross chain election testing', function () {
   before('set up users', async function () {
     nominee = await fixtureSignerOnChains();
     voter = await fixtureSignerOnChains();
-  });
-
-  before('register emitters', async function () {
-    for (const chain of typedValues(chains)) {
-      const _chains = [
-        WormholeChainSelector.mothership,
-        WormholeChainSelector.satellite1,
-        WormholeChainSelector.satellite2,
-      ];
-      const _emitters = [
-        chains.mothership.GovernanceProxy.address,
-        chains.satellite1.GovernanceProxy.address,
-        chains.satellite2.GovernanceProxy.address,
-      ];
-      await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(_chains, _emitters);
-    }
   });
 
   describe('on initialization', function () {
@@ -118,10 +107,12 @@ describe('cross chain election testing', function () {
   describe('successful voting on all chains', function () {
     before('prepare snapshot record on all chains', async function () {
       for (const chain of typedValues(chains)) {
-        await chain.GovernanceProxy.connect(chain.signer).setSnapshotContract(
+        const tx = await chain.GovernanceProxy.connect(chain.signer).setSnapshotContract(
           chain.SnapshotRecordMock.address,
+          0,
           true
         );
+        await tx.wait();
       }
     });
 
@@ -135,12 +126,12 @@ describe('cross chain election testing', function () {
 
       for (const [chainName, chain] of typedEntries(chains)) {
         const snapshotId1 = await chain.GovernanceProxy.callStatic.takeVotePowerSnapshot(
-          chain.SnapshotRecordMock.address // TODO: should we remove this param? it is being set on setSnapshotContract
+          chain.SnapshotRecordMock.address
         );
         await chain.GovernanceProxy.takeVotePowerSnapshot(chain.SnapshotRecordMock.address);
         await chain.SnapshotRecordMock.setBalanceOfOnPeriod(
           await voter[chainName].getAddress(),
-          ethers.utils.parseEther('100'),
+          100,
           snapshotId1.toString()
         );
         await chain.GovernanceProxy.prepareBallotWithSnapshot(
@@ -155,7 +146,7 @@ describe('cross chain election testing', function () {
 
       const tx = await mothership.GovernanceProxy.connect(voter.mothership).cast(
         [await nominee.mothership.getAddress()],
-        [ethers.utils.parseEther('100')],
+        [10],
         {
           gasLimit: 9000000,
         }
@@ -175,7 +166,7 @@ describe('cross chain election testing', function () {
 
       const tx = await satellite1.GovernanceProxy.connect(voter.satellite1).cast(
         [await nominee.mothership.getAddress()],
-        [ethers.utils.parseEther('100')]
+        [10]
       );
 
       await deliverCrossChainCast(
@@ -197,7 +188,7 @@ describe('cross chain election testing', function () {
 
       const tx = await satellite2.GovernanceProxy.connect(voter.satellite2).cast(
         [await nominee.mothership.getAddress()],
-        [ethers.utils.parseEther('100')]
+        [10]
       );
 
       await deliverCrossChainCast(
@@ -212,6 +203,27 @@ describe('cross chain election testing', function () {
       );
 
       assert.equal(hasVoted, true);
+    });
+
+    it('successfully removes network and emitter', async function () {
+      const { mothership } = chains;
+
+      let registeredEmitters = await mothership.GovernanceProxy.getRegisteredEmitters();
+      let supportedNetworks = await mothership.GovernanceProxy.getSupportedNetworks();
+
+      assert.equal(registeredEmitters.length, 3);
+      assert.equal(supportedNetworks.length, 3);
+
+      const tx = await mothership.GovernanceProxy.removeRegisteredEmitters([
+        WormholeChainSelector.satellite1,
+      ]);
+      await tx.wait();
+
+      registeredEmitters = await mothership.GovernanceProxy.getRegisteredEmitters();
+      supportedNetworks = await mothership.GovernanceProxy.getSupportedNetworks();
+
+      assert.equal(registeredEmitters.length, 2);
+      assert.equal(supportedNetworks.length, 2);
     });
   });
 });

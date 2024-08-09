@@ -10,24 +10,23 @@ import type { SnapshotRecordMock } from '../generated/typechain/sepolia';
 import type { WormholeMock } from '../generated/typechain/sepolia';
 import type { WormholeRelayerMock } from '../generated/typechain/sepolia';
 
+interface Params {
+  networkName: string;
+  cannonfile: string;
+  cannonfileSettings?: { [key: string]: unknown };
+  writeDeployments: string;
+  typechainFolder: string;
+  ownerAddress?: string;
+}
+
 export async function spinChain<GovernanceProxy>({
   networkName,
   cannonfile,
   cannonfileSettings,
   writeDeployments,
   typechainFolder,
-  chainSlector,
   ownerAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-}: {
-  networkName: string;
-  cannonfile: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cannonfileSettings?: { [key: string]: any };
-  writeDeployments: string;
-  typechainFolder: string;
-  chainSlector: string;
-  ownerAddress?: string;
-}) {
+}: Params) {
   if (!hre.config.networks[networkName]) {
     throw new Error(`Invalid network "${networkName}"`);
   }
@@ -111,7 +110,6 @@ export async function spinChain<GovernanceProxy>({
   return {
     networkName,
     chainId,
-    chainSlector,
     provider,
     GovernanceProxy,
     CouncilToken,
