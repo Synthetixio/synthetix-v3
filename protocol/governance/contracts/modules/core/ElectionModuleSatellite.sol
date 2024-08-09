@@ -87,7 +87,7 @@ contract ElectionModuleSatellite is
 
     /// @inheritdoc	IElectionModuleSatellite
     function cast(
-        address[] calldata candidates, //TODO can we change the signature here to just use address candidate
+        address[] calldata candidates,
         uint256[] calldata amounts
     ) public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);

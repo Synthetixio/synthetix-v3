@@ -26,7 +26,6 @@ describe('cross chain election testing', function () {
   ) => {
     const rx = await tx.wait();
 
-    // TODO use json abi here
     const abi = [
       'event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel)',
     ];
@@ -127,7 +126,7 @@ describe('cross chain election testing', function () {
 
       for (const [chainName, chain] of typedEntries(chains)) {
         const snapshotId1 = await chain.GovernanceProxy.callStatic.takeVotePowerSnapshot(
-          chain.SnapshotRecordMock.address // TODO: should we remove this param? it is being set on setSnapshotContract
+          chain.SnapshotRecordMock.address
         );
         await chain.GovernanceProxy.takeVotePowerSnapshot(chain.SnapshotRecordMock.address);
         await chain.SnapshotRecordMock.setBalanceOfOnPeriod(
