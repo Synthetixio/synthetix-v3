@@ -32,11 +32,10 @@ library StalenessCircuitBreakerNode {
             runtimeValues
         );
 
-        if (possibleError.length > 0) {
-            return (possibleError, nodeOutput);
-        }
-
-        if (block.timestamp - stalenessTolerance <= priceNodeOutput.timestamp) {
+        if (
+            possibleError.length > 0 ||
+            block.timestamp - stalenessTolerance <= priceNodeOutput.timestamp
+        ) {
             return (possibleError, priceNodeOutput);
         } else if (nodeDefinition.parents.length == 1) {
             possibleError = abi.encodeWithSelector(

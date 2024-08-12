@@ -11,7 +11,7 @@ import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 const abi = ethers.utils.defaultAbiCoder;
 
 describe('NodeModule', function () {
-  const { getContract, nodeId1, nodeId2 } = bootstrapWithNodes();
+  const { getContract, nodeId1, nodeId2, failingNodeId } = bootstrapWithNodes();
 
   let NodeModule: ethers.Contract;
 
@@ -22,14 +22,6 @@ describe('NodeModule', function () {
   it('make sure mock aggregator node is set up', async () => {
     const node = await NodeModule.getNode(nodeId1());
     assert.notEqual(node.nodeType, NodeTypes.NONE);
-  });
-
-  it('Test price on leaf nodes', async () => {
-    let priceData = await NodeModule.process(nodeId1());
-    assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
-
-    priceData = await NodeModule.process(nodeId2());
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
   });
 
   it('reverts on register a node with an invalid parent', async () => {
@@ -59,5 +51,43 @@ describe('NodeModule', function () {
     assert.equal(event.args.nodeId, nodeId);
     assert.equal(event.args.nodeType, NodeTypes.REDUCER);
     assert.equal(event.args.parameters, params);
+  });
+
+  describe('process()', () => {
+    it('Test price on leaf nodes', async () => {
+      let priceData = await NodeModule.process(nodeId1());
+      assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
+
+      priceData = await NodeModule.process(nodeId2());
+      assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+    });
+
+    it('passes through errors', async () => {
+      await assertRevert(
+        NodeModule.process(failingNodeId()),
+        '0xac47be2100000000000000000000000000000000000000000000000000000000000004d2'
+      );
+    });
+  });
+
+  describe('processManyWithRuntime()', () => {
+    it('when everything is success, returns an array with all the good stuff', async () => {
+      const priceDatas = await NodeModule.processManyWithRuntime([nodeId2(), nodeId1()], [], []);
+
+      assertBn.equal(priceDatas[0].price, ethers.utils.parseEther('0.9'));
+      assertBn.equal(priceDatas[1].price, ethers.utils.parseEther('1.0'));
+    });
+
+    it('when fail, returns Errors() event', async () => {
+      await assertRevert(
+        NodeModule.processManyWithRuntime(
+          [failingNodeId(), nodeId2(), nodeId1(), failingNodeId()],
+          [],
+          []
+        ),
+        'Errors("0xac47be2100000000000000000000000000000000000000000000000000000000000004d2","0xac47be2100000000000000000000000000000000000000000000000000000000000004d2")',
+        NodeModule
+      );
+    });
   });
 });

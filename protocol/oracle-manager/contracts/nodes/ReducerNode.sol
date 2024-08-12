@@ -35,33 +35,25 @@ library ReducerNode {
 
         if (operation == Operations.RECENT) {
             nodeOutput = recent(parentNodeOutputs);
-        }
-        if (operation == Operations.MIN) {
+        } else if (operation == Operations.MIN) {
             nodeOutput = min(parentNodeOutputs);
-        }
-        if (operation == Operations.MAX) {
+        } else if (operation == Operations.MAX) {
             nodeOutput = max(parentNodeOutputs);
-        }
-        if (operation == Operations.MEAN) {
+        } else if (operation == Operations.MEAN) {
             nodeOutput = mean(parentNodeOutputs);
-        }
-        if (operation == Operations.MEDIAN) {
+        } else if (operation == Operations.MEDIAN) {
             nodeOutput = median(parentNodeOutputs);
-        }
-        if (operation == Operations.MUL) {
+        } else if (operation == Operations.MUL) {
             nodeOutput = mul(parentNodeOutputs);
-        }
-        if (operation == Operations.DIV) {
+        } else if (operation == Operations.DIV) {
             nodeOutput = div(parentNodeOutputs);
-        }
-        if (operation == Operations.MULDECIMAL) {
+        } else if (operation == Operations.MULDECIMAL) {
             nodeOutput = mulDecimal(parentNodeOutputs);
-        }
-        if (operation == Operations.DIVDECIMAL) {
+        } else if (operation == Operations.DIVDECIMAL) {
             nodeOutput = divDecimal(parentNodeOutputs);
+        } else {
+            possibleError = abi.encodeWithSelector(UnsupportedOperation.selector, operation);
         }
-
-        possibleError = abi.encodeWithSelector(UnsupportedOperation.selector, operation);
     }
 
     function median(

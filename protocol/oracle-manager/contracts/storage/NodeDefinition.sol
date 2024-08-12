@@ -112,10 +112,21 @@ library NodeDefinition {
         Data storage nodeDefinition = load(nodeId);
         NodeType nodeType = nodeDefinition.nodeType;
 
-        (
-            bytes[] memory errors,
-            NodeOutput.Data[] memory parentNodeOutputs
-        ) = _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues);
+        // TODO: some nodes want parents pre-processed, others do not
+
+        bytes[] memory errors = new bytes[](0);
+        NodeOutput.Data[] memory parentNodeOutputs = new NodeOutput.Data[](0);
+        if (
+            nodeType == NodeType.REDUCER ||
+            nodeType == NodeType.EXTERNAL ||
+            nodeType == NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
+        ) {
+            (errors, parentNodeOutputs) = _processParentNodeOutputs(
+                nodeDefinition,
+                runtimeKeys,
+                runtimeValues
+            );
+        }
 
         for (uint256 i = 0; i < errors.length; i++) {
             if (errors[i].length > 0) {

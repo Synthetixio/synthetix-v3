@@ -88,11 +88,7 @@ async function _getCompiler(version: string): Promise<any> {
   const isDownloaded = await downloader.isCompilerDownloaded(version);
 
   if (!isDownloaded) {
-    await downloader.downloadCompiler(
-      version,
-      async () => {},
-      async () => {}
-    );
+    await downloader.downloadCompiler(version);
   }
 
   const buildInfo = await downloader.getCompiler(version);

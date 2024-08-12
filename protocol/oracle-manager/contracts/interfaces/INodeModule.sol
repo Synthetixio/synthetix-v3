@@ -22,6 +22,11 @@ interface INodeModule {
     error Errors(bytes[] revertReasons);
 
     /**
+     * @notice ERC-7412 OracleDataRequired error definition. While not explicitly reverted by NodeModule, its a commonly encountered error that makes it useful to have it declared here
+     */
+    error OracleDataRequired(address oracleContract, bytes oracleQuery);
+
+    /**
      * @notice Emitted when `registerNode` is called.
      * @param nodeId The id of the registered node.
      * @param nodeType The nodeType assigned to this node.
