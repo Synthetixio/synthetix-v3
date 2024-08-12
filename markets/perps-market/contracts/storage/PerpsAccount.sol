@@ -183,7 +183,7 @@ library PerpsAccount {
             .toInt();
 
         availableMargin = getAvailableMargin(self, stalenessTolerance) - totalLiquidationReward;
-        isEligible = availableMargin < 0;
+        isEligible = availableMargin < 0 && self.debt > 0;
     }
 
     function isEligibleForLiquidation(
