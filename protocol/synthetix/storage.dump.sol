@@ -637,6 +637,8 @@ library Pool {
         uint64 __reserved3;
         mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
         bool collateralDisabledByDefault;
+        SetUtil.Bytes32Set rewardIds;
+        mapping(bytes32 => RewardDistribution.Data) rewardsToVaults;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -666,6 +668,9 @@ library RewardDistribution {
         uint64 start;
         uint32 duration;
         uint32 lastUpdate;
+        int128 nextScheduledValueD18;
+        uint64 nextStart;
+        uint32 nextDuration;
     }
 }
 

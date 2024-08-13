@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { delegateCollateral } from '@synthetixio/main/test/common';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 
@@ -18,7 +19,7 @@ const interestRateParams = {
   highUtilGradient: wei(0.01),
 };
 
-describe('Position - interest rates', () => {
+describe('Insolvent test', () => {
   const { systems, perpsMarkets, superMarketId, provider, owner, trader1, keeper, staker } =
     bootstrapMarkets({
       interestRateParams: {
@@ -55,7 +56,11 @@ describe('Position - interest rates', () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
-      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId()));
+
+      const snxUsdValue = wei(await systems().PerpsMarket.globalCollateralValue(0));
+      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId())).sub(
+        snxUsdValue
+      );
 
       const utilRate = delegatedCollateral.gt(0) ? minCredit.div(delegatedCollateral) : wei(1);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
@@ -77,12 +82,14 @@ describe('Position - interest rates', () => {
     await fastForwardTo((await getTime(provider())) + _SECONDS_IN_DAY * 10, provider());
   });
 
+  let delegatedCollateralValue: Wei;
   before('undelegate', async () => {
     const currentCollateralAmount = await systems().Core.getPositionCollateral(
       1,
       1,
       systems().CollateralMock.address
     );
+    console.log(currentCollateralAmount);
     // very low amount to make market insolvent
     await delegateCollateral(
       systems,
@@ -94,31 +101,30 @@ describe('Position - interest rates', () => {
       wei(currentCollateralAmount).mul(wei(0.1)).toBN(),
       ethers.utils.parseEther('1')
     );
+    // this ends up being total delegated collateral value
+    delegatedCollateralValue = wei(200_000);
   });
 
-  // trader 1
-  before('open 20 eth position', async () => {
-    await openPosition({
-      systems,
-      provider,
-      trader: trader1(),
-      accountId: 2,
-      keeper: keeper(),
-      marketId: ethMarket.marketId(),
-      sizeDelta: _TRADER_SIZE.toBN(),
-      settlementStrategyId: ethMarket.strategyId(),
-      price: _ETH_PRICE.toBN(),
-    });
+  it('reverts if attempting to open position when market insolved', async () => {
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(trader1())
+        .commitOrder({
+          marketId: ethMarket.marketId(),
+          accountId: 2,
+          sizeDelta: _TRADER_SIZE.toBN(),
+          settlementStrategyId: ethMarket.strategyId(),
+          acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+          referrer: ethers.constants.AddressZero,
+          trackingCode: ethers.constants.HashZero,
+        }),
+      `ExceedsMarketCreditCapacity("${delegatedCollateralValue.toString(18, true)}", "${_TRADER_SIZE.mul(_ETH_PRICE).toString(18, true)}")`,
+      systems().PerpsMarket
+    );
   });
 
-  checkMarketInterestRate();
-
-  describe('close for large profit making market insolvent', () => {
-    before('make price higher', async () => {
-      await ethMarket.aggregator().mockSetCurrentPrice(bn(10_000));
-    });
-
-    before('close position', async () => {
+  describe('open position', () => {
+    before(async () => {
       await openPosition({
         systems,
         provider,
@@ -126,17 +132,91 @@ describe('Position - interest rates', () => {
         accountId: 2,
         keeper: keeper(),
         marketId: ethMarket.marketId(),
-        sizeDelta: _TRADER_SIZE.mul(-1).toBN(),
+        sizeDelta: bn(50),
         settlementStrategyId: ethMarket.strategyId(),
-        price: bn(10_000),
+        price: bn(2_000),
       });
     });
 
-    it('sets util rate at 1', async () => {
-      const utilRate = await systems().PerpsMarket.utilizationRate();
-      assertBn.equal(utilRate.rate, bn(1));
+    it('reverts when attempting to open position above market credit capacity', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarket.marketId(),
+            accountId: 2,
+            sizeDelta: bn(60),
+            settlementStrategyId: ethMarket.strategyId(),
+            acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `ExceedsMarketCreditCapacity("${delegatedCollateralValue.toString(18, true)}", "${wei(60).add(wei(50)).mul(_ETH_PRICE).toString(18, true)}")`,
+        systems().PerpsMarket
+      );
+    });
+
+    it('reverts when attempting to open position in the opposite direction above market credit capacity', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarket.marketId(),
+            accountId: 2,
+            sizeDelta: bn(-160),
+            settlementStrategyId: ethMarket.strategyId(),
+            acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `ExceedsMarketCreditCapacity("${delegatedCollateralValue.toString(18, true)}", "${wei(60).add(wei(50)).mul(_ETH_PRICE).toString(18, true)}")`,
+        systems().PerpsMarket
+      );
+    });
+  });
+
+  describe('open position with profit', () => {
+    before('open 100 eth position', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        accountId: 2,
+        keeper: keeper(),
+        marketId: ethMarket.marketId(),
+        sizeDelta: bn(50),
+        settlementStrategyId: ethMarket.strategyId(),
+        price: _ETH_PRICE.toBN(),
+      });
     });
 
     checkMarketInterestRate();
+
+    describe('close for large profit making market insolvent', () => {
+      before('make price higher', async () => {
+        await ethMarket.aggregator().mockSetCurrentPrice(bn(10_000));
+      });
+
+      before('close position', async () => {
+        await openPosition({
+          systems,
+          provider,
+          trader: trader1(),
+          accountId: 2,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(-100),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(10_000),
+        });
+      });
+
+      it('sets util rate at 1', async () => {
+        const utilRate = await systems().PerpsMarket.utilizationRate();
+        assertBn.equal(utilRate.rate, bn(1));
+      });
+
+      checkMarketInterestRate();
+    });
   });
 });

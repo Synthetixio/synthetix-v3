@@ -594,12 +594,6 @@ contract VaultModule is IVaultModule {
         // Identify the vault that corresponds to this collateral type and pool id.
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
-        // Use account interaction to update its rewards.
-        uint256 totalSharesD18 = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
-        uint256 actorSharesD18 = vault.currentEpoch().accountsDebtDistribution.getActorShares(
-            accountId.toBytes32()
-        );
-
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
         uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() +
@@ -638,6 +632,11 @@ contract VaultModule is IVaultModule {
                 vault.currentEpoch().lastDelegationTime[accountId]
             );
         }
+
+        // distribute any outstanding rewards distributor value to vaults prior to updating positions
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
 
         // Update the account's position for the given pool and collateral type,
         // Note: This will trigger an update in the entire debt distribution chain.
@@ -691,12 +690,6 @@ contract VaultModule is IVaultModule {
             newCollateralAmountD18,
             leverage,
             ERC2771Context._msgSender() // this is the executor address, not the account owner or authorized (the one that posted the intent)
-        );
-
-        vault.updateRewards(
-            Vault.PositionSelector(accountId, poolId, collateralType),
-            totalSharesD18,
-            actorSharesD18
         );
     }
 

@@ -44,7 +44,6 @@ contract RewardsDistributorExternalConstructorTest is Test {
         new RewardsDistributorExternal(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T18D),
             18,
             "18 Decimals token payouts",
@@ -57,7 +56,6 @@ contract RewardsDistributorExternalConstructorTest is Test {
         RewardsDistributorExternal rewardsDistributor = new RewardsDistributorExternal(
             address(rewardsManager),
             poolId,
-            collateralType,
             address(T18D),
             18,
             "18 Decimals token payouts",

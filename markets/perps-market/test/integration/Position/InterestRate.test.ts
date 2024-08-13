@@ -81,7 +81,12 @@ describe('Position - interest rates', () => {
       const withdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
-      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId()));
+
+      const snxUsdValue = wei(await systems().PerpsMarket.globalCollateralValue(0));
+      // remove snxUSD collateral value from min credit (which is added in contracts)
+      const minCredit = wei(await systems().PerpsMarket.minimumCredit(superMarketId())).sub(
+        snxUsdValue
+      );
 
       const utilRate = minCredit.div(delegatedCollateral);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);
@@ -224,6 +229,25 @@ describe('Position - interest rates', () => {
           .mul(normalizedTime);
         assertBn.near(owedInterest, expectedTrader2Interest.toBN(), bn(0.00001));
       });
+    });
+  });
+
+  describe('add margin to trader 1', () => {
+    let previousMarketInterestRate: Wei;
+    before('update interest rate and add margin', async () => {
+      await systems().PerpsMarket.updateInterestRate();
+      previousMarketInterestRate = wei(await systems().PerpsMarket.interestRate());
+      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(50_000));
+    });
+
+    before('call manual update', async () => {
+      await systems().PerpsMarket.updateInterestRate();
+    });
+
+    const { currentInterestRate } = checkMarketInterestRate();
+
+    it('does not change interest rate', async () => {
+      assertBn.equal(currentInterestRate().toBN(), previousMarketInterestRate.toBN());
     });
   });
 
