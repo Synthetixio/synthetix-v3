@@ -111,6 +111,13 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 84532,
     },
+    ['snaxchain-testnet']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://testnet.snaxchain.io/${BCA1Ao4AhBh5DwLei75wQps21iXy2iMUD}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 2192,
+    },
   },
   gasReporter: {
     enabled: !!process.env.REPORT_GAS,

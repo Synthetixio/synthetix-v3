@@ -15,7 +15,9 @@ library WormholeCrossChain {
     using SetUtil for SetUtil.UintSet;
     using SafeCastU256 for uint256;
 
-    event NewEmitter(uint64 newChainId, address emitterAddress);
+    event CrossChainNetworkSupportRemoved(uint64 chainId);
+
+    event EmitterSet(uint64 newChainId, address emitterAddress);
 
     event NewSupportedCrossChainNetwork(uint64 newChainId);
 
@@ -49,7 +51,7 @@ library WormholeCrossChain {
     function removeSupportedNetwork(Data storage self, uint16 chainId) internal {
         if (!self.supportedNetworks.contains(chainId)) revert UnsupportedNetwork(chainId);
         self.supportedNetworks.remove(chainId);
-        emit NewSupportedCrossChainNetwork(chainId);
+        emit CrossChainNetworkSupportRemoved(chainId);
     }
 
     ///@dev adds or removes registered emitter to storage, used for cross-chain contract verification
@@ -57,7 +59,7 @@ library WormholeCrossChain {
     function setEmitter(Data storage self, uint16 chainId, address emitter) internal {
         // solhint-disable-next-line
         self.registeredEmitters[chainId] = bytes32(uint256(uint160(emitter)));
-        emit NewEmitter(chainId, emitter);
+        emit EmitterSet(chainId, emitter);
     }
 
     function setGasLimit(Data storage self, uint256 gasLimit) internal {

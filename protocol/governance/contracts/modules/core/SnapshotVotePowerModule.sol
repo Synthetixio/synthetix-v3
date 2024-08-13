@@ -14,6 +14,8 @@ import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
 
+    event ScaleSet(address indexed snapshotContract, uint256 scale);
+
     event SnapshotContractSet(
         address indexed snapshotContract,
         bool indexed enabled,
@@ -44,6 +46,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         if (snapshotVotePower.weight != SnapshotVotePower.WeightType.Scaled)
             revert SnapshotVotePower.InvalidWeightType();
         snapshotVotePower.scale = scale;
+        emit ScaleSet(snapshotContract, scale);
     }
 
     function takeVotePowerSnapshot(
