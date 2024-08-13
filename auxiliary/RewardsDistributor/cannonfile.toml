@@ -15,11 +15,6 @@ description = "Reward manager address"
 defaultValue = "1"
 description = "Associated Pool ID"
 
-[setting.collateralType]
-# USDC on Base Mainnet
-defaultValue = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-description = "Token address of the pool collateral"
-
 [setting.payoutToken]
 # SNX on Base Mainnet
 defaultValue = "0x22e6966B799c4D5B13BE962E1D117b56327FDa66"
@@ -38,7 +33,6 @@ artifact = "RewardsDistributor"
 args = [
     "<%= settings.rewardManager %>",
     "<%= settings.poolId %>",
-    "<%= settings.collateralType %>",
     "<%= settings.payoutToken %>",
     "<%= settings.payoutTokenDecimals %>",
     "<%= settings.name %>",

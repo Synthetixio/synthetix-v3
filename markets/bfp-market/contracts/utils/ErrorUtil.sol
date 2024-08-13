@@ -101,6 +101,9 @@ library ErrorUtil {
     /// @notice Thrown when an invalid Core as passed was specified.
     error InvalidCoreAddress(address synthetixCore);
 
+    /// @notice Thrown when an account is not authorized to perform an action.
+    error Unauthorized(address caller);
+
     /// @notice Thrown when a specified hook is not whitelisted, or does not match spec, or otherwise.
     error InvalidHook(address hook);
 
@@ -113,11 +116,14 @@ library ErrorUtil {
     /// @notice Thrown when user trying to split an account with too large porportion.
     error AccountSplitProportionTooLarge();
 
+    /// @notice Thrown when user trying to split an account with too small porportion, this can cause weird rounding exploits.
+    error AccountSplitProportionTooSmall();
+
     /// @notice Thrown when user trying to split an account with 0 porportion.
     error ZeroProportion();
 
-    /// @notice Thrown when duplicate account ids were found.
-    error DuplicateAccountIds();
+    /// @notice Thrown when duplicate entries in an array or otherwise was found and not expected.
+    error DuplicateEntries();
 
     /// @notice Thrown when user trying to merge accounts with positions on opposite sides.
     error InvalidPositionSide();

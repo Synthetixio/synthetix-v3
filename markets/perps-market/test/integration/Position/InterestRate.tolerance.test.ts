@@ -18,10 +18,11 @@ const interestRateParams = {
   highUtilGradient: wei(0.01),
 };
 
+const TOTAL_DEPOSITED_SNX_USD = bn(250_000); // trader margins deposited below
 const calculateMinCredit = (useMonthlyPrice: boolean) => {
   const ethNotional = _TRADER_ETH_SIZE.abs().mul(useMonthlyPrice ? _ETH_MONTHLY_PRICE : _ETH_PRICE);
   const btcNotional = _TRADER_BTC_SIZE.abs().mul(useMonthlyPrice ? _BTC_MONTHLY_PRICE : _BTC_PRICE);
-  return ethNotional.add(btcNotional);
+  return ethNotional.add(btcNotional).add(TOTAL_DEPOSITED_SNX_USD);
 };
 
 describe('InterestRate.tolerance', () => {
@@ -100,7 +101,9 @@ describe('InterestRate.tolerance', () => {
       const totalCollateralValue = wei(await systems().PerpsMarket.totalGlobalCollateralValue());
       const delegatedCollateral = withdrawableUsd.sub(totalCollateralValue);
 
-      const minCredit = calculateMinCredit(withMontlyTolerance);
+      const snxUsdValue = wei(await systems().PerpsMarket.globalCollateralValue(0));
+      // remove snxUSD collateral value from min credit (which is added in contracts)
+      const minCredit = calculateMinCredit(withMontlyTolerance).sub(snxUsdValue);
 
       const utilRate = minCredit.div(delegatedCollateral);
       currentInterestRate = calculateInterestRate(utilRate, interestRateParams);

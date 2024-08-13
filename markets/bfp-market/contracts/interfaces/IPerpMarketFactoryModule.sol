@@ -52,7 +52,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         uint128 utilizationRate;
         /// Amount of size remaining last recorded in current window.
         uint128 remainingLiquidatableSizeCapacity;
-        /// block.timestamp of when the last liqudation had occurred.
+        /// block.timestamp of when the last liquidation had occurred.
         uint128 lastLiquidationTime;
         /// All traders unsettled debt in USD.
         uint128 totalTraderDebtUsd;

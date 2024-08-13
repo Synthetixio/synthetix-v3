@@ -43,5 +43,5 @@ codegen sepolia 11155111 "synthetix-omnibus:latest@main"
 codegen optimism-mainnet 10 "synthetix-omnibus:latest@main"
 
 # Arbitrum
-codegen arbitrum-mainnet 42161 "synthetix-omnibus:latest@arbthetix"
+codegen arbitrum-mainnet 42161 "synthetix-omnibus:latest@main"
 codegen arbitrum-sepolia 421614 "synthetix-omnibus:latest@main"

@@ -27,6 +27,7 @@ contract LiquidationModule is ILiquidationModule {
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using Margin for Margin.Data;
 
     // --- Immutables --- //
 
@@ -75,13 +76,8 @@ contract LiquidationModule is ILiquidationModule {
             uint256 liqKeeperFee
         )
     {
-        (int128 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
 
         uint128 liqSize;
         (oldPosition, newPosition, liqSize, liqKeeperFee) = Position.validateLiquidation(
@@ -114,7 +110,7 @@ contract LiquidationModule is ILiquidationModule {
         emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
 
         // Update market debt relative to the keeperFee incurred.
-        market.updateDebtCorrection(oldPosition, newPosition);
+        market.updateDebtCorrection(oldPosition, newPosition, oraclePrice);
     }
 
     /// @dev Invoked post flag when position is dead and set to liquidate or when liquidating margin only due to debt.
@@ -371,9 +367,15 @@ contract LiquidationModule is ILiquidationModule {
             market.getOraclePrice(addresses),
             addresses
         );
+
         if (
             marginValues.collateralUsd == 0 ||
-            !Margin.isMarginLiquidatable(accountId, market, marginValues, addresses)
+            !Margin.load(accountId, marketId).isMarginLiquidatable(
+                accountId,
+                market,
+                marginValues,
+                addresses
+            )
         ) {
             revert ErrorUtil.CannotLiquidateMargin();
         }
@@ -514,7 +516,13 @@ contract LiquidationModule is ILiquidationModule {
             return false;
         }
 
-        return Margin.isMarginLiquidatable(accountId, market, marginValues, addresses);
+        return
+            Margin.load(accountId, marketId).isMarginLiquidatable(
+                accountId,
+                market,
+                marginValues,
+                addresses
+            );
     }
 
     /// @inheritdoc ILiquidationModule
@@ -538,7 +546,7 @@ contract LiquidationModule is ILiquidationModule {
             PerpMarketConfiguration.load(),
             addresses
         );
-        (im, mm, ) = Position.getLiquidationMarginUsd(
+        (im, mm) = Position.getLiquidationMarginUsd(
             market.positions[accountId].size + sizeDelta,
             oraclePrice,
             collateralUsd,

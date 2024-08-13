@@ -58,6 +58,20 @@ library RewardDistribution {
          * @dev Date on which this distribution entry was last updated.
          */
         uint32 lastUpdate;
+        /**
+         * @dev Value to be distributed as rewards in a scheduled form. This value is set to `scheduledValueD18` after the start + duration is elapsed
+         */
+        int128 nextScheduledValueD18;
+        /**
+         * @dev Date at which the entry's rewards will begin to be claimable. This value is set to `scheduledValueD18` after the start + duration is elapsed
+         *
+         * Note: Set to <= block.timestamp to distribute immediately to currently participating users.
+         */
+        uint64 nextStart;
+        /**
+         * @dev Time span after the start date, in which the whole of the entry's rewards will become claimable. This value is set to `scheduledValueD18` after the start + duration is elapsed
+         */
+        uint32 nextDuration;
     }
 
     /**
@@ -73,13 +87,13 @@ library RewardDistribution {
         int256 amountD18,
         uint64 start,
         uint32 duration
-    ) internal returns (int256 diffD18) {
+    ) internal returns (int256 diffD18, int256 cancelledAmount) {
         uint256 totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
             revert ParameterError.InvalidParameter(
                 "amount",
-                "can't distribute to empty distribution"
+                "cannot distribute to empty distribution"
             );
         }
 
@@ -88,27 +102,37 @@ library RewardDistribution {
         // Unlocks the entry's distributed amount into its value per share.
         diffD18 += updateEntry(self, totalSharesD18);
 
-        // If the current time is past the end of the entry's duration,
-        // update any rewards which may have accrued since last run.
-        // (instant distribution--immediately disperse amount).
-        if (start + duration <= curTime) {
-            diffD18 += amountD18.divDecimal(totalSharesD18.toInt());
+        // no matter what distribution gets applied, the next scheduled value (if any) gets cancelled)
+        cancelledAmount = self.nextScheduledValueD18;
 
-            self.lastUpdate = 0;
-            self.start = 0;
-            self.duration = 0;
-            self.scheduledValueD18 = 0;
-            // Else, schedule the amount to distribute.
-        } else {
+        // is this going to be a new active distribution, or a next distribution?
+        // its an active distribution if there is no "active" distribution, or if the new distribution starts before the end of the current active distro
+        if (
+            start == 0 ||
+            self.scheduledValueD18 == 0 ||
+            curTime > self.start + self.duration ||
+            start < self.start + self.duration
+        ) {
+            if (curTime < self.start || start < self.start || self.duration == 0) {
+                cancelledAmount += self.scheduledValueD18;
+            } else {
+                cancelledAmount +=
+                    (self.scheduledValueD18 * (self.start + self.duration - curTime).toInt()) /
+                    self.duration.toInt();
+            }
+            self.nextScheduledValueD18 = 0;
+            self.nextStart = 0;
+            self.nextDuration = 0;
             self.scheduledValueD18 = amountD18.to128();
-
             self.start = start;
             self.duration = duration;
-
-            // The amount is actually the amount distributed already *plus* whatever has been specified now.
             self.lastUpdate = 0;
-
             diffD18 += updateEntry(self, totalSharesD18);
+            // its a next distribution if none of the above applies
+        } else {
+            self.nextScheduledValueD18 = amountD18.to128();
+            self.nextStart = start;
+            self.nextDuration = duration;
         }
     }
 
@@ -221,13 +245,27 @@ library RewardDistribution {
                 // Note: Not using an intermediate time ratio variable
                 // in the following calculation to maintain precision.
                 curUpdateDistributedD18 =
-                    (curUpdateDistributedD18 * (curTime - self.start).toInt()) /
+                    (self.scheduledValueD18 * (curTime - self.start).toInt()) /
                     self.duration.toInt();
             }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
-            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18)
+            valuePerShareChangeD18 += (curUpdateDistributedD18 - lastUpdateDistributedD18)
                 .divDecimal(totalSharesAmountD18.toInt());
+        }
+
+        // cycle to the new distribution if it exists
+        if (curTime >= self.start + self.duration) {
+            // if we have reached the end of the distribution, we should cycle through to the next distribution (if any)
+            self.start = self.nextStart;
+            self.duration = self.nextDuration;
+            self.scheduledValueD18 = self.nextScheduledValueD18;
+            self.nextStart = 0;
+            self.nextDuration = 0;
+            self.nextScheduledValueD18 = 0;
+
+            // start processing the new entry also
+            valuePerShareChangeD18 += updateEntry(self, totalSharesAmountD18);
         }
 
         self.lastUpdate = curTime.to32();

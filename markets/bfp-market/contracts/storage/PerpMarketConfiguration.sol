@@ -52,7 +52,7 @@ library PerpMarketConfiguration {
         uint128 minCollateralDiscount;
         /// Maximum discount applied on deposited margin collateral.
         uint128 maxCollateralDiscount;
-        /// Dictates wheter or not the utilization rate should use high or low slope
+        /// Dictates whether or not the utilization rate should use high or low slope
         uint128 utilizationBreakpointPercent;
         /// Used for utilization interest when below utilization breakpoint
         uint128 lowUtilizationSlopePercent;
@@ -89,7 +89,7 @@ library PerpMarketConfiguration {
         uint256 maintenanceMarginScalar;
         /// A max cap on the IMR.
         uint256 maxInitialMarginRatio;
-        /// Used to infer a % of position notional as liquidation reward.
+        /// Used to calc % of position notional or margin collateral as liq reward.
         uint256 liquidationRewardPercent;
         /// An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
         uint128 liquidationLimitScalar;

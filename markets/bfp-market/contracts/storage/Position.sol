@@ -136,12 +136,22 @@ library Position {
         PerpMarket.Data storage market,
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
-        AddressRegistry.Data memory addresses
+        AddressRegistry.Data memory addresses,
+        int128 sizeDelta
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCredit(marketConfig, oraclePrice, addresses);
+        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
+            marketConfig,
+            oraclePrice,
+            sizeDelta,
+            addresses
+        );
+
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
 
-        if (delegatedCollateralValueUsd < minimumCredit.toInt()) {
+        if (
+            delegatedCollateralValueUsd + market.depositedCollateral[addresses.sUsd].toInt() <
+            minimumCredit.toInt()
+        ) {
             revert ErrorUtil.InsufficientLiquidity();
         }
     }
@@ -149,7 +159,7 @@ library Position {
     /**
      * @dev Infers the post settlement marginUsd by deducting the order and keeperFee.
      *
-     * NOTE: The previous margin (which may include a discount on the collteral; used for liquidation checks) includes the
+     * NOTE: The previous margin (which may include a discount on the collateral; used for liquidation checks) includes the
      * previous PnL, accrued funding, fees etc. We `-fee` and `-keeperFee` here as they're deducted on the settlement.
      * This is important as it helps avoid instant liquidations immediately after settlement.
      */
@@ -169,10 +179,13 @@ library Position {
      */
     function validateNextPositionEnoughMargin(
         Position.Data memory newPosition,
+        int128 oldPositionSize,
         uint256 oraclePrice,
-        uint256 mm,
+        uint256 im,
         uint256 nextMarginUsd
     ) internal pure {
+        // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
+        int128 sizeDelta = newPosition.size - oldPositionSize;
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
@@ -180,15 +193,14 @@ library Position {
         // NOTE: The `min(delta, 0)` as we only want to _reduce_ their remaining margin, not increase it in the case where
         // a discount is applied for reducing skew.
         int256 fillPremium = MathUtil.min(
-            newPosition.size.mulDecimal(oraclePrice.toInt() - newPosition.entryPrice.toInt()),
+            sizeDelta.mulDecimal(oraclePrice.toInt() - newPosition.entryPrice.toInt()),
             0
         );
         uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
 
-        uint256 healthFactor = remainingMarginUsd.divDecimal(mm);
-
-        if (healthFactor <= DecimalMath.UNIT) {
-            revert ErrorUtil.CanLiquidatePosition();
+        // Check new position initial margin validations.
+        if (remainingMarginUsd < im) {
+            revert ErrorUtil.InsufficientMargin();
         }
     }
 
@@ -281,7 +293,7 @@ library Position {
                 runtime.keeperFee
             );
 
-            (runtime.im, runtime.mm, ) = getLiquidationMarginUsd(
+            (runtime.im, runtime.mm) = getLiquidationMarginUsd(
                 newPosition.size,
                 params.oraclePrice,
                 marginValuesForLiqValidation.collateralUsd,
@@ -289,19 +301,21 @@ library Position {
                 addresses
             );
 
-            // Check new position initial margin validations.
-            if (runtime.discountedNextMarginUsd < runtime.im) {
-                revert ErrorUtil.InsufficientMargin();
-            }
-
             // Check the minimum credit requirements are still met.
-            validateMinimumCredit(market, params.oraclePrice, marketConfig, addresses);
+            validateMinimumCredit(
+                market,
+                params.oraclePrice,
+                marketConfig,
+                addresses,
+                params.sizeDelta
+            );
 
             // Check new position margin validations.
             validateNextPositionEnoughMargin(
                 newPosition,
+                currentPosition.size,
                 params.oraclePrice,
-                runtime.mm,
+                runtime.im,
                 runtime.discountedNextMarginUsd
             );
 
@@ -462,12 +476,12 @@ library Position {
         uint256 collateralUsd,
         PerpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses
-    ) internal view returns (uint256 im, uint256 mm, uint256 liqFlagReward) {
+    ) internal view returns (uint256 im, uint256 mm) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Short-circuit empty position and return zero'd values.
         if (size == 0) {
-            return (0, 0, 0);
+            return (0, 0);
         }
 
         uint128 absSize = MathUtil.abs(size).to128();
@@ -486,7 +500,7 @@ library Position {
             .price
             .toUint();
 
-        liqFlagReward = getLiquidationFlagReward(
+        uint256 liqFlagReward = getLiquidationFlagReward(
             notional,
             collateralUsd,
             ethPrice,
@@ -565,7 +579,7 @@ library Position {
             return healthData;
         }
 
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+        (, int256 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(price);
 
         healthData.accruedFunding = size
             .mulDecimal(
@@ -606,14 +620,20 @@ library Position {
         Margin.MarginValues memory marginValues,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
+        // A zero sized position means there is no position.
+        if (size == 0) {
+            return type(uint256).max;
+        }
+
         // `margin / mm <= 1` means liquidation.
-        (, uint256 mm, ) = getLiquidationMarginUsd(
+        (, uint256 mm) = getLiquidationMarginUsd(
             size,
             price,
             marginValues.collateralUsd,
             marketConfig,
             addresses
         );
+
         return marginValues.discountedMarginUsd.divDecimal(mm);
     }
 
@@ -653,7 +673,7 @@ library Position {
             return 0;
         }
 
-        (, int256 unrecordedFunding) = market.getUnrecordedFundingWithRate(price);
+        (, int256 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(price);
         return
             self
                 .size

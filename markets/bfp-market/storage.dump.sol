@@ -299,6 +299,8 @@ library Pool {
         uint64 __reserved3;
         mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
         bool collateralDisabledByDefault;
+        SetUtil.Bytes32Set rewardIds;
+        mapping(bytes32 => RewardDistribution.Data) rewardsToVaults;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -328,6 +330,9 @@ library RewardDistribution {
         uint64 start;
         uint32 duration;
         uint32 lastUpdate;
+        int128 nextScheduledValueD18;
+        uint64 nextStart;
+        uint32 nextDuration;
     }
 }
 
@@ -669,6 +674,7 @@ contract OrderModule {
     struct Runtime_commitOrder {
         uint256 oraclePrice;
         uint64 commitmentTime;
+        AddressRegistry.Data addresses;
     }
     struct Runtime_settleOrder {
         uint256 pythPrice;
@@ -714,6 +720,7 @@ contract PerpAccountModule {
         uint256 supportedCollateralsLength;
         address collateralAddress;
         uint256 fromAccountCollateral;
+        int256 fromSize;
     }
 }
 
@@ -944,6 +951,21 @@ library SettlementHookConfiguration {
         address[] whitelistedHookAddresses;
     }
     function load() internal pure returns (SettlementHookConfiguration.GlobalData storage d) {
+        bytes32 s = GLOBAL_DATA_SLOT_NAME;
+        assembly {
+            d.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/SplitAccountConfiguration.sol:SplitAccountConfiguration
+library SplitAccountConfiguration {
+    bytes32 private constant GLOBAL_DATA_SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.SplitAccountConfiguration"));
+    struct GlobalData {
+        mapping(address => bool) whitelisted;
+        address[] whitelistedAddresses;
+    }
+    function load() internal pure returns (SplitAccountConfiguration.GlobalData storage d) {
         bytes32 s = GLOBAL_DATA_SLOT_NAME;
         assembly {
             d.slot := s

@@ -38,7 +38,7 @@ args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
@@ -62,6 +62,10 @@ args = []
 
 [contract.SettlementHookModule]
 artifact = "contracts/modules/SettlementHookModule.sol:SettlementHookModule"
+args = []
+
+[contract.SplitAccountConfigurationModule]
+artifact = "contracts/modules/SplitAccountConfigurationModule.sol:SplitAccountConfigurationModule"
 args = []
 
 # --- Distributor contract --- #
@@ -94,6 +98,7 @@ contracts = [
     "LiquidationModule",
     "PerpRewardDistributorFactoryModule",
     "SettlementHookModule",
+    "SplitAccountConfigurationModule",
 ]
 
 # --- Proxy post deployment --- #
