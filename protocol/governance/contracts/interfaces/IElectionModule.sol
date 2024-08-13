@@ -33,12 +33,7 @@ interface IElectionModule is IElectionModuleSatellite {
         address[] candidates
     );
 
-    event VoteWithdrawn(
-        address indexed voter,
-        uint256 indexed chainId,
-        uint256 indexed epochId,
-        address[] candidates
-    );
+    event VoteWithdrawn(address indexed voter, uint256 indexed chainId, uint256 indexed epochId);
 
     event ElectionBatchEvaluated(
         uint256 indexed epochId,
@@ -128,12 +123,7 @@ interface IElectionModule is IElectionModuleSatellite {
     ) external;
 
     /// @dev Internal voting withdrawl logic, receiving end of withdrawing vote via Wormhole
-    function _recvWithdrawVote(
-        uint256 epochIndex,
-        address voter,
-        uint256 chainId,
-        address[] calldata candidates
-    ) external;
+    function _recvWithdrawVote(uint256 epochIndex, address voter, uint256 chainId) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
     /// @dev ElectionTally needs to be extended to specify how votes are counted

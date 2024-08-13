@@ -11,7 +11,7 @@ describe('cross chain nft distribution', function () {
     }
   });
 
-  it.only('dimisses members', async function () {
+  it('dimisses members', async function () {
     const voter = await fixtureSignerOnChains();
     const ownerAddress = await chains.mothership.signer.getAddress();
     const tx = await chains.mothership.GovernanceProxy.dismissMembers([ownerAddress]);

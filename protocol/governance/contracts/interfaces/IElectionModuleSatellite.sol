@@ -36,7 +36,7 @@ interface IElectionModuleSatellite {
 
     event VoteCastSent(address sender, address[] candidates, uint256[] amounts);
 
-    event VoteWithdrawnSent(address sender, address[] candidates);
+    event VoteWithdrawnSent(address sender);
 
     /// @notice Initialize the election module with the given council members and epoch schedule
     /// @dev Utility method for initializing a new Satellite chain; can only be called once
@@ -69,8 +69,7 @@ interface IElectionModuleSatellite {
     function cast(address[] calldata candidates, uint256[] calldata amounts) external payable;
 
     /// @notice Allows to withdraw a casted vote on the current network
-    /// @param candidates the candidates to withdraw the vote from
-    function withdrawVote(address[] calldata candidates) external payable;
+    function withdrawVote() external payable;
 
     /// @dev Burn the council tokens from the given members; receiving end of members dismissal via Wormhole
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;

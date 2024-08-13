@@ -327,15 +327,10 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     function _recvWithdrawVote(
         uint256 epochIndex,
         address voter,
-        uint256 chainId,
-        address[] calldata candidates
+        uint256 chainId
     ) external override {
         WormholeCrossChain.onlyCrossChain();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
-
-        if (candidates.length > _MAX_BALLOT_SIZE) {
-            revert ParameterError.InvalidParameter("candidates", "too many candidates");
-        }
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
@@ -344,8 +339,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         if (epochIndex != currentElectionId) {
             revert ParameterError.InvalidParameter("epochIndex", "invalid epoch index");
         }
-
-        _validateCandidates(candidates);
 
         Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
 
@@ -363,7 +356,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             election.ballotPtrs.add(ballotPtr);
         }
 
-        emit VoteWithdrawn(voter, chainId, currentElectionId, candidates);
+        emit VoteWithdrawn(voter, chainId, currentElectionId);
     }
 
     /// @inheritdoc	IElectionModule

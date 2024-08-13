@@ -78,7 +78,7 @@ describe('ElectionModule - voting', function () {
         });
 
         it('succeeds if user withdraws his own vote', async () => {
-          await c.GovernanceProxy.connect(user).withdrawVote([await user.getAddress()]);
+          await c.GovernanceProxy.connect(user).withdrawVote();
           equal(
             await c.GovernanceProxy.connect(user).hasVoted(
               await user.getAddress(),

@@ -126,7 +126,7 @@ contract ElectionModuleSatellite is
     }
 
     /// @inheritdoc	IElectionModuleSatellite
-    function withdrawVote(address[] calldata candidates) public payable override {
+    function withdrawVote() public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
         address sender = ERC2771Context._msgSender();
@@ -145,13 +145,12 @@ contract ElectionModuleSatellite is
                 IElectionModule._recvWithdrawVote.selector,
                 currentEpoch,
                 sender,
-                block.chainid,
-                candidates
+                block.chainid
             ),
             0
         );
 
-        emit VoteWithdrawnSent(sender, candidates);
+        emit VoteWithdrawnSent(sender);
     }
 
     function _recvDismissMembers(
