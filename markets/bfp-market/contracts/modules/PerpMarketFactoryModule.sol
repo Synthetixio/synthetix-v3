@@ -259,7 +259,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             oracleManager: ORACLE_MANAGER
         });
 
-        (int128 fundingRate, ) = market.getCurrentFundingRate();
+        (int128 fundingRate, int128 fundingVelocity) = market.getCurrentFundingRate();
         return
             IPerpMarketFactoryModule.MarketDigest(
                 depositedCollaterals,
@@ -267,7 +267,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.skew,
                 market.size,
                 market.getOraclePrice(addresses),
-                market.getCurrentFundingVelocity(),
+                fundingVelocity,
                 fundingRate,
                 market.currentUtilizationRateComputed,
                 remainingCapacity,
