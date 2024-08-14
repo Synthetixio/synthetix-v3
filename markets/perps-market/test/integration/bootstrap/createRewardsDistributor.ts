@@ -19,7 +19,6 @@ export const createRewardsDistributor = async (
     .deploy(
       Core.address,
       poolId,
-      collateralAddress,
       payoutToken,
       payoutTokenDecimals,
       `Distributor for ${marketId}`,
