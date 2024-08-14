@@ -100,6 +100,8 @@ contract PerpsAccountModule is IPerpsAccountModule {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
         Account.exists(accountId);
 
+        AsyncOrder.checkPendingOrder(accountId);
+
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         uint256 debtPaid = account.payDebt(amount);
 
