@@ -114,7 +114,7 @@ const config = {
     ['snaxchain-testnet']: {
       url:
         process.env.NETWORK_ENDPOINT ||
-        `https://testnet.snaxchain.io/${BCA1Ao4AhBh5DwLei75wQps21iXy2iMUD}`,
+        `https://testnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 2192,
     },
