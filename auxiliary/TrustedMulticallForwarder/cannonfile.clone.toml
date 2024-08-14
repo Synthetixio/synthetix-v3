@@ -1,0 +1,12 @@
+name = "trusted-multicall-forwarder"
+version = "0.0.3"
+description = "ERC-2771 compliant trusted forwarder including Multicall3 functionality with error bubbling"
+preset = "from-clone"
+
+[setting.salt]
+defaultValue = "salt"
+
+[clone.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"
+target = "trusted-multicall-forwarder@with-synthetix"
+options.salt = "<%= settings.salt %>"

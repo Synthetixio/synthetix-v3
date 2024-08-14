@@ -90,10 +90,11 @@ library Margin {
     /**
      * @dev Re-evaluates the debt and collateral for `accountMargin` with `amountDeltaUsd`. When amount is negative,
      * a portion of their sUSD collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
-     * account margin.
-     *
-     * NOTE: `amountDeltaUsd` _must_ consider margin and incorporate `debtUsd`. This also performs a global change
+     * account margin. This also performs a global change
      * in debt and collateral for the supplied `market`.
+     *
+     * NOTE: `amountDeltaUsd` Represent the total pnl with debt from the previous position taken into account.
+     * This means that if a position had $10 debt and made $10 from the price pnl (or funding etc), the amountDeltaUsd would be 0.
      */
     function realizeAccountPnlAndUpdate(
         Margin.Data storage accountMargin,
@@ -101,15 +102,20 @@ library Margin {
         int256 amountDeltaUsd,
         AddressRegistry.Data memory addresses
     ) internal {
-        // Nothing to update, this is a no-op.
+        uint128 previousDebt = accountMargin.debtUsd;
+
         if (amountDeltaUsd == 0) {
+            // If there was debt, clear it. This is a no-op if there was no debt.
+            if (previousDebt > 0) {
+                accountMargin.debtUsd = 0;
+                market.updateDebtAndCollateral(-previousDebt.toInt(), 0, addresses.sUsd);
+            }
             return;
         }
 
         uint256 availableUsdCollateral = accountMargin.collaterals[addresses.sUsd];
-        uint128 previousDebt = accountMargin.debtUsd;
 
-        if (amountDeltaUsd >= 0) {
+        if (amountDeltaUsd > 0) {
             // >0 means profitable position, including the outstanding debt.
             accountMargin.debtUsd = 0;
             accountMargin.collaterals[addresses.sUsd] += MathUtil.abs(amountDeltaUsd).to128();
