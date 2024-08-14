@@ -305,13 +305,13 @@ describe('Liquidation - multi collateral', () => {
           await systems().PerpsMarket.getRegisteredDistributor(btcSynth.marketId());
         const { distributor: ethDistributor } =
           await systems().PerpsMarket.getRegisteredDistributor(ethSynth.marketId());
-        const btcReward = await systems().Core.getAvailableRewards(
+        const btcReward = await systems().Core.callStatic.getAvailableRewards(
           1, // staker account id
           1, // pool id
           systems().CollateralMock.address,
           btcDistributor
         );
-        const ethReward = await systems().Core.getAvailableRewards(
+        const ethReward = await systems().Core.callStatic.getAvailableRewards(
           1, // staker account id
           1, // pool id
           systems().CollateralMock.address,
