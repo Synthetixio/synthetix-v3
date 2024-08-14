@@ -129,7 +129,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             );
             for (uint256 i = 1; i <= activeMarkets.length; i++) {
                 totalMarketDebt += PerpsMarket.load(activeMarkets[i - 1].to128()).marketDebt(
-                    prices[i]
+                    prices[i - 1]
                 );
             }
 
