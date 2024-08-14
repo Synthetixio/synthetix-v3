@@ -199,13 +199,8 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int128 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(
-            market.id,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(price);
+        emit FundingRecomputed(market.id, market.skew, fundingRate, fundingVelocity);
     }
 
     // --- Mutations --- //
@@ -363,7 +358,7 @@ contract OrderModule is IOrderModule {
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
         recomputeUtilization(market, runtime.tradeParams.oraclePrice);
 
-        market.updateDebtCorrection(position, trade.newPosition);
+        market.updateDebtCorrection(position, trade.newPosition, runtime.tradeParams.oraclePrice);
 
         // Account debt and market total trader debt must be updated with fees incurred to settle.
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);

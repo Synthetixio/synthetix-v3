@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/oracle-manager",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "Core Synthetix Protocol Oracle Manager",
   "publishConfig": {
     "access": "public"

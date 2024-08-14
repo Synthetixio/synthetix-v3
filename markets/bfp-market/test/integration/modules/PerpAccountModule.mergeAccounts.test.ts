@@ -102,7 +102,7 @@ describe('PerpAccountModule mergeAccounts', () => {
         fromTrader.accountId,
         1
       ),
-      `DuplicateAccountIds`,
+      `DuplicateEntries`,
       BfpMarketProxy
     );
   });
@@ -159,6 +159,55 @@ describe('PerpAccountModule mergeAccounts', () => {
     );
   });
 
+  it('should revert when from position is 0', async () => {
+    const { BfpMarketProxy, MergeAccountSettlementHookMock } = systems();
+
+    const { fromTrader, toTrader } = await createAccountsToMerge();
+    const market = genOneOf(markets());
+
+    const { marketId, collateralDepositAmount, collateral } = await depositMargin(
+      bs,
+      genTrader(bs, {
+        desiredTrader: fromTrader,
+        desiredMarket: market,
+      })
+    );
+    const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+    await commitAndSettle(bs, marketId, fromTrader, order);
+    const { collateralDepositAmount: toTraderCollateralDepositAmount, collateral: toCollateral } =
+      await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredTrader: toTrader,
+          desiredMarket: market,
+        })
+      );
+    const toOrder = await genOrder(bs, market, toCollateral, toTraderCollateralDepositAmount, {
+      desiredSize: order.sizeDelta,
+    });
+    await commitAndSettle(bs, marketId, toTrader, toOrder);
+
+    // Start close order, causing merge account to be called when position size is 0.
+    const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+      desiredHooks: [MergeAccountSettlementHookMock.address],
+      desiredSize: order.sizeDelta.mul(-1),
+    });
+
+    await commitOrder(bs, marketId, fromTrader, closeOrder);
+
+    const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, fromTrader);
+    await fastForwardTo(settlementTime, provider());
+
+    const { updateData, updateFee } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+    await assertRevert(
+      BfpMarketProxy.connect(keeper()).settleOrder(fromTrader.accountId, marketId, updateData, {
+        value: updateFee,
+      }),
+      `PositionNotFound()`,
+      BfpMarketProxy
+    );
+  });
   it('should revert when positions are on the opposite side', async () => {
     const { BfpMarketProxy } = systems();
 

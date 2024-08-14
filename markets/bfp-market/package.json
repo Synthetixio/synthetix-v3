@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/bfp-market",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "L1 perp market implementation",
   "scripts": {
     "build": "yarn build:contracts",

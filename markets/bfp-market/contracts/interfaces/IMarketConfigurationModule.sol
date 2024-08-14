@@ -5,8 +5,9 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
-interface IMarketConfigurationModule {
+interface IMarketConfigurationModule is IBasePerpMarket {
     // --- Structs --- //
 
     /// @notice See PerpMarketConfiguration.GlobalData for more details.
