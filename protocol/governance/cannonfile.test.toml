@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 version = "<%= package.version %>-testable"
-include = ["cannonfile.toml"]
+include = ["cannonfile.toml", "./tomls/testable-contracts.toml"]
 
 [setting.wormhole_chain_id]
 defaultValue = "10002"
@@ -14,24 +14,8 @@ defaultValue = "0x4235288801B10D43d381E1a7ff495c44EbDD669a"
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
 
-# Testable storage contracts
-[contract.TestableCouncilStorage]
-artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
-
-[contract.TestableBallotStorage]
-artifact = "contracts/generated/test/TestableBallotStorage.sol:TestableBallotStorage"
-
-[contract.TestableSnapshotVotePowerStorage]
-artifact = "contracts/generated/test/TestableSnapshotVotePowerStorage.sol:TestableSnapshotVotePowerStorage"
-
-[contract.TestableElectionSettingsStorage]
-artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:TestableElectionSettingsStorage"
-
-[contract.TestableElectionStorage]
-artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
-
-[contract.TestableEpochStorage]
-artifact = "contracts/generated/test/TestableEpochStorage.sol:TestableEpochStorage"
+[contract.CouncilMemberMock]
+artifact = "contracts/mocks/CouncilMemberMock.sol:CouncilMemberMock"
 
 [contract.WormholeMock]
 artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
@@ -48,6 +32,8 @@ create2 = true
 contracts = [
     # Extend Original Core Router
     "CoreRouter",
+    # Helper contract to debug council members functionality
+    "CouncilMemberMock",
     # Testable storage contracts
     "TestableCouncilStorage",
     "TestableBallotStorage",
@@ -66,3 +52,9 @@ factory.GovernanceProxy.abiOf = ["TestRouter"]
 factory.GovernanceProxy.event = "Upgraded"
 factory.GovernanceProxy.arg = 0
 factory.GovernanceProxy.highlight = true
+
+[invoke.set_registered_emitters]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setRegisteredEmitters"
+args = [["10002"], ["<%= contracts.InitialProxy.address %>"]]

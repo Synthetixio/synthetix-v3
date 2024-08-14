@@ -33,12 +33,7 @@ interface IElectionModule is IElectionModuleSatellite {
         address[] candidates
     );
 
-    event VoteWithdrawn(
-        address indexed voter,
-        uint256 indexed chainId,
-        uint256 indexed epochId,
-        address[] candidates
-    );
+    event VoteWithdrawn(address indexed voter, uint256 indexed chainId, uint256 indexed epochId);
 
     event ElectionBatchEvaluated(
         uint256 indexed epochId,
@@ -52,6 +47,14 @@ interface IElectionModule is IElectionModuleSatellite {
     // ---------------------------------------
 
     /// @notice Initialises the module and immediately starts the first epoch
+    /// @param initialCouncil addresses that will hold the initial council seats; Length cannot be greater than type(uint8).max or equal to 0
+    /// @param wormholeCore wormhole contract address on the current chain https://docs.wormhole.com/wormhole/reference/constants#core-contracts
+    /// @param wormholeRelayer wormhole relayer contract address on the current chain https://docs.wormhole.com/wormhole/reference/constants#standard-relayer
+    /// @param minimumActiveMembers minimum number of active council members required, cannot be greater than initialCouncil length or equal to 0
+    /// @param initialNominationPeriodStartDate start date for the first nomination period
+    /// @param administrationPeriodDuration duration of the administration period, in days
+    /// @param nominationPeriodDuration duration of the nomination period, in days
+    /// @param votingPeriodDuration duration of the voting period, in days
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         IWormhole wormholeCore,
@@ -67,14 +70,25 @@ interface IElectionModule is IElectionModuleSatellite {
     // Owner write functions
     // ---------------------------------------
 
-    /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration, and that changes are small (see setMaxDateAdjustmentTolerance)
+    /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration
+    /// @dev This function takes timestamps as parameters for the new start dates for the new periods; can only be called during the Administration period
+    /// @param newNominationPeriodStartDate new start date for the nomination period
+    /// @param newVotingPeriodStartDate new start date for the voting period
+    /// @param newEpochEndDate new end date for the epoch
     function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external;
+    ) external payable;
 
     /// @notice Adjust settings that will be used on next epoch
+    /// @dev can only be called during the Administration period
+    /// @param epochSeatCount number of council seats to be elected in the next epoch
+    /// @param minimumActiveMembers minimum number of active council members required
+    /// @param epochDuration duration of the epoch in days
+    /// @param nominationPeriodDuration duration of the nomination period in days
+    /// @param votingPeriodDuration duration of the voting period in days
+    /// @param maxDateAdjustmentTolerance maximum allowed difference between the new epoch dates and the current epoch dates in days
     function setNextElectionSettings(
         uint8 epochSeatCount,
         uint8 minimumActiveMembers,
@@ -85,6 +99,7 @@ interface IElectionModule is IElectionModuleSatellite {
     ) external;
 
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
+    /// @param members list of council members to be removed
     function dismissMembers(address[] calldata members) external payable;
 
     // ---------------------------------------
@@ -107,17 +122,15 @@ interface IElectionModule is IElectionModuleSatellite {
         uint256[] calldata amounts
     ) external;
 
-    function _recvWithdrawVote(
-        uint256 epochIndex,
-        address voter,
-        uint256 chainId,
-        address[] calldata candidates
-    ) external;
+    /// @dev Internal voting withdrawl logic, receiving end of withdrawing vote via Wormhole
+    function _recvWithdrawVote(uint256 epochIndex, address voter, uint256 chainId) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
-    function evaluate(uint256 numBallots) external;
+    /// @dev ElectionTally needs to be extended to specify how votes are counted
+    function evaluate(uint256 numBallots) external payable;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
+    /// @dev Burns previous NFTs and mints new ones
     function resolve() external payable;
 
     // ---------------------------------------
@@ -168,6 +181,7 @@ interface IElectionModule is IElectionModuleSatellite {
     /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() external view returns (bool);
 
+    /// @notice Returns the number of ballots in the current election
     function getBallot(
         address voter,
         uint256 chainId,

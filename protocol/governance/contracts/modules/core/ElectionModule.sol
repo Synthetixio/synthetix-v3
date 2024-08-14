@@ -30,7 +30,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     using Ballot for Ballot.Data;
     using Epoch for Epoch.Data;
 
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 
     event MessageReceived(string indexed message);
@@ -43,11 +42,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         revert NotImplemented();
     }
 
-    function emitCrossChainMessage(string memory message) internal {
-        emit MessageReceived(message);
-    }
-
-    ///@dev Initializes the election module
+    /// @inheritdoc	IElectionModule
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         IWormhole wormholeCore,
@@ -110,6 +105,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         }
     }
 
+    ///@dev Internal function to validate, update storage, and emit events for the election settings
     function _initElectionSettings(
         Council.Data storage council,
         ElectionSettings.Data storage electionSettings,
@@ -148,11 +144,12 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit EpochStarted(0);
     }
 
+    /// @inheritdoc	IElectionModule
     function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override {
+    ) external payable override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
@@ -169,32 +166,19 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        uint64[] memory chains = wh.getSupportedNetworks();
-        for (uint256 i = 0; i < chains.length; i++) {
-            // solhint-disable-next-line
-            if (chains[i] == uint64(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID))) {
-                currentEpoch.nominationPeriodStartDate = newNominationPeriodStartDate;
-                currentEpoch.votingPeriodStartDate = newVotingPeriodStartDate;
-                currentEpoch.endDate = newEpochEndDate;
-            } else {
-                transmit(
-                    wh,
-                    // solhint-disable-next-line
-                    uint16(chains[i]),
-                    // solhint-disable-next-line
-                    toAddress(wh.registeredEmitters[uint16(chains[i])]),
-                    abi.encodeWithSelector(
-                        this._recvTweakEpochSchedule.selector,
-                        council.currentElectionId,
-                        newEpoch.nominationPeriodStartDate,
-                        newEpoch.votingPeriodStartDate,
-                        newEpoch.endDate
-                    ),
-                    0,
-                    _CROSSCHAIN_GAS_LIMIT
-                );
-            }
-        }
+        uint16[] memory chains = wh.getSupportedNetworks();
+        broadcast(
+            wh,
+            chains,
+            abi.encodeWithSelector(
+                this._recvTweakEpochSchedule.selector,
+                council.currentElectionId,
+                newEpoch.nominationPeriodStartDate,
+                newEpoch.votingPeriodStartDate,
+                newEpoch.endDate
+            ),
+            0
+        );
 
         emit EpochScheduleUpdated(
             newEpoch.nominationPeriodStartDate,
@@ -203,13 +187,14 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         );
     }
 
+    /// @inheritdoc	IElectionModule
     function setNextElectionSettings(
         uint8 epochSeatCount,
         uint8 minimumActiveMembers,
-        uint64 epochDuration, // days
-        uint64 nominationPeriodDuration, // days
-        uint64 votingPeriodDuration, // days
-        uint64 maxDateAdjustmentTolerance // days
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
+        uint64 maxDateAdjustmentTolerance
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
@@ -224,28 +209,25 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         );
     }
 
+    /// @inheritdoc	IElectionModule
     function dismissMembers(address[] calldata membersToDismiss) external payable override {
         OwnableStorage.onlyOwner();
 
         Council.Data storage council = Council.load();
         Epoch.Data storage epoch = council.getCurrentEpoch();
-
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        // solhint-disable-next-line
-        uint16 chain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
+        uint16[] memory chains = wh.getSupportedNetworks();
 
-        transmit(
+        broadcast(
             wh,
-            chain,
-            toAddress(wh.registeredEmitters[chain]),
+            chains,
             abi.encodeWithSelector(
                 this._recvDismissMembers.selector,
                 membersToDismiss,
                 council.currentElectionId
             ),
-            0,
-            _CROSSCHAIN_GAS_LIMIT
+            0
         );
 
         CouncilMembers.Data storage membersStore = CouncilMembers.load();
@@ -264,6 +246,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit EmergencyElectionStarted(council.currentElectionId);
     }
 
+    /// @inheritdoc	IElectionModule
     function nominate() public override {
         Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
 
@@ -277,6 +260,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit CandidateNominated(sender, Council.load().currentElectionId);
     }
 
+    /// @inheritdoc	IElectionModule
     function withdrawNomination() external override {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
         Council.onlyInPeriod(Epoch.ElectionPeriod.Nomination);
@@ -290,6 +274,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit NominationWithdrawn(sender, Council.load().currentElectionId);
     }
 
+    /// @inheritdoc	IElectionModule
     function _recvCast(
         uint256 epochIndex,
         address voter,
@@ -338,18 +323,14 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower, candidates);
     }
 
+    /// @inheritdoc	IElectionModule
     function _recvWithdrawVote(
         uint256 epochIndex,
         address voter,
-        uint256 chainId,
-        address[] calldata candidates
+        uint256 chainId
     ) external override {
         WormholeCrossChain.onlyCrossChain();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
-
-        if (candidates.length > _MAX_BALLOT_SIZE) {
-            revert ParameterError.InvalidParameter("candidates", "too many candidates");
-        }
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
@@ -358,8 +339,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         if (epochIndex != currentElectionId) {
             revert ParameterError.InvalidParameter("epochIndex", "invalid epoch index");
         }
-
-        _validateCandidates(candidates);
 
         Ballot.Data storage ballot = Ballot.load(council.currentElectionId, voter, chainId);
 
@@ -377,11 +356,11 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             election.ballotPtrs.add(ballotPtr);
         }
 
-        emit VoteWithdrawn(voter, chainId, currentElectionId, candidates);
+        emit VoteWithdrawn(voter, chainId, currentElectionId);
     }
 
-    /// @dev ElectionTally needs to be extended to specify how votes are counted
-    function evaluate(uint256 numBallots) external override {
+    /// @inheritdoc	IElectionModule
+    function evaluate(uint256 numBallots) external payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
         Council.Data storage council = Council.load();
@@ -393,25 +372,19 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         if (election.nominees.values().length < electionSettings.minimumActiveMembers) {
             WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-            uint64[] memory chains = wh.getSupportedNetworks();
-            for (uint256 i = 0; i < chains.length; i++) {
-                transmit(
-                    wh,
-                    // solhint-disable-next-line
-                    uint16(chains[i]),
-                    // solhint-disable-next-line
-                    toAddress(wh.registeredEmitters[uint16(chains[i])]),
-                    abi.encodeWithSelector(
-                        this._recvTweakEpochSchedule.selector,
-                        council.currentElectionId,
-                        epoch.nominationPeriodStartDate,
-                        epoch.votingPeriodStartDate,
-                        epoch.endDate + electionSettings.votingPeriodDuration
-                    ),
-                    0,
-                    _CROSSCHAIN_GAS_LIMIT
-                );
-            }
+            uint16[] memory chains = wh.getSupportedNetworks();
+            broadcast(
+                wh,
+                chains,
+                abi.encodeWithSelector(
+                    this._recvTweakEpochSchedule.selector,
+                    council.currentElectionId,
+                    epoch.nominationPeriodStartDate,
+                    epoch.votingPeriodStartDate,
+                    epoch.endDate + electionSettings.votingPeriodDuration
+                ),
+                0
+            );
         } else {
             if (election.evaluated) revert ElectionAlreadyEvaluated();
 
@@ -433,7 +406,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         }
     }
 
-    /// @dev Burns previous NFTs and mints new ones
+    /// @inheritdoc	IElectionModule
     function resolve() public payable virtual override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Evaluation);
 
@@ -464,27 +437,21 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        uint64[] memory chains = wh.getSupportedNetworks();
-        for (uint256 i = 0; i < chains.length; i++) {
-            transmit(
-                wh,
-                // solhint-disable-next-line
-                uint16(chains[i]),
-                // solhint-disable-next-line
-                toAddress(wh.registeredEmitters[uint16(chains[i])]),
-                abi.encodeWithSelector(
-                    this._recvResolve.selector,
-                    council.currentElectionId,
-                    nextEpoch.startDate,
-                    nextEpoch.nominationPeriodStartDate,
-                    nextEpoch.votingPeriodStartDate,
-                    nextEpoch.endDate,
-                    election.winners.values()
-                ),
-                0,
-                _CROSSCHAIN_GAS_LIMIT
-            );
-        }
+        uint16[] memory chains = wh.getSupportedNetworks();
+        broadcast(
+            wh,
+            chains,
+            abi.encodeWithSelector(
+                this._recvResolve.selector,
+                council.currentElectionId,
+                nextEpoch.startDate,
+                nextEpoch.nominationPeriodStartDate,
+                nextEpoch.votingPeriodStartDate,
+                nextEpoch.endDate,
+                election.winners.values()
+            ),
+            0
+        );
 
         emit EpochStarted(council.currentElectionId);
     }
@@ -507,10 +474,12 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             });
     }
 
+    /// @inheritdoc	IElectionModule
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
         return Council.load().getCurrentEpoch();
     }
 
+    /// @inheritdoc	IElectionModule
     function getElectionSettings()
         external
         view
@@ -520,6 +489,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return Council.load().getCurrentElectionSettings();
     }
 
+    /// @inheritdoc	IElectionModule
     function getNextElectionSettings()
         external
         view
@@ -529,29 +499,35 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return Council.load().getNextElectionSettings();
     }
 
+    /// @inheritdoc	IElectionModule
     function getEpochIndex() external view override returns (uint256) {
         return Council.load().currentElectionId;
     }
 
+    /// @inheritdoc	IElectionModule
     function getCurrentPeriod() external view override returns (uint256) {
         // solhint-disable-next-line numcast/safe-cast
         return uint256(Council.load().getCurrentEpoch().getCurrentPeriod());
     }
 
+    /// @inheritdoc	IElectionModule
     function isNominated(address candidate) external view override returns (bool) {
         return Council.load().getCurrentElection().nominees.contains(candidate);
     }
 
+    /// @inheritdoc	IElectionModule
     function getNominees() external view override returns (address[] memory) {
         return Council.load().getCurrentElection().nominees.values();
     }
 
+    /// @inheritdoc	IElectionModule
     function hasVoted(address user, uint256 chainId) public view override returns (bool) {
         Council.Data storage council = Council.load();
         Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, chainId);
         return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
     }
 
+    /// @inheritdoc	IElectionModule
     function getVotePower(
         address user,
         uint256 chainId,
@@ -561,6 +537,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return ballot.votingPower;
     }
 
+    /// @inheritdoc	IElectionModule
     function getBallot(
         address voter,
         uint256 chainId,
@@ -569,6 +546,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return Ballot.load(electionId, voter, chainId);
     }
 
+    /// @inheritdoc	IElectionModule
     function getBallotCandidates(
         address voter,
         uint256 chainId,
@@ -577,22 +555,27 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return Ballot.load(electionId, voter, chainId).votedCandidates;
     }
 
+    /// @inheritdoc	IElectionModule
     function isElectionEvaluated() public view override returns (bool) {
         return Council.load().getCurrentElection().evaluated;
     }
 
+    /// @inheritdoc	IElectionModule
     function getCandidateVotes(address candidate) external view override returns (uint256) {
         return Council.load().getCurrentElection().candidateVoteTotals[candidate];
     }
 
+    /// @inheritdoc	IElectionModule
     function getElectionWinners() external view override returns (address[] memory) {
         return Council.load().getCurrentElection().winners.values();
     }
 
+    /// @inheritdoc	IElectionModule
     function getCouncilToken() public view override returns (address) {
         return CouncilMembers.load().councilToken;
     }
 
+    /// @inheritdoc	IElectionModule
     function getCouncilMembers() external view override returns (address[] memory) {
         return CouncilMembers.load().councilMembers.values();
     }

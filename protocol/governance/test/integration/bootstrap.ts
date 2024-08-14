@@ -15,12 +15,6 @@ interface Proxies {
   satellite2: AvalancheFujiGovernanceProxy;
 }
 
-export enum ChainSelector {
-  mothership = '16015286601757825753',
-  satellite1 = '2664363617261496610',
-  satellite2 = '14767482510784806043',
-}
-
 export enum WormholeChainSelector {
   mothership = '10002',
   satellite1 = '10005',
@@ -92,13 +86,12 @@ before(`setup integration chains`, async function () {
     networkName: 'sepolia',
     cannonfile: 'cannonfile.test.toml',
     cannonfileSettings: {
-      wormhole_chain_id: '10002',
+      wormhole_chain_id: WormholeChainSelector.mothership,
       wormhole_core: '0xBc9C458D6294a40599FB3485fB079429C0732833',
-      wormhole_relayer: '0x4235288801B10D43d381E1a7ff495c44EbDD669a',
+      wormhole_relayer: '0x8398f5766CB940c02DA34a612e08AAA52C022745',
     },
     typechainFolder,
     writeDeployments,
-    chainSlector: ChainSelector.mothership,
   });
 
   const schedule = await mothership.GovernanceProxy.getEpochSchedule();
@@ -120,26 +113,24 @@ before(`setup integration chains`, async function () {
       cannonfile: 'cannonfile.satellite.test.toml',
       cannonfileSettings: {
         ...cannonfileSettings,
-        wormhole_chain_id: '10005',
+        wormhole_chain_id: WormholeChainSelector.satellite1,
         wormhole_core: '0x41e689A993322c2B3dE4569084D6F979dc39f095',
-        wormhole_relayer: '0xEbCD8Ad722197daaf44E04493837880a09aa0Ea9',
+        wormhole_relayer: '0xDDb03b84892d39266bC820F76C11FF86F7A3DA1F',
       },
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.satellite1,
     }),
     spinChain<Proxies['satellite2']>({
       networkName: 'avalanche-fuji',
       cannonfile: 'cannonfile.satellite.test.toml',
       cannonfileSettings: {
         ...cannonfileSettings,
-        wormhole_chain_id: '43113',
+        wormhole_chain_id: WormholeChainSelector.satellite2,
         wormhole_core: '0x40342Cb59035F004043DE1b30C04A69D06C900A2',
-        wormhole_relayer: '0x77578945eA23008e40e9Af5AB902999B0A82Ee73',
+        wormhole_relayer: '0xD8027025142c1B133f4a70a1A1F428568ca9e6f6',
       },
       typechainFolder,
       writeDeployments,
-      chainSlector: ChainSelector.satellite2,
     }),
   ]);
 
@@ -148,6 +139,16 @@ before(`setup integration chains`, async function () {
     satellite1,
     satellite2,
   } satisfies Chains);
+
+  // Configure multichain messaging
+  const chainSelectors = typedValues(WormholeChainSelector);
+  const proxyAddresses = typedValues(chains).map((chain) => chain.GovernanceProxy.address);
+  for (const chain of typedValues(chains)) {
+    await chain.GovernanceProxy.connect(chain.signer).setRegisteredEmitters(
+      chainSelectors,
+      proxyAddresses
+    );
+  }
 });
 
 before('snapshot checkpoint', createSnapshots);

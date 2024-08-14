@@ -10,7 +10,44 @@ interface IElectionModuleSatellite {
 
     event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
 
-    /// @dev Initialize first epoch of the current election module. Can only be called once.
+    event InitializedSatellite(
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate,
+        address[] councilMembers
+    );
+
+    event EpochSetup(
+        uint256 epochIndex,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    );
+
+    event EpochScheduleTweaked(
+        uint256 epochIndex,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    );
+
+    event VoteCastSent(address sender, address[] candidates, uint256[] amounts);
+
+    event VoteWithdrawnSent(address sender);
+
+    /// @notice Initialize the election module with the given council members and epoch schedule
+    /// @dev Utility method for initializing a new Satellite chain; can only be called once
+    /// @param epochIndex the index of the epoch
+    /// @param epochStartDate the start date of the epoch (timestamp)
+    /// @param nominationPeriodStartDate the start date of the nomination period (timestamp)
+    /// @param votingPeriodStartDate the start date of the voting period (timestamp)
+    /// @param epochEndDate the end date of the epoch (timestamp)
+    /// @param wormholeCore wormhole contract address on the current chain https://docs.wormhole.com/wormhole/reference/constants#core-contracts
+    /// @param wormholeRelayer wormhole relayer contract address on the current chain https://docs.wormhole.com/wormhole/reference/constants#standard-relayer
+    /// @param councilMembers the initial council members
     function initElectionModuleSatellite(
         uint256 epochIndex,
         uint64 epochStartDate,
@@ -26,10 +63,13 @@ interface IElectionModuleSatellite {
     function isElectionModuleInitialized() external view returns (bool);
 
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
+    /// @dev caller must use all of their voting power in one go i.e. no partial votes; casts from satellite get broadcast to mothership chain
+    /// @param candidates the candidates to vote for
+    /// @param amounts the amount of votes for each candidate
     function cast(address[] calldata candidates, uint256[] calldata amounts) external payable;
 
-    /// @notice Allows to withdraw a casted vote on the current network.
-    function withdrawVote(address[] calldata candidates) external payable;
+    /// @notice Allows to withdraw a casted vote on the current network
+    function withdrawVote() external payable;
 
     /// @dev Burn the council tokens from the given members; receiving end of members dismissal via Wormhole
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;

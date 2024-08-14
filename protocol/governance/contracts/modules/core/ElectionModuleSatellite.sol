@@ -30,12 +30,9 @@ contract ElectionModuleSatellite is
     using Epoch for Epoch.Data;
     using SetUtil for SetUtil.AddressSet;
 
-    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
     uint64 internal constant _MOTHERSHIP_CHAIN_ID = 0;
 
-    /**
-     * @dev Utility method for initializing a new Satellite chain
-     */
+    /// @inheritdoc	IElectionModuleSatellite
     function initElectionModuleSatellite(
         uint256 epochIndex,
         uint64 epochStartDate,
@@ -68,8 +65,18 @@ contract ElectionModuleSatellite is
             epochEndDate,
             councilMembers
         );
+
+        emit InitializedSatellite(
+            epochIndex,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate,
+            councilMembers
+        );
     }
 
+    /// @inheritdoc	IElectionModuleSatellite
     function isElectionModuleInitialized() public view override returns (bool) {
         return _isInitialized();
     }
@@ -78,7 +85,7 @@ contract ElectionModuleSatellite is
         return Council.load().initialized;
     }
 
-    ///@dev Casts vote on mothership chain
+    /// @inheritdoc	IElectionModuleSatellite
     function cast(
         address[] calldata candidates,
         uint256[] calldata amounts
@@ -109,21 +116,17 @@ contract ElectionModuleSatellite is
         );
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
-        // solhint-disable-next-line
-        uint16 targetChain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
 
-        transmit(
-            wh,
-            targetChain,
-            toAddress(wh.registeredEmitters[targetChain]),
-            payload,
-            0,
-            _CROSSCHAIN_GAS_LIMIT
-        );
+        uint16[] memory targetChains = new uint16[](1);
+        targetChains[0] = wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID);
+
+        broadcast(wh, targetChains, payload, 0);
+
+        emit VoteCastSent(sender, candidates, amounts);
     }
 
-    ///@dev Withdraws a vote that has already been casted by the sender
-    function withdrawVote(address[] calldata candidates) public payable override {
+    /// @inheritdoc	IElectionModuleSatellite
+    function withdrawVote() public payable override {
         Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
 
         address sender = ERC2771Context._msgSender();
@@ -132,22 +135,22 @@ contract ElectionModuleSatellite is
 
         WormholeCrossChain.Data storage wh = WormholeCrossChain.load();
 
-        // solhint-disable-next-line
-        uint16 targetChain = uint16(wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID));
-        transmit(
+        uint16[] memory targetChains = new uint16[](1);
+        targetChains[0] = wh.getChainIdAt(_MOTHERSHIP_CHAIN_ID);
+
+        broadcast(
             wh,
-            targetChain,
-            toAddress(wh.registeredEmitters[targetChain]),
+            targetChains,
             abi.encodeWithSelector(
                 IElectionModule._recvWithdrawVote.selector,
                 currentEpoch,
                 sender,
-                block.chainid,
-                candidates
+                block.chainid
             ),
-            0,
-            _CROSSCHAIN_GAS_LIMIT
+            0
         );
+
+        emit VoteWithdrawnSent(sender);
     }
 
     function _recvDismissMembers(
@@ -197,6 +200,13 @@ contract ElectionModuleSatellite is
             votingPeriodStartDate,
             epochEndDate
         );
+
+        emit EpochScheduleTweaked(
+            epochIndex,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
     }
 
     function _setupEpoch(
@@ -222,5 +232,13 @@ contract ElectionModuleSatellite is
 
         _removeAllCouncilMembers(prevEpochIndex);
         _addCouncilMembers(councilMembers, epochIndex);
+
+        emit EpochSetup(
+            epochIndex,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
     }
 }

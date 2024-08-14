@@ -1,25 +1,17 @@
+import { equal } from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import assert from 'assert';
 import { ethers } from 'ethers';
-import { bootstrap } from '../../bootstrap';
+import { bootstrap } from '../bootstrap';
 
 describe('ElectionModule - voting', function () {
   const { c, getSigners, getProvider } = bootstrap();
 
-  let owner: ethers.Signer;
   let user: ethers.Signer;
   let otherUser: ethers.Signer;
 
   before('identify signers', async function () {
-    [owner, user, otherUser] = getSigners();
-  });
-
-  before('register emitters', async function () {
-    await c.GovernanceProxy.connect(owner).setRegisteredEmitters(
-      [10002],
-      [c.GovernanceProxy.address]
-    );
+    [, user, otherUser] = getSigners();
   });
 
   before('create voting power for user', async function () {
@@ -86,8 +78,8 @@ describe('ElectionModule - voting', function () {
         });
 
         it('succeeds if user withdraws his own vote', async () => {
-          await c.GovernanceProxy.connect(user).withdrawVote([await user.getAddress()]);
-          assert.equal(
+          await c.GovernanceProxy.connect(user).withdrawVote();
+          equal(
             await c.GovernanceProxy.connect(user).hasVoted(
               await user.getAddress(),
               (await user.provider!.getNetwork()).chainId
