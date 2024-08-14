@@ -61,6 +61,7 @@ library UniswapNode {
             : price.downscale((-scale).toUint());
 
         nodeOutput = NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
+        possibleError = new bytes(0);
     }
 
     function getQuoteAtTick(

@@ -103,6 +103,11 @@ export function bootstrapWithNodes() {
     nodeId3: () => nodeId3,
     nodeId4: () => nodeId4,
     nodeId5: () => nodeId5,
+    aggregator: () => aggregator,
+    aggregator2: () => aggregator2,
+    aggregator3: () => aggregator3,
+    aggregator4: () => aggregator4,
+    aggregator5: () => aggregator5,
     failingNodeId: () => failingNodeId,
   };
 }

@@ -130,8 +130,7 @@ library NodeDefinition {
 
         for (uint256 i = 0; i < errors.length; i++) {
             if (errors[i].length > 0) {
-                // for now to keep things simpler, we revert if we have parent nodes giving a series of errors
-                revert Errors(errors);
+                return (abi.encodeWithSelector(Errors.selector, errors), price);
             }
         }
 

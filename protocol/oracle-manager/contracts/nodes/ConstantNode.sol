@@ -9,6 +9,7 @@ library ConstantNode {
         bytes memory parameters
     ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
         nodeOutput = NodeOutput.Data(abi.decode(parameters, (int256)), block.timestamp, 0, 0);
+        possibleError = new bytes(0);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
