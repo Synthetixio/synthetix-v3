@@ -9,16 +9,18 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
+import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {InterestRate} from "../storage/InterestRate.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
 
 /**
  * @title Module to manage accounts
@@ -38,10 +40,12 @@ contract PerpsAccountModule is IPerpsAccountModule {
      */
     function modifyCollateral(
         uint128 accountId,
-        uint128 synthMarketId,
+        uint128 collateralId,
         int256 amountDelta
     ) external override {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
+        PerpsCollateralConfiguration.validDistributorExists(collateralId);
 
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(
@@ -54,40 +58,72 @@ contract PerpsAccountModule is IPerpsAccountModule {
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
         GlobalPerpsMarket.Data storage globalPerpsMarket = GlobalPerpsMarket.load();
-        globalPerpsMarket.validateCollateralAmount(synthMarketId, amountDelta);
+        globalPerpsMarket.validateCollateralAmount(collateralId, amountDelta);
         globalPerpsMarket.checkLiquidation(accountId);
 
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = perpsMarketFactory.perpsMarketId;
 
-        PerpsAccount.validateMaxCollaterals(accountId, synthMarketId);
+        PerpsAccount.validateMaxCollaterals(accountId, collateralId);
 
         AsyncOrder.checkPendingOrder(account.id);
 
         if (amountDelta > 0) {
-            _depositMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountDelta.toUint());
+            _depositMargin(perpsMarketFactory, perpsMarketId, collateralId, amountDelta.toUint());
         } else {
             uint256 amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
             account.validateWithdrawableAmount(
-                synthMarketId,
+                collateralId,
                 amountAbs,
                 perpsMarketFactory.spotMarket
             );
-            _withdrawMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountAbs);
+            _withdrawMargin(perpsMarketFactory, perpsMarketId, collateralId, amountAbs);
         }
 
         // accounting
-        account.updateCollateralAmount(synthMarketId, amountDelta);
+        account.updateCollateralAmount(collateralId, amountDelta);
 
-        emit CollateralModified(accountId, synthMarketId, amountDelta, ERC2771Context._msgSender());
+        emit CollateralModified(accountId, collateralId, amountDelta, ERC2771Context._msgSender());
+    }
+
+    function debt(uint128 accountId) external view override returns (uint256 accountDebt) {
+        Account.exists(accountId);
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+
+        accountDebt = account.debt;
+    }
+
+    // 1. call depositMarketUsd and deposit amount directly to core system
+    // 2. look up account and reduce debt by amount
+    function payDebt(uint128 accountId, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+        Account.exists(accountId);
+
+        AsyncOrder.checkPendingOrder(accountId);
+
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        uint256 debtPaid = account.payDebt(amount);
+
+        emit DebtPaid(accountId, debtPaid, ERC2771Context._msgSender());
+
+        // update interest rate after debt paid since credit capacity for market has increased
+        (uint128 interestRate, ) = InterestRate.update(PerpsPrice.Tolerance.DEFAULT);
+        emit IGlobalPerpsMarketModule.InterestRateUpdated(
+            PerpsMarketFactory.load().perpsMarketId,
+            interestRate
+        );
     }
 
     /**
      * @inheritdoc IPerpsAccountModule
      */
     function totalCollateralValue(uint128 accountId) external view override returns (uint256) {
-        return PerpsAccount.load(accountId).getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
+        return
+            PerpsAccount.load(accountId).getTotalCollateralValue(
+                PerpsPrice.Tolerance.DEFAULT,
+                false
+            );
     }
 
     /**
@@ -149,13 +185,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        int256 availableMargin = account.getAvailableMargin(PerpsPrice.Tolerance.DEFAULT);
-        (uint256 initialRequiredMargin, , uint256 liquidationReward) = account
-            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
-
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
-
-        withdrawableMargin = availableMargin - requiredMargin.toInt();
+        withdrawableMargin = account.getWithdrawableMargin(PerpsPrice.Tolerance.DEFAULT);
     }
 
     /**
@@ -191,9 +221,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
      */
     function getCollateralAmount(
         uint128 accountId,
-        uint128 synthMarketId
+        uint128 collateralId
     ) external view override returns (uint256) {
-        return PerpsAccount.load(accountId).collateralAmounts[synthMarketId];
+        return PerpsAccount.load(accountId).collateralAmounts[collateralId];
     }
 
     /**
@@ -217,10 +247,10 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function _depositMargin(
         PerpsMarketFactory.Data storage perpsMarketFactory,
         uint128 perpsMarketId,
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 amount
     ) internal {
-        if (synthMarketId == SNX_USD_MARKET_ID) {
+        if (collateralId == SNX_USD_MARKET_ID) {
             // depositing into the USD market
             perpsMarketFactory.synthetix.depositMarketUsd(
                 perpsMarketId,
@@ -228,9 +258,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
                 amount
             );
         } else {
-            ITokenModule synth = ITokenModule(
-                perpsMarketFactory.spotMarket.getSynth(synthMarketId)
-            );
+            ITokenModule synth = ITokenModule(perpsMarketFactory.spotMarket.getSynth(collateralId));
             synth.transferFrom(ERC2771Context._msgSender(), address(this), amount);
             // depositing into a synth market
             perpsMarketFactory.depositMarketCollateral(synth, amount);
@@ -240,10 +268,10 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function _withdrawMargin(
         PerpsMarketFactory.Data storage perpsMarketFactory,
         uint128 perpsMarketId,
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 amount
     ) internal {
-        if (synthMarketId == SNX_USD_MARKET_ID) {
+        if (collateralId == SNX_USD_MARKET_ID) {
             // withdrawing from the USD market
             perpsMarketFactory.synthetix.withdrawMarketUsd(
                 perpsMarketId,
@@ -251,9 +279,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
                 amount
             );
         } else {
-            ITokenModule synth = ITokenModule(
-                perpsMarketFactory.spotMarket.getSynth(synthMarketId)
-            );
+            ITokenModule synth = ITokenModule(perpsMarketFactory.spotMarket.getSynth(collateralId));
             // withdrawing from a synth market
             perpsMarketFactory.synthetix.withdrawMarketCollateral(
                 perpsMarketId,
