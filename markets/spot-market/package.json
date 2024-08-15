@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "Spot Market implementation",
   "scripts": {
     "build": "yarn build:contracts",
@@ -33,7 +33,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
     "@types/node-fetch": "^2.6.11",
-    "@usecannon/cli": "2.15.2",
+    "@usecannon/cli": "2.16.2",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "node-fetch": "^2.7.0",

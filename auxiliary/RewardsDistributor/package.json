@@ -21,7 +21,7 @@
     "forge-coverage": "forge coverage --report lcov"
   },
   "devDependencies": {
-    "@usecannon/cli": "2.15.2",
+    "@usecannon/cli": "2.16.2",
     "forge-std": "github:foundry-rs/forge-std#master"
   },
   "depcheck": {
