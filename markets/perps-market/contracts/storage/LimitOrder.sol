@@ -96,19 +96,16 @@ library LimitOrder {
         uint128 accountId;
         int128 amount;
         int256 pnl;
-        uint256 pnlUint;
         MarketUpdate.Data updateData;
         uint256 chargedInterest;
         Position.Data newPosition;
         Position.Data oldPosition;
-        uint256 synthDeductionIterator;
-        uint128[] deductedSynthIds;
-        uint256[] deductedAmount;
         uint256 relayerFees;
         uint256 feeCollectorFees;
         int256 accruedFunding;
         uint256 limitOrderFees;
         uint256 price;
+        int256 chargedAmount;
     }
 
     function load() internal pure returns (Data storage limitOrderNonces) {

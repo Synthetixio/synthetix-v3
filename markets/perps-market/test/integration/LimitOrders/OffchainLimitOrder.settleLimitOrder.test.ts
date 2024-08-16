@@ -17,7 +17,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 // import assert from 'assert';
 // import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
-describe.only('Settle Offchain Limit Order tests', () => {
+describe('Settle Offchain Limit Order tests', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, signers, owner } =
     bootstrapMarkets({
       synthMarkets: [
@@ -142,7 +142,7 @@ describe.only('Settle Offchain Limit Order tests', () => {
 
   const restoreToSnapshot = snapshotCheckpoint(provider);
 
-  it.only('settles the orders and emits the proper events', async () => {
+  it('settles the orders and emits the proper events', async () => {
     const signedShortOrder = await signOrder(
       shortOrder,
       trader1() as ethers.Wallet,
@@ -233,10 +233,10 @@ describe.only('Settle Offchain Limit Order tests', () => {
         0,
       ].join(', '),
     };
-    const collateralDeductedEventsArgs = {
-      trader1: [`${shortOrder.accountId}`, `${0}`, `${limitOrderFeesShort}`].join(', '),
-      trader2: [`${longOrder.accountId}`, `${0}`, `${limitOrderFeesLong}`].join(', '),
-    };
+    // const collateralDeductedEventsArgs = {
+    //   trader1: [`${shortOrder.accountId}`, `${0}`, `${limitOrderFeesShort}`].join(', '),
+    //   trader2: [`${longOrder.accountId}`, `${0}`, `${limitOrderFeesLong}`].join(', '),
+    // };
     await assertEvent(
       tx,
       `LimitOrderSettled(${orderSettledEventsArgs.trader1})`,
@@ -257,19 +257,19 @@ describe.only('Settle Offchain Limit Order tests', () => {
       `MarketUpdated(${marketUpdateEventsArgs.trader2})`,
       systems().PerpsMarket
     );
-    await assertEvent(
-      tx,
-      `CollateralDeducted(${collateralDeductedEventsArgs.trader1})`,
-      systems().PerpsMarket
-    );
-    await assertEvent(
-      tx,
-      `CollateralDeducted(${collateralDeductedEventsArgs.trader2})`,
-      systems().PerpsMarket
-    );
+    // await assertEvent(
+    //   tx,
+    //   `CollateralDeducted(${collateralDeductedEventsArgs.trader1})`,
+    //   systems().PerpsMarket
+    // );
+    // await assertEvent(
+    //   tx,
+    //   `CollateralDeducted(${collateralDeductedEventsArgs.trader2})`,
+    //   systems().PerpsMarket
+    // );
   });
 
-  it.only('fails to cancel an already completed limit order', async () => {
+  it('fails to cancel an already completed limit order', async () => {
     const signedShortOrder = await signOrder(
       shortOrder,
       trader1() as ethers.Wallet,
@@ -281,7 +281,7 @@ describe.only('Settle Offchain Limit Order tests', () => {
     );
   });
 
-  it.only('successfully cancels a new limit order', async () => {
+  it('successfully cancels a new limit order', async () => {
     const newNonceShortOrder = { ...shortOrder, nonce: 197889234 };
     const signedNewNonceShortOrder = await signOrder(
       newNonceShortOrder,
@@ -299,7 +299,7 @@ describe.only('Settle Offchain Limit Order tests', () => {
     );
   });
 
-  it.only('fails to cancel a new limit order that is already settled', async () => {
+  it('fails to cancel a new limit order that is already settled', async () => {
     const newNonceShortOrder = { ...shortOrder, nonce: 197889234 };
     const signedNewNonceShortOrder = await signOrder(
       newNonceShortOrder,

@@ -22,7 +22,7 @@ import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 /**
  * @title Module for settling signed P2P limit orders
@@ -119,8 +119,8 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             shortOrder.marketId
         );
-        console.log("maxMarketSize", marketConfig.maxMarketSize);
-        console.log("maxMarketValue", marketConfig.maxMarketValue);
+        // console.log("maxMarketSize", marketConfig.maxMarketSize);
+        // console.log("maxMarketValue", marketConfig.maxMarketValue);
         perpsMarketData.validateLimitOrderSize(
             marketConfig.maxMarketSize,
             marketConfig.maxMarketValue,
@@ -158,7 +158,7 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
         LimitOrder.SignedOrderRequest calldata order,
         LimitOrder.Signature calldata sig
     ) internal {
-        // Account.exists(order.accountId);
+        Account.exists(order.accountId);
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -189,6 +189,7 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
     }
 
     function validateLimitOrder(LimitOrder.SignedOrderRequest calldata order) internal view {
+        // TODO still need this?
         AsyncOrder.checkPendingOrder(order.accountId);
         PerpsAccount.validateMaxPositions(order.accountId, order.marketId);
         LimitOrder.load().isLimitOrderNonceUsed(order.accountId, order.nonce);
@@ -273,7 +274,7 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
 
         // only account for negative pnl
         runtime.currentAvailableMargin += MathUtil.min(
-            AsyncOrder.calculateStartingPnl(runtime.price, lastPriceCheck, runtime.newPositionSize),
+            AsyncOrder.calculateFillPricePnl(runtime.price, lastPriceCheck, runtime.amount),
             0
         );
         if (runtime.currentAvailableMargin < runtime.limitOrderFees.toInt()) {
@@ -295,6 +296,13 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
+        // TODO add check if this logic below is needed or should be changed
+        // int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
+        //     MathUtil.abs(runtime.newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt(),
+        //     PerpsPrice.Tolerance.DEFAULT
+        // );
+        // GlobalPerpsMarket.load().validateMarketCapacity(lockedCreditDelta);
+
         runtime.newPosition = Position.Data({
             marketId: runtime.marketId,
             latestInteractionPrice: order.price.to128(),
@@ -323,13 +331,10 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
         (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
             order.price
         );
-        runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
-        if (runtime.pnl > 0) {
-            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
-        } else if (runtime.pnl < 0) {
-            runtime.limitOrderFees += runtime.pnlUint;
-        }
+        runtime.chargedAmount = runtime.pnl - runtime.limitOrderFees.toInt();
+        perpsAccount.charge(runtime.chargedAmount);
+        emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
         // after pnl is realized, update position
         runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
@@ -348,27 +353,6 @@ contract LimitOrderModule is ILimitOrderModule, IMarketEvents, IAccountEvents {
             runtime.updateData.currentFundingVelocity,
             runtime.updateData.interestRate
         );
-
-        // since margin is deposited when trader deposits, as long as the owed collateral is deducted
-        // from internal accounting, fees are automatically realized by the stakers
-        if (runtime.limitOrderFees > 0) {
-            (runtime.deductedSynthIds, runtime.deductedAmount) = perpsAccount.deductFromAccount(
-                runtime.limitOrderFees
-            );
-            for (
-                runtime.synthDeductionIterator = 0;
-                runtime.synthDeductionIterator < runtime.deductedSynthIds.length;
-                runtime.synthDeductionIterator++
-            ) {
-                if (runtime.deductedAmount[runtime.synthDeductionIterator] > 0) {
-                    emit CollateralDeducted(
-                        runtime.accountId,
-                        runtime.deductedSynthIds[runtime.synthDeductionIterator],
-                        runtime.deductedAmount[runtime.synthDeductionIterator]
-                    );
-                }
-            }
-        }
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         (runtime.relayerFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
