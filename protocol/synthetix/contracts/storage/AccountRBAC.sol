@@ -22,6 +22,7 @@ library AccountRBAC {
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _PERPS_COMMIT_LIMIT_ORDER_PERMISSION = "PERPS_COMMIT_LIMIT_ORDER";
     bytes32 internal constant _BURN_PERMISSION = "BURN";
 
     /**
@@ -56,6 +57,7 @@ library AccountRBAC {
             permission != AccountRBAC._REWARDS_PERMISSION &&
             permission != AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION &&
             permission != AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION &&
+            permission != AccountRBAC._PERPS_COMMIT_LIMIT_ORDER_PERMISSION &&
             permission != AccountRBAC._BURN_PERMISSION
         ) {
             revert InvalidPermission(permission);
