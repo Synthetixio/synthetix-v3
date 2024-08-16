@@ -1,0 +1,60 @@
+name = "synthetix-governance"
+version = "<%= package.version %>-testable"
+include = ["cannonfile.toml", "./tomls/testable-contracts.toml"]
+
+[setting.wormhole_chain_id]
+defaultValue = "10002"
+
+[setting.wormhole_core]
+defaultValue = "0xBc9C458D6294a40599FB3485fB079429C0732833"
+
+[setting.wormhole_relayer]
+defaultValue = "0x4235288801B10D43d381E1a7ff495c44EbDD669a"
+
+[contract.SnapshotRecordMock]
+artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
+
+[contract.CouncilMemberMock]
+artifact = "contracts/mocks/CouncilMemberMock.sol:CouncilMemberMock"
+
+[contract.WormholeMock]
+artifact = "contracts/mocks/WormholeMock.sol:WormholeMock"
+args = ["<%= settings.wormhole_chain_id %>"]
+create2 = true
+
+[contract.WormholeRelayerMock]
+artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
+args = ["<%= settings.wormhole_core %>"]
+create2 = true
+
+# Core Router + Testable modules
+[router.TestRouter]
+contracts = [
+    # Extend Original Core Router
+    "CoreRouter",
+    # Helper contract to debug council members functionality
+    "CouncilMemberMock",
+    # Testable storage contracts
+    "TestableCouncilStorage",
+    "TestableBallotStorage",
+    "TestableSnapshotVotePowerStorage",
+    "TestableElectionSettingsStorage",
+    "TestableElectionStorage",
+    "TestableEpochStorage",
+]
+
+[invoke.upgrade_core_proxy]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.TestRouter.address %>"]
+factory.GovernanceProxy.abiOf = ["TestRouter"]
+factory.GovernanceProxy.event = "Upgraded"
+factory.GovernanceProxy.arg = 0
+factory.GovernanceProxy.highlight = true
+
+[invoke.set_registered_emitters]
+target = ["GovernanceProxy"]
+from = "<%= settings.owner %>"
+func = "setRegisteredEmitters"
+args = [["10002"], ["<%= contracts.InitialProxy.address %>"]]
