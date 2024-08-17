@@ -38,8 +38,7 @@
     "lodash": "^4.17.21",
     "mocha-each": "2.0.1",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4"
   },
   "depcheck": {
     "ignoreMatches": [

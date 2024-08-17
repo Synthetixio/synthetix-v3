@@ -2950,8 +2950,7 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -2974,8 +2973,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     mocha-each: "npm:2.0.1"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -2992,8 +2990,7 @@ __metadata:
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3079,8 +3076,9 @@ __metadata:
     sinon: "npm:^17.0.1"
     solc: "npm:0.8.21"
     solidity-ast: "npm:^0.4.55"
+    ts-node: "npm:^10.9.2"
     typechain: "npm:8.3.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
     viem: "npm:^2.9.31"
   peerDependencies:
     "@usecannon/builder": ^2.16.2
@@ -3105,7 +3103,7 @@ __metadata:
   dependencies:
     depcheck: "npm:^1.4.7"
     prettier: "npm:^3.2.5"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   bin:
     deps: ./deps.js
     deps-circular: ./circular.js
@@ -3169,7 +3167,7 @@ __metadata:
     mustache: "npm:^4.2.0"
     solidity-ast: "npm:^0.4.55"
     ts-jest: "npm:^29.1.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3202,7 +3200,6 @@ __metadata:
     hardhat: "npm:^2.19.5"
     solidity-ast: "npm:^0.4.55"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
   languageName: unknown
   linkType: soft
 
@@ -3216,8 +3213,7 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3235,8 +3231,7 @@ __metadata:
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3270,8 +3265,7 @@ __metadata:
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3285,8 +3279,7 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3348,8 +3341,7 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3384,8 +3376,7 @@ __metadata:
     hardhat: "npm:^2.19.5"
     node-fetch: "npm:^2.7.0"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.3.3"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -15823,7 +15814,8 @@ __metadata:
     solhint: "npm:^4.1.1"
     solhint-plugin-meta-transactions: "npm:^0.1.0"
     solhint-plugin-numcast: "npm:^1.0.0"
-    typescript: "npm:^5.3.3"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -16409,23 +16401,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.3.3":
-  version: 5.3.3
-  resolution: "typescript@npm:5.3.3"
+"typescript@npm:^5.5.4":
+  version: 5.5.4
+  resolution: "typescript@npm:5.5.4"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/6e4e6a14a50c222b3d14d4ea2f729e79f972fa536ac1522b91202a9a65af3605c2928c4a790a4a50aa13694d461c479ba92cedaeb1e7b190aadaa4e4b96b8e18
+  checksum: 10/1689ccafef894825481fc3d856b4834ba3cc185a9c2878f3c76a9a1ef81af04194849840f3c69e7961e2312771471bb3b460ca92561e1d87599b26c37d0ffb6f
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.3.3#optional!builtin<compat/typescript>":
-  version: 5.3.3
-  resolution: "typescript@patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"
+"typescript@patch:typescript@npm%3A^5.5.4#optional!builtin<compat/typescript>":
+  version: 5.5.4
+  resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=d69c25"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/c93786fcc9a70718ba1e3819bab56064ead5817004d1b8186f8ca66165f3a2d0100fee91fa64c840dcd45f994ca5d615d8e1f566d39a7470fc1e014dbb4cf15d
+  checksum: 10/2c065f0ef81855eac25c9b658a3c9da65ffc005260c12854c2286f40f3667e1b1ecf8bdbdd37b59aa0397920378ce7900bff8cb32e0f1c7af6fd86efc676718c
   languageName: node
   linkType: hard
 
