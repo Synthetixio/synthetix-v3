@@ -1,62 +1,57 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
-
-[setting.salt]
-defaultValue = "governance"
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.council_token_name]
-defaultValue = "Synthetix Governance Module"
+[setting.salt]
+defaultValue = "governance"
 
-[setting.council_token_symbol]
-defaultValue = "SNXGOV"
+[setting.wormhole_core]
+defaultValue = "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
 
-[setting.init_council_member]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
+[setting.wormhole_relayer]
+defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
 
-[setting.epoch_start]
+[setting.initial_council_member]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.epoch_duration]
-defaultValue = "90" # days
+[setting.minimum_active_members]
+defaultValue = "1"
+
+[setting.initial_nomination_period_start_date]
+defaultValue = "0" # defaults to "block.timestamp + administration_period_duration" when given "0"
+
+[setting.administration_period_duration]
+defaultValue = "60" # days
+
+[setting.nomination_period_duration]
+defaultValue = "15" # days
 
 [setting.voting_period_duration]
-defaultValue = "7" # days
-
-[contract.InitialModuleBundle]
-artifact = "InitialModuleBundle"
-create2 = true
-
-[contract.InitialProxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
-salt = "<%= settings.salt %>"
-abiOf = ["InitialModuleBundle"]
-create2 = true
+defaultValue = "15" # days
 
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.ElectionModule]
-artifact = "ElectionModule"
-
 [contract.ElectionInspectorModule]
-artifact = "ElectionInspectorModule"
+artifact = "contracts/modules/core/ElectionInspectorModule.sol:ElectionInspectorModule"
 
-[contract.CouncilTokenModule]
-artifact = "CouncilTokenModule"
+[contract.ElectionModule]
+artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
 
-[contract.DebtShareMock]
-artifact = "DebtShareMock"
+[contract.SnapshotVotePowerModule]
+artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
-    "ElectionModule",
     "ElectionInspectorModule",
+    "ElectionModule",
+    "SnapshotVotePowerModule",
     "InitialModuleBundle",
 ]
 
@@ -65,43 +60,24 @@ target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
-factory.CoreProxy.abiOf = ["CoreRouter"]
-factory.CoreProxy.event = "Upgraded"
-factory.CoreProxy.arg = 0
-
-[router.CouncilTokenRouter]
-contracts = ["CouncilTokenModule", "InitialModuleBundle"]
-
-[invoke.init_council_token]
-target = ["CoreProxy"]
-from = "<%= settings.owner %>"
-func = "initOrUpgradeNft"
-args = [
-    "<%= formatBytes32String('councilToken') %>",
-    "Synthetix Governance Token",
-    "SNXGOV",
-    "https://synthetix.io",
-    "<%= contracts.CouncilTokenRouter.address %>",
-]
-depends = ["invoke.upgrade_core_proxy", "router.CouncilTokenRouter"]
-factory.AccountProxy.abiOf = ["CouncilTokenRouter"]
-factory.AccountProxy.event = "AssociatedSystemSet"
-factory.AccountProxy.arg = 2
+factory.GovernanceProxy.abiOf = ["CoreRouter"]
+factory.GovernanceProxy.event = "Upgraded"
+factory.GovernanceProxy.arg = 0
+factory.GovernanceProxy.highlight = true
 
 [invoke.init_election_module]
-target = ["CoreProxy"]
-func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address)"
+target = ["GovernanceProxy"]
+func = "initOrUpdateElectionSettings(address[],address,address,uint8,uint64,uint64,uint64,uint64)"
 args = [
     [
-        "<%= settings.init_council_member %>",
+        "<%= settings.initial_council_member %>",
     ],
-    "1",
-    "<%= settings.epoch_start %>",
-    "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
-    "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
-    "<%= contracts.DebtShareMock.address %>",
+    "<%= settings.wormhole_core %>",
+    "<%= settings.wormhole_relayer %>",
+    "<%= settings.minimum_active_members %>",
+    "<%= settings.initial_nomination_period_start_date %>",
+    "<%= settings.administration_period_duration %>",
+    "<%= settings.nomination_period_duration %>",
+    "<%= settings.voting_period_duration %>",
 ]
 from = "<%= settings.owner %>"
-
-[provision.trusted_multicall_forwarder]
-source = "trusted-multicall-forwarder"

@@ -9,6 +9,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {Flags} from "../utils/Flags.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {InterestRate} from "../storage/InterestRate.sol";
@@ -129,7 +130,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 );
             }
 
-            int256 totalDebt = collateralValue.toInt() + totalMarketDebt;
+            int256 totalDebt = collateralValue.toInt() +
+                totalMarketDebt -
+                globalMarket.totalAccountsDebt.toInt();
             return MathUtil.max(0, totalDebt).toUint();
         }
 
@@ -141,7 +144,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         if (PerpsMarketFactory.load().perpsMarketId == perpsMarketId) {
-            return GlobalPerpsMarket.load().minimumCredit(PerpsPrice.Tolerance.DEFAULT);
+            GlobalPerpsMarket.Data storage globalMarket = GlobalPerpsMarket.load();
+            uint256 minRequiredCredit = globalMarket.minimumCredit(PerpsPrice.Tolerance.DEFAULT);
+
+            // add the sUSD collateral value to the minimum credit since it's used as escrow
+            return minRequiredCredit + globalMarket.collateralAmounts[SNX_USD_MARKET_ID];
         }
 
         return 0;

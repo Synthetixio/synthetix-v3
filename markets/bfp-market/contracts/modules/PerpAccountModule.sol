@@ -595,7 +595,8 @@ contract PerpAccountModule is IPerpAccountModule {
                 market.currentUtilizationAccruedComputed,
                 fromPosition.entryPythPrice,
                 fromPosition.entryPythPrice
-            )
+            ),
+            runtime.oraclePrice
         );
 
         Position.Data memory mergedPosition = Position.Data(
@@ -608,7 +609,7 @@ contract PerpAccountModule is IPerpAccountModule {
         );
 
         // Update debt correction for `to` position.
-        market.updateDebtCorrection(toPosition, mergedPosition);
+        market.updateDebtCorrection(toPosition, mergedPosition, runtime.oraclePrice);
 
         // Update position accounting `from` -> `to`.
         toPosition.update(mergedPosition);

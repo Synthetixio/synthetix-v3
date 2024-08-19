@@ -52,8 +52,6 @@ interface IAsyncOrderSettlementPythModule {
         int256 pnl;
         uint256 chargedInterest;
         int256 accruedFunding;
-        uint256 pnlUint;
-        uint256 amountToDeduct;
         uint256 settlementReward;
         uint256 fillPrice;
         uint256 totalFees;
@@ -64,6 +62,8 @@ interface IAsyncOrderSettlementPythModule {
         uint256 synthDeductionIterator;
         uint128[] deductedSynthIds;
         uint256[] deductedAmount;
+        int256 chargedAmount;
+        uint256 newAccountDebt;
     }
 
     /**

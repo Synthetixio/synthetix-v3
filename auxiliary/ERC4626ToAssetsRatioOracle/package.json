@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/erc-4626-to-assets-ratio-oracle",
-  "version": "3.4.1",
+  "version": "3.6.0",
   "description": "ERC 4626 to Assets Oracle Node",
   "publishConfig": {
     "access": "public"

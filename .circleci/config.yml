@@ -24,19 +24,34 @@ commands:
           command: |-
             export PATH="$PATH:$HOME/.foundry/bin"
             echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+            expected_version="forge 0.2.0 (6de15b013 2024-07-23T11:21:28.391167000Z)"
 
-            if command -v anvil; then
-              echo "Anvil already installed"
-              anvil --version
+            if forge --version; then
+              foundry_version=$(forge --version)
+              if [ "$expected_version" != "$foundry_version" ]; then
+                echo "Foundry Forge version does not match the expected version."
+                echo "Found: $foundry_version"
+                echo "Expected: $expected_version"
+                curl https://sh.rustup.rs -sSf | sh -s -- -y
+                . "$HOME/.cargo/env"
+                curl -L https://foundry.paradigm.xyz | bash
+                cd .foundry/bin
+                ./foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
+              fi
             else
+              echo "Foundry needs to be installed"
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              . "$HOME/.cargo/env"
               curl -L https://foundry.paradigm.xyz | bash
-              foundryup
+              cd .foundry/bin
+              ./foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
             fi
-
       - save_cache:
           key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
           paths:
             - "~/.foundry"
+            - "~/.cargo"
+            - "~/.rustup"
 
   install-ipfs:
     steps:
@@ -144,6 +159,7 @@ jobs:
         default: "--all"
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - install-foundry
@@ -260,6 +276,7 @@ jobs:
 
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     parallelism: << parameters.parallelism >>
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
@@ -338,6 +355,7 @@ jobs:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -346,6 +364,7 @@ jobs:
   size-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -355,6 +374,7 @@ jobs:
   verify-storage:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - install-foundry
@@ -366,6 +386,7 @@ jobs:
   lint:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -379,6 +400,7 @@ jobs:
   check-packages:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     steps:
       - checkout
       - run: yarn install --immutable --immutable-cache --check-cache
@@ -399,6 +421,7 @@ jobs:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
@@ -438,6 +461,7 @@ jobs:
   docgen-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
       GIT_PAGER: cat
@@ -495,6 +519,7 @@ jobs:
   update-subgraphs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
       GIT_PAGER: cat
@@ -543,6 +568,7 @@ jobs:
         default: 1
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
     parallelism: << parameters.parallelism >>
     steps:
       - checkout
@@ -573,6 +599,7 @@ jobs:
 
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    resource_class: large
 
     steps:
       - checkout

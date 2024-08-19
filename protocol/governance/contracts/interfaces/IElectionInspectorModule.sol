@@ -28,28 +28,13 @@ interface IElectionInspectorModule {
     /// @notice Returns a list of all nominated candidates in the given epoch
     function getNomineesAtEpoch(uint256 epochIndex) external view returns (address[] memory);
 
-    /// @notice Returns the ballot id that user voted on in the given election
-    function getBallotVotedAtEpoch(
-        address user,
-        uint256 epochIndex
-    ) external view returns (bytes32);
-
     /// @notice Returns if user has voted in the given election
-    function hasVotedInEpoch(address user, uint256 epochIndex) external view returns (bool);
-
-    /// @notice Returns the number of votes given to a particular ballot in a given epoch
-    function getBallotVotesInEpoch(
-        bytes32 ballotId,
+    function hasVotedInEpoch(
+        address user,
+        uint256 chainId,
         uint256 epochIndex
-    ) external view returns (uint256);
+    ) external view returns (bool);
 
-    /// @notice Returns the list of candidates that a particular ballot has in a given epoch
-    function getBallotCandidatesInEpoch(
-        bytes32 ballotId,
-        uint256 epochIndex
-    ) external view returns (address[] memory);
-
-    /// @notice Returns the number of votes a candidate received in a given epoch
     function getCandidateVotesInEpoch(
         address candidate,
         uint256 epochIndex
