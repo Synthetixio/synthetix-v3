@@ -1,5 +1,5 @@
-import { LogDescription } from '@ethersproject/abi/lib/interface';
 import { Result } from '@ethersproject/abi';
+import { LogDescription } from '@ethersproject/abi/lib/interface';
 import { ethers } from 'ethers';
 
 /**
@@ -63,11 +63,13 @@ export function parseLogs({
   contract: ethers.Contract;
   logs: ethers.providers.Log[];
 }) {
-  return logs.map((log) => {
-    const event = contract.interface.parseLog(log) as unknown as ethers.Event;
-    event.event = (event as unknown as LogDescription).name;
-    return event;
-  });
+  return logs
+    .filter((log) => log.data !== '0x')
+    .map((log) => {
+      const event = contract.interface.parseLog(log) as unknown as ethers.Event;
+      event.event = (event as unknown as LogDescription).name;
+      return event;
+    });
 }
 
 interface EventWithArgs extends ethers.Event {
