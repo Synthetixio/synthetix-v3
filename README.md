@@ -73,7 +73,7 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 #### Setup Cannon
 
-- Run `yarn upgrade-interactive` and make sure that `@usecannon/cli` and `hardhat-cannon` and updated to the latest versions.
+- Run `yarn upgrade-interactive` and make sure that `@usecannon/cli` and `hardhat-cannon` are updated to the latest versions.
 - After installing for the first time, run `yarn cannon:setup` to configure a reliable IPFS URL for publishing packages and any other preferred settings.
 
 #### Setup npm
