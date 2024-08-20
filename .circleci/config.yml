@@ -155,6 +155,23 @@ commands:
             else
               echo "Pull Request already exists: $PR_URL"
             fi
+
+  save-cannon-cache:
+    steps:
+      # To avoid infinite cannon cache growth clean the cache once a week
+      - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
+      - save_cache:
+          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}
+          paths:
+            - "~/.local/share/cannon"
+
+  restore-cannon-cache:
+    steps:
+      - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}
+
 jobs:
   compile-foundry:
     docker:
@@ -194,10 +211,6 @@ jobs:
             - generated-testable-{{ .Environment.CIRCLE_SHA1 }}
             - generated-testable-
 
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CIRCLE_SHA1 }}
-
       - run:
           name: "Generate testable contracts sources"
           command: << parameters.generate-testable-command >>
@@ -207,11 +220,13 @@ jobs:
             - "protocol/synthetix/contracts/generated"
             # Add more folders here if we generate more
 
+      - restore-cannon-cache
       - run:
           name: "Build testable contracts"
           environment:
             CANNON_REGISTRY_PRIORITY: "local"
           command: << parameters.build-testable-command >>
+      - save-cannon-cache
 
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -237,23 +252,31 @@ jobs:
             - "markets/bfp-market/typechain-types"
 
             - "auxiliary/ArbitrumGasPriceOracle/artifacts"
-            - "auxiliary/ArbitrumGasPriceOracle/cache"
-            - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
             - "auxiliary/BuybackSnx/artifacts"
-            - "auxiliary/BuybackSnx/cache"
-            - "auxiliary/BuybackSnx/typechain-types"
+            - "auxiliary/ERC4626ToAssetsRatioOracle/artifacts"
             - "auxiliary/OpGasPriceOracle/artifacts"
-            - "auxiliary/OpGasPriceOracle/cache"
-            - "auxiliary/OpGasPriceOracle/typechain-types"
             - "auxiliary/PythERC7412Wrapper/artifacts"
-            - "auxiliary/PythERC7412Wrapper/cache"
-            - "auxiliary/PythERC7412Wrapper/typechain-types"
             - "auxiliary/SpotMarketOracle/artifacts"
-            - "auxiliary/SpotMarketOracle/cache"
-            - "auxiliary/SpotMarketOracle/typechain-types"
             - "auxiliary/TrustedMulticallForwarder/artifacts"
+            - "auxiliary/WstEthToStEthRatioOracle/artifacts"
+
+            - "auxiliary/ArbitrumGasPriceOracle/cache"
+            - "auxiliary/BuybackSnx/cache"
+            - "auxiliary/ERC4626ToAssetsRatioOracle/cache"
+            - "auxiliary/OpGasPriceOracle/cache"
+            - "auxiliary/PythERC7412Wrapper/cache"
+            - "auxiliary/SpotMarketOracle/cache"
             - "auxiliary/TrustedMulticallForwarder/cache"
+            - "auxiliary/WstEthToStEthRatioOracle/cache"
+
+            - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
+            - "auxiliary/BuybackSnx/typechain-types"
+            - "auxiliary/ERC4626ToAssetsRatioOracle/typechain-types"
+            - "auxiliary/OpGasPriceOracle/typechain-types"
+            - "auxiliary/PythERC7412Wrapper/typechain-types"
+            - "auxiliary/SpotMarketOracle/typechain-types"
             - "auxiliary/TrustedMulticallForwarder/typechain-types"
+            - "auxiliary/WstEthToStEthRatioOracle/typechain-types"
 
             - "utils/core-contracts/artifacts"
             - "utils/core-contracts/cache"
@@ -262,10 +285,6 @@ jobs:
             - "utils/core-modules/cache"
             - "utils/core-modules/typechain-types"
 
-      - save_cache:
-          key: cannon-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - "~/.local/share/cannon"
       - save_cache:
           key: hardhat-{{ .Environment.SOLC_VERSION }}
           paths:
@@ -322,9 +341,7 @@ jobs:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
 
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CIRCLE_SHA1 }}
+      - restore-cannon-cache
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -606,9 +623,7 @@ jobs:
       - restore_cache:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CIRCLE_SHA1 }}
+      - restore-cannon-cache
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
