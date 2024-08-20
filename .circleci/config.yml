@@ -10,11 +10,15 @@ commands:
     steps:
       - run: yarn install --immutable --immutable-cache
 
-  install-foundry:
+  restore-foundry:
     steps:
       - restore_cache:
           keys:
-            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}-{{ .Environment.FOUNDRY_COMMIT }}
+
+  install-foundry:
+    steps:
+      - restore-foundry
 
       - run:
           name: "Install Foundry"
@@ -24,34 +28,25 @@ commands:
           command: |-
             export PATH="$PATH:$HOME/.foundry/bin"
             echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
-            expected_version="forge 0.2.0 (6de15b013 2024-07-23T11:21:28.391167000Z)"
 
-            if forge --version; then
-              foundry_version=$(forge --version)
-              if [ "$expected_version" != "$foundry_version" ]; then
-                echo "Foundry Forge version does not match the expected version."
-                echo "Found: $foundry_version"
-                echo "Expected: $expected_version"
-                curl https://sh.rustup.rs -sSf | sh -s -- -y
-                . "$HOME/.cargo/env"
-                curl -L https://foundry.paradigm.xyz | bash
-                cd .foundry/bin
-                ./foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
-              fi
+            if command -v forge; then
+              echo "Forge already installed"
+              forge --version
             else
               echo "Foundry needs to be installed"
               curl https://sh.rustup.rs -sSf | sh -s -- -y
               . "$HOME/.cargo/env"
               curl -L https://foundry.paradigm.xyz | bash
               cd .foundry/bin
-              ./foundryup -C 6de15b0136ccb7dcac412d6b97bb3269ac2361c
+              ./foundryup -C $FOUNDRY_COMMIT
+              echo "Forge compiled and installed"
+              forge --version
             fi
+
       - save_cache:
-          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}-{{ .Environment.FOUNDRY_COMMIT }}
           paths:
             - "~/.foundry"
-            - "~/.cargo"
-            - "~/.rustup"
 
   install-ipfs:
     steps:
@@ -152,7 +147,7 @@ commands:
               echo "Pull Request already exists: $PR_URL"
             fi
 jobs:
-  build-testable:
+  compile-foundry:
     parameters:
       wat:
         type: string
@@ -161,8 +156,18 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     resource_class: large
     steps:
-      - checkout
       - install-foundry
+
+  build-testable:
+    parameters:
+      wat:
+        type: string
+        default: "--all"
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - restore-foundry
       - yarn-install
 
       - run: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run build:ts
@@ -276,7 +281,6 @@ jobs:
 
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     parallelism: << parameters.parallelism >>
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
@@ -300,7 +304,7 @@ jobs:
       - store_artifacts:
           path: "/tmp/files.txt"
 
-      - install-foundry
+      - restore-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -355,7 +359,6 @@ jobs:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -364,7 +367,6 @@ jobs:
   size-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -374,10 +376,9 @@ jobs:
   verify-storage:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     steps:
       - checkout
-      - install-foundry
+      - restore-foundry
       - yarn-install
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:contracts
@@ -386,7 +387,6 @@ jobs:
   lint:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     steps:
       - checkout
       - yarn-install
@@ -400,7 +400,6 @@ jobs:
   check-packages:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     steps:
       - checkout
       - run: yarn install --immutable --immutable-cache --check-cache
@@ -421,12 +420,11 @@ jobs:
         type: string
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
-      - install-foundry
+      - restore-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -461,7 +459,6 @@ jobs:
   docgen-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
       GIT_PAGER: cat
@@ -477,7 +474,7 @@ jobs:
             git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
 
       - checkout
-      - install-foundry
+      - restore-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -519,7 +516,6 @@ jobs:
   update-subgraphs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     environment:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
       GIT_PAGER: cat
@@ -535,7 +531,7 @@ jobs:
             cd synthetix-v3
             git checkout $CIRCLE_SHA1
 
-      - install-foundry
+      - restore-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -568,11 +564,10 @@ jobs:
         default: 1
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
     parallelism: << parameters.parallelism >>
     steps:
       - checkout
-      - install-foundry
+      - restore-foundry
       - yarn-install
       - run: yarn workspace "<< parameters.workspace >>" run forge-test
       - run: yarn workspace "<< parameters.workspace >>" run forge-coverage
@@ -599,12 +594,11 @@ jobs:
 
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
 
     steps:
       - checkout
 
-      - install-foundry
+      - restore-foundry
       - yarn-install
 
       - restore_cache:
@@ -662,12 +656,15 @@ workflows:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
+      - compile-foundry
       - lint
       - size-contracts
-      - verify-storage
+      - verify-storage:
+          requires: [compile-foundry]
       - check-packages
 
-      - build-testable
+      - build-testable:
+          requires: [compile-foundry]
 
       - test-contracts:
           name: "test-main"
@@ -706,6 +703,7 @@ workflows:
 
       - test-contracts:
           name: "test-core-modules"
+          requires: [compile-foundry]
           dir: "./utils/core-modules"
           parallelism: 1
           batch-size: 5
@@ -719,12 +717,14 @@ workflows:
 
       - test-contracts:
           name: "test-core-utils"
+          requires: [compile-foundry]
           dir: "./utils/core-utils"
           parallelism: 2
           batch-size: 5
 
       - test-forge:
           name: "test-rewards-distributor"
+          requires: [compile-foundry]
           workspace: "@synthetixio/rewards-distributor"
 
       - test-subgraph:
@@ -741,6 +741,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--base-mainnet-andromeda"
+          requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "andromeda"
@@ -750,6 +751,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--base-sepolia-andromeda"
+          requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "andromeda"
@@ -759,6 +761,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--optimism-mainnet"
+          requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "main"
@@ -768,6 +771,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--mainnet"
+          requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "main"
@@ -777,6 +781,7 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--base-mainnet-andromeda"
+          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -786,6 +791,7 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--base-sepolia-andromeda"
+          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -795,6 +801,7 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--optimism-mainnet"
+          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "main"
@@ -804,6 +811,7 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--mainnet"
+          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "main"
@@ -811,28 +819,29 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "spot-market--base-mainnet-andromeda"
-      #    workspace: "@synthetixio/spot-market"
-      #    cannonPackage: "synthetix-spot-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialSpotMarketProxy"
+      - simulate-release:
+          name: "spot-market--base-mainnet-andromeda"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "spot-market--base-sepolia-andromeda"
-      #    workspace: "@synthetixio/spot-market"
-      #    cannonPackage: "synthetix-spot-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-sepolia"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialSpotMarketProxy"
+      - simulate-release:
+          name: "spot-market--base-sepolia-andromeda"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
 
       - simulate-release:
           name: "spot-market--optimism-mainnet"
+          requires: [compile-foundry]
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "main"
@@ -840,29 +849,30 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialSpotMarketProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "perps-market--base-mainnet-andromeda"
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
+      - simulate-release:
+          name: "perps-market--base-mainnet-andromeda"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
 
-      # TODO: Uncomment when hardhat-cannon supports --preset
-      #- simulate-release:
-      #    name: "perps-market--base-sepolia-andromeda"
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-sepolia"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
+      - simulate-release:
+          name: "perps-market--base-sepolia-andromeda"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/perps-market"
+          cannonPackage: "synthetix-perps-market:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
 
       # TODO: Uncomment when deployed
       #- simulate-release:
       #    name: "perps-market--optimism-mainnet"
+      #    requires: [compile-foundry]
       #    workspace: "@synthetixio/perps-market"
       #    cannonPackage: "synthetix-perps-market:latest"
       #    cannonPreset: "main"
@@ -886,8 +896,15 @@ workflows:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
+      - compile-foundry:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - docgen-contracts:
           name: "docgen-contracts"
+          requires: [compile-foundry]
           filters:
             tags:
               only: /^v.*/
@@ -899,7 +916,14 @@ workflows:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
+      - compile-foundry:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /docgen-contracts/
       - docgen-contracts:
+          requires: [compile-foundry]
           filters:
             tags:
               ignore: /.*/
