@@ -134,7 +134,8 @@ describe('SpotMarketFactory', () => {
       it('reverts if you send wrong transaction type', async () => {
         await assertRevert(
           systems().SpotMarket.connect(marketOwner).indexPrice(marketId(), 12, 0),
-          'InvalidTransactionType'
+          'InvalidTransactionType',
+          systems().SpotMarket
         );
       });
 

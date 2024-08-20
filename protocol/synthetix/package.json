@@ -34,7 +34,6 @@
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-ast": "^0.4.55",
-    "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.2"
+    "solidity-docgen": "^0.6.0-beta.36"
   }
 }

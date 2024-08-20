@@ -24,7 +24,7 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.pyth]
 source = "pyth"
-args = [120, 1] # 120s, 1wei
+# args = [120, 1] # 120s, 1wei
 
 # --- Module Contracts --- #
 
