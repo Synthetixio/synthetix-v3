@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: "18.18.0"
+    default: "20.16.0"
 
 commands:
   yarn-install:
