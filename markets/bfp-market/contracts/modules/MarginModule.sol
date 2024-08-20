@@ -499,7 +499,7 @@ contract MarginModule is IMarginModule {
 
         Account.loadAccountAndValidatePermission(
             accountId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+            AccountRBAC._BFP_PERPS_PAY_DEBT_PERMISSION
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);

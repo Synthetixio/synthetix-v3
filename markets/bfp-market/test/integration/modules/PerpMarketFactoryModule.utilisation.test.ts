@@ -154,13 +154,18 @@ describe('PerpMarketFactoryModule Utilization', () => {
       // Create one trade that will win more than the delegated collateral.
       const { collateral, collateralDepositAmount, trader } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarket: market })
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredMarginUsdDepositAmount: 2000,
+        })
       );
 
       // Create a long position
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSide: 1,
+        desiredLeverage: 1,
       });
+
       await commitAndSettle(bs, marketId, trader, order1);
 
       // Price 10x, causing large profits for the trader.
@@ -224,13 +229,15 @@ describe('PerpMarketFactoryModule Utilization', () => {
       // Create one trade that will win more than the delegated collateral
       const { trader, collateral, collateralDepositAmount } = await depositMargin(
         bs,
-        genTrader(bs, { desiredMarket: market })
+        genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: 2000 })
       );
 
       // Create a long position
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSide: 1,
+        desiredLeverage: 1,
       });
+
       await commitAndSettle(bs, marketId, trader, order1);
 
       // Price 10x, causing large profits for the trader
