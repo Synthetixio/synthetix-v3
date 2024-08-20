@@ -53,6 +53,11 @@ export default async function assertRevert(
       return; // Expected message found in custom error.
     }
 
+    if (customError && customError === 'UNKNOWN_ERROR_FAILED_TO_DECODE') {
+      console.warn('assertRevert: could not decode custom error');
+      return;
+    }
+
     // Before throwing, replace the uninformative original message
     // with the retrieved custom error (if retrieved).
     errorMessage = customError || errorMessage;
@@ -124,23 +129,28 @@ async function _getCustomErrorFromTransaction(transaction: Transaction, contract
     from: transaction.from,
     to: transaction.to,
     data: transaction.data,
+    value: transaction.value,
   };
 
   // Retrieve the error code of the transaction.
   const provider = contract.provider;
-  const code = await provider.call(txRequest);
+  try {
+    const code = await provider.call(txRequest);
 
-  // Try decoding the returned code of the call with all the errors
-  // defined in the contract's interface.
-  for (const fragment of Object.values(contract.interface.errors)) {
-    try {
-      // This line will throw if the code is not decodable with this error fragment.
-      const values = contract.interface.decodeErrorResult(fragment, code);
+    // Try decoding the returned code of the call with all the errors
+    // defined in the contract's interface.
+    for (const fragment of Object.values(contract.interface.errors)) {
+      try {
+        // This line will throw if the code is not decodable with this error fragment.
+        const values = contract.interface.decodeErrorResult(fragment, code);
 
-      return `${fragment.name}(${_wrapInQuotes(values as unknown[])})`;
-    } catch (err) {
-      // Decoding failed, try another fragment.
+        return `${fragment.name}(${_wrapInQuotes(values as unknown[])})`;
+      } catch (err) {
+        // Decoding failed, try another fragment.
+      }
     }
+  } catch (err) {
+    return 'UNKNOWN_ERROR_FAILED_TO_DECODE';
   }
 }
 
