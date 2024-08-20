@@ -187,12 +187,16 @@ describe('OrderModule', () => {
         stakedCollateral().address
       );
       const stakedCollateralAddress = stakedCollateral().address;
-      await Core.connect(staker()).delegateCollateral(
-        stakerAccountId,
-        poolId,
-        stakedCollateralAddress,
-        minDelegationD18,
-        bn(1)
+      await withExplicitEvmMine(
+        () =>
+          Core.connect(staker()).delegateCollateral(
+            stakerAccountId,
+            poolId,
+            stakedCollateralAddress,
+            minDelegationD18,
+            bn(1)
+          ),
+        provider()
       );
 
       const {
@@ -204,6 +208,7 @@ describe('OrderModule', () => {
       } = await depositMargin(
         bs,
         genTrader(bs, {
+          desiredMarginUsdDepositAmount: 4000,
           desiredTrader: tradersGenerator.next().value,
         })
       );
@@ -223,6 +228,7 @@ describe('OrderModule', () => {
           genTrader(bs, {
             desiredTrader: trader2,
             desiredMarket: market,
+            desiredMarginUsdDepositAmount: 15_000,
           })
         );
       const order2 = await genOrder(bs, market, collateral2, collateralDepositAmount2);
