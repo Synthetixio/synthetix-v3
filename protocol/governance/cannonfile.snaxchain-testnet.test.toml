@@ -6,7 +6,7 @@ preset = "test"
 include = ["./cannonfile.toml", "./tomls/testable-contracts.toml"]
 
 [setting.owner]
-defaultValue = "0xe2163dd599067919d1e9108929b568Bf41D3A420"
+defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
 
 [setting.salt]
 defaultValue = "governance-test-v8"
@@ -14,12 +14,13 @@ defaultValue = "governance-test-v8"
 [setting.wormhole_core]
 defaultValue = "0xBB73cB66C26740F31d1FabDC6b7A46a038A300dd" # https://testnet-explorer.snaxchain.io/address/0xBB73cB66C26740F31d1FabDC6b7A46a038A300dd
 
-[contract.WormholeRelayerMock]
-artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
-args = ["<%= settings.wormhole_core %>"]
+# [contract.WormholeRelayerMock]
+# artifact = "contracts/mocks/WormholeRelayerMock.sol:WormholeRelayerMock"
+# args = ["<%= settings.wormhole_core %>"]
 
 [setting.wormhole_relayer]
-defaultValue = "<%= contracts.WormholeRelayerMock.address %>" # https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0xe1ECA712d327ed8e0E762A303c95c19b7b4659EE"
+# defaultValue = "<%= contracts.WormholeRelayerMock.address %>" # https://docs.wormhole.com/wormhole/reference/constants
 
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"
@@ -72,14 +73,7 @@ args = ["<%= settings.owner %>", "100", "1"]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setRegisteredEmitters"
-args = [
-    [
-        "43",
-    ],
-    [
-        "0x4066a172DD5D21E4f787C07D3118D0876296750B"
-    ],
-]
+args = [["43"], ["0x4066a172DD5D21E4f787C07D3118D0876296750B"]]
 
 [invoke.set_gas_limit]
 target = ["GovernanceProxy"]
@@ -91,4 +85,4 @@ args = ["1000000"]
 target = ["GovernanceProxy"]
 from = "<%= settings.owner %>"
 func = "setSnapshotContract"
-args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true,]
+args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true]
