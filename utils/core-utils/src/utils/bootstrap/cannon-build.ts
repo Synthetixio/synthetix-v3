@@ -1,11 +1,10 @@
-import { ContractArtifact, traceActions } from '@usecannon/builder';
+import type { ContractArtifact, ChainBuilderContext } from '@usecannon/builder';
+import { traceActions } from '@usecannon/builder';
 import { build, loadCannonfile } from '@usecannon/cli';
 import { getChainById } from '@usecannon/cli/dist/src/chains';
 import { ethers } from 'ethers';
 import * as viem from 'viem';
 import { launchCannonNode } from './cannon-node';
-
-import type { ChainBuilderContext } from '@usecannon/builder/src/types';
 
 interface BuildOptions {
   cannonfile: string;

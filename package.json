@@ -71,7 +71,8 @@
     "solhint": "^4.1.1",
     "solhint-plugin-meta-transactions": "^0.1.0",
     "solhint-plugin-numcast": "^1.0.0",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   },
   "resolutions": {
     "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors"
