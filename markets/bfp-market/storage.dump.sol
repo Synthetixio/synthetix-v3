@@ -928,6 +928,8 @@ library Position {
         uint256 im;
         uint256 mm;
         uint256 ethPrice;
+        int256 fillPremium;
+        int128 sizeDelta;
     }
     struct Data {
         int128 size;
