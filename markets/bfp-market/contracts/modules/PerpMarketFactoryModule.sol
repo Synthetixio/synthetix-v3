@@ -71,7 +71,11 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         OwnableStorage.onlyOwner();
 
         uint128 id = ISynthetixSystem(SYNTHETIX_CORE).registerMarket(address(this));
-
+        if (data.minDelegateTime > 0) {
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(id, data.minDelegateTime);
+        } else {
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(id, 24 hours);
+        }
         PerpMarket.create(id, data.name);
         PerpMarket.load().activeMarketIds.push(id);
         emit MarketCreated(id, data.name);
