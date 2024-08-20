@@ -10,15 +10,30 @@ commands:
     steps:
       - run: yarn install --immutable --immutable-cache
 
-  restore-foundry:
+  install-foundry:
     steps:
       - restore_cache:
           keys:
             - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}-{{ .Environment.FOUNDRY_COMMIT }}
 
-  install-foundry:
+      - run:
+          name: "Add .foundry/bin to PATH"
+          command: |-
+            export PATH="$PATH:$HOME/.foundry/bin"
+            echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+
+      - run:
+          name: "forge --version"
+          command: |-
+            if command -v forge; then
+              forge --version
+            else
+              echo "Forge needs to be compiled"
+            fi
+
+  compile-foundry:
     steps:
-      - restore-foundry
+      - install-foundry
 
       - run:
           name: "Install Foundry"
@@ -26,27 +41,21 @@ commands:
           environment:
             SHELL: /bin/bash
           command: |-
-            export PATH="$PATH:$HOME/.foundry/bin"
-            echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
-
             if command -v forge; then
               echo "Forge already installed"
-              forge --version
             else
-              echo "Foundry needs to be installed"
               curl https://sh.rustup.rs -sSf | sh -s -- -y
               . "$HOME/.cargo/env"
               curl -L https://foundry.paradigm.xyz | bash
               cd .foundry/bin
               ./foundryup -C $FOUNDRY_COMMIT
-              echo "Forge compiled and installed"
               forge --version
             fi
 
       - save_cache:
           key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}-{{ .Environment.FOUNDRY_COMMIT }}
           paths:
-            - "~/.foundry"
+            - "~/.foundry/bin"
 
   install-ipfs:
     steps:
@@ -156,7 +165,7 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     resource_class: large
     steps:
-      - install-foundry
+      - compile-foundry
 
   build-testable:
     parameters:
@@ -167,7 +176,7 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      - restore-foundry
+      - install-foundry
       - yarn-install
 
       - run: yarn workspaces foreach << parameters.wat >> --topological-dev --verbose run build:ts
@@ -304,7 +313,7 @@ jobs:
       - store_artifacts:
           path: "/tmp/files.txt"
 
-      - restore-foundry
+      - install-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -378,7 +387,7 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      - restore-foundry
+      - install-foundry
       - yarn-install
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:ts
       - run: yarn workspaces foreach --all --topological-dev --verbose run build:contracts
@@ -424,7 +433,7 @@ jobs:
       #CANNON_IPFS_URL: "http://127.0.0.1:5001"
     steps:
       - checkout
-      - restore-foundry
+      - install-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -474,7 +483,7 @@ jobs:
             git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
 
       - checkout
-      - restore-foundry
+      - install-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -531,7 +540,7 @@ jobs:
             cd synthetix-v3
             git checkout $CIRCLE_SHA1
 
-      - restore-foundry
+      - install-foundry
       #- install-ipfs
       #- run-ipfs-daemon
       - yarn-install
@@ -567,7 +576,7 @@ jobs:
     parallelism: << parameters.parallelism >>
     steps:
       - checkout
-      - restore-foundry
+      - install-foundry
       - yarn-install
       - run: yarn workspace "<< parameters.workspace >>" run forge-test
       - run: yarn workspace "<< parameters.workspace >>" run forge-coverage
@@ -598,7 +607,7 @@ jobs:
     steps:
       - checkout
 
-      - restore-foundry
+      - install-foundry
       - yarn-install
 
       - restore_cache:
