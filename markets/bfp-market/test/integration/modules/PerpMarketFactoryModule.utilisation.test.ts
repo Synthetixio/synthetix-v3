@@ -413,7 +413,7 @@ describe('PerpMarketFactoryModule Utilization', () => {
       } = pool();
 
       // Some time passes
-      await fastForwardBySec(provider(), genNumber(1, SECONDS_ONE_DAY));
+      await fastForwardBySec(provider(), SECONDS_ONE_DAY + 1);
       // Decrease amount of staked collateral on the core side.
       const stakedCollateralAddress = stakedCollateral().address;
       await withExplicitEvmMine(
