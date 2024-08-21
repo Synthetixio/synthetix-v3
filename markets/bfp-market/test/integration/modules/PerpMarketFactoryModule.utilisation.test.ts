@@ -14,6 +14,7 @@ import {
   withExplicitEvmMine,
 } from '../../helpers';
 import { calcUtilization, calcUtilizationRate } from '../../calculations';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PerpMarketFactoryModule Utilization', () => {
   const bs = bootstrap(genBootstrap());
@@ -142,6 +143,11 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const { minDelegationD18 } = await Core.getCollateralConfiguration(
         stakedCollateral().address
       );
+
+      // increase the time for 1 day to pass the minimum delegation time period
+      const nowTime = (await provider().getBlock('latest')).timestamp;
+      await fastForwardTo(nowTime + SECONDS_ONE_DAY + 1, provider());
+
       const stakedCollateralAddress = stakedCollateral().address;
       await Core.connect(staker()).delegateCollateral(
         stakerAccountId,
@@ -217,6 +223,11 @@ describe('PerpMarketFactoryModule Utilization', () => {
       const { minDelegationD18 } = await Core.getCollateralConfiguration(
         stakedCollateral().address
       );
+
+      // increase the time for 1 day to pass the minimum delegation time period
+      const nowTime = (await provider().getBlock('latest')).timestamp;
+      await fastForwardTo(nowTime + SECONDS_ONE_DAY + 1, provider());
+
       const stakedCollateralAddress = stakedCollateral().address;
       await Core.connect(staker()).delegateCollateral(
         stakerAccountId,
