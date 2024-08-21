@@ -161,7 +161,7 @@ commands:
       # To avoid infinite cannon cache growth clean the cache once a week
       - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
       - save_cache:
-          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}
+          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "~/.local/share/cannon"
 
@@ -170,23 +170,8 @@ commands:
       - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}
-
-  save-testable-cannon-cache:
-    steps:
-      # To avoid infinite cannon cache growth clean the cache once a week
-      - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
-      - save_cache:
-          key: cannon-testable-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}
-          paths:
-            - "~/.local/share/cannon"
-
-  restore-testable-cannon-cache:
-    steps:
-      - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
-      - restore_cache:
-          keys:
-            - cannon-testable-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}-{{ .Environment.CIRCLE_SHA1 }}
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}-
 
 jobs:
   compile-foundry:
@@ -236,13 +221,13 @@ jobs:
             - "protocol/synthetix/contracts/generated"
             # Add more folders here if we generate more
 
-      - restore-testable-cannon-cache
+      - restore-cannon-cache
       - run:
           name: "Build testable contracts"
           environment:
             CANNON_REGISTRY_PRIORITY: "local"
           command: << parameters.build-testable-command >>
-      - save-testable-cannon-cache
+      - save-cannon-cache
 
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -357,7 +342,7 @@ jobs:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
 
-      - restore-testable-cannon-cache
+      - restore-cannon-cache
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -420,11 +405,7 @@ jobs:
       - install-foundry
       - yarn-install
       - run: yarn build:ts
-
-      - restore-cannon-cache
-      - run: yarn build:contracts
-      - save-cannon-cache
-
+      - run: yarn storage:verify
       - run: yarn check:storage
 
   lint:
@@ -643,7 +624,7 @@ jobs:
       - restore_cache:
           keys:
             - hardhat-{{ .Environment.SOLC_VERSION }}
-      - restore-testable-cannon-cache
+      - restore-cannon-cache
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CIRCLE_SHA1 }}
