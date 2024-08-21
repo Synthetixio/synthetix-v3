@@ -5,8 +5,11 @@
   "private": true,
   "scripts": {
     "clean": "hardhat clean && rm -rf test/generated contracts/generated",
-    "build": "yarn clean && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
-    "build-testable": "yarn build cannonfile.test.toml",
+    "build": "yarn build:contracts",
+    "storage:verify": "hardhat compile --force && hardhat storage:verify",
+    "build:contracts": "hardhat compile --force && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "yarn build-testable && hardhat test",
     "coverage": "yarn build && hardhat coverage --network hardhat",

@@ -420,11 +420,7 @@ jobs:
       - install-foundry
       - yarn-install
       - run: yarn build:ts
-
-      - restore-cannon-cache
-      - run: yarn build:contracts
-      - save-cannon-cache
-
+      - run: yarn storage:verify
       - run: yarn check:storage
 
   lint:
