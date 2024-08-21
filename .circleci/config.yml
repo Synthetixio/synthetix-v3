@@ -764,6 +764,26 @@ workflows:
           workspace: "@synthetixio/perps-market-subgraph"
 
       - simulate-release:
+          name: "synthetix--mainnet"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
+          name: "synthetix--sepolia"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
+
+      - simulate-release:
           name: "synthetix--base-mainnet-andromeda"
           requires: [compile-foundry]
           workspace: "@synthetixio/main"
@@ -794,14 +814,24 @@ workflows:
           proxy: "contract.InitialCoreProxy"
 
       - simulate-release:
-          name: "synthetix--mainnet"
+          name: "oracle-manager--mainnet"
           requires: [compile-foundry]
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix:latest"
-          cannonPreset: "main"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
           hardhatNetwork: "mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialCoreProxy"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
+          name: "oracle-manager--sepolia"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
+          hardhatNetwork: "sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
 
       - simulate-release:
           name: "oracle-manager--base-mainnet-andromeda"
@@ -828,20 +858,30 @@ workflows:
           requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
-          cannonPreset: "main"
+          cannonPreset: "with-synthetix"
           hardhatNetwork: "optimistic-mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
       - simulate-release:
-          name: "oracle-manager--mainnet"
+          name: "spot-market--mainnet"
           requires: [compile-foundry]
-          workspace: "@synthetixio/oracle-manager"
-          cannonPackage: "oracle-manager:latest"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "main"
           hardhatNetwork: "mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
+          proxy: "contract.InitialSpotMarketProxy"
+
+      - simulate-release:
+          name: "spot-market--sepolia"
+          requires: [compile-foundry]
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "sepolia"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialSpotMarketProxy"
 
       - simulate-release:
           name: "spot-market--base-mainnet-andromeda"
@@ -892,17 +932,6 @@ workflows:
           hardhatNetwork: "base-sepolia"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
-
-      # TODO: Uncomment when deployed
-      #- simulate-release:
-      #    name: "perps-market--optimism-mainnet"
-      #    requires: [compile-foundry]
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market:latest"
-      #    cannonPreset: "main"
-      #    hardhatNetwork: "optimistic-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
 
   # TODO: Uncomment when update-subgraphs has been refactored/re-implemented to work.
   # update-subgraphs:
