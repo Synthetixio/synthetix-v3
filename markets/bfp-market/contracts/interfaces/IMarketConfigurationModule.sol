@@ -97,4 +97,9 @@ interface IMarketConfigurationModule is IBasePerpMarket {
     function getMarketConfigurationById(
         uint128 marketId
     ) external view returns (PerpMarketConfiguration.Data memory);
+
+    /// @notice Updates the minimum delegation time for a market.
+    /// @param marketId Market to update
+    /// @param minDelegationTime Minimum delegation time in seconds
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external;
 }
