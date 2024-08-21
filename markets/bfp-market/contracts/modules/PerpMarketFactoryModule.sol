@@ -31,6 +31,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
+    uint32 constant DEFAULT_MIN_DELEGATE_TIME = 24 hours; // 86400 seconds
+
     constructor(address _synthetix) {
         SYNTHETIX_CORE = _synthetix;
         ISynthetixSystem core = ISynthetixSystem(_synthetix);
@@ -74,7 +76,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         if (data.minDelegateTime > 0) {
             ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(id, data.minDelegateTime);
         } else {
-            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(id, 24 hours);
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(
+                id,
+                DEFAULT_MIN_DELEGATE_TIME
+            );
         }
         PerpMarket.create(id, data.name);
         PerpMarket.load().activeMarketIds.push(id);
