@@ -600,6 +600,7 @@ interface IPerpAccountModule {
 interface IPerpMarketFactoryModule {
     struct CreatePerpMarketParameters {
         bytes32 name;
+        uint32 minDelegateTime;
     }
     struct DepositedCollateral {
         address collateralAddress;
@@ -722,6 +723,11 @@ contract PerpAccountModule {
         uint256 fromAccountCollateral;
         int256 fromSize;
     }
+}
+
+// @custom:artifact contracts/modules/PerpMarketFactoryModule.sol:PerpMarketFactoryModule
+contract PerpMarketFactoryModule {
+    uint32 internal constant DEFAULT_MIN_DELEGATE_TIME = 24;
 }
 
 // @custom:artifact contracts/storage/AddressRegistry.sol:AddressRegistry
