@@ -13,6 +13,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     struct CreatePerpMarketParameters {
         /// Name of the market to be created e.g, ETHPERP
         bytes32 name;
+        /// Minimum LP delegation time in seconds e.g. 86400
         uint32 minDelegateTime;
     }
 
