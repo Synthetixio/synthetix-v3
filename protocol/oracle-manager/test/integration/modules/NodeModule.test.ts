@@ -65,7 +65,8 @@ describe('NodeModule', function () {
     it('passes through errors', async () => {
       await assertRevert(
         NodeModule.process(failingNodeId()),
-        '0xac47be2100000000000000000000000000000000000000000000000000000000000004d2'
+        '0xac47be2100000000000000000000000000000000000000000000000000000000000004d2',
+        NodeModule
       );
     });
   });
