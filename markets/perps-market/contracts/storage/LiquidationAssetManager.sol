@@ -53,9 +53,6 @@ library LiquidationAssetManager {
             revert ParameterError.InvalidParameter("collateralTypes", "must not be empty");
         }
         for (uint256 i = 0; i < collateralTypesLength; ) {
-            if (self.poolDelegatedCollateralTypes[i] == address(0)) {
-                revert AddressError.ZeroAddress();
-            }
             unchecked {
                 ++i;
             }
