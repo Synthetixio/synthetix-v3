@@ -122,6 +122,12 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit MarketConfigured(marketId, ERC2771Context._msgSender());
     }
 
+    /// @inheritdoc IMarketConfigurationModule
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external {
+        OwnableStorage.onlyOwner();
+        ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(marketId, minDelegationTime);
+    }
+
     // --- Views --- //
 
     /// @inheritdoc IMarketConfigurationModule

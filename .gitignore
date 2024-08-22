@@ -4,9 +4,8 @@
 .vscode
 **/coverage*
 **/deployments
-/markets/*/test/generated
-/protocol/*/test/generated
-/utils/*/test/generated
+/**/test/generated
+/**/contracts/generated
 /utils/hardhat-router/test
 **/contracts/routers
 artifacts

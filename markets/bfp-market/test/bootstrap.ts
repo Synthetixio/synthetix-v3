@@ -148,6 +148,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     marketId: () => BigNumber;
   }[] = [];
 
+  const minDelegateTime = 86400; // 1 day
+
   let collaterals: PerpCollateral[];
   let collateralsWithoutSusd: PerpCollateral[];
 
@@ -196,8 +198,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
       );
 
       // Create market.
-      const marketId = await BfpMarketProxy.callStatic.createMarket({ name });
-      await BfpMarketProxy.createMarket({ name });
+      const marketId = await BfpMarketProxy.callStatic.createMarket({ name, minDelegateTime });
+      await BfpMarketProxy.createMarket({ name, minDelegateTime });
 
       // Configure market.
       await BfpMarketProxy.connect(getOwner()).setMarketConfigurationById({
