@@ -139,4 +139,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external pure returns (PerpMarketConfiguration.Data memory) {
         return PerpMarketConfiguration.load(marketId);
     }
+
+    /// @inheritdoc IMarketConfigurationModule
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external {
+        ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(marketId, minDelegationTime);
+    }
 }
