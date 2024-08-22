@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11 < 0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
-        bool initialized;
         address owner;
         address nominatedOwner;
     }
@@ -100,6 +99,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xE2C5658cC5C448B48141168f3e475dF8f65A1e3e;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/SetUtil.sol:SetUtil
 library SetUtil {
     struct UintSet {
@@ -110,13 +114,98 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions;
+        mapping(bytes32 => uint256) _positions;
     }
+}
+
+// @custom:artifact contracts/interfaces/IWormhole.sol:IWormhole
+interface IWormhole {
+    struct GuardianSet {
+        address[] keys;
+        uint32 expirationTime;
+    }
+    struct Signature {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        uint8 guardianIndex;
+    }
+    struct VM {
+        uint8 version;
+        uint32 timestamp;
+        uint32 nonce;
+        uint16 emitterChainId;
+        bytes32 emitterAddress;
+        uint64 sequence;
+        uint8 consistencyLevel;
+        bytes payload;
+        uint32 guardianSetIndex;
+        Signature[] signatures;
+        bytes32 hash;
+    }
+    struct ContractUpgrade {
+        bytes32 module;
+        uint8 action;
+        uint16 chain;
+        address newContract;
+    }
+    struct GuardianSetUpgrade {
+        bytes32 module;
+        uint8 action;
+        uint16 chain;
+        GuardianSet newGuardianSet;
+        uint32 newGuardianSetIndex;
+    }
+    struct SetMessageFee {
+        bytes32 module;
+        uint8 action;
+        uint16 chain;
+        uint256 messageFee;
+    }
+    struct TransferFees {
+        bytes32 module;
+        uint8 action;
+        uint16 chain;
+        uint256 amount;
+        bytes32 recipient;
+    }
+    struct RecoverChainId {
+        bytes32 module;
+        uint8 action;
+        uint256 evmChainId;
+        uint16 newChainId;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IWormholeRelayer.sol:IWormholeRelayerDelivery
+interface IWormholeRelayerDelivery {
+    enum DeliveryStatus {
+        SUCCESS,
+        RECEIVER_FAILURE
+    }
+    enum RefundStatus {
+        REFUND_SENT,
+        REFUND_FAIL,
+        CROSS_CHAIN_REFUND_SENT,
+        CROSS_CHAIN_REFUND_FAIL_PROVIDER_NOT_SUPPORTED,
+        CROSS_CHAIN_REFUND_FAIL_NOT_ENOUGH,
+        NO_REFUND_REQUESTED
+    }
+}
+
+// @custom:artifact contracts/modules/DecayTokenModule.sol:DecayTokenModule
+contract DecayTokenModule {
+    uint256 private constant SECONDS_PER_YEAR = 31536000;
 }
 
 // @custom:artifact contracts/modules/NftModule.sol:NftModule
 contract NftModule {
     bytes32 internal constant _INITIALIZED_NAME = "NftModule";
+}
+
+// @custom:artifact contracts/modules/TokenModule.sol:TokenModule
+contract TokenModule {
+    bytes32 internal constant _INITIALIZED_NAME = "TokenModule";
 }
 
 // @custom:artifact contracts/storage/AssociatedSystem.sol:AssociatedSystem
@@ -137,11 +226,28 @@ library AssociatedSystem {
     }
 }
 
+// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.core-modules.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/storage/DecayToken.sol:DecayToken
 library DecayToken {
-    bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.DecayToken"));
+    bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
     struct Data {
-        uint256 interestRate;
+        uint256 decayRate;
         uint256 epochStart;
         uint256 totalSupplyAtEpochStart;
     }
@@ -158,7 +264,9 @@ library FeatureFlag {
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
+        address[] deniers;
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
@@ -185,13 +293,59 @@ library Initialized {
 library SampleStorage {
     bytes32 private constant _SLOT_SAMPLE_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.Sample"));
     struct Data {
-        uint someValue;
-        uint protectedValue;
+        uint256 someValue;
+        uint256 protectedValue;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_SAMPLE_STORAGE;
         assembly {
             store.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/WormholeCrossChain.sol:WormholeCrossChain
+library WormholeCrossChain {
+    bytes32 private constant _SLOT_WORMHOLE_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.core-modules.WormholeCrossChain"));
+    struct Data {
+        address wormholeCore;
+        address wormholeRelayer;
+        uint256 gasLimit;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint16 => bytes32) registeredEmitters;
+        mapping(bytes32 => bool) hasProcessedMessage;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_WORMHOLE_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainSelector;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }
