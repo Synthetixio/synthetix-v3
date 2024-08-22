@@ -279,7 +279,7 @@ library Position {
         //
         // NOTE:  We create the new margin manually rather than using marginValuesForLiqValidation.discountedMarginUsd as the pnl adjustment for that margin is based on the oracle price rather than the fillPrice.
         // And when this order settles the pnl will be realised with the fill price.
-        // We also  need to deduct the fees for setteling this order.
+        // We also  need to deduct the fees for settling this order.
         runtime.discountedNextMarginUsd = MathUtil
             .max(
                 getNextMarginUsd(
@@ -291,7 +291,7 @@ library Position {
             )
             .toUint();
         if (runtime.positionDecreasing) {
-            // In some cases a postion can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completly.
+            // In some cases a position can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completely.
             if (
                 newPosition.size > 0 &&
                 runtime.discountedNextMarginUsd.divDecimal(runtime.mm) <= DecimalMath.UNIT
@@ -536,7 +536,7 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
-        // We exit early if size is 0, this would only happen then remaining liqcapacity is 0.
+        // We exit early if size is 0, this would only happen then remaining liqCapacity is 0.
         if (size == 0) {
             return 0;
         }
