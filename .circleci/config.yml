@@ -218,7 +218,11 @@ jobs:
       - save_cache:
           key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
           paths:
+            - "auxiliary/PythERC7412Wrapper/contracts/generated"
+            - "protocol/governance/contracts/generated"
+            - "protocol/oracle-manager/contracts/generated"
             - "protocol/synthetix/contracts/generated"
+            - "utils/core-modules/contracts/generated"
             # Add more folders here if we generate more
 
       - restore-cannon-cache
