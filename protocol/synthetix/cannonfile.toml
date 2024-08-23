@@ -18,6 +18,18 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.oracle_manager_source]
 defaultValue = "oracle-manager"
 
+[setting.usd_token_name]
+defaultValue = "Synthetic USD Token v3"
+
+[setting.usd_token_symbol]
+defaultValue = "sUSD"
+
+[setting.account_token_name]
+defaultValue = "Synthetix Account"
+
+[setting.account_token_symbol]
+defaultValue = "SACCT"
+
 [provision.oracle_manager]
 source = "<%= settings.oracle_manager_source %>"
 options.owner = "<%= settings.owner %>"
@@ -141,8 +153,8 @@ fromCall.func = "owner"
 func = "initOrUpgradeNft"
 args = [
     "0x6163636f756e744e667400000000000000000000000000000000000000000000",
-    "Synthetix Account",
-    "SACCT",
+    "<%= settings.account_token_name %>",
+    "<%= settings.account_token_symbol %>",
     "https://synthetix.io",
     "<%= contracts.AccountRouter.address %>",
 ]
@@ -158,8 +170,8 @@ fromCall.func = "owner"
 func = "initOrUpgradeToken"
 args = [
     "0x555344546f6b656e000000000000000000000000000000000000000000000000",
-    "Synthetic USD Token v3",
-    "snxUSD",
+    "<%= settings.usd_token_name %>",
+    "<%= settings.usd_token_symbol %>",
     18,
     "<%= contracts.USDRouter.address %>",
 ]
