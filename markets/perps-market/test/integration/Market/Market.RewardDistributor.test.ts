@@ -138,21 +138,23 @@ describe('PerpsMarket: Reward Distributor configuration test', () => {
       );
     });
 
-    it('reverts registering a new distributor with wrong data: poolDelegatedCollateralTypes includes zeroAddress', async () => {
-      await assertRevert(
-        systems()
-          .PerpsMarket.connect(owner())
-          .registerDistributor(
-            distributorData.tokenAddress,
-            distributorData.distributorAddress,
-            distributorData.syntMarketId,
-            [ethers.constants.AddressZero]
-          ),
-        'ZeroAddress'
+    it('allows registering a pool-level distributor with ZeroAddress collateral', async () => {
+      const tx = await systems()
+        .PerpsMarket.connect(owner())
+        .registerDistributor(
+          distributorData.tokenAddress,
+          distributorData.distributorAddress,
+          distributorData.syntMarketId,
+          [ethers.constants.AddressZero]
+        );
+      await assertEvent(
+        tx,
+        `RewardDistributorRegistered("${distributorAddress}")`,
+        systems().PerpsMarket
       );
     });
 
-    it('reverts registering a new distributor with wrong data: token is zeroAddress', async () => {
+    it('reverts registering a new distributor with wrong data: token is ZeroAddress', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(owner())
