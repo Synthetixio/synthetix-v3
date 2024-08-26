@@ -23,7 +23,8 @@
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "build-testable": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "docgen": "hardhat docgen"
   },
   "devDependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",

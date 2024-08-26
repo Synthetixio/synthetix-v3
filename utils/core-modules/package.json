@@ -21,7 +21,8 @@
     "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "docgen": "hardhat docgen"
   },
   "keywords": [],
   "author": "Synthetix",

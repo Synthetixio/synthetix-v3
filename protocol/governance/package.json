@@ -4,7 +4,7 @@
   "description": "On-Chain elections for all Synthetix councils",
   "private": true,
   "scripts": {
-    "clean": "hardhat clean && rm -rf test/generated contracts/generated",
+    "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
     "storage:verify": "hardhat compile --force && hardhat storage:verify",
     "build:contracts": "hardhat compile --force && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
