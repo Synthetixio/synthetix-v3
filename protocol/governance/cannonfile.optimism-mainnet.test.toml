@@ -1,21 +1,21 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
-version = "8"
-preset = "test"
+version = "1"
+preset = "test-on-mainnet"
 
 include = ["./cannonfile.toml", "./tomls/testable-contracts.toml"]
 
 [setting.owner]
-defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+defaultValue = "0xe2163dd599067919d1e9108929b568Bf41D3A420"
 
 [setting.salt]
-defaultValue = "governance-test-v8"
+defaultValue = "governance-test-on-mainnet"
 
 [setting.wormhole_core]
-defaultValue = "0xEe91C335eab126dF5fDB3797EA9d6aD93aeC9722" # https://docs.wormhole.com/wormhole/reference/constants#core-contracts
+defaultValue = "0xEe91C335eab126dF5fDB3797EA9d6aD93aeC9722" # https://explorer.snaxchain.io/address/0xc1BA3CC4bFE724A08FbbFbF64F8db196738665f4
 
 [setting.wormhole_relayer]
-defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # https://docs.wormhole.com/wormhole/reference/constants#standard-relayer
+defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # https://explorer.snaxchain.io/address/0x27428DD2d3DD32A4D7f7C497eAaa23130d894911
 
 [setting.initial_council_member]
 defaultValue = "<%= settings.owner %>"
@@ -53,11 +53,11 @@ contracts = [
     "TestableEpochStorage",
 ]
 
-[invoke.set_registered_emitters]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setRegisteredEmitters"
-args = [["43"], [""]]
+# [invoke.set_registered_emitters]
+# target = ["GovernanceProxy"]
+# from = "<%= settings.owner %>"
+# func = "setRegisteredEmitters"
+# args = [["43", "24"], ["contracts.GovernanceProxy.address", "contracts.GovernanceProxy.address"]]
 
 [invoke.set_gas_limit]
 target = ["GovernanceProxy"]
