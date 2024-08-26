@@ -50,7 +50,7 @@ echo "" >> $OUT
 cat $ROOT/protocol/oracle-manager/docs/index.md >> $OUT
 
 
-echo "# Auxiliary Packages" > $OUT
+echo "# Auxiliary Packages" >> $OUT
 echo "" >> $OUT
 cat $ROOT/auxiliary/ArbitrumGasPriceOracle/docs/index.md >> $OUT
 cat $ROOT/auxiliary/BuybackSnx/docs/index.md >> $OUT
