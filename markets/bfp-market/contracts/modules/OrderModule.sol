@@ -234,12 +234,10 @@ contract OrderModule is IOrderModule {
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
-        console.log("validateOrderHooks");
+
         validateOrderHooks(hooks);
-        console.log("validateOrderHooks done");
-        console.log("getting oracle price");
+
         runtime.oraclePrice = market.getOraclePrice(runtime.addresses);
-        console.log("oraclePrice:", runtime.oraclePrice);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
