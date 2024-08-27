@@ -94,12 +94,6 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
 
     // --- Views --- //
 
-    /// TODO: Why is this necessary?
-    function minimumCreditWithPositionSize(
-        uint128 marketId,
-        int128 positionSize
-    ) external view returns (uint256);
-
     /// @notice Returns a digest of an existing market given the `marketId`.
     /// @param marketId Market to query against
     /// @return getMarketDigest Market digest struct
