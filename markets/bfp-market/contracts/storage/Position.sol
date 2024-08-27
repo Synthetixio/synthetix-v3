@@ -68,6 +68,8 @@ library Position {
         uint256 im;
         uint256 mm;
         uint256 ethPrice;
+        int256 fillPremium;
+        int128 sizeDelta;
     }
 
     // --- Storage --- //
@@ -137,12 +139,12 @@ library Position {
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses,
-        int128 sizeDelta
+        int128 positionSize
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
+        uint256 minimumCredit = market.getMinimumCreditWithPositionSize(
             marketConfig,
             oraclePrice,
-            sizeDelta,
+            positionSize,
             addresses
         );
 
@@ -169,39 +171,6 @@ library Position {
         uint256 keeperFee
     ) internal pure returns (uint256) {
         return MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
-    }
-
-    /**
-     * @dev Validates whether the `newPosition` can be liquidated.
-     *
-     * NOTE: We expect marginUsd here to be the discount adjusted margin due to liquidation checks as margin checks
-     * for liquidations are expected to discount the collateral.
-     */
-    function validateNextPositionEnoughMargin(
-        Position.Data memory newPosition,
-        int128 oldPositionSize,
-        uint256 oraclePrice,
-        uint256 im,
-        uint256 nextMarginUsd
-    ) internal pure {
-        // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
-        int128 sizeDelta = newPosition.size - oldPositionSize;
-        // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
-        // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
-        // the margin before verifying the health factor to account for the premium.
-        //
-        // NOTE: The `min(delta, 0)` as we only want to _reduce_ their remaining margin, not increase it in the case where
-        // a discount is applied for reducing skew.
-        int256 fillPremium = MathUtil.min(
-            sizeDelta.mulDecimal(oraclePrice.toInt() - newPosition.entryPrice.toInt()),
-            0
-        );
-        uint256 remainingMarginUsd = MathUtil.max(nextMarginUsd.toInt() + fillPremium, 0).toUint();
-
-        // Check new position initial margin validations.
-        if (remainingMarginUsd < im) {
-            revert ErrorUtil.InsufficientMargin();
-        }
     }
 
     /// @dev Validates whether the given `TradeParams` would lead to a valid next position.
@@ -282,42 +251,67 @@ library Position {
         runtime.positionDecreasing =
             MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        if (!runtime.positionDecreasing) {
-            // We need discounted margin collateral as we're verifying for liquidation here.
-            //
-            // NOTE: `marginUsd` looks at the current overall PnL but it does not consider the 'post' settled
-            // incurred fees hence get `getNextMarginUsd` -fees.
-            runtime.discountedNextMarginUsd = getNextMarginUsd(
-                marginValuesForLiqValidation.discountedMarginUsd,
-                runtime.orderFee,
-                runtime.keeperFee
-            );
 
-            (runtime.im, runtime.mm) = getLiquidationMarginUsd(
-                newPosition.size,
-                params.oraclePrice,
-                marginValuesForLiqValidation.collateralUsd,
-                marketConfig,
-                addresses
-            );
+        (runtime.im, runtime.mm) = getLiquidationMarginUsd(
+            newPosition.size,
+            params.oraclePrice,
+            marginValuesForLiqValidation.collateralUsd,
+            marketConfig,
+            addresses
+        );
 
+        // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
+        runtime.sizeDelta = newPosition.size - currentPosition.size;
+        // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
+        // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
+        // the margin before verifying the health factor to account for the premium.
+        //
+        // NOTE: The `min(delta, 0)` as we only want to _reduce_ their remaining margin, not increase it in the case where
+        // a discount is applied for reducing skew.
+        runtime.fillPremium = MathUtil.min(
+            runtime.sizeDelta.mulDecimal(
+                params.oraclePrice.toInt() - newPosition.entryPrice.toInt()
+            ),
+            0
+        );
+
+        // We need discounted margin collateral as we're verifying for liquidation here.
+        //
+        // NOTE:  We create the new margin manually rather than using marginValuesForLiqValidation.discountedMarginUsd as the pnl adjustment for that margin is based on the oracle price rather than the fillPrice.
+        // And when this order settles the pnl will be realised with the fill price.
+        // We also  need to deduct the fees for setteling this order.
+        runtime.discountedNextMarginUsd = MathUtil
+            .max(
+                getNextMarginUsd(
+                    marginValuesForLiqValidation.discountedMarginUsd,
+                    runtime.orderFee,
+                    runtime.keeperFee
+                ).toInt() + runtime.fillPremium,
+                0
+            )
+            .toUint();
+        if (runtime.positionDecreasing) {
+            // In some cases a postion can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completly.
+            if (
+                newPosition.size > 0 &&
+                runtime.discountedNextMarginUsd.divDecimal(runtime.mm) <= DecimalMath.UNIT
+            ) {
+                revert ErrorUtil.CanLiquidatePosition();
+            }
+        } else {
             // Check the minimum credit requirements are still met.
             validateMinimumCredit(
                 market,
                 params.oraclePrice,
                 marketConfig,
                 addresses,
-                params.sizeDelta
+                newPosition.size
             );
 
             // Check new position margin validations.
-            validateNextPositionEnoughMargin(
-                newPosition,
-                currentPosition.size,
-                params.oraclePrice,
-                runtime.im,
-                runtime.discountedNextMarginUsd
-            );
+            if (runtime.discountedNextMarginUsd < runtime.im) {
+                revert ErrorUtil.InsufficientMargin();
+            }
 
             // Check the new position hasn't hit max OI on either side.
             validateMaxOi(

@@ -1,0 +1,18 @@
+[setting.salt]
+defaultValue = "governance"
+
+[setting.owner]
+
+[contract.InitialModuleBundle]
+artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
+create2 = true
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+salt = "<%= settings.salt %>"
+abiOf = ["InitialModuleBundle"]
+create2 = true
+
+[pull.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder@with-synthetix"

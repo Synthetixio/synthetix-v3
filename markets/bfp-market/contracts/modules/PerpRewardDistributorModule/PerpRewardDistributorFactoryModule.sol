@@ -57,17 +57,13 @@ contract PerpRewardDistributorFactoryModule is IPerpRewardDistributorFactoryModu
         if (collateralTypesLength == 0) {
             revert ErrorUtil.ZeroLength();
         }
-        for (uint256 i = 0; i < collateralTypesLength; ) {
-            if (data.collateralTypes[i] == address(0)) {
-                revert ErrorUtil.ZeroAddress();
-            }
-            unchecked {
-                ++i;
-            }
-        }
 
         // Inefficient but necessary O(n^2) loop to verify in-place there are no duplicates collateralTypes.
         for (uint256 i = 0; i < collateralTypesLength; i++) {
+            if (data.collateralTypes[i] == address(0)) {
+                revert ErrorUtil.ZeroAddress();
+            }
+
             for (uint256 j = i + 1; j < collateralTypesLength; j++) {
                 if (data.collateralTypes[i] == data.collateralTypes[j]) {
                     revert ErrorUtil.DuplicateEntries();

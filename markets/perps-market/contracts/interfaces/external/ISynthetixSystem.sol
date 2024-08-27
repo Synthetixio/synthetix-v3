@@ -6,6 +6,7 @@ import {IMarketManagerModule} from "@synthetixio/main/contracts/interfaces/IMark
 import {IMarketCollateralModule} from "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import {IUtilsModule} from "@synthetixio/main/contracts/interfaces/IUtilsModule.sol";
 import {ICollateralConfigurationModule} from "@synthetixio/main/contracts/interfaces/ICollateralConfigurationModule.sol";
+import {IVaultModule} from "@synthetixio/main/contracts/interfaces/IVaultModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
 interface ISynthetixSystem is
@@ -13,5 +14,6 @@ interface ISynthetixSystem is
     IMarketCollateralModule,
     IMarketManagerModule,
     IUtilsModule,
-    ICollateralConfigurationModule
+    ICollateralConfigurationModule,
+    IVaultModule
 {}

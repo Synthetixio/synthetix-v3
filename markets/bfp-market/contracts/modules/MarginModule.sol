@@ -499,7 +499,7 @@ contract MarginModule is IMarginModule {
 
         Account.loadAccountAndValidatePermission(
             accountId,
-            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+            AccountRBAC._BFP_PERPS_PAY_DEBT_PERMISSION
         );
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -544,17 +544,17 @@ contract MarginModule is IMarginModule {
                 oracleManager: ORACLE_MANAGER
             });
 
-            (uint128 utilizationRate, ) = market.recomputeUtilization(
-                market.getOraclePrice(addresses),
-                addresses
-            );
-            emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
-
             ISynthetixSystem(SYNTHETIX_CORE).depositMarketUsd(
                 marketId,
                 ERC2771Context._msgSender(),
                 amountToBurn
             );
+
+            (uint128 utilizationRate, ) = market.recomputeUtilization(
+                market.getOraclePrice(addresses),
+                addresses
+            );
+            emit UtilizationRecomputed(marketId, market.skew, utilizationRate);
         }
 
         emit DebtPaid(accountId, marketId, debt, accountMargin.debtUsd, sUsdToDeduct);

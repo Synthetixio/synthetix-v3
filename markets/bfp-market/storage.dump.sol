@@ -151,6 +151,8 @@ library AccountRBAC {
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     bytes32 internal constant _BURN_PERMISSION = "BURN";
+    bytes32 internal constant _BFP_PERPS_PAY_DEBT_PERMISSION = "BFP_PERPS_PAY_DEBT";
+    bytes32 internal constant _BFP_PERPS_SPLIT_ACCOUNT_PERMISSION = "BFP_PERPS_SPLIT_ACCOUNT";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -632,6 +634,7 @@ interface IPerpAccountModule {
 interface IPerpMarketFactoryModule {
     struct CreatePerpMarketParameters {
         bytes32 name;
+        uint32 minDelegateTime;
     }
     struct DepositedCollateral {
         address collateralAddress;
@@ -754,6 +757,11 @@ contract PerpAccountModule {
         uint256 fromAccountCollateral;
         int256 fromSize;
     }
+}
+
+// @custom:artifact contracts/modules/PerpMarketFactoryModule.sol:PerpMarketFactoryModule
+contract PerpMarketFactoryModule {
+    uint32 internal constant DEFAULT_MIN_DELEGATE_TIME = 24;
 }
 
 // @custom:artifact contracts/storage/AddressRegistry.sol:AddressRegistry
@@ -960,6 +968,8 @@ library Position {
         uint256 im;
         uint256 mm;
         uint256 ethPrice;
+        int256 fillPremium;
+        int128 sizeDelta;
     }
     struct Data {
         int128 size;

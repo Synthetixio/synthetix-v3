@@ -150,6 +150,8 @@ library AccountRBAC {
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     bytes32 internal constant _BURN_PERMISSION = "BURN";
+    bytes32 internal constant _BFP_PERPS_PAY_DEBT_PERMISSION = "BFP_PERPS_PAY_DEBT";
+    bytes32 internal constant _BFP_PERPS_SPLIT_ACCOUNT_PERMISSION = "BFP_PERPS_SPLIT_ACCOUNT";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -525,6 +527,11 @@ library TickMath {
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }
 
+// @custom:artifact @synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor
+contract RewardsDistributor {
+    uint256 public constant SYSTEM_PRECISION = 10 ** 18;
+}
+
 // @custom:artifact @synthetixio/spot-market/contracts/storage/OrderFees.sol:OrderFees
 library OrderFees {
     struct Data {
@@ -607,8 +614,6 @@ interface IAsyncOrderSettlementPythModule {
         int256 pnl;
         uint256 chargedInterest;
         int256 accruedFunding;
-        uint256 pnlUint;
-        uint256 amountToDeduct;
         uint256 settlementReward;
         uint256 fillPrice;
         uint256 totalFees;
@@ -619,6 +624,8 @@ interface IAsyncOrderSettlementPythModule {
         uint256 synthDeductionIterator;
         uint128[] deductedSynthIds;
         uint256[] deductedAmount;
+        int256 chargedAmount;
+        uint256 newAccountDebt;
     }
 }
 
@@ -713,6 +720,7 @@ library GlobalPerpsMarket {
         mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
+        uint256 totalAccountsDebt;
     }
     function load() internal pure returns (Data storage marketData) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
@@ -728,8 +736,8 @@ library GlobalPerpsMarketConfiguration {
     struct Data {
         address feeCollector;
         mapping(address => uint256) referrerShare;
-        mapping(uint128 => uint256) maxCollateralAmounts;
-        uint128[] synthDeductionPriority;
+        mapping(uint128 => uint256) __unused_1;
+        uint128[] __unused_2;
         uint256 minKeeperRewardUsd;
         uint256 maxKeeperRewardUsd;
         uint128 maxPositionsPerAccount;
@@ -740,6 +748,8 @@ library GlobalPerpsMarketConfiguration {
         uint128 lowUtilizationInterestRateGradient;
         uint128 interestRateGradientBreakpoint;
         uint128 highUtilizationInterestRateGradient;
+        uint128 collateralLiquidateRewardRatioD18;
+        address rewardDistributorImplementation;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -790,6 +800,15 @@ library Liquidation {
     }
 }
 
+// @custom:artifact contracts/storage/LiquidationAssetManager.sol:LiquidationAssetManager
+library LiquidationAssetManager {
+    struct Data {
+        uint128 id;
+        address distributor;
+        address[] poolDelegatedCollateralTypes;
+    }
+}
+
 // @custom:artifact contracts/storage/MarketUpdate.sol:MarketUpdate
 library MarketUpdate {
     struct Data {
@@ -817,11 +836,30 @@ library PerpsAccount {
         uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
+        uint256 debt;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
         assembly {
             account.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/PerpsCollateralConfiguration.sol:PerpsCollateralConfiguration
+library PerpsCollateralConfiguration {
+    struct Data {
+        uint128 id;
+        uint256 maxAmount;
+        uint256 upperLimitDiscount;
+        uint256 lowerLimitDiscount;
+        uint256 discountScalar;
+        LiquidationAssetManager.Data lam;
+    }
+    function load(uint128 collateralId) internal pure returns (Data storage collateralConfig) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.CollateralConfiguration", collateralId));
+        assembly {
+            collateralConfig.slot := s
         }
     }
 }
@@ -896,6 +934,7 @@ library PerpsMarketFactory {
         address spotMarket;
         uint128 perpsMarketId;
         string name;
+        address liquidationAssetManager;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;

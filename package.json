@@ -15,11 +15,15 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "clean": "yarn workspaces foreach --all --parallel --verbose run clean",
-    "generate-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run generate-testable",
+    "generate-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --verbose run generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable",
     "compile-contracts": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run compile-contracts",
     "build:ts": "yarn workspaces foreach --all --topological-dev --verbose run build:ts",
     "build": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build",
+    "size-contracts": "yarn workspaces foreach --all --verbose run size-contracts",
+    "storage:verify": "yarn workspaces foreach --all --verbose run storage:verify",
+    "build:contracts": "yarn workspaces foreach --all --topological-dev --verbose run build:contracts",
+    "check:storage": "yarn workspaces foreach --all --verbose run check:storage",
     "test": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --all --verbose run coverage",
     "lint:progress": "ESLINT_PROGRESS=true eslint --max-warnings=0 .",
@@ -40,8 +44,7 @@
     "publish:dev": "lerna publish --canary --dist-tag dev --preid dev.$(git rev-parse --short HEAD)",
     "publish-contracts": "yarn workspaces foreach --all --verbose run publish-contracts",
     "prepublishOnly": "node ./prepublishOnly.js",
-    "docgen:contracts": "yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
-    "docgen:abis": "yarn workspace @synthetixio/docgen run docgen:abis",
+    "docgen:contracts": "yarn clean && yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
     "subgraphgen": "yarn workspaces foreach --all --verbose run subgraphgen",
     "check-staged": "lint-staged",
     "changed": "lerna changed --long"
@@ -71,7 +74,8 @@
     "solhint": "^4.1.1",
     "solhint-plugin-meta-transactions": "^0.1.0",
     "solhint-plugin-numcast": "^1.0.0",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   },
   "resolutions": {
     "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors"

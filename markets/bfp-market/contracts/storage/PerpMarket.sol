@@ -187,14 +187,14 @@ library PerpMarket {
     }
 
     /// @dev Returns the market's required minimum backing credit in USD.
-    function getMinimumCreditWithTradeSize(
+    function getMinimumCreditWithPositionSize(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price,
-        int128 sizeDelta,
+        int128 positionSize,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
-        uint128 size = self.size + MathUtil.abs(sizeDelta).to128();
+        uint128 size = self.size + MathUtil.abs(positionSize).to128();
 
         return
             size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +

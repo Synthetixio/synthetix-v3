@@ -21,12 +21,16 @@
     "prepublishOnly": "yarn build"
   },
   "peerDependencies": {
-    "@usecannon/builder": "^2.4.7",
+    "@usecannon/builder": "^2.16.2",
+    "@usecannon/cli": "^2.16.2",
     "ethers": "^5.7.2",
     "solidity-ast": "^0.4.0"
   },
   "peerDependenciesMeta": {
     "@usecannon/builder": {
+      "optional": true
+    },
+    "@usecannon/cli": {
       "optional": true
     },
     "ethers": {
@@ -37,19 +41,24 @@
     }
   },
   "devDependencies": {
+    "@foundry-rs/hardhat-anvil": "^0.1.7",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@types/micromatch": "^4",
     "@types/prompts": "^2.4.9",
-    "@usecannon/builder": "2.15.2",
+    "@usecannon/builder": "2.16.3",
+    "@usecannon/cli": "2.16.3",
     "ethers": "^5.7.2",
+    "get-port": "^7.0.0",
     "hardhat": "^2.19.5",
     "mocha": "^10.3.0",
     "nyc": "^15.1.0",
     "sinon": "^17.0.1",
     "solc": "0.8.21",
     "solidity-ast": "^0.4.55",
+    "ts-node": "^10.9.2",
     "typechain": "8.3.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4",
+    "viem": "^2.9.31"
   },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
