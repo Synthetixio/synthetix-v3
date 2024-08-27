@@ -22,6 +22,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PythUtil} from "../utils/PythUtil.sol";
 import {Flags} from "../utils/Flags.sol";
+import "hardhat/console.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -252,7 +253,8 @@ contract OrderModule is IOrderModule {
             limitPrice,
             keeperFeeBufferUsd
         );
-
+        console.log("tradeParams fillPrice", tradeParams.fillPrice);
+        console.log("validateTrade");
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
@@ -267,10 +269,12 @@ contract OrderModule is IOrderModule {
         );
 
         runtime.commitmentTime = block.timestamp.to64();
+        console.log("commitmentTime:", runtime.commitmentTime);
+        console.log("update order");
         market.orders[accountId].update(
             Order.Data(sizeDelta, runtime.commitmentTime, limitPrice, keeperFeeBufferUsd, hooks)
         );
-
+        console.log("update order done");
         emit OrderCommitted(
             accountId,
             marketId,

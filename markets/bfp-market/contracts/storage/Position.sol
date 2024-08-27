@@ -12,6 +12,7 @@ import {Margin} from "./Margin.sol";
 import {AddressRegistry} from "./AddressRegistry.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import "hardhat/console.sol";
 
 library Position {
     using DecimalMath for int128;
@@ -101,19 +102,25 @@ library Position {
         int256 newSize
     ) internal view {
         // Allow users to reduce an order no matter the market conditions.
+
         if (
             MathUtil.sameSide(currentSize, newSize) &&
             MathUtil.abs(newSize) <= MathUtil.abs(currentSize)
         ) {
+            console.log("validateMaxOi newSize <= currentSize");
             return;
         }
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
         // we check that the side of the market their order is on would not break the limit.
         int256 newSkew = market.skew - currentSize + newSize;
+        console.log("validateMaxOi newSkew:");
+        console.logInt(newSkew);
+
         int256 newMarketSize = (market.size - MathUtil.abs(currentSize) + MathUtil.abs(newSize))
             .toInt();
-
+        console.log("validateMaxOi newMarketSize:");
+        console.logInt(newMarketSize);
         int256 newSideSize;
         if (0 < newSize) {
             // long case: marketSize + skew
@@ -147,8 +154,11 @@ library Position {
             positionSize,
             addresses
         );
+        console.log("validateMinimumCredit validateMinimumCredit", minimumCredit);
 
         int256 delegatedCollateralValueUsd = market.getDelegatedCollateralValueUsd(addresses);
+        console.log("delegatedCollateralValueUsd:");
+        console.logInt(delegatedCollateralValueUsd);
 
         if (
             delegatedCollateralValueUsd + market.depositedCollateral[addresses.sUsd].toInt() <
@@ -190,12 +200,28 @@ library Position {
         Runtime_validateTrade memory runtime;
 
         // --- Existing position validation --- //
-
+        console.log("validateTrade Margin.getMarginUsd");
         Margin.MarginValues memory marginValuesForLiqValidation = Margin.getMarginUsd(
             accountId,
             market,
             params.oraclePrice,
             addresses
+        );
+        console.log(
+            "marginValuesForLiqValidation.marginUsd",
+            marginValuesForLiqValidation.marginUsd
+        );
+        console.log(
+            "marginValuesForLiqValidation.discountedMarginUsd",
+            marginValuesForLiqValidation.discountedMarginUsd
+        );
+        console.log(
+            "marginValuesForLiqValidation.collateralUsd",
+            marginValuesForLiqValidation.collateralUsd
+        );
+        console.log(
+            "marginValuesForLiqValidation.discountedCollateralUsd",
+            marginValuesForLiqValidation.discountedCollateralUsd
         );
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
@@ -204,7 +230,7 @@ library Position {
             if (market.flaggedLiquidations[accountId] != address(0)) {
                 revert ErrorUtil.PositionFlagged();
             }
-
+            console.log("existing position exists check if liquidatable");
             // Determine if the current (previous) position can be immediately liquidated.
             if (
                 isLiquidatable(
@@ -217,9 +243,11 @@ library Position {
             ) {
                 revert ErrorUtil.CanLiquidatePosition();
             }
+            console.log("existing position is not liquidatable");
         }
 
         // --- New position validation (as though the order settled) --- //
+        console.log("getOrderFees");
 
         // Derive fees incurred and next position if this order were to be settled successfully.
         runtime.orderFee = Order.getOrderFee(
@@ -229,14 +257,20 @@ library Position {
             params.makerFee,
             params.takerFee
         );
+        console.log("orderFee", runtime.orderFee);
+        console.log("getEthPrice");
         runtime.ethPrice = INodeModule(addresses.oracleManager)
             .process(PerpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
+        console.log("ethPrice", runtime.ethPrice);
+        console.log("getSettlementKeeperFee");
         runtime.keeperFee = Order.getSettlementKeeperFee(
             params.keeperFeeBufferUsd,
             runtime.ethPrice
         );
+        console.log("keeperFee", runtime.keeperFee);
+
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
@@ -245,13 +279,21 @@ library Position {
             params.pythPrice,
             params.fillPrice
         );
+        console.log("newPositon.size:");
+        console.logInt(newPosition.size);
+        console.log("newPositon.entryFundingAccrued:");
+        console.logInt(newPosition.entryFundingAccrued);
+        console.log("newPositon.entryUtilizationAccrued", newPosition.entryUtilizationAccrued);
+        console.log("newPositon.entryPythPrice", newPosition.entryPythPrice);
+        console.log("newPositon.entryPrice", newPosition.entryPrice);
 
         // Minimum position margin checks. If a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         runtime.positionDecreasing =
             MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-
+        console.log("runtime.positionDecreasing", runtime.positionDecreasing);
+        console.log("getLiquidationMarginUsd");
         (runtime.im, runtime.mm) = getLiquidationMarginUsd(
             newPosition.size,
             params.oraclePrice,
@@ -259,9 +301,13 @@ library Position {
             marketConfig,
             addresses
         );
+        console.log("im", runtime.im);
+        console.log("mm", runtime.mm);
 
         // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
         runtime.sizeDelta = newPosition.size - currentPosition.size;
+        console.log("sizeDelta:");
+        console.logInt(runtime.sizeDelta);
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
@@ -274,6 +320,8 @@ library Position {
             ),
             0
         );
+        console.log("fillPremium:");
+        console.logInt(runtime.fillPremium);
 
         // We need discounted margin collateral as we're verifying for liquidation here.
         //
@@ -290,7 +338,14 @@ library Position {
                 0
             )
             .toUint();
+        console.log("discountedNextMarginUsd", runtime.discountedNextMarginUsd);
         if (runtime.positionDecreasing) {
+            if (newPosition.size > 0) {
+                console.log(
+                    "runtime.discountedNextMarginUsd.divDecimal(runtime.mm)",
+                    runtime.discountedNextMarginUsd.divDecimal(runtime.mm)
+                );
+            }
             // In some cases a postion can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completly.
             if (
                 newPosition.size > 0 &&
@@ -299,6 +354,7 @@ library Position {
                 revert ErrorUtil.CanLiquidatePosition();
             }
         } else {
+            console.log("validateMinimumCredit");
             // Check the minimum credit requirements are still met.
             validateMinimumCredit(
                 market,
@@ -313,6 +369,7 @@ library Position {
                 revert ErrorUtil.InsufficientMargin();
             }
 
+            console.log("validateMaxOi");
             // Check the new position hasn't hit max OI on either side.
             validateMaxOi(
                 market,
@@ -325,11 +382,15 @@ library Position {
         // Create and return a validated trade struct for downstream processing.
         int256 marginUsdForNextMarginUsd = marginValuesForLiqValidation.collateralUsd.toInt() +
             Margin.getPnlAdjustmentUsd(accountId, market, params.oraclePrice, params.fillPrice);
+        console.log("marginUsdForNextMarginUsd");
+        console.logInt(marginUsdForNextMarginUsd);
         uint256 newMarginUsd = getNextMarginUsd(
             MathUtil.max(marginUsdForNextMarginUsd, 0).toUint(),
             runtime.orderFee,
             runtime.keeperFee
         );
+        console.log("newMarginUsd", newMarginUsd);
+        console.log("end validateTrade");
         return
             Position.ValidatedTrade(
                 newPosition,

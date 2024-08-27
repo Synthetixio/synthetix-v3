@@ -14,6 +14,7 @@ import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {Margin} from "../storage/Margin.sol";
+import "hardhat/console.sol";
 
 library PerpMarket {
     using DecimalMath for int128;
@@ -323,6 +324,9 @@ library PerpMarket {
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+        console.log("getOraclePrice from oracleNodeId:");
+        console.logBytes32(marketConfig.oracleNodeId);
+        console.log(addresses.oracleManager);
         return
             INodeModule(addresses.oracleManager).process(marketConfig.oracleNodeId).price.toUint();
     }
@@ -359,6 +363,11 @@ library PerpMarket {
     function getProportionalUtilizationElapsed(
         PerpMarket.Data storage self
     ) internal view returns (uint128) {
+        console.log("getProportionalUtilizationElapsed block.timestamp", block.timestamp);
+        console.log(
+            "getProportionalUtilizationElapsed self.lastUtilizationTime",
+            self.lastUtilizationTime
+        );
         return
             (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SECONDS_PER_YEAR).to128();
     }
