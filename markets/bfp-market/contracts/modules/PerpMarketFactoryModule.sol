@@ -176,10 +176,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             );
     }
 
-    /// @notice includes the order sizeDelta in the calculation of the minimum credit amount
-    function minimumCreditWithTradeSize(
+    /// @inheritdoc IPerpMarketFactoryModule
+    function minimumCreditWithPositionSize(
         uint128 marketId,
-        int128 sizeDelta
+        int128 positionSize
     ) external view returns (uint256) {
         // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
@@ -191,10 +191,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             oracleManager: ORACLE_MANAGER
         });
         return
-            market.getMinimumCreditWithTradeSize(
+            market.getMinimumCreditWithPositionSize(
                 PerpMarketConfiguration.load(marketId),
                 market.getOraclePrice(addresses),
-                sizeDelta,
+                positionSize,
                 addresses
             );
     }
