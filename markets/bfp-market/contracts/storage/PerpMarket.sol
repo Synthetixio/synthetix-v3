@@ -363,6 +363,11 @@ library PerpMarket {
     function getProportionalUtilizationElapsed(
         PerpMarket.Data storage self
     ) internal view returns (uint128) {
+        console.log("getProportionalUtilizationElapsed block.timestamp", block.timestamp);
+        console.log(
+            "getProportionalUtilizationElapsed self.lastUtilizationTime",
+            self.lastUtilizationTime
+        );
         return
             (block.timestamp - self.lastUtilizationTime).divDecimal(AVG_SECONDS_PER_YEAR).to128();
     }

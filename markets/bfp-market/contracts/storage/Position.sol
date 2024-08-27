@@ -340,10 +340,12 @@ library Position {
             .toUint();
         console.log("discountedNextMarginUsd", runtime.discountedNextMarginUsd);
         if (runtime.positionDecreasing) {
-            console.log(
-                "runtime.discountedNextMarginUsd.divDecimal(runtime.mm)",
-                runtime.discountedNextMarginUsd.divDecimal(runtime.mm)
-            );
+            if (newPosition.size > 0) {
+                console.log(
+                    "runtime.discountedNextMarginUsd.divDecimal(runtime.mm)",
+                    runtime.discountedNextMarginUsd.divDecimal(runtime.mm)
+                );
+            }
             // In some cases a postion can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completly.
             if (
                 newPosition.size > 0 &&
