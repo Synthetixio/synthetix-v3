@@ -4,11 +4,11 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 import { ethers } from 'ethers';
-import { bn, bootstrapBuyback } from './bootstrap';
+import { bn, bootstrapOwnedFeeCollector } from './bootstrap';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 describe('OwnedFeeCollector', function () {
-  const { getContract, owner, user } = bootstrapBuyback();
+  const { getContract, owner, user } = bootstrapOwnedFeeCollector();
 
   let OwnedFeeCollector: ethers.Contract;
   let UsdToken: ethers.Contract;

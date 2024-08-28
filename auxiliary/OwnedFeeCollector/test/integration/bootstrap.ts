@@ -30,7 +30,7 @@ async function getImpersonatedSigner(
   return provider.getSigner(addr);
 }
 
-export function bootstrapBuyback() {
+export function bootstrapOwnedFeeCollector() {
   const r = bootstrap();
 
   let user: ethers.Signer;
