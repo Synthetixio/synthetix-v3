@@ -36,7 +36,7 @@ contract FeeCollectorMock is IFeeCollector, Ownable {
     function claimFees() external onlyOwner {
         address owner = owner();
         uint256 feeTokenBalance = IERC20(feeToken).balanceOf(address(this));
-        IERC20(feeToken).transfer(ownerAddress, feeTokenBalance);
+        IERC20(feeToken).transfer(owner, feeTokenBalance);
     }
 
     function supportsInterface(
