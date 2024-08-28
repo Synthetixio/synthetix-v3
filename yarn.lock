@@ -3022,8 +3022,10 @@ __metadata:
     "@ethersproject/bignumber": "npm:^5.7.0"
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
   languageName: unknown
   linkType: soft
 
@@ -3033,8 +3035,10 @@ __metadata:
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
   languageName: unknown
   linkType: soft
 

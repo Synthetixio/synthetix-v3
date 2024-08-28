@@ -139,12 +139,12 @@ library Position {
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses,
-        int128 sizeDelta
+        int128 positionSize
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
+        uint256 minimumCredit = market.getMinimumCreditWithPositionSize(
             marketConfig,
             oraclePrice,
-            sizeDelta,
+            positionSize,
             addresses
         );
 
@@ -305,7 +305,7 @@ library Position {
                 params.oraclePrice,
                 marketConfig,
                 addresses,
-                params.sizeDelta
+                newPosition.size
             );
 
             // Check new position margin validations.

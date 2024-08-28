@@ -8,6 +8,7 @@ const config = {
   docgen: {
     exclude: [
       './interfaces/external',
+      './generated',
       './modules',
       './mixins',
       './mocks',
