@@ -2499,6 +2499,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openzeppelin/contracts@npm:5.0.2":
+  version: 5.0.2
+  resolution: "@openzeppelin/contracts@npm:5.0.2"
+  checksum: 10/938ebffbdade7dc59ea3df5b562c0e457bbefde9d82be8fa2acfd11da887df11653ac07922f41746b80cdbc106430e1e6978ce244fe99b00a7d9dc1418fc7670
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.6":
   version: 2.3.6
   resolution: "@peculiar/asn1-schema@npm:2.3.6"
@@ -3232,6 +3239,24 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/node": "npm:^20.11.17"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/owned-fee-collector@workspace:auxiliary/OwnedFeeCollector":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/owned-fee-collector@workspace:auxiliary/OwnedFeeCollector"
+  dependencies:
+    "@openzeppelin/contracts": "npm:5.0.2"
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
