@@ -94,9 +94,9 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
 
     // --- Views --- //
 
-    /**
-     * @notice Returns a digest of an existing market given the `marketId`.
-     */
+    /// @notice Returns a digest of an existing market given the `marketId`.
+    /// @param marketId Market to query against
+    /// @return getMarketDigest Market digest struct
     function getMarketDigest(
         uint128 marketId
     ) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
