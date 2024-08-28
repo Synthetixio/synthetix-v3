@@ -61,39 +61,57 @@ contract AsyncOrderSettlementPythModule is
     }
 
     /**
-     * @dev used for settleing an order.
+     * @notice Settles an offchain order
+     * @param price provided by offchain oracle
+     * @param asyncOrder to be validated and settled
+     * @param settlementStrategy used to validate order and calculate settlement reward 
      */
     function _settleOrder(
         uint256 price,
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
+        /// @dev runtime stores order settlement data; prevents stack too deep error
         SettleOrderRuntime memory runtime;
+
         runtime.accountId = asyncOrder.request.accountId;
         runtime.marketId = asyncOrder.request.marketId;
-        // check if account is flagged
+        runtime.sizeDelta = asyncOrder.request.sizeDelta;
+
+        // ensure account has not been flagged for liquidation
+        /// @custom:question is this check necessary given validateRequest() calls isEligibleForLiquidation()?
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
 
         Position.Data storage oldPosition;
-        (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
-            .validateRequest(settlementStrategy, price);
-        asyncOrder.validateAcceptablePrice(runtime.fillPrice);
 
-        runtime.sizeDelta = asyncOrder.request.sizeDelta;
+        // validate order request can be settled; call reverts if not
+        (
+            runtime.newPosition, 
+            runtime.totalFees, 
+            runtime.fillPrice, 
+            oldPosition
+        ) = asyncOrder.validateRequest(
+            settlementStrategy, 
+            price
+        );
+
+        // validate final fill price is acceptable relative to price specified by trader
+        asyncOrder.validateAcceptablePrice(runtime.fillPrice); 
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
-        // use fill price to calculate realized pnl
+        // use actual fill price to calculate realized pnl
         (runtime.pnl, , runtime.chargedInterest, runtime.accruedFunding, , ) = oldPosition.getPnl(
             runtime.fillPrice
         );
 
         runtime.chargedAmount = runtime.pnl - runtime.totalFees.toInt();
         perpsAccount.charge(runtime.chargedAmount);
+        
         emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
-        // after pnl is realized, update position
+        // only update position state after pnl has been realized
         runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
             runtime.accountId,
             runtime.newPosition
@@ -113,26 +131,22 @@ contract AsyncOrderSettlementPythModule is
 
         runtime.settlementReward = AsyncOrder.settlementRewardCost(settlementStrategy);
 
+        // if settlement reward is non-zero, pay keeper
         if (runtime.settlementReward > 0) {
-            // pay keeper
             factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
-        (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
-            .load()
-            .collectFees(
-                runtime.totalFees - runtime.settlementReward, // totalFees includes settlement reward so we remove it
-                asyncOrder.request.referrer,
-                factory
-            );
+        // order fees are total fees minus settlement reward
+        uint orderFees = runtime.totalFees - runtime.settlementReward;
+        GlobalPerpsMarketConfiguration.Data s = GlobalPerpsMarketConfiguration.load();
+        s.collectFees(orderFees, asyncOrder.request.referrer, factory);
 
         // trader can now commit a new order
         asyncOrder.reset();
 
-        // Note: new event for this due to stack too deep adding it to OrderSettled event
+        /// @custom:question two events here seems bad. Can we not combine or find a better way?
         emit InterestCharged(runtime.accountId, runtime.chargedInterest);
 
-        // emit event
         emit OrderSettled(
             runtime.marketId,
             runtime.accountId,
