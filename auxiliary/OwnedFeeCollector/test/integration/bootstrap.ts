@@ -21,14 +21,27 @@ export function bootstrap() {
   return r;
 }
 
+async function getImpersonatedSigner(
+  provider: ethers.providers.JsonRpcProvider,
+  addr: string
+): Promise<ethers.Signer> {
+  await provider.send('hardhat_impersonateAccount', [addr]);
+
+  return provider.getSigner(addr);
+}
+
 export function bootstrapBuyback() {
   const r = bootstrap();
 
-  let owner: ethers.Signer;
   let user: ethers.Signer;
+  let owner: ethers.Signer;
 
-  before('get signers', async function () {
-    [owner, user] = r.getSigners();
+  before('get owner', async function () {
+    [user] = r.getSigners();
+    owner = await getImpersonatedSigner(
+      r.getProvider(),
+      '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9'
+    );
   });
 
   return {

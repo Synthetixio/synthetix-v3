@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 import { ethers } from 'ethers';
 import { bn, bootstrapBuyback } from './bootstrap';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 describe('OwnedFeeCollector', function () {
-  const { getContract, user, owner } = bootstrapBuyback();
+  const { getContract, owner, user } = bootstrapBuyback();
 
   let OwnedFeeCollector: ethers.Contract;
   let UsdToken: ethers.Contract;
 
   const usdAmount = bn(5000);
-  const snxFeeShareRatio = bn(0.5);
+  const ownerFeeShareRatio = bn(0.5);
 
   before('prepare environment', async () => {
     OwnedFeeCollector = getContract('owned_fee_collector');
@@ -26,88 +27,55 @@ describe('OwnedFeeCollector', function () {
   });
 
   describe('initial state is set', function () {
-    it('get premium', async () => {
-      const premium = await OwnedFeeCollector.getPremium();
-      assertBn.equal(premium, premiumValue);
+    it('get owner', async () => {
+      const contractReadOwner = await OwnedFeeCollector.contractReadO();
+      assertBn.equal(contractReadOwner, await owner().getAddress());
     });
-    it('get snxFeeShare', async () => {
-      const snxFeeShare = await OwnedFeeCollector.getSnxFeeShare();
-      assertBn.equal(snxFeeShare, snxFeeShareRatio);
+    it('get ownerFeeShare', async () => {
+      const ownerFeeShare = await OwnedFeeCollector.ownerFeeShare();
+      assertBn.equal(ownerFeeShare, ownerFeeShareRatio);
     });
-    it('get snxNodeId', async () => {
-      const snxNodeId = await OwnedFeeCollector.getSnxFeeShare();
-      assert.notEqual(snxNodeId, ethers.constants.HashZero);
+    it('get feeToken', async () => {
+      const feeToken = await OwnedFeeCollector.feeToken();
+      assert.notEqual(feeToken, UsdToken.address);
     });
   });
 
-  describe('buyback', function () {
-    let userAddress: string;
-    let userSnxBalanceBefore: any;
-    let userUsdBalanceBefore: any;
-    let buybackSnxBalanceBefore: any;
-    let buybackUsdBalanceBefore: any;
+  describe('owned fee collector', function () {
+    let ownerAddress: string;
+    let ownerUsdBalanceBefore: any;
 
     before('record balances and approve', async () => {
       // record balances
-      userAddress = await user().getAddress();
-      userSnxBalanceBefore = await SnxToken.balanceOf(userAddress);
-      userUsdBalanceBefore = await UsdToken.balanceOf(userAddress);
-      buybackSnxBalanceBefore = await SnxToken.balanceOf(OwnedFeeCollector.address);
-      buybackUsdBalanceBefore = await UsdToken.balanceOf(OwnedFeeCollector.address);
-      console.log('userSnxBalanceBefore', userSnxBalanceBefore.toString());
-      console.log('userUsdBalanceBefore', userUsdBalanceBefore.toString());
-      console.log('buybackSnxBalanceBefore', buybackSnxBalanceBefore.toString());
-      console.log('buybackUsdBalanceBefore', buybackUsdBalanceBefore.toString());
-
-      // approve buyback contract to spend SNX
-      await SnxToken.connect(user()).approve(OwnedFeeCollector.address, snxAmount);
+      ownerAddress = await owner().getAddress();
+      ownerUsdBalanceBefore = await UsdToken.balanceOf(ownerAddress);
     });
 
-    it('buys snx for usd', async () => {
-      const premium = await OwnedFeeCollector.getPremium();
-      console.log('premium', premium.toString());
-
-      console.log(
-        '1 + premimum',
-        bn(1)
-          .add(await OwnedFeeCollector.getPremium())
-          .toString()
-      );
-      console.log('snx price * snx amount ', snxPrice.mul(snxAmount).div(bn(1)).toString());
-
-      const expectedAmountUSD = snxPrice
-        .mul(snxAmount)
-        .mul(bn(1).add(await OwnedFeeCollector.getPremium()))
-        .div(bn(1))
-        .div(bn(1));
-      console.log('expected usd amount:', expectedAmountUSD.toString());
-
-      const tx = await OwnedFeeCollector.connect(user()).processBuyback(snxAmount);
+    it('claims fees on behalf of an owner', async () => {
+      assertBn.equal(ownerUsdBalanceBefore, 0);
+      const tx = await OwnedFeeCollector.connect(owner()).claimFees();
       const receipt = await tx.wait();
       const event = findSingleEvent({
         receipt,
-        eventName: 'BuybackProcessed',
+        eventName: 'Transfer',
       });
-
-      assert.equal(event.args.buyer, userAddress);
-      assertBn.equal(event.args.snx, snxAmount);
-      assertBn.equal(event.args.usd, expectedAmountUSD);
+      assert.equal(event.args.from, OwnedFeeCollector.address);
+      assertBn.equal(event.args.to, await owner().getAddress());
+      assertBn.equal(event.args.amount, usdAmount);
+      const ownerUsdBalanceAfter = await UsdToken.balanceOf(ownerAddress);
 
       // verify balances are correct
-      assertBn.equal(await SnxToken.balanceOf(userAddress), userSnxBalanceBefore.sub(snxAmount));
-      assertBn.equal(
-        await SnxToken.balanceOf('0x000000000000000000000000000000000000dEaD'),
-        snxAmount
-      );
-      assertBn.equal(
-        await UsdToken.balanceOf(userAddress),
-        userUsdBalanceBefore.add(expectedAmountUSD)
-      );
-      assertBn.equal(
-        await UsdToken.balanceOf(OwnedFeeCollector.address),
-        buybackUsdBalanceBefore.sub(expectedAmountUSD)
-      );
+      assertBn.equal(ownerUsdBalanceAfter, usdAmount);
     });
+  });
+
+  it('blocks claiming fees on behalf of a non owner', async () => {
+    await UsdToken.connect(owner()).mint(usdAmount, OwnedFeeCollector.address);
+    await assertRevert(
+      OwnedFeeCollector.connect(owner()).claimFees(),
+      `OwnableUnauthorizedAccount(${await user().getAddress()})`,
+      OwnedFeeCollector
+    );
   });
 
   describe('fee collector', function () {
@@ -118,7 +86,7 @@ describe('OwnedFeeCollector', function () {
         totalFees,
         ethers.constants.AddressZero
       );
-      assertBn.equal(quotedFees, totalFees.mul(snxFeeShareRatio).div(bn(1)));
+      assertBn.equal(quotedFees, totalFees.mul(ownerFeeShareRatio).div(bn(1)));
     });
   });
 });
