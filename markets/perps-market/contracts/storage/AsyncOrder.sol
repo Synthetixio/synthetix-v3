@@ -264,10 +264,12 @@ library AsyncOrder {
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
     ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
+        /// @dev runtime stores order settlement data and prevents stack too deep
         SimulateDataRuntime memory runtime;
-        runtime.sizeDelta = order.request.sizeDelta;
+
         runtime.accountId = order.request.accountId;
         runtime.marketId = order.request.marketId;
+        runtime.sizeDelta = order.request.sizeDelta;
 
         if (runtime.sizeDelta == 0) {
             revert ZeroSizeOrder();
@@ -348,11 +350,18 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
 
-        int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
-            MathUtil.abs(runtime.newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt(),
-            PerpsPrice.Tolerance.DEFAULT
-        );
-        GlobalPerpsMarket.load().validateMarketCapacity(lockedCreditDelta);
+        /// @custom:magnitude determines if more market credit is required
+        /// when a position's magnitude is increased, more credit is required
+        /// when a position's magnitude is decreased, less credit is required
+        uint newMagnitude = MathUtil.abs(runtime.newPositionSize);
+        uint oldMagnitude = MathUtil.abs(oldPosition.size);
+        if (newMagnitude > oldMagnitude) {
+            int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
+                newMagnitude.toInt() - oldMagnitude.toInt(),
+                PerpsPrice.Tolerance.DEFAULT
+            );
+            GlobalPerpsMarket.load().validateMarketCapacity(lockedCreditDelta);
+        }
 
         runtime.newPosition = Position.Data({
             marketId: runtime.marketId,
