@@ -82,11 +82,17 @@ library GlobalPerpsMarket {
 
     /**
      * @notice Check whether, given the new locked credit delta, if the market is still solvent given its credit capacity from the core system.
+     * @dev reverts if current delegated collateral is insufficient to collateralize the specified locked credit
      */
     function validateMarketCapacity(Data storage self, int256 lockedCreditDelta) internal view {
+        /// @dev establish amount of collateral currently collateralizing outstanding perp markets
         int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
-        int256 lockedCredit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt() +
-            lockedCreditDelta;
+
+        /// @dev establish amount of credit needed to collateralize outstanding perp markets
+        int256 credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
+
+        /// @dev calculate new accumulated credit following the addition of the new locked credit
+        credit += lockedCreditDelta;
 
         if (delegatedCollateralValue < lockedCredit) {
             revert ExceedsMarketCreditCapacity(delegatedCollateralValue, lockedCredit);
@@ -108,9 +114,24 @@ library GlobalPerpsMarket {
         rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
     }
 
-    function getDelegatedCollateralValue(Data storage self) internal view returns (int256) {
+    /// @notice get the value of collateral that is currently delegated to the perps market
+    /// @dev value returned is denominated in USD
+    /// @return value of delegated collateral; negative values indicate credit capacity exceeded
+    function getDelegatedCollateralValue(Data storage self) internal view returns (int256 value) {
+        // the total amount of collateral (σ) that can be withdrawn from the 
+        // given perp market is calculated as the sum of:
+        //      (α) lp collateral delegated to the given perp market
+        //      (β) collateral (i.e., trader margin) deposited into the given perp market
+        // where both values are measured in USD and are non-negative (see return type)
         uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
-        return withdrawableUsd.toInt() - totalCollateralValue(self).toInt();
+
+        // thus, collateral delegated can be calculated as follows:
+        //     α = σ - β
+        // where (α) can be negative if the market is over utilized 
+        // (i.e., perp market's credit capacity is currently exceeded)
+        /// @custom:caution negative value indicates credit capacity exceeded
+        /// and lp's are insolvent and thus are at risk of liquidation
+        value = withdrawableUsd.toInt() - totalCollateralValue(self).toInt();
     }
 
     function minimumCredit(
