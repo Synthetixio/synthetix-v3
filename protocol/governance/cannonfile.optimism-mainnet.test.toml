@@ -40,10 +40,10 @@ defaultValue = "governance-test-on-mainnet"
 # [setting.initial_epoch_end_date]
 # defaultValue = "1725180371"
 
-[contract.SnapshotRecordMock]
-artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
-salt = "<%= settings.salt %>"
-create2 = true
+# [contract.SnapshotRecordMock]
+# artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
+# salt = "<%= settings.salt %>"
+# create2 = true
 
 # [router.CoreRouter]
 # contracts = [
@@ -69,17 +69,17 @@ create2 = true
 # args = [["43"], ["0xB3026a683AAC2499e70Bbd988a9411A99b00EBD2"]]
 
 # unset v2x snapshot address
-[invoke.set_snapshot_record_1]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setSnapshotContract"
-args = ["0x45c55BF488D3Cb8640f12F63CbeDC027E8261E79", 0, false]
-
-[invoke.set_snapshot_record_2]
-target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
-func = "setSnapshotContract"
-args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true]
+# [invoke.set_snapshot_record_1]
+# target = ["GovernanceProxy"]
+# from = "<%= settings.owner %>"
+# func = "setSnapshotContract"
+# args = ["0x45c55BF488D3Cb8640f12F63CbeDC027E8261E79", 0, false]
+# 
+# [invoke.set_snapshot_record_2]
+# target = ["GovernanceProxy"]
+# from = "<%= settings.owner %>"
+# func = "setSnapshotContract"
+# args = ["<%= contracts.SnapshotRecordMock.address %>", 0, true]
 
 # [invoke.set_gas_limit]
 # target = ["GovernanceProxy"]

@@ -13,8 +13,3 @@ args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
-
-[clone.trusted_multicall_forwarder]
-source = "trusted-multicall-forwarder"
-target = "trusted-multicall-forwarder:0.0.3@with-synthetix"
-options.salt = "<%= settings.salt %>"
