@@ -493,14 +493,42 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
+    function getIntentDelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view override returns (uint256) {
+        return
+            Account.load(accountId).getDelegationIntents().delegatedAmountPerCollateral[
+                collateralType
+            ];
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getIntentUndelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view override returns (uint256) {
+        return
+            Account.load(accountId).getDelegationIntents().unDelegatedAmountPerCollateral[
+                collateralType
+            ];
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
     function getNetDelegatedPerCollateral(
         uint128 accountId,
         address collateralType
     ) external view override returns (int256) {
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
         return
-            Account.load(accountId).getDelegationIntents().netDelegatedAmountPerCollateral[
-                collateralType
-            ];
+            accountIntents.delegatedAmountPerCollateral[collateralType].toInt() -
+            accountIntents.unDelegatedAmountPerCollateral[collateralType].toInt();
     }
 
     /**

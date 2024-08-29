@@ -82,12 +82,20 @@ contract CollateralModule is ICollateralModule {
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
 
-        (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked) = account
-            .getCollateralTotals(collateralType);
+        (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked,
+            uint256 pendingToDelegate
+        ) = account.getCollateralTotals(collateralType);
+
+        uint256 lockedPlusPending = totalLocked + pendingToDelegate;
 
         // The amount that cannot be withdrawn from the protocol is the max of either
         // locked collateral or delegated collateral.
-        uint256 unavailableCollateral = totalLocked > totalAssigned ? totalLocked : totalAssigned;
+        uint256 unavailableCollateral = lockedPlusPending > totalAssigned
+            ? lockedPlusPending
+            : totalAssigned;
 
         uint256 availableForWithdrawal = totalDeposited - unavailableCollateral;
         if (tokenAmountD18 > availableForWithdrawal) {
@@ -111,7 +119,12 @@ contract CollateralModule is ICollateralModule {
         external
         view
         override
-        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked,
+            uint256 totalPendingToDelegate
+        )
     {
         return Account.load(accountId).getCollateralTotals(collateralType);
     }
@@ -212,7 +225,7 @@ contract CollateralModule is ICollateralModule {
             AccountRBAC._ADMIN_PERMISSION
         );
 
-        (uint256 totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(
+        (uint256 totalDeposited, , uint256 totalLocked, ) = account.getCollateralTotals(
             collateralType
         );
 

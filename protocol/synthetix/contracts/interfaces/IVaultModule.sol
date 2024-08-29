@@ -292,6 +292,28 @@ interface IVaultModule {
         );
 
     /**
+     * @notice Returns the total amount of collateral intended to be delegated to the vault by the account.
+     * @param accountId The id of the account owning the intents.
+     * @param collateralType The address of the collateral.
+     * @return delegatedPerCollateral The total amount of collateral intended to be delegated to the vault by the account, denominated with 18 decimals of precision.
+     */
+    function getIntentDelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view returns (uint256 delegatedPerCollateral);
+
+    /**
+     * @notice Returns the total amount of collateral intended to be undelegated to the vault by the account.
+     * @param accountId The id of the account owning the intents.
+     * @param collateralType The address of the collateral.
+     * @return undelegatedPerCollateral The total amount of collateral intended to be undelegated to the vault by the account, denominated with 18 decimals of precision.
+     */
+    function getIntentUndelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view returns (uint256 undelegatedPerCollateral);
+
+    /**
      * @notice Returns the total (positive and negative) amount of collateral intended to be delegated to the vault by the account.
      * @param accountId The id of the account owning the intents.
      * @param collateralType The address of the collateral.

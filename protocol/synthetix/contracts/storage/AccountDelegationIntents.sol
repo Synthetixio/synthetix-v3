@@ -25,7 +25,8 @@ library AccountDelegationIntents {
         // accounting for the intents collateral delegated
         // Per Collateral
         SetUtil.AddressSet delegatedCollaterals;
-        mapping(address => int256) netDelegatedAmountPerCollateral; // collateralType => net delegatedCollateralAmount
+        mapping(address => uint256) delegatedAmountPerCollateral; // collateralType => sum of delegations (delegatedCollateralAmount)
+        mapping(address => uint256) unDelegatedAmountPerCollateral; // collateralType => sum of un-delegations (delegatedCollateralAmount)
     }
 
     function addIntent(
@@ -42,8 +43,14 @@ library AccountDelegationIntents {
             ]
             .add(intentId);
 
-        self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
-            .deltaCollateralAmountD18;
+        if (delegationIntent.deltaCollateralAmountD18 > 0) {
+            self.delegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
+                .deltaCollateralAmountD18
+                .toUint();
+        } else {
+            self.unDelegatedAmountPerCollateral[delegationIntent.collateralType] += (-1 *
+                delegationIntent.deltaCollateralAmountD18).toUint();
+        }
 
         if (!self.delegatedCollaterals.contains(delegationIntent.collateralType)) {
             self.delegatedCollaterals.add(delegationIntent.collateralType);
@@ -68,8 +75,14 @@ library AccountDelegationIntents {
             ]
             .remove(intentId);
 
-        self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
-            .deltaCollateralAmountD18;
+        if (delegationIntent.deltaCollateralAmountD18 > 0) {
+            self.delegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
+                .deltaCollateralAmountD18
+                .toUint();
+        } else {
+            self.unDelegatedAmountPerCollateral[delegationIntent.collateralType] -= (-1 *
+                delegationIntent.deltaCollateralAmountD18).toUint();
+        }
     }
 
     function getIntent(

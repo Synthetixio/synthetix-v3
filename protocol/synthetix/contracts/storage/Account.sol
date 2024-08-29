@@ -112,15 +112,23 @@ library Account {
     )
         internal
         view
-        returns (uint256 totalDepositedD18, uint256 totalAssignedD18, uint256 totalLockedD18)
+        returns (
+            uint256 totalDepositedD18,
+            uint256 totalAssignedD18,
+            uint256 totalLockedD18,
+            uint256 totalIntendedToDelegateD18
+        )
     {
         totalAssignedD18 = getAssignedCollateral(self, collateralType);
         totalDepositedD18 =
             totalAssignedD18 +
             self.collaterals[collateralType].amountAvailableForDelegationD18;
         totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
+        totalIntendedToDelegateD18 = getDelegationIntents(self).delegatedAmountPerCollateral[
+            collateralType
+        ];
 
-        return (totalDepositedD18, totalAssignedD18, totalLockedD18);
+        return (totalDepositedD18, totalAssignedD18, totalLockedD18, totalIntendedToDelegateD18);
     }
 
     /**
