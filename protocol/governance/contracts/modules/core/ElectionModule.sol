@@ -555,6 +555,10 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         return Ballot.load(electionId, voter, chainId).votedCandidates;
     }
 
+    function getNumOfBallots() external view override returns (uint256) {
+        return Council.load().getCurrentElection().ballotPtrs.length();
+    }
+
     /// @inheritdoc	IElectionModule
     function isElectionEvaluated() public view override returns (bool) {
         return Council.load().getCurrentElection().evaluated;
