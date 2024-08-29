@@ -1,4 +1,4 @@
-name = "owned_fee_collector"
+name = "owned-fee-collector"
 version = "<%= package.version %>-testable"
 
 [setting.owner]

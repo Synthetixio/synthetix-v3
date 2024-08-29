@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @title Owned Fee Collector.
  */
-contract FeeCollectorMock is IFeeCollector, Ownable {
+contract OwnedFeeCollector is IFeeCollector, Ownable {
     using DecimalMath for uint256;
 
     uint256 public immutable ownerFeeShare;

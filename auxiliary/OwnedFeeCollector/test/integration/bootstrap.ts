@@ -10,6 +10,8 @@ interface Contracts {
   'usd.MintableToken': ethers.Contract;
 }
 
+const ownerAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
+
 const params = { cannonfile: 'cannonfile.test.toml' };
 
 const r = coreBootstrap<Contracts>(params);
@@ -38,10 +40,11 @@ export function bootstrapOwnedFeeCollector() {
 
   before('get owner', async function () {
     [user] = r.getSigners();
-    owner = await getImpersonatedSigner(
-      r.getProvider(),
-      '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9'
-    );
+    await user.sendTransaction({
+      to: ownerAddress,
+      value: bn(1),
+    });
+    owner = await getImpersonatedSigner(r.getProvider(), ownerAddress);
   });
 
   return {
