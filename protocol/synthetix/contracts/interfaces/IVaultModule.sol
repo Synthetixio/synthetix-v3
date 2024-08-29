@@ -57,7 +57,7 @@ interface IVaultModule {
      */
     error ExceedingUndelegateAmount(
         int256 deltaCollateralAmountD18,
-        int256 cachedDeltaCollateralAmountD18,
+        uint256 cachedDeltaCollateralAmountD18,
         int256 totalDeltaCollateralAmountD18,
         uint256 currentCollateralAmount
     );
@@ -312,17 +312,6 @@ interface IVaultModule {
         uint128 accountId,
         address collateralType
     ) external view returns (uint256 undelegatedPerCollateral);
-
-    /**
-     * @notice Returns the total (positive and negative) amount of collateral intended to be delegated to the vault by the account.
-     * @param accountId The id of the account owning the intents.
-     * @param collateralType The address of the collateral.
-     * @return netDelegatedPerCollateral The total amount of collateral intended to be delegated to the vault by the account, denominated with 18 decimals of precision.
-     */
-    function getNetDelegatedPerCollateral(
-        uint128 accountId,
-        address collateralType
-    ) external view returns (int256 netDelegatedPerCollateral);
 
     /**
      * @notice Returns the total executable (not expired) amount of collateral intended to be delegated to the vault by the account.

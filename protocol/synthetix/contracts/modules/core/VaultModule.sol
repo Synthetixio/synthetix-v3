@@ -112,19 +112,28 @@ contract VaultModule is IVaultModule {
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
-        int256 accumulatedDelta = deltaCollateralAmountD18 +
-            accountIntents.netDelegatedAmountPerCollateral[collateralType];
-        if (accumulatedDelta < 0 && currentCollateralAmount < (-1 * accumulatedDelta).toUint()) {
+
+        uint256 accumulatedDelegatedDelta = deltaCollateralAmountD18 > 0
+            ? accountIntents.delegatedAmountPerCollateral[collateralType] +
+                deltaCollateralAmountD18.toUint()
+            : accountIntents.delegatedAmountPerCollateral[collateralType];
+        uint256 accumulatedUnDelegatedDelta = deltaCollateralAmountD18 < 0
+            ? accountIntents.unDelegatedAmountPerCollateral[collateralType] +
+                (-1 * deltaCollateralAmountD18).toUint()
+            : accountIntents.unDelegatedAmountPerCollateral[collateralType];
+
+        if (deltaCollateralAmountD18 < 0 && currentCollateralAmount < accumulatedUnDelegatedDelta) {
             revert ExceedingUndelegateAmount(
                 deltaCollateralAmountD18,
-                accountIntents.netDelegatedAmountPerCollateral[collateralType],
-                accumulatedDelta,
+                accountIntents.unDelegatedAmountPerCollateral[collateralType],
+                accumulatedUnDelegatedDelta.toInt() * -1,
                 currentCollateralAmount
             );
         }
 
-        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() + accumulatedDelta)
-            .toUint();
+        uint256 newCollateralAmountD18 = deltaCollateralAmountD18 > 0
+            ? currentCollateralAmount + accumulatedDelegatedDelta
+            : currentCollateralAmount - accumulatedUnDelegatedDelta;
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -514,21 +523,6 @@ contract VaultModule is IVaultModule {
             Account.load(accountId).getDelegationIntents().unDelegatedAmountPerCollateral[
                 collateralType
             ];
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getNetDelegatedPerCollateral(
-        uint128 accountId,
-        address collateralType
-    ) external view override returns (int256) {
-        AccountDelegationIntents.Data storage accountIntents = Account
-            .load(accountId)
-            .getDelegationIntents();
-        return
-            accountIntents.delegatedAmountPerCollateral[collateralType].toInt() -
-            accountIntents.unDelegatedAmountPerCollateral[collateralType].toInt();
     }
 
     /**
