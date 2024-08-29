@@ -25,7 +25,7 @@ contract OwnedFeeCollector is IFeeCollector, Ownable {
         uint128 marketId,
         uint256 feeAmount,
         address sender
-    ) external override returns (uint256) {
+    ) external view override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;
