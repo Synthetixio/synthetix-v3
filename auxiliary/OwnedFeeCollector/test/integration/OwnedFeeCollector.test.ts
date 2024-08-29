@@ -54,12 +54,20 @@ describe('OwnedFeeCollector', function () {
   });
 
   it('blocks claiming fees on behalf of a non owner', async () => {
+    const contractUsdBalance = await UsdToken.balanceOf(OwnedFeeCollector.address);
+    assertBn.equal(contractUsdBalance, 0);
     await UsdToken.connect(owner()).mint(usdAmount, OwnedFeeCollector.address);
+    const contractUsdBalanceBeforeClaim = await UsdToken.balanceOf(OwnedFeeCollector.address);
+    assertBn.equal(contractUsdBalanceBeforeClaim, usdAmount);
+    const contractReadOwner = await OwnedFeeCollector.owner();
+    assertBn.notEqual(contractReadOwner, await user().getAddress());
     await assertRevert(
-      OwnedFeeCollector.connect(owner()).claimFees(),
-      `OwnableUnauthorizedAccount(${await user().getAddress()})`,
+      OwnedFeeCollector.connect(user()).claimFees(),
+      `Unauthorized(${await user().getAddress()})`,
       OwnedFeeCollector
     );
+    const contractUsdBalanceAfterClaim = await UsdToken.balanceOf(OwnedFeeCollector.address);
+    assertBn.equal(contractUsdBalanceAfterClaim, usdAmount);
   });
 
   it('quotes fee with share', async () => {

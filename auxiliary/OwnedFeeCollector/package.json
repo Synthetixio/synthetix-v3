@@ -24,7 +24,6 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@openzeppelin/contracts": "^5.0.2",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",

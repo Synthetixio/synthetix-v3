@@ -5,7 +5,7 @@ import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.so
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {IFeeCollector} from "@synthetixio/perps-market/contracts/interfaces/external/IFeeCollector.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 
 /**
  * @title Owned Fee Collector.
@@ -34,7 +34,7 @@ contract OwnedFeeCollector is IFeeCollector, Ownable {
     }
 
     function claimFees() external onlyOwner {
-        address owner = owner();
+        address owner = OwnableStorage.load().owner;
         uint256 feeTokenBalance = IERC20(feeToken).balanceOf(address(this));
         IERC20(feeToken).transfer(owner, feeTokenBalance);
     }
