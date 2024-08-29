@@ -5,7 +5,6 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 
 import { ethers } from 'ethers';
 import { bn, bootstrapOwnedFeeCollector } from './bootstrap';
-import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 describe('OwnedFeeCollector', function () {
   const { getContract, owner, user } = bootstrapOwnedFeeCollector();
@@ -19,54 +18,39 @@ describe('OwnedFeeCollector', function () {
   before('prepare environment', async () => {
     OwnedFeeCollector = getContract('owned_fee_collector');
     UsdToken = getContract('usd.MintableToken');
-    console.log('usd token address', UsdToken.address);
-  });
-
-  before('set up token balances', async () => {
     await UsdToken.connect(owner()).mint(usdAmount, OwnedFeeCollector.address);
   });
 
-  describe('initial state is set', function () {
-    it('get owner', async () => {
-      const contractReadOwner = await OwnedFeeCollector.contractReadO();
-      assertBn.equal(contractReadOwner, await owner().getAddress());
-    });
-    it('get ownerFeeShare', async () => {
-      const ownerFeeShare = await OwnedFeeCollector.ownerFeeShare();
-      assertBn.equal(ownerFeeShare, ownerFeeShareRatio);
-    });
-    it('get feeToken', async () => {
-      const feeToken = await OwnedFeeCollector.feeToken();
-      assert.notEqual(feeToken, UsdToken.address);
-    });
+  it('gets owner', async () => {
+    const contractReadOwner = await OwnedFeeCollector.owner();
+    assertBn.equal(contractReadOwner, await owner().getAddress());
+  });
+  it('gets ownerFeeShare', async () => {
+    const ownerFeeShare = await OwnedFeeCollector.ownerFeeShare();
+    assertBn.equal(ownerFeeShare, ownerFeeShareRatio);
+  });
+  it('gets feeToken', async () => {
+    const feeToken = await OwnedFeeCollector.feeToken();
+    assert.equal(feeToken, UsdToken.address);
   });
 
-  describe('owned fee collector', function () {
-    let ownerAddress: string;
-    let ownerUsdBalanceBefore: any;
+  it('claims fees on behalf of an owner', async () => {
+    const ownerAddress = await owner().getAddress();
+    const ownerUsdBalanceBefore = await UsdToken.balanceOf(ownerAddress);
+    assertBn.equal(ownerUsdBalanceBefore, 0);
 
-    before('record balances and approve', async () => {
-      // record balances
-      ownerAddress = await owner().getAddress();
-      ownerUsdBalanceBefore = await UsdToken.balanceOf(ownerAddress);
-    });
+    const contractUsdBalanceBefore = await UsdToken.balanceOf(OwnedFeeCollector.address);
+    assertBn.equal(contractUsdBalanceBefore, usdAmount);
 
-    it('claims fees on behalf of an owner', async () => {
-      assertBn.equal(ownerUsdBalanceBefore, 0);
-      const tx = await OwnedFeeCollector.connect(owner()).claimFees();
-      const receipt = await tx.wait();
-      const event = findSingleEvent({
-        receipt,
-        eventName: 'Transfer',
-      });
-      assert.equal(event.args.from, OwnedFeeCollector.address);
-      assertBn.equal(event.args.to, await owner().getAddress());
-      assertBn.equal(event.args.amount, usdAmount);
-      const ownerUsdBalanceAfter = await UsdToken.balanceOf(ownerAddress);
+    const tx = await OwnedFeeCollector.connect(owner()).claimFees();
+    await tx.wait();
 
-      // verify balances are correct
-      assertBn.equal(ownerUsdBalanceAfter, usdAmount);
-    });
+    const contractUsdBalanceAfter = await UsdToken.balanceOf(OwnedFeeCollector.address);
+    const ownerUsdBalanceAfter = await UsdToken.balanceOf(ownerAddress);
+
+    // verify balances are correct
+    assertBn.equal(ownerUsdBalanceAfter, usdAmount);
+    assertBn.equal(contractUsdBalanceAfter, 0);
   });
 
   it('blocks claiming fees on behalf of a non owner', async () => {
@@ -78,15 +62,13 @@ describe('OwnedFeeCollector', function () {
     );
   });
 
-  describe('fee collector', function () {
-    it('quotes fee with share', async () => {
-      const totalFees = bn(1000);
-      const quotedFees = await OwnedFeeCollector.quoteFees(
-        1,
-        totalFees,
-        ethers.constants.AddressZero
-      );
-      assertBn.equal(quotedFees, totalFees.mul(ownerFeeShareRatio).div(bn(1)));
-    });
+  it('quotes fee with share', async () => {
+    const totalFees = ethers.BigNumber.from(1000);
+    const quotedFees = await OwnedFeeCollector.quoteFees(
+      1,
+      totalFees.toNumber(),
+      ethers.constants.AddressZero
+    );
+    assertBn.equal(quotedFees, totalFees.mul(ownerFeeShareRatio).div(bn(1)));
   });
 });
