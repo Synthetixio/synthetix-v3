@@ -29,7 +29,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
 
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         snapshotVotePower.enabled = enabled;
