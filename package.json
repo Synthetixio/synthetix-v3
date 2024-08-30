@@ -59,7 +59,7 @@
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@synthetixio/deps": "workspace:*",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.17",
+    "@types/node": "^22.5.1",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
