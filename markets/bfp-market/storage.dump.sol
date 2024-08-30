@@ -137,7 +137,8 @@ library AccountDelegationIntents {
         SetUtil.UintSet intentsId;
         mapping(bytes32 => SetUtil.UintSet) intentsByPair;
         SetUtil.AddressSet delegatedCollaterals;
-        mapping(address => int256) netDelegatedAmountPerCollateral;
+        mapping(address => uint256) delegatedAmountPerCollateral;
+        mapping(address => uint256) unDelegatedAmountPerCollateral;
     }
 }
 
