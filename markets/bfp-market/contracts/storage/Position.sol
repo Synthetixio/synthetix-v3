@@ -229,14 +229,17 @@ library Position {
             params.makerFee,
             params.takerFee
         );
+
         runtime.ethPrice = INodeModule(addresses.oracleManager)
             .process(PerpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
+
         runtime.keeperFee = Order.getSettlementKeeperFee(
             params.keeperFeeBufferUsd,
             runtime.ethPrice
         );
+
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
@@ -260,8 +263,6 @@ library Position {
             addresses
         );
 
-        // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
-        runtime.sizeDelta = newPosition.size - currentPosition.size;
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
@@ -291,8 +292,9 @@ library Position {
                 0
             )
             .toUint();
+
         if (runtime.positionDecreasing) {
-            // Postion can be liquidatable due to fees, even if decreasing. This can't happen if closed completely.
+            // Position can be liquidatable due to fees, even if decreasing. This can't happen if closed completely.
             if (
                 newPosition.size != 0 &&
                 runtime.discountedNextMarginUsd.divDecimal(runtime.mm) <= DecimalMath.UNIT
