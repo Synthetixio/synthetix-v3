@@ -1,0 +1,40 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      cannon:
+        patterns:
+          - "@usecannon*"
+          - "*cannon*"
+      lerna:
+        patterns:
+          - "*lerna*"
+      subgraph:
+        patterns:
+          - "@graphprotocol*"
+          - "matchstick"
+      tests:
+        patterns:
+          - "*prettier*"
+          - "*eslint*"
+          - "*solhint*"
+          - "*lint*"
+          - "*mocha*"
+          - "*sinon*"
+          - "*nyc*"
+          - "*jest*"
+      deps:
+        patterns:
+          - "*"
+    reviewers:
+      - "noisekit"
+    ignore:
+      - dependency-name: "@openzeppelin/contracts"
+      - dependency-name: "@ethersproject*"
+      - dependency-name: "ethers"
+      - dependency-name: "chalk"
+      - dependency-name: "node-fetch"
+      - dependency-name: "forge-std"
