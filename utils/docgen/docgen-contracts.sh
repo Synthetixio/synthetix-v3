@@ -54,6 +54,7 @@ echo "# Auxiliary Packages" >> $OUT
 echo "" >> $OUT
 cat $ROOT/auxiliary/ArbitrumGasPriceOracle/docs/index.md >> $OUT
 cat $ROOT/auxiliary/BuybackSnx/docs/index.md >> $OUT
+cat $ROOT/auxiliary/OwnedFeeCollector/docs/index.md >> $OUT
 cat $ROOT/auxiliary/ERC4626ToAssetsRatioOracle/docs/index.md >> $OUT
 cat $ROOT/auxiliary/OpGasPriceOracle/docs/index.md >> $OUT
 cat $ROOT/auxiliary/PythERC7412Wrapper/docs/index.md >> $OUT
