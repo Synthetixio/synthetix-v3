@@ -15,7 +15,7 @@ contracts = ["CouncilTokenModule", "InitialModuleBundle"]
 
 [invoke.init_council_token]
 target = ["GovernanceProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "initOrUpgradeNft"
 args = [
     "<%= formatBytes32String('councilToken') %>",
