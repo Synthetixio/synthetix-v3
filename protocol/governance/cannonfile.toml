@@ -57,7 +57,7 @@ contracts = [
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 factory.GovernanceProxy.abiOf = ["CoreRouter"]
