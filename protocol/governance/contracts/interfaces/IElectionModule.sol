@@ -137,24 +137,6 @@ interface IElectionModule is IElectionModuleSatellite {
     // View functions
     // ---------------------------------------
 
-    /// @notice Shows the current epoch schedule dates
-    function getEpochSchedule() external view returns (Epoch.Data memory epoch);
-
-    /// @notice Shows the settings for the current election
-    function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
-
-    /// @notice Shows the settings for the next election
-    function getNextElectionSettings()
-        external
-        view
-        returns (ElectionSettings.Data memory settings);
-
-    /// @notice Returns the index of the current epoch. The first epoch's index is 1
-    function getEpochIndex() external view returns (uint256);
-
-    /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
-    function getCurrentPeriod() external view returns (uint256);
-
     /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view returns (bool);
 
