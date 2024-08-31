@@ -1,0 +1,23 @@
+name = "owned-fee-collector"
+version = "<%= package.version %>-testable"
+
+[setting.owner]
+defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+
+[setting.owner_fee_share]
+defaultValue = "500000000000000000"
+
+[provision.usd]
+source = "mintable-token:1.8@permissionless-mint"
+options.symbol = "USD"
+options.name = "Mintable USD"
+options.salt = "usd"
+
+[contract.owned_fee_collector]
+artifact = "contracts/OwnedFeeCollector.sol:OwnedFeeCollector"
+args = [
+    "<%= settings.owner %>",
+    "<%= settings.owner_fee_share %>",
+    "<%= imports.usd.contracts.MintableToken.address %>",
+]
+create2 = true
