@@ -13,6 +13,7 @@ import {
   expectedToDeltaDelegatedCollateral,
 } from '../../../common';
 import { wei } from '@synthetixio/wei';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('VaultModule', function () {
   const {
@@ -1066,6 +1067,224 @@ describe('VaultModule', function () {
       );
 
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+    });
+  });
+
+  describe('transient locked collateral (flashloan)', async () => {
+    let intentId: BigNumber;
+    let declareDelegateIntentTime: number;
+    let preTotalDeposited: BigNumber;
+    let preTotalAssigned: BigNumber;
+    let toWithdraw: BigNumber;
+
+    before(restore);
+
+    before('set market window times', async () => {
+      const previousConfiguration = await MockMarket.getDelegationCollateralConfiguration();
+      await MockMarket.setDelegationCollateralConfiguration(
+        100,
+        20,
+        previousConfiguration[2],
+        previousConfiguration[3]
+      );
+    });
+
+    before('declare intent to delegate', async () => {
+      const collateralsPre = await systems()
+        .Core.connect(owner)
+        .getAccountCollateral(accountId, collateralAddress());
+      preTotalAssigned = collateralsPre.totalAssigned;
+      preTotalDeposited = collateralsPre.totalDeposited;
+      toWithdraw = preTotalDeposited.sub(preTotalAssigned);
+
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+
+      declareDelegateIntentTime = await getTime(provider());
+    });
+
+    const restoreToLocked = snapshotCheckpoint(provider);
+
+    it('intended to delegate is transient locked', async () => {
+      const collaterals = await systems()
+        .Core.connect(owner)
+        .getAccountCollateral(accountId, collateralAddress());
+
+      assertBn.equal(collaterals.totalPendingToDelegate, depositAmount.mul(1));
+    });
+
+    it('fails to withraw when collateral is reserved for the intent to delegate', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).withdraw(accountId, collateralAddress(), toWithdraw),
+        'InsufficientAccountCollateral("10000000000000000000")',
+        systems().Core
+      );
+    });
+
+    describe('when the intent is processed and undelegated', async () => {
+      before(restoreToLocked);
+
+      before('process the intent and undelegate the collateral', async () => {
+        await fastForwardTo(declareDelegateIntentTime + 110, provider());
+
+        await systems()
+          .Core.connect(user1)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+
+        // Undelegate the collateral
+        await delegateCollateral(
+          systems,
+          owner,
+          user1,
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.mul(1),
+          ethers.utils.parseEther('1')
+        );
+      });
+
+      it('allows to withdraw the collateral', async () => {
+        await systems().Core.connect(user1).withdraw(accountId, collateralAddress(), toWithdraw);
+      });
+    });
+
+    describe('when the intent is expired and removed', async () => {
+      before(restoreToLocked);
+
+      before('remove the expired intent', async () => {
+        await fastForwardTo(declareDelegateIntentTime + 130, provider());
+
+        await systems()
+          .Core.connect(user1)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+      });
+
+      it('allows to withdraw the collateral', async () => {
+        await systems().Core.connect(user1).withdraw(accountId, collateralAddress(), toWithdraw);
+      });
+    });
+  });
+
+  describe('undelegate what is delegated', async () => {
+    let intentId: BigNumber;
+    // let preTotalDeposited: BigNumber;
+    // let preTotalAssigned: BigNumber;
+
+    before(restore);
+
+    before('declare intent to delegate', async () => {
+      const collateralsPre = await systems()
+        .Core.connect(owner)
+        .getAccountCollateral(accountId, collateralAddress());
+      preTotalAssigned = collateralsPre.totalAssigned;
+      preTotalDeposited = collateralsPre.totalDeposited;
+
+      intentId = await declareDelegateIntent(
+        systems,
+        owner,
+        user1,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(2),
+        ethers.utils.parseEther('1')
+      );
+    });
+
+    const restoreToLocked = snapshotCheckpoint(provider);
+
+    it('intended to delegate is transient locked', async () => {
+      const collaterals = await systems()
+        .Core.connect(owner)
+        .getAccountCollateral(accountId, collateralAddress());
+
+      assertBn.equal(collaterals.totalPendingToDelegate, depositAmount.mul(1));
+    });
+
+    it('fails to undelegate what is pending in a single undelegation', async () => {
+      const delta = await expectedToDeltaDelegatedCollateral(
+        systems,
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.mul(0)
+      );
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .declareIntentToDelegateCollateral(
+            accountId,
+            poolId,
+            collateralAddress(),
+            delta,
+            ethers.utils.parseEther('1')
+          ),
+        'ExceedingUndelegateAmount',
+        systems().Core
+      );
+    });
+
+    describe('fails to undelegate what is pending on a multiple shots', async () => {
+      before(restoreToLocked);
+
+      before('add a previous undelegation intent', async () => {
+        // set the first undelegation (allowed, since is what is already delegated)
+        await declareDelegateIntent(
+          systems,
+          owner,
+          user1,
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.mul(1),
+          ethers.utils.parseEther('1')
+        );
+      });
+
+      it('fails to set the second intent to delegate', async () => {
+        const delta = await expectedToDeltaDelegatedCollateral(
+          systems,
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.mul(0)
+        );
+        // exceeds the amount that is delegated (still pending)
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .declareIntentToDelegateCollateral(
+              accountId,
+              poolId,
+              collateralAddress(),
+              delta,
+              ethers.utils.parseEther('1')
+            ),
+          'ExceedingUndelegateAmount',
+          systems().Core
+        );
+      });
+    });
+
+    describe('can undelegate in a single shot if previous delegation is executed', async () => {
+      before(restoreToLocked);
+
+      before('process the pending intent to delegate', async () => {
+        await systems()
+          .Core.connect(user1)
+          .processIntentToDelegateCollateralByIntents(accountId, [intentId]);
+      });
+
+      it('allows to withdraw the collateral in a single shot', async () => {});
     });
   });
 });

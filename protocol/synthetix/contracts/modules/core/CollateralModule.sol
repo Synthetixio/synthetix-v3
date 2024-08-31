@@ -89,15 +89,11 @@ contract CollateralModule is ICollateralModule {
             uint256 pendingToDelegate
         ) = account.getCollateralTotals(collateralType);
 
-        uint256 lockedPlusPending = totalLocked + pendingToDelegate;
-
         // The amount that cannot be withdrawn from the protocol is the max of either
         // locked collateral or delegated collateral.
-        uint256 unavailableCollateral = lockedPlusPending > totalAssigned
-            ? lockedPlusPending
-            : totalAssigned;
+        uint256 unavailableCollateral = totalLocked > totalAssigned ? totalLocked : totalAssigned;
 
-        uint256 availableForWithdrawal = totalDeposited - unavailableCollateral;
+        uint256 availableForWithdrawal = totalDeposited - unavailableCollateral - pendingToDelegate;
         if (tokenAmountD18 > availableForWithdrawal) {
             revert InsufficientAccountCollateral(tokenAmountD18);
         }
