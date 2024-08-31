@@ -170,6 +170,7 @@ interface IElectionModule is IElectionModuleSatellite {
         uint256 electionId
     ) external pure returns (Ballot.Data memory);
 
+    /// @notice Returns the number of ballots in the current election
     function getNumOfBallots() external view returns (uint256);
 
     /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
