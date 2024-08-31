@@ -258,6 +258,7 @@ jobs:
 
             - "auxiliary/ArbitrumGasPriceOracle/artifacts"
             - "auxiliary/BuybackSnx/artifacts"
+            - "auxiliary/OwnedFeeCollector/artifacts"
             - "auxiliary/ERC4626ToAssetsRatioOracle/artifacts"
             - "auxiliary/OpGasPriceOracle/artifacts"
             - "auxiliary/PythERC7412Wrapper/artifacts"
@@ -267,6 +268,7 @@ jobs:
 
             - "auxiliary/ArbitrumGasPriceOracle/cache"
             - "auxiliary/BuybackSnx/cache"
+            - "auxiliary/OwnedFeeCollector/cache"
             - "auxiliary/ERC4626ToAssetsRatioOracle/cache"
             - "auxiliary/OpGasPriceOracle/cache"
             - "auxiliary/PythERC7412Wrapper/cache"
@@ -276,6 +278,7 @@ jobs:
 
             - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
             - "auxiliary/BuybackSnx/typechain-types"
+            - "auxiliary/OwnedFeeCollector/typechain-types"
             - "auxiliary/ERC4626ToAssetsRatioOracle/typechain-types"
             - "auxiliary/OpGasPriceOracle/typechain-types"
             - "auxiliary/PythERC7412Wrapper/typechain-types"

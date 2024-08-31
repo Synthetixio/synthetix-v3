@@ -53,7 +53,7 @@ contracts = [
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 factory.GovernanceProxy.abiOf = ["CoreRouter"]
@@ -63,6 +63,7 @@ factory.GovernanceProxy.highlight = true
 
 [invoke.init_election_module]
 target = ["GovernanceProxy"]
+fromCall.func = "owner"
 func = "initElectionModuleSatellite(uint256,uint64,uint64,uint64,uint64,address,address,address[])"
 args = [
     "<%= settings.initial_epoch_index %>",
@@ -76,4 +77,3 @@ args = [
         "<%= settings.initial_council_member %>",
     ],
 ]
-from = "<%= settings.owner %>"
