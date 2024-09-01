@@ -111,6 +111,8 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
+				_verifyPoolCratio(poolId, collateralType);
+
         _updateAccountCollateralPools(
             accountId,
             poolId,
@@ -301,6 +303,15 @@ contract VaultModule is IVaultModule {
             revert CapacityLocked(market.id);
         }
     }
+
+		function _verifyPoolCratio(uint128 poolId, address collateralType) internal {
+        Pool.Data storage pool = Pool.load(poolId);
+        int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
+        (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);
+				if (collateralValue.divDecimal(rawVaultDebt.toUint()) < CollateralConfiguration.load(collateralType).liquidationRatioD18) {
+						revert InsufficientVaultCollateralRatio(poolId, collateralType);
+				}
+		}
 
     /**
      * @dev Registers the pool in the given account's collaterals array.
