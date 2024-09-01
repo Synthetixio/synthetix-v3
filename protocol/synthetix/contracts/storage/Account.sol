@@ -42,6 +42,18 @@ library Account {
         uint256 requiredTime
     );
 
+		/**
+		 * @notice Emitted when all the locks in an account were scaled down proportionally due to insufficient balance
+		 * @param totalDepositedD18 The observed deposited collateral
+		 * @param totalLockedD18 The observed locked collateral total
+		 */
+		event AccountLocksScaled(
+			uint128 accountId,
+			address collateralType,
+			uint256 totalDepositedD18,
+			uint256 totalLockedD18
+		);
+
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -94,6 +106,39 @@ library Account {
 
         return a;
     }
+
+		/**
+		 * @dev Performs any needed housekeeping on account locks, including:
+		 * * removing any expired locks
+		 * * scaling down all locks if their locked value is greater than total account value (ex. from liquidation)
+		 *
+		 * also returns total locked value as a convenience
+		 */
+		function cleanAccountLocks(Data storage self, address collateralType, uint256 offset, uint256 count) internal returns (uint256) {
+        CollateralLock.Data[] storage locks = self.collaterals[collateralType].locks;
+
+				(, uint256 totalLocked) = self.collaterals[collateralType].cleanExpiredLocks(offset, count);
+
+				uint256 totalDeposited = getAssignedCollateral(self, collateralType) + self.collaterals[collateralType].amountAvailableForDelegationD18;
+
+				uint256 len = locks.length;
+				if (offset == 0 && 
+						count >= len &&
+						totalLocked > totalDeposited) {
+						// something happened (ex. liquidation) and the amount of collateral in the account is greater than the total locked
+						// so scale the remaining locks down
+						// NOTE: ideally we would scale based on the time that the user's deposited balance got reduced, but if this function
+						// is called late we may not actually be able to scale it perfectly for the users situation. oh well.
+						for (uint256 i = 0;i < len;i++) {
+								locks[i].amountD18 = (locks[i].amountD18 * totalDeposited / totalLocked).to128();
+						}
+
+						emit AccountLocksScaled(self.id, collateralType, totalDeposited, totalLocked);
+						totalLocked = totalDeposited;
+				}
+
+        return totalLocked;
+		}
 
     /**
      * @dev Given a collateral type, returns information about the total collateral assigned, deposited, and locked by the account

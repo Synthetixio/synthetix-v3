@@ -42,20 +42,6 @@ interface ICollateralModule {
     );
 
     /**
-     * @notice Emitted when a lock is cleared from an account due to expiration
-     * @param accountId The id of the account that has the expired lock
-     * @param collateralType The address of the collateral type that was unlocked
-     * @param tokenAmount The amount of collateral that was unlocked, demoninated in system units (1e18)
-     * @param expireTimestamp unix timestamp at which the unlock is due to expire
-     */
-    event CollateralLockExpired(
-        uint128 indexed accountId,
-        address indexed collateralType,
-        uint256 tokenAmount,
-        uint64 expireTimestamp
-    );
-
-    /**
      * @notice Emitted when `tokenAmount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      * @param accountId The id of the account that withdrew collateral.
      * @param collateralType The address of the collateral that was withdrawn.
@@ -132,7 +118,7 @@ interface ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external returns (uint256 cleared);
+    ) external returns (uint256 cleared, uint256 remainingLockAmountD18);
 
     /**
      * @notice Get a list of locks existing in account. Lists all locks in storage, even if they are expired

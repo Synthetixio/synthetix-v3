@@ -22,6 +22,16 @@ library Collateral {
         uint256 amountD18
     );
 
+    /**
+     * @notice Emitted when a lock is cleared from an account due to expiration
+     * @param tokenAmount The amount of collateral that was unlocked, demoninated in system units (1e18)
+     * @param expireTimestamp unix timestamp at which the unlock is due to expire
+     */
+    event CollateralLockExpired(
+        uint256 tokenAmount,
+        uint64 expireTimestamp
+    );
+
     struct Data {
         /**
          * @dev The amount that can be withdrawn or delegated in this collateral.
@@ -57,6 +67,39 @@ library Collateral {
         }
         self.amountAvailableForDelegationD18 -= amountD18;
     }
+
+		function cleanExpiredLocks(Data storage self, uint256 offset, uint256 count) internal returns (uint256 cleared, uint256 remainingLockAmountD18) {
+        uint64 currentTime = block.timestamp.to64();
+
+        uint256 len = self.locks.length;
+
+        if (offset >= len) {
+            return (0, 0);
+        }
+
+        if (count == 0 || offset + count >= len) {
+            count = len - offset;
+        }
+
+        uint256 index = offset;
+				uint256 totalLocked = 0;
+        for (uint256 i = 0; i < count; i++) {
+            if (self.locks[index].lockExpirationTime <= currentTime) {
+                emit CollateralLockExpired(
+                    self.locks[index].amountD18,
+                    self.locks[index].lockExpirationTime
+                );
+
+                self.locks[index] = self.locks[self.locks.length - 1];
+                self.locks.pop();
+            } else {
+								totalLocked += self.locks[index].amountD18;
+                index++;
+            }
+        }
+
+				return (offset + count - index, totalLocked);
+		}
 
     /**
      * @dev Returns the total amount in this collateral entry that is locked.
