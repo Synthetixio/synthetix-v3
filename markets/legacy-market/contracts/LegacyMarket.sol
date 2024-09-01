@@ -190,10 +190,6 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
      * @inheritdoc ILegacyMarket
      */
     function migrateOnBehalf(address staker, uint128 accountId) external {
-        if (staker == ERC2771Context._msgSender() && pauseMigration) {
-            revert Paused();
-        }
-
         _migrate(staker, accountId);
     }
 
@@ -201,8 +197,6 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
      * @dev Migrates {staker} from V2 to {accountId} in V3.
      */
     function _migrate(address staker, uint128 accountId) internal {
-				// we still want to allow migration if the user is liquidatable, but don't want to allow
-				// the user to just migrate themselves if its paused.
         if (staker == address(this)) {
             revert ParameterError.InvalidParameter("staker", "must not be legacy market");
         }
