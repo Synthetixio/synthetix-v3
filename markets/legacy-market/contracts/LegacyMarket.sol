@@ -384,6 +384,10 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             revert V2xPaused();
         }
 
+				if (totalDebtShares == 0) {
+					return 0;
+				}
+
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
     }
 
