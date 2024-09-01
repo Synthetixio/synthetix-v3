@@ -92,6 +92,11 @@ contract LiquidationModule is ILiquidationModule {
             revert MustBeVaultLiquidated();
         }
 
+        // distribute any outstanding rewards distributor value to the user who is about to be liquidated, since technically they are eligible.
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
         // This will clear the user's account the same way as if they had withdrawn normally
         epoch.updateAccountPosition(accountId, 0, 0);
 
