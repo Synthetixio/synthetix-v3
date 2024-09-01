@@ -165,7 +165,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         uint256 afterDebt = iss.debtBalanceOf(address(this), "sUSD");
 
         // approximately equal check because some rounding error can happen on the v2x side
-        if (beforeDebt - afterDebt < amount - 100) {
+        if (beforeDebt - afterDebt == 0 || beforeDebt - afterDebt < amount - 100) {
             revert V2xPaused();
         }
 
