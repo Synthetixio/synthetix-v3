@@ -267,7 +267,8 @@ library CollateralConfiguration {
 
         if (
             debtD18 != 0 &&
-            (collateralValueD18 == 0 || collateralValueD18.divDecimal(debtD18) < liquidationRatioD18)
+            (collateralValueD18 == 0 ||
+                collateralValueD18.divDecimal(debtD18) < liquidationRatioD18)
         ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,

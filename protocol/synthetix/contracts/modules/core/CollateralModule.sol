@@ -56,7 +56,7 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
-				account.cleanAccountLocks(collateralType, 0, 999999999999999);
+        account.cleanAccountLocks(collateralType, 0, 999999999999999);
 
         account.collaterals[collateralType].increaseAvailableCollateral(
             CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
@@ -137,7 +137,7 @@ contract CollateralModule is ICollateralModule {
         uint256 offset,
         uint256 count
     ) external override returns (uint256 cleared, uint256 remainingLockAmountD18) {
-				return Account.load(accountId).collaterals[collateralType].cleanExpiredLocks(offset, count);
+        return Account.load(accountId).collaterals[collateralType].cleanExpiredLocks(offset, count);
     }
 
     /**

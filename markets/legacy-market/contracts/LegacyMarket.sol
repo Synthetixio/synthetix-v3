@@ -45,8 +45,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     // NOTE: below field is now unused but we leave it here to reduce maintenance burden
     ISNXDistributor public rewardsDistributor;
 
-		// in case an account nft was not able to be transferred to a owner's address due to some error, we allow transferring it later using this structure.
-		mapping(uint256 => address) deferredAccounts;
+    // in case an account nft was not able to be transferred to a owner's address due to some error, we allow transferring it later using this structure.
+    mapping(uint256 => address) deferredAccounts;
 
     error MigrationInProgress();
 
@@ -284,41 +284,37 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             debtValueMigrated
         );
 
-				if (v3System.isVaultLiquidatable(preferredPoolId, address(oldSynthetix))) {
-					revert Paused();
-				}
+        if (v3System.isVaultLiquidatable(preferredPoolId, address(oldSynthetix))) {
+            revert Paused();
+        }
 
         // send the built v3 account to the staker
-        try IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
-            address(this),
-            staker,
-            accountId
-				) {
-
-				} catch {
-					deferredAccounts[accountId] = staker;
-				}
+        try
+            IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
+                address(this),
+                staker,
+                accountId
+            )
+        {} catch {
+            deferredAccounts[accountId] = staker;
+        }
 
         emit AccountMigrated(staker, accountId, collateralMigrated, debtValueMigrated);
     }
 
-		/**
-		 * @dev In case a previously migrated account was not able to be sent to a user during the migration, this function can be
-		 * called in order to claim the token afterwards to any address.
-		 */
-		function transferDeferredAccount(uint256 accountId, address to) external {
-			if (deferredAccounts[accountId] != ERC2771Context._msgSender()) {
-					revert AccessError.Unauthorized(ERC2771Context._msgSender());
-			}
+    /**
+     * @dev In case a previously migrated account was not able to be sent to a user during the migration, this function can be
+     * called in order to claim the token afterwards to any address.
+     */
+    function transferDeferredAccount(uint256 accountId, address to) external {
+        if (deferredAccounts[accountId] != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
+        }
 
-			deferredAccounts[accountId] = address(0);
+        deferredAccounts[accountId] = address(0);
 
-			IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
-					address(this),
-					to,
-					accountId
-			);
-		}
+        IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(address(this), to, accountId);
+    }
 
     /**
      * @dev Moves the collateral and debt associated {staker} in the V2 system to this market.
@@ -384,9 +380,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             revert V2xPaused();
         }
 
-				if (totalDebtShares == 0) {
-					return 0;
-				}
+        if (totalDebtShares == 0) {
+            return 0;
+        }
 
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
     }

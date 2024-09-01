@@ -22,10 +22,10 @@ interface IVaultModule {
      */
     error InvalidCollateralAmount();
 
-		/**
-		 * @notice Thrown when there is insufficient c-ratio in the vault after delegating
-		 */
-		error InsufficientVaultCollateralRatio(uint128 poolId, address collateralType);
+    /**
+     * @notice Thrown when there is insufficient c-ratio in the vault after delegating
+     */
+    error InsufficientVaultCollateralRatio(uint128 poolId, address collateralType);
 
     /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.

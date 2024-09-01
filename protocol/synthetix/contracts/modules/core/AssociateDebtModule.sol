@@ -65,11 +65,11 @@ contract AssociateDebtModule is IAssociateDebtModule {
         }
 
         // Rebalance here because this is a good opporitunity to do so, and because its required for correct debt accounting after account debt update
-				// TODO: this may no longer be needed
+        // TODO: this may no longer be needed
         poolData.rebalanceMarketsInPool();
 
-				// Remove the pro-rata debt we are about to assign from the market level (ensures it does not leak down to any other pools or vaults that may be connected)
-				marketData.poolsDebtDistribution.distributeValue(-amount.toInt());
+        // Remove the pro-rata debt we are about to assign from the market level (ensures it does not leak down to any other pools or vaults that may be connected)
+        marketData.poolsDebtDistribution.distributeValue(-amount.toInt());
 
         // We can now reassign this debt to the specified position
         epochData.assignDebtToAccount(accountId, amount.toInt());
