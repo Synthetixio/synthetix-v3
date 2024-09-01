@@ -13,7 +13,7 @@ library ExternalNode {
         bytes memory parameters,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         IExternalNode externalNode = IExternalNode(abi.decode(parameters, (address)));
         try externalNode.process(prices, parameters, runtimeKeys, runtimeValues) returns (
             NodeOutput.Data memory out

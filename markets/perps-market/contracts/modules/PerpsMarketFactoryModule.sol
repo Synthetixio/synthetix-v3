@@ -127,10 +127,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 activeMarkets,
                 PerpsPrice.Tolerance.DEFAULT
             );
-            for (uint256 i = 1; i <= activeMarkets.length; i++) {
-                totalMarketDebt += PerpsMarket.load(activeMarkets[i - 1].to128()).marketDebt(
-                    prices[i - 1]
-                );
+            for (uint256 i = 0; i < activeMarkets.length; i++) {
+                totalMarketDebt += PerpsMarket.load(activeMarkets[i].to128()).marketDebt(prices[i]);
             }
 
             int256 totalDebt = collateralValue.toInt() +

@@ -16,7 +16,7 @@ library PythNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         (address pythAddress, bytes32 priceFeedId, bool useEma) = abi.decode(
             parameters,
             (address, bytes32, bool)
@@ -29,12 +29,14 @@ library PythNode {
                 pythData = r;
             } catch (bytes memory err) {
                 possibleError = err;
+                return (nodeOutput, possibleError);
             }
         } else {
             try pyth.getPriceUnsafe(priceFeedId) returns (PythStructs.Price memory r) {
                 pythData = r;
             } catch (bytes memory err) {
                 possibleError = err;
+                return (nodeOutput, possibleError);
             }
         }
 

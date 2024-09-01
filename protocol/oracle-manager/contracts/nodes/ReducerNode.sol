@@ -30,7 +30,7 @@ library ReducerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.RECENT) {

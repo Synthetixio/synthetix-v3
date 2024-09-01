@@ -69,7 +69,7 @@ contract NodeModule is INodeModule {
      */
     function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node) {
         bytes memory err;
-        (err, node) = NodeDefinition.process(nodeId, new bytes32[](0), new bytes32[](0));
+        (node, err) = NodeDefinition.process(nodeId, new bytes32[](0), new bytes32[](0));
 
         if (err.length > 0) {
             RevertUtil.revertWithReason(err);
@@ -85,7 +85,7 @@ contract NodeModule is INodeModule {
         bytes32[] memory runtimeValues
     ) external view returns (NodeOutput.Data memory node) {
         bytes memory err;
-        (err, node) = NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
+        (node, err) = NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
 
         if (err.length > 0) {
             RevertUtil.revertWithReason(err);
@@ -102,7 +102,7 @@ contract NodeModule is INodeModule {
         uint256 errIdx = 0;
 
         for (uint256 i = 0; i < nodeIds.length; i++) {
-            (errors[errIdx], nodes[i]) = NodeDefinition.process(
+            (nodes[i], errors[errIdx]) = NodeDefinition.process(
                 nodeIds[i],
                 runtimeKeys,
                 runtimeValues

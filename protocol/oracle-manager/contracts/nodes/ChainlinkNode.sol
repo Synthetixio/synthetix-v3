@@ -17,7 +17,7 @@ library ChainlinkNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
             (address, uint256, uint8)

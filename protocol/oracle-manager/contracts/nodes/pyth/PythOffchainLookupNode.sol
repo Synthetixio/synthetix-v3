@@ -19,7 +19,7 @@ library PythOffchainLookupNode {
         bytes memory parameters,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal pure returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         (address pythAddress, bytes32 priceId, uint256 stalenessTolerance) = abi.decode(
             parameters,
             (address, bytes32, uint256)
@@ -64,8 +64,6 @@ library PythOffchainLookupNode {
                 priceIds
             )
         );
-
-        return (possibleError, nodeOutput);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {

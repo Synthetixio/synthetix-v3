@@ -14,7 +14,7 @@ library StalenessCircuitBreakerNode {
         NodeDefinition.Data memory nodeDefinition,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal view returns (bytes memory possibleError, NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         uint256 stalenessTolerance = abi.decode(nodeDefinition.parameters, (uint256));
 
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
@@ -26,7 +26,7 @@ library StalenessCircuitBreakerNode {
 
         bytes32 priceNodeId = nodeDefinition.parents[0];
         NodeOutput.Data memory priceNodeOutput;
-        (possibleError, priceNodeOutput) = NodeDefinition.process(
+        (priceNodeOutput, possibleError) = NodeDefinition.process(
             priceNodeId,
             runtimeKeys,
             runtimeValues
@@ -34,9 +34,9 @@ library StalenessCircuitBreakerNode {
 
         if (
             possibleError.length > 0 ||
-            block.timestamp - stalenessTolerance <= priceNodeOutput.timestamp
+            block.timestamp <= priceNodeOutput.timestamp + stalenessTolerance
         ) {
-            return (possibleError, priceNodeOutput);
+            return (priceNodeOutput, possibleError);
         } else if (nodeDefinition.parents.length == 1) {
             possibleError = abi.encodeWithSelector(
                 StalenessToleranceExceeded.selector,
@@ -46,7 +46,7 @@ library StalenessCircuitBreakerNode {
             );
         } else {
             // If there are two parents, return the output of the second parent (which in this case, should revert with OracleDataRequired)
-            (possibleError, nodeOutput) = NodeDefinition.process(
+            (nodeOutput, possibleError) = NodeDefinition.process(
                 nodeDefinition.parents[1],
                 runtimeKeys,
                 runtimeValues
