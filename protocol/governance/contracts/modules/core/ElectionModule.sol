@@ -151,7 +151,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 newEpochEndDate
     ) external payable override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
         Council.Data storage council = Council.load();
 
         Epoch.Data storage currentEpoch = council.getCurrentEpoch();
