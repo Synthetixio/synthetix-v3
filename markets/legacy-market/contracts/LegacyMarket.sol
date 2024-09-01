@@ -190,6 +190,10 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
      * @inheritdoc ILegacyMarket
      */
     function migrateOnBehalf(address staker, uint128 accountId) external {
+        if (staker == ERC2771Context._msgSender() && pauseMigration) {
+            revert Paused();
+        }
+
         _migrate(staker, accountId);
     }
 
