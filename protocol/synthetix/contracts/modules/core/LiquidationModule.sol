@@ -201,6 +201,9 @@ contract LiquidationModule is ILiquidationModule {
 
             // Reduce the collateral of the remaining positions in the vault
             epoch.collateralAmounts.scale(-liquidationData.collateralLiquidated.toInt());
+
+						// ensure markets get accurate accounting of available collateral
+						pool.recalculateVaultCollateral(collateralType);
         }
 
         // Send liquidationData.collateralLiquidated to the specified account
