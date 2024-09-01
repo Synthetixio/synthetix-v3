@@ -45,6 +45,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     // NOTE: below field is now unused but we leave it here to reduce maintenance burden
     ISNXDistributor public rewardsDistributor;
 
+		// in case an account nft was not able to be transferred to a owner's address due to some error, we allow transferring it later using this structure.
+		mapping(uint256 => address) deferredAccounts;
+
     error MigrationInProgress();
 
     // redefine event so it can be catched by ethers
@@ -278,14 +281,36 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         );
 
         // send the built v3 account to the staker
-        IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
+        try IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
             address(this),
             staker,
             accountId
-        );
+				) {
+
+				} catch {
+					deferredAccounts[accountId] = staker;
+				}
 
         emit AccountMigrated(staker, accountId, collateralMigrated, debtValueMigrated);
     }
+
+		/**
+		 * @dev In case a previously migrated account was not able to be sent to a user during the migration, this function can be
+		 * called in order to claim the token afterwards to any address.
+		 */
+		function transferDeferredAccount(uint256 accountId, address to) external {
+			if (deferredAccounts[accountId] != ERC2771Context._msgSender()) {
+					revert AccessError.Unauthorized(ERC2771Context._msgSender());
+			}
+
+			deferredAccounts[accountId] = address(0);
+
+			IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
+					address(this),
+					to,
+					accountId
+			);
+		}
 
     /**
      * @dev Moves the collateral and debt associated {staker} in the V2 system to this market.
