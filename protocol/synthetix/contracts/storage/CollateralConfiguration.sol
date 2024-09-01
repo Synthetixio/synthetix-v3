@@ -252,6 +252,33 @@ library CollateralConfiguration {
     }
 
     /**
+     * @dev Reverts if the specified collateral and debt values produce a collateralization ratio which is below the liquidation ratio.
+     * @param self The CollateralConfiguration object whose collateral and settings are being queried.
+     * @param debtD18 The debt component of the ratio.
+     * @param collateralValueD18 The collateral component of the ratio.
+     */
+    function verifyLiquidationRatio(
+        Data storage self,
+        uint256 debtD18,
+        uint256 collateralValueD18,
+        uint256 minIssuanceRatioD18
+    ) internal view {
+        uint256 liquidationRatioD18 = self.liquidationRatioD18;
+
+        if (
+            debtD18 != 0 &&
+            (collateralValueD18 == 0 || collateralValueD18.divDecimal(debtD18) < liquidationRatioD18)
+        ) {
+            revert InsufficientCollateralRatio(
+                collateralValueD18,
+                debtD18,
+                collateralValueD18.divDecimal(debtD18),
+                liquidationRatioD18
+            );
+        }
+    }
+
+    /**
      * @dev Converts token amounts with non-system decimal precisions, to 18 decimals of precision.
      * E.g: $TOKEN_A uses 6 decimals of precision, so this would upscale it by 12 decimals.
      * E.g: $TOKEN_B uses 20 decimals of precision, so this would downscale it by 2 decimals.
