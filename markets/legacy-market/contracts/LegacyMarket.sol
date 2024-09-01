@@ -284,6 +284,10 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             debtValueMigrated
         );
 
+				if (v3System.isVaultLiquidatable(preferredPoolId, address(oldSynthetix))) {
+					revert Paused();
+				}
+
         // send the built v3 account to the staker
         try IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(
             address(this),
