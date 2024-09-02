@@ -102,6 +102,9 @@ contract AccountModule is IAccountModule {
             account.rbac.revokeAllPermissions(permissionedAddresses[i]);
         }
 
+        // clean all pending intents
+        account.cleanAllIntents();
+
         account.rbac.setOwner(to);
     }
 
