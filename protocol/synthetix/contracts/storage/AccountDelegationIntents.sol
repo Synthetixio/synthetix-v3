@@ -8,7 +8,7 @@ import "../interfaces/IVaultModule.sol";
 import "./Account.sol";
 
 /**
- * @title Represents a delegation (or undelegation) intent.
+ * @title Contains the delegation intents for an account on an specific epoch.
  */
 library AccountDelegationIntents {
     using SafeCastI256 for int256;
@@ -25,7 +25,8 @@ library AccountDelegationIntents {
         // accounting for the intents collateral delegated
         // Per Collateral
         SetUtil.AddressSet delegatedCollaterals;
-        mapping(address => int256) netDelegatedAmountPerCollateral; // collateralType => net delegatedCollateralAmount
+        mapping(address => uint256) delegatedAmountPerCollateral; // collateralType => sum of delegations (delegatedCollateralAmount)
+        mapping(address => uint256) unDelegatedAmountPerCollateral; // collateralType => sum of un-delegations (delegatedCollateralAmount)
     }
 
     function addIntent(
@@ -42,8 +43,14 @@ library AccountDelegationIntents {
             ]
             .add(intentId);
 
-        self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
-            .deltaCollateralAmountD18;
+        if (delegationIntent.deltaCollateralAmountD18 > 0) {
+            self.delegatedAmountPerCollateral[delegationIntent.collateralType] += delegationIntent
+                .deltaCollateralAmountD18
+                .toUint();
+        } else {
+            self.unDelegatedAmountPerCollateral[delegationIntent.collateralType] += (-1 *
+                delegationIntent.deltaCollateralAmountD18).toUint();
+        }
 
         if (!self.delegatedCollaterals.contains(delegationIntent.collateralType)) {
             self.delegatedCollaterals.add(delegationIntent.collateralType);
@@ -68,8 +75,14 @@ library AccountDelegationIntents {
             ]
             .remove(intentId);
 
-        self.netDelegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
-            .deltaCollateralAmountD18;
+        if (delegationIntent.deltaCollateralAmountD18 > 0) {
+            self.delegatedAmountPerCollateral[delegationIntent.collateralType] -= delegationIntent
+                .deltaCollateralAmountD18
+                .toUint();
+        } else {
+            self.unDelegatedAmountPerCollateral[delegationIntent.collateralType] -= (-1 *
+                delegationIntent.deltaCollateralAmountD18).toUint();
+        }
     }
 
     function getIntent(
@@ -94,8 +107,7 @@ library AccountDelegationIntents {
     }
 
     function isInCurrentEpoch(Data storage self, uint256 intentId) internal view returns (bool) {
-        // Notice: not checking that `self.delegationIntentsEpoch == account.currentDelegationIntentsEpoch` since
-        // it was loadValid and getValid use it at load time
+        // verifies the intent is in the current epoch
         return self.intentsId.contains(intentId);
     }
 

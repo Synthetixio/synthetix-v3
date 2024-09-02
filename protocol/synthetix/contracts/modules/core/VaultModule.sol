@@ -20,21 +20,13 @@ import "../../interfaces/IVaultModule.sol";
  */
 contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
-    using SetUtil for SetUtil.Bytes32Set;
-    using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Collateral for Collateral.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
-    using AccountRBAC for AccountRBAC.Data;
-    using Distribution for Distribution.Data;
-    using CollateralConfiguration for CollateralConfiguration.Data;
-    using ScalableMapping for ScalableMapping.Data;
-    using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
-    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using AccountDelegationIntents for AccountDelegationIntents.Data;
     using DelegationIntent for DelegationIntent.Data;
@@ -112,19 +104,28 @@ contract VaultModule is IVaultModule {
         Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
-        int256 accumulatedDelta = deltaCollateralAmountD18 +
-            accountIntents.netDelegatedAmountPerCollateral[collateralType];
-        if (accumulatedDelta < 0 && currentCollateralAmount < (-1 * accumulatedDelta).toUint()) {
+
+        uint256 accumulatedDelegatedDelta = deltaCollateralAmountD18 > 0
+            ? accountIntents.delegatedAmountPerCollateral[collateralType] +
+                deltaCollateralAmountD18.toUint()
+            : accountIntents.delegatedAmountPerCollateral[collateralType];
+        uint256 accumulatedUnDelegatedDelta = deltaCollateralAmountD18 < 0
+            ? accountIntents.unDelegatedAmountPerCollateral[collateralType] +
+                (-1 * deltaCollateralAmountD18).toUint()
+            : accountIntents.unDelegatedAmountPerCollateral[collateralType];
+
+        if (deltaCollateralAmountD18 < 0 && currentCollateralAmount < accumulatedUnDelegatedDelta) {
             revert ExceedingUndelegateAmount(
                 deltaCollateralAmountD18,
-                accountIntents.netDelegatedAmountPerCollateral[collateralType],
-                accumulatedDelta,
+                accountIntents.unDelegatedAmountPerCollateral[collateralType],
+                accumulatedUnDelegatedDelta.toInt() * -1,
                 currentCollateralAmount
             );
         }
 
-        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() + accumulatedDelta)
-            .toUint();
+        uint256 newCollateralAmountD18 = deltaCollateralAmountD18 > 0
+            ? currentCollateralAmount + accumulatedDelegatedDelta
+            : currentCollateralAmount - accumulatedUnDelegatedDelta;
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
@@ -162,6 +163,7 @@ contract VaultModule is IVaultModule {
         intent.deltaCollateralAmountD18 = deltaCollateralAmountD18;
         intent.leverage = leverage;
         intent.declarationTime = block.timestamp.to32();
+        intent.epochId = account.currentDelegationIntentsEpoch;
 
         // Add intent to the account's delegation intents.
         accountIntents.addIntent(intent, intentId);
@@ -197,6 +199,8 @@ contract VaultModule is IVaultModule {
             .load(accountId)
             .getDelegationIntents();
 
+        uint128 accountEpochId = Account.load(accountId).currentDelegationIntentsEpoch;
+
         for (uint256 i = 0; i < intentIds.length; i++) {
             uint256 intentId = intentIds[i];
             DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
@@ -204,7 +208,7 @@ contract VaultModule is IVaultModule {
                 revert DelegationIntentNotInCurrentEpoch(intentId);
             }
 
-            if (!intent.isExecutable()) {
+            if (!intent.isExecutable(accountEpochId)) {
                 // emit an Skipped event
                 emit DelegationIntentSkipped(
                     intentId,
@@ -409,119 +413,6 @@ contract VaultModule is IVaultModule {
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getAccountIntent(
-        uint128 accountId,
-        uint256 intentId
-    ) external view override returns (uint128, address, int256, uint256, uint32, uint32, uint32) {
-        DelegationIntent.Data storage intent = Account
-            .load(accountId)
-            .getDelegationIntents()
-            .getIntent(intentId);
-        return (
-            intent.poolId,
-            intent.collateralType,
-            intent.deltaCollateralAmountD18,
-            intent.leverage,
-            intent.declarationTime,
-            intent.processingStartTime(),
-            intent.processingEndTime()
-        );
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getAccountIntentIds(
-        uint128 accountId
-    ) external view override returns (uint256[] memory) {
-        return Account.load(accountId).getDelegationIntents().intentsId.values();
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getAccountExpiredIntentIds(
-        uint128 accountId,
-        uint256 maxProcessableIntent
-    ) external view override returns (uint256[] memory expiredIntents, uint256 foundItems) {
-        uint256[] memory allIntents = Account
-            .load(accountId)
-            .getDelegationIntents()
-            .intentsId
-            .values();
-        uint256 max = maxProcessableIntent > allIntents.length
-            ? allIntents.length
-            : maxProcessableIntent;
-        expiredIntents = new uint256[](max);
-        for (uint256 i = 0; i < max; i++) {
-            if (DelegationIntent.load(allIntents[i]).intentExpired()) {
-                expiredIntents[foundItems] = allIntents[i];
-                foundItems++;
-            }
-        }
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getAccountExecutableIntentIds(
-        uint128 accountId,
-        uint256 maxProcessableIntent
-    ) external view override returns (uint256[] memory executableIntents, uint256 foundItems) {
-        uint256[] memory allIntents = Account
-            .load(accountId)
-            .getDelegationIntents()
-            .intentsId
-            .values();
-        uint256 max = maxProcessableIntent > allIntents.length
-            ? allIntents.length
-            : maxProcessableIntent;
-        executableIntents = new uint256[](max);
-        for (uint256 i = 0; i < max; i++) {
-            if (DelegationIntent.load(allIntents[i]).isExecutable()) {
-                executableIntents[foundItems] = allIntents[i];
-                foundItems++;
-            }
-        }
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getNetDelegatedPerCollateral(
-        uint128 accountId,
-        address collateralType
-    ) external view override returns (int256) {
-        return
-            Account.load(accountId).getDelegationIntents().netDelegatedAmountPerCollateral[
-                collateralType
-            ];
-    }
-
-    /**
-     * @inheritdoc IVaultModule
-     */
-    function getExecutableDelegationAccumulated(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
-    ) external view override returns (int256 accumulatedIntentDelta) {
-        uint256[] memory intentIds = Account.load(accountId).getDelegationIntents().intentIdsByPair(
-            poolId,
-            collateralType
-        );
-        accumulatedIntentDelta = 0;
-        for (uint256 i = 0; i < intentIds.length; i++) {
-            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
-            if (!intent.intentExpired()) {
-                accumulatedIntentDelta += intent.deltaCollateralAmountD18;
-            }
-        }
     }
 
     /**

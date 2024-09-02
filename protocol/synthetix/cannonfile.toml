@@ -91,6 +91,9 @@ artifact = "contracts/modules/core/UtilsModule.sol:UtilsModule"
 [contract.VaultModule]
 artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
 
+[contract.VaultIntentViewsModule]
+artifact = "contracts/modules/core/VaultIntentViewsModule.sol:VaultIntentViewsModule"
+
 [contract.AccountTokenModule]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
@@ -118,6 +121,7 @@ contracts = [
     "RewardsManagerModule",
     "UtilsModule",
     "VaultModule",
+    "VaultIntentViewsModule",
 ]
 
 [contract.InitialCoreProxy]
