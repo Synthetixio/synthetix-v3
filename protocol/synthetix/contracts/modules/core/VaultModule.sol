@@ -163,6 +163,7 @@ contract VaultModule is IVaultModule {
         intent.deltaCollateralAmountD18 = deltaCollateralAmountD18;
         intent.leverage = leverage;
         intent.declarationTime = block.timestamp.to32();
+        intent.epochId = account.currentDelegationIntentsEpoch;
 
         // Add intent to the account's delegation intents.
         accountIntents.addIntent(intent, intentId);
@@ -198,6 +199,8 @@ contract VaultModule is IVaultModule {
             .load(accountId)
             .getDelegationIntents();
 
+        uint128 accountEpochId = Account.load(accountId).currentDelegationIntentsEpoch;
+
         for (uint256 i = 0; i < intentIds.length; i++) {
             uint256 intentId = intentIds[i];
             DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
@@ -205,7 +208,7 @@ contract VaultModule is IVaultModule {
                 revert DelegationIntentNotInCurrentEpoch(intentId);
             }
 
-            if (!intent.isExecutable()) {
+            if (!intent.isExecutable(accountEpochId)) {
                 // emit an Skipped event
                 emit DelegationIntentSkipped(
                     intentId,

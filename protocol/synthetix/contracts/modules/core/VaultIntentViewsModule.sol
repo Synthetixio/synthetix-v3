@@ -92,6 +92,7 @@ contract VaultIntentViewsModule is IVaultIntentViewsModule {
         uint128 accountId,
         uint256 maxProcessableIntent
     ) external view override returns (uint256[] memory executableIntents, uint256 foundItems) {
+        uint128 accountEpochId = Account.load(accountId).currentDelegationIntentsEpoch;
         uint256[] memory allIntents = Account
             .load(accountId)
             .getDelegationIntents()
@@ -102,7 +103,7 @@ contract VaultIntentViewsModule is IVaultIntentViewsModule {
             : maxProcessableIntent;
         executableIntents = new uint256[](max);
         for (uint256 i = 0; i < max; i++) {
-            if (DelegationIntent.load(allIntents[i]).isExecutable()) {
+            if (DelegationIntent.load(allIntents[i]).isExecutable(accountEpochId)) {
                 executableIntents[foundItems] = allIntents[i];
                 foundItems++;
             }

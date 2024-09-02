@@ -60,6 +60,10 @@ library DelegationIntent {
          * @notice The timestamp at which the intent was declared
          */
         uint32 declarationTime;
+        /**
+         * @notice Id of the epoch where this intent was created. Used to validate if the epoch is still valid
+         */
+        uint128 epochId;
     }
 
     /**
@@ -103,22 +107,25 @@ library DelegationIntent {
         return _processingEndTime;
     }
 
-    function checkIsExecutable(Data storage self) internal view {
+    // function checkIsExecutable(Data storage self) internal view {
+    //     (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
+
+    //     if (block.timestamp < _processingStartTime)
+    //         revert IVaultModule.DelegationIntentNotReady(
+    //             self.declarationTime,
+    //             _processingStartTime
+    //         );
+    //     if (block.timestamp >= _processingEndTime)
+    //         revert IVaultModule.DelegationIntentExpired(self.declarationTime, _processingEndTime);
+    // }
+
+    function isExecutable(Data storage self, uint128 currentEpochId) internal view returns (bool) {
         (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
 
-        if (block.timestamp < _processingStartTime)
-            revert IVaultModule.DelegationIntentNotReady(
-                self.declarationTime,
-                _processingStartTime
-            );
-        if (block.timestamp >= _processingEndTime)
-            revert IVaultModule.DelegationIntentExpired(self.declarationTime, _processingEndTime);
-    }
-
-    function isExecutable(Data storage self) internal view returns (bool) {
-        (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
-
-        return block.timestamp >= _processingStartTime && block.timestamp < _processingEndTime;
+        return
+            currentEpochId == self.epochId &&
+            block.timestamp >= _processingStartTime &&
+            block.timestamp < _processingEndTime;
     }
 
     function intentExpired(Data storage self) internal view returns (bool) {
