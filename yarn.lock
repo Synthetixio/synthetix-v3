@@ -3239,6 +3239,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/owned-fee-collector@workspace:auxiliary/OwnedFeeCollector":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/owned-fee-collector@workspace:auxiliary/OwnedFeeCollector"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/wei": "npm:^2.74.4"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph":
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph"
