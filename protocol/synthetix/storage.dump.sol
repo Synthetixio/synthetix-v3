@@ -512,6 +512,7 @@ library DelegationIntent {
         int256 deltaCollateralAmountD18;
         uint256 leverage;
         uint32 declarationTime;
+        uint128 epochId;
     }
     function load(uint256 id) internal pure returns (Data storage delegationIntent) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.DelegationIntent", id));
