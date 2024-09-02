@@ -8,7 +8,7 @@ import "../interfaces/IVaultModule.sol";
 import "./Account.sol";
 
 /**
- * @title Represents a delegation (or undelegation) intent.
+ * @title Contains the delegation intents for an account on an specific epoch.
  */
 library AccountDelegationIntents {
     using SafeCastI256 for int256;
@@ -107,8 +107,7 @@ library AccountDelegationIntents {
     }
 
     function isInCurrentEpoch(Data storage self, uint256 intentId) internal view returns (bool) {
-        // Notice: not checking that `self.delegationIntentsEpoch == account.currentDelegationIntentsEpoch` since
-        // it was loadValid and getValid use it at load time
+        // verifies the intent is in the current epoch
         return self.intentsId.contains(intentId);
     }
 

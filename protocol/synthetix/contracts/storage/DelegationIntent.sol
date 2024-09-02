@@ -107,18 +107,6 @@ library DelegationIntent {
         return _processingEndTime;
     }
 
-    // function checkIsExecutable(Data storage self) internal view {
-    //     (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
-
-    //     if (block.timestamp < _processingStartTime)
-    //         revert IVaultModule.DelegationIntentNotReady(
-    //             self.declarationTime,
-    //             _processingStartTime
-    //         );
-    //     if (block.timestamp >= _processingEndTime)
-    //         revert IVaultModule.DelegationIntentExpired(self.declarationTime, _processingEndTime);
-    // }
-
     function isExecutable(Data storage self, uint128 currentEpochId) internal view returns (bool) {
         (uint32 _processingStartTime, uint32 _processingEndTime) = getProcessingWindow(self);
 
