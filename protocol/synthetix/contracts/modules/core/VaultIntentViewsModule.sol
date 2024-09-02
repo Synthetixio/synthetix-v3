@@ -148,7 +148,7 @@ contract VaultIntentViewsModule is IVaultIntentViewsModule {
             poolId,
             collateralType
         );
-        accumulatedIntentDelta = 0;
+
         for (uint256 i = 0; i < intentIds.length; i++) {
             DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
             if (!intent.intentExpired()) {
