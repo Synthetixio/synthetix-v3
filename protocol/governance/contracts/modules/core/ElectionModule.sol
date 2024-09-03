@@ -151,7 +151,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 newEpochEndDate
     ) external payable override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
         Council.Data storage council = Council.load();
 
         Epoch.Data storage currentEpoch = council.getCurrentEpoch();
@@ -197,7 +197,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 maxDateAdjustmentTolerance
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
 
         Council.load().getNextElectionSettings().setElectionSettings(
             epochSeatCount,
@@ -475,42 +475,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
     }
 
     /// @inheritdoc	IElectionModule
-    function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
-        return Council.load().getCurrentEpoch();
-    }
-
-    /// @inheritdoc	IElectionModule
-    function getElectionSettings()
-        external
-        view
-        override
-        returns (ElectionSettings.Data memory settings)
-    {
-        return Council.load().getCurrentElectionSettings();
-    }
-
-    /// @inheritdoc	IElectionModule
-    function getNextElectionSettings()
-        external
-        view
-        override
-        returns (ElectionSettings.Data memory settings)
-    {
-        return Council.load().getNextElectionSettings();
-    }
-
-    /// @inheritdoc	IElectionModule
-    function getEpochIndex() external view override returns (uint256) {
-        return Council.load().currentElectionId;
-    }
-
-    /// @inheritdoc	IElectionModule
-    function getCurrentPeriod() external view override returns (uint256) {
-        // solhint-disable-next-line numcast/safe-cast
-        return uint256(Council.load().getCurrentEpoch().getCurrentPeriod());
-    }
-
-    /// @inheritdoc	IElectionModule
     function isNominated(address candidate) external view override returns (bool) {
         return Council.load().getCurrentElection().nominees.contains(candidate);
     }
@@ -553,6 +517,11 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint256 electionId
     ) external view override returns (address[] memory) {
         return Ballot.load(electionId, voter, chainId).votedCandidates;
+    }
+
+    /// @inheritdoc	IElectionModule
+    function getNumOfBallots() external view override returns (uint256) {
+        return Council.load().getCurrentElection().ballotPtrs.length();
     }
 
     /// @inheritdoc	IElectionModule
