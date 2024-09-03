@@ -445,7 +445,8 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      - run: yarn install --immutable --immutable-cache --check-cache
+      - yarn-install
+      - run: yarn npm audit --all --recursive --severity high
 
   simulate-release:
     parameters:
