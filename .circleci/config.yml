@@ -13,6 +13,9 @@ commands:
           keys:
             - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
             - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
+      - run: sudo corepack enable
+      - run: corepack install
+      - run: yarn -v
       - run: yarn install --immutable
       - save_cache:
           key: yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
