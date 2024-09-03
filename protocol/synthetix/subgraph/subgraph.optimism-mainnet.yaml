@@ -52,13 +52,9 @@ dataSources:
           handler: handlePoolConfigurationSet
         - event: MarketRegistered(indexed address,indexed uint128,indexed address)
           handler: handleMarketCreated
-        - event:
-            MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed
-            address)
+        - event: MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed address,int128,int128,uint256)
           handler: handleMarketUsdDeposited
-        - event:
-            MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed
-            address)
+        - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address,int128,int128,uint256)
           handler: handleMarketUsdWithdrawn
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleCollateralDeposited
@@ -93,6 +89,8 @@ dataSources:
             RewardsDistributorRegistered(indexed uint128,indexed address,indexed
             address)
           handler: handleRewardsDistributorRegistered
+        - event: RewardsDistributorRemoved(indexed uint128,indexed address,indexed address)
+          handler: handleRewardsDistributorRemoved
         - event: Liquidation(indexed uint128,indexed uint128,indexed
             address,(uint256,uint256,uint256),uint128,address)
           handler: handleLiquidation
