@@ -8877,13 +8877,13 @@ __metadata:
   linkType: hard
 
 "hardhat-ignore-warnings@npm:^0.2.9":
-  version: 0.2.9
-  resolution: "hardhat-ignore-warnings@npm:0.2.9"
+  version: 0.2.11
+  resolution: "hardhat-ignore-warnings@npm:0.2.11"
   dependencies:
     minimatch: "npm:^5.1.0"
     node-interval-tree: "npm:^2.0.1"
     solidity-comments: "npm:^0.0.2"
-  checksum: 10/e1f57f53010e55466ae93412139b5c79080bdfd8157c6270e7f18cdec265cf15e6c48682177d31cddee14680ba20e62a84eaee22351eb783c6ab1436deb7817c
+  checksum: 10/b249e02dbc207a40cb3090577c0f972b52f233b062ebafed413e70454ad389f991f32a8fda582f32d87f6057886e529a9f58ff6abb604d3294f7f4697a6dcb16
   languageName: node
   linkType: hard
 
