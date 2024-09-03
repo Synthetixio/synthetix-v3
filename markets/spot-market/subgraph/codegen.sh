@@ -22,7 +22,6 @@ codegen() {
   yarn prettier --write "$namespace/generated"
 }
 
-
 codegen base-mainnet-andromeda 8453 "synthetix-omnibus:latest@andromeda"
 codegen base-sepolia-andromeda 84532 "synthetix-omnibus:latest@andromeda"
 codegen optimism-mainnet 10 "synthetix-omnibus:latest@main"

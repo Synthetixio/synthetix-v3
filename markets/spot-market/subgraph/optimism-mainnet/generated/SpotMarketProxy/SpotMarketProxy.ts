@@ -262,6 +262,10 @@ export class SynthPriceDataUpdated__Params {
   get sellFeedId(): Bytes {
     return this._event.parameters[2].value.toBytes();
   }
+
+  get strictStalenessTolerance(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
 }
 
 export class SynthRegistered extends ethereum.Event {
@@ -477,7 +481,7 @@ export class OrderCancelledAsyncOrderClaimStruct extends ethereum.Tuple {
     return this[4].toBigInt();
   }
 
-  get settlementTime(): BigInt {
+  get commitmentTime(): BigInt {
     return this[5].toBigInt();
   }
 
@@ -618,16 +622,16 @@ export class SettlementStrategyAdded__Params {
   }
 }
 
-export class SettlementStrategyUpdated extends ethereum.Event {
-  get params(): SettlementStrategyUpdated__Params {
-    return new SettlementStrategyUpdated__Params(this);
+export class SettlementStrategySet extends ethereum.Event {
+  get params(): SettlementStrategySet__Params {
+    return new SettlementStrategySet__Params(this);
   }
 }
 
-export class SettlementStrategyUpdated__Params {
-  _event: SettlementStrategyUpdated;
+export class SettlementStrategySet__Params {
+  _event: SettlementStrategySet;
 
-  constructor(event: SettlementStrategyUpdated) {
+  constructor(event: SettlementStrategySet) {
     this._event = event;
   }
 
@@ -639,8 +643,56 @@ export class SettlementStrategyUpdated__Params {
     return this._event.parameters[1].value.toBigInt();
   }
 
-  get enabled(): boolean {
-    return this._event.parameters[2].value.toBoolean();
+  get strategy(): SettlementStrategySetStrategyStruct {
+    return changetype<SettlementStrategySetStrategyStruct>(
+      this._event.parameters[2].value.toTuple()
+    );
+  }
+}
+
+export class SettlementStrategySetStrategyStruct extends ethereum.Tuple {
+  get strategyType(): i32 {
+    return this[0].toI32();
+  }
+
+  get settlementDelay(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get settlementWindowDuration(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get priceVerificationContract(): Address {
+    return this[3].toAddress();
+  }
+
+  get feedId(): Bytes {
+    return this[4].toBytes();
+  }
+
+  get url(): string {
+    return this[5].toString();
+  }
+
+  get settlementReward(): BigInt {
+    return this[6].toBigInt();
+  }
+
+  get priceDeviationTolerance(): BigInt {
+    return this[7].toBigInt();
+  }
+
+  get minimumUsdExchangeAmount(): BigInt {
+    return this[8].toBigInt();
+  }
+
+  get maxRoundingLoss(): BigInt {
+    return this[9].toBigInt();
+  }
+
+  get disabled(): boolean {
+    return this[10].toBoolean();
   }
 }
 
@@ -1111,6 +1163,38 @@ export class SpotMarketProxy__getAssociatedSystemResult {
   }
 }
 
+export class SpotMarketProxy__getPriceDataResult {
+  value0: Bytes;
+  value1: Bytes;
+  value2: BigInt;
+
+  constructor(value0: Bytes, value1: Bytes, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromFixedBytes(this.value0));
+    map.set('value1', ethereum.Value.fromFixedBytes(this.value1));
+    map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
+    return map;
+  }
+
+  getBuyFeedId(): Bytes {
+    return this.value0;
+  }
+
+  getSellFeedId(): Bytes {
+    return this.value1;
+  }
+
+  getStrictPriceStalenessTolerance(): BigInt {
+    return this.value2;
+  }
+}
+
 export class SpotMarketProxy__buyResultFeesStruct extends ethereum.Tuple {
   get fixedFees(): BigInt {
     return this[0].toBigInt();
@@ -1562,7 +1646,7 @@ export class SpotMarketProxy__commitOrderResultAsyncOrderClaimStruct extends eth
     return this[4].toBigInt();
   }
 
-  get settlementTime(): BigInt {
+  get commitmentTime(): BigInt {
     return this[5].toBigInt();
   }
 
@@ -1600,7 +1684,7 @@ export class SpotMarketProxy__getAsyncOrderClaimResultAsyncOrderClaimStruct exte
     return this[4].toBigInt();
   }
 
-  get settlementTime(): BigInt {
+  get commitmentTime(): BigInt {
     return this[5].toBigInt();
   }
 
@@ -1749,6 +1833,31 @@ export class SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruc
 
   get disabled(): boolean {
     return this[10].toBoolean();
+  }
+}
+
+export class SpotMarketProxy__getWrapperResult {
+  value0: Address;
+  value1: BigInt;
+
+  constructor(value0: Address, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromAddress(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+
+  getWrapCollateralType(): Address {
+    return this.value0;
+  }
+
+  getMaxWrappableAmount(): BigInt {
+    return this.value1;
   }
 }
 
@@ -2003,6 +2112,60 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  getNominatedMarketOwner(synthMarketId: BigInt): Address {
+    let result = super.call(
+      'getNominatedMarketOwner',
+      'getNominatedMarketOwner(uint128):(address)',
+      [ethereum.Value.fromUnsignedBigInt(synthMarketId)]
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_getNominatedMarketOwner(synthMarketId: BigInt): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      'getNominatedMarketOwner',
+      'getNominatedMarketOwner(uint128):(address)',
+      [ethereum.Value.fromUnsignedBigInt(synthMarketId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  getPriceData(synthMarketId: BigInt): SpotMarketProxy__getPriceDataResult {
+    let result = super.call('getPriceData', 'getPriceData(uint128):(bytes32,bytes32,uint256)', [
+      ethereum.Value.fromUnsignedBigInt(synthMarketId),
+    ]);
+
+    return new SpotMarketProxy__getPriceDataResult(
+      result[0].toBytes(),
+      result[1].toBytes(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_getPriceData(
+    synthMarketId: BigInt
+  ): ethereum.CallResult<SpotMarketProxy__getPriceDataResult> {
+    let result = super.tryCall('getPriceData', 'getPriceData(uint128):(bytes32,bytes32,uint256)', [
+      ethereum.Value.fromUnsignedBigInt(synthMarketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new SpotMarketProxy__getPriceDataResult(
+        value[0].toBytes(),
+        value[1].toBytes(),
+        value[2].toBigInt()
+      )
+    );
+  }
+
   getSynth(marketId: BigInt): Address {
     let result = super.call('getSynth', 'getSynth(uint128):(address)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
@@ -2039,6 +2202,33 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  indexPrice(marketId: BigInt, transactionType: BigInt, priceTolerance: i32): BigInt {
+    let result = super.call('indexPrice', 'indexPrice(uint128,uint128,uint8):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+      ethereum.Value.fromUnsignedBigInt(transactionType),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(priceTolerance)),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_indexPrice(
+    marketId: BigInt,
+    transactionType: BigInt,
+    priceTolerance: i32
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('indexPrice', 'indexPrice(uint128,uint128,uint8):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+      ethereum.Value.fromUnsignedBigInt(transactionType),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(priceTolerance)),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   minimumCredit(marketId: BigInt): BigInt {
@@ -2270,11 +2460,38 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  quoteBuyExactIn(marketId: BigInt, usdAmount: BigInt): SpotMarketProxy__quoteBuyExactInResult {
+  getMarketSkew(marketId: BigInt): BigInt {
+    let result = super.call('getMarketSkew', 'getMarketSkew(uint128):(int256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_getMarketSkew(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMarketSkew', 'getMarketSkew(uint128):(int256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  quoteBuyExactIn(
+    marketId: BigInt,
+    usdAmount: BigInt,
+    stalenessTolerance: i32
+  ): SpotMarketProxy__quoteBuyExactInResult {
     let result = super.call(
       'quoteBuyExactIn',
-      'quoteBuyExactIn(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(usdAmount)]
+      'quoteBuyExactIn(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(usdAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
 
     return new SpotMarketProxy__quoteBuyExactInResult(
@@ -2285,12 +2502,17 @@ export class SpotMarketProxy extends ethereum.SmartContract {
 
   try_quoteBuyExactIn(
     marketId: BigInt,
-    usdAmount: BigInt
+    usdAmount: BigInt,
+    stalenessTolerance: i32
   ): ethereum.CallResult<SpotMarketProxy__quoteBuyExactInResult> {
     let result = super.tryCall(
       'quoteBuyExactIn',
-      'quoteBuyExactIn(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(usdAmount)]
+      'quoteBuyExactIn(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(usdAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -2304,11 +2526,19 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  quoteBuyExactOut(marketId: BigInt, synthAmount: BigInt): SpotMarketProxy__quoteBuyExactOutResult {
+  quoteBuyExactOut(
+    marketId: BigInt,
+    synthAmount: BigInt,
+    stalenessTolerance: i32
+  ): SpotMarketProxy__quoteBuyExactOutResult {
     let result = super.call(
       'quoteBuyExactOut',
-      'quoteBuyExactOut(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(synthAmount)]
+      'quoteBuyExactOut(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(synthAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
 
     return new SpotMarketProxy__quoteBuyExactOutResult(
@@ -2319,12 +2549,17 @@ export class SpotMarketProxy extends ethereum.SmartContract {
 
   try_quoteBuyExactOut(
     marketId: BigInt,
-    synthAmount: BigInt
+    synthAmount: BigInt,
+    stalenessTolerance: i32
   ): ethereum.CallResult<SpotMarketProxy__quoteBuyExactOutResult> {
     let result = super.tryCall(
       'quoteBuyExactOut',
-      'quoteBuyExactOut(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(synthAmount)]
+      'quoteBuyExactOut(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(synthAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -2338,11 +2573,19 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  quoteSellExactIn(marketId: BigInt, synthAmount: BigInt): SpotMarketProxy__quoteSellExactInResult {
+  quoteSellExactIn(
+    marketId: BigInt,
+    synthAmount: BigInt,
+    stalenessTolerance: i32
+  ): SpotMarketProxy__quoteSellExactInResult {
     let result = super.call(
       'quoteSellExactIn',
-      'quoteSellExactIn(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(synthAmount)]
+      'quoteSellExactIn(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(synthAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
 
     return new SpotMarketProxy__quoteSellExactInResult(
@@ -2353,12 +2596,17 @@ export class SpotMarketProxy extends ethereum.SmartContract {
 
   try_quoteSellExactIn(
     marketId: BigInt,
-    synthAmount: BigInt
+    synthAmount: BigInt,
+    stalenessTolerance: i32
   ): ethereum.CallResult<SpotMarketProxy__quoteSellExactInResult> {
     let result = super.tryCall(
       'quoteSellExactIn',
-      'quoteSellExactIn(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(synthAmount)]
+      'quoteSellExactIn(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(synthAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -2372,11 +2620,19 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  quoteSellExactOut(marketId: BigInt, usdAmount: BigInt): SpotMarketProxy__quoteSellExactOutResult {
+  quoteSellExactOut(
+    marketId: BigInt,
+    usdAmount: BigInt,
+    stalenessTolerance: i32
+  ): SpotMarketProxy__quoteSellExactOutResult {
     let result = super.call(
       'quoteSellExactOut',
-      'quoteSellExactOut(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(usdAmount)]
+      'quoteSellExactOut(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(usdAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
 
     return new SpotMarketProxy__quoteSellExactOutResult(
@@ -2387,12 +2643,17 @@ export class SpotMarketProxy extends ethereum.SmartContract {
 
   try_quoteSellExactOut(
     marketId: BigInt,
-    usdAmount: BigInt
+    usdAmount: BigInt,
+    stalenessTolerance: i32
   ): ethereum.CallResult<SpotMarketProxy__quoteSellExactOutResult> {
     let result = super.tryCall(
       'quoteSellExactOut',
-      'quoteSellExactOut(uint128,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(usdAmount)]
+      'quoteSellExactOut(uint128,uint256,uint8):(uint256,(uint256,uint256,int256,int256))',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(usdAmount),
+        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(stalenessTolerance)),
+      ]
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -2645,21 +2906,6 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  PRECISION(): BigInt {
-    let result = super.call('PRECISION', 'PRECISION():(int256)', []);
-
-    return result[0].toBigInt();
-  }
-
-  try_PRECISION(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('PRECISION', 'PRECISION():(int256)', []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   settleOrder(marketId: BigInt, asyncOrderId: BigInt): SpotMarketProxy__settleOrderResult {
     let result = super.call(
       'settleOrder',
@@ -2755,6 +3001,27 @@ export class SpotMarketProxy extends ethereum.SmartContract {
       changetype<SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruct>(
         value[0].toTuple()
       )
+    );
+  }
+
+  getWrapper(marketId: BigInt): SpotMarketProxy__getWrapperResult {
+    let result = super.call('getWrapper', 'getWrapper(uint128):(address,uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return new SpotMarketProxy__getWrapperResult(result[0].toAddress(), result[1].toBigInt());
+  }
+
+  try_getWrapper(marketId: BigInt): ethereum.CallResult<SpotMarketProxy__getWrapperResult> {
+    let result = super.tryCall('getWrapper', 'getWrapper(uint128):(address,uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new SpotMarketProxy__getWrapperResult(value[0].toAddress(), value[1].toBigInt())
     );
   }
 
@@ -3676,6 +3943,10 @@ export class UpdatePriceDataCall__Inputs {
   get sellFeedId(): Bytes {
     return this._call.inputValues[2].value.toBytes();
   }
+
+  get strictPriceStalenessTolerance(): BigInt {
+    return this._call.inputValues[3].value.toBigInt();
+  }
 }
 
 export class UpdatePriceDataCall__Outputs {
@@ -4235,7 +4506,7 @@ export class CommitOrderCallAsyncOrderClaimStruct extends ethereum.Tuple {
     return this[4].toBigInt();
   }
 
-  get settlementTime(): BigInt {
+  get commitmentTime(): BigInt {
     return this[5].toBigInt();
   }
 
@@ -4312,66 +4583,6 @@ export class SettleOrderCallFeesStruct extends ethereum.Tuple {
   }
 }
 
-export class SettlePythOrderCall extends ethereum.Call {
-  get inputs(): SettlePythOrderCall__Inputs {
-    return new SettlePythOrderCall__Inputs(this);
-  }
-
-  get outputs(): SettlePythOrderCall__Outputs {
-    return new SettlePythOrderCall__Outputs(this);
-  }
-}
-
-export class SettlePythOrderCall__Inputs {
-  _call: SettlePythOrderCall;
-
-  constructor(call: SettlePythOrderCall) {
-    this._call = call;
-  }
-
-  get result(): Bytes {
-    return this._call.inputValues[0].value.toBytes();
-  }
-
-  get extraData(): Bytes {
-    return this._call.inputValues[1].value.toBytes();
-  }
-}
-
-export class SettlePythOrderCall__Outputs {
-  _call: SettlePythOrderCall;
-
-  constructor(call: SettlePythOrderCall) {
-    this._call = call;
-  }
-
-  get finalOrderAmount(): BigInt {
-    return this._call.outputValues[0].value.toBigInt();
-  }
-
-  get fees(): SettlePythOrderCallFeesStruct {
-    return changetype<SettlePythOrderCallFeesStruct>(this._call.outputValues[1].value.toTuple());
-  }
-}
-
-export class SettlePythOrderCallFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
 export class AddSettlementStrategyCall extends ethereum.Call {
   get inputs(): AddSettlementStrategyCall__Inputs {
     return new AddSettlementStrategyCall__Inputs(this);
@@ -4413,6 +4624,92 @@ export class AddSettlementStrategyCall__Outputs {
 }
 
 export class AddSettlementStrategyCallStrategyStruct extends ethereum.Tuple {
+  get strategyType(): i32 {
+    return this[0].toI32();
+  }
+
+  get settlementDelay(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get settlementWindowDuration(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get priceVerificationContract(): Address {
+    return this[3].toAddress();
+  }
+
+  get feedId(): Bytes {
+    return this[4].toBytes();
+  }
+
+  get url(): string {
+    return this[5].toString();
+  }
+
+  get settlementReward(): BigInt {
+    return this[6].toBigInt();
+  }
+
+  get priceDeviationTolerance(): BigInt {
+    return this[7].toBigInt();
+  }
+
+  get minimumUsdExchangeAmount(): BigInt {
+    return this[8].toBigInt();
+  }
+
+  get maxRoundingLoss(): BigInt {
+    return this[9].toBigInt();
+  }
+
+  get disabled(): boolean {
+    return this[10].toBoolean();
+  }
+}
+
+export class SetSettlementStrategyCall extends ethereum.Call {
+  get inputs(): SetSettlementStrategyCall__Inputs {
+    return new SetSettlementStrategyCall__Inputs(this);
+  }
+
+  get outputs(): SetSettlementStrategyCall__Outputs {
+    return new SetSettlementStrategyCall__Outputs(this);
+  }
+}
+
+export class SetSettlementStrategyCall__Inputs {
+  _call: SetSettlementStrategyCall;
+
+  constructor(call: SetSettlementStrategyCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get strategyId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get strategy(): SetSettlementStrategyCallStrategyStruct {
+    return changetype<SetSettlementStrategyCallStrategyStruct>(
+      this._call.inputValues[2].value.toTuple()
+    );
+  }
+}
+
+export class SetSettlementStrategyCall__Outputs {
+  _call: SetSettlementStrategyCall;
+
+  constructor(call: SetSettlementStrategyCall) {
+    this._call = call;
+  }
+}
+
+export class SetSettlementStrategyCallStrategyStruct extends ethereum.Tuple {
   get strategyType(): i32 {
     return this[0].toI32();
   }
